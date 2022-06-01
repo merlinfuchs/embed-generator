@@ -9,13 +9,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const client = useAPIClient();
   if (client) {
     client.getUser().then((user) => setUser(user));
-  } else {
+  } else if (user) {
     setUser(null);
   }
 
   return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
 };
 
-export function useUser() {
+export default function useUser() {
   return useContext(UserContext);
 }

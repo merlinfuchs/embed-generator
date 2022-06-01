@@ -1,1 +1,1 @@
-export function useRoles() {}
+export default function useRoles() {}

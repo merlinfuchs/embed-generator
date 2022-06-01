@@ -1,1 +1,1 @@
-export function useStickers() {}
+export default function useStickers() {}

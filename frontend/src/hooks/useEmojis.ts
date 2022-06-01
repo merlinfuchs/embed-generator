@@ -1,1 +1,1 @@
-export function useEmojis() {}
+export default function useEmojis() {}

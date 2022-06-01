@@ -5,6 +5,8 @@ import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { TokenProvider } from "./hooks/useToken";
 import { UserProvider } from "./hooks/useUser";
+import { SelectedModeProvider } from "./hooks/useSelectedMode";
+import { MessageProvider } from "./hooks/useMessage";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -13,7 +15,11 @@ root.render(
   <React.StrictMode>
     <TokenProvider>
       <UserProvider>
-        <App />
+        <SelectedModeProvider>
+          <MessageProvider>
+            <App />
+          </MessageProvider>
+        </SelectedModeProvider>
       </UserProvider>
     </TokenProvider>
   </React.StrictMode>

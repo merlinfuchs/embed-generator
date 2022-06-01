@@ -11,17 +11,17 @@ function App() {
 
   return (
     <>
-      <div className="bg-dark-4 w-screen h-screen flex flex-col">
+      <div className="bg-dark-4 w-screen h-screen flex flex-col text-gray-100">
         <div className="flex-none">
           <TopBar />
         </div>
-        <div className="flex-auto flex">
-          <div className="lg:w-7/12 flex-grow bg-dark-3 p-5">
+        <div className="flex-auto flex overflow-hidden">
+          <div className="lg:w-7/12 flex-grow p-3 md:p-5 border-r-2 border-dark-3 overflow-y-auto">
             <SendMenu />
-            <div className="border-b border-dark-7 my-5" />
+            <div className="border-b border-gray-600 my-5" />
             <Editor />
           </div>
-          <div className="lg:w-5/12 flex-none hidden lg:block p-5">
+          <div className="lg:w-5/12 flex-none hidden lg:block">
             <Preview />
           </div>
         </div>

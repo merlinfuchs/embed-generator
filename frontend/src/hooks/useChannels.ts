@@ -1,1 +1,1 @@
-export function useChannels() {}
+export default function useChannels() {}

@@ -18,6 +18,6 @@ export const GuildsProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export function useGuilds() {
+export default function useGuilds() {
   return useContext(GuildsContext);
 }

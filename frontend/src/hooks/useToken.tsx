@@ -23,6 +23,6 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export function useToken() {
+export default function useToken() {
   return useContext(TokenContext);
 }

@@ -1,3 +1,15 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.no-ring {
+  @apply focus:ring-0 focus:ring-offset-0 focus:outline-none;
+}
+
+* {
+  appearance: none;
+}
+
+.discord-message {
+  padding-right: 1em !important; /* TODO: apply only on mobile */
+}

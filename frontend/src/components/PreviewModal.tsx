@@ -1,4 +1,5 @@
 import BaseModal from "./BaseModal";
+import Preview from "./Preview";
 
 interface Props {
   visible: boolean;
@@ -7,7 +8,7 @@ interface Props {
 export default function PreviewModal({ visible }: Props) {
   return (
     <BaseModal visible={visible} size="large">
-      d
+      <Preview />
     </BaseModal>
   );
 }
