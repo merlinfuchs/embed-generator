@@ -1,8 +1,14 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from "react";
 
-const TokenContext = createContext<[string | null, (newToken: string) => void]>(
-  [null, () => {}]
-);
+const TokenContext = createContext<
+  [string | null, (newToken: string | null) => void]
+>([null, () => {}]);
 
 export const TokenProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState(localStorage.getItem("token") || null);
@@ -10,10 +16,11 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
   const wrappedSetToken = (newToken: string | null) => {
     if (newToken) {
       localStorage.setItem("token", newToken);
+      setToken(newToken);
     } else {
       localStorage.removeItem("token");
+      setToken(null);
     }
-    setToken(null);
   };
 
   return (

@@ -1,8 +1,17 @@
 import { ChevronRightIcon } from "@heroicons/react/outline";
 import { useState } from "react";
+import { Embed } from "../discord";
+import useMessage from "../hooks/useMessage";
+import ColorPicker from "./ColorPicker";
 
-export default function EditorEmbedBody() {
+interface Props {
+  index: number;
+  embed: Embed;
+}
+
+export default function EditorEmbedBody({ index, embed }: Props) {
   const [collapsed, setCollapsed] = useState(false);
+  const [, dispatch] = useMessage();
 
   return (
     <div>
@@ -26,13 +35,31 @@ export default function EditorEmbedBody() {
             <input
               type="text"
               className="bg-dark-2 rounded p-2 w-full no-ring font-light"
+              value={embed.title || ""}
+              onChange={(e) =>
+                dispatch({
+                  type: "setEmbedTitle",
+                  value: e.target.value || undefined,
+                  index,
+                })
+              }
             />
           </div>
           <div>
             <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
               Description
             </div>
-            <textarea className="bg-dark-2 rounded p-2 w-full no-ring font-light" />
+            <textarea
+              className="bg-dark-2 rounded p-2 w-full no-ring font-light"
+              value={embed.description || ""}
+              onChange={(e) =>
+                dispatch({
+                  type: "setEmbedDescription",
+                  value: e.target.value || undefined,
+                  index,
+                })
+              }
+            />
           </div>
           <div className="flex space-x-3">
             <div className="flex-auto">
@@ -42,15 +69,29 @@ export default function EditorEmbedBody() {
               <input
                 type="text"
                 className="bg-dark-2 rounded p-2 w-full no-ring font-light"
+                value={embed.url || ""}
+                onChange={(e) =>
+                  dispatch({
+                    type: "setEmbedUrl",
+                    value: e.target.value || undefined,
+                    index,
+                  })
+                }
               />
             </div>
             <div className="flex-auto">
               <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
                 Color
               </div>
-              <input
-                type="text"
-                className="bg-dark-2 rounded p-2 w-full no-ring font-light"
+              <ColorPicker
+                value={embed.color}
+                onChange={(value) =>
+                  dispatch({
+                    type: "setEmbedColor",
+                    value,
+                    index,
+                  })
+                }
               />
             </div>
           </div>

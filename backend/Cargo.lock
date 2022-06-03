@@ -148,7 +148,9 @@ dependencies = [
  "http",
  "log",
  "pin-project-lite",
+ "tokio-rustls",
  "tokio-util 0.7.2",
+ "webpki-roots",
 ]
 
 [[package]]
@@ -316,6 +318,7 @@ dependencies = [
  "percent-encoding",
  "pin-project-lite",
  "rand",
+ "rustls",
  "serde 1.0.137",
  "serde_json",
  "serde_urlencoded",
@@ -693,6 +696,7 @@ dependencies = [
  "once_cell",
  "percent-encoding",
  "redis",
+ "regex",
  "rust-embed",
  "serde 1.0.137",
  "serde_json",
@@ -703,6 +707,7 @@ dependencies = [
  "twilight-http",
  "twilight-http-ratelimiting",
  "twilight-model",
+ "twilight-util",
 ]
 
 [[package]]
@@ -1598,9 +1603,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.5.4"
+version = "1.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d07a8629359eb56f1e2fb1652bb04212c072a87ba68546a04065d525673ac461"
+checksum = "d83f127d94bdbcda4c8cc2e50f6f84f4b611f69c902699ca385a39c3a75f9ff1"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -1609,9 +1614,9 @@ dependencies = [
 
 [[package]]
 name = "regex-syntax"
-version = "0.6.25"
+version = "0.6.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f497285884f3fcff424ffc933e56d7cbca511def0c9831a7f9b5f6153e3cc89b"
+checksum = "49b3de9ec5dc0a3417da371aab17d729997c15010e7fd24ff707773a33bddb64"
 
 [[package]]
 name = "resolv-conf"
@@ -2465,6 +2470,16 @@ dependencies = [
  "serde_repr",
  "time 0.3.5",
  "tracing",
+]
+
+[[package]]
+name = "twilight-util"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da9f54602b3265361fb7337abc5305d93b7e70faa0b1e76fe59a264144936543"
+dependencies = [
+ "twilight-model",
+ "twilight-validate",
 ]
 
 [[package]]

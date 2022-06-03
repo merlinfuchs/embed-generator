@@ -12,7 +12,7 @@ mod config;
 mod db;
 mod tokens;
 
-#[tokio::main]
+#[actix_web::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
     db::connect(&CONFIG.mongo_url).await?;

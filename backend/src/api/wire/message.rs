@@ -1,15 +1,18 @@
 use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
+use twilight_model::id::marker::{ChannelMarker, GuildMarker, MessageMarker, UserMarker, WebhookMarker};
+use twilight_model::id::Id;
 
 use crate::api::response::RouteError;
 use crate::api::wire::NormalizeValidate;
-use crate::CONFIG;
 use crate::db::models::MessageModel;
+use crate::CONFIG;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MessageWire {
     pub id: String,
-    pub user_id: String,
+    pub user_id: Id<UserMarker>,
     pub name: String,
     pub description: String,
     pub data: serde_json::Value,
@@ -22,7 +25,7 @@ impl From<MessageModel> for MessageWire {
             user_id: m.user_id,
             name: m.name,
             description: m.description,
-            data: m.data
+            data: m.data,
         }
     }
 }
@@ -117,15 +120,16 @@ impl NormalizeValidate for MessageUpdateRequestWire {
 #[serde(untagged)]
 pub enum MessageSendTargetWire {
     Webhook {
-        webhook_id: String,
+        webhook_id: Id<WebhookMarker>,
         webhook_token: String,
-        message_id: Option<String>
+        thread_id: Option<Id<ChannelMarker>>,
+        message_id: Option<Id<MessageMarker>>,
     },
     Channel {
-        guild_id: String,
-        channel_id: String,
-        message_id: Option<String>
-    }
+        guild_id: Id<GuildMarker>,
+        channel_id: Id<ChannelMarker>,
+        message_id: Option<Id<MessageMarker>>,
+    },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -133,5 +137,5 @@ pub struct MessageSendExecuteRequestWire {
     pub target: MessageSendTargetWire,
     pub payload_json: serde_json::Value,
     #[serde(default)]
-    pub files: HashMap<String, Vec<u8>>
+    pub files: HashMap<String, Vec<u8>>,
 }

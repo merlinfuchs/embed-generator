@@ -1,8 +1,16 @@
 import { ChevronRightIcon } from "@heroicons/react/outline";
 import { useState } from "react";
+import { Embed } from "../discord";
+import useMessage from "../hooks/useMessage";
 
-export default function EditorEmbedFooter() {
+interface Props {
+  index: number;
+  embed: Embed;
+}
+
+export default function EditorEmbedFooter({ index, embed }: Props) {
   const [collapsed, setCollapsed] = useState(true);
+  const [, dispatch] = useMessage();
 
   return (
     <div>
@@ -26,6 +34,14 @@ export default function EditorEmbedFooter() {
             <input
               type="text"
               className="bg-dark-2 rounded p-2 w-full no-ring font-light"
+              value={embed.footer?.text || ""}
+              onChange={(e) =>
+                dispatch({
+                  type: "setEmbedFooterText",
+                  value: e.target.value || undefined,
+                  index,
+                })
+              }
             />
           </div>
           <div className="flex space-x-3">
@@ -36,6 +52,14 @@ export default function EditorEmbedFooter() {
               <input
                 type="text"
                 className="bg-dark-2 rounded p-2 w-full no-ring font-light"
+                value={embed.timestamp || ""}
+                onChange={(e) =>
+                  dispatch({
+                    type: "setEmbedTimestamp",
+                    value: e.target.value || undefined,
+                    index,
+                  })
+                }
               />
             </div>
             <div className="flex-auto">
@@ -43,8 +67,16 @@ export default function EditorEmbedFooter() {
                 Footer Icon URL
               </div>
               <input
-                type="text"
+                type="url"
                 className="bg-dark-2 rounded p-2 w-full no-ring font-light"
+                value={embed.footer?.icon_url || ""}
+                onChange={(e) =>
+                  dispatch({
+                    type: "setEmbedFooterIconUrl",
+                    value: e.target.value || undefined,
+                    index,
+                  })
+                }
               />
             </div>
           </div>

@@ -7,6 +7,8 @@ import { TokenProvider } from "./hooks/useToken";
 import { UserProvider } from "./hooks/useUser";
 import { SelectedModeProvider } from "./hooks/useSelectedMode";
 import { MessageProvider } from "./hooks/useMessage";
+import { GuildsProvider } from "./hooks/useGuilds";
+import { SelectedGuildProvider } from "./hooks/useSelectedGuild";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -15,11 +17,15 @@ root.render(
   <React.StrictMode>
     <TokenProvider>
       <UserProvider>
-        <SelectedModeProvider>
-          <MessageProvider>
-            <App />
-          </MessageProvider>
-        </SelectedModeProvider>
+        <GuildsProvider>
+          <SelectedGuildProvider>
+            <SelectedModeProvider>
+              <MessageProvider>
+                <App />
+              </MessageProvider>
+            </SelectedModeProvider>
+          </SelectedGuildProvider>
+        </GuildsProvider>
       </UserProvider>
     </TokenProvider>
   </React.StrictMode>

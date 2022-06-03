@@ -17,6 +17,7 @@ pub async fn route_message_send(
     // - get or create a webhook in that channel
     // - if message id is provided fetch message and check if webhook id matches? (or just catch error?)
     // - execute and return errors or message
+    // - add message to redis for messages_list endpoint
 
     unimplemented!()
 }

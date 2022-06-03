@@ -2,16 +2,16 @@ export interface Message {
   username?: string;
   avatar_url?: string;
   content?: string;
-  embeds: ({ id: number } & Embed)[];
-  components: ({ id: number } & ComponentActionRow)[];
-  files: ({ id: number } & File)[];
+  embeds: ({ id: number | undefined } & Embed)[];
+  components: ({ id: number | undefined } & ComponentActionRow)[];
+  files: ({ id: number | undefined } & File)[];
 }
 
 export interface File {}
 
 export interface ComponentActionRow {
   type: 1;
-  components: Component[];
+  components: ({ id: number | undefined } & Component)[];
 }
 
 export type Component =
@@ -65,15 +65,66 @@ export interface Embed {
   image?: EmbedImage;
   thumbnail?: EmbedThumbnail;
   author?: EmbedAuthor;
-  fields: ({ id: number } & EmbedField)[];
+  fields: ({ id: number | undefined } & EmbedField)[];
 }
 
-export interface EmbedFooter {}
+export interface EmbedFooter {
+  text: string;
+  icon_url?: string;
+}
 
-export interface EmbedImage {}
+export interface EmbedImage {
+  url: string;
+}
 
-export interface EmbedThumbnail {}
+export interface EmbedThumbnail {
+  url: string;
+}
 
-export interface EmbedAuthor {}
+export interface EmbedAuthor {
+  name: string;
+  url?: string;
+  icon_url?: string;
+}
 
-export interface EmbedField {}
+export interface EmbedField {
+  name: string;
+  value: string;
+  inline?: boolean;
+}
+
+export function userAvatarUrl({
+  id,
+  avatar,
+  discriminator,
+}: {
+  id: string;
+  avatar: string | null;
+  discriminator: string;
+}) {
+  if (avatar) {
+    return `https://cdn.discordapp.com/avatars/${id}/${avatar}.webp?size=128`;
+  } else {
+    return `https://cdn.discordapp.com/embed/avatars/${
+      parseInt(discriminator) % 5
+    }.png?size=128`;
+  }
+}
+
+export function guildIconUrl({
+  id,
+  icon,
+}: {
+  id: string;
+  icon: string | null;
+}) {
+  return `https://cdn.discordapp.com/icons/${id}/${icon}.webp`;
+}
+
+export function removeIdsFromMessage(msg: Message): Message {
+  return msg;
+}
+
+export function fillIdsForMessage(msg: Message): Message {
+  return msg;
+}

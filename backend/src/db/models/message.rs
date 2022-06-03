@@ -12,7 +12,7 @@ use crate::db::get_collection;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MessageModel {
     pub id: String,
-    pub user_id: String,
+    pub user_id: Id<UserMarker>,
     pub name: String,
     pub description: String,
     pub data: serde_json::Value,

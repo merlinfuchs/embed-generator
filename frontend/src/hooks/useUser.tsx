@@ -1,17 +1,30 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from "react";
+import { UserWire } from "../api/wire";
 import useAPIClient from "./useApiClient";
 
-const UserContext = createContext<{} | null>(null);
+const UserContext = createContext<UserWire | null>(null);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<{} | null>(null);
+  const [user, setUser] = useState<UserWire | null>(null);
 
   const client = useAPIClient();
-  if (client) {
-    client.getUser().then((user) => setUser(user));
-  } else if (user) {
-    setUser(null);
-  }
+  useEffect(() => {
+    if (client) {
+      client.getUser().then((resp) => {
+        if (resp.success) {
+          setUser(resp.data);
+        }
+      });
+    } else if (user) {
+      setUser(null);
+    }
+  }, [client]);
 
   return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
 };

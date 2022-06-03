@@ -1,20 +1,33 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from "react";
+import { GuildWire } from "../api/wire";
 import useAPIClient from "./useApiClient";
 
-const GuildsContext = createContext<{}[] | null>(null);
+const GuildsContext = createContext<GuildWire[] | null>(null);
 
 export const GuildsProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<{}[] | null>(null);
+  const [guilds, setGuilds] = useState<GuildWire[] | null>(null);
 
   const client = useAPIClient();
-  if (client) {
-    client.getGuilds().then((user) => setUser(user));
-  } else {
-    setUser(null);
-  }
+  useEffect(() => {
+    if (client) {
+      client.getGuilds().then((resp) => {
+        if (resp.success) {
+          setGuilds(resp.data);
+        }
+      });
+    } else {
+      setGuilds(null);
+    }
+  }, [client]);
 
   return (
-    <GuildsContext.Provider value={user}>{children}</GuildsContext.Provider>
+    <GuildsContext.Provider value={guilds}>{children}</GuildsContext.Provider>
   );
 };
 

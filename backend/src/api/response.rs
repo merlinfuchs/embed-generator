@@ -1,9 +1,9 @@
 use std::borrow::Cow;
 
-use actix_web::{HttpResponse, ResponseError};
 use actix_web::body::BoxBody;
 use actix_web::http::StatusCode;
 use actix_web::web::Json;
+use actix_web::{HttpResponse, ResponseError};
 use awc::error::{JsonPayloadError, SendRequestError};
 use log::error;
 use mongodb::error::Error as MongoError;
@@ -53,7 +53,7 @@ pub enum RouteError {
     #[error("No or invalid token provided")]
     InvalidToken,
     #[error("Background fetch request failed")]
-    BackgroundRequestFailed,
+    BackgroundRequestFailed { details: String },
     #[error("Missing guild access")]
     MissingGuildAccess,
 }
@@ -67,7 +67,7 @@ impl ResponseError for RouteError {
             DatabaseError => StatusCode::INTERNAL_SERVER_ERROR,
             ValidationError { .. } => StatusCode::BAD_REQUEST,
             InvalidToken => StatusCode::UNAUTHORIZED,
-            BackgroundRequestFailed => StatusCode::UNAUTHORIZED,
+            BackgroundRequestFailed { .. } => StatusCode::INTERNAL_SERVER_ERROR,
             MissingGuildAccess => StatusCode::FORBIDDEN,
         }
     }
@@ -82,14 +82,18 @@ impl ResponseError for RouteError {
 }
 
 impl From<awc::error::SendRequestError> for RouteError {
-    fn from(_: SendRequestError) -> Self {
-        Self::BackgroundRequestFailed
+    fn from(e: SendRequestError) -> Self {
+        Self::BackgroundRequestFailed {
+            details: format!("{:?}", e),
+        }
     }
 }
 
 impl From<awc::error::JsonPayloadError> for RouteError {
-    fn from(_: JsonPayloadError) -> Self {
-        Self::BackgroundRequestFailed
+    fn from(e: JsonPayloadError) -> Self {
+        Self::BackgroundRequestFailed {
+            details: format!("{:?}", e),
+        }
     }
 }
 

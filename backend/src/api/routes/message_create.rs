@@ -18,7 +18,7 @@ pub async fn route_message_create(
 
     let model = MessageModel {
         id: nanoid!(),
-        user_id: token.user_id.to_string(),
+        user_id: token.user_id,
         name: req.name,
         description: req.description,
         data: req.data,

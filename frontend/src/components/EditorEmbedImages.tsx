@@ -1,8 +1,16 @@
 import { ChevronRightIcon } from "@heroicons/react/outline";
 import { useState } from "react";
+import { Embed } from "../discord";
+import useMessage from "../hooks/useMessage";
 
-export default function EditorEmbedImages() {
+interface Props {
+  index: number;
+  embed: Embed;
+}
+
+export default function EditorEmbedImages({ index, embed }: Props) {
   const [collapsed, setCollapsed] = useState(true);
+  const [, dispatch] = useMessage();
 
   return (
     <div>
@@ -24,8 +32,16 @@ export default function EditorEmbedImages() {
               Image URL
             </div>
             <input
-              type="text"
+              type="url"
               className="bg-dark-2 rounded p-2 w-full no-ring font-light"
+              value={embed.image?.url || ""}
+              onChange={(e) =>
+                dispatch({
+                  type: "setEmbedImageUrl",
+                  value: e.target.value || undefined,
+                  index,
+                })
+              }
             />
           </div>
           <div>
@@ -33,8 +49,16 @@ export default function EditorEmbedImages() {
               Thumbnail URL
             </div>
             <input
-              type="text"
+              type="url"
               className="bg-dark-2 rounded p-2 w-full no-ring font-light"
+              value={embed.thumbnail?.url || ""}
+              onChange={(e) =>
+                dispatch({
+                  type: "setEmbedThumbnailUrl",
+                  value: e.target.value || undefined,
+                  index,
+                })
+              }
             />
           </div>
         </div>

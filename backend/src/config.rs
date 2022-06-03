@@ -3,6 +3,8 @@ use std::path::Path;
 use config::{Config, ConfigError, Environment, File};
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
+use twilight_model::id::Id;
+use twilight_model::id::marker::{ApplicationMarker, GuildMarker};
 
 lazy_static! {
     pub static ref CONFIG: RootConfig = RootConfig::new().expect("Parsing config");
@@ -15,11 +17,13 @@ fn default_shard_count() -> u64 {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiscordConfig {
     pub token: String,
-    pub oauth_client_id: u64,
+    pub oauth_client_id: Id<ApplicationMarker>,
     pub oauth_client_secret: String,
     pub oauth_redirect_uri: String,
     #[serde(default = "default_shard_count")]
-    pub shard_count: u64
+    pub shard_count: u64,
+    #[serde(default)]
+    pub test_guild_id: Option<Id<GuildMarker>>
 }
 
 fn default_max_messages_per_user() -> u32 {
@@ -66,6 +70,7 @@ fn default_redis_url() -> String {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RootConfig {
     pub discord: DiscordConfig,
+    pub jwt_secret: String,
 
     #[serde(default = "default_host")]
     pub host: String,

@@ -1,7 +1,9 @@
 use actix_web::post;
 use actix_web::web::Json;
 use serde::Deserialize;
-use twilight_model::guild::{PartialGuild, Permissions};
+use twilight_model::guild::Permissions;
+use twilight_model::id::marker::GuildMarker;
+use twilight_model::id::Id;
 
 use crate::api::response::RouteResult;
 use crate::api::wire::{ExchangeTokenRequestWire, ExchangeTokenResponseWire};
@@ -14,8 +16,14 @@ pub struct DiscordExchangeTokenResponseData {
     pub access_token: String,
 }
 
+#[derive(Deserialize)]
+pub struct DiscordGuildsResponseDataEntry {
+    pub id: Id<GuildMarker>,
+    pub permissions: Permissions,
+}
+
 #[post("/auth/exchange")]
-pub async fn route_auth_callback_cli(
+pub async fn route_auth_exchange(
     req: Json<ExchangeTokenRequestWire>,
 ) -> RouteResult<ExchangeTokenResponseWire> {
     let code = req.into_inner().code;
@@ -50,7 +58,7 @@ pub async fn route_auth_callback_cli(
         .await?;
     user_model.save().await?;
 
-    let guilds: Vec<PartialGuild> = client
+    let guilds: Vec<DiscordGuildsResponseDataEntry> = client
         .get("https://discord.com/api/v9/users/@me/guilds")
         .append_header((
             "Authorization",
@@ -65,10 +73,7 @@ pub async fn route_auth_callback_cli(
         user_id: user_model.id,
         guild_ids: guilds
             .into_iter()
-            .filter(|g| match g.permissions {
-                None => false,
-                Some(p) => p.contains(Permissions::MANAGE_MESSAGES),
-            })
+            .filter(|g| g.permissions.contains(Permissions::MANAGE_MESSAGES))
             .map(|g| g.id)
             .collect(),
     };

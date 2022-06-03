@@ -12,6 +12,7 @@ twilight-http = "0.11.0"
 twilight-http-ratelimiting = "0.11.0"
 twilight-model = "0.11.0"
 twilight-cache-inmemory = "0.11.0"
+twilight-util = { version = "0.11.0", features = ["builder"] }
 lazy_static = "1.4.0"
 rust-embed = "6.4.0"
 mime = "0.3.16"
@@ -21,7 +22,7 @@ log = "0.4.17"
 actix-cors = { version = "0.6.1", optional = true }
 futures-util = "0.3.21"
 percent-encoding = "2.1.0"
-awc = "3.0.0"
+awc = { version = "3.0.0", features = ["rustls"] }
 jsonwebtoken = "8.1.0"
 thiserror = "1.0.31"
 redis = "0.21.5"
@@ -30,6 +31,7 @@ deadpool-redis = "0.10.2"
 serde_json = "1.0.81"
 once_cell = "1.12.0"
 nanoid = "0.4.0"
+regex = "1.5.6"
 
 [features]
 default = []

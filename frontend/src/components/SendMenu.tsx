@@ -1,49 +1,65 @@
-import { ChangeEvent, useState } from "react";
+import { LinkIcon } from "@heroicons/react/outline";
+import { ChangeEvent, useEffect, useState } from "react";
+import useChannels from "../hooks/useChannels";
+import useGuilds from "../hooks/useGuilds";
 import useSelectedGuild from "../hooks/useSelectedGuild";
 import useSelectedMode from "../hooks/useSelectedMode";
 import useToken from "../hooks/useToken";
+import ChannelSelect from "./ChannelSelect";
+import GuildSelect from "./GuildSelect";
+import LoginSuggest from "./LoginSuggest";
 
 export default function SendMenu() {
   const [selectedGuild, setSelectedGuild] = useSelectedGuild();
-  const [selectedChannel, setSelectedChannel] = useState("");
+  const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
   const [selectedMessage, setSelectedMessage] = useState("");
   const [selectedMode, setSelectedMode] = useSelectedMode();
 
   const [token] = useToken();
+  const guilds = useGuilds();
+  const channels = useChannels();
 
-  function handleModeChange(e: ChangeEvent<HTMLSelectElement>) {
-    const newMode = e.target.value;
+  useEffect(() => {
+    setSelectedChannel("");
+  }, [selectedGuild]);
+
+  function wrappedSetSelectedMode(newMode: "webhook" | "channel") {
     if (newMode === "channel" && !token) {
-      // TODO: open login popup
       setSelectedMode("webhook");
     } else {
-      setSelectedMode(newMode as "webhook" | "channel");
+      setSelectedMode(newMode);
     }
   }
 
   return (
     <div className="space-y-5">
-      <div className="flex space-x-3">
-        <div className="flex-none">
-          <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-            Mode
+      <div className="flex items-end space-x-3">
+        {!!token && (
+          <div className="flex-none">
+            {selectedMode === "webhook" ? (
+              <div
+                onClick={() => wrappedSetSelectedMode("channel")}
+                className="bg-dark-2 flex items-center justify-center rounded h-10 w-10 cursor-pointer text-gray-200"
+              >
+                <LinkIcon className="h-7 w-7" />
+              </div>
+            ) : (
+              <div
+                onClick={() => wrappedSetSelectedMode("webhook")}
+                className="bg-dark-2 flex items-center justify-center rounded h-10 w-10 cursor-pointer text-3xl text-gray-200"
+              >
+                #
+              </div>
+            )}
           </div>
-          <select
-            className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer font-light"
-            onChange={handleModeChange}
-            value={selectedMode}
-          >
-            <option value="webhook">Webhook URL</option>
-            <option value="channel">Select Channel</option>
-          </select>
-        </div>
+        )}
         {selectedMode === "webhook" ? (
           <div className="flex-auto">
             <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
               Webhook URL
             </div>
             <input
-              type="text"
+              type="url"
               className="bg-dark-2 rounded p-2 w-full no-ring font-light"
             />
           </div>
@@ -52,31 +68,22 @@ export default function SendMenu() {
             <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
               Server
             </div>
-            <select
-              className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointe font-light cursor-pointer"
-              value={selectedGuild || ""}
-              onChange={(e) => setSelectedGuild(e.target.value)}
-            >
-              <option>Some Server</option>
-            </select>
+            <GuildSelect value={selectedGuild} onChange={setSelectedGuild} />
           </div>
         )}
       </div>
       {selectedMode === "channel" ? (
         <div className="flex space-x-3">
-          <div className="flex-auto">
+          <div className="flex-auto w-full">
             <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
               Channel
             </div>
-            <select
-              className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer font-light cursor-pointer"
+            <ChannelSelect
               value={selectedChannel}
-              onChange={(e) => setSelectedChannel(e.target.value)}
-            >
-              <option>Some Channel</option>
-            </select>
+              onChange={setSelectedChannel}
+            />
           </div>
-          <div className="flex-auto">
+          <div className="flex-auto w-full">
             <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
               Edit Message
             </div>
@@ -85,11 +92,20 @@ export default function SendMenu() {
               value={selectedMessage}
               onChange={(e) => setSelectedMessage(e.target.value)}
             >
+              <option value="" disabled>
+                Select Message
+              </option>
               <option>Some Message</option>
             </select>
           </div>
         </div>
       ) : undefined}
+      {!token && <LoginSuggest />}
+      <div className="flex justify-end">
+        <button className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark">
+          Send Message
+        </button>
+      </div>
     </div>
   );
 }

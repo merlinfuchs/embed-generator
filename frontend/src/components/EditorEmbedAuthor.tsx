@@ -1,8 +1,16 @@
 import { ChevronRightIcon } from "@heroicons/react/outline";
 import { useState } from "react";
+import { Embed } from "../discord";
+import useMessage from "../hooks/useMessage";
 
-export default function EditorEmbedAuthor() {
+interface Props {
+  index: number;
+  embed: Embed;
+}
+
+export default function EditorEmbedAuthor({ index, embed }: Props) {
   const [collapsed, setCollapsed] = useState(false);
+  const [, dispatch] = useMessage();
 
   return (
     <div>
@@ -26,6 +34,14 @@ export default function EditorEmbedAuthor() {
             <input
               type="text"
               className="bg-dark-2 rounded p-2 w-full no-ring font-light"
+              value={embed.author?.name || ""}
+              onChange={(e) =>
+                dispatch({
+                  type: "setEmbedAuthorName",
+                  value: e.target.value || undefined,
+                  index,
+                })
+              }
             />
           </div>
           <div className="flex space-x-3">
@@ -34,8 +50,16 @@ export default function EditorEmbedAuthor() {
                 Author URL
               </div>
               <input
-                type="text"
+                type="url"
                 className="bg-dark-2 rounded p-2 w-full no-ring font-light"
+                value={embed.author?.url || ""}
+                onChange={(e) =>
+                  dispatch({
+                    type: "setEmbedAuthorUrl",
+                    value: e.target.value || undefined,
+                    index,
+                  })
+                }
               />
             </div>
             <div className="flex-auto">
@@ -43,8 +67,16 @@ export default function EditorEmbedAuthor() {
                 Author Icon URL
               </div>
               <input
-                type="text"
+                type="url"
                 className="bg-dark-2 rounded p-2 w-full no-ring font-light"
+                value={embed.author?.icon_url || ""}
+                onChange={(e) =>
+                  dispatch({
+                    type: "setEmbedAuthorIconUrl",
+                    value: e.target.value || undefined,
+                    index,
+                  })
+                }
               />
             </div>
           </div>

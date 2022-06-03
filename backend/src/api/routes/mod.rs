@@ -1,3 +1,4 @@
+pub use auth_exchange::route_auth_exchange;
 pub use auth_redirect::route_auth_redirect;
 pub use guild_channel_list::route_guild_channel_list;
 pub use guild_emoji_list::route_guild_emoji_list;
@@ -23,7 +24,7 @@ mod message_create;
 mod message_delete;
 mod message_get;
 mod message_list;
+mod message_send;
 mod message_update;
 mod serve_frontend;
 mod user_get_me;
-mod message_send;

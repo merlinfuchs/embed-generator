@@ -37,7 +37,7 @@ pub async fn route_serve_frontend(path: web::Path<String>) -> impl Responder {
     let path = Path::new(&raw_path);
 
     let (body, mime_type) = match FrontendFiles::get(raw_path.as_str()) {
-        Some(f) => (cow_to_bytes(f.data), get_mime_type_for_file(&path)),
+        Some(f) => (cow_to_bytes(f.data), get_mime_type_for_file(path)),
         None => (cow_to_bytes(FrontendFiles::get("index.html").unwrap().data), mime::TEXT_HTML)
     };
 

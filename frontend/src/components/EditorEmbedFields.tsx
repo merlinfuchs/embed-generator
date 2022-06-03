@@ -33,6 +33,7 @@ export default function EditorEmbedFields({ index, embed }: Props) {
               field={field}
               key={field.id}
               index={i}
+              embed={embed}
               embedIndex={index}
             />
           ))}

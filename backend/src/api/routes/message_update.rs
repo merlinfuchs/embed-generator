@@ -17,7 +17,7 @@ pub async fn route_message_update(
 
     let model = MessageModel {
         id: message_id,
-        user_id: token.user_id.to_string(),
+        user_id: token.user_id,
         name: req.name,
         description: req.description,
         data: req.data,
