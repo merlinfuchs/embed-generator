@@ -3,8 +3,8 @@ use std::path::Path;
 use config::{Config, ConfigError, Environment, File};
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
-use twilight_model::id::Id;
 use twilight_model::id::marker::{ApplicationMarker, GuildMarker};
+use twilight_model::id::Id;
 
 lazy_static! {
     pub static ref CONFIG: RootConfig = RootConfig::new().expect("Parsing config");
@@ -23,7 +23,7 @@ pub struct DiscordConfig {
     #[serde(default = "default_shard_count")]
     pub shard_count: u64,
     #[serde(default)]
-    pub test_guild_id: Option<Id<GuildMarker>>
+    pub test_guild_id: Option<Id<GuildMarker>>,
 }
 
 fn default_max_messages_per_user() -> u32 {
@@ -51,6 +51,17 @@ impl Default for LimitConfig {
     }
 }
 
+fn default_source_link() -> String {
+    String::from("https://github.com/merlinfuchs/embed-generator")
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LinkConfig {
+    pub discord_invite: String,
+    #[serde(default = "default_source_link")]
+    pub source: String,
+}
+
 fn default_host() -> String {
     "127.0.0.1".to_string()
 }
@@ -70,6 +81,7 @@ fn default_redis_url() -> String {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RootConfig {
     pub discord: DiscordConfig,
+    pub links: LinkConfig,
     pub jwt_secret: String,
 
     #[serde(default = "default_host")]

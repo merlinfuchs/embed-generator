@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo } from "react";
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon, SelectorIcon } from "@heroicons/react/solid";
 import useChannels from "../hooks/useChannels";
@@ -30,7 +30,7 @@ export default function ChannelSelect({ value, onChange }: Props) {
     <Listbox value={value} onChange={onChange}>
       {({ open }) => (
         <div className="mt-1 relative">
-          <Listbox.Button className="relative w-full bg-dark-2 rounded shadow-sm pl-3 pr-10 py-2 text-left text-sm no-ring cursor-pointer">
+          <Listbox.Button className="relative w-full bg-dark-2 rounded shadow-sm pl-3 pr-10 py-2 text-left no-ring cursor-pointer">
             {selectedChannel ? (
               <span className="flex items-center">
                 <div className="rounded-full flex items-center justify-center text-lg py-0 h-6 text-dark-7">

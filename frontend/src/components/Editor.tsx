@@ -2,6 +2,8 @@ import { ChevronRightIcon } from "@heroicons/react/outline";
 import { useState } from "react";
 import useMessage from "../hooks/useMessage";
 import EditorEmbed from "./EditorEmbed";
+import StyledInput from "./StyledInput";
+import StyledTextarea from "./StyledTextarea";
 
 export default function Editor() {
   const [msg, dispatchMsg] = useMessage();
@@ -12,45 +14,30 @@ export default function Editor() {
   return (
     <div className="space-y-5">
       <div className="flex space-x-3">
-        <div className="flex-auto">
-          <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-            Username
-          </div>
-          <input
-            type="text"
-            className="bg-dark-2 rounded p-2 w-full no-ring font-light"
-            value={msg.username || ""}
-            onChange={(e) =>
-              dispatchMsg({ type: "setUsername", value: e.target.value })
-            }
-          />
-        </div>
-        <div className="flex-auto">
-          <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-            Avatar URL
-          </div>
-          <input
-            type="text"
-            className="bg-dark-2 rounded p-2 w-full no-ring font-light"
-            value={msg.avatar_url || ""}
-            onChange={(e) =>
-              dispatchMsg({ type: "setAvatarUrl", value: e.target.value })
-            }
-          />
-        </div>
-      </div>
-      <div>
-        <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-          Content
-        </div>
-        <textarea
-          className="bg-dark-2 rounded p-2 w-full no-ring font-light"
-          value={msg.content || ""}
-          onChange={(e) =>
-            dispatchMsg({ type: "setContent", value: e.target.value })
+        <StyledInput
+          label="Username"
+          type="text"
+          className="flex-auto"
+          maxLength={80}
+          value={msg.username || ""}
+          onChange={(value) => dispatchMsg({ type: "setUsername", value })}
+        />
+        <StyledInput
+          label="Avatar URL"
+          type="url"
+          className="flex-auto"
+          value={msg.avatar_url || ""}
+          onChange={(value) =>
+            dispatchMsg({ type: "setAvatarUrl", value: value })
           }
         />
       </div>
+      <StyledTextarea
+        label="Content"
+        value={msg.content || ""}
+        maxLength={2000}
+        onChange={(value) => dispatchMsg({ type: "setContent", value })}
+      />
       <div>
         <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
           Files
@@ -95,7 +82,7 @@ export default function Editor() {
           </>
         )}
       </div>
-      <div>
+      {/*<div>
         <div
           className="flex-auto cursor-pointer flex items-center space-x-2 text-gray-300 select-none mb-2"
           onClick={() => setComponentsCollapsed(!componentsCollapsed)}
@@ -114,18 +101,18 @@ export default function Editor() {
                 className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark"
                 onClick={() => dispatchMsg({ type: "addEmbed" })}
               >
-                Add Component
+                Add Button
               </button>
               <button
                 className="px-3 py-2 rounded border border-red hover:bg-red transition-colors"
                 onClick={() => dispatchMsg({ type: "clearEmbeds" })}
               >
-                Clear Components
+                Clear Buttons
               </button>
             </div>
           </>
         )}
-      </div>
+      </div>*/}
     </div>
   );
 }

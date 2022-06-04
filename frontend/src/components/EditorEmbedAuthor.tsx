@@ -2,6 +2,7 @@ import { ChevronRightIcon } from "@heroicons/react/outline";
 import { useState } from "react";
 import { Embed } from "../discord";
 import useMessage from "../hooks/useMessage";
+import StyledInput from "./StyledInput";
 
 interface Props {
   index: number;
@@ -27,58 +28,46 @@ export default function EditorEmbedAuthor({ index, embed }: Props) {
       </div>
       {!collapsed ? (
         <div className="space-y-4 mt-3">
-          <div>
-            <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-              Author
-            </div>
-            <input
-              type="text"
-              className="bg-dark-2 rounded p-2 w-full no-ring font-light"
-              value={embed.author?.name || ""}
-              onChange={(e) =>
+          <StyledInput
+            label="Author"
+            type="text"
+            value={embed.author?.name || ""}
+            maxLength={256}
+            onChange={(value) =>
+              dispatch({
+                type: "setEmbedAuthorName",
+                value,
+                index,
+              })
+            }
+          />
+          <div className="flex space-x-3">
+            <StyledInput
+              className="flex-auto"
+              label="Author URL"
+              type="url"
+              value={embed.author?.url || ""}
+              onChange={(value) =>
                 dispatch({
-                  type: "setEmbedAuthorName",
-                  value: e.target.value || undefined,
+                  type: "setEmbedAuthorUrl",
+                  value: value || undefined,
                   index,
                 })
               }
             />
-          </div>
-          <div className="flex space-x-3">
-            <div className="flex-auto">
-              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-                Author URL
-              </div>
-              <input
-                type="url"
-                className="bg-dark-2 rounded p-2 w-full no-ring font-light"
-                value={embed.author?.url || ""}
-                onChange={(e) =>
-                  dispatch({
-                    type: "setEmbedAuthorUrl",
-                    value: e.target.value || undefined,
-                    index,
-                  })
-                }
-              />
-            </div>
-            <div className="flex-auto">
-              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-                Author Icon URL
-              </div>
-              <input
-                type="url"
-                className="bg-dark-2 rounded p-2 w-full no-ring font-light"
-                value={embed.author?.icon_url || ""}
-                onChange={(e) =>
-                  dispatch({
-                    type: "setEmbedAuthorIconUrl",
-                    value: e.target.value || undefined,
-                    index,
-                  })
-                }
-              />
-            </div>
+            <StyledInput
+              className="flex-auto"
+              label="Author Icon URL"
+              type="url"
+              value={embed.author?.icon_url || ""}
+              onChange={(value) =>
+                dispatch({
+                  type: "setEmbedAuthorIconUrl",
+                  value: value || undefined,
+                  index,
+                })
+              }
+            />
           </div>
         </div>
       ) : undefined}

@@ -1,7 +1,9 @@
 import { ChevronRightIcon } from "@heroicons/react/outline";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Embed } from "../discord";
 import useMessage from "../hooks/useMessage";
+import StyledInput from "./StyledInput";
+import { parse, formatISO, parseISO, format } from "date-fns";
 
 interface Props {
   index: number;
@@ -11,6 +13,38 @@ interface Props {
 export default function EditorEmbedFooter({ index, embed }: Props) {
   const [collapsed, setCollapsed] = useState(true);
   const [, dispatch] = useMessage();
+
+  const [rawTimestamp, setRawTimestamp] = useState("");
+  const previousTimestamp = useRef("");
+
+  useEffect(() => {
+    if (rawTimestamp) {
+      const date = parse(rawTimestamp, "yyyy-MM-dd HH:mm", new Date());
+      if (!isNaN(date.getTime())) {
+        const value = formatISO(date);
+        if (value !== previousTimestamp.current) {
+          previousTimestamp.current = value;
+          dispatch({ type: "setEmbedTimestamp", index, value });
+        }
+      }
+    } else {
+      if (previousTimestamp.current !== "") {
+        previousTimestamp.current = "";
+        dispatch({ type: "setEmbedTimestamp", index, value: undefined });
+      }
+    }
+  }, [rawTimestamp]);
+
+  useEffect(() => {
+    if (embed.timestamp) {
+      const date = parseISO(embed.timestamp);
+      if (!isNaN(date.getTime())) {
+        setRawTimestamp(format(date, "yyyy-MM-dd HH:mm"));
+      }
+    } else {
+      setRawTimestamp("");
+    }
+  }, [embed.timestamp]);
 
   return (
     <div>
@@ -27,58 +61,41 @@ export default function EditorEmbedFooter({ index, embed }: Props) {
       </div>
       {!collapsed ? (
         <div className="space-y-4 mt-3">
-          <div>
-            <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-              Footer
-            </div>
-            <input
+          <StyledInput
+            label="Footer"
+            type="text"
+            value={embed.footer?.text || ""}
+            maxLength={2048}
+            onChange={(value) =>
+              dispatch({
+                type: "setEmbedFooterText",
+                value: value || undefined,
+                index,
+              })
+            }
+          />
+          <div className="flex space-x-3">
+            <StyledInput
+              className="flex-auto"
+              label="Timestamp"
               type="text"
-              className="bg-dark-2 rounded p-2 w-full no-ring font-light"
-              value={embed.footer?.text || ""}
-              onChange={(e) =>
+              value={rawTimestamp}
+              onChange={setRawTimestamp}
+              inputProps={{ placeholder: "YYYY-MM-DD hh:mm" }}
+            />
+            <StyledInput
+              className="flex-auto"
+              label="Footer Icon URL"
+              type="url"
+              value={embed.footer?.icon_url || ""}
+              onChange={(value) =>
                 dispatch({
-                  type: "setEmbedFooterText",
-                  value: e.target.value || undefined,
+                  type: "setEmbedFooterIconUrl",
+                  value: value || undefined,
                   index,
                 })
               }
             />
-          </div>
-          <div className="flex space-x-3">
-            <div className="flex-auto">
-              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-                Timestamp
-              </div>
-              <input
-                type="text"
-                className="bg-dark-2 rounded p-2 w-full no-ring font-light"
-                value={embed.timestamp || ""}
-                onChange={(e) =>
-                  dispatch({
-                    type: "setEmbedTimestamp",
-                    value: e.target.value || undefined,
-                    index,
-                  })
-                }
-              />
-            </div>
-            <div className="flex-auto">
-              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-                Footer Icon URL
-              </div>
-              <input
-                type="url"
-                className="bg-dark-2 rounded p-2 w-full no-ring font-light"
-                value={embed.footer?.icon_url || ""}
-                onChange={(e) =>
-                  dispatch({
-                    type: "setEmbedFooterIconUrl",
-                    value: e.target.value || undefined,
-                    index,
-                  })
-                }
-              />
-            </div>
           </div>
         </div>
       ) : undefined}

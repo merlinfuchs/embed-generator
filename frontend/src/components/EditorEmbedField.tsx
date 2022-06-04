@@ -1,4 +1,5 @@
 import {
+  CheckIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   ChevronUpIcon,
@@ -8,6 +9,8 @@ import {
 import { useState } from "react";
 import { Embed, EmbedField } from "../discord";
 import useMessage from "../hooks/useMessage";
+import StyledInput from "./StyledInput";
+import StyledTextarea from "./StyledTextarea";
 
 interface Props {
   field: EmbedField;
@@ -76,41 +79,54 @@ export default function EditorEmbedField({
         </div>
         {!collapsed ? (
           <div className="space-y-4 pb-3">
-            <div>
-              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-                Name
-              </div>
-              <input
+            <div className="flex space-x-3">
+              <StyledInput
+                className="flex-auto"
+                label="Name"
                 type="text"
-                className="bg-dark-2 rounded p-2 w-full no-ring font-light"
                 value={field.name}
-                onChange={(e) =>
+                maxLength={256}
+                onChange={(value) =>
                   dispatch({
                     type: "setEmbedFieldName",
-                    value: e.target.value,
+                    value: value,
                     index,
                     embedIndex,
                   })
                 }
               />
-            </div>
-            <div>
-              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-                Description
+              <div className="flex-none">
+                <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+                  Inline
+                </div>
+                <div
+                  className="bg-dark-2 w-10 h-10 rounded cursor-pointer flex items-center justify-center"
+                  onClick={() =>
+                    dispatch({
+                      type: "setEmbedFieldInline",
+                      index,
+                      embedIndex,
+                      value: !field.inline,
+                    })
+                  }
+                >
+                  {!!field.inline && <CheckIcon className="w-8 h-8" />}
+                </div>
               </div>
-              <textarea
-                className="bg-dark-2 rounded p-2 w-full no-ring font-light"
-                value={field.value}
-                onChange={(e) =>
-                  dispatch({
-                    type: "setEmbedFieldValue",
-                    value: e.target.value,
-                    index,
-                    embedIndex,
-                  })
-                }
-              />
             </div>
+            <StyledTextarea
+              label="Description"
+              value={field.value}
+              maxLength={1024}
+              onChange={(value) =>
+                dispatch({
+                  type: "setEmbedFieldValue",
+                  value,
+                  index,
+                  embedIndex,
+                })
+              }
+            />
           </div>
         ) : undefined}
       </div>

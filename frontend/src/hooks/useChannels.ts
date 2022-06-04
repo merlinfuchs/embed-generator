@@ -3,7 +3,7 @@ import { ChannelWire } from "../api/wire";
 import useAPIClient from "./useApiClient";
 import useSelectedGuild from "./useSelectedGuild";
 
-const channelTypes = new Set([0]);
+const channelTypes = new Set([0, 5, 10, 11, 12]);
 
 export default function useChannels() {
   const [channels, setChannels] = useState<ChannelWire[] | null>(null);

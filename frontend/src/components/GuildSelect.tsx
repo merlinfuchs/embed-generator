@@ -36,7 +36,7 @@ export default function GuildSelect({ value, onChange }: Props) {
     <Listbox value={value} onChange={onChange}>
       {({ open }) => (
         <div className="mt-1 relative">
-          <Listbox.Button className="relative w-full bg-dark-2 rounded shadow-sm pl-3 pr-10 py-2 text-left text-sm no-ring cursor-pointer">
+          <Listbox.Button className="relative w-full bg-dark-2 rounded shadow-sm pl-3 pr-10 py-2 text-left no-ring cursor-pointer">
             {selectedGuild ? (
               <span className="flex items-center">
                 {selectedGuild.icon ? (

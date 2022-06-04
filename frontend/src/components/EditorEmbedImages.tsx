@@ -2,6 +2,7 @@ import { ChevronRightIcon } from "@heroicons/react/outline";
 import { useState } from "react";
 import { Embed } from "../discord";
 import useMessage from "../hooks/useMessage";
+import StyledInput from "./StyledInput";
 
 interface Props {
   index: number;
@@ -27,40 +28,30 @@ export default function EditorEmbedImages({ index, embed }: Props) {
       </div>
       {!collapsed ? (
         <div className="space-y-4 mt-3">
-          <div>
-            <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-              Image URL
-            </div>
-            <input
-              type="url"
-              className="bg-dark-2 rounded p-2 w-full no-ring font-light"
-              value={embed.image?.url || ""}
-              onChange={(e) =>
-                dispatch({
-                  type: "setEmbedImageUrl",
-                  value: e.target.value || undefined,
-                  index,
-                })
-              }
-            />
-          </div>
-          <div>
-            <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-              Thumbnail URL
-            </div>
-            <input
-              type="url"
-              className="bg-dark-2 rounded p-2 w-full no-ring font-light"
-              value={embed.thumbnail?.url || ""}
-              onChange={(e) =>
-                dispatch({
-                  type: "setEmbedThumbnailUrl",
-                  value: e.target.value || undefined,
-                  index,
-                })
-              }
-            />
-          </div>
+          <StyledInput
+            label="Image URL"
+            type="url"
+            value={embed.image?.url || ""}
+            onChange={(value) =>
+              dispatch({
+                type: "setEmbedImageUrl",
+                value: value || undefined,
+                index,
+              })
+            }
+          />
+          <StyledInput
+            label="Thumbnail URL"
+            type="url"
+            value={embed.thumbnail?.url || ""}
+            onChange={(value) =>
+              dispatch({
+                type: "setEmbedThumbnailUrl",
+                value: value || undefined,
+                index,
+              })
+            }
+          />
         </div>
       ) : undefined}
     </div>

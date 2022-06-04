@@ -15,9 +15,11 @@ use twilight_model::gateway::event::Event;
 use twilight_model::gateway::Intents;
 
 use crate::bot::commands::{command_definitions, handle_interaction};
+use crate::bot::webhooks::delete_webhooks_for_guild;
 use crate::config::CONFIG;
 
 mod commands;
+pub mod webhooks;
 
 lazy_static! {
     pub static ref DISCORD_CACHE: InMemoryCache = InMemoryCache::builder()
@@ -92,8 +94,9 @@ pub async fn run_bot() -> Result<(), Box<dyn Error>> {
                 if let Err(e) = handle_interaction(i.0).await {
                     error!("Handling interaction failed: {:?}", e)
                 }
-            },
-            Event::MessageDelete(msg) => {} // TODO: delete from last message store
+            }
+            Event::MessageDelete(_) => {} // TODO: delete from last message store
+            Event::WebhooksUpdate(w) => delete_webhooks_for_guild(w.guild_id),
             _ => {}
         }
     }

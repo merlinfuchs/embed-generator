@@ -1,5 +1,6 @@
 import useMessage from "../hooks/useMessage";
 import "./Preview.css";
+import { format, parseISO } from "date-fns";
 
 export default function Preview() {
   const [msg] = useMessage();
@@ -32,6 +33,13 @@ export default function Preview() {
                   const hexColor = embed.color
                     ? "#" + embed.color.toString(16)
                     : "#1f2225";
+                  let timestamp = "";
+                  if (embed.timestamp) {
+                    const date = parseISO(embed.timestamp);
+                    if (!isNaN(date.getTime())) {
+                      timestamp = format(date, "dd/MM/yyyy");
+                    }
+                  }
                   return (
                     <div key={embed.id} className="discord-embed">
                       <div
@@ -125,7 +133,7 @@ export default function Preview() {
                                     •
                                   </span>
                                 )}
-                                {embed.timestamp}
+                                {timestamp}
                               </div>
                             )}
                           </div>

@@ -3,6 +3,8 @@ import { useState } from "react";
 import { Embed } from "../discord";
 import useMessage from "../hooks/useMessage";
 import ColorPicker from "./ColorPicker";
+import StyledInput from "./StyledInput";
+import StyledTextarea from "./StyledTextarea";
 
 interface Props {
   index: number;
@@ -28,57 +30,45 @@ export default function EditorEmbedBody({ index, embed }: Props) {
       </div>
       {!collapsed ? (
         <div className="space-y-4 mt-3">
-          <div>
-            <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-              Title
-            </div>
-            <input
-              type="text"
-              className="bg-dark-2 rounded p-2 w-full no-ring font-light"
-              value={embed.title || ""}
-              onChange={(e) =>
-                dispatch({
-                  type: "setEmbedTitle",
-                  value: e.target.value || undefined,
-                  index,
-                })
-              }
-            />
-          </div>
-          <div>
-            <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-              Description
-            </div>
-            <textarea
-              className="bg-dark-2 rounded p-2 w-full no-ring font-light"
-              value={embed.description || ""}
-              onChange={(e) =>
-                dispatch({
-                  type: "setEmbedDescription",
-                  value: e.target.value || undefined,
-                  index,
-                })
-              }
-            />
-          </div>
+          <StyledInput
+            label="Title"
+            type="text"
+            value={embed.title || ""}
+            maxLength={256}
+            onChange={(value) =>
+              dispatch({
+                type: "setEmbedTitle",
+                value: value || undefined,
+                index,
+              })
+            }
+          />
+          <StyledTextarea
+            label="Description"
+            value={embed.description || ""}
+            maxLength={4096}
+            onChange={(value) =>
+              dispatch({
+                type: "setEmbedDescription",
+                value,
+                index,
+              })
+            }
+          />
           <div className="flex space-x-3">
-            <div className="flex-auto">
-              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-                URL
-              </div>
-              <input
-                type="text"
-                className="bg-dark-2 rounded p-2 w-full no-ring font-light"
-                value={embed.url || ""}
-                onChange={(e) =>
-                  dispatch({
-                    type: "setEmbedUrl",
-                    value: e.target.value || undefined,
-                    index,
-                  })
-                }
-              />
-            </div>
+            <StyledInput
+              className="flex-auto"
+              label="URL"
+              type="url"
+              value={embed.url || ""}
+              onChange={(value) =>
+                dispatch({
+                  type: "setEmbedUrl",
+                  value: value || undefined,
+                  index,
+                })
+              }
+            />
             <div className="flex-auto">
               <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
                 Color

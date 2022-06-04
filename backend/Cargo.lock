@@ -684,6 +684,7 @@ dependencies = [
  "actix-web",
  "awc",
  "config",
+ "dashmap",
  "deadpool-redis",
  "env_logger",
  "futures-util",

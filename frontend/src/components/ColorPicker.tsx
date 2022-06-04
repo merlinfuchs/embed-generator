@@ -10,13 +10,15 @@ interface Props {
 export default function ColorPicker({ value, onChange }: Props) {
   const [show, setShow] = useState(false);
 
-  const [hexColor, setHexColor] = useState("");
+  function setHexColor(newColor: string) {
+    let raw = newColor.trim();
+    while (raw.startsWith("#")) {
+      raw = raw.substring(1);
+    }
 
-  useEffect(() => {
-    const raw = hexColor.trim();
     if (raw) {
-      const value = parseInt(raw.substring(1), 16);
-      if (value || value === 0) {
+      const value = parseInt(raw, 16);
+      if (value !== NaN) {
         onChange(value);
       } else {
         onChange(undefined);
@@ -24,13 +26,17 @@ export default function ColorPicker({ value, onChange }: Props) {
     } else {
       onChange(undefined);
     }
-  }, [hexColor]);
+  }
 
-  useEffect(() => {
+  const hexColor = useMemo(() => {
     if (value || value === 0) {
-      setHexColor("#" + value.toString(16));
+      return value.toString(16);
+    } else {
+      return "";
     }
   }, [value]);
+
+  const displayColor = hexColor ? "#" + hexColor : "#1f2225";
 
   return (
     <div className="flex space-x-2">
@@ -43,7 +49,7 @@ export default function ColorPicker({ value, onChange }: Props) {
           className="bg-dark-2 rounded-r p-2 w-full no-ring font-light"
           value={hexColor}
           onChange={(e) => setHexColor(e.target.value)}
-          placeholder="#rrggbb"
+          placeholder="rrggbb"
         />
       </div>
       <ClickOutsideHandler
@@ -52,13 +58,13 @@ export default function ColorPicker({ value, onChange }: Props) {
       >
         <div
           className="w-12 h-full rounded cursor-pointer relative bg-dark-5"
-          style={{ backgroundColor: hexColor }}
+          style={{ backgroundColor: displayColor }}
           role="button"
           onClick={() => setShow(!show)}
         />
         {show && (
           <div className="absolute bottom-14 right-0">
-            <HexColorPicker color={hexColor} onChange={setHexColor} />
+            <HexColorPicker color={"#" + hexColor} onChange={setHexColor} />
           </div>
         )}
       </ClickOutsideHandler>
