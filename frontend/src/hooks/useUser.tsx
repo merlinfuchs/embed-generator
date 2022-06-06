@@ -15,7 +15,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const client = useAPIClient();
   useEffect(() => {
-    if (client) {
+    if (client.token) {
       client.getUser().then((resp) => {
         if (resp.success) {
           setUser(resp.data);

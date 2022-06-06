@@ -20,7 +20,7 @@ pub async fn route_message_update(
         user_id: token.user_id,
         name: req.name,
         description: req.description,
-        data: req.data,
+        payload_json: req.payload_json,
     };
     let result = model.update().await?;
     if result.matched_count == 0 {

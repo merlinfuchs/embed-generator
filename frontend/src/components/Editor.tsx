@@ -1,12 +1,15 @@
 import { ChevronRightIcon } from "@heroicons/react/outline";
 import { useState } from "react";
 import useMessage from "../hooks/useMessage";
+import useToken from "../hooks/useToken";
+import EditorButton from "./EditorButton";
 import EditorEmbed from "./EditorEmbed";
 import StyledInput from "./StyledInput";
 import StyledTextarea from "./StyledTextarea";
 
 export default function Editor() {
   const [msg, dispatchMsg] = useMessage();
+  const [token] = useToken();
 
   const [embedsCollapsed, setEmbedsCollapsed] = useState(false);
   const [componentsCollapsed, setComponentsCollapsed] = useState(false);
@@ -66,12 +69,21 @@ export default function Editor() {
               <EditorEmbed index={i} embed={embed} key={embed.id} />
             ))}
             <div className="space-x-3 mt-3">
-              <button
-                className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark"
-                onClick={() => dispatchMsg({ type: "addEmbed" })}
-              >
-                Add Embed
-              </button>
+              {msg.embeds.length < 10 ? (
+                <button
+                  className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark"
+                  onClick={() => dispatchMsg({ type: "addEmbed" })}
+                >
+                  Add Embed
+                </button>
+              ) : (
+                <button
+                  disabled
+                  className="bg-dark-3 px-3 py-2 rounded transition-colors cursor-not-allowed text-gray-300"
+                >
+                  Add Embed
+                </button>
+              )}
               <button
                 className="px-3 py-2 rounded border border-red hover:bg-red transition-colors"
                 onClick={() => dispatchMsg({ type: "clearEmbeds" })}
@@ -82,37 +94,53 @@ export default function Editor() {
           </>
         )}
       </div>
-      {/*<div>
-        <div
-          className="flex-auto cursor-pointer flex items-center space-x-2 text-gray-300 select-none mb-2"
-          onClick={() => setComponentsCollapsed(!componentsCollapsed)}
-        >
-          <ChevronRightIcon
-            className={`h-5 w-5 transition-transform duration-300 ${
-              componentsCollapsed ? "" : "rotate-90"
-            }`}
-          />
-          <div className="text-lg font-medium">Components</div>
+      {!!token && (
+        <div>
+          <div
+            className="flex-auto cursor-pointer flex items-center space-x-2 text-gray-300 select-none mb-2"
+            onClick={() => setComponentsCollapsed(!componentsCollapsed)}
+          >
+            <ChevronRightIcon
+              className={`h-5 w-5 transition-transform duration-300 ${
+                componentsCollapsed ? "" : "rotate-90"
+              }`}
+            />
+            <div className="text-lg font-medium">Buttons</div>
+          </div>
+          {!componentsCollapsed && (
+            <>
+              {msg.components.flatMap((comp, i) =>
+                comp.components.map((button, i) => (
+                  <EditorButton index={i} button={button} key={button.id} />
+                ))
+              )}
+              <div className="space-x-3 mt-3">
+                {(msg.components[0]?.components?.length || 0) < 5 ? (
+                  <button
+                    className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark"
+                    onClick={() => dispatchMsg({ type: "addButton" })}
+                  >
+                    Add Button
+                  </button>
+                ) : (
+                  <button
+                    disabled
+                    className="bg-dark-3 px-3 py-2 rounded transition-colors cursor-not-allowed text-gray-300"
+                  >
+                    Add Button
+                  </button>
+                )}
+                <button
+                  className="px-3 py-2 rounded border border-red hover:bg-red transition-colors"
+                  onClick={() => dispatchMsg({ type: "clearButtons" })}
+                >
+                  Clear Buttons
+                </button>
+              </div>
+            </>
+          )}
         </div>
-        {!componentsCollapsed && (
-          <>
-            <div className="space-x-3 mt-3">
-              <button
-                className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark"
-                onClick={() => dispatchMsg({ type: "addEmbed" })}
-              >
-                Add Button
-              </button>
-              <button
-                className="px-3 py-2 rounded border border-red hover:bg-red transition-colors"
-                onClick={() => dispatchMsg({ type: "clearEmbeds" })}
-              >
-                Clear Buttons
-              </button>
-            </div>
-          </>
-        )}
-      </div>*/}
+      )}
     </div>
   );
 }

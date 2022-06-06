@@ -1,12 +1,19 @@
+use twilight_cache_inmemory::model::CachedEmoji;
 use twilight_http::client::InteractionClient;
-use twilight_model::application::command::{Command, CommandType};
-use twilight_model::application::interaction::{ApplicationCommand, ApplicationCommandAutocomplete};
+use twilight_model::application::command::{Command, CommandOptionChoice, CommandType};
+use twilight_model::application::interaction::application_command::CommandOptionValue;
+use twilight_model::application::interaction::{
+    ApplicationCommand, ApplicationCommandAutocomplete,
+};
+use twilight_model::http::interaction::{
+    InteractionResponse, InteractionResponseData, InteractionResponseType,
+};
 use twilight_util::builder::command::{
-    ChannelBuilder, CommandBuilder, MentionableBuilder, RoleBuilder, StringBuilder,
-    SubCommandBuilder,
+    ChannelBuilder, CommandBuilder, RoleBuilder, StringBuilder, SubCommandBuilder, UserBuilder,
 };
 
-use crate::bot::commands::InteractionResult;
+use crate::bot::commands::{simple_response, InteractionResult};
+use crate::bot::DISCORD_CACHE;
 
 pub fn command_definition() -> Command {
     CommandBuilder::new(
@@ -14,7 +21,7 @@ pub fn command_definition() -> Command {
         "Get the API format for mentions, channels, roles, & custom emojis".into(),
         CommandType::ChatInput,
     )
-    .option(
+    /* .option(
         SubCommandBuilder::new(
             "text".into(),
             "Get the API format for a text with multiple mentions, channels, & custom emojis"
@@ -28,18 +35,15 @@ pub fn command_definition() -> Command {
             )
             .required(true),
         ),
-    )
+    ) */
     .option(
         SubCommandBuilder::new(
-            "mention".into(),
+            "user".into(),
             "Get the API format for mentioning a user".into(),
         )
         .option(
-            MentionableBuilder::new(
-                "target".into(),
-                "The user or role you want to mention".into(),
-            )
-            .required(true),
+            UserBuilder::new("user".into(), "The user or role you want to mention".into())
+                .required(true),
         ),
     )
     .option(
@@ -76,12 +80,134 @@ pub fn command_definition() -> Command {
 }
 
 pub async fn handle_command(
-    _: InteractionClient<'_>,
-    _: Box<ApplicationCommand>,
+    http: InteractionClient<'_>,
+    cmd: Box<ApplicationCommand>,
 ) -> InteractionResult {
+    let sub_cmd = cmd.data.options.get(0).unwrap();
+    let mut options = match &sub_cmd.value {
+        CommandOptionValue::SubCommand(options) => options.clone(),
+        _ => unreachable!(),
+    };
+
+    match sub_cmd.name.as_str() {
+        "user" => {
+            let user_id = match options.pop().unwrap().value {
+                CommandOptionValue::User(u) => u,
+                _ => unreachable!(),
+            };
+
+            simple_response(
+                &http,
+                cmd.id,
+                &cmd.token,
+                format!("API format for <@{0}>: ```<@{0}>```", user_id),
+            )
+            .await?;
+        }
+        "role" => {
+            let role_id = match options.pop().unwrap().value {
+                CommandOptionValue::Role(r) => r,
+                _ => unreachable!(),
+            };
+
+            simple_response(
+                &http,
+                cmd.id,
+                &cmd.token,
+                format!("API format for <@&{0}>: ```<@&{0}>```", role_id),
+            )
+            .await?;
+        }
+        "channel" => {
+            let channel_id = match options.pop().unwrap().value {
+                CommandOptionValue::Channel(c) => c,
+                _ => unreachable!(),
+            };
+
+            simple_response(
+                &http,
+                cmd.id,
+                &cmd.token,
+                format!("API format for <#{0}>: ```<#{0}>```", channel_id),
+            )
+            .await?;
+        }
+        "emoji" => {
+            let emoji_format = match options.pop().unwrap().value {
+                CommandOptionValue::String(e) => e,
+                _ => unreachable!(),
+            };
+
+            simple_response(
+                &http,
+                cmd.id,
+                &cmd.token,
+                format!("API format for {0}: ```{0}```", emoji_format),
+            )
+            .await?;
+        }
+        _ => {}
+    }
     Ok(())
 }
 
-pub async fn handle_autocomplete(_: InteractionClient<'_>, _: Box<ApplicationCommandAutocomplete>) -> InteractionResult {
+pub async fn handle_autocomplete(
+    http: InteractionClient<'_>,
+    cmd: Box<ApplicationCommandAutocomplete>,
+) -> InteractionResult {
+    let sub_cmd = cmd.data.options.get(0).unwrap();
+    let search = match &sub_cmd.options.get(0).unwrap().value {
+        Some(e) => e,
+        _ => unreachable!(),
+    };
+
+    let emojis: Vec<CachedEmoji> = if let Some(guild_id) = cmd.guild_id {
+        DISCORD_CACHE
+            .guild_emojis(guild_id)
+            .map(|e| {
+                e.value()
+                    .iter()
+                    .filter_map(|eid| {
+                        DISCORD_CACHE
+                            .emoji(*eid)
+                            .map(|e| e.value().resource().clone())
+                    })
+                    .collect()
+            })
+            .unwrap_or_default()
+    } else {
+        vec![]
+    };
+
+    let mut choices: Vec<CommandOptionChoice> = emojis
+        .into_iter()
+        .filter(|e| e.name().contains(search))
+        .map(|e| CommandOptionChoice::String {
+            name: e.name().to_string(),
+            name_localizations: None,
+            value: format!(
+                "<{}:{}:{}>",
+                if e.animated() { "a" } else { "" },
+                e.name(),
+                e.id()
+            ),
+        })
+        .collect();
+
+    choices.truncate(25);
+    http.create_response(
+        cmd.id,
+        &cmd.token,
+        &InteractionResponse {
+            kind: InteractionResponseType::ApplicationCommandAutocompleteResult,
+            data: Some(InteractionResponseData {
+                choices: Some(choices),
+                ..Default::default()
+            }),
+        },
+    )
+    .exec()
+    .await?;
+
     Ok(())
 }

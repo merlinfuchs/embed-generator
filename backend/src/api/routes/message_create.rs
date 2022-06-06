@@ -21,7 +21,7 @@ pub async fn route_message_create(
         user_id: token.user_id,
         name: req.name,
         description: req.description,
-        data: req.data,
+        payload_json: req.payload_json,
     };
     model.create().await?;
 

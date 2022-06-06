@@ -4,10 +4,12 @@ use serde::{Deserialize, Serialize};
 use twilight_http::client::InteractionClient;
 use twilight_http::error::ErrorType;
 use twilight_model::application::command::{Command, CommandType};
+use twilight_model::application::component::Component;
 use twilight_model::application::interaction::application_command::{
     CommandDataOption, CommandOptionValue,
 };
 use twilight_model::application::interaction::ApplicationCommand;
+use twilight_model::channel::embed::Embed;
 use twilight_model::channel::Message;
 use twilight_model::id::marker::{ChannelMarker, MessageMarker};
 use twilight_model::id::Id;
@@ -29,7 +31,7 @@ pub fn command_definition() -> Command {
         "Get JSON for or restore a message on Embed Generator".into(),
         CommandType::ChatInput,
     )
-    .option(
+    /* .option(
         SubCommandBuilder::new("restore".into(), "Restore a message on Embed Generator".into())
             .option(
                 StringBuilder::new(
@@ -38,7 +40,7 @@ pub fn command_definition() -> Command {
                 )
                 .required(true),
             ),
-    )
+    ) */
     .option(
         SubCommandBuilder::new("dump".into(), "Get the JSON code for a message".into()).option(
             StringBuilder::new(
@@ -157,6 +159,17 @@ async fn handle_command_restore(
     Ok(())
 }
 
+#[derive(Serialize)]
+pub struct MessageDump {
+    pub id: Id<MessageMarker>,
+    pub channel_id: Id<ChannelMarker>,
+    pub username: String,
+    pub avatar_url: Option<String>,
+    pub content: String,
+    pub components: Vec<Component>,
+    pub embeds: Vec<Embed>,
+}
+
 async fn handle_command_dump(
     http: InteractionClient<'_>,
     cmd: Box<ApplicationCommand>,
@@ -169,7 +182,20 @@ async fn handle_command_dump(
 
     let msg = get_message_from_id_or_url(&http, &cmd, &message_id_or_url).await?;
 
-    let msg_json = serde_json::to_string_pretty(&msg)?;
+    let msg_json = serde_json::to_string_pretty(&MessageDump {
+        id: msg.id,
+        channel_id: msg.channel_id,
+        username: msg.author.name,
+        avatar_url: msg.author.avatar.map(|a| {
+            format!(
+                "https://cdn.discordapp.com/avatars/{}/{}.webp",
+                msg.author.id, a
+            )
+        }),
+        content: msg.content,
+        embeds: msg.embeds,
+        components: msg.components,
+    })?;
 
     let client = awc::ClientBuilder::new().finish();
 

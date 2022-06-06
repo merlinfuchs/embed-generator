@@ -9,25 +9,31 @@ import { SelectedModeProvider } from "./hooks/useSelectedMode";
 import { MessageProvider } from "./hooks/useMessage";
 import { GuildsProvider } from "./hooks/useGuilds";
 import { SelectedGuildProvider } from "./hooks/useSelectedGuild";
+import { MessagesProvider } from "./hooks/useMessages";
+import { AlertsProvider } from "./hooks/useAlerts";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <TokenProvider>
-      <UserProvider>
-        <GuildsProvider>
-          <SelectedGuildProvider>
-            <SelectedModeProvider>
-              <MessageProvider>
-                <App />
-              </MessageProvider>
-            </SelectedModeProvider>
-          </SelectedGuildProvider>
-        </GuildsProvider>
-      </UserProvider>
-    </TokenProvider>
+    <AlertsProvider>
+      <TokenProvider>
+        <UserProvider>
+          <MessagesProvider>
+            <GuildsProvider>
+              <SelectedGuildProvider>
+                <SelectedModeProvider>
+                  <MessageProvider>
+                    <App />
+                  </MessageProvider>
+                </SelectedModeProvider>
+              </SelectedGuildProvider>
+            </GuildsProvider>
+          </MessagesProvider>
+        </UserProvider>
+      </TokenProvider>
+    </AlertsProvider>
   </React.StrictMode>
 );
 

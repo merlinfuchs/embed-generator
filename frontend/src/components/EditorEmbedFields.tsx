@@ -38,12 +38,21 @@ export default function EditorEmbedFields({ index, embed }: Props) {
             />
           ))}
           <div className="space-x-3 mt-3">
-            <button
-              className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark"
-              onClick={() => dispatch({ type: "addEmbedField", index })}
-            >
-              Add Field
-            </button>
+            {embed.fields.length < 25 ? (
+              <button
+                className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark"
+                onClick={() => dispatch({ type: "addEmbedField", index })}
+              >
+                Add Field
+              </button>
+            ) : (
+              <button
+                disabled
+                className="bg-dark-2 px-3 py-2 rounded transition-colors cursor-not-allowed text-gray-400"
+              >
+                Add Field
+              </button>
+            )}
             <button
               className="px-3 py-2 rounded border border-red hover:bg-red transition-colors"
               onClick={() => dispatch({ type: "clearEmbedFields", index })}

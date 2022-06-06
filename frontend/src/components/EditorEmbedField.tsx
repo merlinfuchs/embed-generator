@@ -33,7 +33,7 @@ export default function EditorEmbedField({
       <div className="border border-dark-6 px-3 md:px-4 rounded-md mb-3">
         <div className="flex items-center py-3 overflow-hidden">
           <div
-            className="text-medium flex-auto cursor-pointer flex items-center space-x-2 select-none"
+            className="text-medium flex-auto cursor-pointer flex items-center space-x-2 select-none overflow-hidden"
             onClick={() => setCollapsed(!collapsed)}
           >
             <ChevronRightIcon

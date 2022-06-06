@@ -1,8 +1,8 @@
 use redis::cmd;
-use twilight_model::id::Id;
 use twilight_model::id::marker::{GuildMarker, UserMarker};
+use twilight_model::id::Id;
 
-use crate::db::{REDIS, RedisPoolError};
+use crate::db::{RedisPoolError, REDIS};
 
 pub struct GuildsWithAccessModel {
     pub user_id: Id<UserMarker>,
@@ -14,6 +14,8 @@ impl GuildsWithAccessModel {
         let mut con = REDIS.get().await?;
 
         let mut args = vec![format!("users:{}:guilds", self.user_id)];
+        cmd("DEL").arg(&args).query_async::<_, ()>(&mut con).await?;
+
         for guild_id in &self.guild_ids {
             args.push(guild_id.to_string());
         }
@@ -49,7 +51,10 @@ impl GuildsWithAccessModel {
 
         Ok(Self {
             user_id,
-            guild_ids: members.into_iter().filter_map(|gid| gid.parse().ok()).collect()
+            guild_ids: members
+                .into_iter()
+                .filter_map(|gid| gid.parse().ok())
+                .collect(),
         })
     }
 }

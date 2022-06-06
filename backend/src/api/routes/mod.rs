@@ -12,9 +12,12 @@ pub use links::route_link_source;
 pub use message_create::route_message_create;
 pub use message_delete::route_message_delete;
 pub use message_update::route_message_update;
+pub use message_get::route_message_get;
+pub use message_list::route_message_list;
 #[cfg(feature = "frontend")]
 pub use serve_frontend::route_serve_frontend;
 pub use user_get_me::route_user_get_me;
+pub use message_send::route_message_send;
 
 mod auth_exchange;
 mod auth_redirect;

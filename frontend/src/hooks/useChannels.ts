@@ -11,7 +11,7 @@ export default function useChannels() {
 
   const client = useAPIClient();
   useEffect(() => {
-    if (client && selectedGuild) {
+    if (client.token && selectedGuild) {
       client.getGuildChannels(selectedGuild).then((resp) => {
         if (resp.success) {
           setChannels(resp.data.filter((c) => channelTypes.has(c.type)));

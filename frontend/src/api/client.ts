@@ -1,4 +1,11 @@
-import { ChannelWire, GuildWire, UserWire } from "./wire";
+import {
+  ChannelWire,
+  GuildWire,
+  MessageSendRequestWire,
+  MessageSendResponseWire,
+  MessageWire,
+  UserWire,
+} from "./wire";
 
 type ApiResponse<T> =
   | {
@@ -7,14 +14,17 @@ type ApiResponse<T> =
     }
   | {
       success: false;
-      error: { code: string };
+      error: { code: string; details: string | null };
     };
 
 export default class APIClient {
-  token: string;
+  token: string | null;
   setToken: (newToken: string | null) => void;
 
-  constructor(token: string, setToken: (newToken: string | null) => void) {
+  constructor(
+    token: string | null,
+    setToken: (newToken: string | null) => void
+  ) {
     this.token = token;
     this.setToken = setToken;
   }
@@ -24,13 +34,18 @@ export default class APIClient {
     path: string,
     data?: any
   ): Promise<ApiResponse<T>> {
+    const headers: any = {};
+    if (this.token) {
+      headers["Authorization"] = this.token;
+    }
+    if (data) {
+      headers["Content-Type"] = "application/json";
+    }
+
     const resp = await fetch(`/api${path}`, {
       method,
       body: data ? JSON.stringify(data) : undefined,
-      headers: {
-        Authorization: this.token,
-        "Content-Type": "application/json",
-      },
+      headers,
     });
     if (resp.status === 401) {
       this.setToken(null);
@@ -52,5 +67,15 @@ export default class APIClient {
 
   getGuildChannels(guildId: string): Promise<ApiResponse<ChannelWire[]>> {
     return this.apiRequest("GET", `/guilds/${guildId}/channels`);
+  }
+
+  getMessages(): Promise<ApiResponse<MessageWire[]>> {
+    return this.apiRequest("GET", "/messages");
+  }
+
+  sendMessage(
+    req: MessageSendRequestWire
+  ): Promise<ApiResponse<MessageSendResponseWire>> {
+    return this.apiRequest("POST", "/messages/send", req);
   }
 }

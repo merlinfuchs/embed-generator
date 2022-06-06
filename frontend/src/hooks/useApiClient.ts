@@ -5,10 +5,6 @@ import useToken from "./useToken";
 export default function useAPIClient() {
   const [token, setToken] = useToken();
   return useMemo(() => {
-    if (token) {
-      return new APIClient(token, setToken);
-    } else {
-      return null;
-    }
+    return new APIClient(token, setToken);
   }, [token, setToken]);
 }

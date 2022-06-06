@@ -11,7 +11,7 @@ use crate::bot::DISCORD_CACHE;
 pub async fn route_guild_emoji_list(
     guild_id: ReqData<Id<GuildMarker>>,
 ) -> RouteResult<Vec<GuildEmojiWire>> {
-    let stickers: Vec<GuildEmojiWire> = DISCORD_CACHE
+    let emojis: Vec<GuildEmojiWire> = DISCORD_CACHE
         .guild_emojis(guild_id.into_inner())
         .map(|e| {
             e.value()
@@ -25,5 +25,5 @@ pub async fn route_guild_emoji_list(
         })
         .unwrap_or_default();
 
-    Ok(Json(stickers.into()))
+    Ok(Json(emojis.into()))
 }

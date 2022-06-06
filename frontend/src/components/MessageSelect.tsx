@@ -1,46 +1,43 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon, SelectorIcon } from "@heroicons/react/solid";
-import useChannels from "../hooks/useChannels";
+import useMessages from "../hooks/useMessages";
 
 function classNames(...classes: any) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function MessageSelect() {
-  const channels = useChannels();
+interface Props {
+  value: string | null;
+  onChange: (newValue: string | null) => void;
+}
 
-  const [value, onChange] = useState<string | null>(null);
+export default function MessageSelect({ value, onChange }: Props) {
+  const messages = useMessages();
 
-  const selectedChannel = useMemo(
-    () => channels?.find((c) => c.id === value),
-    [value, channels]
+  const selectedMessage = useMemo(
+    () => messages?.find((c) => c.id === value),
+    [value, messages]
   );
-
-  useEffect(() => {
-    if (channels && channels.length && !value) {
-      onChange(channels[0].id);
-    }
-  }, [channels, value]);
 
   return (
     <Listbox value={value} onChange={onChange}>
       {({ open }) => (
         <div className="relative">
           <Listbox.Button className="relative w-full bg-dark-2 rounded shadow-sm pl-3 pr-10 py-2 text-left text-sm no-ring cursor-pointer w-40 xs:w-48">
-            {selectedChannel ? (
+            {selectedMessage ? (
               <span className="flex items-center">
                 <div className="rounded-full flex items-center justify-center text-lg py-0 h-6 text-dark-7">
                   #
                 </div>
                 <span className="ml-3 block truncate">
-                  {selectedChannel.name}
+                  {selectedMessage.name}
                 </span>
               </span>
             ) : (
               <span className="flex items-center">
                 <span className="block truncate text-gray-300">
-                  Select a channel
+                  Select a message
                 </span>
               </span>
             )}
@@ -60,16 +57,16 @@ export default function MessageSelect() {
             leaveTo="opacity-0"
           >
             <Listbox.Options className="absolute z-10 mt-1 w-full bg-dark-2 shadow-lg max-h-56 rounded-md py-1 text-base overflow-auto no-ring sm:text-sm">
-              {(channels || []).map((channel) => (
+              {(messages || []).map((msg) => (
                 <Listbox.Option
-                  key={channel.id}
+                  key={msg.id}
                   className={({ active }) =>
                     classNames(
                       active ? "text-white bg-blurple" : "text-gray-300",
                       "cursor-pointer select-none relative py-2 pl-3 pr-9"
                     )
                   }
-                  value={channel.id}
+                  value={msg.id}
                 >
                   {({ selected, active }) => (
                     <>
@@ -83,7 +80,7 @@ export default function MessageSelect() {
                             "ml-3 block truncate"
                           )}
                         >
-                          {channel.name}
+                          {msg.name}
                         </span>
                       </div>
 

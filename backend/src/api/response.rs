@@ -8,6 +8,7 @@ use awc::error::{JsonPayloadError, SendRequestError};
 use log::error;
 use mongodb::error::Error as MongoError;
 use serde::Serialize;
+use twilight_http::Error;
 
 use crate::db::RedisPoolError;
 
@@ -19,7 +20,7 @@ pub struct RouteResponse<T: Serialize> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<T>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub error: Option<RouteError>,
+    pub error: Option<ErrorResponseWrapper>,
 }
 
 impl<T: Serialize> RouteResponse<T> {
@@ -38,24 +39,39 @@ impl<T: Serialize> From<T> for RouteResponse<T> {
     }
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct ErrorResponseWrapper {
+    #[serde(flatten)]
+    pub inner: RouteError,
+    pub details: Option<String>
+}
+
 #[derive(Debug, Clone, thiserror::Error, Serialize)]
 #[serde(rename_all = "snake_case", tag = "code")]
 pub enum RouteError {
     #[error("Not found")]
     NotFound { entity: Cow<'static, str> },
-    #[error("Database operation failed")]
+    #[error("A database operation has failed")]
     DatabaseError,
-    #[error("Validation failed")]
+    #[error("Field validation failed")]
     ValidationError {
         field: Cow<'static, str>,
         details: Cow<'static, str>,
     },
     #[error("No or invalid token provided")]
     InvalidToken,
-    #[error("Background fetch request failed")]
+    #[error("A background request has failed")]
     BackgroundRequestFailed { details: String },
-    #[error("Missing guild access")]
+    #[error("You don't have access to the discord server")]
     MissingGuildAccess,
+    #[error("The provided channel doesn't belong to the provided server")]
+    GuildChannelMismatch,
+    #[error("The bot can't create a new webhook because there are already 10 for the channel")]
+    ChannelWebhookLimitReached,
+    #[error("The type of the channel is not supported")]
+    UnsupportedChannelType,
+    #[error("A request to the Discord API has failed")]
+    DiscordApi,
 }
 
 impl ResponseError for RouteError {
@@ -69,6 +85,10 @@ impl ResponseError for RouteError {
             InvalidToken => StatusCode::UNAUTHORIZED,
             BackgroundRequestFailed { .. } => StatusCode::INTERNAL_SERVER_ERROR,
             MissingGuildAccess => StatusCode::FORBIDDEN,
+            GuildChannelMismatch => StatusCode::BAD_REQUEST,
+            ChannelWebhookLimitReached => StatusCode::BAD_REQUEST,
+            UnsupportedChannelType => StatusCode::BAD_REQUEST,
+            DiscordApi => StatusCode::BAD_REQUEST,
         }
     }
 
@@ -76,7 +96,10 @@ impl ResponseError for RouteError {
         HttpResponse::build(self.status_code()).json(&RouteResponse::<()> {
             success: false,
             data: None,
-            error: Some(self.clone()),
+            error: Some(ErrorResponseWrapper {
+                inner: self.clone(),
+                details: Some(format!("{}", self))
+            }),
         })
     }
 }
@@ -114,5 +137,11 @@ impl From<MongoError> for RouteError {
     fn from(e: MongoError) -> Self {
         error!("Database operation failed: {:?}", e);
         Self::DatabaseError
+    }
+}
+
+impl From<twilight_http::Error> for RouteError {
+    fn from(_: Error) -> Self {
+        Self::DiscordApi
     }
 }

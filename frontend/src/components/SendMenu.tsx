@@ -1,7 +1,8 @@
 import { LinkIcon } from "@heroicons/react/outline";
-import { ChangeEvent, useEffect, useState } from "react";
-import useChannels from "../hooks/useChannels";
-import useGuilds from "../hooks/useGuilds";
+import { useEffect, useMemo, useState } from "react";
+import useAlerts from "../hooks/useAlerts";
+import useAPIClient from "../hooks/useApiClient";
+import useMessage from "../hooks/useMessage";
 import useSelectedGuild from "../hooks/useSelectedGuild";
 import useSelectedMode from "../hooks/useSelectedMode";
 import useToken from "../hooks/useToken";
@@ -9,15 +10,31 @@ import ChannelSelect from "./ChannelSelect";
 import GuildSelect from "./GuildSelect";
 import LoginSuggest from "./LoginSuggest";
 
+const webhookUrlRegex =
+  /https?:\/\/(?:canary\.|ptb\.)?discord\.com\/api\/webhooks\/([0-9]+)\/([a-zA-Z0-9_-]+)/;
+
 export default function SendMenu() {
+  const client = useAPIClient();
+  const [token] = useToken();
+  const [msg] = useMessage();
+
   const [selectedGuild, setSelectedGuild] = useSelectedGuild();
   const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
   const [selectedMessage, setSelectedMessage] = useState("");
   const [selectedMode, setSelectedMode] = useSelectedMode();
 
-  const [token] = useToken();
-  const guilds = useGuilds();
-  const channels = useChannels();
+  const [webhookUrl, setWebhookUrl] = useState("");
+  const addAlert = useAlerts();
+
+  const [webhookId, webhookToken] = useMemo(() => {
+    if (webhookUrl) {
+      const match = webhookUrl.match(webhookUrlRegex);
+      if (match) {
+        return [match[1], match[2]];
+      }
+    }
+    return [null, null];
+  }, [webhookUrl]);
 
   useEffect(() => {
     setSelectedChannel("");
@@ -28,6 +45,38 @@ export default function SendMenu() {
       setSelectedMode("webhook");
     } else {
       setSelectedMode(newMode);
+    }
+  }
+
+  function sendMessage() {
+    if (selectedMode === "webhook") {
+      if (webhookId && webhookToken) {
+        client.sendMessage({
+          target: { webhook_id: webhookId, webhook_token: webhookToken },
+          payload_json: JSON.stringify(msg),
+        });
+      }
+    } else {
+      client
+        .sendMessage({
+          target: { guild_id: selectedGuild!, channel_id: selectedChannel! },
+          payload_json: JSON.stringify(msg),
+        })
+        .then((resp) => {
+          if (resp.success) {
+            addAlert({
+              type: "success",
+              title: "Message Sent",
+              details: "The message has been sent to the selected channel.",
+            });
+          } else {
+            addAlert({
+              type: "error",
+              title: "Sending Failed",
+              details: resp.error.details || "No details available",
+            });
+          }
+        });
     }
   }
 
@@ -61,6 +110,8 @@ export default function SendMenu() {
             <input
               type="url"
               className="bg-dark-2 rounded p-2 w-full no-ring font-light"
+              value={webhookUrl}
+              onChange={(e) => setWebhookUrl(e.target.value)}
             />
           </div>
         ) : (
@@ -102,7 +153,10 @@ export default function SendMenu() {
       ) : undefined}
       {!token && <LoginSuggest />}
       <div className="flex justify-end">
-        <button className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark">
+        <button
+          className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark"
+          onClick={sendMessage}
+        >
           Send Message
         </button>
       </div>

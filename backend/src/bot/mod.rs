@@ -13,8 +13,11 @@ use twilight_http::Client;
 use twilight_http_ratelimiting::InMemoryRatelimiter;
 use twilight_model::gateway::event::Event;
 use twilight_model::gateway::Intents;
+use twilight_model::guild::Permissions;
+use twilight_model::id::marker::GuildMarker;
+use twilight_model::id::Id;
 
-use crate::bot::commands::{command_definitions, handle_interaction};
+use crate::bot::commands::{command_definitions, handle_interaction, InteractionError};
 use crate::bot::webhooks::delete_webhooks_for_guild;
 use crate::config::CONFIG;
 
@@ -42,6 +45,20 @@ lazy_static! {
     );
 }
 
+pub fn get_bot_permissions_on_guild(guild_id: Id<GuildMarker>) -> Permissions {
+    let user_id = Id::new(CONFIG.discord.oauth_client_id.get());
+    if let Some(member) = DISCORD_CACHE.member(guild_id, user_id) {
+        member
+            .roles()
+            .into_iter()
+            .filter_map(|r| DISCORD_CACHE.role(*r).map(|r| r.permissions))
+            .reduce(|a, b| a | b)
+            .unwrap_or(Permissions::empty())
+    } else {
+        Permissions::empty()
+    }
+}
+
 pub async fn sync_commands() -> Result<(), Box<dyn Error>> {
     let http = DISCORD_HTTP.interaction(CONFIG.discord.oauth_client_id);
     if let Some(guild_id) = CONFIG.discord.test_guild_id {
@@ -61,10 +78,7 @@ pub async fn run_bot() -> Result<(), Box<dyn Error>> {
     sync_commands().await?;
     info!("Successfully synced commands");
 
-    let intents = Intents::GUILDS
-        | Intents::GUILD_WEBHOOKS
-        | Intents::GUILD_MESSAGES
-        | Intents::MESSAGE_CONTENT;
+    let intents = Intents::GUILDS | Intents::GUILD_WEBHOOKS | Intents::GUILD_MESSAGES;
 
     let queue = Arc::new(LocalQueue::new());
 
@@ -92,7 +106,10 @@ pub async fn run_bot() -> Result<(), Box<dyn Error>> {
         match event {
             Event::InteractionCreate(i) => {
                 if let Err(e) = handle_interaction(i.0).await {
-                    error!("Handling interaction failed: {:?}", e)
+                    match e {
+                        InteractionError::NoOp => {}
+                        _ => error!("Handling interaction failed: {:?}", e),
+                    }
                 }
             }
             Event::MessageDelete(_) => {} // TODO: delete from last message store

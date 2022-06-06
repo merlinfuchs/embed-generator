@@ -15,7 +15,7 @@ export const GuildsProvider = ({ children }: { children: ReactNode }) => {
 
   const client = useAPIClient();
   useEffect(() => {
-    if (client) {
+    if (client.token) {
       client.getGuilds().then((resp) => {
         if (resp.success) {
           setGuilds(resp.data);

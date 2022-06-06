@@ -1,15 +1,10 @@
 import { useEffect, useRef } from "react";
 import { Disclosure } from "@headlessui/react";
-import {
-  LogoutIcon,
-  MenuIcon,
-  UploadIcon,
-  XIcon,
-} from "@heroicons/react/outline";
+import { LogoutIcon, MenuIcon, XIcon } from "@heroicons/react/outline";
 import useToken from "../hooks/useToken";
 import useUser from "../hooks/useUser";
 import { userAvatarUrl } from "../discord";
-import MessageSelect from "./MessageSelect";
+import MessageManager from "./MessageManager";
 
 const user = {
   name: "Tom Cook",
@@ -35,6 +30,7 @@ export default function Example() {
 
     if (code && !requestMade.current) {
       requestMade.current = true;
+
       fetch("/api/auth/exchange", {
         method: "POST",
         body: JSON.stringify({ code }),
@@ -68,8 +64,8 @@ export default function Example() {
                 </div>
                 <div className="flex-shrink-0 flex items-center">
                   <img
-                    className="h-8 w-auto hidden md:block"
-                    src="https://tailwindui.com/img/logos/workflow-mark-indigo-500.svg"
+                    className="h-10 w-10 w-auto hidden md:block rounded-full"
+                    src="/logo128.png"
                     alt="Workflow"
                   />
                 </div>
@@ -88,17 +84,7 @@ export default function Example() {
               </div>
               <div className="flex items-center">
                 {!!user ? (
-                  <div className="flex-shrink-0 flex space-x-2">
-                    <div className="bg-dark-2 rounded flex items-center justify-center cursor-pointer px-3">
-                      <MenuIcon className="w-5 h-5" />
-                      <div className="ml-3 hidden lg:block">Manage</div>
-                    </div>
-                    <div className="bg-dark-2 rounded flex items-center justify-center cursor-pointer px-3">
-                      <UploadIcon className="w-5 h-5" />
-                      <div className="ml-3 hidden lg:block">Save</div>
-                    </div>
-                    <MessageSelect />
-                  </div>
+                  <MessageManager />
                 ) : (
                   <a
                     className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark"

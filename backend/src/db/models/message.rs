@@ -15,7 +15,7 @@ pub struct MessageModel {
     pub user_id: Id<UserMarker>,
     pub name: String,
     pub description: String,
-    pub data: serde_json::Value,
+    pub payload_json: String,
 }
 
 impl MessageModel {

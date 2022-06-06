@@ -69,7 +69,7 @@ export default function EditorEmbedBody({ index, embed }: Props) {
                 })
               }
             />
-            <div className="flex-auto">
+            <div>
               <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
                 Color
               </div>

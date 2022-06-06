@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-use twilight_model::id::marker::{ChannelMarker, GuildMarker, MessageMarker, UserMarker, WebhookMarker};
+use twilight_model::id::marker::{
+    ChannelMarker, GuildMarker, MessageMarker, UserMarker, WebhookMarker,
+};
 use twilight_model::id::Id;
 
 use crate::api::response::RouteError;
@@ -15,7 +17,7 @@ pub struct MessageWire {
     pub user_id: Id<UserMarker>,
     pub name: String,
     pub description: String,
-    pub data: serde_json::Value,
+    pub payload_json: String,
 }
 
 impl From<MessageModel> for MessageWire {
@@ -25,7 +27,7 @@ impl From<MessageModel> for MessageWire {
             user_id: m.user_id,
             name: m.name,
             description: m.description,
-            data: m.data,
+            payload_json: m.payload_json,
         }
     }
 }
@@ -34,7 +36,7 @@ impl From<MessageModel> for MessageWire {
 pub struct MessageCreateRequestWire {
     pub name: String,
     pub description: String,
-    pub data: serde_json::Value,
+    pub payload_json: String,
 }
 
 impl NormalizeValidate for MessageCreateRequestWire {
@@ -42,19 +44,17 @@ impl NormalizeValidate for MessageCreateRequestWire {
         if self.name.len() < 3 || self.name.len() > 25 {
             return Err(RouteError::ValidationError {
                 field: "name".into(),
-                details: "Message name must be between 3 and 25 characters in length".into(),
+                details: "The message name must be between 3 and 25 characters in length".into(),
             });
         }
         if self.description.len() > 100 {
             return Err(RouteError::ValidationError {
                 field: "description".into(),
-                details: "Message description can't be longer than 100 characters".into(),
+                details: "The message description can't be longer than 100 characters".into(),
             });
         }
 
-        // This is pretty inefficient but does the job for now
-        let raw_json = serde_json::to_vec(&self.data).unwrap();
-        if raw_json.len() > CONFIG.limits.max_message_size {
+        if self.payload_json.len() > CONFIG.limits.max_message_size {
             return Err(RouteError::ValidationError {
                 field: "data".into(),
                 details: "The message data is too big".into(),
@@ -68,7 +68,7 @@ impl NormalizeValidate for MessageCreateRequestWire {
         Self {
             name: self.name.trim().to_string(),
             description: self.description.trim().to_string(),
-            data: self.data,
+            payload_json: self.payload_json,
         }
     }
 }
@@ -77,7 +77,7 @@ impl NormalizeValidate for MessageCreateRequestWire {
 pub struct MessageUpdateRequestWire {
     pub name: String,
     pub description: String,
-    pub data: serde_json::Value,
+    pub payload_json: String,
 }
 
 impl NormalizeValidate for MessageUpdateRequestWire {
@@ -85,19 +85,17 @@ impl NormalizeValidate for MessageUpdateRequestWire {
         if self.name.len() < 3 || self.name.len() > 25 {
             return Err(RouteError::ValidationError {
                 field: "name".into(),
-                details: "Message name must be between 3 and 25 characters in length".into(),
+                details: "The message name must be between 3 and 25 characters in length".into(),
             });
         }
         if self.description.len() > 100 {
             return Err(RouteError::ValidationError {
                 field: "description".into(),
-                details: "Message description can't be longer than 100 characters".into(),
+                details: "The message description can't be longer than 100 characters".into(),
             });
         }
 
-        // This is pretty inefficient but does the job for now
-        let raw_json = serde_json::to_vec(&self.data).unwrap();
-        if raw_json.len() > CONFIG.limits.max_message_size {
+        if self.payload_json.len() > CONFIG.limits.max_message_size {
             return Err(RouteError::ValidationError {
                 field: "data".into(),
                 details: "The message data is too big".into(),
@@ -111,7 +109,7 @@ impl NormalizeValidate for MessageUpdateRequestWire {
         Self {
             name: self.name.trim().to_string(),
             description: self.description.trim().to_string(),
-            data: self.data,
+            payload_json: self.payload_json,
         }
     }
 }
@@ -122,20 +120,34 @@ pub enum MessageSendTargetWire {
     Webhook {
         webhook_id: Id<WebhookMarker>,
         webhook_token: String,
+        #[serde(default)]
         thread_id: Option<Id<ChannelMarker>>,
+        #[serde(default)]
         message_id: Option<Id<MessageMarker>>,
     },
     Channel {
         guild_id: Id<GuildMarker>,
         channel_id: Id<ChannelMarker>,
+        #[serde(default)]
         message_id: Option<Id<MessageMarker>>,
     },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct MessageSendExecuteRequestWire {
+pub enum MessageSendActionsWire {
+
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MessageSendRequestWire {
     pub target: MessageSendTargetWire,
-    pub payload_json: serde_json::Value,
+    pub payload_json: String,
     #[serde(default)]
-    pub files: HashMap<String, Vec<u8>>,
+    pub attachments: HashMap<String, Vec<u8>>,
+    pub actions: HashMap<String, MessageSendActionsWire>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MessageSendResponseWire {
+    pub message_id: Id<MessageMarker>,
 }

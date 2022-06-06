@@ -7,7 +7,7 @@ import {
   useReducer,
   useRef,
 } from "react";
-import { Embed, Message } from "../discord";
+import { Button, Embed, Message } from "../discord";
 
 export type MessageAction =
   | { type: "setUsername"; value: string | undefined }
@@ -146,6 +146,49 @@ export type MessageAction =
       index: number;
       embedIndex: number;
       value: boolean;
+    }
+  | {
+      type: "addButton";
+      value?: Button;
+    }
+  | {
+      type: "clearButtons";
+    }
+  | {
+      type: "removeButton";
+      index: number;
+    }
+  | {
+      type: "moveButtonUp";
+      index: number;
+    }
+  | {
+      type: "moveButtonDown";
+      index: number;
+    }
+  | {
+      type: "cloneButton";
+      index: number;
+    }
+  | {
+      type: "setButtonLabel";
+      index: number;
+      value: string;
+    }
+  | {
+      type: "setButtonStyle";
+      index: number;
+      value: Button["style"];
+    }
+  | {
+      type: "setButtonUrl";
+      index: number;
+      value: string;
+    }
+  | {
+      type: "setButtonCustomId";
+      index: number;
+      value: string;
     };
 
 // this more-or-less makes sure that we never generate the same id twice
@@ -160,13 +203,17 @@ function reducer(msg: Message, action: MessageAction): Message {
     case "setContent":
       return { ...msg, content: action.value };
     case "addEmbed":
-      return {
-        ...msg,
-        embeds: [
-          ...msg.embeds,
-          { id: lastUniqueId++, ...(action.value || { fields: [] }) },
-        ],
-      };
+      if (msg.embeds.length < 10) {
+        return {
+          ...msg,
+          embeds: [
+            ...msg.embeds,
+            { id: lastUniqueId++, ...(action.value || { fields: [] }) },
+          ],
+        };
+      } else {
+        return msg;
+      }
     case "setEmbed": {
       const embeds = [...msg.embeds];
       embeds[action.index] = { id: lastUniqueId++, ...action.value };
@@ -327,12 +374,16 @@ function reducer(msg: Message, action: MessageAction): Message {
     case "addEmbedField": {
       const embeds = [...msg.embeds];
       const embed = { ...embeds[action.index] };
-      embed.fields = [
-        ...embed.fields,
-        { id: lastUniqueId++, name: "", value: "" },
-      ];
-      embeds[action.index] = embed;
-      return { ...msg, embeds };
+      if (embed.fields.length < 25) {
+        embed.fields = [
+          ...embed.fields,
+          { id: lastUniqueId++, name: "", value: "" },
+        ];
+        embeds[action.index] = embed;
+        return { ...msg, embeds };
+      } else {
+        return msg;
+      }
     }
     case "clearEmbedFields": {
       const embeds = [...msg.embeds];
@@ -408,6 +459,144 @@ function reducer(msg: Message, action: MessageAction): Message {
       embeds[action.embedIndex] = { ...embeds[action.embedIndex], fields };
       return { ...msg, embeds };
     }
+    case "addButton": {
+      const components = [...msg.components];
+      const newButton = {
+        id: lastUniqueId++,
+        ...(action.value || { type: 2, style: 5, url: "", label: "" }),
+      };
+
+      if (components.length === 0) {
+        components.push({
+          id: lastUniqueId++,
+          type: 1,
+          components: [newButton],
+        });
+      } else {
+        components[0] = {
+          ...components[0],
+          components: [...components[0].components, newButton],
+        };
+      }
+      return { ...msg, components };
+    }
+    case "clearButtons": {
+      return { ...msg, components: [] };
+    }
+    case "moveButtonUp": {
+      const components = [...msg.components];
+      if (components.length !== 0) {
+        const subComponents = [...components[0].components];
+        [subComponents[action.index - 1], subComponents[action.index]] = [
+          subComponents[action.index],
+          subComponents[action.index - 1],
+        ];
+        components[0] = { ...components[0], components: subComponents };
+      }
+      return { ...msg, components };
+    }
+    case "moveButtonDown": {
+      const components = [...msg.components];
+      if (components.length !== 0) {
+        const subComponents = [...components[0].components];
+        [subComponents[action.index + 1], subComponents[action.index]] = [
+          subComponents[action.index],
+          subComponents[action.index + 1],
+        ];
+        components[0] = { ...components[0], components: subComponents };
+      }
+      return { ...msg, components };
+    }
+    case "removeButton": {
+      let components = [...msg.components];
+      if (components.length !== 0) {
+        const subComponents = [...components[0].components];
+        subComponents.splice(action.index, 1);
+        if (subComponents.length === 0) {
+          components = [];
+        } else {
+          components[0] = { ...components[0], components: subComponents };
+        }
+      }
+      return { ...msg, components };
+    }
+    case "cloneButton": {
+      const components = [...msg.components];
+      if (components.length !== 0) {
+        const subComponents = [...components[0].components];
+        const newButton = JSON.parse(
+          JSON.stringify(subComponents[action.index])
+        );
+        newButton.id = lastUniqueId++;
+        subComponents.splice(action.index, 0, newButton);
+        components[0] = { ...components[0], components: subComponents };
+      }
+      return { ...msg, components };
+    }
+    case "setButtonLabel": {
+      const components = [...msg.components];
+      if (components.length !== 0) {
+        const subComponents = [...components[0].components];
+        subComponents[action.index] = {
+          ...subComponents[action.index],
+          label: action.value,
+        };
+        components[0] = { ...components[0], components: subComponents };
+      }
+      return { ...msg, components };
+    }
+    case "setButtonStyle": {
+      const components = [...msg.components];
+      if (components.length !== 0) {
+        const subComponents = [...components[0].components];
+        const component = subComponents[action.index];
+        if (action.value === 5) {
+          subComponents[action.index] = {
+            ...component,
+            style: action.value,
+            url: component.style === 5 ? component.url : "",
+          };
+        } else {
+          subComponents[action.index] = {
+            ...component,
+            style: action.value,
+            custom_id: component.style !== 5 ? component.custom_id : "",
+          };
+        }
+        components[0] = { ...components[0], components: subComponents };
+      }
+      return { ...msg, components };
+    }
+    case "setButtonUrl": {
+      const components = [...msg.components];
+      if (components.length !== 0) {
+        const subComponents = [...components[0].components];
+        const component = subComponents[action.index];
+        if (component.style === 5) {
+          subComponents[action.index] = {
+            ...component,
+            url: action.value,
+          };
+        }
+        components[0] = { ...components[0], components: subComponents };
+      }
+      return { ...msg, components };
+    }
+    case "setButtonCustomId": {
+      const components = [...msg.components];
+      if (components.length !== 0) {
+        const subComponents = [...components[0].components];
+        const component = subComponents[action.index];
+        if (component.style !== 5) {
+          subComponents[action.index] = {
+            ...component,
+            custom_id: action.value,
+          };
+        }
+        components[0] = { ...components[0], components: subComponents };
+      }
+      return { ...msg, components };
+    }
     default:
       // force switch to be exhaustive at compile time
       ((t: never) => {})(action);
@@ -415,9 +604,24 @@ function reducer(msg: Message, action: MessageAction): Message {
   }
 }
 
+const defaultMessage: Message = {
+  content: "Welcome to Embed Generator!",
+  embeds: [
+    {
+      id: lastUniqueId++,
+      title: "This is an Embed!",
+      description: "Embeds are pretty cool if you ask me :)",
+      color: 1412061,
+      fields: [],
+    },
+  ],
+  components: [],
+  files: [],
+};
+
 const MessageContext = createContext<
   [Message, (action: MessageAction) => void]
->([{ embeds: [], components: [], files: [] }, () => {}]);
+>([defaultMessage, () => {}]);
 
 export const MessageProvider = ({ children }: { children: ReactNode }) => {
   const initialMessage = useMemo(() => {
@@ -425,11 +629,7 @@ export const MessageProvider = ({ children }: { children: ReactNode }) => {
     if (lastMessage) {
       return JSON.parse(lastMessage);
     } else {
-      return {
-        embeds: [],
-        components: [],
-        files: [],
-      };
+      return defaultMessage;
     }
   }, []);
 

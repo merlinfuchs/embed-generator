@@ -21,6 +21,7 @@ mod message;
 mod message_restore_direct;
 mod message_json_direct;
 mod website;
+mod webhook;
 
 pub fn command_definitions() -> Vec<Command> {
     vec![
@@ -29,8 +30,9 @@ pub fn command_definitions() -> Vec<Command> {
         help::command_definition(),
         website::command_definition(),
         message::command_definition(),
-        message_restore_direct::command_definition(),
-        message_json_direct::command_definition()
+        webhook::command_definition(),
+        // message_restore_direct::command_definition(),
+        // message_json_direct::command_definition()
     ]
 }
 
@@ -44,6 +46,7 @@ pub async fn handle_interaction(interaction: Interaction) -> InteractionResult {
             "invite" => invite::handle_command(http, cmd).await?,
             "website" => website::handle_command(http, cmd).await?,
             "message" => message::handle_command(http, cmd).await?,
+            "webhook" => webhook::handle_command(http, cmd).await?,
             "Restore Message" => message_restore_direct::handle_command(http, cmd).await?,
             "Dump Message" => message_json_direct::handle_command(http, cmd).await?,
             _ => {}
