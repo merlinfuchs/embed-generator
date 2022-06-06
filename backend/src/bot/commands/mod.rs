@@ -32,7 +32,7 @@ pub fn command_definitions() -> Vec<Command> {
         message::command_definition(),
         webhook::command_definition(),
         // message_restore_direct::command_definition(),
-        // message_json_direct::command_definition()
+        message_json_direct::command_definition()
     ]
 }
 

@@ -10,6 +10,10 @@ import {
 import { Button, Embed, Message } from "../discord";
 
 export type MessageAction =
+  | {
+      type: "replace";
+      value: Message;
+    }
   | { type: "setUsername"; value: string | undefined }
   | { type: "setAvatarUrl"; value: string | undefined }
   | { type: "setContent"; value: string | undefined }
@@ -196,6 +200,8 @@ let lastUniqueId = Date.now();
 
 function reducer(msg: Message, action: MessageAction): Message {
   switch (action.type) {
+    case "replace":
+      return action.value;
     case "setUsername":
       return { ...msg, username: action.value };
     case "setAvatarUrl":

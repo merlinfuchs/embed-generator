@@ -46,3 +46,8 @@ export interface MessageSendRequestWire {
 export interface MessageSendResponseWire {
   message_id: string;
 }
+
+export interface HistoryMessageWire {
+  id: string;
+  created_at: string;
+}

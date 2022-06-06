@@ -1,4 +1,5 @@
 import {
+  HistoryMessageWire,
   ChannelWire,
   GuildWire,
   MessageSendRequestWire,
@@ -77,5 +78,11 @@ export default class APIClient {
     req: MessageSendRequestWire
   ): Promise<ApiResponse<MessageSendResponseWire>> {
     return this.apiRequest("POST", "/messages/send", req);
+  }
+
+  getChannelHistory(
+    channelId: string
+  ): Promise<ApiResponse<HistoryMessageWire[]>> {
+    return this.apiRequest("GET", `/channels/${channelId}/history`);
   }
 }

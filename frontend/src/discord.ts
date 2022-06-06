@@ -129,10 +129,44 @@ export function guildIconUrl({
   return `https://cdn.discordapp.com/icons/${id}/${icon}.webp`;
 }
 
-export function removeIdsFromMessage(msg: Message): Message {
-  return msg;
+export function messageToJson(msg: Message): any {
+  const result: Message = JSON.parse(JSON.stringify(msg));
+
+  for (const embed of result.embeds) {
+    embed.id = undefined;
+    for (const field of embed.fields) {
+      field.id = undefined;
+    }
+  }
+
+  for (const component of result.components) {
+    component.id = undefined;
+    for (const button of component.components) {
+      button.id = undefined;
+    }
+  }
+
+  return result;
 }
 
-export function fillIdsForMessage(msg: Message): Message {
-  return msg;
+type JsontoMessageResult =
+  | { success: true; message: Message }
+  | { success: false; errors: string[] };
+
+export function jsonToMessage(json: any): JsontoMessageResult {
+  const errors: string[] = [];
+  const message: Message = { files: [], embeds: [], components: [] };
+
+  if (typeof json.content === "string") {
+    message.content = json.content;
+  }
+
+  if (errors.length !== 0) {
+    return { success: false, errors };
+  } else {
+    return {
+      success: true,
+      message,
+    };
+  }
 }

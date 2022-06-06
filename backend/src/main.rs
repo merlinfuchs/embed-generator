@@ -11,6 +11,7 @@ mod bot;
 mod config;
 mod db;
 mod tokens;
+mod util;
 
 #[actix_web::main]
 async fn main() -> Result<(), Box<dyn Error>> {

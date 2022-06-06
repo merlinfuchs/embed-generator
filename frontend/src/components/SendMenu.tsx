@@ -1,5 +1,6 @@
 import { LinkIcon } from "@heroicons/react/outline";
 import { useEffect, useMemo, useState } from "react";
+import { Message } from "../discord";
 import useAlerts from "../hooks/useAlerts";
 import useAPIClient from "../hooks/useApiClient";
 import useMessage from "../hooks/useMessage";
@@ -8,10 +9,13 @@ import useSelectedMode from "../hooks/useSelectedMode";
 import useToken from "../hooks/useToken";
 import ChannelSelect from "./ChannelSelect";
 import GuildSelect from "./GuildSelect";
+import HistoryMessageSelect from "./HistoryMessageSelect";
 import LoginSuggest from "./LoginSuggest";
 
 const webhookUrlRegex =
   /https?:\/\/(?:canary\.|ptb\.)?discord\.com\/api\/webhooks\/([0-9]+)\/([a-zA-Z0-9_-]+)/;
+const messageUrlRegex =
+  /https?:\/\/(?:canary\.|ptb\.)?discord\.com\/channels\/[0-9]+\/([0-9]+)\/([0-9]+)/;
 
 export default function SendMenu() {
   const client = useAPIClient();
@@ -20,10 +24,12 @@ export default function SendMenu() {
 
   const [selectedGuild, setSelectedGuild] = useSelectedGuild();
   const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
-  const [selectedMessage, setSelectedMessage] = useState("");
   const [selectedMode, setSelectedMode] = useSelectedMode();
 
   const [webhookUrl, setWebhookUrl] = useState("");
+  const [threadId, setThreadId] = useState("");
+  const [messageId, setMessageId] = useState("");
+
   const addAlert = useAlerts();
 
   const [webhookId, webhookToken] = useMemo(() => {
@@ -36,10 +42,6 @@ export default function SendMenu() {
     return [null, null];
   }, [webhookUrl]);
 
-  useEffect(() => {
-    setSelectedChannel("");
-  }, [selectedGuild]);
-
   function wrappedSetSelectedMode(newMode: "webhook" | "channel") {
     if (newMode === "channel" && !token) {
       setSelectedMode("webhook");
@@ -48,19 +50,45 @@ export default function SendMenu() {
     }
   }
 
+  function wrappedSetMessageId(value: string) {
+    const match = value.match(messageUrlRegex);
+    if (match) {
+      setMessageId(match[2]);
+    } else {
+      setMessageId(value);
+    }
+  }
+
   function sendMessage() {
+    const msgPayload: Message = JSON.parse(JSON.stringify(msg));
+    if (!msgPayload.username) {
+      msgPayload.username = "Embed Generator";
+    }
+    if (!msgPayload.avatar_url) {
+      msgPayload.avatar_url = "https://message.style/logo128.png";
+    }
+
     if (selectedMode === "webhook") {
       if (webhookId && webhookToken) {
         client.sendMessage({
-          target: { webhook_id: webhookId, webhook_token: webhookToken },
-          payload_json: JSON.stringify(msg),
+          target: {
+            webhook_id: webhookId,
+            webhook_token: webhookToken,
+            thread_id: threadId || undefined,
+            message_id: messageId || undefined,
+          },
+          payload_json: JSON.stringify(msgPayload),
         });
       }
     } else {
       client
         .sendMessage({
-          target: { guild_id: selectedGuild!, channel_id: selectedChannel! },
-          payload_json: JSON.stringify(msg),
+          target: {
+            guild_id: selectedGuild!, // TODO
+            channel_id: selectedChannel!,
+            message_id: messageId || undefined,
+          },
+          payload_json: JSON.stringify(msgPayload),
         })
         .then((resp) => {
           if (resp.success) {
@@ -136,28 +164,49 @@ export default function SendMenu() {
           </div>
           <div className="flex-auto w-full">
             <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-              Edit Message
+              Message ID or URL
             </div>
-            <select
-              className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer font-light cursor-pointer"
-              value={selectedMessage}
-              onChange={(e) => setSelectedMessage(e.target.value)}
-            >
-              <option value="" disabled>
-                Select Message
-              </option>
-              <option>Some Message</option>
-            </select>
+            <input
+              type="text"
+              className="bg-dark-2 rounded p-2 w-full no-ring font-light"
+              value={messageId}
+              onChange={(e) => wrappedSetMessageId(e.target.value)}
+            />
           </div>
         </div>
-      ) : undefined}
+      ) : (
+        <div className="flex space-x-3">
+          <div className="flex-auto w-full">
+            <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+              Thread ID
+            </div>
+            <input
+              type="text"
+              className="bg-dark-2 rounded p-2 w-full no-ring font-light"
+              value={threadId}
+              onChange={(e) => setThreadId(e.target.value)}
+            />
+          </div>
+          <div className="flex-auto w-full">
+            <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+              Message ID or URL
+            </div>
+            <input
+              type="text"
+              className="bg-dark-2 rounded p-2 w-full no-ring font-light"
+              value={messageId}
+              onChange={(e) => wrappedSetMessageId(e.target.value)}
+            />
+          </div>
+        </div>
+      )}
       {!token && <LoginSuggest />}
       <div className="flex justify-end">
         <button
           className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark"
           onClick={sendMessage}
         >
-          Send Message
+          {messageId ? "Edit Message" : "Send Message"}
         </button>
       </div>
     </div>

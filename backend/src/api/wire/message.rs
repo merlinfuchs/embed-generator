@@ -5,6 +5,7 @@ use twilight_model::id::marker::{
     ChannelMarker, GuildMarker, MessageMarker, UserMarker, WebhookMarker,
 };
 use twilight_model::id::Id;
+use twilight_model::util::Timestamp;
 
 use crate::api::response::RouteError;
 use crate::api::wire::NormalizeValidate;
@@ -134,9 +135,7 @@ pub enum MessageSendTargetWire {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum MessageSendActionsWire {
-
-}
+pub enum MessageSendActionsWire {}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MessageSendRequestWire {
@@ -144,10 +143,17 @@ pub struct MessageSendRequestWire {
     pub payload_json: String,
     #[serde(default)]
     pub attachments: HashMap<String, Vec<u8>>,
+    #[serde(default)]
     pub actions: HashMap<String, MessageSendActionsWire>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MessageSendResponseWire {
     pub message_id: Id<MessageMarker>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct HistoryMessageWire {
+    pub id: Id<MessageMarker>,
+    pub created_at: Timestamp,
 }

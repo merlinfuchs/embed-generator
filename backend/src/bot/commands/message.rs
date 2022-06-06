@@ -224,17 +224,17 @@ async fn handle_command_dump(
 }
 
 #[derive(Serialize, Deserialize)]
-struct VaultbinPasteCreateRequest {
+pub struct VaultbinPasteCreateRequest {
     pub content: String,
     pub language: String,
 }
 
 #[derive(Serialize, Deserialize)]
-struct VaultbinPasteCreateResponse {
-    data: VaultbinPasteCreateResponseData,
+pub struct VaultbinPasteCreateResponse {
+    pub data: VaultbinPasteCreateResponseData,
 }
 
 #[derive(Serialize, Deserialize)]
-struct VaultbinPasteCreateResponseData {
-    id: String,
+pub struct VaultbinPasteCreateResponseData {
+    pub id: String,
 }

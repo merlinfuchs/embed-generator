@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::fmt::Debug;
 
 use actix_web::body::BoxBody;
 use actix_web::http::StatusCode;
@@ -141,7 +142,8 @@ impl From<MongoError> for RouteError {
 }
 
 impl From<twilight_http::Error> for RouteError {
-    fn from(_: Error) -> Self {
+    fn from(e: Error) -> Self {
+        error!("Discord API error: {}", e);
         Self::DiscordApi
     }
 }

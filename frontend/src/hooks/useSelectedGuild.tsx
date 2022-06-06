@@ -20,10 +20,8 @@ export const SelectedGuildProvider = ({
   const guilds = useGuilds();
 
   useEffect(() => {
-    if (guilds && guilds.length && !guild) {
-      setGuild(guilds[0].id);
-    }
-  }, [guilds, guild]);
+    setGuild(null);
+  }, [guilds]);
 
   return (
     <SelectedGuildContext.Provider value={[guild, setGuild]}>

@@ -1,5 +1,5 @@
 import { ChevronRightIcon } from "@heroicons/react/outline";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import useMessage from "../hooks/useMessage";
 import useToken from "../hooks/useToken";
 import EditorButton from "./EditorButton";
@@ -13,6 +13,23 @@ export default function Editor() {
 
   const [embedsCollapsed, setEmbedsCollapsed] = useState(false);
   const [componentsCollapsed, setComponentsCollapsed] = useState(false);
+
+  const embedCharacters = useMemo(
+    () =>
+      msg.embeds
+        .map(
+          (e) =>
+            (e.title?.length || 0) +
+            (e.description?.length || 0) +
+            (e.author?.name.length || 0) +
+            (e.footer?.text.length || 0) +
+            e.fields
+              .map((f) => f.name.length + f.value.length)
+              .reduce((a, b) => a + b, 0)
+        )
+        .reduce((a, b) => a + b, 0),
+    [msg.embeds]
+  );
 
   return (
     <div className="space-y-5">
@@ -61,7 +78,16 @@ export default function Editor() {
               embedsCollapsed ? "" : "rotate-90"
             }`}
           />
-          <div className="text-lg font-medium">Embeds</div>
+          <div className="flex space-x-2 items-center">
+            <div className="text-lg font-medium">Embeds</div>
+            <div
+              className={`italic font-light text-sm ${
+                embedCharacters < 6000 ? "text-gray-400" : "text-red"
+              }`}
+            >
+              {embedCharacters} / 6000
+            </div>
+          </div>
         </div>
         {!embedsCollapsed && (
           <>

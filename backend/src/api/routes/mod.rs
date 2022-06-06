@@ -1,6 +1,7 @@
 pub use auth_exchange::route_auth_exchange;
 pub use auth_redirect::route_auth_redirect;
 pub use guild_channel_list::route_guild_channel_list;
+pub use guild_channel_history_get::route_guild_channel_history_get;
 pub use guild_emoji_list::route_guild_emoji_list;
 pub use guild_get::route_guild_get;
 pub use guild_list::route_guild_list;
@@ -11,17 +12,18 @@ pub use links::route_link_invite;
 pub use links::route_link_source;
 pub use message_create::route_message_create;
 pub use message_delete::route_message_delete;
-pub use message_update::route_message_update;
 pub use message_get::route_message_get;
 pub use message_list::route_message_list;
+pub use message_send::route_message_send;
+pub use message_update::route_message_update;
 #[cfg(feature = "frontend")]
 pub use serve_frontend::route_serve_frontend;
 pub use user_get_me::route_user_get_me;
-pub use message_send::route_message_send;
 
 mod auth_exchange;
 mod auth_redirect;
 mod guild_channel_list;
+mod guild_channel_history_get;
 mod guild_emoji_list;
 mod guild_get;
 mod guild_list;
@@ -34,6 +36,6 @@ mod message_get;
 mod message_list;
 mod message_send;
 mod message_update;
-mod user_get_me;
 #[cfg(feature = "frontend")]
 mod serve_frontend;
+mod user_get_me;
