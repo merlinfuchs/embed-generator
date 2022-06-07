@@ -23,6 +23,7 @@ use crate::config::CONFIG;
 
 mod commands;
 pub mod webhooks;
+pub mod emojis;
 
 lazy_static! {
     pub static ref DISCORD_CACHE: InMemoryCache = InMemoryCache::builder()

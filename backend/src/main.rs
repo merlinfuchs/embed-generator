@@ -15,6 +15,11 @@ mod util;
 
 #[actix_web::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    let test = String::from("🧙‍♀️");
+
+    let twemoji: String = test.chars().map(|c| format!("{:x}", c as u32)).collect::<Vec<String>>().join("-");
+    println!("{}", twemoji);
+
     env_logger::init();
     db::connect(&CONFIG.mongo_url).await?;
 

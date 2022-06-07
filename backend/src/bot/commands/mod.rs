@@ -16,12 +16,13 @@ use crate::CONFIG;
 
 mod format;
 mod help;
+mod image;
 mod invite;
 mod message;
-mod message_restore_direct;
 mod message_json_direct;
-mod website;
+mod message_restore_direct;
 mod webhook;
+mod website;
 
 pub fn command_definitions() -> Vec<Command> {
     vec![
@@ -32,7 +33,8 @@ pub fn command_definitions() -> Vec<Command> {
         message::command_definition(),
         webhook::command_definition(),
         // message_restore_direct::command_definition(),
-        message_json_direct::command_definition()
+        message_json_direct::command_definition(),
+        image::command_definition()
     ]
 }
 
@@ -47,6 +49,7 @@ pub async fn handle_interaction(interaction: Interaction) -> InteractionResult {
             "website" => website::handle_command(http, cmd).await?,
             "message" => message::handle_command(http, cmd).await?,
             "webhook" => webhook::handle_command(http, cmd).await?,
+            "image" => image::handle_command(http, cmd).await?,
             "Restore Message" => message_restore_direct::handle_command(http, cmd).await?,
             "Dump Message" => message_json_direct::handle_command(http, cmd).await?,
             _ => {}
@@ -56,6 +59,7 @@ pub async fn handle_interaction(interaction: Interaction) -> InteractionResult {
         },
         Interaction::ApplicationCommandAutocomplete(cmd) => match cmd.data.name.as_str() {
             "format" => format::handle_autocomplete(http, cmd).await?,
+            "image" => image::handle_autocomplete(http, cmd).await?,
             _ => {}
         },
         _ => {}

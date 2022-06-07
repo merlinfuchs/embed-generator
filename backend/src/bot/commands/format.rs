@@ -13,6 +13,7 @@ use twilight_util::builder::command::{
 };
 
 use crate::bot::commands::{simple_response, InteractionResult};
+use crate::bot::emojis::EMOJIS;
 use crate::bot::DISCORD_CACHE;
 
 pub fn command_definition() -> Command {
@@ -42,8 +43,7 @@ pub fn command_definition() -> Command {
             "Get the API format for mentioning a user".into(),
         )
         .option(
-            UserBuilder::new("user".into(), "The user or role you want to mention".into())
-                .required(true),
+            UserBuilder::new("target".into(), "The user you want to mention".into()).required(true),
         ),
     )
     .option(
@@ -133,7 +133,7 @@ pub async fn handle_command(
             .await?;
         }
         "emoji" => {
-            let emoji_format = match options.pop().unwrap().value {
+            let value = match options.pop().unwrap().value {
                 CommandOptionValue::String(e) => e,
                 _ => unreachable!(),
             };
@@ -142,7 +142,7 @@ pub async fn handle_command(
                 &http,
                 cmd.id,
                 &cmd.token,
-                format!("API format for {0}: ```{0}```", emoji_format),
+                format!("API format for {0}: ```{0}```", value),
             )
             .await?;
         }
@@ -161,7 +161,7 @@ pub async fn handle_autocomplete(
         _ => unreachable!(),
     };
 
-    let emojis: Vec<CachedEmoji> = if let Some(guild_id) = cmd.guild_id {
+    let custom_emojis: Vec<CachedEmoji> = if let Some(guild_id) = cmd.guild_id {
         DISCORD_CACHE
             .guild_emojis(guild_id)
             .map(|e| {
@@ -179,7 +179,7 @@ pub async fn handle_autocomplete(
         vec![]
     };
 
-    let mut choices: Vec<CommandOptionChoice> = emojis
+    let mut choices: Vec<CommandOptionChoice> = custom_emojis
         .into_iter()
         .filter(|e| e.name().contains(search))
         .map(|e| CommandOptionChoice::String {
@@ -193,6 +193,17 @@ pub async fn handle_autocomplete(
             ),
         })
         .collect();
+
+    for (unicode, _, name) in EMOJIS.iter().filter(|(_, _, n)| n.contains(search)) {
+        if choices.len() >= 25 {
+            break;
+        }
+        choices.push(CommandOptionChoice::String {
+            name: format!("{} {}", unicode, name),
+            name_localizations: None,
+            value: unicode.to_string(),
+        })
+    }
 
     choices.truncate(25);
     http.create_response(
