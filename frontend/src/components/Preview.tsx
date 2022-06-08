@@ -2,6 +2,7 @@ import useMessage from "../hooks/useMessage";
 import "./Preview.css";
 import { format, parseISO } from "date-fns";
 import { useState } from "react";
+import { toHTML } from "../discord/markdown";
 
 const buttonColors = {
   1: "discord-button-primary",
@@ -51,7 +52,14 @@ export default function Preview() {
                 Today at {currentTime}
               </span>
               {!!msg.content && (
-                <div className="discord-message-body">{msg.content || ""}</div>
+                <div className="discord-message-body">
+                  <div
+                    className="discord-message-markup"
+                    dangerouslySetInnerHTML={{
+                      __html: toHTML(msg.content || "", {}),
+                    }}
+                  />
+                </div>
               )}
               <div className="discord-message-compact-indent">
                 {msg.embeds.map((embed) => {
@@ -99,16 +107,32 @@ export default function Preview() {
                             {!!embed.title && (
                               <div className="discord-embed-title overflow-hidden break-all">
                                 {embed.url ? (
-                                  <a href={embed.url}>{embed.title}</a>
+                                  <a
+                                    href={embed.url}
+                                    dangerouslySetInnerHTML={{
+                                      __html: toHTML(embed.title || "", {
+                                        isTitle: true,
+                                      }),
+                                    }}
+                                  ></a>
                                 ) : (
-                                  <span>{embed.title}</span>
+                                  <span
+                                    dangerouslySetInnerHTML={{
+                                      __html: toHTML(embed.title || "", {
+                                        isTitle: true,
+                                      }),
+                                    }}
+                                  />
                                 )}
                               </div>
                             )}
                             {!!embed.description && (
-                              <div className="discord-embed-description">
-                                {embed.description}
-                              </div>
+                              <div
+                                className="discord-embed-description"
+                                dangerouslySetInnerHTML={{
+                                  __html: toHTML(embed.description || "", {}),
+                                }}
+                              />
                             )}
                             {!!embed.fields.length && (
                               <div className="discord-embed-fields">
@@ -123,10 +147,19 @@ export default function Preview() {
                                         : ""
                                     }`}
                                   >
-                                    <div className="discord-field-title overflow-hidden break-all">
-                                      {field.name}
-                                    </div>
-                                    {field.value}
+                                    <div
+                                      className="discord-field-title overflow-hidden break-all"
+                                      dangerouslySetInnerHTML={{
+                                        __html: toHTML(field.name || "", {
+                                          isTitle: true,
+                                        }),
+                                      }}
+                                    />
+                                    <div
+                                      dangerouslySetInnerHTML={{
+                                        __html: toHTML(field.value, {}),
+                                      }}
+                                    />
                                   </div>
                                 ))}
                               </div>

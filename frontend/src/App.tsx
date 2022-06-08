@@ -27,7 +27,7 @@ function App() {
         </div>
       </div>
       <div>
-        <PreviewModal visible={previewModal} />
+        <PreviewModal visible={previewModal} setVisible={setPreviewModal} />
         <div
           className="lg:hidden fixed bottom-5 right-5 bg-blurple rounded-full h-12 w-12 shadow-xl flex items-center justify-center cursor-pointer"
           role="button"

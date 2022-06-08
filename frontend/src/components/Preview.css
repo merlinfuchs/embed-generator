@@ -2055,3 +2055,92 @@ Sources from: https://github.com/skyra-project/skyra.pw/blob/main/src/config/dis
   border-radius: 3px;
   padding: 0 2px;
 }
+
+/* Sourced from https://gist.github.com/cherryblossom000/6c59a9a2436eaddbe4f388e3ae145e4a */
+
+.theme-dark {
+  --header-secondary: #b9bbbe;
+  --interactive-muted: #4f545c;
+}
+
+.theme-light {
+  --header-secondary: #4f5660;
+  --interactive-muted: #c7ccd1;
+}
+
+.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 0.5em;
+  border-radius: 4px;
+  color: var(--header-secondary);
+  -webkit-text-size-adjust: none;
+  -moz-text-size-adjust: none;
+  -ms-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: var(--interactive-muted);
+}
+
+.hljs-addition,
+.hljs-keyword,
+.hljs-selector-tag {
+  color: #859900;
+}
+
+.hljs-doctag,
+.hljs-literal,
+.hljs-meta .hljs-meta-string,
+.hljs-number,
+.hljs-regexp,
+.hljs-string {
+  color: #2aa198;
+}
+
+.hljs-name,
+.hljs-section,
+.hljs-selector-class,
+.hljs-selector-id,
+.hljs-title {
+  color: #268bd2;
+}
+
+.hljs-attr,
+.hljs-attribute,
+.hljs-class .hljs-title,
+.hljs-template-variable,
+.hljs-type,
+.hljs-variable {
+  color: #b58900;
+}
+
+.hljs-bullet,
+.hljs-link,
+.hljs-meta,
+.hljs-meta .hljs-keyword,
+.hljs-selector-attr,
+.hljs-selector-pseudo,
+.hljs-subst,
+.hljs-symbol {
+  color: #cb4b16;
+}
+
+.hljs-built_in,
+.hljs-deletion {
+  color: #dc322f;
+}
+
+.hljs-formula {
+  background: #073642;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: 700;
+}

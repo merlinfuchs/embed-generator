@@ -5,7 +5,7 @@ use twilight_util::builder::command::CommandBuilder;
 
 use crate::bot::commands::{simple_response, InteractionResult};
 
-pub fn command_definition() -> Command {
+pub fn _command_definition() -> Command {
     CommandBuilder::new(
         "Restore Message".into(),
         "".into(),

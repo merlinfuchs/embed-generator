@@ -23,6 +23,7 @@ mod message_json_direct;
 mod message_restore_direct;
 mod webhook;
 mod website;
+mod embed;
 
 pub fn command_definitions() -> Vec<Command> {
     vec![
@@ -34,7 +35,8 @@ pub fn command_definitions() -> Vec<Command> {
         webhook::command_definition(),
         // message_restore_direct::command_definition(),
         message_json_direct::command_definition(),
-        image::command_definition()
+        image::command_definition(),
+        embed::command_definition()
     ]
 }
 
@@ -50,6 +52,7 @@ pub async fn handle_interaction(interaction: Interaction) -> InteractionResult {
             "message" => message::handle_command(http, cmd).await?,
             "webhook" => webhook::handle_command(http, cmd).await?,
             "image" => image::handle_command(http, cmd).await?,
+            "embed" => embed::handle_command(http, cmd).await?,
             "Restore Message" => message_restore_direct::handle_command(http, cmd).await?,
             "Dump Message" => message_json_direct::handle_command(http, cmd).await?,
             _ => {}
@@ -62,6 +65,10 @@ pub async fn handle_interaction(interaction: Interaction) -> InteractionResult {
             "image" => image::handle_autocomplete(http, cmd).await?,
             _ => {}
         },
+        Interaction::ModalSubmit(modal) => match modal.data.custom_id.as_str() {
+            "embed" => embed::handle_modal(http, modal).await?,
+            _ => {}
+        }
         _ => {}
     }
 

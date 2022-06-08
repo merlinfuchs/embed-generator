@@ -3,7 +3,7 @@ import { Disclosure } from "@headlessui/react";
 import { LogoutIcon, MenuIcon, XIcon } from "@heroicons/react/outline";
 import useToken from "../hooks/useToken";
 import useUser from "../hooks/useUser";
-import { userAvatarUrl } from "../discord";
+import { userAvatarUrl } from "../discord/utils";
 import MessageManager from "./MessageManager";
 
 const user = {

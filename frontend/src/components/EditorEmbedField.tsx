@@ -7,7 +7,7 @@ import {
   TrashIcon,
 } from "@heroicons/react/outline";
 import { useState } from "react";
-import { Embed, EmbedField } from "../discord";
+import { Embed, EmbedField } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import StyledInput from "./StyledInput";
 import StyledTextarea from "./StyledTextarea";

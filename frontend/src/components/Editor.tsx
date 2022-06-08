@@ -111,7 +111,7 @@ export default function Editor() {
                 </button>
               )}
               <button
-                className="px-3 py-2 rounded border border-red hover:bg-red transition-colors"
+                className="px-3 py-2 rounded border-2 border-red hover:bg-red transition-colors"
                 onClick={() => dispatchMsg({ type: "clearEmbeds" })}
               >
                 Clear Embeds
@@ -157,7 +157,7 @@ export default function Editor() {
                   </button>
                 )}
                 <button
-                  className="px-3 py-2 rounded border border-red hover:bg-red transition-colors"
+                  className="px-3 py-2 rounded border-2 border-red hover:bg-red transition-colors"
                   onClick={() => dispatchMsg({ type: "clearButtons" })}
                 >
                   Clear Buttons

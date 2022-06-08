@@ -7,7 +7,7 @@ import {
   useReducer,
   useRef,
 } from "react";
-import { Button, Embed, Message } from "../discord";
+import { Button, Embed, Message } from "../discord/types";
 
 export type MessageAction =
   | {
@@ -622,7 +622,6 @@ const defaultMessage: Message = {
     },
   ],
   components: [],
-  files: [],
 };
 
 const MessageContext = createContext<

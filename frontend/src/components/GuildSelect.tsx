@@ -2,7 +2,7 @@ import { Fragment, useMemo, useState } from "react";
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon, SelectorIcon } from "@heroicons/react/solid";
 import useGuilds from "../hooks/useGuilds";
-import { guildIconUrl } from "../discord";
+import { guildIconUrl } from "../discord/utils";
 import { GuildWire } from "../api/wire";
 import useSelectedGuild from "../hooks/useSelectedGuild";
 

@@ -6,7 +6,7 @@ import {
   TrashIcon,
 } from "@heroicons/react/outline";
 import { useMemo, useState } from "react";
-import { Button } from "../discord";
+import { Button } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import StyledInput from "./StyledInput";
 

@@ -1,12 +1,21 @@
 import { ReactNode } from "react";
+import ClickOutsideHandler from "./ClickOutsideHandler";
 
 interface Props {
   children: ReactNode;
   visible: boolean;
+  setVisible: (visible: boolean) => void;
   size?: "small" | "medium" | "large";
 }
 
-export default function BaseModal({ children, visible, size }: Props) {
+export default function BaseModal({
+  children,
+  visible,
+  setVisible,
+  size,
+}: Props) {
+  console.log(visible);
+
   if (!visible) return <div />;
 
   let modalClass = "bg-dark-4 h-48 rounded-md";
@@ -19,8 +28,10 @@ export default function BaseModal({ children, visible, size }: Props) {
   }
 
   return (
-    <div className="fixed w-screen h-screen flex items-center justify-center bg-dark-1 top-0 left-0 bg-opacity-90 px-2">
-      <div className={modalClass}>{children}</div>
+    <div className="fixed flex-col w-screen h-screen flex items-center justify-center bg-dark-1 top-0 left-0 bg-opacity-90 px-2">
+      <ClickOutsideHandler onClickOutside={() => {}} className={modalClass}>
+        {children}
+      </ClickOutsideHandler>
     </div>
   );
 }

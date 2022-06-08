@@ -1,6 +1,6 @@
 import { ChevronRightIcon } from "@heroicons/react/outline";
 import { useEffect, useRef, useState } from "react";
-import { Embed } from "../discord";
+import { Embed } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import StyledInput from "./StyledInput";
 import { parse, formatISO, parseISO, format } from "date-fns";
