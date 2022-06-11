@@ -14,8 +14,6 @@ export default function BaseModal({
   setVisible,
   size,
 }: Props) {
-  console.log(visible);
-
   if (!visible) return <div />;
 
   let modalClass = "bg-dark-4 h-48 rounded-md";

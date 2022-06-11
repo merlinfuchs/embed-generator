@@ -142,9 +142,17 @@ pub struct MessageSendRequestWire {
     pub target: MessageSendTargetWire,
     pub payload_json: String,
     #[serde(default)]
-    pub attachments: HashMap<String, Vec<u8>>,
+    pub attachments: Vec<MessageSendAttachmentWire>,
     #[serde(default)]
     pub actions: HashMap<String, MessageSendActionsWire>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MessageSendAttachmentWire {
+    pub name: String,
+    #[serde(default)]
+    pub description: Option<String>,
+    pub data_url: String
 }
 
 #[derive(Debug, Serialize, Deserialize)]

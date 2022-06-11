@@ -1,6 +1,8 @@
 use actix_web::post;
 use actix_web::web::{Json, ReqData};
+use data_url::DataUrl;
 use twilight_model::channel::ChannelType;
+use twilight_model::http::attachment::Attachment;
 
 use crate::api::response::{RouteError, RouteResult};
 use crate::api::wire::{MessageSendRequestWire, MessageSendResponseWire, MessageSendTargetWire};
@@ -16,6 +18,34 @@ pub async fn route_message_send(
     token: ReqData<TokenClaims>,
 ) -> RouteResult<MessageSendResponseWire> {
     let req = req.into_inner();
+
+    let attachments: Vec<Attachment> = req
+        .attachments
+        .into_iter()
+        .enumerate()
+        .filter_map(|(i, a)| {
+            let body = DataUrl::process(&a.data_url)
+                .ok()
+                .map(|d| d.decode_to_vec().ok().map(|b| b.0))
+                .flatten();
+
+            let filename = a
+                .name
+                .chars()
+                .filter(|c| (c.is_ascii_alphanumeric() || *c == '.' || *c == '-' || *c == '_'))
+                .collect();
+
+            match body {
+                Some(body) => Some(Attachment {
+                    filename,
+                    description: a.description,
+                    file: body,
+                    id: i as u64,
+                }),
+                None => None,
+            }
+        })
+        .collect();
 
     let (webhook_id, webhook_token, thread_id, message_id) = match req.target {
         MessageSendTargetWire::Webhook {
@@ -88,10 +118,9 @@ pub async fn route_message_send(
             update_req = update_req.thread_id(thread_id)
         }
 
-        // TODO: instruct discord to remove existing attachments that aren't provided again
         update_req
             .payload_json(req.payload_json.as_bytes())
-            .attachments(&[])
+            .attachments(&attachments)
             .unwrap()
             .exec()
             .await?;
@@ -105,7 +134,7 @@ pub async fn route_message_send(
 
         let msg = exec_req
             .payload_json(req.payload_json.as_bytes())
-            .attachments(&[])
+            .attachments(&attachments)
             .unwrap()
             .wait()
             .exec()

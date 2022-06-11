@@ -300,17 +300,24 @@ const bodyRules = {
     },
     html: function (node, output, state) {
       return htmlTag(
-        "img",
-        "",
+        "div",
+        htmlTag(
+          "img",
+          "",
+          {
+            class: "discord-custom-emoji-image",
+            src: `https://cdn.discordapp.com/emojis/${node.id}.${
+              node.animated ? "gif" : "png"
+            }`,
+            title: `:${node.name}:`,
+            alt: `:${node.name}:`,
+          },
+          false,
+          state
+        ),
         {
-          class: "discord-custom-emoji-image",
-          src: `https://cdn.discordapp.com/emojis/${node.id}.${
-            node.animated ? "gif" : "png"
-          }`,
-          title: `:${node.name}:`,
-          alt: `:${node.name}:`,
+          class: "discord-custom-emoji",
         },
-        false,
         state
       );
     },

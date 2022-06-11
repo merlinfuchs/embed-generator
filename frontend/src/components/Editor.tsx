@@ -2,7 +2,9 @@ import { ChevronRightIcon } from "@heroicons/react/outline";
 import { useMemo, useState } from "react";
 import useMessage from "../hooks/useMessage";
 import useToken from "../hooks/useToken";
+import EditorAttachments from "./EditorAttachments";
 import EditorButton from "./EditorButton";
+import EditorComponentsRow from "./EditorComponentsRow";
 import EditorEmbed from "./EditorEmbed";
 import StyledInput from "./StyledInput";
 import StyledTextarea from "./StyledTextarea";
@@ -11,8 +13,12 @@ export default function Editor() {
   const [msg, dispatchMsg] = useMessage();
   const [token] = useToken();
 
-  const [embedsCollapsed, setEmbedsCollapsed] = useState(false);
-  const [componentsCollapsed, setComponentsCollapsed] = useState(false);
+  const [embedsCollapsed, setEmbedsCollapsed] = useState(
+    msg.embeds.length === 0
+  );
+  const [componentsCollapsed, setComponentsCollapsed] = useState(
+    msg.components.length === 0
+  );
 
   const embedCharacters = useMemo(
     () =>
@@ -58,16 +64,7 @@ export default function Editor() {
         maxLength={2000}
         onChange={(value) => dispatchMsg({ type: "setContent", value })}
       />
-      <div>
-        <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-          Files
-        </div>
-        <input
-          type="file"
-          multiple
-          className="bg-dark-2 rounded p-2 w-full no-ring font-light"
-        />
-      </div>
+      <EditorAttachments />
       <div>
         <div
           className="flex-auto cursor-pointer flex items-center space-x-2 text-gray-300 select-none mb-2"
@@ -131,36 +128,34 @@ export default function Editor() {
                 componentsCollapsed ? "" : "rotate-90"
               }`}
             />
-            <div className="text-lg font-medium">Buttons</div>
+            <div className="text-lg font-medium">Components</div>
           </div>
           {!componentsCollapsed && (
             <>
-              {msg.components.flatMap((comp, i) =>
-                comp.components.map((button, i) => (
-                  <EditorButton index={i} button={button} key={button.id} />
-                ))
-              )}
+              {msg.components.map((row, i) => (
+                <EditorComponentsRow key={row.id} row={row} index={i} />
+              ))}
               <div className="space-x-3 mt-3">
                 {(msg.components[0]?.components?.length || 0) < 5 ? (
                   <button
                     className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark"
                     onClick={() => dispatchMsg({ type: "addButton" })}
                   >
-                    Add Button
+                    Add Row
                   </button>
                 ) : (
                   <button
                     disabled
                     className="bg-dark-3 px-3 py-2 rounded transition-colors cursor-not-allowed text-gray-300"
                   >
-                    Add Button
+                    Add Row
                   </button>
                 )}
                 <button
                   className="px-3 py-2 rounded border-2 border-red hover:bg-red transition-colors"
                   onClick={() => dispatchMsg({ type: "clearButtons" })}
                 >
-                  Clear Buttons
+                  Clear Rows
                 </button>
               </div>
             </>

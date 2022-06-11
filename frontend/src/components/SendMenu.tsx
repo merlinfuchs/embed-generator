@@ -1,13 +1,16 @@
+import { Switch } from "@headlessui/react";
 import { LinkIcon } from "@heroicons/react/outline";
 import { useMemo, useState } from "react";
 import { json } from "stream/consumers";
 import { Message } from "../discord/types";
 import useAlerts from "../hooks/useAlerts";
 import useAPIClient from "../hooks/useApiClient";
+import useAttachments from "../hooks/useAttachments";
 import useMessage from "../hooks/useMessage";
 import useSelectedGuild from "../hooks/useSelectedGuild";
 import useSelectedMode from "../hooks/useSelectedMode";
 import useToken from "../hooks/useToken";
+import { classNames } from "../util";
 import ChannelSelect from "./ChannelSelect";
 import GuildSelect from "./GuildSelect";
 import JsonEditorModal from "./JsonEditorModal";
@@ -22,6 +25,7 @@ export default function SendMenu() {
   const client = useAPIClient();
   const [token] = useToken();
   const [msg] = useMessage();
+  const [attachments] = useAttachments();
 
   const [selectedGuild, setSelectedGuild] = useSelectedGuild();
   const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
@@ -81,6 +85,7 @@ export default function SendMenu() {
             message_id: messageId || undefined,
           },
           payload_json: JSON.stringify(msgPayload),
+          attachments,
         });
       }
     } else {
@@ -92,6 +97,7 @@ export default function SendMenu() {
             message_id: messageId || undefined,
           },
           payload_json: JSON.stringify(msgPayload),
+          attachments,
         })
         .then((resp) => {
           if (resp.success) {
@@ -114,27 +120,54 @@ export default function SendMenu() {
   return (
     <>
       <div className="space-y-5">
-        <div className="flex items-end space-x-3">
-          {!!token && (
-            <div className="flex-none">
-              {selectedMode === "webhook" ? (
-                <div
-                  onClick={() => wrappedSetSelectedMode("channel")}
-                  className="bg-dark-2 flex items-center justify-center rounded h-10 w-10 cursor-pointer text-gray-200"
-                >
-                  <LinkIcon className="h-7 w-7" />
-                </div>
-              ) : (
-                <div
-                  onClick={() => wrappedSetSelectedMode("webhook")}
-                  className="bg-dark-2 flex items-center justify-center rounded h-10 w-10 cursor-pointer text-3xl text-gray-200"
-                >
-                  #
-                </div>
-              )}
+        {!!token && (
+          <div>
+            <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+              Send To
             </div>
-          )}
-          {selectedMode === "webhook" ? (
+            <select
+              value={selectedMode}
+              onChange={(e) => setSelectedMode(e.target.value as any)}
+              className="bg-dark-2 rounded px-3 py-2 w-full sm:w-64 cursor-pointer"
+            >
+              <option value="webhook">Webhook</option>
+              <option value="channel">Channel</option>
+            </select>
+          </div>
+        )}
+        {selectedMode === "channel" ? (
+          <>
+            <div className="flex-auto">
+              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+                Server
+              </div>
+              <GuildSelect value={selectedGuild} onChange={setSelectedGuild} />
+            </div>
+            <div className="flex space-x-3">
+              <div className="flex-auto w-full">
+                <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+                  Channel
+                </div>
+                <ChannelSelect
+                  value={selectedChannel}
+                  onChange={setSelectedChannel}
+                />
+              </div>
+              <div className="flex-auto w-full">
+                <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+                  Message ID or URL
+                </div>
+                <input
+                  type="text"
+                  className="bg-dark-2 rounded p-2 w-full no-ring font-light"
+                  value={messageId}
+                  onChange={(e) => wrappedSetMessageId(e.target.value)}
+                />
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
             <div className="flex-auto">
               <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
                 Webhook URL
@@ -146,72 +179,40 @@ export default function SendMenu() {
                 onChange={(e) => setWebhookUrl(e.target.value)}
               />
             </div>
-          ) : (
-            <div className="flex-auto">
-              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-                Server
+            <div className="flex space-x-3">
+              <div className="flex-auto w-full">
+                <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+                  Thread ID
+                </div>
+                <input
+                  type="text"
+                  className="bg-dark-2 rounded p-2 w-full no-ring font-light"
+                  value={threadId}
+                  onChange={(e) => setThreadId(e.target.value)}
+                />
               </div>
-              <GuildSelect value={selectedGuild} onChange={setSelectedGuild} />
-            </div>
-          )}
-        </div>
-        {selectedMode === "channel" ? (
-          <div className="flex space-x-3">
-            <div className="flex-auto w-full">
-              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-                Channel
+              <div className="flex-auto w-full">
+                <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+                  Message ID or URL
+                </div>
+                <input
+                  type="text"
+                  className="bg-dark-2 rounded p-2 w-full no-ring font-light"
+                  value={messageId}
+                  onChange={(e) => wrappedSetMessageId(e.target.value)}
+                />
               </div>
-              <ChannelSelect
-                value={selectedChannel}
-                onChange={setSelectedChannel}
-              />
             </div>
-            <div className="flex-auto w-full">
-              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-                Message ID or URL
-              </div>
-              <input
-                type="text"
-                className="bg-dark-2 rounded p-2 w-full no-ring font-light"
-                value={messageId}
-                onChange={(e) => wrappedSetMessageId(e.target.value)}
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="flex space-x-3">
-            <div className="flex-auto w-full">
-              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-                Thread ID
-              </div>
-              <input
-                type="text"
-                className="bg-dark-2 rounded p-2 w-full no-ring font-light"
-                value={threadId}
-                onChange={(e) => setThreadId(e.target.value)}
-              />
-            </div>
-            <div className="flex-auto w-full">
-              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-                Message ID or URL
-              </div>
-              <input
-                type="text"
-                className="bg-dark-2 rounded p-2 w-full no-ring font-light"
-                value={messageId}
-                onChange={(e) => wrappedSetMessageId(e.target.value)}
-              />
-            </div>
-          </div>
+          </>
         )}
         {!token && <LoginSuggest />}
         <div className="flex justify-end space-x-3">
-          <button
+          {/* <button
             className="border-2 border-blurple px-3 py-2 rounded transition-colors hover:bg-blurple"
             onClick={() => setJsonModal(!jsonModal)}
           >
             View JSON
-          </button>
+        </button> */}
           <button
             className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark"
             onClick={sendMessage}

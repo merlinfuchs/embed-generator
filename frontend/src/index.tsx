@@ -11,6 +11,10 @@ import { GuildsProvider } from "./hooks/useGuilds";
 import { SelectedGuildProvider } from "./hooks/useSelectedGuild";
 import { MessagesProvider } from "./hooks/useMessages";
 import { AlertsProvider } from "./hooks/useAlerts";
+import { ChannelsProvider } from "./hooks/useChannels";
+import { StickersProvider } from "./hooks/useStickers";
+import { AttachmentsProvider } from "./hooks/useAttachments";
+import { EmojisProvider } from "./hooks/useEmojis";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -23,11 +27,19 @@ root.render(
           <MessagesProvider>
             <GuildsProvider>
               <SelectedGuildProvider>
-                <SelectedModeProvider>
-                  <MessageProvider>
-                    <App />
-                  </MessageProvider>
-                </SelectedModeProvider>
+                <ChannelsProvider>
+                  <StickersProvider>
+                    <EmojisProvider>
+                      <SelectedModeProvider>
+                        <MessageProvider>
+                          <AttachmentsProvider>
+                            <App />
+                          </AttachmentsProvider>
+                        </MessageProvider>
+                      </SelectedModeProvider>
+                    </EmojisProvider>
+                  </StickersProvider>
+                </ChannelsProvider>
               </SelectedGuildProvider>
             </GuildsProvider>
           </MessagesProvider>

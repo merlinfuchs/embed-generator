@@ -40,7 +40,7 @@ export interface MessageSendRequestWire {
         message_id?: string;
       };
   payload_json: string;
-  attachments?: {}[];
+  attachments?: AttachmentWire[];
 }
 
 export interface MessageSendResponseWire {
@@ -50,4 +50,26 @@ export interface MessageSendResponseWire {
 export interface HistoryMessageWire {
   id: string;
   created_at: string;
+}
+
+export interface StickerWire {
+  id: string;
+  name: string;
+  description: string | null;
+  available: boolean;
+  format_type: number;
+}
+
+export interface EmojiWire {
+  id: string;
+  name: string;
+  available: boolean;
+  animated: boolean;
+  managed: boolean;
+}
+
+export interface AttachmentWire {
+  name: string;
+  description: string | null;
+  data_url: string;
 }

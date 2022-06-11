@@ -22,8 +22,8 @@ use crate::bot::webhooks::delete_webhooks_for_guild;
 use crate::config::CONFIG;
 
 mod commands;
-pub mod webhooks;
 pub mod emojis;
+pub mod webhooks;
 
 lazy_static! {
     pub static ref DISCORD_CACHE: InMemoryCache = InMemoryCache::builder()
@@ -41,7 +41,7 @@ lazy_static! {
         Client::builder()
             .token(CONFIG.discord.token.clone())
             .ratelimiter(Some(Box::new(InMemoryRatelimiter::new())))
-            .timeout(Duration::from_secs(5))
+            .timeout(Duration::from_secs(30))
             .build()
     );
 }
@@ -79,7 +79,10 @@ pub async fn run_bot() -> Result<(), Box<dyn Error>> {
     sync_commands().await?;
     info!("Successfully synced commands");
 
-    let intents = Intents::GUILDS | Intents::GUILD_WEBHOOKS | Intents::GUILD_MESSAGES;
+    let intents = Intents::GUILDS
+        | Intents::GUILD_EMOJIS_AND_STICKERS
+        | Intents::GUILD_WEBHOOKS
+        | Intents::GUILD_MESSAGES;
 
     let queue = Arc::new(LocalQueue::new());
 

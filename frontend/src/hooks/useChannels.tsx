@@ -1,11 +1,19 @@
-import { useEffect, useState } from "react";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { ChannelWire } from "../api/wire";
 import useAPIClient from "./useApiClient";
 import useSelectedGuild from "./useSelectedGuild";
 
 const channelTypes = new Set([0, 5, 10, 11, 12]);
 
-export default function useChannels() {
+const ChannelsContext = createContext<ChannelWire[] | null>(null);
+
+export const ChannelsProvider = ({ children }: { children: ReactNode }) => {
   const [channels, setChannels] = useState<ChannelWire[] | null>(null);
   const [selectedGuild] = useSelectedGuild();
 
@@ -22,5 +30,13 @@ export default function useChannels() {
     }
   }, [client, selectedGuild]);
 
-  return channels;
+  return (
+    <ChannelsContext.Provider value={channels}>
+      {children}
+    </ChannelsContext.Provider>
+  );
+};
+
+export default function useChannels() {
+  return useContext(ChannelsContext);
 }
