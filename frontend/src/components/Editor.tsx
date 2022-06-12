@@ -3,8 +3,7 @@ import { useMemo, useState } from "react";
 import useMessage from "../hooks/useMessage";
 import useToken from "../hooks/useToken";
 import EditorAttachments from "./EditorAttachments";
-import EditorButton from "./EditorButton";
-import EditorComponentsRow from "./EditorComponentsRow";
+import EditorComponentRow from "./EditorComponentRow";
 import EditorEmbed from "./EditorEmbed";
 import StyledInput from "./StyledInput";
 import StyledTextarea from "./StyledTextarea";
@@ -133,27 +132,47 @@ export default function Editor() {
           {!componentsCollapsed && (
             <>
               {msg.components.map((row, i) => (
-                <EditorComponentsRow key={row.id} row={row} index={i} />
+                <EditorComponentRow key={row.id} row={row} index={i} />
               ))}
               <div className="space-x-3 mt-3">
-                {(msg.components[0]?.components?.length || 0) < 5 ? (
-                  <button
-                    className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark"
-                    onClick={() => dispatchMsg({ type: "addButton" })}
-                  >
-                    Add Row
-                  </button>
+                {msg.components.length < 5 ? (
+                  <>
+                    <button
+                      className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark"
+                      onClick={() => dispatchMsg({ type: "addComponentRow" })}
+                    >
+                      Add Button Row
+                    </button>
+                    <button
+                      className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark"
+                      onClick={() =>
+                        dispatchMsg({
+                          type: "addComponentSelectRow",
+                        })
+                      }
+                    >
+                      Add Select Menu
+                    </button>
+                  </>
                 ) : (
-                  <button
-                    disabled
-                    className="bg-dark-3 px-3 py-2 rounded transition-colors cursor-not-allowed text-gray-300"
-                  >
-                    Add Row
-                  </button>
+                  <>
+                    <button
+                      disabled
+                      className="bg-dark-3 px-3 py-2 rounded transition-colors cursor-not-allowed text-gray-300"
+                    >
+                      Add Button Row
+                    </button>
+                    <button
+                      disabled
+                      className="bg-dark-3 px-3 py-2 rounded transition-colors cursor-not-allowed text-gray-300"
+                    >
+                      Add Select Menu
+                    </button>
+                  </>
                 )}
                 <button
                   className="px-3 py-2 rounded border-2 border-red hover:bg-red transition-colors"
-                  onClick={() => dispatchMsg({ type: "clearButtons" })}
+                  onClick={() => dispatchMsg({ type: "clearComponentRows" })}
                 >
                   Clear Rows
                 </button>

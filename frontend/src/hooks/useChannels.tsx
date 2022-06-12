@@ -9,12 +9,17 @@ import { ChannelWire } from "../api/wire";
 import useAPIClient from "./useApiClient";
 import useSelectedGuild from "./useSelectedGuild";
 
-const channelTypes = new Set([0, 5, 10, 11, 12]);
+const ChannelsContext = createContext<
+  (ChannelWire & { indent: number })[] | null
+>(null);
 
-const ChannelsContext = createContext<ChannelWire[] | null>(null);
+const positionSort = (a: ChannelWire, b: ChannelWire) =>
+  a.position > b.position ? 1 : -1;
 
 export const ChannelsProvider = ({ children }: { children: ReactNode }) => {
-  const [channels, setChannels] = useState<ChannelWire[] | null>(null);
+  const [channels, setChannels] = useState<
+    (ChannelWire & { indent: number })[] | null
+  >(null);
   const [selectedGuild] = useSelectedGuild();
 
   const client = useAPIClient();
@@ -22,7 +27,68 @@ export const ChannelsProvider = ({ children }: { children: ReactNode }) => {
     if (client.token && selectedGuild) {
       client.getGuildChannels(selectedGuild).then((resp) => {
         if (resp.success) {
-          setChannels(resp.data.filter((c) => channelTypes.has(c.type)));
+          const channels = Object.fromEntries(resp.data.map((c) => [c.id, c]));
+
+          const channelTree: any = {};
+
+          for (const channel of Object.values(channels)
+            .filter((c) => !c.parent_id)
+            .sort((a, b) =>
+              a.type === 4 && b.type !== 4
+                ? 1
+                : b.type === 4 && a.type !== 4
+                ? -1
+                : positionSort(a, b)
+            )) {
+            channelTree[channel.id] = {};
+          }
+
+          for (const channel of Object.values(channels)
+            .filter((c) => [0, 5, 15].includes(c.type))
+            .sort(positionSort)) {
+            if (channel.parent_id) {
+              channelTree[channel.parent_id] = {
+                ...(channelTree[channel.parent_id] || {}),
+              };
+              channelTree[channel.parent_id][channel.id] = {};
+            }
+          }
+
+          for (const channel of Object.values(channels)
+            .filter((c) => [10, 11, 12].includes(c.type))
+            .sort(positionSort)) {
+            if (channel.parent_id) {
+              const parent = channels[channel.parent_id];
+              if (parent && parent.parent_id) {
+                channelTree[parent.parent_id] = {
+                  ...(channelTree[parent.parent_id] || {}),
+                };
+                channelTree[parent.parent_id][channel.parent_id] = {
+                  ...(channelTree[parent.parent_id][channel.parent_id] || {}),
+                };
+                channelTree[parent.parent_id][channel.parent_id][channel.id] =
+                  {};
+              } else {
+                channelTree[channel.parent_id] = {
+                  ...(channelTree[channel.parent_id] || {}),
+                };
+                channelTree[channel.parent_id][channel.id] = {};
+              }
+            }
+          }
+
+          const result: (ChannelWire & { indent: number })[] = [];
+          for (const [id, aChildren] of Object.entries(channelTree)) {
+            result.push({ indent: 0, ...channels[id] });
+            for (const [id, bChildren] of Object.entries(aChildren as any)) {
+              result.push({ indent: 1, ...channels[id] });
+              for (const [id] of Object.entries(bChildren as any)) {
+                result.push({ indent: 2, ...channels[id] });
+              }
+            }
+          }
+
+          setChannels(result);
         }
       });
     } else {

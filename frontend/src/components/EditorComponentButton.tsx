@@ -6,13 +6,15 @@ import {
   TrashIcon,
 } from "@heroicons/react/outline";
 import { useState } from "react";
-import { Button } from "../discord/types";
+import { ComponentButton, ComponentActionRow } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import StyledInput from "./StyledInput";
 
 interface Props {
   index: number;
-  button: Button;
+  rowIndex: number;
+  button: ComponentButton;
+  row: ComponentActionRow;
 }
 
 const buttonBorderColors = {
@@ -23,8 +25,13 @@ const buttonBorderColors = {
   5: "border-dark-7",
 };
 
-export default function EditorButton({ index, button }: Props) {
-  const [msg, dispatch] = useMessage();
+export default function EditorComponentButton({
+  index,
+  rowIndex,
+  button,
+  row,
+}: Props) {
+  const [, dispatch] = useMessage();
   const [collapsed, setCollapsed] = useState(true);
 
   const borderColor = buttonBorderColors[button.style];
@@ -35,11 +42,11 @@ export default function EditorButton({ index, button }: Props) {
     >
       <div className="flex items-center">
         <div
-          className="text-medium text-lg flex-auto cursor-pointer flex items-center space-x-2 select-none overflow-hidden"
+          className="text-medium flex-auto cursor-pointer flex items-center space-x-2 select-none overflow-hidden"
           onClick={() => setCollapsed(!collapsed)}
         >
           <ChevronRightIcon
-            className={`h-6 w-6 transition-transform duration-300 ${
+            className={`h-5 w-5 transition-transform duration-300 ${
               collapsed ? "" : "rotate-90"
             }`}
           />
@@ -53,24 +60,34 @@ export default function EditorButton({ index, button }: Props) {
             <ChevronUpIcon
               className="h-5 w-5 cursor-pointer"
               role="button"
-              onClick={() => dispatch({ type: "moveButtonUp", index })}
+              onClick={() =>
+                dispatch({ type: "moveComponentUp", index, rowIndex })
+              }
             />
           ) : undefined}
-          {index !== (msg.components[0]?.components?.length || 0) - 1 ? (
+          {index !== (row.components.length || 0) - 1 ? (
             <ChevronDownIcon
               className="h-5 w-5 cursor-pointer"
               role="button"
-              onClick={() => dispatch({ type: "moveButtonDown", index })}
+              onClick={() =>
+                dispatch({ type: "moveComponentDown", index, rowIndex })
+              }
             />
           ) : undefined}
-          <DuplicateIcon
-            className="h-5 w-5 cursor-pointer"
-            role="button"
-            onClick={() => dispatch({ type: "cloneButton", index })}
-          />
+          {row.components.length < 5 && (
+            <DuplicateIcon
+              className="h-5 w-5 cursor-pointer"
+              role="button"
+              onClick={() =>
+                dispatch({ type: "cloneComponent", index, rowIndex })
+              }
+            />
+          )}
           <TrashIcon
             className="h-5 w-5 cursor-pointer"
-            onClick={() => dispatch({ type: "removeButton", index })}
+            onClick={() =>
+              dispatch({ type: "removeComponent", index, rowIndex })
+            }
           />
         </div>
       </div>
@@ -88,6 +105,7 @@ export default function EditorButton({ index, button }: Props) {
                   dispatch({
                     type: "setButtonStyle",
                     index,
+                    rowIndex,
                     value: parseInt(e.target.value) as any,
                   })
                 }
@@ -106,7 +124,7 @@ export default function EditorButton({ index, button }: Props) {
               maxLength={80}
               value={button.label || ""}
               onChange={(value) =>
-                dispatch({ type: "setButtonLabel", index, value })
+                dispatch({ type: "setButtonLabel", index, rowIndex, value })
               }
             />
           </div>
@@ -116,7 +134,7 @@ export default function EditorButton({ index, button }: Props) {
               label="URL"
               value={button.url || ""}
               onChange={(value) =>
-                dispatch({ type: "setButtonUrl", index, value })
+                dispatch({ type: "setButtonUrl", index, rowIndex, value })
               }
             />
           ) : (
@@ -126,7 +144,12 @@ export default function EditorButton({ index, button }: Props) {
               maxLength={100}
               value={button.custom_id}
               onChange={(value) =>
-                dispatch({ type: "setButtonCustomId", index, value })
+                dispatch({
+                  type: "setButtonCustomId",
+                  index,
+                  rowIndex,
+                  value,
+                })
               }
             />
           )}

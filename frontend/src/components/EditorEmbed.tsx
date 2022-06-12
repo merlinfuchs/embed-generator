@@ -65,11 +65,13 @@ export default function EditorEmbed({ index, embed }: Props) {
               onClick={() => dispatch({ type: "moveEmbedDown", index })}
             />
           ) : undefined}
-          <DuplicateIcon
-            className="h-5 w-5 cursor-pointer"
-            role="button"
-            onClick={() => dispatch({ type: "cloneEmbed", index })}
-          />
+          {msg.embeds.length < 10 && (
+            <DuplicateIcon
+              className="h-5 w-5 cursor-pointer"
+              role="button"
+              onClick={() => dispatch({ type: "cloneEmbed", index })}
+            />
+          )}
           <TrashIcon
             className="h-5 w-5 cursor-pointer"
             onClick={() => dispatch({ type: "removeEmbed", index })}

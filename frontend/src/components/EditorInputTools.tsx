@@ -19,7 +19,9 @@ export default function EditorInputTools({ value, onChange, input }: Props) {
   const [guild] = useSelectedGuild();
 
   useEffect(() => {
-    if (!input.current) return;
+    const current = input.current;
+    if (!current) return;
+
     function handleSelection(e: any) {
       setSelection([
         e.target.selectionStart || 0,
@@ -27,10 +29,10 @@ export default function EditorInputTools({ value, onChange, input }: Props) {
       ]);
     }
 
-    input.current.addEventListener("selectionchange", handleSelection);
+    current.addEventListener("selectionchange", handleSelection);
     return () =>
-      input.current?.removeEventListener("selectionchange", handleSelection);
-  }, [input.current]);
+      current?.removeEventListener("selectionchange", handleSelection);
+  }, [input]);
 
   function suroundWith(left: string, right?: string) {
     onChange(
@@ -38,7 +40,7 @@ export default function EditorInputTools({ value, onChange, input }: Props) {
         left +
         (value.slice(selectionStart, selectionEnd) || "some text") +
         (right || left) +
-        (selectionEnd != undefined ? value.slice(selectionEnd) : "")
+        (selectionEnd !== undefined ? value.slice(selectionEnd) : "")
     );
   }
 

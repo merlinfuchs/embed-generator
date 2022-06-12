@@ -10,56 +10,35 @@ export interface File {}
 
 export interface ComponentActionRow {
   type: 1;
-  components: ({ id?: number } & Button)[];
+  components: ({ id?: number } & (ComponentButton | ComponentSelectMenu))[];
 }
 
-export type Button = (
+export type ComponentButton =
   | {
       type: 2;
       style: 1 | 2 | 3 | 4;
       custom_id: string;
+      label: string;
     }
   | {
       type: 2;
       style: 5;
       url: string;
-    }
-) &
-  (
-    | {
-        label: string;
-        emoji?: {
-          name: string;
-          id?: string;
-          animated?: boolean;
-        };
-      }
-    | {
-        label: undefined;
-        emoji: {
-          name: string;
-          id?: string;
-          animated?: boolean;
-        };
-      }
-  );
+      label: string;
+    };
 
-export interface SelectMenu {
+export interface ComponentSelectMenu {
   type: 3;
   custom_id: string;
   placeholder?: string;
-  disabled: boolean;
-  options: {
-    label: string;
-    value: string;
-    description?: string;
-    emoji?: {
-      name: string;
-      id?: string;
-      animated?: boolean;
-    };
-    default?: boolean;
-  }[];
+  options: ({ id?: number } & ComponentSelectMenuOption)[];
+}
+
+export interface ComponentSelectMenuOption {
+  label: string;
+  value: string;
+  description?: string;
+  default?: boolean;
 }
 
 export interface Embed {

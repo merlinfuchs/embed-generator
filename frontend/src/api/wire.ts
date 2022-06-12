@@ -16,6 +16,8 @@ export interface ChannelWire {
   id: string;
   name: string | null;
   type: number;
+  position: number;
+  parent_id: string | null;
 }
 
 export interface MessageWire {

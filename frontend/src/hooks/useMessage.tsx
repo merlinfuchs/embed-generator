@@ -7,7 +7,13 @@ import {
   useReducer,
   useRef,
 } from "react";
-import { Button, Embed, Message } from "../discord/types";
+import {
+  ComponentActionRow,
+  ComponentButton,
+  ComponentSelectMenu,
+  Embed,
+  Message,
+} from "../discord/types";
 
 export type MessageAction =
   | {
@@ -152,47 +158,125 @@ export type MessageAction =
       value: boolean;
     }
   | {
+      type: "addComponentRow";
+    }
+  | {
+      type: "addComponentSelectRow";
+    }
+  | {
+      type: "clearComponentRows";
+    }
+  | {
+      type: "removeComponentRow";
+      index: number;
+    }
+  | {
+      type: "moveComponentRowUp";
+      index: number;
+    }
+  | {
+      type: "moveComponentRowDown";
+      index: number;
+    }
+  | {
+      type: "cloneComponentRow";
+      index: number;
+    }
+  | {
       type: "addButton";
-      value?: Button;
+      index: number;
+      value?: ComponentButton;
     }
   | {
-      type: "clearButtons";
-    }
-  | {
-      type: "removeButton";
+      type: "clearComponents";
       index: number;
     }
   | {
-      type: "moveButtonUp";
+      type: "removeComponent";
+      rowIndex: number;
       index: number;
     }
   | {
-      type: "moveButtonDown";
+      type: "moveComponentUp";
+      rowIndex: number;
       index: number;
     }
   | {
-      type: "cloneButton";
+      type: "moveComponentDown";
+      rowIndex: number;
+      index: number;
+    }
+  | {
+      type: "cloneComponent";
+      rowIndex: number;
       index: number;
     }
   | {
       type: "setButtonLabel";
+      rowIndex: number;
       index: number;
       value: string;
     }
   | {
       type: "setButtonStyle";
+      rowIndex: number;
       index: number;
-      value: Button["style"];
+      value: ComponentButton["style"];
     }
   | {
       type: "setButtonUrl";
+      rowIndex: number;
       index: number;
       value: string;
     }
   | {
       type: "setButtonCustomId";
+      rowIndex: number;
       index: number;
       value: string;
+    }
+  | {
+      type: "setSelectMenuPlaceholder";
+      rowIndex: number;
+      index: number;
+      value: string | undefined;
+    }
+  | {
+      type: "addSelectMenuOption";
+      rowIndex: number;
+      index: number;
+    }
+  | {
+      type: "clearSelectMenuOptions";
+      rowIndex: number;
+      index: number;
+    }
+  | {
+      type: "removeSelectMenuOption";
+      rowIndex: number;
+      selectIndex: number;
+      index: number;
+    }
+  | {
+      type: "setSelectMenuOptionLabel";
+      rowIndex: number;
+      selectIndex: number;
+      index: number;
+      value: string;
+    }
+  | {
+      type: "setSelectMenuOptionValue";
+      rowIndex: number;
+      selectIndex: number;
+      index: number;
+      value: string;
+    }
+  | {
+      type: "setSelectMenuOptionDescription";
+      rowIndex: number;
+      selectIndex: number;
+      index: number;
+      value?: string;
     };
 
 // this more-or-less makes sure that we never generate the same id twice
@@ -465,6 +549,73 @@ function reducer(msg: Message, action: MessageAction): Message {
       embeds[action.embedIndex] = { ...embeds[action.embedIndex], fields };
       return { ...msg, embeds };
     }
+    case "addComponentRow": {
+      return {
+        ...msg,
+        components: [
+          ...msg.components,
+          {
+            id: lastUniqueId++,
+            type: 1,
+            components: [],
+          },
+        ],
+      };
+    }
+    case "addComponentSelectRow": {
+      return {
+        ...msg,
+        components: [
+          ...msg.components,
+          {
+            id: lastUniqueId++,
+            type: 1,
+            components: [
+              {
+                type: 3,
+                id: lastUniqueId++,
+                custom_id: (lastUniqueId++).toString(),
+                options: [],
+              },
+            ],
+          },
+        ],
+      };
+    }
+    case "clearComponentRows": {
+      return {
+        ...msg,
+        components: [],
+      };
+    }
+    case "removeComponentRow": {
+      const components = [...msg.components];
+      components.splice(action.index, 1);
+      return { ...msg, components };
+    }
+    case "moveComponentRowUp": {
+      const components = [...msg.components];
+      [components[action.index - 1], components[action.index]] = [
+        components[action.index],
+        components[action.index - 1],
+      ];
+      return { ...msg, components };
+    }
+    case "moveComponentRowDown": {
+      const components = [...msg.components];
+      [components[action.index + 1], components[action.index]] = [
+        components[action.index],
+        components[action.index + 1],
+      ];
+      return { ...msg, components };
+    }
+    case "cloneComponentRow": {
+      const components = [...msg.components];
+      const newComponent = JSON.parse(JSON.stringify(components[action.index]));
+      newComponent.id = lastUniqueId++;
+      components.splice(action.index, 0, newComponent);
+      return { ...msg, components };
+    }
     case "addButton": {
       const components = [...msg.components];
       const newButton = {
@@ -472,90 +623,89 @@ function reducer(msg: Message, action: MessageAction): Message {
         ...(action.value || { type: 2, style: 5, url: "", label: "" }),
       };
 
-      if (components.length === 0) {
-        components.push({
-          id: lastUniqueId++,
-          type: 1,
-          components: [newButton],
-        });
-      } else {
-        components[0] = {
-          ...components[0],
-          components: [...components[0].components, newButton],
-        };
-      }
+      components[action.index] = {
+        ...components[action.index],
+        components: [...components[action.index].components, newButton],
+      };
       return { ...msg, components };
     }
-    case "clearButtons": {
-      return { ...msg, components: [] };
-    }
-    case "moveButtonUp": {
+    case "clearComponents": {
       const components = [...msg.components];
-      if (components.length !== 0) {
-        const subComponents = [...components[0].components];
-        [subComponents[action.index - 1], subComponents[action.index]] = [
-          subComponents[action.index],
-          subComponents[action.index - 1],
-        ];
-        components[0] = { ...components[0], components: subComponents };
-      }
+      components[action.index] = {
+        ...components[action.index],
+        components: [],
+      };
       return { ...msg, components };
     }
-    case "moveButtonDown": {
+    case "moveComponentUp": {
       const components = [...msg.components];
-      if (components.length !== 0) {
-        const subComponents = [...components[0].components];
-        [subComponents[action.index + 1], subComponents[action.index]] = [
-          subComponents[action.index],
-          subComponents[action.index + 1],
-        ];
-        components[0] = { ...components[0], components: subComponents };
-      }
+      const subComponents = [...components[action.rowIndex].components];
+      [subComponents[action.index - 1], subComponents[action.index]] = [
+        subComponents[action.index],
+        subComponents[action.index - 1],
+      ];
+      components[action.rowIndex] = {
+        ...components[action.rowIndex],
+        components: subComponents,
+      };
       return { ...msg, components };
     }
-    case "removeButton": {
+    case "moveComponentDown": {
+      const components = [...msg.components];
+      const subComponents = [...components[action.rowIndex].components];
+      [subComponents[action.index + 1], subComponents[action.index]] = [
+        subComponents[action.index],
+        subComponents[action.index + 1],
+      ];
+      components[action.rowIndex] = {
+        ...components[action.rowIndex],
+        components: subComponents,
+      };
+      return { ...msg, components };
+    }
+    case "removeComponent": {
       let components = [...msg.components];
-      if (components.length !== 0) {
-        const subComponents = [...components[0].components];
-        subComponents.splice(action.index, 1);
-        if (subComponents.length === 0) {
-          components = [];
-        } else {
-          components[0] = { ...components[0], components: subComponents };
-        }
-      }
+      const subComponents = [...components[action.rowIndex].components];
+      subComponents.splice(action.index, 1);
+      components[action.rowIndex] = {
+        ...components[action.rowIndex],
+        components: subComponents,
+      };
       return { ...msg, components };
     }
-    case "cloneButton": {
+    case "cloneComponent": {
       const components = [...msg.components];
-      if (components.length !== 0) {
-        const subComponents = [...components[0].components];
-        const newButton = JSON.parse(
-          JSON.stringify(subComponents[action.index])
-        );
-        newButton.id = lastUniqueId++;
-        subComponents.splice(action.index, 0, newButton);
-        components[0] = { ...components[0], components: subComponents };
-      }
+      const subComponents = [...components[action.rowIndex].components];
+      const newButton = JSON.parse(JSON.stringify(subComponents[action.index]));
+      newButton.id = lastUniqueId++;
+      subComponents.splice(action.index, 0, newButton);
+      components[action.rowIndex] = {
+        ...components[action.rowIndex],
+        components: subComponents,
+      };
       return { ...msg, components };
     }
     case "setButtonLabel": {
       const components = [...msg.components];
-      if (components.length !== 0) {
-        const subComponents = [...components[0].components];
+      const subComponents = [...components[action.rowIndex].components];
+      const component = subComponents[action.index];
+      if (component.type === 2) {
         subComponents[action.index] = {
-          ...subComponents[action.index],
+          ...component,
           label: action.value,
         };
-        components[0] = { ...components[0], components: subComponents };
       }
+      components[action.rowIndex] = {
+        ...components[action.rowIndex],
+        components: subComponents,
+      };
       return { ...msg, components };
     }
     case "setButtonStyle": {
       const components = [...msg.components];
-      if (components.length !== 0) {
-        const subComponents = [...components[0].components];
-        const component = subComponents[action.index];
+      const subComponents = [...components[action.rowIndex].components];
+      const component = subComponents[action.index];
+      if (component.type === 2) {
         if (action.value === 5) {
           subComponents[action.index] = {
             ...component,
@@ -569,38 +719,175 @@ function reducer(msg: Message, action: MessageAction): Message {
             custom_id: component.style !== 5 ? component.custom_id : "",
           };
         }
-        components[0] = { ...components[0], components: subComponents };
       }
+      components[action.rowIndex] = {
+        ...components[action.rowIndex],
+        components: subComponents,
+      };
       return { ...msg, components };
     }
     case "setButtonUrl": {
       const components = [...msg.components];
-      if (components.length !== 0) {
-        const subComponents = [...components[0].components];
-        const component = subComponents[action.index];
-        if (component.style === 5) {
-          subComponents[action.index] = {
-            ...component,
-            url: action.value,
-          };
-        }
-        components[0] = { ...components[0], components: subComponents };
+      const subComponents = [...components[action.rowIndex].components];
+      const component = subComponents[action.index];
+      if (component.type === 2 && component.style === 5) {
+        subComponents[action.index] = {
+          ...component,
+          url: action.value,
+        };
       }
+      components[action.rowIndex] = {
+        ...components[action.rowIndex],
+        components: subComponents,
+      };
       return { ...msg, components };
     }
     case "setButtonCustomId": {
       const components = [...msg.components];
-      if (components.length !== 0) {
-        const subComponents = [...components[0].components];
-        const component = subComponents[action.index];
-        if (component.style !== 5) {
-          subComponents[action.index] = {
-            ...component,
-            custom_id: action.value,
-          };
-        }
-        components[0] = { ...components[0], components: subComponents };
+      const subComponents = [...components[action.rowIndex].components];
+      const component = subComponents[action.index];
+      if (component.type === 2 && component.style !== 5) {
+        subComponents[action.index] = {
+          ...component,
+          custom_id: action.value,
+        };
       }
+      components[action.rowIndex] = {
+        ...components[action.rowIndex],
+        components: subComponents,
+      };
+      return { ...msg, components };
+    }
+    case "setSelectMenuPlaceholder": {
+      const components = [...msg.components];
+      const subComponents = [...components[action.rowIndex].components];
+      const component = subComponents[action.index];
+      if (component.type === 3) {
+        subComponents[action.index] = {
+          ...component,
+          placeholder: action.value,
+        };
+      }
+      components[action.rowIndex] = {
+        ...components[action.rowIndex],
+        components: subComponents,
+      };
+      return { ...msg, components };
+    }
+    case "addSelectMenuOption": {
+      const components = [...msg.components];
+      const subComponents = [...components[action.rowIndex].components];
+      const component = subComponents[action.index];
+      if (component.type === 3) {
+        subComponents[action.index] = {
+          ...component,
+          options: [
+            ...component.options,
+            { id: lastUniqueId++, label: "", value: "" },
+          ],
+        };
+      }
+      components[action.rowIndex] = {
+        ...components[action.rowIndex],
+        components: subComponents,
+      };
+      return { ...msg, components };
+    }
+    case "clearSelectMenuOptions": {
+      const components = [...msg.components];
+      const subComponents = [...components[action.rowIndex].components];
+      const component = subComponents[action.index];
+      if (component.type === 3) {
+        subComponents[action.index] = {
+          ...component,
+          options: [],
+        };
+      }
+      components[action.rowIndex] = {
+        ...components[action.rowIndex],
+        components: subComponents,
+      };
+      return { ...msg, components };
+    }
+    case "removeSelectMenuOption": {
+      const components = [...msg.components];
+      const subComponents = [...components[action.rowIndex].components];
+      const component = subComponents[action.selectIndex];
+      if (component.type === 3) {
+        const options = [...component.options];
+        options.splice(action.index, 1);
+        subComponents[action.selectIndex] = {
+          ...component,
+          options,
+        };
+      }
+      components[action.rowIndex] = {
+        ...components[action.rowIndex],
+        components: subComponents,
+      };
+      return { ...msg, components };
+    }
+    case "setSelectMenuOptionLabel": {
+      const components = [...msg.components];
+      const subComponents = [...components[action.rowIndex].components];
+      const component = subComponents[action.selectIndex];
+      if (component.type === 3) {
+        const options = [...component.options];
+        options[action.index] = {
+          ...options[action.index],
+          label: action.value,
+        };
+        subComponents[action.selectIndex] = {
+          ...component,
+          options,
+        };
+      }
+      components[action.rowIndex] = {
+        ...components[action.rowIndex],
+        components: subComponents,
+      };
+      return { ...msg, components };
+    }
+    case "setSelectMenuOptionValue": {
+      const components = [...msg.components];
+      const subComponents = [...components[action.rowIndex].components];
+      const component = subComponents[action.selectIndex];
+      if (component.type === 3) {
+        const options = [...component.options];
+        options[action.index] = {
+          ...options[action.index],
+          value: action.value,
+        };
+        subComponents[action.selectIndex] = {
+          ...component,
+          options,
+        };
+      }
+      components[action.rowIndex] = {
+        ...components[action.rowIndex],
+        components: subComponents,
+      };
+      return { ...msg, components };
+    }
+    case "setSelectMenuOptionDescription": {
+      const components = [...msg.components];
+      const subComponents = [...components[action.rowIndex].components];
+      const component = subComponents[action.selectIndex];
+      if (component.type === 3) {
+        const options = [...component.options];
+        options[action.index] = {
+          ...options[action.index],
+          description: action.value,
+        };
+        subComponents[action.selectIndex] = {
+          ...component,
+          options,
+        };
+      }
+      components[action.rowIndex] = {
+        ...components[action.rowIndex],
+        components: subComponents,
+      };
       return { ...msg, components };
     }
     default:
