@@ -6,11 +6,7 @@ import {
   TrashIcon,
 } from "@heroicons/react/outline";
 import { useMemo, useState } from "react";
-import {
-  ComponentActionRow,
-  ComponentButton,
-  ComponentSelectMenu,
-} from "../discord/types";
+import { ComponentActionRow } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import EditorComponentButton from "./EditorComponentButton";
 import EditorComponentSelect from "./EditorComponentSelect";

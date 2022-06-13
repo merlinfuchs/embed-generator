@@ -7,13 +7,7 @@ import {
   useReducer,
   useRef,
 } from "react";
-import {
-  ComponentActionRow,
-  ComponentButton,
-  ComponentSelectMenu,
-  Embed,
-  Message,
-} from "../discord/types";
+import { ComponentButton, Embed, Message } from "../discord/types";
 
 export type MessageAction =
   | {

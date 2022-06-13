@@ -16,7 +16,7 @@ export default function BaseModal({
 }: Props) {
   if (!visible) return <div />;
 
-  let modalClass = "bg-dark-4 h-48 rounded-md";
+  let modalClass = "bg-dark-4 rounded-md p-2";
   if (size === "large") {
     modalClass += " w-full md:w-160";
   } else if (size === "medium") {
@@ -26,8 +26,11 @@ export default function BaseModal({
   }
 
   return (
-    <div className="fixed flex-col w-screen h-screen flex items-center justify-center bg-dark-1 top-0 left-0 bg-opacity-90 px-2">
-      <ClickOutsideHandler onClickOutside={() => {}} className={modalClass}>
+    <div className="fixed flex-col w-screen h-screen flex items-center justify-center bg-dark-1 top-0 left-0 bg-opacity-90 px-2 z-20">
+      <ClickOutsideHandler
+        onClickOutside={() => setVisible(false)}
+        className={modalClass}
+      >
         {children}
       </ClickOutsideHandler>
     </div>

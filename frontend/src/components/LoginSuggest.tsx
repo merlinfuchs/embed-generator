@@ -1,5 +1,8 @@
 import {
+  CursorClickIcon,
+  EmojiHappyIcon,
   InformationCircleIcon,
+  LinkIcon,
   LoginIcon,
   UploadIcon,
 } from "@heroicons/react/outline";
@@ -35,9 +38,21 @@ export default function LoginSuggest() {
             </div>
           </div>
           <div className="p-4 bg-dark-2 rounded flex space-x-3 items-center">
-            <UploadIcon className="w-5 h-5 text-green flex-none" />
+            <LinkIcon className="w-5 h-5 text-green flex-none" />
             <div className="text-gray-400 font-light text-sm">
-              Save messages and load them whenever you need them
+              Send messages without having to deal with webhooks
+            </div>
+          </div>
+          <div className="p-4 bg-dark-2 rounded flex space-x-3 items-center">
+            <CursorClickIcon className="w-5 h-5 text-green flex-none" />
+            <div className="text-gray-400 font-light text-sm">
+              Add buttons and select menus to your messages
+            </div>
+          </div>
+          <div className="p-4 bg-dark-2 rounded flex space-x-3 items-center">
+            <EmojiHappyIcon className="w-5 h-5 text-green flex-none" />
+            <div className="text-gray-400 font-light text-sm">
+              Add custom emojis to your messages using the emoji picker
             </div>
           </div>
           <div className="flex justify-end pt-2">

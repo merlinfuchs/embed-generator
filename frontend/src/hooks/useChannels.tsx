@@ -27,6 +27,8 @@ export const ChannelsProvider = ({ children }: { children: ReactNode }) => {
     if (client.token && selectedGuild) {
       client.getGuildChannels(selectedGuild).then((resp) => {
         if (resp.success) {
+          // this code is terrible but it seems to work and I don't want to deal with this anymore
+
           const channels = Object.fromEntries(resp.data.map((c) => [c.id, c]));
 
           const channelTree: any = {};

@@ -22,7 +22,7 @@ pub fn command_definition() -> Command {
         "Get the API format for mentions, channels, roles, & custom emojis".into(),
         CommandType::ChatInput,
     )
-    /* .option(
+    .option(
         SubCommandBuilder::new(
             "text".into(),
             "Get the API format for a text with multiple mentions, channels, & custom emojis"
@@ -36,7 +36,7 @@ pub fn command_definition() -> Command {
             )
             .required(true),
         ),
-    ) */
+    )
     .option(
         SubCommandBuilder::new(
             "user".into(),
@@ -143,6 +143,20 @@ pub async fn handle_command(
                 cmd.id,
                 &cmd.token,
                 format!("API format for {0}: ```{0}```", value),
+            )
+            .await?;
+        },
+        "text" => {
+            let value = match options.pop().unwrap().value {
+                CommandOptionValue::String(e) => e,
+                _ => unreachable!(),
+            };
+
+            simple_response(
+                &http,
+                cmd.id,
+                &cmd.token,
+                format!("API format for the provided text: ```{0}```", value),
             )
             .await?;
         }

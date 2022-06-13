@@ -20,7 +20,7 @@ export default function ChannelSelect({ value, onChange }: Props) {
 
   useEffect(() => {
     onChange(null);
-  }, [channels]);
+  }, [channels, onChange]);
 
   return (
     <Listbox value={value} onChange={onChange}>

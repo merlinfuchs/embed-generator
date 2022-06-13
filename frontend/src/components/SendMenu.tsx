@@ -1,7 +1,4 @@
-import { Switch } from "@headlessui/react";
-import { LinkIcon } from "@heroicons/react/outline";
 import { useMemo, useState } from "react";
-import { json } from "stream/consumers";
 import { Message } from "../discord/types";
 import useAlerts from "../hooks/useAlerts";
 import useAPIClient from "../hooks/useApiClient";
@@ -10,7 +7,6 @@ import useMessage from "../hooks/useMessage";
 import useSelectedGuild from "../hooks/useSelectedGuild";
 import useSelectedMode from "../hooks/useSelectedMode";
 import useToken from "../hooks/useToken";
-import { classNames } from "../util";
 import ChannelSelect from "./ChannelSelect";
 import GuildSelect from "./GuildSelect";
 import JsonEditorModal from "./JsonEditorModal";
@@ -127,7 +123,7 @@ export default function SendMenu() {
             </div>
             <select
               value={selectedMode}
-              onChange={(e) => setSelectedMode(e.target.value as any)}
+              onChange={(e) => wrappedSetSelectedMode(e.target.value as any)}
               className="bg-dark-2 rounded px-3 py-2 w-full sm:w-64 cursor-pointer"
             >
               <option value="webhook">Webhook</option>
@@ -207,12 +203,12 @@ export default function SendMenu() {
         )}
         {!token && <LoginSuggest />}
         <div className="flex justify-end space-x-3">
-          {/* <button
+          <button
             className="border-2 border-blurple px-3 py-2 rounded transition-colors hover:bg-blurple"
             onClick={() => setJsonModal(!jsonModal)}
           >
             View JSON
-        </button> */}
+          </button>
           <button
             className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark"
             onClick={sendMessage}

@@ -1,4 +1,4 @@
-import { ChevronRightIcon, TrashIcon } from "@heroicons/react/outline";
+import { ChevronRightIcon } from "@heroicons/react/outline";
 import { useState } from "react";
 import { ComponentSelectMenu } from "../discord/types";
 import useMessage from "../hooks/useMessage";
