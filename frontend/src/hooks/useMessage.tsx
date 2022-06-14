@@ -8,6 +8,7 @@ import {
   useRef,
 } from "react";
 import { ComponentButton, Embed, Message } from "../discord/types";
+import { jsonToMessage, messageToJson } from "../discord/utils";
 
 export type MessageAction =
   | {
@@ -913,7 +914,7 @@ export const MessageProvider = ({ children }: { children: ReactNode }) => {
   const initialMessage = useMemo(() => {
     const lastMessage = localStorage.getItem("lastMessage");
     if (lastMessage) {
-      return JSON.parse(lastMessage);
+      return jsonToMessage(JSON.parse(lastMessage));
     } else {
       return defaultMessage;
     }
@@ -925,7 +926,7 @@ export const MessageProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     clearTimeout(timeout.current);
     timeout.current = setTimeout(() => {
-      const raw = JSON.stringify(msg);
+      const raw = JSON.stringify(messageToJson(msg));
       localStorage.setItem("lastMessage", raw);
     }, 500);
   }, [msg]);

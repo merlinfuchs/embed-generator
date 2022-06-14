@@ -17,40 +17,33 @@ export default function JsonEditorModal({ visible, setVisible }: Props) {
   );
 
   const [json, setJson] = useState(currentJson);
-  const [errors, setErrors] = useState<string[] | null>(null);
 
-  useEffect(() => setJson(json), [json]);
+  useEffect(() => setJson(currentJson), [currentJson]);
 
   function close() {
     setVisible(false);
-    setErrors(null);
   }
 
   function save() {
-    const result = jsonToMessage(JSON.parse(json));
-    if (result.success) {
-      dispatch({ type: "replace", value: result.message });
+    try {
+      const message = jsonToMessage(JSON.parse(json));
+      dispatch({ type: "replace", value: message });
       setVisible(false);
-      setErrors(null);
-    } else {
-      setErrors(result.errors);
+    } catch {
+      alert("Invalid JSON provided");
     }
   }
 
   return (
     <BaseModal visible={visible} setVisible={setVisible} size="large">
-      <div className="space-y-3">
+      <div className="space-y-1">
         <textarea
           value={json}
           onChange={(e) => setJson(e.target.value)}
           className="w-full h-96 bg-dark-3 rounded no-ring rounded"
         ></textarea>
-        <div>
-          {errors?.map((e, i) => (
-            <div key={i} className="text-red text-sm">
-              - {e}
-            </div>
-          ))}
+        <div className="text-sm text-gray-400">
+          Unknown and invalid fields will be ignored
         </div>
         <div className="flex justify-end space-x-2">
           <button

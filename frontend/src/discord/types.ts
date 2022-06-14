@@ -38,7 +38,6 @@ export interface ComponentSelectMenuOption {
   label: string;
   value: string;
   description?: string;
-  default?: boolean;
 }
 
 export interface Embed {
