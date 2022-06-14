@@ -1,3 +1,5 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use actix_web::post;
 use actix_web::web::{Json, ReqData};
 use nanoid::nanoid;
@@ -16,9 +18,14 @@ pub async fn route_message_create(
 
     // TODO: check message limit for user
 
+    let unix_now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
     let model = MessageModel {
         id: nanoid!(),
-        user_id: token.user_id,
+        owner_id: token.user_id,
+        updated_at: unix_now,
         name: req.name,
         description: req.description,
         payload_json: req.payload_json,

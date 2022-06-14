@@ -1,3 +1,4 @@
+use std::time::{SystemTime, UNIX_EPOCH};
 use actix_web::put;
 use actix_web::web::{Json, Path, ReqData};
 
@@ -15,9 +16,14 @@ pub async fn route_message_update(
     let message_id = message_id.into_inner();
     let req = req.into_inner().normalize_and_validate()?;
 
+    let unix_now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
     let model = MessageModel {
         id: message_id,
-        user_id: token.user_id,
+        owner_id: token.user_id,
+        updated_at: unix_now,
         name: req.name,
         description: req.description,
         payload_json: req.payload_json,

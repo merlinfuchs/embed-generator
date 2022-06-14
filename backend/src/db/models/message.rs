@@ -12,7 +12,8 @@ use crate::db::get_collection;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MessageModel {
     pub id: String,
-    pub user_id: Id<UserMarker>,
+    pub owner_id: Id<UserMarker>,
+    pub updated_at: u64,
     pub name: String,
     pub description: String,
     pub payload_json: String,
@@ -28,7 +29,7 @@ impl MessageModel {
     pub async fn update(&self) -> Result<UpdateResult, MongoError> {
         get_collection::<Self>("messages")
             .update_one(
-                doc! {"_id": &self.id, "user_id": self.user_id.to_string()},
+                doc! {"_id": &self.id, "user_id": self.owner_id.to_string()},
                 doc! {"$set": to_bson(self).unwrap()},
                 UpdateOptions::builder().build(),
             )

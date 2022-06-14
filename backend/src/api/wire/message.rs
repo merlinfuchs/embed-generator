@@ -15,7 +15,8 @@ use crate::CONFIG;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MessageWire {
     pub id: String,
-    pub user_id: Id<UserMarker>,
+    pub owner_id: Id<UserMarker>,
+    pub updated_at: Timestamp,
     pub name: String,
     pub description: String,
     pub payload_json: String,
@@ -25,7 +26,8 @@ impl From<MessageModel> for MessageWire {
     fn from(m: MessageModel) -> Self {
         Self {
             id: m.id,
-            user_id: m.user_id,
+            owner_id: m.owner_id,
+            updated_at: Timestamp::from_secs(m.updated_at as i64).unwrap(),
             name: m.name,
             description: m.description,
             payload_json: m.payload_json,
@@ -152,7 +154,7 @@ pub struct MessageSendAttachmentWire {
     pub name: String,
     #[serde(default)]
     pub description: Option<String>,
-    pub data_url: String
+    pub data_url: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
