@@ -4,8 +4,9 @@ use actix_web::post;
 use actix_web::web::{Json, ReqData};
 use nanoid::nanoid;
 
-use crate::api::response::RouteResult;
+use crate::api::response::{RouteError, RouteResult};
 use crate::api::wire::{MessageCreateRequestWire, MessageWire, NormalizeValidate};
+use crate::CONFIG;
 use crate::db::models::MessageModel;
 use crate::tokens::TokenClaims;
 
@@ -16,7 +17,10 @@ pub async fn route_message_create(
 ) -> RouteResult<MessageWire> {
     let req = req.into_inner().normalize_and_validate()?;
 
-    // TODO: check message limit for user
+    let message_count = MessageModel::count_by_user_id(token.user_id).await?;
+    if message_count > CONFIG.limits.max_messages_per_user {
+        return Err(RouteError::MessageLimitReached)
+    }
 
     let unix_now = SystemTime::now()
         .duration_since(UNIX_EPOCH)

@@ -4,8 +4,8 @@ use mongodb::error::Error as MongoError;
 use mongodb::options::{InsertOneOptions, UpdateOptions};
 use mongodb::results::{DeleteResult, InsertOneResult, UpdateResult};
 use serde::{Deserialize, Serialize};
-use twilight_model::id::marker::UserMarker;
 use twilight_model::id::Id;
+use twilight_model::id::marker::UserMarker;
 
 use crate::db::get_collection;
 
@@ -62,5 +62,13 @@ impl MessageModel {
             .await?;
 
         Ok(cursor.collect().await)
+    }
+
+    pub async fn count_by_user_id(
+        user_id: Id<UserMarker>,
+    ) -> Result<u64, MongoError> {
+        get_collection::<Self>("messages")
+            .count_documents(doc! {"user_id": user_id.to_string()}, None)
+            .await
     }
 }

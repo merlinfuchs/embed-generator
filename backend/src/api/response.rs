@@ -73,6 +73,8 @@ pub enum RouteError {
     UnsupportedChannelType,
     #[error("A request to the Discord API has failed")]
     DiscordApi,
+    #[error("You have reached the maximum count of messages")]
+    MessageLimitReached,
 }
 
 impl ResponseError for RouteError {
@@ -90,6 +92,7 @@ impl ResponseError for RouteError {
             ChannelWebhookLimitReached => StatusCode::BAD_REQUEST,
             UnsupportedChannelType => StatusCode::BAD_REQUEST,
             DiscordApi => StatusCode::BAD_REQUEST,
+            MessageLimitReached => StatusCode::FORBIDDEN
         }
     }
 

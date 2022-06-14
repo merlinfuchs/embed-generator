@@ -26,7 +26,7 @@ pub struct DiscordConfig {
     pub test_guild_id: Option<Id<GuildMarker>>,
 }
 
-fn default_max_messages_per_user() -> u32 {
+fn default_max_messages_per_user() -> u64 {
     25
 }
 
@@ -37,7 +37,7 @@ fn default_max_messages_size() -> usize {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LimitConfig {
     #[serde(default = "default_max_messages_per_user")]
-    pub max_messages_per_user: u32,
+    pub max_messages_per_user: u64,
     #[serde(default = "default_max_messages_size")]
     pub max_message_size: usize,
 }
