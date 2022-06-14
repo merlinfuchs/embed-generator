@@ -2,7 +2,7 @@
 
 A powerful tool for creating rich-embed Discord messages using webhooks.
 
-You will usually want to use the hosted version and https://message.style. There is not much benefit in hosting this yourself.
+You will usually want to use the hosted version at https://message.style. There is not much benefit in hosting this yourself.
 
 ## Project Structure
 
