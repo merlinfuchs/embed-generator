@@ -43,7 +43,7 @@ Otherwise you will need a HTTP server like Nginx to server the frontend for you:
 cargo build --release --no-default-features
 ```
 
-# Install database
+### Install databases
 
 Install MongoDB and Redis on your server. I'm sure you can find instructions online!
 
