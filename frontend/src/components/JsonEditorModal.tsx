@@ -22,6 +22,7 @@ export default function JsonEditorModal({ visible, setVisible }: Props) {
 
   function close() {
     setVisible(false);
+    setJson(currentJson);
   }
 
   function save() {
@@ -29,6 +30,7 @@ export default function JsonEditorModal({ visible, setVisible }: Props) {
       const message = jsonToMessage(JSON.parse(json));
       dispatch({ type: "replace", value: message });
       setVisible(false);
+      setJson(currentJson);
     } catch {
       alert("Invalid JSON provided");
     }
