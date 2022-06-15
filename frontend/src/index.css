@@ -16,7 +16,3 @@ select {
   background-position-x: 100%;
   background-position-y: 50%;
 }
-
-.discord-message {
-  padding-right: 1em !important; /* TODO: apply only on mobile */
-}

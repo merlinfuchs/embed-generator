@@ -934,7 +934,6 @@ Sources from: https://github.com/skyra-project/skyra.pw/blob/main/src/config/dis
   flex-direction: column;
   font-size: 0.9em;
   font-family: Whitney, Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
-  padding: 0px 1em;
 
   position: relative;
   word-wrap: break-word;
@@ -945,9 +944,7 @@ Sources from: https://github.com/skyra-project/skyra.pw/blob/main/src/config/dis
   -webkit-box-flex: 0;
   -ms-flex: 0 0 auto;
   flex: 0 0 auto;
-  padding-right: 0;
   min-height: 1.375rem;
-  padding-right: 48px !important;
   margin-top: 1.0625rem;
 }
 

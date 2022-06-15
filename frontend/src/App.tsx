@@ -21,7 +21,7 @@ function App() {
             <div className="border-b border-gray-600 my-5" />
             <Editor />
           </div>
-          <div className="lg:w-5/12 flex-none hidden lg:block overflow-y-auto">
+          <div className="lg:w-5/12 flex-none hidden lg:block overflow-y-auto pl-4 pr-10">
             <Preview />
           </div>
         </div>
@@ -29,7 +29,7 @@ function App() {
       <div>
         <PreviewModal visible={previewModal} setVisible={setPreviewModal} />
         <div
-          className="lg:hidden fixed bottom-5 right-5 bg-blurple rounded-full h-12 w-12 shadow-xl flex items-center justify-center cursor-pointer"
+          className="lg:hidden fixed bottom-5 right-5 bg-blurple rounded-full h-12 w-12 shadow-xl flex items-center justify-center cursor-pointer z-10"
           role="button"
           title="Preview"
           onClick={() => setPreviewModal(!previewModal)}
