@@ -24,6 +24,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     } else if (user) {
       setUser(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client]);
 
   return <UserContext.Provider value={user}>{children}</UserContext.Provider>;

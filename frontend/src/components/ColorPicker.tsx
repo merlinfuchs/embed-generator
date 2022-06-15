@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { HexColorPicker } from "react-colorful";
 import ClickOutsideHandler from "./ClickOutsideHandler";
 
@@ -18,7 +18,7 @@ export default function ColorPicker({ value, onChange }: Props) {
 
     if (raw) {
       const value = parseInt(raw, 16);
-      if (value !== NaN) {
+      if (!isNaN(value)) {
         onChange(value);
       } else {
         onChange(undefined);

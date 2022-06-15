@@ -6,12 +6,6 @@ import useUser from "../hooks/useUser";
 import { userAvatarUrl } from "../discord/utils";
 import MessageManager from "./MessageManager";
 
-const user = {
-  name: "Tom Cook",
-  email: "tom@example.com",
-  imageUrl:
-    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-};
 const navigation = [
   { name: "Discord Server", href: "/api/link/discord" },
   { name: "Invite Bot", href: "/api/link/invite" },
@@ -42,7 +36,7 @@ export default function Example() {
       url.searchParams.delete("code");
       window.history.pushState(null, "", url.toString());
     }
-  }, []);
+  }, [setToken]);
 
   return (
     <Disclosure as="nav" className="bg-dark-3 border-b border-dark-2 shadow-md">
@@ -76,6 +70,7 @@ export default function Example() {
                       href={item.href}
                       className="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-dark-4 hover:text-white"
                       target="_blank"
+                      rel="noreferrer"
                     >
                       {item.name}
                     </a>
@@ -123,6 +118,7 @@ export default function Example() {
                   href={item.href}
                   className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-dark-4 hover:text-white"
                   target="_blank"
+                  rel="noreferrer"
                 >
                   {item.name}
                 </a>

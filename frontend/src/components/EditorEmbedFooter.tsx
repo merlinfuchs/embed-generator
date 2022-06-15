@@ -33,7 +33,7 @@ export default function EditorEmbedFooter({ index, embed }: Props) {
         dispatch({ type: "setEmbedTimestamp", index, value: undefined });
       }
     }
-  }, [rawTimestamp]);
+  }, [rawTimestamp, index, dispatch]);
 
   useEffect(() => {
     if (embed.timestamp) {

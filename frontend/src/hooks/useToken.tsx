@@ -1,10 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-  useEffect,
-} from "react";
+import { createContext, useContext, useState, ReactNode } from "react";
 
 const TokenContext = createContext<
   [string | null, (newToken: string | null) => void]
