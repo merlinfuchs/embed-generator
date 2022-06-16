@@ -31,16 +31,19 @@ pub fn command_definition() -> Command {
         "Get JSON for or restore a message on Embed Generator".into(),
         CommandType::ChatInput,
     )
-    /* .option(
-        SubCommandBuilder::new("restore".into(), "Restore a message on Embed Generator".into())
-            .option(
-                StringBuilder::new(
-                    "message_id_or_url".into(),
-                    "ID or URL of the message you want to restore".into(),
-                )
-                .required(true),
-            ),
-    ) */
+    .option(
+        SubCommandBuilder::new(
+            "restore".into(),
+            "Restore a message on Embed Generator".into(),
+        )
+        .option(
+            StringBuilder::new(
+                "message_id_or_url".into(),
+                "ID or URL of the message you want to restore".into(),
+            )
+            .required(true),
+        ),
+    )
     .option(
         SubCommandBuilder::new("dump".into(), "Get the JSON code for a message".into()).option(
             StringBuilder::new(
@@ -137,6 +140,23 @@ async fn get_message_from_id_or_url(
     Ok(msg)
 }
 
+pub fn message_to_dump(msg: Message) -> MessageDump {
+    MessageDump {
+        id: msg.id,
+        channel_id: msg.channel_id,
+        username: msg.author.name,
+        avatar_url: msg.author.avatar.map(|a| {
+            format!(
+                "https://cdn.discordapp.com/avatars/{}/{}.webp",
+                msg.author.id, a
+            )
+        }),
+        content: msg.content,
+        embeds: msg.embeds,
+        components: msg.components,
+    }
+}
+
 async fn handle_command_restore(
     http: InteractionClient<'_>,
     cmd: Box<ApplicationCommand>,
@@ -147,19 +167,31 @@ async fn handle_command_restore(
         _ => unreachable!(),
     };
 
-    let _ = get_message_from_id_or_url(&http, &cmd, &message_id_or_url).await?;
+    let msg = get_message_from_id_or_url(&http, &cmd, &message_id_or_url).await?;
+    let msg_dump = message_to_dump(msg);
+
+    let client = awc::ClientBuilder::new().finish();
+    let resp: ClubShareCreateResponse = client
+        .post("https://api.discord.club/messages/share")
+        .send_json(&ClubShareCreateRequest { json: msg_dump })
+        .await?
+        .json()
+        .await?;
 
     simple_response(
         &http,
         cmd.id,
         &cmd.token,
-        "You can view message here: ".into(),
+        format!(
+            "You can edit the message here: https://discord.club/share/{}",
+            resp.id
+        ),
     )
     .await?;
     Ok(())
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct MessageDump {
     pub id: Id<MessageMarker>,
     pub channel_id: Id<ChannelMarker>,
@@ -182,20 +214,7 @@ async fn handle_command_dump(
 
     let msg = get_message_from_id_or_url(&http, &cmd, &message_id_or_url).await?;
 
-    let msg_json = serde_json::to_string_pretty(&MessageDump {
-        id: msg.id,
-        channel_id: msg.channel_id,
-        username: msg.author.name,
-        avatar_url: msg.author.avatar.map(|a| {
-            format!(
-                "https://cdn.discordapp.com/avatars/{}/{}.webp",
-                msg.author.id, a
-            )
-        }),
-        content: msg.content,
-        embeds: msg.embeds,
-        components: msg.components,
-    })?;
+    let msg_json = serde_json::to_string_pretty(&message_to_dump(msg))?;
 
     let client = awc::ClientBuilder::new().finish();
 
@@ -236,5 +255,15 @@ pub struct VaultbinPasteCreateResponse {
 
 #[derive(Serialize, Deserialize)]
 pub struct VaultbinPasteCreateResponseData {
+    pub id: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ClubShareCreateRequest {
+    pub json: MessageDump,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ClubShareCreateResponse {
     pub id: String,
 }

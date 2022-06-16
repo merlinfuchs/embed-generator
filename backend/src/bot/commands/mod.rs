@@ -33,7 +33,7 @@ pub fn command_definitions() -> Vec<Command> {
         website::command_definition(),
         message::command_definition(),
         webhook::command_definition(),
-        // message_restore_direct::command_definition(),
+        message_restore_direct::command_definition(),
         message_json_direct::command_definition(),
         image::command_definition(),
         embed::command_definition()

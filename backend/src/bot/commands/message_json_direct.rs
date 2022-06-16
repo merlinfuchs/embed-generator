@@ -4,16 +4,13 @@ use twilight_model::application::interaction::ApplicationCommand;
 use twilight_model::id::Id;
 use twilight_util::builder::command::CommandBuilder;
 
-use crate::bot::commands::{InteractionResult, simple_response};
-use crate::bot::commands::message::{MessageDump, VaultbinPasteCreateRequest, VaultbinPasteCreateResponse};
+use crate::bot::commands::message::{
+    message_to_dump, VaultbinPasteCreateRequest, VaultbinPasteCreateResponse,
+};
+use crate::bot::commands::{simple_response, InteractionResult};
 
 pub fn command_definition() -> Command {
-    CommandBuilder::new(
-        "Dump Message".into(),
-        "".into(),
-        CommandType::Message,
-    )
-    .build()
+    CommandBuilder::new("Dump Message".into(), "".into(), CommandType::Message).build()
 }
 
 pub async fn handle_command(
@@ -23,20 +20,7 @@ pub async fn handle_command(
     let msg_id = Id::new(cmd.data.target_id.unwrap().get());
     let msg = cmd.data.resolved.unwrap().messages.remove(&msg_id).unwrap();
 
-    let msg_json = serde_json::to_string_pretty(&MessageDump {
-        id: msg.id,
-        channel_id: msg.channel_id,
-        username: msg.author.name,
-        avatar_url: msg.author.avatar.map(|a| {
-            format!(
-                "https://cdn.discordapp.com/avatars/{}/{}.webp",
-                msg.author.id, a
-            )
-        }),
-        content: msg.content,
-        embeds: msg.embeds,
-        components: msg.components,
-    })?;
+    let msg_json = serde_json::to_string_pretty(&message_to_dump(msg))?;
 
     let client = awc::ClientBuilder::new().finish();
 
