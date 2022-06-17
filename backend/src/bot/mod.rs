@@ -48,16 +48,7 @@ lazy_static! {
 
 pub fn get_bot_permissions_on_guild(guild_id: Id<GuildMarker>) -> Permissions {
     let user_id = Id::new(CONFIG.discord.oauth_client_id.get());
-    if let Some(member) = DISCORD_CACHE.member(guild_id, user_id) {
-        member
-            .roles()
-            .into_iter()
-            .filter_map(|r| DISCORD_CACHE.role(*r).map(|r| r.permissions))
-            .reduce(|a, b| a | b)
-            .unwrap_or(Permissions::empty())
-    } else {
-        Permissions::empty()
-    }
+    DISCORD_CACHE.permissions().root(user_id, guild_id).unwrap_or(Permissions::empty())
 }
 
 pub async fn sync_commands() -> Result<(), Box<dyn Error>> {

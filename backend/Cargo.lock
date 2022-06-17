@@ -2408,6 +2408,7 @@ dependencies = [
  "dashmap",
  "serde 1.0.137",
  "twilight-model",
+ "twilight-util",
 ]
 
 [[package]]

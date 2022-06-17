@@ -73,7 +73,7 @@ pub async fn route_auth_exchange(
         user_id: user_model.id,
         guild_ids: guilds
             .into_iter()
-            .filter(|g| g.permissions.contains(Permissions::MANAGE_MESSAGES))
+            .filter(|g| g.permissions.contains(Permissions::MANAGE_WEBHOOKS))
             .map(|g| g.id)
             .collect(),
     };
