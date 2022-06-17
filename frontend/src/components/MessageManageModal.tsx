@@ -33,10 +33,11 @@ export default function MessageManageModal({ visible, setVisible }: Props) {
     client
       .createMessage({
         name: newName,
-        description: "",
+        description: null,
         payload_json: payloadJson,
       })
       .then((resp) => {
+        setNewName("");
         if (resp.success) {
           refreshMessages();
         } else {
@@ -85,7 +86,12 @@ export default function MessageManageModal({ visible, setVisible }: Props) {
       <div className="space-y-4">
         <div>
           <div className="flex items-center mb-1">
-            <div className="font-medium text-lg flex-auto">Saved Messages</div>
+            <div className="flex items-center flex-auto">
+              <div className="font-medium text-lg mr-2">Saved Messages</div>
+              <div className="text-gray-400 text-light italic text-sm">
+                {messages?.length || 0} / 25
+              </div>
+            </div>
             <XIcon
               className="flex-none w-6 h-6 text-gray-300 hover:text-gray-100 cursor-pointer"
               onClick={() => setVisible(false)}

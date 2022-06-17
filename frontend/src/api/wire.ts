@@ -24,20 +24,20 @@ export interface MessageWire {
   id: string;
   user_id: string;
   name: string;
-  description: string;
+  description: string | null;
   payload_json: string;
   updated_at: string;
 }
 
 export interface MessageCreateRequestWire {
   name: string;
-  description: string;
+  description: string | null;
   payload_json: string;
 }
 
 export interface MessageUpdateRequestWire {
   name: string;
-  description: string;
+  description: string | null;
   payload_json: string;
 }
 
