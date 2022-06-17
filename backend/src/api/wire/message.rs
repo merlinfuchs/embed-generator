@@ -18,7 +18,7 @@ pub struct MessageWire {
     pub owner_id: Id<UserMarker>,
     pub updated_at: Timestamp,
     pub name: String,
-    pub description: String,
+    pub description: Option<String>,
     pub payload_json: String,
 }
 
@@ -38,7 +38,8 @@ impl From<MessageModel> for MessageWire {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MessageCreateRequestWire {
     pub name: String,
-    pub description: String,
+    #[serde(default)]
+    pub description: Option<String>,
     pub payload_json: String,
 }
 
@@ -50,11 +51,13 @@ impl NormalizeValidate for MessageCreateRequestWire {
                 details: "The message name must be between 3 and 25 characters in length".into(),
             });
         }
-        if self.description.len() > 100 {
-            return Err(RouteError::ValidationError {
-                field: "description".into(),
-                details: "The message description can't be longer than 100 characters".into(),
-            });
+        if let Some(description) = &self.description {
+            if description.len() > 100 {
+                return Err(RouteError::ValidationError {
+                    field: "description".into(),
+                    details: "The message description can't be longer than 100 characters".into(),
+                });
+            }
         }
 
         if self.payload_json.len() > CONFIG.limits.max_message_size {
@@ -70,7 +73,7 @@ impl NormalizeValidate for MessageCreateRequestWire {
     fn normalize(self) -> Self {
         Self {
             name: self.name.trim().to_string(),
-            description: self.description.trim().to_string(),
+            description: self.description.map(|d| d.trim().to_string()),
             payload_json: self.payload_json,
         }
     }
@@ -79,7 +82,8 @@ impl NormalizeValidate for MessageCreateRequestWire {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MessageUpdateRequestWire {
     pub name: String,
-    pub description: String,
+    #[serde(default)]
+    pub description: Option<String>,
     pub payload_json: String,
 }
 
@@ -91,11 +95,13 @@ impl NormalizeValidate for MessageUpdateRequestWire {
                 details: "The message name must be between 3 and 25 characters in length".into(),
             });
         }
-        if self.description.len() > 100 {
-            return Err(RouteError::ValidationError {
-                field: "description".into(),
-                details: "The message description can't be longer than 100 characters".into(),
-            });
+        if let Some(description) = &self.description {
+            if description.len() > 100 {
+                return Err(RouteError::ValidationError {
+                    field: "description".into(),
+                    details: "The message description can't be longer than 100 characters".into(),
+                });
+            }
         }
 
         if self.payload_json.len() > CONFIG.limits.max_message_size {
@@ -111,7 +117,7 @@ impl NormalizeValidate for MessageUpdateRequestWire {
     fn normalize(self) -> Self {
         Self {
             name: self.name.trim().to_string(),
-            description: self.description.trim().to_string(),
+            description: self.description.map(|d| d.trim().to_string()),
             payload_json: self.payload_json,
         }
     }

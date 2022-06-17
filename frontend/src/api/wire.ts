@@ -26,6 +26,19 @@ export interface MessageWire {
   name: string;
   description: string | null;
   payload_json: string;
+  updated_at: string;
+}
+
+export interface MessageCreateRequestWire {
+  name: string;
+  description: string | null;
+  payload_json: string;
+}
+
+export interface MessageUpdateRequestWire {
+  name: string;
+  description: string | null;
+  payload_json: string;
 }
 
 export interface MessageSendRequestWire {

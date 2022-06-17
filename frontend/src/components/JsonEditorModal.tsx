@@ -42,7 +42,7 @@ export default function JsonEditorModal({ visible, setVisible }: Props) {
         <textarea
           value={json}
           onChange={(e) => setJson(e.target.value)}
-          className="w-full h-96 bg-dark-3 rounded no-ring rounded"
+          className="w-full h-96 bg-dark-2 rounded no-ring rounded"
         ></textarea>
         <div className="text-sm text-gray-400">
           Unknown and invalid fields will be ignored

@@ -16,7 +16,7 @@ export default function BaseModal({
 }: Props) {
   if (!visible) return <div />;
 
-  let modalClass = "bg-dark-4 rounded-md p-2 max-h-full overflow-none";
+  let modalClass = "bg-dark-4 rounded-md p-3 max-h-full overflow-none";
   if (size === "large") {
     modalClass += " w-full md:w-160";
   } else if (size === "medium") {

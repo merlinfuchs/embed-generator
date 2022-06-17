@@ -62,7 +62,7 @@ export function jsonToMessage(json: any): Message {
     return message;
   }
 
-  if (typeof json.useranem === "string" || json.username === undefined) {
+  if (typeof json.username === "string" || json.username === undefined) {
     message.username = json.username;
   }
 
