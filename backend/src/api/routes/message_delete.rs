@@ -12,7 +12,7 @@ pub async fn route_message_delete(
 ) -> RouteResult<()> {
     let message_id = message_id.into_inner();
 
-    let result = MessageModel::delete_by_user_id_and_id(token.user_id, &message_id).await?;
+    let result = MessageModel::delete_by_owner_id_and_id(token.user_id, &message_id).await?;
 
     if result.deleted_count == 0 {
         Err(RouteError::NotFound {

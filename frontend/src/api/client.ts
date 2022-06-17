@@ -8,6 +8,8 @@ import {
   UserWire,
   StickerWire,
   EmojiWire,
+  MessageCreateRequestWire,
+  MessageUpdateRequestWire,
 } from "./wire";
 
 type ApiResponse<T> =
@@ -82,6 +84,23 @@ export default class APIClient {
 
   getMessages(): Promise<ApiResponse<MessageWire[]>> {
     return this.apiRequest("GET", "/messages");
+  }
+
+  createMessage(
+    req: MessageCreateRequestWire
+  ): Promise<ApiResponse<MessageWire>> {
+    return this.apiRequest("POST", "/messages", req);
+  }
+
+  deleteMessage(messageId: string): Promise<ApiResponse<{}>> {
+    return this.apiRequest("DELETE", `/messages/${messageId}`);
+  }
+
+  updateMessage(
+    messageId: string,
+    req: MessageUpdateRequestWire
+  ): Promise<ApiResponse<MessageWire>> {
+    return this.apiRequest("PUT", `/messages/${messageId}`, req);
   }
 
   sendMessage(

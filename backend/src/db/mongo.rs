@@ -11,7 +11,7 @@ pub fn get_connection() -> &'static Client {
 }
 
 pub fn get_database() -> Database {
-    get_connection().database("kite")
+    get_connection().database("embedg")
 }
 
 pub fn get_collection<T>(name: &str) -> Collection<T> {

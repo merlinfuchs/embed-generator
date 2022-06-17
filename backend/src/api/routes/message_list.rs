@@ -8,7 +8,7 @@ use crate::tokens::TokenClaims;
 
 #[get("/messages")]
 pub async fn route_message_list(token: ReqData<TokenClaims>) -> RouteResult<Vec<MessageWire>> {
-    let models = MessageModel::list_by_user_id(token.user_id).await?;
+    let models = MessageModel::list_by_owner_id(token.user_id).await?;
 
     let messages: Vec<MessageWire> = models
         .into_iter()

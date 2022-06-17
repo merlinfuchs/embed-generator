@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function MessageSelect({ value, onChange }: Props) {
-  const messages = useMessages();
+  const [messages] = useMessages();
 
   const selectedMessage = useMemo(
     () => messages?.find((c) => c.id === value),

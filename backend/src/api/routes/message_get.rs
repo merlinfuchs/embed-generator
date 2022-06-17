@@ -13,7 +13,7 @@ pub async fn route_message_get(
 ) -> RouteResult<MessageWire> {
     let message_id = message_id.into_inner();
 
-    let model = MessageModel::find_by_user_id_and_id(token.user_id, &message_id)
+    let model = MessageModel::find_by_owner_id_and_id(token.user_id, &message_id)
         .await?
         .ok_or(RouteError::NotFound {
             entity: "message".into(),

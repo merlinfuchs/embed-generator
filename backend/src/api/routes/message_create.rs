@@ -17,7 +17,7 @@ pub async fn route_message_create(
 ) -> RouteResult<MessageWire> {
     let req = req.into_inner().normalize_and_validate()?;
 
-    let message_count = MessageModel::count_by_user_id(token.user_id).await?;
+    let message_count = MessageModel::count_by_owner_id(token.user_id).await?;
     if message_count > CONFIG.limits.max_messages_per_user {
         return Err(RouteError::MessageLimitReached)
     }
