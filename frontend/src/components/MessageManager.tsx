@@ -21,6 +21,7 @@ export default function MessageManager() {
       const value = jsonToMessage(JSON.parse(message.payload_json));
       dispatch({ type: "replace", value });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMessage]);
 
   function updateSelectedMessage() {

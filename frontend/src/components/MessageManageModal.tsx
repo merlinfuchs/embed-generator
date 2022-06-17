@@ -4,7 +4,7 @@ import {
   TrashIcon,
   XIcon,
 } from "@heroicons/react/outline";
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
 import { useState } from "react";
 import { MessageWire } from "../api/wire";
 import { jsonToMessage, messageToJson } from "../discord/utils";

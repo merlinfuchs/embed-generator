@@ -31,6 +31,7 @@ export const MessagesProvider = ({ children }: { children: ReactNode }) => {
   const client = useAPIClient();
   useEffect(() => {
     refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client]);
 
   return (
