@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo } from "react";
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon, SelectorIcon } from "@heroicons/react/solid";
 import useMessages from "../hooks/useMessages";
@@ -20,7 +20,7 @@ export default function MessageSelect({ value, onChange }: Props) {
     if (value && !messages?.find((m) => m.id === value)) {
       onChange(null);
     }
-  }, [messages, onChange]);
+  }, [messages, onChange, value]);
 
   const selectedMessage = useMemo(
     () => messages?.find((c) => c.id === value),
