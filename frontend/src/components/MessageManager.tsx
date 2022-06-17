@@ -9,7 +9,7 @@ import MessageSelect from "./MessageSelect";
 
 export default function MessageManager() {
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
-  const [messages] = useMessages();
+  const [messages, refreshMessages] = useMessages();
   const [visible, setVisible] = useState(false);
   const [msg, dispatch] = useMessage();
   const client = useAPIClient();
@@ -29,11 +29,17 @@ export default function MessageManager() {
     const message = messages?.find((m) => m.id === selectedMessage);
     const payloadJson = JSON.stringify(messageToJson(msg));
     if (message) {
-      client.updateMessage(selectedMessage, {
-        name: message.name,
-        description: message.description,
-        payload_json: payloadJson,
-      });
+      client
+        .updateMessage(selectedMessage, {
+          name: message.name,
+          description: message.description,
+          payload_json: payloadJson,
+        })
+        .then((resp) => {
+          if (resp.success) {
+            refreshMessages();
+          }
+        });
     }
   }
 

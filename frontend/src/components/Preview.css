@@ -5,7 +5,7 @@ Sources from: https://github.com/skyra-project/skyra.pw/blob/main/src/config/dis
 
 .discord-action-row {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 .discord-attachment {
   color: #dcddde;
