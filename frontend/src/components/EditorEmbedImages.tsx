@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function EditorEmbedImages({ index, embed, errors }: Props) {
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
   const [, dispatch] = useMessage();
 
   return (

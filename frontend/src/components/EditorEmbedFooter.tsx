@@ -14,7 +14,7 @@ interface Props {
 }
 
 export default function EditorEmbedFooter({ index, embed, errors }: Props) {
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
   const [, dispatch] = useMessage();
 
   const [rawTimestamp, setRawTimestamp] = useState("");

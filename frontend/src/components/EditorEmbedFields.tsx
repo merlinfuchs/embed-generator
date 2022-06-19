@@ -14,7 +14,7 @@ interface Props {
 
 export default function EditorEmbedFields({ index, embed, errors }: Props) {
   const [, dispatch] = useMessage();
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
     <div>
