@@ -1,5 +1,7 @@
 import { ChevronRightIcon, TrashIcon } from "@heroicons/react/outline";
+import { ExclamationCircleIcon } from "@heroicons/react/solid";
 import { useState } from "react";
+import { ZodFormattedError } from "zod";
 import {
   ComponentSelectMenu,
   ComponentSelectMenuOption,
@@ -9,18 +11,18 @@ import StyledInput from "./StyledInput";
 
 interface Props {
   option: ComponentSelectMenuOption;
-  selectMenu: ComponentSelectMenu;
   rowIndex: number;
   selectIndex: number;
   index: number;
+  errors: ZodFormattedError<ComponentSelectMenuOption>;
 }
 
 export default function EditorComponentSelectOption({
   option,
-  selectMenu,
   rowIndex,
   selectIndex,
   index,
+  errors,
 }: Props) {
   const [collapsed, setCollapsed] = useState(true);
   const [, dispatch] = useMessage();
@@ -38,6 +40,7 @@ export default function EditorComponentSelectOption({
             }`}
           />
           <div className="flex-none">Select Option</div>
+          {!!errors && <ExclamationCircleIcon className="text-red w-5 h-5" />}
           {option.label ? (
             <div className="text-gray-500 truncate">- {option.label}</div>
           ) : undefined}
@@ -73,6 +76,7 @@ export default function EditorComponentSelectOption({
                 value,
               })
             }
+            errors={errors?.label?._errors}
           />
           <StyledInput
             className="flex-auto"
@@ -89,6 +93,7 @@ export default function EditorComponentSelectOption({
                 value: value || undefined,
               })
             }
+            errors={errors?.description?._errors}
           />
           <StyledInput
             className="flex-auto"
@@ -105,6 +110,7 @@ export default function EditorComponentSelectOption({
                 value,
               })
             }
+            errors={errors?.value?._errors}
           />
         </div>
       )}

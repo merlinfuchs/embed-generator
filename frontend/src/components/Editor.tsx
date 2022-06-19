@@ -144,11 +144,19 @@ export default function Editor() {
               }`}
             />
             <div className="text-lg font-medium">Components</div>
+            {!!errors?.components && (
+              <ExclamationCircleIcon className="text-red w-5 h-5" />
+            )}
           </div>
           {!componentsCollapsed && (
             <>
               {msg.components.map((row, i) => (
-                <EditorComponentRow key={row.id} row={row} index={i} />
+                <EditorComponentRow
+                  key={row.id}
+                  row={row}
+                  index={i}
+                  errors={(errors?.components || [])[i]}
+                />
               ))}
               <div className="space-x-3 mt-3">
                 {msg.components.length < 5 ? (

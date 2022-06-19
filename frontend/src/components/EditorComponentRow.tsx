@@ -5,7 +5,9 @@ import {
   DuplicateIcon,
   TrashIcon,
 } from "@heroicons/react/outline";
+import { ExclamationCircleIcon } from "@heroicons/react/solid";
 import { useMemo, useState } from "react";
+import { ZodFormattedError } from "zod";
 import { ComponentActionRow } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import EditorComponentButton from "./EditorComponentButton";
@@ -14,9 +16,10 @@ import EditorComponentSelect from "./EditorComponentSelect";
 interface Props {
   index: number;
   row: ComponentActionRow;
+  errors: ZodFormattedError<ComponentActionRow>;
 }
 
-export default function EditorComponentRow({ row, index }: Props) {
+export default function EditorComponentRow({ row, index, errors }: Props) {
   const [collapsed, setCollapsed] = useState(true);
 
   const [msg, dispatch] = useMessage();
@@ -39,6 +42,7 @@ export default function EditorComponentRow({ row, index }: Props) {
             }`}
           />
           <div className="flex-none">Row {index + 1}</div>
+          {!!errors && <ExclamationCircleIcon className="text-red w-5 h-5" />}
           <div className="flex-none text-gray-500 truncate">
             - {isButtonRow ? "Buttons" : "Select Menu"}
           </div>
@@ -81,6 +85,7 @@ export default function EditorComponentRow({ row, index }: Props) {
                 rowIndex={index}
                 row={row}
                 key={comp.id}
+                errors={(errors?.components || [])[i]}
               />
             ) : (
               <EditorComponentSelect
@@ -88,6 +93,7 @@ export default function EditorComponentRow({ row, index }: Props) {
                 selectMenu={comp}
                 index={i}
                 rowIndex={index}
+                errors={(errors?.components || [])[i]}
               />
             )
           )}

@@ -1,5 +1,7 @@
 import { ChevronRightIcon } from "@heroicons/react/outline";
+import { ExclamationCircleIcon } from "@heroicons/react/solid";
 import { useState } from "react";
+import { ZodFormattedError } from "zod";
 import { ComponentSelectMenu } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import EditorComponentSelectOption from "./EditorComponentSelectOption";
@@ -9,12 +11,14 @@ interface Props {
   index: number;
   rowIndex: number;
   selectMenu: ComponentSelectMenu;
+  errors?: ZodFormattedError<ComponentSelectMenu>;
 }
 
 export default function EditorComponentSelect({
   index,
   rowIndex,
   selectMenu,
+  errors,
 }: Props) {
   const [, dispatch] = useMessage();
   const [optionsCollapsed, setOptionsCollapsed] = useState(false);
@@ -30,6 +34,7 @@ export default function EditorComponentSelect({
         onChange={(value) =>
           dispatch({ type: "setSelectMenuPlaceholder", index, rowIndex, value })
         }
+        errors={errors?.placeholder?._errors}
       />
       <div>
         <div
@@ -42,17 +47,20 @@ export default function EditorComponentSelect({
             }`}
           />
           <div>Options</div>
+          {!!errors?.options && (
+            <ExclamationCircleIcon className="text-red w-5 h-5" />
+          )}
         </div>
         {!optionsCollapsed && (
           <div className="mt-3">
             {selectMenu.options.map((option, i) => (
               <EditorComponentSelectOption
-                selectMenu={selectMenu}
                 option={option}
                 rowIndex={rowIndex}
                 selectIndex={index}
                 index={i}
                 key={option.id}
+                errors={(errors?.options || [])[i]}
               />
             ))}
             <div className="space-x-3 mt-3">

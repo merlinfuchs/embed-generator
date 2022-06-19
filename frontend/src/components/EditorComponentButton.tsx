@@ -5,7 +5,9 @@ import {
   DuplicateIcon,
   TrashIcon,
 } from "@heroicons/react/outline";
+import { ExclamationCircleIcon } from "@heroicons/react/solid";
 import { useState } from "react";
+import { ZodFormattedError } from "zod";
 import { ComponentButton, ComponentActionRow } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import StyledInput from "./StyledInput";
@@ -15,6 +17,7 @@ interface Props {
   rowIndex: number;
   button: ComponentButton;
   row: ComponentActionRow;
+  errors?: ZodFormattedError<ComponentButton>;
 }
 
 const buttonBorderColors = {
@@ -30,6 +33,7 @@ export default function EditorComponentButton({
   rowIndex,
   button,
   row,
+  errors,
 }: Props) {
   const [, dispatch] = useMessage();
   const [collapsed, setCollapsed] = useState(true);
@@ -51,6 +55,7 @@ export default function EditorComponentButton({
             }`}
           />
           <div className="flex-none">Button {index + 1}</div>
+          {!!errors && <ExclamationCircleIcon className="text-red w-5 h-5" />}
           {button.label ? (
             <div className="text-gray-500 truncate">- {button.label}</div>
           ) : undefined}
@@ -126,6 +131,7 @@ export default function EditorComponentButton({
               onChange={(value) =>
                 dispatch({ type: "setButtonLabel", index, rowIndex, value })
               }
+              errors={errors?.label?._errors}
             />
           </div>
           {button.style === 5 ? (
@@ -136,6 +142,7 @@ export default function EditorComponentButton({
               onChange={(value) =>
                 dispatch({ type: "setButtonUrl", index, rowIndex, value })
               }
+              errors={(errors as any)?.url?._errors}
             />
           ) : (
             <StyledInput
@@ -151,6 +158,7 @@ export default function EditorComponentButton({
                   value,
                 })
               }
+              errors={(errors as any)?.custom_id?._errors}
             />
           )}
         </div>
