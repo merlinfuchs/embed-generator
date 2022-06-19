@@ -4,6 +4,7 @@ import useAlerts from "../hooks/useAlerts";
 import useAPIClient from "../hooks/useApiClient";
 import useAttachments from "../hooks/useAttachments";
 import useMessage from "../hooks/useMessage";
+import useMessageValidation from "../hooks/useMessageValidation";
 import useSelectedGuild from "../hooks/useSelectedGuild";
 import useSelectedMode from "../hooks/useSelectedMode";
 import useToken from "../hooks/useToken";
@@ -21,6 +22,7 @@ export default function SendMenu() {
   const client = useAPIClient();
   const [token] = useToken();
   const [msg] = useMessage();
+  const errors = useMessageValidation();
   const [attachments] = useAttachments();
 
   const [selectedGuild, setSelectedGuild] = useSelectedGuild();
@@ -209,12 +211,18 @@ export default function SendMenu() {
           >
             View JSON
           </button>
-          <button
-            className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark"
-            onClick={sendMessage}
-          >
-            {messageId ? "Edit Message" : "Send Message"}
-          </button>
+          {errors ? (
+            <button className="bg-dark-3 px-3 py-2 rounded transition-colors cursor-not-allowed">
+              {messageId ? "Edit Message" : "Send Message"}
+            </button>
+          ) : (
+            <button
+              className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark"
+              onClick={sendMessage}
+            >
+              {messageId ? "Edit Message" : "Send Message"}
+            </button>
+          )}
         </div>
       </div>
       <JsonEditorModal visible={jsonModal} setVisible={setJsonModal} />

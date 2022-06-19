@@ -1,6 +1,8 @@
 import { ChevronRightIcon } from "@heroicons/react/outline";
+import { ExclamationCircleIcon } from "@heroicons/react/solid";
 import { useMemo, useState } from "react";
 import useMessage from "../hooks/useMessage";
+import useMessageValidation from "../hooks/useMessageValidation";
 import useToken from "../hooks/useToken";
 import EditorAttachments from "./EditorAttachments";
 import EditorComponentRow from "./EditorComponentRow";
@@ -11,6 +13,7 @@ import StyledTextarea from "./StyledTextarea";
 export default function Editor() {
   const [msg, dispatchMsg] = useMessage();
   const [token] = useToken();
+  const errors = useMessageValidation();
 
   const [embedsCollapsed, setEmbedsCollapsed] = useState(
     msg.embeds.length === 0
@@ -45,7 +48,10 @@ export default function Editor() {
           className="flex-auto"
           maxLength={80}
           value={msg.username || ""}
-          onChange={(value) => dispatchMsg({ type: "setUsername", value })}
+          onChange={(value) =>
+            dispatchMsg({ type: "setUsername", value: value || undefined })
+          }
+          errors={errors?.username?._errors}
         />
         <StyledInput
           label="Avatar URL"
@@ -53,8 +59,9 @@ export default function Editor() {
           className="flex-auto"
           value={msg.avatar_url || ""}
           onChange={(value) =>
-            dispatchMsg({ type: "setAvatarUrl", value: value })
+            dispatchMsg({ type: "setAvatarUrl", value: value || undefined })
           }
+          errors={errors?.avatar_url?._errors}
         />
       </div>
       <StyledTextarea
@@ -62,6 +69,7 @@ export default function Editor() {
         value={msg.content || ""}
         maxLength={2000}
         onChange={(value) => dispatchMsg({ type: "setContent", value })}
+        errors={errors?.content?._errors}
       />
       <EditorAttachments />
       <div>
@@ -83,12 +91,20 @@ export default function Editor() {
             >
               {embedCharacters} / 6000
             </div>
+            {!!errors?.embeds && (
+              <ExclamationCircleIcon className="text-red w-5 h-5" />
+            )}
           </div>
         </div>
         {!embedsCollapsed && (
           <>
             {msg.embeds.map((embed, i) => (
-              <EditorEmbed index={i} embed={embed} key={embed.id} />
+              <EditorEmbed
+                index={i}
+                embed={embed}
+                key={embed.id}
+                errors={(errors?.embeds || [])[i]}
+              />
             ))}
             <div className="space-x-3 mt-3">
               {msg.embeds.length < 10 ? (

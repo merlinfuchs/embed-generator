@@ -15,6 +15,7 @@ import { ChannelsProvider } from "./hooks/useChannels";
 import { StickersProvider } from "./hooks/useStickers";
 import { AttachmentsProvider } from "./hooks/useAttachments";
 import { EmojisProvider } from "./hooks/useEmojis";
+import { MessageValidationProvider } from "./hooks/useMessageValidation";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -32,9 +33,11 @@ root.render(
                     <EmojisProvider>
                       <SelectedModeProvider>
                         <MessageProvider>
-                          <AttachmentsProvider>
-                            <App />
-                          </AttachmentsProvider>
+                          <MessageValidationProvider>
+                            <AttachmentsProvider>
+                              <App />
+                            </AttachmentsProvider>
+                          </MessageValidationProvider>
                         </MessageProvider>
                       </SelectedModeProvider>
                     </EmojisProvider>

@@ -4,13 +4,16 @@ import { Embed } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import StyledInput from "./StyledInput";
 import { parse, formatISO, parseISO, format } from "date-fns";
+import { ZodFormattedError } from "zod";
+import { ExclamationCircleIcon } from "@heroicons/react/solid";
 
 interface Props {
   index: number;
   embed: Embed;
+  errors?: ZodFormattedError<Embed>;
 }
 
-export default function EditorEmbedFooter({ index, embed }: Props) {
+export default function EditorEmbedFooter({ index, embed, errors }: Props) {
   const [collapsed, setCollapsed] = useState(true);
   const [, dispatch] = useMessage();
 
@@ -58,6 +61,9 @@ export default function EditorEmbedFooter({ index, embed }: Props) {
           }`}
         />
         <div>Footer</div>
+        {(errors?.footer || errors?.timestamp) && (
+          <ExclamationCircleIcon className="text-red w-5 h-5" />
+        )}
       </div>
       {!collapsed ? (
         <div className="space-y-4 mt-3">
@@ -73,6 +79,7 @@ export default function EditorEmbedFooter({ index, embed }: Props) {
                 index,
               })
             }
+            errors={(errors?.footer as any)?.text?._errors}
           />
           <div className="flex space-x-3">
             <StyledInput
@@ -82,6 +89,7 @@ export default function EditorEmbedFooter({ index, embed }: Props) {
               value={rawTimestamp}
               onChange={setRawTimestamp}
               inputProps={{ placeholder: "YYYY-MM-DD hh:mm" }}
+              errors={errors?.timestamp?._errors}
             />
             <StyledInput
               className="flex-auto"
@@ -95,6 +103,7 @@ export default function EditorEmbedFooter({ index, embed }: Props) {
                   index,
                 })
               }
+              errors={(errors?.footer as any)?.icon_url?._errors}
             />
           </div>
         </div>

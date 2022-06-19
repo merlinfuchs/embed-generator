@@ -1,15 +1,18 @@
 import { ChevronRightIcon } from "@heroicons/react/outline";
+import { ExclamationCircleIcon } from "@heroicons/react/solid";
 import { useState } from "react";
-import { Embed } from "../discord/types";
+import { ZodFormattedError } from "zod";
+import { Embed, EmbedField } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import EditorEmbedField from "./EditorEmbedField";
 
 interface Props {
   index: number;
   embed: Embed;
+  errors?: ZodFormattedError<EmbedField[]>;
 }
 
-export default function EditorEmbedFields({ index, embed }: Props) {
+export default function EditorEmbedFields({ index, embed, errors }: Props) {
   const [, dispatch] = useMessage();
   const [collapsed, setCollapsed] = useState(true);
 
@@ -25,6 +28,7 @@ export default function EditorEmbedFields({ index, embed }: Props) {
           }`}
         />
         <div>Fields</div>
+        {!!errors && <ExclamationCircleIcon className="text-red w-5 h-5" />}
       </div>
       {!collapsed ? (
         <div className="mt-3">
@@ -35,6 +39,7 @@ export default function EditorEmbedFields({ index, embed }: Props) {
               index={i}
               embed={embed}
               embedIndex={index}
+              errors={(errors || [])[i]}
             />
           ))}
           <div className="space-x-3 mt-3">

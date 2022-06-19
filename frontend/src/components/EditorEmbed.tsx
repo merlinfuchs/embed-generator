@@ -13,13 +13,16 @@ import EditorEmbedBody from "./EditorEmbedBody";
 import EditorEmbedFields from "./EditorEmbedFields";
 import EditorEmbedImages from "./EditorEmbedImages";
 import EditorEmbedFooter from "./EditorEmbedFooter";
+import { ZodFormattedError } from "zod";
+import { ExclamationCircleIcon } from "@heroicons/react/solid";
 
 interface Props {
   index: number;
   embed: Embed;
+  errors?: ZodFormattedError<Embed>;
 }
 
-export default function EditorEmbed({ index, embed }: Props) {
+export default function EditorEmbed({ index, embed, errors }: Props) {
   const [msg, dispatch] = useMessage();
 
   const [collapsed, setCollapsed] = useState(true);
@@ -44,6 +47,7 @@ export default function EditorEmbed({ index, embed }: Props) {
             }`}
           />
           <div className="flex-none">Embed {index + 1}</div>
+          {!!errors && <ExclamationCircleIcon className="text-red w-5 h-5" />}
           {embed.author?.name || embed.title ? (
             <div className="text-gray-500 truncate">
               - {embed.author?.name || embed.title}
@@ -80,11 +84,19 @@ export default function EditorEmbed({ index, embed }: Props) {
       </div>
       {!collapsed ? (
         <div className="space-y-5 mt-3">
-          <EditorEmbedAuthor index={index} embed={embed} />
-          <EditorEmbedBody index={index} embed={embed} />
-          <EditorEmbedFields index={index} embed={embed} />
-          <EditorEmbedImages index={index} embed={embed} />
-          <EditorEmbedFooter index={index} embed={embed} />
+          <EditorEmbedAuthor
+            index={index}
+            embed={embed}
+            errors={errors?.author}
+          />
+          <EditorEmbedBody index={index} embed={embed} errors={errors} />
+          <EditorEmbedFields
+            index={index}
+            embed={embed}
+            errors={errors?.fields}
+          />
+          <EditorEmbedImages index={index} embed={embed} errors={errors} />
+          <EditorEmbedFooter index={index} embed={embed} errors={errors} />
         </div>
       ) : undefined}
     </div>

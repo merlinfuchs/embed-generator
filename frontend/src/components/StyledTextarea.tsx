@@ -1,3 +1,4 @@
+import { ExclamationCircleIcon } from "@heroicons/react/solid";
 import { useRef } from "react";
 import EditorInputTools from "./EditorInputTools";
 
@@ -9,6 +10,7 @@ interface Props {
   className?: string;
   tools?: boolean;
   [extraProps: string]: any;
+  errors?: string[];
 }
 
 export default function StyledTextarea({
@@ -19,6 +21,7 @@ export default function StyledTextarea({
   className,
   tools,
   extraProps,
+  errors,
 }: Props) {
   const ref = useRef<HTMLTextAreaElement>(null);
 
@@ -54,6 +57,15 @@ export default function StyledTextarea({
         ref={ref}
         {...extraProps}
       />
+      {errors?.map((e) => (
+        <div
+          className="text-sm text-red pt-1 flex items-center space-x-1"
+          key={e}
+        >
+          <ExclamationCircleIcon className="w-5 h-5" />
+          <div>{e}</div>
+        </div>
+      ))}
     </div>
   );
 }

@@ -6,7 +6,9 @@ import {
   DuplicateIcon,
   TrashIcon,
 } from "@heroicons/react/outline";
+import { ExclamationCircleIcon } from "@heroicons/react/solid";
 import { useState } from "react";
+import { ZodFormattedError } from "zod";
 import { Embed, EmbedField } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import StyledInput from "./StyledInput";
@@ -17,6 +19,7 @@ interface Props {
   index: number;
   embed: Embed;
   embedIndex: number;
+  errors?: ZodFormattedError<EmbedField>;
 }
 
 export default function EditorEmbedField({
@@ -24,6 +27,7 @@ export default function EditorEmbedField({
   index,
   embed,
   embedIndex,
+  errors,
 }: Props) {
   const [, dispatch] = useMessage();
   const [collapsed, setCollapsed] = useState(false);
@@ -42,6 +46,7 @@ export default function EditorEmbedField({
               }`}
             />
             <div className="flex-none">Field {index + 1}</div>
+            {!!errors && <ExclamationCircleIcon className="text-red w-5 h-5" />}
             {field.name ? (
               <div className="text-gray-500 truncate">- {field.name}</div>
             ) : undefined}
@@ -94,6 +99,7 @@ export default function EditorEmbedField({
                     embedIndex,
                   })
                 }
+                errors={errors?.name?._errors}
               />
               <div className="flex-none">
                 <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
@@ -126,6 +132,7 @@ export default function EditorEmbedField({
                   embedIndex,
                 })
               }
+              errors={errors?.value?._errors}
             />
           </div>
         ) : undefined}

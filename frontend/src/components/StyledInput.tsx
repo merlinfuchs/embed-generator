@@ -1,3 +1,5 @@
+import { ExclamationCircleIcon } from "@heroicons/react/solid";
+
 interface Props {
   label: string;
   type: string;
@@ -6,6 +8,7 @@ interface Props {
   maxLength?: number;
   className?: string;
   inputProps?: { [key: string]: any };
+  errors?: string[];
 }
 
 export default function StyledInput({
@@ -16,6 +19,7 @@ export default function StyledInput({
   maxLength,
   className,
   inputProps,
+  errors,
 }: Props) {
   return (
     <div className={className}>
@@ -41,6 +45,15 @@ export default function StyledInput({
         maxLength={maxLength}
         {...inputProps}
       />
+      {errors?.map((e) => (
+        <div
+          className="text-sm text-red pt-1 flex items-center space-x-1"
+          key={e}
+        >
+          <ExclamationCircleIcon className="w-5 h-5" />
+          <div>{e}</div>
+        </div>
+      ))}
     </div>
   );
 }

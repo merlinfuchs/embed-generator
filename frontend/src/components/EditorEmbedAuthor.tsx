@@ -1,15 +1,18 @@
 import { ChevronRightIcon } from "@heroicons/react/outline";
+import { ExclamationCircleIcon } from "@heroicons/react/solid";
 import { useState } from "react";
-import { Embed } from "../discord/types";
+import { ZodFormattedError } from "zod";
+import { Embed, EmbedAuthor } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import StyledInput from "./StyledInput";
 
 interface Props {
   index: number;
   embed: Embed;
+  errors?: ZodFormattedError<EmbedAuthor>;
 }
 
-export default function EditorEmbedAuthor({ index, embed }: Props) {
+export default function EditorEmbedAuthor({ index, embed, errors }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [, dispatch] = useMessage();
 
@@ -25,6 +28,7 @@ export default function EditorEmbedAuthor({ index, embed }: Props) {
           }`}
         />
         <div>Author</div>
+        {!!errors && <ExclamationCircleIcon className="text-red w-5 h-5" />}
       </div>
       {!collapsed ? (
         <div className="space-y-4 mt-3">
@@ -40,6 +44,7 @@ export default function EditorEmbedAuthor({ index, embed }: Props) {
                 index,
               })
             }
+            errors={errors?.name?._errors}
           />
           <div className="flex space-x-3">
             <StyledInput
@@ -54,6 +59,7 @@ export default function EditorEmbedAuthor({ index, embed }: Props) {
                   index,
                 })
               }
+              errors={errors?.url?._errors}
             />
             <StyledInput
               className="flex-auto"
@@ -67,6 +73,7 @@ export default function EditorEmbedAuthor({ index, embed }: Props) {
                   index,
                 })
               }
+              errors={errors?.icon_url?._errors}
             />
           </div>
         </div>

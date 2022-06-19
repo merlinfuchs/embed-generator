@@ -1,5 +1,7 @@
 import { ChevronRightIcon } from "@heroicons/react/outline";
+import { ExclamationCircleIcon } from "@heroicons/react/solid";
 import { useState } from "react";
+import { ZodFormattedError } from "zod";
 import { Embed } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import StyledInput from "./StyledInput";
@@ -7,9 +9,10 @@ import StyledInput from "./StyledInput";
 interface Props {
   index: number;
   embed: Embed;
+  errors?: ZodFormattedError<Embed>;
 }
 
-export default function EditorEmbedImages({ index, embed }: Props) {
+export default function EditorEmbedImages({ index, embed, errors }: Props) {
   const [collapsed, setCollapsed] = useState(true);
   const [, dispatch] = useMessage();
 
@@ -25,6 +28,9 @@ export default function EditorEmbedImages({ index, embed }: Props) {
           }`}
         />
         <div>Images</div>
+        {(errors?.image || errors?.thumbnail) && (
+          <ExclamationCircleIcon className="text-red w-5 h-5" />
+        )}
       </div>
       {!collapsed ? (
         <div className="space-y-4 mt-3">
@@ -39,6 +45,7 @@ export default function EditorEmbedImages({ index, embed }: Props) {
                 index,
               })
             }
+            errors={(errors?.image as any)?.url?._errors}
           />
           <StyledInput
             label="Thumbnail URL"
@@ -51,6 +58,7 @@ export default function EditorEmbedImages({ index, embed }: Props) {
                 index,
               })
             }
+            errors={(errors?.thumbnail as any)?.url?._errors}
           />
         </div>
       ) : undefined}

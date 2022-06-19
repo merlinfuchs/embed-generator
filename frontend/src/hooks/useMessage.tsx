@@ -2,10 +2,10 @@ import {
   createContext,
   ReactNode,
   useContext,
+  useDeferredValue,
   useEffect,
   useMemo,
   useReducer,
-  useRef,
 } from "react";
 import { ComponentButton, Embed, Message } from "../discord/types";
 import { jsonToMessage, messageToJson } from "../discord/utils";
@@ -922,14 +922,11 @@ export const MessageProvider = ({ children }: { children: ReactNode }) => {
 
   const [msg, dispatch] = useReducer(reducer, initialMessage);
 
-  const timeout = useRef<any>();
+  const defferedMsg = useDeferredValue(msg);
   useEffect(() => {
-    clearTimeout(timeout.current);
-    timeout.current = setTimeout(() => {
-      const raw = JSON.stringify(messageToJson(msg));
-      localStorage.setItem("lastMessage", raw);
-    }, 500);
-  }, [msg]);
+    const raw = JSON.stringify(messageToJson(defferedMsg));
+    localStorage.setItem("lastMessage", raw);
+  }, [defferedMsg]);
 
   return (
     <MessageContext.Provider value={[msg, dispatch]}>

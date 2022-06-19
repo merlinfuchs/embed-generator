@@ -1,5 +1,7 @@
 import { ChevronRightIcon } from "@heroicons/react/outline";
+import { ExclamationCircleIcon } from "@heroicons/react/solid";
 import { useState } from "react";
+import { ZodFormattedError } from "zod";
 import { Embed } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import ColorPicker from "./ColorPicker";
@@ -9,9 +11,10 @@ import StyledTextarea from "./StyledTextarea";
 interface Props {
   index: number;
   embed: Embed;
+  errors?: ZodFormattedError<Embed>;
 }
 
-export default function EditorEmbedBody({ index, embed }: Props) {
+export default function EditorEmbedBody({ index, embed, errors }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [, dispatch] = useMessage();
 
@@ -27,6 +30,9 @@ export default function EditorEmbedBody({ index, embed }: Props) {
           }`}
         />
         <div>Body</div>
+        {(errors?.title || errors?.description || errors?.url) && (
+          <ExclamationCircleIcon className="text-red w-5 h-5" />
+        )}
       </div>
       {!collapsed ? (
         <div className="space-y-4 mt-3">
@@ -42,6 +48,7 @@ export default function EditorEmbedBody({ index, embed }: Props) {
                 index,
               })
             }
+            errors={errors?.title?._errors}
           />
           <StyledTextarea
             label="Description"
@@ -54,6 +61,7 @@ export default function EditorEmbedBody({ index, embed }: Props) {
                 index,
               })
             }
+            errors={errors?.description?._errors}
           />
           <div className="flex space-x-3">
             <StyledInput
@@ -68,6 +76,7 @@ export default function EditorEmbedBody({ index, embed }: Props) {
                   index,
                 })
               }
+              errors={errors?.url?._errors}
             />
             <div>
               <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
