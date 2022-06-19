@@ -2,10 +2,7 @@ import { ChevronRightIcon, TrashIcon } from "@heroicons/react/outline";
 import { ExclamationCircleIcon } from "@heroicons/react/solid";
 import { useState } from "react";
 import { ZodFormattedError } from "zod";
-import {
-  ComponentSelectMenu,
-  ComponentSelectMenuOption,
-} from "../discord/types";
+import { ComponentSelectMenuOption } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import StyledInput from "./StyledInput";
 
