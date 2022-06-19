@@ -384,7 +384,7 @@ function reducer(msg: Message, action: MessageAction): Message {
       } else {
         embed.author = {
           name: embed.author?.name || "",
-          url: action.value || "",
+          url: action.value,
           icon_url: embed.author?.icon_url,
         };
       }
@@ -399,7 +399,7 @@ function reducer(msg: Message, action: MessageAction): Message {
       } else {
         embed.author = {
           name: embed.author?.name || "",
-          icon_url: action.value || "",
+          icon_url: action.value,
           url: embed.author?.url,
         };
       }
@@ -450,7 +450,7 @@ function reducer(msg: Message, action: MessageAction): Message {
       } else {
         embed.footer = {
           text: embed.footer?.text || "",
-          icon_url: action.value || "",
+          icon_url: action.value,
         };
       }
       embeds[action.index] = embed;
