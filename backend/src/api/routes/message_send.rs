@@ -2,7 +2,7 @@ use actix_web::post;
 use actix_web::web::{Json, ReqData};
 use data_url::DataUrl;
 use twilight_model::channel::ChannelType;
-use twilight_model::guild::Permissions;
+use twilight_model::guild::{Member, Permissions};
 use twilight_model::http::attachment::Attachment;
 use twilight_model::id::marker::RoleMarker;
 use twilight_model::id::Id;
@@ -73,39 +73,52 @@ pub async fn route_message_send(
                     entity: "channel".into(),
                 })?;
 
-            let member = DISCORD_HTTP
-                .guild_member(guild_id, token.user_id)
-                .exec()
-                .await?
-                .model()
-                .await
-                .unwrap();
+            if channel.guild_id != Some(guild_id) {
+                return Err(RouteError::GuildChannelMismatch);
+            }
 
-            let everyone_role = DISCORD_CACHE
-                .role(guild_id.cast())
-                .map(|r| r.permissions)
-                .unwrap_or(Permissions::empty());
-            let assigned_roles: Vec<(Id<RoleMarker>, Permissions)> = member
-                .roles
-                .into_iter()
-                .filter_map(|role_id| {
-                    DISCORD_CACHE
-                        .role(role_id)
-                        .map(|r| (role_id, r.permissions))
-                })
-                .collect();
+            let guild =
+                DISCORD_CACHE.guild(guild_id).ok_or(RouteError::NotFound {
+                    entity: "guild".into(),
+                })?;
 
-            let calculator =
-                PermissionCalculator::new(guild_id, token.user_id, everyone_role, &assigned_roles);
-            let overwrites = channel.permission_overwrites.as_deref().unwrap_or(&[]);
-            let perms = calculator.in_channel(channel.kind, &overwrites);
+            let perms = if guild.owner_id() == token.user_id {
+                Permissions::all()
+            } else {
+                let member: Member = DISCORD_HTTP
+                    .guild_member(guild_id, token.user_id)
+                    .exec()
+                    .await?
+                    .model()
+                    .await
+                    .unwrap();
+
+                let everyone_role = DISCORD_CACHE
+                    .role(guild_id.cast())
+                    .map(|r| r.permissions)
+                    .unwrap_or(Permissions::empty());
+                let assigned_roles: Vec<(Id<RoleMarker>, Permissions)> = member
+                    .roles
+                    .into_iter()
+                    .filter_map(|role_id| {
+                        DISCORD_CACHE
+                            .role(role_id)
+                            .map(|r| (role_id, r.permissions))
+                    })
+                    .collect();
+
+                let calculator = PermissionCalculator::new(
+                    guild_id,
+                    token.user_id,
+                    everyone_role,
+                    &assigned_roles,
+                );
+                let overwrites = channel.permission_overwrites.as_deref().unwrap_or(&[]);
+                calculator.in_channel(channel.kind, &overwrites)
+            };
 
             if !perms.contains(Permissions::MANAGE_WEBHOOKS) {
                 return Err(RouteError::MissingChannelAccess);
-            }
-
-            if channel.guild_id != Some(guild_id) {
-                return Err(RouteError::GuildChannelMismatch);
             }
 
             let (channel_id, thread_id) = match channel.kind {
