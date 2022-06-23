@@ -1,5 +1,34 @@
 import z from "zod";
 
+const HOSTNAME_RE = new RegExp("\\.[a-zA-Z]{2,}$");
+const urlRefinement: [(v: string) => boolean, string] = [
+  (v) => {
+    try {
+      const url = new URL(v);
+      return !!url.hostname.match(HOSTNAME_RE);
+    } catch {
+      return false;
+    }
+  },
+  "Invalid URL",
+];
+
+const IMAGE_PATH_RE = new RegExp("\\.(png|jpg|jpeg)$");
+const imageUrlRefinement: [(v: string) => boolean, string] = [
+  (v) => {
+    try {
+      const url = new URL(v);
+      return (
+        !!url.hostname.match(HOSTNAME_RE) && !!url.pathname.match(IMAGE_PATH_RE)
+      );
+    } catch {
+      return false;
+    }
+    return true;
+  },
+  "",
+];
+
 export const componentButtonValidator = z.object({ type: z.literal(2) }).and(
   z.union([
     z.object({
@@ -9,7 +38,7 @@ export const componentButtonValidator = z.object({ type: z.literal(2) }).and(
     }),
     z.object({
       style: z.literal(5),
-      url: z.string().url(),
+      url: z.string().refine(...urlRefinement),
       label: z.string().max(80).min(1),
     }),
   ])
@@ -45,7 +74,10 @@ export type ComponentSelectMenu = z.infer<typeof componentSelectMenuValidator>;
 
 export const embedFooterValidator = z.object({
   text: z.string().min(1).max(2048),
-  icon_url: z.string().url().optional(),
+  icon_url: z
+    .string()
+    .refine(...imageUrlRefinement)
+    .optional(),
 });
 
 export const componentActionRowValidator = z.object({
@@ -65,21 +97,27 @@ export type ComponentActionRow = z.infer<typeof componentActionRowValidator>;
 export type EmbedFooter = z.infer<typeof embedFooterValidator>;
 
 export const embedImageValidator = z.object({
-  url: z.string().url(),
+  url: z.string().refine(...imageUrlRefinement),
 });
 
 export type EmbedImage = z.infer<typeof embedImageValidator>;
 
 export const embedThumbnailValidator = z.object({
-  url: z.string().url(),
+  url: z.string().refine(...imageUrlRefinement),
 });
 
 export type EmbedThumbnail = z.infer<typeof embedThumbnailValidator>;
 
 export const embedAuthorValidator = z.object({
   name: z.string().max(256).min(1),
-  url: z.string().url().optional(),
-  icon_url: z.string().url().optional(),
+  url: z
+    .string()
+    .refine(...urlRefinement)
+    .optional(),
+  icon_url: z
+    .string()
+    .refine(...imageUrlRefinement)
+    .optional(),
 });
 
 export type EmbedAuthor = z.infer<typeof embedAuthorValidator>;
@@ -95,7 +133,10 @@ export type EmbedField = z.infer<typeof embedFieldValidator>;
 export const embedValidator = z.object({
   title: z.string().max(256).optional(),
   description: z.string().max(4096).optional(),
-  url: z.string().url().optional(),
+  url: z
+    .string()
+    .refine(...urlRefinement)
+    .optional(),
   timestamp: z.string().optional(),
   color: z.number().optional(),
   footer: embedFooterValidator.optional(),
@@ -111,7 +152,10 @@ export type Embed = z.infer<typeof embedValidator>;
 
 export const messageValidator = z.object({
   username: z.string().max(25).optional(),
-  avatar_url: z.string().url().optional(),
+  avatar_url: z
+    .string()
+    .refine(...imageUrlRefinement)
+    .optional(),
   content: z.string().max(2000).optional(),
   embeds: z
     .array(z.object({ id: z.number().optional() }).and(embedValidator))
