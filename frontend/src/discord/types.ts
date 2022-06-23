@@ -13,7 +13,7 @@ const urlRefinement: [(v: string) => boolean, string] = [
   "Invalid URL",
 ];
 
-const IMAGE_PATH_RE = new RegExp("\\.(png|jpg|jpeg)$");
+const IMAGE_PATH_RE = new RegExp("\\.(png|jpg|jpeg|webp)$");
 const imageUrlRefinement: [(v: string) => boolean, string] = [
   (v) => {
     try {
@@ -130,23 +130,41 @@ export const embedFieldValidator = z.object({
 
 export type EmbedField = z.infer<typeof embedFieldValidator>;
 
-export const embedValidator = z.object({
-  title: z.string().max(256).optional(),
-  description: z.string().max(4096).optional(),
-  url: z
-    .string()
-    .refine(...urlRefinement)
-    .optional(),
-  timestamp: z.string().optional(),
-  color: z.number().optional(),
-  footer: embedFooterValidator.optional(),
-  image: embedImageValidator.optional(),
-  thumbnail: embedThumbnailValidator.optional(),
-  author: embedAuthorValidator.optional(),
-  fields: z
-    .array(z.object({ id: z.number().optional() }).and(embedFieldValidator))
-    .max(25),
-});
+export const embedValidator = z
+  .object({
+    title: z.string().max(256).optional(),
+    description: z.string().max(4096).optional(),
+    url: z
+      .string()
+      .refine(...urlRefinement)
+      .optional(),
+    timestamp: z.string().optional(),
+    color: z.number().optional(),
+    footer: embedFooterValidator.optional(),
+    image: embedImageValidator.optional(),
+    thumbnail: embedThumbnailValidator.optional(),
+    author: embedAuthorValidator.optional(),
+    fields: z
+      .array(z.object({ id: z.number().optional() }).and(embedFieldValidator))
+      .max(25),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      !data.description &&
+      !data.title &&
+      !data.author &&
+      !data.footer &&
+      !data.fields.length &&
+      !data.image &&
+      !data.thumbnail
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["description"],
+        message: "Description is required when no other fields are set",
+      });
+    }
+  });
 
 export type Embed = z.infer<typeof embedValidator>;
 
