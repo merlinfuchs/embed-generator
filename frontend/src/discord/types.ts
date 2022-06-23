@@ -24,7 +24,6 @@ const imageUrlRefinement: [(v: string) => boolean, string] = [
     } catch {
       return false;
     }
-    return true;
   },
   "",
 ];
