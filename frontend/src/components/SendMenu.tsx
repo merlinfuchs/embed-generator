@@ -75,16 +75,32 @@ export default function SendMenu() {
 
     if (selectedMode === "webhook") {
       if (webhookId && webhookToken) {
-        client.sendMessage({
-          target: {
-            webhook_id: webhookId,
-            webhook_token: webhookToken,
-            thread_id: threadId || undefined,
-            message_id: messageId || undefined,
-          },
-          payload_json: JSON.stringify(msgPayload),
-          attachments,
-        });
+        client
+          .sendMessage({
+            target: {
+              webhook_id: webhookId,
+              webhook_token: webhookToken,
+              thread_id: threadId || undefined,
+              message_id: messageId || undefined,
+            },
+            payload_json: JSON.stringify(msgPayload),
+            attachments,
+          })
+          .then((resp) => {
+            if (resp.success) {
+              addAlert({
+                type: "success",
+                title: "Message Sent",
+                details: "The message has been sent to the selected channel.",
+              });
+            } else {
+              addAlert({
+                type: "error",
+                title: "Sending Failed",
+                details: resp.error.details || "No details available",
+              });
+            }
+          });
       }
     } else {
       client
@@ -114,6 +130,22 @@ export default function SendMenu() {
         });
     }
   }
+
+  const canSend = useMemo(
+    () =>
+      !errors &&
+      (selectedMode === "webhook"
+        ? webhookId && webhookToken
+        : selectedGuild && selectedChannel),
+    [
+      selectedMode,
+      selectedGuild,
+      selectedChannel,
+      webhookId,
+      webhookToken,
+      errors,
+    ]
+  );
 
   return (
     <>
@@ -211,7 +243,7 @@ export default function SendMenu() {
           >
             View JSON
           </button>
-          {errors ? (
+          {!canSend ? (
             <button className="bg-dark-3 px-3 py-2 rounded transition-colors cursor-not-allowed">
               {messageId ? "Edit Message" : "Send Message"}
             </button>
