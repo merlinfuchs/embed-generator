@@ -2,13 +2,13 @@ use twilight_http::client::InteractionClient;
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::ApplicationCommand;
 use twilight_model::guild::Permissions;
-use twilight_model::id::marker::{ChannelMarker, GuildMarker, InteractionMarker, WebhookMarker};
+use twilight_model::id::marker::{ChannelMarker, InteractionMarker, WebhookMarker};
 use twilight_model::id::Id;
 use twilight_util::builder::command::CommandBuilder;
 
 use crate::bot::commands::{simple_response, InteractionError, InteractionResult};
-use crate::bot::webhooks::{get_webhooks_for_guild, CachedWebhook};
-use crate::bot::{get_bot_permissions_on_guild, DISCORD_HTTP};
+use crate::bot::webhooks::{get_webhooks_for_channel, CachedWebhook};
+use crate::bot::{get_bot_permissions_in_channel, DISCORD_HTTP};
 use crate::CONFIG;
 
 pub fn command_definition() -> Command {
@@ -24,16 +24,11 @@ pub fn command_definition() -> Command {
 
 pub async fn get_webhook_for_channel(
     http: &InteractionClient<'_>,
-    guild_id: Id<GuildMarker>,
     channel_id: Id<ChannelMarker>,
     interaction_id: Id<InteractionMarker>,
     interaction_token: &str,
 ) -> Result<(Id<WebhookMarker>, String), InteractionError> {
-    let existing_webhooks: Vec<CachedWebhook> = get_webhooks_for_guild(guild_id)
-        .await?
-        .into_iter()
-        .filter(|w| w.channel_id == channel_id)
-        .collect();
+    let existing_webhooks: Vec<CachedWebhook> = get_webhooks_for_channel(channel_id).await?;
     let existing_webhook_count = existing_webhooks.len();
     let existing_webhook = existing_webhooks
         .into_iter()
@@ -89,7 +84,7 @@ pub async fn handle_command(
         return Err(InteractionError::NoOp);
     }
 
-    let bot_perms = get_bot_permissions_on_guild(cmd.guild_id.unwrap());
+    let bot_perms = get_bot_permissions_in_channel(cmd.channel_id);
     if !bot_perms.contains(Permissions::MANAGE_WEBHOOKS) {
         simple_response(
             &http,
@@ -101,7 +96,8 @@ pub async fn handle_command(
         return Err(InteractionError::NoOp);
     }
 
-    let (webhook_id, webhook_token) = get_webhook_for_channel(&http, cmd.guild_id.unwrap(), cmd.channel_id, cmd.id, &cmd.token).await?;
+    let (webhook_id, webhook_token) =
+        get_webhook_for_channel(&http, cmd.channel_id, cmd.id, &cmd.token).await?;
 
     simple_response(
         &http,

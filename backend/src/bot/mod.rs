@@ -14,11 +14,11 @@ use twilight_http_ratelimiting::InMemoryRatelimiter;
 use twilight_model::gateway::event::Event;
 use twilight_model::gateway::Intents;
 use twilight_model::guild::Permissions;
-use twilight_model::id::marker::GuildMarker;
+use twilight_model::id::marker::ChannelMarker;
 use twilight_model::id::Id;
 
 use crate::bot::commands::{command_definitions, handle_interaction, InteractionError};
-use crate::bot::webhooks::delete_webhooks_for_guild;
+use crate::bot::webhooks::delete_webhooks_for_channel;
 use crate::config::CONFIG;
 
 mod commands;
@@ -46,9 +46,12 @@ lazy_static! {
     );
 }
 
-pub fn get_bot_permissions_on_guild(guild_id: Id<GuildMarker>) -> Permissions {
+pub fn get_bot_permissions_in_channel(channel_id: Id<ChannelMarker>) -> Permissions {
     let user_id = Id::new(CONFIG.discord.oauth_client_id.get());
-    DISCORD_CACHE.permissions().root(user_id, guild_id).unwrap_or(Permissions::empty())
+    DISCORD_CACHE
+        .permissions()
+        .in_channel(user_id, channel_id)
+        .unwrap_or(Permissions::empty())
 }
 
 pub async fn sync_commands() -> Result<(), Box<dyn Error>> {
@@ -108,7 +111,7 @@ pub async fn run_bot() -> Result<(), Box<dyn Error>> {
                 }
             }
             Event::MessageDelete(_) => {} // TODO: delete from last message store
-            Event::WebhooksUpdate(w) => delete_webhooks_for_guild(w.guild_id),
+            Event::WebhooksUpdate(w) => delete_webhooks_for_channel(w.channel_id),
             _ => {}
         }
     }

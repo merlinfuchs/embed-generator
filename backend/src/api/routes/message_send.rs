@@ -10,7 +10,7 @@ use twilight_util::permission_calculator::PermissionCalculator;
 
 use crate::api::response::{RouteError, RouteResult};
 use crate::api::wire::{MessageSendRequestWire, MessageSendResponseWire, MessageSendTargetWire};
-use crate::bot::webhooks::{get_webhooks_for_guild, CachedWebhook};
+use crate::bot::webhooks::{get_webhooks_for_channel, CachedWebhook};
 use crate::bot::{DISCORD_CACHE, DISCORD_HTTP};
 use crate::config::CONFIG;
 use crate::db::models::{ChannelMessagesModel, GuildsWithAccessModel};
@@ -77,10 +77,9 @@ pub async fn route_message_send(
                 return Err(RouteError::GuildChannelMismatch);
             }
 
-            let guild =
-                DISCORD_CACHE.guild(guild_id).ok_or(RouteError::NotFound {
-                    entity: "guild".into(),
-                })?;
+            let guild = DISCORD_CACHE.guild(guild_id).ok_or(RouteError::NotFound {
+                entity: "guild".into(),
+            })?;
 
             let perms = if guild.owner_id() == token.user_id {
                 Permissions::all()
@@ -129,11 +128,8 @@ pub async fn route_message_send(
                 _ => return Err(RouteError::UnsupportedChannelType),
             };
 
-            let existing_webhooks: Vec<CachedWebhook> = get_webhooks_for_guild(guild_id)
-                .await?
-                .into_iter()
-                .filter(|w| w.channel_id == channel_id)
-                .collect();
+            let existing_webhooks: Vec<CachedWebhook> =
+                get_webhooks_for_channel(channel_id).await?;
             let existing_webhook_count = existing_webhooks.len();
             let existing_webhook = existing_webhooks
                 .into_iter()
