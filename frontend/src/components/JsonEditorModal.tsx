@@ -55,7 +55,7 @@ export default function JsonEditorModal({ visible, setVisible }: Props) {
         {error && (
           <div className="h-32 overflow-y-auto bg-dark-2 rounded py-1 px-2">
             {error.errors.map((e) => (
-              <div className="flex space-x-3">
+              <div className="flex space-x-3" key={e.path.join(".")}>
                 <div className="text-gray-300">{e.path.join(".")}</div>
                 <div className="text-red">{e.message}</div>
               </div>
