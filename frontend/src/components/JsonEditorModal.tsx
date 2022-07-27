@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { jsonToMessage, messageToJson } from "../discord/utils";
+import { ZodError } from "zod";
+import { jsonToMessageStrict, messageToJson } from "../discord/utils";
 import useMessage from "../hooks/useMessage";
 import BaseModal from "./BaseModal";
 
@@ -20,6 +21,8 @@ export default function JsonEditorModal({ visible, setVisible }: Props) {
 
   useEffect(() => setJson(currentJson), [currentJson]);
 
+  const [error, setError] = useState<ZodError | null>(null);
+
   function close() {
     setVisible(false);
     setJson(currentJson);
@@ -27,10 +30,15 @@ export default function JsonEditorModal({ visible, setVisible }: Props) {
 
   function save() {
     try {
-      const message = jsonToMessage(JSON.parse(json));
-      dispatch({ type: "replace", value: message });
-      setVisible(false);
-      setJson(currentJson);
+      const result = jsonToMessageStrict(JSON.parse(json));
+      if (result.success) {
+        dispatch({ type: "replace", value: result.message });
+        setVisible(false);
+        setError(null);
+        setJson(currentJson);
+      } else {
+        setError(result.error);
+      }
     } catch {
       alert("Invalid JSON provided");
     }
@@ -38,15 +46,22 @@ export default function JsonEditorModal({ visible, setVisible }: Props) {
 
   return (
     <BaseModal visible={visible} setVisible={setVisible} size="large">
-      <div className="space-y-1">
+      <div className="space-y-3">
         <textarea
           value={json}
           onChange={(e) => setJson(e.target.value)}
           className="w-full h-96 bg-dark-2 rounded no-ring rounded"
         ></textarea>
-        <div className="text-sm text-gray-400">
-          Unknown and invalid fields will be ignored
-        </div>
+        {error && (
+          <div className="h-32 overflow-y-auto bg-dark-2 rounded py-1 px-2">
+            {error.errors.map((e) => (
+              <div className="flex space-x-3">
+                <div className="text-gray-300">{e.path.join(".")}</div>
+                <div className="text-red">{e.message}</div>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="flex justify-end space-x-2">
           <button
             className="border-2 border-dark-7 px-3 py-2 rounded transition-colors hover:bg-dark-6"

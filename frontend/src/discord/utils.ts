@@ -1,3 +1,4 @@
+import { ZodError } from "zod";
 import { getUniqueId } from "../util";
 import {
   ComponentActionRow,
@@ -5,6 +6,7 @@ import {
   ComponentSelectMenu,
   Embed,
   Message,
+  messageValidator,
 } from "./types";
 
 export function userAvatarUrl({
@@ -267,4 +269,44 @@ export function jsonToMessage(json: any): Message {
   }
 
   return message;
+}
+
+export function jsonToMessageStrict(
+  json: any
+): { success: true; message: Message } | { success: false; error: ZodError } {
+  const result = messageValidator.safeParse(json);
+  if (!result.success) {
+    return {
+      success: false,
+      error: result.error,
+    };
+  }
+
+  const message = result.data;
+  for (const embed of message.embeds) {
+    embed.id = getUniqueId();
+
+    for (const field of embed.fields) {
+      field.id = getUniqueId();
+    }
+  }
+
+  for (const row of message.components) {
+    row.id = getUniqueId();
+
+    for (const component of row.components) {
+      component.id = getUniqueId();
+
+      if (component.type === 3) {
+        for (const option of component.options) {
+          option.id = getUniqueId();
+        }
+      }
+    }
+  }
+
+  return {
+    success: true,
+    message,
+  };
 }
