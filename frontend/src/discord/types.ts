@@ -25,7 +25,7 @@ const imageUrlRefinement: [(v: string) => boolean, string] = [
       return false;
     }
   },
-  "",
+  "Invalid image URL",
 ];
 
 export const componentButtonValidator = z.object({ type: z.literal(2) }).and(
