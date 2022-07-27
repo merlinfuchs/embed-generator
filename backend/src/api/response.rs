@@ -2,13 +2,15 @@ use std::borrow::Cow;
 use std::fmt::Debug;
 
 use actix_web::body::BoxBody;
-use actix_web::http::StatusCode;
 use actix_web::web::Json;
 use actix_web::{HttpResponse, ResponseError};
+use actix_web::http::StatusCode;
 use awc::error::{JsonPayloadError, SendRequestError};
 use log::error;
 use mongodb::error::Error as MongoError;
 use serde::Serialize;
+use serde_json::Value;
+use twilight_http::error::ErrorType;
 use twilight_http::Error;
 
 use crate::db::RedisPoolError;
@@ -44,7 +46,7 @@ impl<T: Serialize> From<T> for RouteResponse<T> {
 pub struct ErrorResponseWrapper {
     #[serde(flatten)]
     pub inner: RouteError,
-    pub details: Option<String>
+    pub details: Option<String>,
 }
 
 #[derive(Debug, Clone, thiserror::Error, Serialize)]
@@ -77,6 +79,8 @@ pub enum RouteError {
     DiscordApi,
     #[error("You have reached the maximum count of messages")]
     MessageLimitReached,
+    #[error("Failed to send message")]
+    MessageSendError(MessageSendError),
 }
 
 impl ResponseError for RouteError {
@@ -95,7 +99,8 @@ impl ResponseError for RouteError {
             ChannelWebhookLimitReached => StatusCode::BAD_REQUEST,
             UnsupportedChannelType => StatusCode::BAD_REQUEST,
             DiscordApi => StatusCode::BAD_REQUEST,
-            MessageLimitReached => StatusCode::FORBIDDEN
+            MessageLimitReached => StatusCode::FORBIDDEN,
+            MessageSendError(_) => StatusCode::BAD_REQUEST,
         }
     }
 
@@ -105,7 +110,7 @@ impl ResponseError for RouteError {
             data: None,
             error: Some(ErrorResponseWrapper {
                 inner: self.clone(),
-                details: Some(format!("{}", self))
+                details: Some(format!("{}", self)),
             }),
         })
     }
@@ -151,5 +156,31 @@ impl From<twilight_http::Error> for RouteError {
     fn from(e: Error) -> Self {
         error!("Discord API error: {}", e);
         Self::DiscordApi
+    }
+}
+
+#[derive(Serialize, Debug, Clone)]
+#[serde(rename_all = "snake_case", tag = "type")]
+pub enum MessageSendError {
+    Unknown,
+    Response { status: u16, body: Value },
+}
+
+impl From<twilight_http::Error> for MessageSendError {
+    fn from(e: Error) -> Self {
+        match e.into_parts().0 {
+            ErrorType::Response { status, body, .. } => MessageSendError::Response {
+                status: status.get(),
+                body: serde_json::from_slice(&body)
+                    .unwrap_or(Value::String(String::from_utf8(body).unwrap())),
+            },
+            _ => MessageSendError::Unknown,
+        }
+    }
+}
+
+impl From<MessageSendError> for RouteError {
+    fn from(e: MessageSendError) -> Self {
+        Self::MessageSendError(e)
     }
 }

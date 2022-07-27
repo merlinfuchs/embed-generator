@@ -16,7 +16,7 @@ function App() {
           <TopBar />
         </div>
         <div className="flex-auto flex overflow-hidden">
-          <div className="lg:w-7/12 flex-grow p-3 md:p-5 border-r-2 border-dark-3 overflow-y-auto">
+          <div className="lg:w-7/12 flex-grow p-3 md:p-5 border-r-2 border-dark-3 overflow-y-auto flex flex-col">
             <SendMenu />
             <div className="border-b border-gray-600 my-5" />
             <Editor />

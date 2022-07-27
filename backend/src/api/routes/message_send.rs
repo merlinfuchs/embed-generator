@@ -8,7 +8,7 @@ use twilight_model::id::marker::RoleMarker;
 use twilight_model::id::Id;
 use twilight_util::permission_calculator::PermissionCalculator;
 
-use crate::api::response::{RouteError, RouteResult};
+use crate::api::response::{MessageSendError, RouteError, RouteResult};
 use crate::api::wire::{MessageSendRequestWire, MessageSendResponseWire, MessageSendTargetWire};
 use crate::bot::webhooks::{get_webhooks_for_channel, CachedWebhook};
 use crate::bot::{DISCORD_CACHE, DISCORD_HTTP};
@@ -167,7 +167,8 @@ pub async fn route_message_send(
             .attachments(&attachments)
             .unwrap()
             .exec()
-            .await?;
+            .await
+            .map_err(|e| MessageSendError::from(e))?;
 
         Ok(Json(MessageSendResponseWire { message_id }.into()))
     } else {
@@ -182,7 +183,8 @@ pub async fn route_message_send(
             .unwrap()
             .wait()
             .exec()
-            .await?
+            .await
+            .map_err(|e| MessageSendError::from(e))?
             .model()
             .await
             .unwrap();

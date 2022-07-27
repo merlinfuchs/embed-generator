@@ -40,7 +40,7 @@ export default function Editor() {
   );
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 flex-auto">
       <div className="flex space-x-3">
         <StyledInput
           label="Username"

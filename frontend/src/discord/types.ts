@@ -167,22 +167,32 @@ export const embedValidator = z
 
 export type Embed = z.infer<typeof embedValidator>;
 
-export const messageValidator = z.object({
-  username: z.string().max(25).optional(),
-  avatar_url: z
-    .string()
-    .refine(...imageUrlRefinement)
-    .optional(),
-  content: z.string().max(2000).optional(),
-  embeds: z
-    .array(z.object({ id: z.number().optional() }).and(embedValidator))
-    .max(10),
-  components: z
-    .array(
-      z.object({ id: z.number().optional() }).and(componentActionRowValidator)
-    )
-    .max(5),
-});
+export const messageValidator = z
+  .object({
+    username: z.string().max(25).optional(),
+    avatar_url: z
+      .string()
+      .refine(...imageUrlRefinement)
+      .optional(),
+    content: z.string().max(2000).optional(),
+    embeds: z
+      .array(z.object({ id: z.number().optional() }).and(embedValidator))
+      .max(10),
+    components: z
+      .array(
+        z.object({ id: z.number().optional() }).and(componentActionRowValidator)
+      )
+      .max(5),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.content && !data.embeds.length && !data.components.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["content"],
+        message: "Content is required when no other fields are set",
+      });
+    }
+  });
 
 export type Message = z.infer<typeof messageValidator>;
 

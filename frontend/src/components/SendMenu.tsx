@@ -12,6 +12,7 @@ import ChannelSelect from "./ChannelSelect";
 import GuildSelect from "./GuildSelect";
 import JsonEditorModal from "./JsonEditorModal";
 import LoginSuggest from "./LoginSuggest";
+import SendErrorModal from "./SendErrorModal";
 
 const webhookUrlRegex =
   /https?:\/\/(?:canary\.|ptb\.)?discord\.com\/api\/webhooks\/([0-9]+)\/([a-zA-Z0-9_-]+)/;
@@ -36,6 +37,8 @@ export default function SendMenu() {
   const addAlert = useAlerts();
 
   const [jsonModal, setJsonModal] = useState(false);
+
+  const [sendError, setSendError] = useState<any | null>(null);
 
   const [webhookId, webhookToken] = useMemo(() => {
     if (webhookUrl) {
@@ -94,11 +97,15 @@ export default function SendMenu() {
                 details: "The message has been sent to the selected channel.",
               });
             } else {
-              addAlert({
-                type: "error",
-                title: "Sending Failed",
-                details: resp.error.details || "No details available",
-              });
+              if (resp.error.code === "message_send_error") {
+                setSendError((resp.error as any).body);
+              } else {
+                addAlert({
+                  type: "error",
+                  title: "Sending Failed",
+                  details: resp.error.details || "No details available",
+                });
+              }
             }
           });
       }
@@ -121,11 +128,15 @@ export default function SendMenu() {
               details: "The message has been sent to the selected channel.",
             });
           } else {
-            addAlert({
-              type: "error",
-              title: "Sending Failed",
-              details: resp.error.details || "No details available",
-            });
+            if (resp.error.code === "message_send_error") {
+              setSendError((resp.error as any).body);
+            } else {
+              addAlert({
+                type: "error",
+                title: "Sending Failed",
+                details: resp.error.details || "No details available",
+              });
+            }
           }
         });
     }
@@ -258,6 +269,11 @@ export default function SendMenu() {
         </div>
       </div>
       <JsonEditorModal visible={jsonModal} setVisible={setJsonModal} />
+      <SendErrorModal
+        visible={!!sendError}
+        setVisible={() => setSendError(null)}
+        body={sendError}
+      />
     </>
   );
 }
