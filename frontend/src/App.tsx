@@ -5,9 +5,13 @@ import Editor from "./components/Editor";
 import { EyeIcon } from "@heroicons/react/outline";
 import PreviewModal from "./components/PreviewModal";
 import { useState } from "react";
+import PrivacyPolicyModal from "./components/PrivacyPolicyModal";
+import TermsModal from "./components/TermsModal";
 
 function App() {
   const [previewModal, setPreviewModal] = useState(false);
+  const [privacyPolicyModal, setPrivacyPolicyModal] = useState(false);
+  const [termsModal, setTermsModal] = useState(false);
 
   return (
     <div>
@@ -20,6 +24,25 @@ function App() {
             <SendMenu />
             <div className="border-b border-gray-600 my-5" />
             <Editor />
+            <div className="mt-10">
+              <div className="flex mb-2 space-x-4">
+                <div
+                  className="cursor-pointer text-gray-300 hover:text-white"
+                  onClick={() => setPrivacyPolicyModal(true)}
+                >
+                  Privacy Policy
+                </div>
+                <div
+                  className="cursor-pointer text-gray-300 hover:text-white"
+                  onClick={() => setTermsModal(true)}
+                >
+                  Terms of Service
+                </div>
+              </div>
+              <div className="text-gray-300 text-sm">
+                © 2020 Merlin Fuchs & Contributors
+              </div>
+            </div>
           </div>
           <div className="lg:w-5/12 flex-none hidden lg:block overflow-y-auto pl-4 pr-10">
             <Preview />
@@ -37,6 +60,12 @@ function App() {
           <EyeIcon className="text-white h-9 w-9" />
         </div>
       </div>
+
+      <PrivacyPolicyModal
+        visible={privacyPolicyModal}
+        setVisible={setPrivacyPolicyModal}
+      />
+      <TermsModal visible={termsModal} setVisible={setTermsModal} />
     </div>
   );
 }

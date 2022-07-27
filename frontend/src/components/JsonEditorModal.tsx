@@ -26,6 +26,7 @@ export default function JsonEditorModal({ visible, setVisible }: Props) {
   function close() {
     setVisible(false);
     setJson(currentJson);
+    setError(null);
   }
 
   function save() {
