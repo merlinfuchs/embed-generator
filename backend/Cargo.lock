@@ -693,7 +693,7 @@ checksum = "56899898ce76aaf4a0f24d914c97ea6ed976d42fec6ad33fcbb0a1103e07b2b0"
 
 [[package]]
 name = "embed-generator"
-version = "0.1.5"
+version = "0.1.7"
 dependencies = [
  "actix-cors",
  "actix-web",
