@@ -23,15 +23,19 @@ export default function EditorInputTools({ value, onChange, input }: Props) {
     if (!current) return;
 
     function handleSelection(e: any) {
+      if (!e) return;
       setSelection([
         e.target.selectionStart || 0,
         e.target.selectionEnd ?? undefined,
       ]);
     }
 
-    current.addEventListener("selectionchange", handleSelection);
-    return () =>
-      current?.removeEventListener("selectionchange", handleSelection);
+    current.addEventListener("select", handleSelection);
+    current.addEventListener("mouseup", handleSelection);
+    return () => {
+      current?.removeEventListener("select", handleSelection);
+      current?.removeEventListener("mouseup", handleSelection);
+    };
   }, [input]);
 
   function suroundWith(left: string, right?: string) {
