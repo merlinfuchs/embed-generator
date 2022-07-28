@@ -5,6 +5,7 @@ import { ZodFormattedError } from "zod";
 import { Embed, EmbedField } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import EditorEmbedField from "./EditorEmbedField";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 interface Props {
   index: number;
@@ -16,8 +17,11 @@ export default function EditorEmbedFields({ index, embed, errors }: Props) {
   const [, dispatch] = useMessage();
   const [collapsed, setCollapsed] = useState(false);
 
+  const [fieldsSection] = useAutoAnimate<HTMLDivElement>();
+  const [fieldContainer] = useAutoAnimate<HTMLDivElement>();
+
   return (
-    <div>
+    <div ref={fieldsSection}>
       <div
         className="text-medium flex-auto cursor-pointer flex items-center space-x-2 text-gray-300 select-none"
         onClick={() => setCollapsed(!collapsed)}
@@ -32,16 +36,18 @@ export default function EditorEmbedFields({ index, embed, errors }: Props) {
       </div>
       {!collapsed ? (
         <div className="mt-3">
-          {embed.fields.map((field, i) => (
-            <EditorEmbedField
-              field={field}
-              key={field.id}
-              index={i}
-              embed={embed}
-              embedIndex={index}
-              errors={(errors || [])[i]}
-            />
-          ))}
+          <div ref={fieldContainer}>
+            {embed.fields.map((field, i) => (
+              <EditorEmbedField
+                field={field}
+                key={field.id}
+                index={i}
+                embed={embed}
+                embedIndex={index}
+                errors={(errors || [])[i]}
+              />
+            ))}
+          </div>
           <div className="space-x-3 mt-3">
             {embed.fields.length < 25 ? (
               <button

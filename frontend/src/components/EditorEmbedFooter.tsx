@@ -6,6 +6,7 @@ import StyledInput from "./StyledInput";
 import { parse, formatISO, parseISO, format } from "date-fns";
 import { ZodFormattedError } from "zod";
 import { ExclamationCircleIcon } from "@heroicons/react/solid";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 interface Props {
   index: number;
@@ -49,8 +50,10 @@ export default function EditorEmbedFooter({ index, embed, errors }: Props) {
     }
   }, [embed.timestamp]);
 
+  const [footerContainer] = useAutoAnimate<HTMLDivElement>();
+
   return (
-    <div>
+    <div ref={footerContainer}>
       <div
         className="text-medium flex-auto cursor-pointer flex items-center space-x-2 text-gray-300 select-none"
         onClick={() => setCollapsed(!collapsed)}

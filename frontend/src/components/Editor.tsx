@@ -9,6 +9,7 @@ import EditorComponentRow from "./EditorComponentRow";
 import EditorEmbed from "./EditorEmbed";
 import StyledInput from "./StyledInput";
 import StyledTextarea from "./StyledTextarea";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 export default function Editor() {
   const [msg, dispatchMsg] = useMessage();
@@ -38,6 +39,9 @@ export default function Editor() {
         .reduce((a, b) => a + b, 0),
     [msg.embeds]
   );
+
+  const [embedsSection] = useAutoAnimate<HTMLDivElement>();
+  const [componentsSection] = useAutoAnimate<HTMLDivElement>();
 
   return (
     <div className="space-y-5 flex-auto">
@@ -72,7 +76,7 @@ export default function Editor() {
         errors={errors?.content?._errors}
       />
       <EditorAttachments />
-      <div>
+      <div ref={embedsSection}>
         <div
           className="flex-auto cursor-pointer flex items-center space-x-2 text-gray-300 select-none mb-2"
           onClick={() => setEmbedsCollapsed(!embedsCollapsed)}
@@ -133,7 +137,7 @@ export default function Editor() {
         )}
       </div>
       {!!token && (
-        <div>
+        <div ref={componentsSection}>
           <div
             className="flex-auto cursor-pointer flex items-center space-x-2 text-gray-300 select-none mb-2"
             onClick={() => setComponentsCollapsed(!componentsCollapsed)}

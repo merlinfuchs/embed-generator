@@ -6,6 +6,7 @@ import { ComponentSelectMenu } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import EditorComponentSelectOption from "./EditorComponentSelectOption";
 import StyledInput from "./StyledInput";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 interface Props {
   index: number;
@@ -23,6 +24,9 @@ export default function EditorComponentSelect({
   const [, dispatch] = useMessage();
   const [optionsCollapsed, setOptionsCollapsed] = useState(false);
 
+  const [optionsSection] = useAutoAnimate<HTMLDivElement>();
+  const [optionsContainer] = useAutoAnimate<HTMLDivElement>();
+
   return (
     <div className="space-y-4 mt-3">
       <StyledInput
@@ -36,7 +40,7 @@ export default function EditorComponentSelect({
         }
         errors={errors?.placeholder?._errors}
       />
-      <div>
+      <div ref={optionsSection}>
         <div
           className="text-medium flex-auto cursor-pointer flex items-center space-x-2 text-gray-300 select-none"
           onClick={() => setOptionsCollapsed(!optionsCollapsed)}
@@ -53,16 +57,18 @@ export default function EditorComponentSelect({
         </div>
         {!optionsCollapsed && (
           <div className="mt-3">
-            {selectMenu.options.map((option, i) => (
-              <EditorComponentSelectOption
-                option={option}
-                rowIndex={rowIndex}
-                selectIndex={index}
-                index={i}
-                key={option.id}
-                errors={(errors?.options || [])[i]}
-              />
-            ))}
+            <div ref={optionsContainer}>
+              {selectMenu.options.map((option, i) => (
+                <EditorComponentSelectOption
+                  option={option}
+                  rowIndex={rowIndex}
+                  selectIndex={index}
+                  index={i}
+                  key={option.id}
+                  errors={(errors?.options || [])[i]}
+                />
+              ))}
+            </div>
             <div className="space-x-3 mt-3">
               {selectMenu.options.length < 25 ? (
                 <button

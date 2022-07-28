@@ -185,6 +185,7 @@ export const messageValidator = z
       .max(5),
   })
   .superRefine((data, ctx) => {
+    // this currently doesn't take attachments into account
     if (!data.content && !data.embeds.length && !data.components.length) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

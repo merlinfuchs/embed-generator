@@ -9,6 +9,7 @@ import {
 } from "react";
 import { ComponentButton, Embed, Message } from "../discord/types";
 import { jsonToMessage, messageToJson } from "../discord/utils";
+import { getUniqueId } from "../util";
 
 export type MessageAction =
   | {
@@ -274,9 +275,6 @@ export type MessageAction =
       value?: string;
     };
 
-// this more-or-less makes sure that we never generate the same id twice
-let lastUniqueId = Date.now();
-
 function reducer(msg: Message, action: MessageAction): Message {
   switch (action.type) {
     case "replace":
@@ -293,7 +291,7 @@ function reducer(msg: Message, action: MessageAction): Message {
           ...msg,
           embeds: [
             ...msg.embeds,
-            { id: lastUniqueId++, ...(action.value || { fields: [] }) },
+            { id: getUniqueId(), ...(action.value || { fields: [] }) },
           ],
         };
       } else {
@@ -301,7 +299,7 @@ function reducer(msg: Message, action: MessageAction): Message {
       }
     case "setEmbed": {
       const embeds = [...msg.embeds];
-      embeds[action.index] = { id: lastUniqueId++, ...action.value };
+      embeds[action.index] = { id: getUniqueId(), ...action.value };
       return { ...msg, embeds };
     }
     case "clearEmbeds":
@@ -330,8 +328,8 @@ function reducer(msg: Message, action: MessageAction): Message {
     case "cloneEmbed": {
       const embeds = [...msg.embeds];
       const newEmbed = JSON.parse(JSON.stringify(embeds[action.index]));
-      newEmbed.id = lastUniqueId++;
-      embeds.splice(action.index, 0, newEmbed);
+      newEmbed.id = getUniqueId();
+      embeds.splice(action.index + 1, 0, newEmbed);
       return { ...msg, embeds };
     }
     case "setEmbedColor": {
@@ -462,7 +460,7 @@ function reducer(msg: Message, action: MessageAction): Message {
       if (embed.fields.length < 25) {
         embed.fields = [
           ...embed.fields,
-          { id: lastUniqueId++, name: "", value: "" },
+          { id: getUniqueId(), name: "", value: "" },
         ];
         embeds[action.index] = embed;
         return { ...msg, embeds };
@@ -508,8 +506,8 @@ function reducer(msg: Message, action: MessageAction): Message {
       const fields = [...embeds[action.embedIndex].fields];
 
       const newField = JSON.parse(JSON.stringify(fields[action.index]));
-      newField.id = lastUniqueId++;
-      fields.splice(action.index, 0, newField);
+      newField.id = getUniqueId();
+      fields.splice(action.index + 1, 0, newField);
 
       embeds[action.embedIndex] = { ...embeds[action.embedIndex], fields };
       return { ...msg, embeds };
@@ -550,7 +548,7 @@ function reducer(msg: Message, action: MessageAction): Message {
         components: [
           ...msg.components,
           {
-            id: lastUniqueId++,
+            id: getUniqueId(),
             type: 1,
             components: [],
           },
@@ -563,13 +561,13 @@ function reducer(msg: Message, action: MessageAction): Message {
         components: [
           ...msg.components,
           {
-            id: lastUniqueId++,
+            id: getUniqueId(),
             type: 1,
             components: [
               {
                 type: 3,
-                id: lastUniqueId++,
-                custom_id: (lastUniqueId++).toString(),
+                id: getUniqueId(),
+                custom_id: getUniqueId().toString(),
                 options: [],
               },
             ],
@@ -607,14 +605,14 @@ function reducer(msg: Message, action: MessageAction): Message {
     case "cloneComponentRow": {
       const components = [...msg.components];
       const newComponent = JSON.parse(JSON.stringify(components[action.index]));
-      newComponent.id = lastUniqueId++;
-      components.splice(action.index, 0, newComponent);
+      newComponent.id = getUniqueId();
+      components.splice(action.index + 1, 0, newComponent);
       return { ...msg, components };
     }
     case "addButton": {
       const components = [...msg.components];
       const newButton = {
-        id: lastUniqueId++,
+        id: getUniqueId(),
         ...(action.value || { type: 2, style: 5, url: "", label: "" }),
       };
 
@@ -672,8 +670,8 @@ function reducer(msg: Message, action: MessageAction): Message {
       const components = [...msg.components];
       const subComponents = [...components[action.rowIndex].components];
       const newButton = JSON.parse(JSON.stringify(subComponents[action.index]));
-      newButton.id = lastUniqueId++;
-      subComponents.splice(action.index, 0, newButton);
+      newButton.id = getUniqueId();
+      subComponents.splice(action.index + 1, 0, newButton);
       components[action.rowIndex] = {
         ...components[action.rowIndex],
         components: subComponents,
@@ -703,13 +701,17 @@ function reducer(msg: Message, action: MessageAction): Message {
       if (component.type === 2) {
         if (action.value === 5) {
           subComponents[action.index] = {
-            ...component,
+            id: component.id,
+            type: 2,
+            label: component.label,
             style: action.value,
             url: component.style === 5 ? component.url : "",
           };
         } else {
           subComponents[action.index] = {
-            ...component,
+            id: component.id,
+            type: 2,
+            label: component.label,
             style: action.value,
             custom_id: component.style !== 5 ? component.custom_id : "",
           };
@@ -778,7 +780,7 @@ function reducer(msg: Message, action: MessageAction): Message {
           ...component,
           options: [
             ...component.options,
-            { id: lastUniqueId++, label: "", value: "" },
+            { id: getUniqueId(), label: "", value: "" },
           ],
         };
       }
@@ -896,7 +898,7 @@ const defaultMessage: Message = {
   content: "Welcome to Embed Generator!",
   embeds: [
     {
-      id: lastUniqueId++,
+      id: getUniqueId(),
       title: "This is an Embed!",
       description: "Embeds are pretty cool if you ask me :)",
       color: 1412061,

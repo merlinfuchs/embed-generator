@@ -11,6 +11,7 @@ import { ZodFormattedError } from "zod";
 import { ComponentButton, ComponentActionRow } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import StyledInput from "./StyledInput";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 interface Props {
   index: number;
@@ -40,9 +41,12 @@ export default function EditorComponentButton({
 
   const borderColor = buttonBorderColors[button.style];
 
+  const [buttonContainer] = useAutoAnimate<HTMLDivElement>();
+
   return (
     <div
       className={`bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow border-2 ${borderColor}`}
+      ref={buttonContainer}
     >
       <div className="flex items-center">
         <div

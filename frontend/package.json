@@ -5,6 +5,7 @@
   "proxy": "http://127.0.0.1:8080",
   "dependencies": {
     "@babel/core": "^7.16.0",
+    "@formkit/auto-animate": "^1.0.0-beta.1",
     "@headlessui/react": "^1.6.4",
     "@heroicons/react": "^1.0.6",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.3",

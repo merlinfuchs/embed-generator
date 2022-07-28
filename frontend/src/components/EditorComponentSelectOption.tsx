@@ -5,6 +5,7 @@ import { ZodFormattedError } from "zod";
 import { ComponentSelectMenuOption } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import StyledInput from "./StyledInput";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 interface Props {
   option: ComponentSelectMenuOption;
@@ -24,8 +25,13 @@ export default function EditorComponentSelectOption({
   const [collapsed, setCollapsed] = useState(true);
   const [, dispatch] = useMessage();
 
+  const [optionContainer] = useAutoAnimate<HTMLDivElement>();
+
   return (
-    <div className="bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow border border-dark-6">
+    <div
+      className="bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow border border-dark-6"
+      ref={optionContainer}
+    >
       <div className="flex items-center">
         <div
           className="text-medium flex-auto cursor-pointer flex items-center space-x-2 select-none overflow-hidden"

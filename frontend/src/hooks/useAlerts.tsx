@@ -5,8 +5,7 @@ import {
   XIcon,
 } from "@heroicons/react/outline";
 import { createContext, useContext, useState, ReactNode } from "react";
-
-let lastUniqueId = 0;
+import { getUniqueId } from "../util";
 
 export interface Alert {
   type: "error" | "success" | "info";
@@ -20,7 +19,7 @@ export const AlertsProvider = ({ children }: { children: ReactNode }) => {
   const [alerts, setAlerts] = useState<(Alert & { id: number })[]>([]);
 
   function addAlert(alert: Alert) {
-    const id = lastUniqueId++;
+    const id = getUniqueId();
     setAlerts([...alerts, { ...alert, id }]);
     setTimeout(() => {
       setAlerts((alerts) => alerts.filter((a) => a.id !== id));

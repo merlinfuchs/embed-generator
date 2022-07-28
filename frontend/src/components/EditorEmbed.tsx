@@ -15,6 +15,7 @@ import EditorEmbedImages from "./EditorEmbedImages";
 import EditorEmbedFooter from "./EditorEmbedFooter";
 import { ZodFormattedError } from "zod";
 import { ExclamationCircleIcon } from "@heroicons/react/solid";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 interface Props {
   index: number;
@@ -31,10 +32,13 @@ export default function EditorEmbed({ index, embed, errors }: Props) {
     [embed.color]
   );
 
+  const [embedContainer] = useAutoAnimate<HTMLDivElement>();
+
   return (
     <div
       className="bg-dark-3 rounded-md px-3 md:px-4 py-3 mb-3 shadow border-l-4"
       style={{ borderColor: hexColor }}
+      ref={embedContainer}
     >
       <div className="flex items-center">
         <div

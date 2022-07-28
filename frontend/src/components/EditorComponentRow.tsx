@@ -12,6 +12,7 @@ import { ComponentActionRow } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import EditorComponentButton from "./EditorComponentButton";
 import EditorComponentSelect from "./EditorComponentSelect";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 interface Props {
   index: number;
@@ -29,8 +30,14 @@ export default function EditorComponentRow({ row, index, errors }: Props) {
     [row]
   );
 
+  const [rowSection] = useAutoAnimate<HTMLDivElement>();
+  const [rowContainer] = useAutoAnimate<HTMLDivElement>();
+
   return (
-    <div className="bg-dark-3 rounded-md px-3 md:px-4 py-3 mb-3 shadow">
+    <div
+      className="bg-dark-3 rounded-md px-3 md:px-4 py-3 mb-3 shadow"
+      ref={rowSection}
+    >
       <div className="flex items-center">
         <div
           className="text-medium text-lg flex-auto cursor-pointer flex items-center space-x-2 select-none overflow-hidden"
@@ -77,26 +84,29 @@ export default function EditorComponentRow({ row, index, errors }: Props) {
       </div>
       {!collapsed && (
         <div className="mt-4">
-          {row.components.map((comp, i) =>
-            comp.type === 2 ? (
-              <EditorComponentButton
-                button={comp}
-                index={i}
-                rowIndex={index}
-                row={row}
-                key={comp.id}
-                errors={(errors?.components || [])[i]}
-              />
-            ) : (
-              <EditorComponentSelect
-                key={comp.id}
-                selectMenu={comp}
-                index={i}
-                rowIndex={index}
-                errors={(errors?.components || [])[i]}
-              />
-            )
-          )}
+          <div ref={rowContainer}>
+            {row.components.map((comp, i) =>
+              comp.type === 2 ? (
+                <div key={comp.id}>
+                  <EditorComponentButton
+                    button={comp}
+                    index={i}
+                    rowIndex={index}
+                    row={row}
+                    errors={(errors?.components || [])[i]}
+                  />
+                </div>
+              ) : (
+                <EditorComponentSelect
+                  key={comp.id}
+                  selectMenu={comp}
+                  index={i}
+                  rowIndex={index}
+                  errors={(errors?.components || [])[i]}
+                />
+              )
+            )}
+          </div>
           {isButtonRow && (
             <div className="space-x-3 mt-3">
               {row.components.length < 5 ? (

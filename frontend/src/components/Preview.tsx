@@ -3,6 +3,7 @@ import "./Preview.css";
 import { format, parseISO } from "date-fns";
 import { useState } from "react";
 import { toHTML } from "../discord/markdown";
+import { getUniqueId } from "../util";
 
 const buttonColors = {
   1: "discord-button-primary",
@@ -11,8 +12,6 @@ const buttonColors = {
   4: "discord-button-destructive",
   5: "discord-button-secondary",
 };
-
-let lastUniqueId = 0;
 
 interface ButtonResponse {
   id: number;
@@ -248,7 +247,7 @@ export default function Preview() {
                                 setResponses([
                                   ...responses,
                                   {
-                                    id: lastUniqueId++,
+                                    id: getUniqueId(),
                                     text: comp.custom_id,
                                   },
                                 ])

@@ -5,6 +5,7 @@ import { ZodFormattedError } from "zod";
 import { Embed, EmbedAuthor } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import StyledInput from "./StyledInput";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 interface Props {
   index: number;
@@ -16,8 +17,10 @@ export default function EditorEmbedAuthor({ index, embed, errors }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [, dispatch] = useMessage();
 
+  const [authorContainer] = useAutoAnimate<HTMLDivElement>();
+
   return (
-    <div>
+    <div ref={authorContainer}>
       <div
         className="text-medium flex-auto cursor-pointer flex items-center space-x-2 text-gray-300 select-none"
         onClick={() => setCollapsed(!collapsed)}

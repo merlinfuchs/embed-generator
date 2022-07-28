@@ -1,5 +1,6 @@
 import { createContext, ReactNode, useContext, useReducer } from "react";
 import { AttachmentWire } from "../api/wire";
+import { getUniqueId } from "../util";
 
 export interface Attachment extends AttachmentWire {
   id?: number;
@@ -21,16 +22,13 @@ export type AttachmentsAction =
       value: string | null;
     };
 
-// this more-or-less makes sure that we never generate the same id twice
-let lastUniqueId = Date.now();
-
 function reducer(
   attachments: Attachment[],
   action: AttachmentsAction
 ): Attachment[] {
   switch (action.type) {
     case "addAttachment": {
-      return [...attachments, { ...action.value, id: lastUniqueId++ }];
+      return [...attachments, { ...action.value, id: getUniqueId() }];
     }
     case "removeAttachment": {
       const newAttachments = [...attachments];

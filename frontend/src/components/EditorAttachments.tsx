@@ -6,6 +6,7 @@ import {
 } from "@heroicons/react/outline";
 import { ChangeEvent, useMemo, useRef, useState } from "react";
 import useAttachments, { Attachment } from "../hooks/useAttachments";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 const isImageRegex = /^data:image\//;
 
@@ -52,8 +53,11 @@ export default function EditorAttachments() {
     [attachments]
   );
 
+  const [attachmentsSection] = useAutoAnimate<HTMLDivElement>();
+  const [attachmentsContainer] = useAutoAnimate<HTMLDivElement>();
+
   return (
-    <div>
+    <div ref={attachmentsSection}>
       <div
         className="flex-auto cursor-pointer flex items-center space-x-2 text-gray-300 select-none mb-2"
         onClick={() => setCollapsed(!collapsed)}
@@ -82,7 +86,7 @@ export default function EditorAttachments() {
         </div>
       </div>
       {!collapsed && (
-        <div className="flex flex-wrap">
+        <div className="flex flex-wrap" ref={attachmentsContainer}>
           {attachments.map((attachment, index) => (
             <div
               className="bg-dark-3 w-56 mr-3 mb-3 rounded space-y-2 p-2 overflow-none"
@@ -117,6 +121,7 @@ export default function EditorAttachments() {
             <div
               className="border-2 border-dashed rounded text-gray-300 hover:text-white cursor-pointer w-56 p-5 flex items-center justify-center mr-3 mb-3"
               onClick={openFileDialog}
+              key="add"
             >
               <input
                 type="file"

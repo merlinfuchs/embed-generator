@@ -13,6 +13,7 @@ import { Embed, EmbedField } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import StyledInput from "./StyledInput";
 import StyledTextarea from "./StyledTextarea";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 interface Props {
   field: EmbedField;
@@ -32,9 +33,14 @@ export default function EditorEmbedField({
   const [, dispatch] = useMessage();
   const [collapsed, setCollapsed] = useState(false);
 
+  const [fieldContainer] = useAutoAnimate<HTMLDivElement>();
+
   return (
     <div>
-      <div className="border border-dark-6 px-3 md:px-4 rounded-md mb-3">
+      <div
+        className="border border-dark-6 px-3 md:px-4 rounded-md mb-3"
+        ref={fieldContainer}
+      >
         <div className="flex items-center py-3 overflow-hidden">
           <div
             className="text-medium flex-auto cursor-pointer flex items-center space-x-2 select-none overflow-hidden"

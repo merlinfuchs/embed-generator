@@ -8,6 +8,8 @@ import ColorPicker from "./ColorPicker";
 import StyledInput from "./StyledInput";
 import StyledTextarea from "./StyledTextarea";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+
 interface Props {
   index: number;
   embed: Embed;
@@ -18,8 +20,10 @@ export default function EditorEmbedBody({ index, embed, errors }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [, dispatch] = useMessage();
 
+  const [bodyContainer] = useAutoAnimate<HTMLDivElement>();
+
   return (
-    <div>
+    <div ref={bodyContainer}>
       <div
         className="text-medium flex-auto cursor-pointer flex items-center space-x-2 text-gray-300 select-none"
         onClick={() => setCollapsed(!collapsed)}

@@ -120,7 +120,7 @@ export function jsonToMessage(json: any): Message {
         embed.color = embedJson.color;
       }
 
-      if (typeof embedJson.footer === "object") {
+      if (typeof embedJson.footer === "object" && embedJson.footer !== null) {
         if (typeof embedJson.footer.text === "string") {
           embed.footer = {
             text: embedJson.footer.text,
@@ -139,19 +139,22 @@ export function jsonToMessage(json: any): Message {
         }
       }
 
-      if (typeof embedJson.image === "object") {
+      if (typeof embedJson.image === "object" && embedJson.image !== null) {
         if (typeof embedJson.image.url === "string") {
           embed.image = { url: embedJson.image.url };
         }
       }
 
-      if (typeof embedJson.thumbnail === "object") {
+      if (
+        typeof embedJson.thumbnail === "object" &&
+        embedJson.thumbnail !== null
+      ) {
         if (typeof embedJson.thumbnail.url === "string") {
           embed.thumbnail = { url: embedJson.thumbnail.url };
         }
       }
 
-      if (typeof embedJson.author === "object") {
+      if (typeof embedJson.author === "object" && embedJson.author !== null) {
         if (typeof embedJson.author.name === "string") {
           embed.author = { ...embed.author, name: embedJson.author.name };
         }
