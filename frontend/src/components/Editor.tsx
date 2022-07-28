@@ -10,6 +10,7 @@ import EditorEmbed from "./EditorEmbed";
 import StyledInput from "./StyledInput";
 import StyledTextarea from "./StyledTextarea";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import useSelectedMode from "../hooks/useSelectedMode";
 
 export default function Editor() {
   const [msg, dispatchMsg] = useMessage();
@@ -42,6 +43,8 @@ export default function Editor() {
 
   const [embedsSection] = useAutoAnimate<HTMLDivElement>();
   const [componentsSection] = useAutoAnimate<HTMLDivElement>();
+
+  const [selectedMode] = useSelectedMode();
 
   return (
     <div className="space-y-5 flex-auto">
@@ -136,7 +139,7 @@ export default function Editor() {
           </>
         )}
       </div>
-      {!!token && (
+      {!!token && selectedMode === "channel" && (
         <div ref={componentsSection}>
           <div
             className="flex-auto cursor-pointer flex items-center space-x-2 text-gray-300 select-none mb-2"

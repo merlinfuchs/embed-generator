@@ -163,8 +163,16 @@ export default function SendMenu() {
       <div className="space-y-5">
         {!!token && (
           <div>
-            <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+            <div className="uppercase text-gray-300 text-sm font-medium mb-1">
               Send To
+            </div>
+            <div className="mb-2">
+              {selectedMode === "webhook" && (
+                <div className="text-sm text-gray-400 font-light">
+                  Buttons and select menus are only available when sending to a
+                  channel directly.
+                </div>
+              )}
             </div>
             <select
               value={selectedMode}
@@ -179,8 +187,12 @@ export default function SendMenu() {
         {selectedMode === "channel" ? (
           <>
             <div className="flex-auto">
-              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+              <div className="uppercase text-gray-300 text-sm font-medium mb-1">
                 Server
+              </div>
+              <div className="text-sm text-gray-400 font-light mb-2">
+                Invite the bot to your server and reload the page to make it
+                show up here.
               </div>
               <GuildSelect value={selectedGuild} onChange={setSelectedGuild} />
             </div>

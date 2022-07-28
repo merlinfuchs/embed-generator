@@ -339,6 +339,7 @@ Sources from: https://github.com/skyra-project/skyra.pw/blob/main/src/config/dis
 .discord-custom-emoji {
   display: inline-block;
   cursor: pointer;
+  margin-bottom: -5px;
 }
 .discord-custom-emoji .discord-custom-emoji-image {
   object-fit: contain;

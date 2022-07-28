@@ -59,7 +59,7 @@ export default function Example() {
                 <div className="flex-shrink-0 flex items-center">
                   <img
                     className="h-10 w-10 w-auto hidden md:block rounded-full"
-                    src="/logo128.png"
+                    src="/logo.svg"
                     alt="Workflow"
                   />
                 </div>

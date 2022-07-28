@@ -28,7 +28,7 @@ export default function EditorEmojiPicker({ onSelect }: Props) {
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <Menu.Items className="origin-top-right absolute right-0 mt-2 w-44 rounded-md shadow-lg bg-dark-3 flex items-center justify-center p-1">
+        <Menu.Items className="origin-top-right absolute right-0 mt-2 w-44 rounded-md shadow-lg bg-dark-3 flex items-center justify-center p-1 max-h-32 overflow-y-auto">
           <div className="grid grid-cols-4">
             {emojis?.map((e) => (
               <Menu.Item key={e.id}>
