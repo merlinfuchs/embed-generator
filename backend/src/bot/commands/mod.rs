@@ -82,7 +82,7 @@ async fn handle_unknown_component(
     comp: Box<MessageComponentInteraction>,
 ) -> InteractionResult {
     let message_id = comp.message.id;
-    let payload_hash = MessagePayload::from(comp.message).hash();
+    let payload_hash = MessagePayload::from(comp.message).integrity_hash();
     // we have to check that the message was created by the bot and not manually by using a webhook
     if !ChannelMessageModel::exists_by_message_id_and_hash(message_id, &payload_hash).await? {
         simple_response(

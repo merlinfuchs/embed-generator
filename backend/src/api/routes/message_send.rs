@@ -1,7 +1,6 @@
 use actix_web::post;
 use actix_web::web::{Json, ReqData};
 use data_url::DataUrl;
-use sha2::{Digest, Sha256};
 use twilight_model::application::component::Component;
 use twilight_model::channel::ChannelType;
 use twilight_model::guild::{Member, Permissions};
@@ -166,6 +165,11 @@ pub async fn route_message_send(
             let actions = parse_component_actions(&payload.components);
             for action in actions {
                 match action {
+                    MessageAction::Unknown => {
+                        return Err(RouteError::NotFound {
+                            entity: "action".into(),
+                        })
+                    }
                     MessageAction::ResponseSavedMessage { message_id } => {
                         if !MessageModel::exists_by_owner_id_and_id(token.user_id, &message_id)
                             .await?
@@ -258,14 +262,10 @@ pub async fn route_message_send(
     match res {
         Ok(message_id) => {
             if let Some(channel_id) = channel_id {
-                let mut hasher = Sha256::new();
-                hasher.update(&payload_json);
-                let hash = hex::encode(hasher.finalize());
-
                 ChannelMessageModel {
                     channel_id,
                     message_id,
-                    hash,
+                    hash: payload.integrity_hash(),
                     updated_at: unix_now_mongodb(),
                     created_at: unix_now_mongodb(),
                 }

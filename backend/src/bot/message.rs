@@ -3,14 +3,17 @@ use std::collections::HashMap;
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use sha2::{Digest, Sha256};
 use twilight_model::application::component::Component;
-use twilight_model::channel::embed::{EmbedAuthor, EmbedField, EmbedFooter, EmbedImage, EmbedThumbnail};
+use twilight_model::channel::embed::{
+    EmbedAuthor, EmbedField, EmbedFooter, EmbedImage, EmbedThumbnail,
+};
 use twilight_model::channel::Message;
 use twilight_model::util::Timestamp;
 
 lazy_static! {
-    static ref ACTION_STRING_RE: Regex = Regex::new(r"{{([a-z]+):([a-zA-Z0-9]+)}}$").unwrap();
+    static ref ACTION_STRING_RE: Regex = Regex::new(r"\{([0-9]+):([a-zA-Z0-9]+)\}$").unwrap();
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Hash)]
@@ -52,22 +55,51 @@ pub struct MessagePayload {
 }
 
 impl From<Message> for MessagePayload {
-    fn from(_: Message) -> Self {
-        todo!()
+    fn from(m: Message) -> Self {
+        Self {
+            username: Some(m.author.name),
+            avatar_url: None, // TODO
+            content: Some(m.content),
+            components: m.components,
+            embeds: m
+                .embeds
+                .into_iter()
+                .map(|e| PartialEmbed {
+                    author: e.author,
+                    color: e.color,
+                    description: e.description,
+                    fields: e.fields,
+                    footer: e.footer,
+                    image: e.image,
+                    thumbnail: e.thumbnail,
+                    timestamp: e.timestamp,
+                    title: e.title,
+                    url: e.url,
+                })
+                .collect(),
+        }
     }
 }
 
 impl MessagePayload {
     pub fn replace_variables(&mut self, _variables: HashMap<String, String>) {}
 
-    pub fn hash(&self) -> String {
+    pub fn integrity_hash(&self) -> String {
         let mut hasher = Sha256::new();
-        hasher.update(&serde_json::to_vec(self).unwrap());
+        hasher.update(
+            &serde_json::to_vec(&json!({
+                "content": self.content,
+                "components": self.components,
+                "embeds": self.embeds,
+            }))
+            .unwrap(),
+        );
         hex::encode(hasher.finalize())
     }
 }
 
 pub enum MessageAction {
+    Unknown,
     ResponseSavedMessage { message_id: String },
 }
 
@@ -75,17 +107,17 @@ impl MessageAction {
     pub fn parse(value: &str) -> Vec<Self> {
         ACTION_STRING_RE
             .captures_iter(value)
-            .filter_map(|captures| {
+            .map(|captures| {
                 let (action_type, arg) = (
-                    captures.get(0).unwrap().as_str(),
                     captures.get(1).unwrap().as_str(),
+                    captures.get(2).unwrap().as_str(),
                 );
 
                 match action_type {
-                    "response_saved_message" => Some(MessageAction::ResponseSavedMessage {
+                    "0" => MessageAction::ResponseSavedMessage {
                         message_id: arg.to_string(),
-                    }),
-                    _ => None,
+                    },
+                    _ => MessageAction::Unknown,
                 }
             })
             .collect()
