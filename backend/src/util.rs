@@ -1,6 +1,13 @@
-use twilight_model::id::Id;
-use twilight_model::util::Timestamp;
+use std::time::{SystemTime, UNIX_EPOCH};
 
-pub fn id_to_timestamp<T>(id: Id<T>) -> Timestamp {
-    Timestamp::from_micros((((id.get() >> 22) + 1420070400000u64) * 1000) as i64).unwrap()
+pub fn unix_now_seconds() -> u64 {
+    let now = SystemTime::now();
+    now.duration_since(UNIX_EPOCH).unwrap().as_secs()
+}
+
+pub fn unix_now_mongodb() -> mongodb::bson::Timestamp {
+    mongodb::bson::Timestamp {
+        time: unix_now_seconds() as u32,
+        increment: 0,
+    }
 }

@@ -27,7 +27,7 @@ impl From<MessageModel> for MessageWire {
         Self {
             id: m.id,
             owner_id: m.owner_id,
-            updated_at: Timestamp::from_secs(m.updated_at as i64).unwrap(),
+            updated_at: Timestamp::from_secs(m.updated_at.time as i64).unwrap(),
             name: m.name,
             description: m.description,
             payload_json: m.payload_json,
@@ -169,7 +169,9 @@ pub struct MessageSendResponseWire {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct HistoryMessageWire {
+pub struct ChannelMessageWire {
     pub id: Id<MessageMarker>,
+    pub hash: String,
     pub created_at: Timestamp,
+    pub updated_at: Timestamp,
 }

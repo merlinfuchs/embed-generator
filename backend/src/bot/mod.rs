@@ -20,10 +20,12 @@ use twilight_model::id::Id;
 use crate::bot::commands::{command_definitions, handle_interaction, InteractionError};
 use crate::bot::webhooks::delete_webhooks_for_channel;
 use crate::config::CONFIG;
+use crate::db::models::ChannelMessageModel;
 
 mod commands;
 pub mod emojis;
 pub mod webhooks;
+pub mod message;
 
 lazy_static! {
     pub static ref DISCORD_CACHE: InMemoryCache = InMemoryCache::builder()
@@ -110,7 +112,9 @@ pub async fn run_bot() -> Result<(), Box<dyn Error>> {
                     }
                 }
             }
-            Event::MessageDelete(_) => {} // TODO: delete from last message store
+            Event::MessageDelete(m) => {
+                let _ = ChannelMessageModel::delete_by_message_id(m.id).await;
+            }
             Event::WebhooksUpdate(w) => delete_webhooks_for_channel(w.channel_id),
             _ => {}
         }

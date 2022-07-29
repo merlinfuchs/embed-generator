@@ -7,7 +7,7 @@ use crate::api::middlewares::{AuthCheck, GuildExtractor};
 #[cfg(feature = "frontend")]
 use crate::api::routes::route_serve_frontend;
 use crate::api::routes::{
-    route_auth_exchange, route_auth_redirect, route_guild_channel_history_get,
+    route_auth_exchange, route_auth_redirect, route_guild_channel_message_list,
     route_guild_channel_list, route_guild_emoji_list, route_guild_get, route_guild_list,
     route_guild_role_list, route_guild_sticker_list, route_link_discord, route_link_invite,
     route_link_source, route_message_create, route_message_delete, route_message_get,
@@ -50,7 +50,7 @@ pub async fn serve_api() -> Result<(), Box<dyn Error>> {
                         .service(route_message_get)
                         .service(route_message_list)
                         .service(route_guild_list)
-                        .service(route_guild_channel_history_get)
+                        .service(route_guild_channel_message_list)
                         .service(
                             scope("/guilds/{guild_id}")
                                 .wrap(GuildExtractor)

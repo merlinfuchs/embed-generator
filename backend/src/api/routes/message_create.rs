@@ -1,5 +1,3 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-
 use actix_web::post;
 use actix_web::web::{Json, ReqData};
 use nanoid::nanoid;
@@ -9,6 +7,7 @@ use crate::api::wire::{MessageCreateRequestWire, MessageWire, NormalizeValidate}
 use crate::CONFIG;
 use crate::db::models::MessageModel;
 use crate::tokens::TokenClaims;
+use crate::util::unix_now_mongodb;
 
 #[post("/messages")]
 pub async fn route_message_create(
@@ -22,14 +21,10 @@ pub async fn route_message_create(
         return Err(RouteError::MessageLimitReached)
     }
 
-    let unix_now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
     let model = MessageModel {
         id: nanoid!(),
         owner_id: token.user_id,
-        updated_at: unix_now,
+        updated_at: unix_now_mongodb(),
         name: req.name,
         description: req.description,
         payload_json: req.payload_json,

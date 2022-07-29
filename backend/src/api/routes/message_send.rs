@@ -1,6 +1,8 @@
 use actix_web::post;
 use actix_web::web::{Json, ReqData};
 use data_url::DataUrl;
+use sha2::{Digest, Sha256};
+use twilight_model::application::component::Component;
 use twilight_model::channel::ChannelType;
 use twilight_model::guild::{Member, Permissions};
 use twilight_model::http::attachment::Attachment;
@@ -10,11 +12,39 @@ use twilight_util::permission_calculator::PermissionCalculator;
 
 use crate::api::response::{MessageSendError, RouteError, RouteResult};
 use crate::api::wire::{MessageSendRequestWire, MessageSendResponseWire, MessageSendTargetWire};
+use crate::bot::message::{MessageAction, MessagePayload};
 use crate::bot::webhooks::{get_webhooks_for_channel, CachedWebhook};
 use crate::bot::{DISCORD_CACHE, DISCORD_HTTP};
 use crate::config::CONFIG;
-use crate::db::models::{ChannelMessagesModel, GuildsWithAccessModel};
+use crate::db::models::{ChannelMessageModel, GuildsWithAccessModel, MessageModel};
 use crate::tokens::TokenClaims;
+use crate::util::unix_now_mongodb;
+
+fn parse_component_actions(components: &[Component]) -> Vec<MessageAction> {
+    let mut result = vec![];
+
+    for component in components {
+        match component {
+            Component::ActionRow(a) => {
+                result.extend(parse_component_actions(&a.components).into_iter())
+            }
+            Component::Button(b) => {
+                if let Some(custom_id) = &b.custom_id {
+                    result.extend(MessageAction::parse(custom_id).into_iter())
+                }
+            }
+            Component::SelectMenu(s) => {
+                result.extend(MessageAction::parse(&s.custom_id).into_iter());
+                for option in &s.options {
+                    result.extend(MessageAction::parse(&option.value).into_iter())
+                }
+            }
+            _ => {}
+        }
+    }
+
+    result
+}
 
 #[post("/messages/send")]
 pub async fn route_message_send(
@@ -51,13 +81,18 @@ pub async fn route_message_send(
         })
         .collect();
 
+    let mut payload: MessagePayload = serde_json::from_str(&req.payload_json).unwrap();
+
     let (webhook_id, webhook_token, thread_id, message_id) = match req.target {
         MessageSendTargetWire::Webhook {
             webhook_id,
             webhook_token,
             thread_id,
             message_id,
-        } => (webhook_id, webhook_token, thread_id, message_id),
+        } => {
+            payload.components = vec![]; // Manual webhooks don't support components
+            (webhook_id, webhook_token, thread_id, message_id)
+        }
         MessageSendTargetWire::Channel {
             guild_id,
             channel_id,
@@ -128,6 +163,19 @@ pub async fn route_message_send(
                 _ => return Err(RouteError::UnsupportedChannelType),
             };
 
+            let actions = parse_component_actions(&payload.components);
+            for action in actions {
+                match action {
+                    MessageAction::ResponseSavedMessage { message_id } => {
+                        if !MessageModel::exists_by_owner_id_and_id(token.user_id, &message_id).await? {
+                            return Err(RouteError::NotFound {
+                                entity: "message".into(),
+                            });
+                        }
+                    }
+                }
+            }
+
             let existing_webhooks: Vec<CachedWebhook> =
                 get_webhooks_for_channel(channel_id).await?;
             let existing_webhook_count = existing_webhooks.len();
@@ -155,6 +203,7 @@ pub async fn route_message_send(
         }
     };
 
+    let payload_json = serde_json::to_vec(&payload).unwrap();
     if let Some(message_id) = message_id {
         let mut update_req =
             DISCORD_HTTP.update_webhook_message(webhook_id, &webhook_token, message_id);
@@ -163,7 +212,7 @@ pub async fn route_message_send(
         }
 
         update_req
-            .payload_json(req.payload_json.as_bytes())
+            .payload_json(&payload_json)
             .attachments(&attachments)
             .unwrap()
             .exec()
@@ -178,7 +227,7 @@ pub async fn route_message_send(
         }
 
         let msg = exec_req
-            .payload_json(req.payload_json.as_bytes())
+            .payload_json(&payload_json)
             .attachments(&attachments)
             .unwrap()
             .wait()
@@ -189,11 +238,18 @@ pub async fn route_message_send(
             .await
             .unwrap();
 
-        ChannelMessagesModel {
+        let mut hasher = Sha256::new();
+        hasher.update(&payload_json);
+        let hash = hex::encode(hasher.finalize());
+
+        ChannelMessageModel {
             channel_id: msg.channel_id,
-            message_ids: vec![msg.id],
+            message_id: msg.id,
+            hash,
+            updated_at: unix_now_mongodb(),
+            created_at: unix_now_mongodb(),
         }
-        .save()
+        .update_or_create()
         .await?;
         Ok(Json(MessageSendResponseWire { message_id: msg.id }.into()))
     }

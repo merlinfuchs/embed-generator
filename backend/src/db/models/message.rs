@@ -1,5 +1,5 @@
 use futures_util::StreamExt;
-use mongodb::bson::{doc, to_bson};
+use mongodb::bson::{doc, Timestamp, to_bson};
 use mongodb::error::Error as MongoError;
 use mongodb::options::{InsertOneOptions, UpdateOptions};
 use mongodb::results::{DeleteResult, InsertOneResult, UpdateResult};
@@ -14,7 +14,7 @@ pub struct MessageModel {
     #[serde(rename = "_id")]
     pub id: String,
     pub owner_id: Id<UserMarker>,
-    pub updated_at: u64,
+    pub updated_at: Timestamp,
     pub name: String,
     #[serde(default)]
     pub description: Option<String>,
@@ -36,6 +36,19 @@ impl MessageModel {
                 UpdateOptions::builder().build(),
             )
             .await
+    }
+
+    pub async fn exists_by_owner_id_and_id(
+        user_id: Id<UserMarker>,
+        id: &str,
+    ) -> Result<bool, MongoError> {
+        get_collection::<Self>("messages")
+            .count_documents(
+                doc! {"_id": id, "owner_id": user_id.to_string()},
+                None,
+            )
+            .await
+            .map(|count| count > 0)
     }
 
     pub async fn find_by_owner_id_and_id(
