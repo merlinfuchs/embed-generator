@@ -21,8 +21,8 @@ pub async fn route_guild_channel_message_list(
             m.ok().map(|m| ChannelMessageWire {
                 id: m.message_id,
                 hash: m.hash,
-                created_at: Timestamp::from_secs(m.created_at.time as i64).unwrap(),
-                updated_at: Timestamp::from_secs(m.updated_at.time as i64).unwrap(),
+                created_at: Timestamp::from_secs(m.created_at.timestamp_millis() / 1000).unwrap(),
+                updated_at: Timestamp::from_secs(m.updated_at.timestamp_millis() / 1000).unwrap(),
             })
         })
         .collect();

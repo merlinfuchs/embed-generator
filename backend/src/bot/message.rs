@@ -5,11 +5,36 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use twilight_model::application::component::Component;
-use twilight_model::channel::embed::Embed;
+use twilight_model::channel::embed::{EmbedAuthor, EmbedField, EmbedFooter, EmbedImage, EmbedThumbnail};
 use twilight_model::channel::Message;
+use twilight_model::util::Timestamp;
 
 lazy_static! {
     static ref ACTION_STRING_RE: Regex = Regex::new(r"{{([a-z]+):([a-zA-Z0-9]+)}}$").unwrap();
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Hash)]
+pub struct PartialEmbed {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub author: Option<EmbedAuthor>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub color: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub fields: Vec<EmbedField>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub footer: Option<EmbedFooter>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub image: Option<EmbedImage>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub thumbnail: Option<EmbedThumbnail>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timestamp: Option<Timestamp>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub title: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Hash)]
@@ -23,7 +48,7 @@ pub struct MessagePayload {
     #[serde(default)]
     pub components: Vec<Component>,
     #[serde(default)]
-    pub embeds: Vec<Embed>,
+    pub embeds: Vec<PartialEmbed>,
 }
 
 impl From<Message> for MessagePayload {

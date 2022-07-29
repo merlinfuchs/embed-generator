@@ -1,11 +1,11 @@
 use futures_util::StreamExt;
-use mongodb::bson::{doc, Timestamp, to_bson};
+use mongodb::bson::{doc, DateTime};
 use mongodb::error::Error as MongoError;
 use mongodb::options::UpdateOptions;
 use mongodb::results::{DeleteResult, UpdateResult};
 use serde::{Deserialize, Serialize};
-use twilight_model::id::Id;
 use twilight_model::id::marker::{ChannelMarker, MessageMarker};
+use twilight_model::id::Id;
 
 use crate::db::get_collection;
 
@@ -14,21 +14,25 @@ pub struct ChannelMessageModel {
     pub channel_id: Id<ChannelMarker>,
     pub message_id: Id<MessageMarker>,
     pub hash: String,
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
+    pub created_at: DateTime,
+    pub updated_at: DateTime,
 }
 
 impl ChannelMessageModel {
     pub async fn update_or_create(&self) -> Result<UpdateResult, MongoError> {
         get_collection::<Self>("channel_messages")
             .update_one(
-                doc! {"message_id": self.message_id.to_string(), "channel_id": self.channel_id.to_string()},
+                doc! {"message_id": self.message_id.to_string()},
                 doc! {
-                    "$set": doc! {
+                    "$set": {
                         "hash": &self.hash,
                         "updated_at": self.updated_at,
                     },
-                    "$setOnInsert": to_bson(self).unwrap()
+                    "$setOnInsert": {
+                        "channel_id": self.channel_id.to_string(),
+                        "message_id": self.message_id.to_string(),
+                        "created_at": self.created_at,
+                    }
                 },
                 UpdateOptions::builder().upsert(true).build(),
             )

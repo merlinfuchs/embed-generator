@@ -24,6 +24,7 @@ pub async fn route_message_create(
     let model = MessageModel {
         id: nanoid!(),
         owner_id: token.user_id,
+        created_at: unix_now_mongodb(),
         updated_at: unix_now_mongodb(),
         name: req.name,
         description: req.description,

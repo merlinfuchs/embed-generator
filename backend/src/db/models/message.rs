@@ -1,5 +1,5 @@
 use futures_util::StreamExt;
-use mongodb::bson::{doc, Timestamp, to_bson};
+use mongodb::bson::{DateTime, doc};
 use mongodb::error::Error as MongoError;
 use mongodb::options::{InsertOneOptions, UpdateOptions};
 use mongodb::results::{DeleteResult, InsertOneResult, UpdateResult};
@@ -14,7 +14,8 @@ pub struct MessageModel {
     #[serde(rename = "_id")]
     pub id: String,
     pub owner_id: Id<UserMarker>,
-    pub updated_at: Timestamp,
+    pub created_at: DateTime,
+    pub updated_at: DateTime,
     pub name: String,
     #[serde(default)]
     pub description: Option<String>,
@@ -32,7 +33,12 @@ impl MessageModel {
         get_collection::<Self>("messages")
             .update_one(
                 doc! {"_id": &self.id, "owner_id": self.owner_id.to_string()},
-                doc! {"$set": to_bson(self).unwrap()},
+                doc! {"$set": {
+                    "name": &self.name,
+                    "description": self.description.as_ref().map(|s| s.as_str()),
+                    "payload_json": &self.payload_json,
+                    "updated_at": self.updated_at,
+                }},
                 UpdateOptions::builder().build(),
             )
             .await

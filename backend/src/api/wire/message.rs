@@ -27,7 +27,7 @@ impl From<MessageModel> for MessageWire {
         Self {
             id: m.id,
             owner_id: m.owner_id,
-            updated_at: Timestamp::from_secs(m.updated_at.time as i64).unwrap(),
+            updated_at: Timestamp::from_secs(m.updated_at.timestamp_millis() / 1000).unwrap(),
             name: m.name,
             description: m.description,
             payload_json: m.payload_json,

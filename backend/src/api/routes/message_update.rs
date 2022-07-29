@@ -19,6 +19,7 @@ pub async fn route_message_update(
     let model = MessageModel {
         id: message_id,
         owner_id: token.user_id,
+        created_at: unix_now_mongodb(),
         updated_at: unix_now_mongodb(),
         name: req.name,
         description: req.description,

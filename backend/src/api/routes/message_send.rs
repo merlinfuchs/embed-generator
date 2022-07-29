@@ -83,7 +83,7 @@ pub async fn route_message_send(
 
     let mut payload: MessagePayload = serde_json::from_str(&req.payload_json).unwrap();
 
-    let (webhook_id, webhook_token, thread_id, message_id) = match req.target {
+    let (webhook_id, webhook_token, channel_id, thread_id, message_id) = match req.target {
         MessageSendTargetWire::Webhook {
             webhook_id,
             webhook_token,
@@ -91,7 +91,7 @@ pub async fn route_message_send(
             message_id,
         } => {
             payload.components = vec![]; // Manual webhooks don't support components
-            (webhook_id, webhook_token, thread_id, message_id)
+            (webhook_id, webhook_token, None, thread_id, message_id)
         }
         MessageSendTargetWire::Channel {
             guild_id,
@@ -167,7 +167,9 @@ pub async fn route_message_send(
             for action in actions {
                 match action {
                     MessageAction::ResponseSavedMessage { message_id } => {
-                        if !MessageModel::exists_by_owner_id_and_id(token.user_id, &message_id).await? {
+                        if !MessageModel::exists_by_owner_id_and_id(token.user_id, &message_id)
+                            .await?
+                        {
                             return Err(RouteError::NotFound {
                                 entity: "message".into(),
                             });
@@ -183,7 +185,13 @@ pub async fn route_message_send(
                 .into_iter()
                 .find(|w| w.application_id == Some(CONFIG.discord.oauth_client_id));
             if let Some(webhook) = existing_webhook {
-                (webhook.id, webhook.token.unwrap(), thread_id, message_id)
+                (
+                    webhook.id,
+                    webhook.token.unwrap(),
+                    Some(channel_id),
+                    thread_id,
+                    message_id,
+                )
             } else {
                 if existing_webhook_count >= 10 {
                     return Err(RouteError::ChannelWebhookLimitReached);
@@ -197,14 +205,20 @@ pub async fn route_message_send(
                         .await
                         .unwrap();
 
-                    (webhook.id, webhook.token.unwrap(), thread_id, message_id)
+                    (
+                        webhook.id,
+                        webhook.token.unwrap(),
+                        Some(channel_id),
+                        thread_id,
+                        message_id,
+                    )
                 }
             }
         }
     };
 
     let payload_json = serde_json::to_vec(&payload).unwrap();
-    if let Some(message_id) = message_id {
+    let res = if let Some(message_id) = message_id {
         let mut update_req =
             DISCORD_HTTP.update_webhook_message(webhook_id, &webhook_token, message_id);
         if let Some(thread_id) = thread_id {
@@ -219,7 +233,7 @@ pub async fn route_message_send(
             .await
             .map_err(|e| MessageSendError::from(e))?;
 
-        Ok(Json(MessageSendResponseWire { message_id }.into()))
+        Ok(message_id)
     } else {
         let mut exec_req = DISCORD_HTTP.execute_webhook(webhook_id, &webhook_token);
         if let Some(thread_id) = thread_id {
@@ -238,19 +252,29 @@ pub async fn route_message_send(
             .await
             .unwrap();
 
-        let mut hasher = Sha256::new();
-        hasher.update(&payload_json);
-        let hash = hex::encode(hasher.finalize());
+        Ok(msg.id)
+    };
 
-        ChannelMessageModel {
-            channel_id: msg.channel_id,
-            message_id: msg.id,
-            hash,
-            updated_at: unix_now_mongodb(),
-            created_at: unix_now_mongodb(),
+    match res {
+        Ok(message_id) => {
+            if let Some(channel_id) = channel_id {
+                let mut hasher = Sha256::new();
+                hasher.update(&payload_json);
+                let hash = hex::encode(hasher.finalize());
+
+                ChannelMessageModel {
+                    channel_id,
+                    message_id,
+                    hash,
+                    updated_at: unix_now_mongodb(),
+                    created_at: unix_now_mongodb(),
+                }
+                .update_or_create()
+                .await?;
+            }
+
+            Ok(Json(MessageSendResponseWire { message_id }.into()))
         }
-        .update_or_create()
-        .await?;
-        Ok(Json(MessageSendResponseWire { message_id: msg.id }.into()))
+        Err(e) => Err(e),
     }
 }
