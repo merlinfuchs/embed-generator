@@ -14,7 +14,7 @@ use twilight_model::util::Timestamp;
 
 lazy_static! {
     static ref ACTION_STRING_RE: Regex = Regex::new(r"\{([0-9]+):([a-zA-Z0-9]+)\}$").unwrap();
-    static ref PAYLOAD_VARIABLE_RE: Regex = Regex::new(r"\{\{([a-z\.]+)\}\}").unwrap();
+    static ref PAYLOAD_VARIABLE_RE: Regex = Regex::new(r"\{\{([a-z\.]+)(?:\|([^{}|]*))?\}\}").unwrap();
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Hash)]
@@ -108,22 +108,26 @@ pub trait VariablesReplace {
     fn replace_variables(&mut self, variables: &HashMap<&str, Cow<str>>);
 }
 
-fn replace_string_variables(text: &mut String, variables: &HashMap<&str, Cow<str>>) {
-    *text = PAYLOAD_VARIABLE_RE
-        .replace_all(text, |caps: &Captures| {
-            if let Some(val) = variables.get(&caps[1]) {
-                val.to_string()
-            } else {
-                caps[0].to_string()
-            }
-        })
-        .into();
+impl VariablesReplace for String {
+    fn replace_variables(&mut self, variables: &HashMap<&str, Cow<str>>) {
+        *self = PAYLOAD_VARIABLE_RE
+            .replace_all(self, |caps: &Captures| {
+                if let Some(val) = variables.get(&caps[1]) {
+                    val.to_string()
+                } else {
+                    caps.get(2)
+                        .map(|v| v.as_str().to_string())
+                        .unwrap_or_else(|| caps[0].to_string())
+                }
+            })
+            .into();
+    }
 }
 
 impl VariablesReplace for MessagePayload {
     fn replace_variables(&mut self, variables: &HashMap<&str, Cow<str>>) {
         if let Some(content) = &mut self.content {
-            replace_string_variables(content, variables);
+            content.replace_variables(variables);
         }
 
         for embed in &mut self.embeds {
@@ -135,11 +139,11 @@ impl VariablesReplace for MessagePayload {
 impl VariablesReplace for MessagePayloadEmbed {
     fn replace_variables(&mut self, variables: &HashMap<&str, Cow<str>>) {
         if let Some(title) = &mut self.title {
-            replace_string_variables(title, variables);
+            title.replace_variables(variables);
         }
 
         if let Some(description) = &mut self.description {
-            replace_string_variables(description, variables);
+            description.replace_variables(variables);
         }
     }
 }

@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 use awc::error::{JsonPayloadError, SendRequestError};
@@ -81,6 +82,23 @@ pub async fn handle_interaction(interaction: Interaction) -> InteractionResult {
     Ok(())
 }
 
+fn variables_from_interaction<'r>(
+    comp: &'r MessageComponentInteraction,
+) -> HashMap<&'static str, Cow<'r, str>> {
+    let member = comp.member.as_ref().unwrap();
+    let user = member.user.as_ref().unwrap();
+
+    HashMap::from([
+        ("user.id", user.id.to_string().into()),
+        ("user.name", user.name.as_str().into()),
+        ("user.discriminator", user.discriminator.to_string().into()),
+        (
+            "user.tag",
+            format!("{}#{}", user.name, user.discriminator).into(),
+        ),
+    ])
+}
+
 async fn handle_unknown_component(
     http: InteractionClient<'_>,
     comp: Box<MessageComponentInteraction>,
@@ -114,7 +132,9 @@ async fn handle_unknown_component(
 
     let actions = MessageAction::parse(response);
     if actions.is_empty() {
-        simple_response(&http, comp.id, &comp.token, response.to_string()).await?;
+        let mut response = response.to_string();
+        response.replace_variables(&variables_from_interaction(&comp));
+        simple_response(&http, comp.id, &comp.token, response).await?;
     } else {
         handle_component_actions(http, comp, actions).await?;
     }
@@ -134,18 +154,7 @@ async fn handle_component_actions(
                     Some(model) => {
                         match serde_json::from_str::<MessagePayload>(&model.payload_json) {
                             Ok(mut payload) => {
-                                let member = comp.member.as_ref().unwrap();
-                                let user = member.user.as_ref().unwrap();
-                                let variables = HashMap::from([
-                                    ("user.id", user.id.to_string().into()),
-                                    ("user.name", user.name.as_str().into()),
-                                    ("user.discriminator", user.discriminator.to_string().into()),
-                                    (
-                                        "user.tag",
-                                        format!("{}#{}", user.name, user.discriminator).into(),
-                                    ),
-                                ]);
-                                payload.replace_variables(&variables);
+                                payload.replace_variables(&variables_from_interaction(&comp));
 
                                 http.create_response(
                                     comp.id,
