@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use awc::error::{JsonPayloadError, SendRequestError};
 use twilight_http::client::InteractionClient;
 use twilight_http::response::DeserializeBodyError;
@@ -13,7 +15,7 @@ use twilight_model::id::Id;
 
 use crate::bot::message::{MessageAction, MessagePayload};
 use crate::bot::DISCORD_HTTP;
-use crate::db::models::ChannelMessageModel;
+use crate::db::models::{ChannelMessageModel, MessageModel};
 use crate::CONFIG;
 
 mod embed;
@@ -81,10 +83,12 @@ async fn handle_unknown_component(
     http: InteractionClient<'_>,
     comp: Box<MessageComponentInteraction>,
 ) -> InteractionResult {
-    let message_id = comp.message.id;
-    let payload_hash = MessagePayload::from(comp.message).integrity_hash();
+    let payload_hash = MessagePayload::from(comp.message.clone()).integrity_hash();
     // we have to check that the message was created by the bot and not manually by using a webhook
-    if !ChannelMessageModel::exists_by_message_id_and_hash(message_id, &payload_hash).await? {
+    if comp.message.author.id != CONFIG.discord.oauth_client_id.cast()
+        && !ChannelMessageModel::exists_by_message_id_and_hash(comp.message.id, &payload_hash)
+            .await?
+    {
         simple_response(
             &http,
             comp.id,
@@ -108,7 +112,74 @@ async fn handle_unknown_component(
     if actions.is_empty() {
         simple_response(&http, comp.id, &comp.token, response.to_string()).await?;
     } else {
-        // TODO: perform the actions
+        handle_component_actions(http, comp, actions).await?;
+    }
+
+    Ok(())
+}
+
+async fn handle_component_actions(
+    http: InteractionClient<'_>,
+    comp: Box<MessageComponentInteraction>,
+    actions: Vec<MessageAction>,
+) -> InteractionResult {
+    for action in actions {
+        match action {
+            MessageAction::ResponseSavedMessage { message_id } => {
+                match MessageModel::find_by_id(&message_id).await? {
+                    Some(model) => {
+                        match serde_json::from_str::<MessagePayload>(&model.payload_json) {
+                            Ok(mut payload) => {
+                                let variables = HashMap::from([]);
+                                payload.replace_variables(&variables);
+
+                                http.create_response(
+                                    comp.id,
+                                    &comp.token,
+                                    &InteractionResponse {
+                                        kind: InteractionResponseType::ChannelMessageWithSource,
+                                        data: Some(InteractionResponseData {
+                                            content: payload.content,
+                                            components: Some(payload.components),
+                                            embeds: Some(
+                                                payload
+                                                    .embeds
+                                                    .into_iter()
+                                                    .map(|e| e.into())
+                                                    .collect(),
+                                            ),
+                                            flags: Some(MessageFlags::EPHEMERAL),
+                                            ..Default::default()
+                                        }),
+                                    },
+                                )
+                                .exec()
+                                .await?;
+                            }
+                            Err(_) => {
+                                simple_response(
+                                    &http,
+                                    comp.id,
+                                    &comp.token,
+                                    "Invalid response message".into(),
+                                )
+                                .await?;
+                            }
+                        };
+                    }
+                    None => {
+                        simple_response(
+                            &http,
+                            comp.id,
+                            &comp.token,
+                            "Response message not found".into(),
+                        )
+                        .await?;
+                    }
+                }
+            }
+            _ => {}
+        }
     }
 
     Ok(())

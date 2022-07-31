@@ -7,7 +7,7 @@ use serde_json::json;
 use sha2::{Digest, Sha256};
 use twilight_model::application::component::Component;
 use twilight_model::channel::embed::{
-    EmbedAuthor, EmbedField, EmbedFooter, EmbedImage, EmbedThumbnail,
+    Embed, EmbedAuthor, EmbedField, EmbedFooter, EmbedImage, EmbedThumbnail,
 };
 use twilight_model::channel::Message;
 use twilight_model::util::Timestamp;
@@ -49,7 +49,7 @@ pub struct MessagePayload {
     #[serde(default)]
     pub content: Option<String>,
     #[serde(default)]
-    pub components: Vec<Component>,
+    pub components: Vec<Component>, // TODO: seems like select menus break the message integrity atm
     #[serde(default)]
     pub embeds: Vec<PartialEmbed>,
 }
@@ -61,28 +61,50 @@ impl From<Message> for MessagePayload {
             avatar_url: None, // TODO
             content: Some(m.content),
             components: m.components,
-            embeds: m
-                .embeds
-                .into_iter()
-                .map(|e| PartialEmbed {
-                    author: e.author,
-                    color: e.color,
-                    description: e.description,
-                    fields: e.fields,
-                    footer: e.footer,
-                    image: e.image,
-                    thumbnail: e.thumbnail,
-                    timestamp: e.timestamp,
-                    title: e.title,
-                    url: e.url,
-                })
-                .collect(),
+            embeds: m.embeds.into_iter().map(|e| e.into()).collect(),
+        }
+    }
+}
+
+impl From<PartialEmbed> for Embed {
+    fn from(e: PartialEmbed) -> Self {
+        Self {
+            author: e.author,
+            color: e.color,
+            description: e.description,
+            fields: e.fields,
+            footer: e.footer,
+            image: e.image,
+            kind: "rich".into(),
+            provider: None,
+            thumbnail: e.thumbnail,
+            timestamp: e.timestamp,
+            title: e.title,
+            url: e.url,
+            video: None,
+        }
+    }
+}
+
+impl From<Embed> for PartialEmbed {
+    fn from(e: Embed) -> Self {
+        PartialEmbed {
+            author: e.author,
+            color: e.color,
+            description: e.description,
+            fields: e.fields,
+            footer: e.footer,
+            image: e.image,
+            thumbnail: e.thumbnail,
+            timestamp: e.timestamp,
+            title: e.title,
+            url: e.url,
         }
     }
 }
 
 impl MessagePayload {
-    pub fn replace_variables(&mut self, _variables: HashMap<String, String>) {}
+    pub fn replace_variables(&mut self, _variables: &HashMap<String, String>) {}
 
     pub fn integrity_hash(&self) -> String {
         let mut hasher = Sha256::new();

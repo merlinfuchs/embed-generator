@@ -1,11 +1,11 @@
 use futures_util::StreamExt;
-use mongodb::bson::{DateTime, doc};
+use mongodb::bson::{doc, DateTime};
 use mongodb::error::Error as MongoError;
 use mongodb::options::{InsertOneOptions, UpdateOptions};
 use mongodb::results::{DeleteResult, InsertOneResult, UpdateResult};
 use serde::{Deserialize, Serialize};
-use twilight_model::id::Id;
 use twilight_model::id::marker::UserMarker;
+use twilight_model::id::Id;
 
 use crate::db::get_collection;
 
@@ -49,12 +49,15 @@ impl MessageModel {
         id: &str,
     ) -> Result<bool, MongoError> {
         get_collection::<Self>("messages")
-            .count_documents(
-                doc! {"_id": id, "owner_id": user_id.to_string()},
-                None,
-            )
+            .count_documents(doc! {"_id": id, "owner_id": user_id.to_string()}, None)
             .await
             .map(|count| count > 0)
+    }
+
+    pub async fn find_by_id(id: &str) -> Result<Option<Self>, MongoError> {
+        get_collection("messages")
+            .find_one(doc! {"_id": id}, None)
+            .await
     }
 
     pub async fn find_by_owner_id_and_id(
@@ -85,9 +88,7 @@ impl MessageModel {
         Ok(cursor.collect().await)
     }
 
-    pub async fn count_by_owner_id(
-        user_id: Id<UserMarker>,
-    ) -> Result<u64, MongoError> {
+    pub async fn count_by_owner_id(user_id: Id<UserMarker>) -> Result<u64, MongoError> {
         get_collection::<Self>("messages")
             .count_documents(doc! {"owner_id": user_id.to_string()}, None)
             .await
