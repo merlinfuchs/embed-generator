@@ -13,7 +13,8 @@ use twilight_model::http::interaction::{
 use twilight_model::id::marker::InteractionMarker;
 use twilight_model::id::Id;
 
-use crate::bot::message::MessageIntegrityHash;
+use crate::bot::message::MessageHashIntegrity;
+use crate::bot::message::VariablesReplace;
 use crate::bot::message::{MessageAction, MessagePayload};
 use crate::bot::DISCORD_HTTP;
 use crate::db::models::{ChannelMessageModel, MessageModel};
@@ -133,7 +134,17 @@ async fn handle_component_actions(
                     Some(model) => {
                         match serde_json::from_str::<MessagePayload>(&model.payload_json) {
                             Ok(mut payload) => {
-                                let variables = HashMap::from([]);
+                                let member = comp.member.as_ref().unwrap();
+                                let user = member.user.as_ref().unwrap();
+                                let variables = HashMap::from([
+                                    ("user.id", user.id.to_string().into()),
+                                    ("user.name", user.name.as_str().into()),
+                                    ("user.discriminator", user.discriminator.to_string().into()),
+                                    (
+                                        "user.tag",
+                                        format!("{}#{}", user.name, user.discriminator).into(),
+                                    ),
+                                ]);
                                 payload.replace_variables(&variables);
 
                                 http.create_response(

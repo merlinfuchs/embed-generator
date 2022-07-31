@@ -1,7 +1,8 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 use lazy_static::lazy_static;
-use regex::Regex;
+use regex::{Captures, Regex};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use twilight_model::application::component::Component;
@@ -13,6 +14,7 @@ use twilight_model::util::Timestamp;
 
 lazy_static! {
     static ref ACTION_STRING_RE: Regex = Regex::new(r"\{([0-9]+):([a-zA-Z0-9]+)\}$").unwrap();
+    static ref PAYLOAD_VARIABLE_RE: Regex = Regex::new(r"\{\{([a-z\.]+)\}\}").unwrap();
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Hash)]
@@ -102,8 +104,44 @@ impl From<Embed> for MessagePayloadEmbed {
     }
 }
 
-impl MessagePayload {
-    pub fn replace_variables(&mut self, _variables: &HashMap<String, String>) {}
+pub trait VariablesReplace {
+    fn replace_variables(&mut self, variables: &HashMap<&str, Cow<str>>);
+}
+
+fn replace_string_variables(text: &mut String, variables: &HashMap<&str, Cow<str>>) {
+    *text = PAYLOAD_VARIABLE_RE
+        .replace_all(text, |caps: &Captures| {
+            if let Some(val) = variables.get(&caps[1]) {
+                val.to_string()
+            } else {
+                caps[0].to_string()
+            }
+        })
+        .into();
+}
+
+impl VariablesReplace for MessagePayload {
+    fn replace_variables(&mut self, variables: &HashMap<&str, Cow<str>>) {
+        if let Some(content) = &mut self.content {
+            replace_string_variables(content, variables);
+        }
+
+        for embed in &mut self.embeds {
+            embed.replace_variables(variables);
+        }
+    }
+}
+
+impl VariablesReplace for MessagePayloadEmbed {
+    fn replace_variables(&mut self, variables: &HashMap<&str, Cow<str>>) {
+        if let Some(title) = &mut self.title {
+            replace_string_variables(title, variables);
+        }
+
+        if let Some(description) = &mut self.description {
+            replace_string_variables(description, variables);
+        }
+    }
 }
 
 pub enum MessageAction {
@@ -133,7 +171,7 @@ impl MessageAction {
 }
 
 /// Outputs a combined hash of all the values that are relevant for the integrity check
-pub trait MessageIntegrityHash {
+pub trait MessageHashIntegrity {
     fn integrity_hash(&self) -> String;
 }
 
@@ -148,20 +186,20 @@ fn hash_component_integrity(hasher: &mut Sha256, component: &Component) {
             if let Some(custom_id) = &button.custom_id {
                 hasher.update(custom_id.as_bytes());
             }
-        },
+        }
         Component::SelectMenu(menu) => {
             hasher.update(menu.custom_id.as_bytes());
             for option in &menu.options {
                 hasher.update(option.value.as_bytes());
             }
-        },
+        }
         Component::TextInput(input) => {
             hasher.update(input.custom_id.as_bytes());
         }
     }
 }
 
-impl MessageIntegrityHash for MessagePayload {
+impl MessageHashIntegrity for MessagePayload {
     fn integrity_hash(&self) -> String {
         let mut hasher = Sha256::new();
         for component in &self.components {
@@ -171,7 +209,7 @@ impl MessageIntegrityHash for MessagePayload {
     }
 }
 
-impl MessageIntegrityHash for Message {
+impl MessageHashIntegrity for Message {
     fn integrity_hash(&self) -> String {
         let mut hasher = Sha256::new();
         for component in &self.components {
