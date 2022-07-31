@@ -13,6 +13,7 @@ use twilight_model::http::interaction::{
 use twilight_model::id::marker::InteractionMarker;
 use twilight_model::id::Id;
 
+use crate::bot::message::MessageIntegrityHash;
 use crate::bot::message::{MessageAction, MessagePayload};
 use crate::bot::DISCORD_HTTP;
 use crate::db::models::{ChannelMessageModel, MessageModel};
@@ -83,11 +84,13 @@ async fn handle_unknown_component(
     http: InteractionClient<'_>,
     comp: Box<MessageComponentInteraction>,
 ) -> InteractionResult {
-    let payload_hash = MessagePayload::from(comp.message.clone()).integrity_hash();
     // we have to check that the message was created by the bot and not manually by using a webhook
     if comp.message.author.id != CONFIG.discord.oauth_client_id.cast()
-        && !ChannelMessageModel::exists_by_message_id_and_hash(comp.message.id, &payload_hash)
-            .await?
+        && !ChannelMessageModel::exists_by_message_id_and_hash(
+            comp.message.id,
+            &comp.message.integrity_hash(),
+        )
+        .await?
     {
         simple_response(
             &http,

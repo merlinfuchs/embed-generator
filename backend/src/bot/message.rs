@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 use sha2::{Digest, Sha256};
 use twilight_model::application::component::Component;
 use twilight_model::channel::embed::{
@@ -17,7 +16,7 @@ lazy_static! {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Hash)]
-pub struct PartialEmbed {
+pub struct MessagePayloadEmbed {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub author: Option<EmbedAuthor>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -51,7 +50,7 @@ pub struct MessagePayload {
     #[serde(default)]
     pub components: Vec<Component>, // TODO: seems like select menus break the message integrity atm
     #[serde(default)]
-    pub embeds: Vec<PartialEmbed>,
+    pub embeds: Vec<MessagePayloadEmbed>,
 }
 
 impl From<Message> for MessagePayload {
@@ -66,8 +65,8 @@ impl From<Message> for MessagePayload {
     }
 }
 
-impl From<PartialEmbed> for Embed {
-    fn from(e: PartialEmbed) -> Self {
+impl From<MessagePayloadEmbed> for Embed {
+    fn from(e: MessagePayloadEmbed) -> Self {
         Self {
             author: e.author,
             color: e.color,
@@ -86,9 +85,9 @@ impl From<PartialEmbed> for Embed {
     }
 }
 
-impl From<Embed> for PartialEmbed {
+impl From<Embed> for MessagePayloadEmbed {
     fn from(e: Embed) -> Self {
-        PartialEmbed {
+        MessagePayloadEmbed {
             author: e.author,
             color: e.color,
             description: e.description,
@@ -105,19 +104,6 @@ impl From<Embed> for PartialEmbed {
 
 impl MessagePayload {
     pub fn replace_variables(&mut self, _variables: &HashMap<String, String>) {}
-
-    pub fn integrity_hash(&self) -> String {
-        let mut hasher = Sha256::new();
-        hasher.update(
-            &serde_json::to_vec(&json!({
-                "content": self.content,
-                "components": self.components,
-                "embeds": self.embeds,
-            }))
-            .unwrap(),
-        );
-        hex::encode(hasher.finalize())
-    }
 }
 
 pub enum MessageAction {
@@ -143,5 +129,54 @@ impl MessageAction {
                 }
             })
             .collect()
+    }
+}
+
+/// Outputs a combined hash of all the values that are relevant for the integrity check
+pub trait MessageIntegrityHash {
+    fn integrity_hash(&self) -> String;
+}
+
+fn hash_component_integrity(hasher: &mut Sha256, component: &Component) {
+    match component {
+        Component::ActionRow(row) => {
+            for comp in &row.components {
+                hash_component_integrity(hasher, comp);
+            }
+        }
+        Component::Button(button) => {
+            if let Some(custom_id) = &button.custom_id {
+                hasher.update(custom_id.as_bytes());
+            }
+        },
+        Component::SelectMenu(menu) => {
+            hasher.update(menu.custom_id.as_bytes());
+            for option in &menu.options {
+                hasher.update(option.value.as_bytes());
+            }
+        },
+        Component::TextInput(input) => {
+            hasher.update(input.custom_id.as_bytes());
+        }
+    }
+}
+
+impl MessageIntegrityHash for MessagePayload {
+    fn integrity_hash(&self) -> String {
+        let mut hasher = Sha256::new();
+        for component in &self.components {
+            hash_component_integrity(&mut hasher, component);
+        }
+        hex::encode(hasher.finalize())
+    }
+}
+
+impl MessageIntegrityHash for Message {
+    fn integrity_hash(&self) -> String {
+        let mut hasher = Sha256::new();
+        for component in &self.components {
+            hash_component_integrity(&mut hasher, component);
+        }
+        hex::encode(hasher.finalize())
     }
 }
