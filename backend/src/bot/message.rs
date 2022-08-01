@@ -54,7 +54,7 @@ pub struct MessagePayload {
     #[serde(default)]
     pub content: Option<String>,
     #[serde(default)]
-    pub components: Vec<Component>, // TODO: seems like select menus break the message integrity atm
+    pub components: Vec<Component>,
     #[serde(default)]
     pub embeds: Vec<MessagePayloadEmbed>,
 }
