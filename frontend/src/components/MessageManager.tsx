@@ -1,6 +1,7 @@
 import { CloudUploadIcon, MenuIcon } from "@heroicons/react/outline";
 import { useEffect, useState } from "react";
 import { jsonToMessage, messageToJson } from "../discord/utils";
+import useAlerts from "../hooks/useAlerts";
 import useAPIClient from "../hooks/useApiClient";
 import useMessage from "../hooks/useMessage";
 import useMessages from "../hooks/useMessages";
@@ -13,6 +14,8 @@ export default function MessageManager() {
   const [visible, setVisible] = useState(false);
   const [msg, dispatch] = useMessage();
   const client = useAPIClient();
+
+  const addAlert = useAlerts();
 
   useEffect(() => {
     if (!selectedMessage) return;
@@ -38,6 +41,17 @@ export default function MessageManager() {
         .then((resp) => {
           if (resp.success) {
             refreshMessages();
+            addAlert({
+              type: "success",
+              title: "Message Saved",
+              details: "The changes have been saved",
+            });
+          } else {
+            addAlert({
+              type: "error",
+              title: "Saving Failed",
+              details: resp.error.details || "No details available",
+            });
           }
         });
     }
