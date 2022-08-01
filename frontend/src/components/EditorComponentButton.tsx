@@ -11,7 +11,7 @@ import { ZodFormattedError } from "zod";
 import { ComponentButton, ComponentActionRow } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import StyledInput from "./StyledInput";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
+import useAutoAnimate from "../hooks/useAutoAnimate";
 
 interface Props {
   index: number;

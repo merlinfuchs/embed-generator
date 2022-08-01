@@ -6,7 +6,7 @@ import {
 } from "@heroicons/react/outline";
 import { ChangeEvent, useMemo, useRef, useState } from "react";
 import useAttachments, { Attachment } from "../hooks/useAttachments";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
+import useAutoAnimate from "../hooks/useAutoAnimate";
 
 const isImageRegex = /^data:image\//;
 
