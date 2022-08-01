@@ -1,20 +1,24 @@
-use std::borrow::Cow;
 use std::collections::HashMap;
 
 use lazy_static::lazy_static;
 use regex::{Captures, Regex};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use twilight_cache_inmemory::model::CachedGuild;
 use twilight_model::application::component::Component;
+use twilight_model::application::interaction::MessageComponentInteraction;
 use twilight_model::channel::embed::{
     Embed, EmbedAuthor, EmbedField, EmbedFooter, EmbedImage, EmbedThumbnail,
 };
-use twilight_model::channel::Message;
+use twilight_model::channel::{Channel, Message};
 use twilight_model::util::Timestamp;
+
+use crate::bot::DISCORD_CACHE;
 
 lazy_static! {
     static ref ACTION_STRING_RE: Regex = Regex::new(r"\{([0-9]+):([a-zA-Z0-9]+)\}$").unwrap();
-    static ref PAYLOAD_VARIABLE_RE: Regex = Regex::new(r"\{\{([a-z\.]+)(?:\|([^{}|]*))?\}\}").unwrap();
+    static ref MESSAGE_VARIABLE_RE: Regex =
+        Regex::new(r"\{\{([a-z_\.]+)(?:\|([^{}|]*))?\}\}").unwrap();
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Hash)]
@@ -104,13 +108,88 @@ impl From<Embed> for MessagePayloadEmbed {
     }
 }
 
-pub trait VariablesReplace {
-    fn replace_variables(&mut self, variables: &HashMap<&str, Cow<str>>);
+pub type MessageVariables<'a> = HashMap<&'a str, String>;
+
+pub trait ToMessageVariables<'r> {
+    fn to_message_variables(&'r self, variables: &mut MessageVariables<'_>);
 }
 
-impl VariablesReplace for String {
-    fn replace_variables(&mut self, variables: &HashMap<&str, Cow<str>>) {
-        *self = PAYLOAD_VARIABLE_RE
+impl ToMessageVariables<'_> for MessageComponentInteraction {
+    fn to_message_variables(&self, variables: &mut MessageVariables<'_>) {
+        let member = self.member.as_ref().unwrap();
+        let user = member.user.as_ref().unwrap();
+
+        if let Some(guild_id) = self.guild_id {
+            match DISCORD_CACHE.guild(guild_id) {
+                Some(guild) => {
+                    guild.value().to_message_variables(variables);
+                }
+                None => {
+                    variables.insert("guild.id", guild_id.to_string().into());
+                }
+            }
+        }
+
+        match DISCORD_CACHE.channel(self.channel_id) {
+            Some(channel) => {
+                channel.value().to_message_variables(variables);
+            }
+            None => {
+                variables.insert("channel.id", self.channel_id.to_string().into());
+            }
+        }
+
+        variables.extend([
+            ("user.id", user.id.to_string()),
+            ("user.name", user.name.clone()),
+            ("user.discriminator", user.discriminator.to_string()),
+            (
+                "user.tag",
+                format!("{}#{}", user.name, user.discriminator),
+            ),
+            (
+                "user.avatar_url",
+                match user.avatar {
+                    Some(a) => format!("https://cdn.discordapp.com/avatars/{}/{}.png", user.id, a),
+                    None => format!(
+                        "https://cdn.discordapp.com/embed/avatars/{}.png",
+                        user.discriminator % 5
+                    ),
+                },
+            ),
+        ]);
+    }
+}
+
+impl ToMessageVariables<'_> for CachedGuild {
+    fn to_message_variables(&self, variables: &mut MessageVariables<'_>) {
+        variables.extend([
+            ("server.id", self.id().to_string()),
+            ("server.name", self.name().to_string()),
+        ]);
+
+        if let Some(icon) = self.icon() {
+            variables.insert("server.icon_url", format!("https://cdn.discordapp.com/icons/{}/{}.png", self.id(), icon));
+        }
+    }
+}
+
+impl ToMessageVariables<'_> for Channel {
+    fn to_message_variables(&self, variables: &mut MessageVariables<'_>) {
+        variables.extend([
+            ("channel.id", self.id.to_string()),
+            ("channel.name", self.name.clone().unwrap_or_default()),
+        ]);
+    }
+}
+
+pub trait MessageVariablesReplace {
+    fn replace_variables(&mut self, variables: &MessageVariables);
+}
+
+impl MessageVariablesReplace for String {
+    fn replace_variables(&mut self, variables: &MessageVariables) {
+        *self = MESSAGE_VARIABLE_RE
             .replace_all(self, |caps: &Captures| {
                 if let Some(val) = variables.get(&caps[1]) {
                     val.to_string()
@@ -124,8 +203,8 @@ impl VariablesReplace for String {
     }
 }
 
-impl VariablesReplace for MessagePayload {
-    fn replace_variables(&mut self, variables: &HashMap<&str, Cow<str>>) {
+impl MessageVariablesReplace for MessagePayload {
+    fn replace_variables(&mut self, variables: &MessageVariables) {
         if let Some(content) = &mut self.content {
             content.replace_variables(variables);
         }
@@ -136,8 +215,8 @@ impl VariablesReplace for MessagePayload {
     }
 }
 
-impl VariablesReplace for MessagePayloadEmbed {
-    fn replace_variables(&mut self, variables: &HashMap<&str, Cow<str>>) {
+impl MessageVariablesReplace for MessagePayloadEmbed {
+    fn replace_variables(&mut self, variables: &MessageVariables) {
         if let Some(title) = &mut self.title {
             title.replace_variables(variables);
         }
@@ -145,6 +224,37 @@ impl VariablesReplace for MessagePayloadEmbed {
         if let Some(description) = &mut self.description {
             description.replace_variables(variables);
         }
+
+        if let Some(author) = &mut self.author {
+            author.replace_variables(variables);
+        }
+
+        if let Some(footer) = &mut self.footer {
+            footer.replace_variables(variables);
+        }
+
+        for field in &mut self.fields {
+            field.replace_variables(variables);
+        }
+    }
+}
+
+impl MessageVariablesReplace for EmbedAuthor {
+    fn replace_variables(&mut self, variables: &MessageVariables) {
+        self.name.replace_variables(variables);
+    }
+}
+
+impl MessageVariablesReplace for EmbedFooter {
+    fn replace_variables(&mut self, variables: &MessageVariables) {
+        self.text.replace_variables(variables);
+    }
+}
+
+impl MessageVariablesReplace for EmbedField {
+    fn replace_variables(&mut self, variables: &MessageVariables) {
+        self.name.replace_variables(variables);
+        self.value.replace_variables(variables);
     }
 }
 

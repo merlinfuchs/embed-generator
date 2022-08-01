@@ -12,7 +12,7 @@ use twilight_util::permission_calculator::PermissionCalculator;
 
 use crate::api::response::{MessageSendError, RouteError, RouteResult};
 use crate::api::wire::{MessageSendRequestWire, MessageSendResponseWire, MessageSendTargetWire};
-use crate::bot::message::{MessageHashIntegrity, VariablesReplace};
+use crate::bot::message::{MessageHashIntegrity, MessageVariablesReplace, ToMessageVariables};
 use crate::bot::message::{MessageAction, MessagePayload};
 use crate::bot::webhooks::{get_webhooks_for_channel, CachedWebhook};
 use crate::bot::{DISCORD_CACHE, DISCORD_HTTP};
@@ -82,8 +82,8 @@ pub async fn route_message_send(
         })
         .collect();
 
+    let mut variables = HashMap::new();
     let mut payload: MessagePayload = serde_json::from_str(&req.payload_json).unwrap();
-    payload.replace_variables(&HashMap::new());
 
     let (webhook_id, webhook_token, channel_id, thread_id, message_id) = match req.target {
         MessageSendTargetWire::Webhook {
@@ -185,6 +185,9 @@ pub async fn route_message_send(
                 }
             }
 
+            channel.to_message_variables(&mut variables);
+            guild.to_message_variables(&mut variables);
+
             let existing_webhooks: Vec<CachedWebhook> =
                 get_webhooks_for_channel(channel_id).await?;
             let existing_webhook_count = existing_webhooks.len();
@@ -224,6 +227,7 @@ pub async fn route_message_send(
         }
     };
 
+    payload.replace_variables(&variables);
     let payload_json = serde_json::to_vec(&payload).unwrap();
     let res = if let Some(message_id) = message_id {
         let mut update_req =

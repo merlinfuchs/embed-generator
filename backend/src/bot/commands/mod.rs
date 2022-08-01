@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::collections::HashMap;
 
 use awc::error::{JsonPayloadError, SendRequestError};
@@ -14,8 +13,8 @@ use twilight_model::http::interaction::{
 use twilight_model::id::marker::InteractionMarker;
 use twilight_model::id::Id;
 
-use crate::bot::message::MessageHashIntegrity;
-use crate::bot::message::VariablesReplace;
+use crate::bot::message::{MessageHashIntegrity, ToMessageVariables};
+use crate::bot::message::MessageVariablesReplace;
 use crate::bot::message::{MessageAction, MessagePayload};
 use crate::bot::DISCORD_HTTP;
 use crate::db::models::{ChannelMessageModel, MessageModel};
@@ -82,23 +81,6 @@ pub async fn handle_interaction(interaction: Interaction) -> InteractionResult {
     Ok(())
 }
 
-fn variables_from_interaction<'r>(
-    comp: &'r MessageComponentInteraction,
-) -> HashMap<&'static str, Cow<'r, str>> {
-    let member = comp.member.as_ref().unwrap();
-    let user = member.user.as_ref().unwrap();
-
-    HashMap::from([
-        ("user.id", user.id.to_string().into()),
-        ("user.name", user.name.as_str().into()),
-        ("user.discriminator", user.discriminator.to_string().into()),
-        (
-            "user.tag",
-            format!("{}#{}", user.name, user.discriminator).into(),
-        ),
-    ])
-}
-
 async fn handle_unknown_component(
     http: InteractionClient<'_>,
     comp: Box<MessageComponentInteraction>,
@@ -133,7 +115,9 @@ async fn handle_unknown_component(
     let actions = MessageAction::parse(response);
     if actions.is_empty() {
         let mut response = response.to_string();
-        response.replace_variables(&variables_from_interaction(&comp));
+        let mut variables = HashMap::new();
+        comp.to_message_variables(&mut variables);
+        response.replace_variables(&variables);
         simple_response(&http, comp.id, &comp.token, response).await?;
     } else {
         handle_component_actions(http, comp, actions).await?;
@@ -154,7 +138,9 @@ async fn handle_component_actions(
                     Some(model) => {
                         match serde_json::from_str::<MessagePayload>(&model.payload_json) {
                             Ok(mut payload) => {
-                                payload.replace_variables(&variables_from_interaction(&comp));
+                                let mut variables = HashMap::new();
+                                comp.to_message_variables(&mut variables);
+                                payload.replace_variables(&variables);
 
                                 http.create_response(
                                     comp.id,
