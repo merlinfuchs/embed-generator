@@ -2,9 +2,9 @@ use std::borrow::Cow;
 use std::fmt::Debug;
 
 use actix_web::body::BoxBody;
+use actix_web::http::StatusCode;
 use actix_web::web::Json;
 use actix_web::{HttpResponse, ResponseError};
-use actix_web::http::StatusCode;
 use awc::error::{JsonPayloadError, SendRequestError};
 use log::error;
 use mongodb::error::Error as MongoError;
@@ -81,6 +81,8 @@ pub enum RouteError {
     MessageLimitReached,
     #[error("Failed to send message")]
     MessageSendError(MessageSendError),
+    #[error("Invalid message action")]
+    InvalidMessageAction { details: Cow<'static, str> },
 }
 
 impl ResponseError for RouteError {
@@ -101,6 +103,7 @@ impl ResponseError for RouteError {
             DiscordApi => StatusCode::BAD_REQUEST,
             MessageLimitReached => StatusCode::FORBIDDEN,
             MessageSendError(_) => StatusCode::BAD_REQUEST,
+            InvalidMessageAction { .. } => StatusCode::BAD_REQUEST,
         }
     }
 

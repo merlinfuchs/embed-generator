@@ -13,9 +13,9 @@ use twilight_model::http::interaction::{
 use twilight_model::id::marker::InteractionMarker;
 use twilight_model::id::Id;
 
-use crate::bot::message::{MessageHashIntegrity, ToMessageVariables};
 use crate::bot::message::MessageVariablesReplace;
 use crate::bot::message::{MessageAction, MessagePayload};
+use crate::bot::message::{MessageHashIntegrity, ToMessageVariables};
 use crate::bot::DISCORD_HTTP;
 use crate::db::models::{ChannelMessageModel, MessageModel};
 use crate::CONFIG;
@@ -133,6 +133,7 @@ async fn handle_component_actions(
 ) -> InteractionResult {
     for action in actions {
         match action {
+            MessageAction::Unknown => {}
             MessageAction::ResponseSavedMessage { message_id } => {
                 match MessageModel::find_by_id(&message_id).await? {
                     Some(model) => {
@@ -187,7 +188,22 @@ async fn handle_component_actions(
                     }
                 }
             }
-            _ => {}
+            MessageAction::RoleToggle { role_id } => {
+                let member = comp.member.as_ref().unwrap();
+                let user_id = member.user.as_ref().unwrap().id;
+                let guild_id = comp.guild_id.unwrap();
+                if member.roles.contains(&role_id) {
+                    DISCORD_HTTP
+                        .remove_guild_member_role(guild_id, user_id, role_id)
+                        .exec()
+                        .await?;
+                } else {
+                    DISCORD_HTTP
+                        .add_guild_member_role(guild_id, user_id, role_id)
+                        .exec()
+                        .await?;
+                }
+            }
         }
     }
 

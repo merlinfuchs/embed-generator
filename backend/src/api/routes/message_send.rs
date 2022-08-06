@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+
 use actix_web::post;
 use actix_web::web::{Json, ReqData};
 use data_url::DataUrl;
@@ -12,8 +13,8 @@ use twilight_util::permission_calculator::PermissionCalculator;
 
 use crate::api::response::{MessageSendError, RouteError, RouteResult};
 use crate::api::wire::{MessageSendRequestWire, MessageSendResponseWire, MessageSendTargetWire};
-use crate::bot::message::{MessageHashIntegrity, MessageVariablesReplace, ToMessageVariables};
 use crate::bot::message::{MessageAction, MessagePayload};
+use crate::bot::message::{MessageHashIntegrity, MessageVariablesReplace, ToMessageVariables};
 use crate::bot::webhooks::{get_webhooks_for_channel, CachedWebhook};
 use crate::bot::{DISCORD_CACHE, DISCORD_HTTP};
 use crate::config::CONFIG;
@@ -118,8 +119,8 @@ pub async fn route_message_send(
                 entity: "guild".into(),
             })?;
 
-            let perms = if guild.owner_id() == token.user_id {
-                Permissions::all()
+            let (perms, is_owner, highest_role) = if guild.owner_id() == token.user_id {
+                (Permissions::all(), true, 0)
             } else {
                 let member: Member = DISCORD_HTTP
                     .guild_member(guild_id, token.user_id)
@@ -133,13 +134,18 @@ pub async fn route_message_send(
                     .role(guild_id.cast())
                     .map(|r| r.permissions)
                     .unwrap_or(Permissions::empty());
+
+                let mut highest_role = 0;
                 let assigned_roles: Vec<(Id<RoleMarker>, Permissions)> = member
                     .roles
                     .into_iter()
                     .filter_map(|role_id| {
-                        DISCORD_CACHE
-                            .role(role_id)
-                            .map(|r| (role_id, r.permissions))
+                        DISCORD_CACHE.role(role_id).map(|r| {
+                            if r.position > highest_role {
+                                highest_role = r.position;
+                            }
+                            (role_id, r.permissions)
+                        })
                     })
                     .collect();
 
@@ -150,7 +156,9 @@ pub async fn route_message_send(
                     &assigned_roles,
                 );
                 let overwrites = channel.permission_overwrites.as_deref().unwrap_or(&[]);
-                calculator.in_channel(channel.kind, &overwrites)
+                let perms = calculator.in_channel(channel.kind, &overwrites);
+
+                (perms, false, highest_role)
             };
 
             if !perms.contains(Permissions::MANAGE_WEBHOOKS) {
@@ -177,9 +185,38 @@ pub async fn route_message_send(
                         if !MessageModel::exists_by_owner_id_and_id(token.user_id, &message_id)
                             .await?
                         {
-                            return Err(RouteError::NotFound {
-                                entity: "message".into(),
+                            return Err(RouteError::InvalidMessageAction {
+                                details:
+                                    "Response message doesn't exist or is owned by someone else"
+                                        .into(),
                             });
+                        }
+                    }
+                    MessageAction::RoleToggle { role_id } => {
+                        if !is_owner {
+                            if !perms.contains(Permissions::MANAGE_ROLES) {
+                                return Err(RouteError::MissingChannelAccess);
+                            }
+
+                            match DISCORD_CACHE.role(role_id) {
+                                Some(role) => {
+                                    if role.guild_id() != guild_id {
+                                        return Err(RouteError::InvalidMessageAction {
+                                            details: "Role to toggle is not in this guild".into(),
+                                        });
+                                    }
+                                    if role.position > highest_role {
+                                        return Err(RouteError::InvalidMessageAction {
+                                            details: "You don't have permissions to toggle that role".into(),
+                                        });
+                                    }
+                                }
+                                None => {
+                                    return Err(RouteError::InvalidMessageAction {
+                                        details: "Unknown role to toggle".into(),
+                                    });
+                                }
+                            }
                         }
                     }
                 }

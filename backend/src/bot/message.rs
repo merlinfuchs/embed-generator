@@ -11,6 +11,8 @@ use twilight_model::channel::embed::{
     Embed, EmbedAuthor, EmbedField, EmbedFooter, EmbedImage, EmbedThumbnail,
 };
 use twilight_model::channel::{Channel, Message};
+use twilight_model::id::marker::RoleMarker;
+use twilight_model::id::Id;
 use twilight_model::util::Timestamp;
 
 use crate::bot::DISCORD_CACHE;
@@ -143,10 +145,7 @@ impl ToMessageVariables<'_> for MessageComponentInteraction {
             ("user.id", user.id.to_string()),
             ("user.name", user.name.clone()),
             ("user.discriminator", user.discriminator.to_string()),
-            (
-                "user.tag",
-                format!("{}#{}", user.name, user.discriminator),
-            ),
+            ("user.tag", format!("{}#{}", user.name, user.discriminator)),
             (
                 "user.avatar_url",
                 match user.avatar {
@@ -169,7 +168,14 @@ impl ToMessageVariables<'_> for CachedGuild {
         ]);
 
         if let Some(icon) = self.icon() {
-            variables.insert("server.icon_url", format!("https://cdn.discordapp.com/icons/{}/{}.png", self.id(), icon));
+            variables.insert(
+                "server.icon_url",
+                format!(
+                    "https://cdn.discordapp.com/icons/{}/{}.png",
+                    self.id(),
+                    icon
+                ),
+            );
         }
     }
 }
@@ -261,6 +267,7 @@ impl MessageVariablesReplace for EmbedField {
 pub enum MessageAction {
     Unknown,
     ResponseSavedMessage { message_id: String },
+    RoleToggle { role_id: Id<RoleMarker> },
 }
 
 impl MessageAction {
@@ -276,6 +283,9 @@ impl MessageAction {
                 match action_type {
                     "0" => MessageAction::ResponseSavedMessage {
                         message_id: arg.to_string(),
+                    },
+                    "1" => MessageAction::RoleToggle {
+                        role_id: arg.parse().unwrap(),
                     },
                     _ => MessageAction::Unknown,
                 }
