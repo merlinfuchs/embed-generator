@@ -13,6 +13,8 @@ use twilight_http::Client;
 use twilight_http_ratelimiting::InMemoryRatelimiter;
 use twilight_model::gateway::event::Event;
 use twilight_model::gateway::Intents;
+use twilight_model::gateway::payload::outgoing::update_presence::UpdatePresencePayload;
+use twilight_model::gateway::presence::{Activity, ActivityType, Status};
 use twilight_model::guild::Permissions;
 use twilight_model::id::marker::ChannelMarker;
 use twilight_model::id::Id;
@@ -89,6 +91,31 @@ pub async fn run_bot() -> Result<(), Box<dyn Error>> {
     let (cluster, mut events) = Cluster::builder(CONFIG.discord.token.clone(), intents)
         .queue(queue)
         .shard_scheme(shard_scheme)
+        .presence(UpdatePresencePayload {
+            activities: vec![
+                Activity {
+                    application_id: None,
+                    assets: None,
+                    buttons: vec![],
+                    created_at: None,
+                    details: None,
+                    emoji: None,
+                    flags: None,
+                    id: None,
+                    instance: None,
+                    kind: ActivityType::Watching,
+                    name: "message.style".to_string(),
+                    party: None,
+                    secrets: None,
+                    state: None,
+                    timestamps: None,
+                    url: None
+                },
+            ],
+            status: Status::Online,
+            afk: false,
+            since: None
+        })
         .build()
         .await?;
 
