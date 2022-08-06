@@ -6,9 +6,9 @@ use twilight_http::error::ErrorType;
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::component::Component;
 use twilight_model::application::interaction::application_command::{
-    CommandDataOption, CommandOptionValue,
+    CommandData, CommandDataOption, CommandOptionValue,
 };
-use twilight_model::application::interaction::ApplicationCommand;
+use twilight_model::application::interaction::Interaction;
 use twilight_model::channel::embed::Embed;
 use twilight_model::channel::Message;
 use twilight_model::id::marker::{ChannelMarker, MessageMarker};
@@ -27,28 +27,24 @@ lazy_static! {
 
 pub fn command_definition() -> Command {
     CommandBuilder::new(
-        "message".into(),
-        "Get JSON for or restore a message on Embed Generator".into(),
+        "message",
+        "Get JSON for or restore a message on Embed Generator",
         CommandType::ChatInput,
     )
     .option(
-        SubCommandBuilder::new(
-            "restore".into(),
-            "Restore a message on Embed Generator".into(),
-        )
-        .option(
+        SubCommandBuilder::new("restore", "Restore a message on Embed Generator").option(
             StringBuilder::new(
-                "message_id_or_url".into(),
-                "ID or URL of the message you want to restore".into(),
+                "message_id_or_url",
+                "ID or URL of the message you want to restore",
             )
             .required(true),
         ),
     )
     .option(
-        SubCommandBuilder::new("dump".into(), "Get the JSON code for a message".into()).option(
+        SubCommandBuilder::new("dump", "Get the JSON code for a message").option(
             StringBuilder::new(
-                "message_id_or_url".into(),
-                "ID or URL of the message you want the JSON code for".into(),
+                "message_id_or_url",
+                "ID or URL of the message you want the JSON code for",
             )
             .required(true),
         ),
@@ -58,17 +54,18 @@ pub fn command_definition() -> Command {
 
 pub async fn handle_command(
     http: InteractionClient<'_>,
-    cmd: Box<ApplicationCommand>,
+    interaction: Interaction,
+    cmd: Box<CommandData>,
 ) -> InteractionResult {
-    let sub_cmd = cmd.data.options.get(0).unwrap();
+    let sub_cmd = cmd.options.get(0).unwrap();
     let options = match &sub_cmd.value {
         CommandOptionValue::SubCommand(options) => options.clone(),
         _ => unreachable!(),
     };
 
     match sub_cmd.name.as_str() {
-        "restore" => handle_command_restore(http, cmd, options).await?,
-        "dump" => handle_command_dump(http, cmd, options).await?,
+        "restore" => handle_command_restore(http, interaction, options).await?,
+        "dump" => handle_command_dump(http, interaction, options).await?,
         _ => {}
     }
     Ok(())
@@ -92,23 +89,23 @@ fn parse_message_id_or_url(
 
 async fn get_message_from_id_or_url(
     http: &InteractionClient<'_>,
-    cmd: &ApplicationCommand,
+    interaction: &Interaction,
     message_id_or_url: &str,
 ) -> Result<Message, InteractionError> {
     let (channel_id, message_id) = match parse_message_id_or_url(&message_id_or_url) {
         Ok(v) => v,
         Err(e) => {
-            simple_response(&http, cmd.id, &cmd.token, e).await?;
+            simple_response(&http, interaction.id, &interaction.token, e).await?;
             return Err(InteractionError::NoOp);
         }
     };
 
-    let channel_id = channel_id.unwrap_or(cmd.channel_id);
-    if channel_id != cmd.channel_id {
+    let channel_id = channel_id.unwrap_or(interaction.channel_id.unwrap());
+    if channel_id != interaction.channel_id.unwrap() {
         simple_response(
             &http,
-            cmd.id,
-            &cmd.token,
+            interaction.id,
+            &interaction.token,
             "The message must belong to this channel".into(),
         )
         .await?;
@@ -123,8 +120,8 @@ async fn get_message_from_id_or_url(
                     404 => {
                         simple_response(
                             &http,
-                            cmd.id,
-                            &cmd.token,
+                            interaction.id,
+                            &interaction.token,
                             "Can't find the message in this channel".into(),
                         )
                         .await?;
@@ -159,7 +156,7 @@ pub fn message_to_dump(msg: Message) -> MessageDump {
 
 async fn handle_command_restore(
     http: InteractionClient<'_>,
-    cmd: Box<ApplicationCommand>,
+    interaction: Interaction,
     mut options: Vec<CommandDataOption>,
 ) -> InteractionResult {
     let message_id_or_url = match options.pop().unwrap().value {
@@ -167,7 +164,7 @@ async fn handle_command_restore(
         _ => unreachable!(),
     };
 
-    let msg = get_message_from_id_or_url(&http, &cmd, &message_id_or_url).await?;
+    let msg = get_message_from_id_or_url(&http, &interaction, &message_id_or_url).await?;
     let msg_dump = message_to_dump(msg);
 
     let client = awc::ClientBuilder::new().finish();
@@ -180,8 +177,8 @@ async fn handle_command_restore(
 
     simple_response(
         &http,
-        cmd.id,
-        &cmd.token,
+        interaction.id,
+        &interaction.token,
         format!(
             "You can edit the message here: https://discord.club/share/{}",
             resp.id
@@ -204,7 +201,7 @@ pub struct MessageDump {
 
 async fn handle_command_dump(
     http: InteractionClient<'_>,
-    cmd: Box<ApplicationCommand>,
+    interaction: Interaction,
     mut options: Vec<CommandDataOption>,
 ) -> InteractionResult {
     let message_id_or_url = match options.pop().unwrap().value {
@@ -212,7 +209,7 @@ async fn handle_command_dump(
         _ => unreachable!(),
     };
 
-    let msg = get_message_from_id_or_url(&http, &cmd, &message_id_or_url).await?;
+    let msg = get_message_from_id_or_url(&http, &interaction, &message_id_or_url).await?;
 
     let msg_json = serde_json::to_string_pretty(&message_to_dump(msg))?;
 
@@ -230,8 +227,8 @@ async fn handle_command_dump(
 
     simple_response(
         &http,
-        cmd.id,
-        &cmd.token,
+        interaction.id,
+        &interaction.token,
         format!(
             "You can find the JSON code here: <https://vaultb.in/{}>",
             resp.data.id
