@@ -285,7 +285,7 @@ impl MessageAction {
                         message_id: arg.to_string(),
                     },
                     "1" => MessageAction::RoleToggle {
-                        role_id: arg.parse().unwrap(),
+                        role_id: arg.parse().unwrap_or(Id::new(1)),
                     },
                     _ => MessageAction::Unknown,
                 }
