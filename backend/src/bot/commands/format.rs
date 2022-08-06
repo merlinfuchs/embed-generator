@@ -1,7 +1,9 @@
 use twilight_cache_inmemory::model::CachedEmoji;
 use twilight_http::client::InteractionClient;
 use twilight_model::application::command::{Command, CommandOptionChoice, CommandType};
-use twilight_model::application::interaction::application_command::{CommandData, CommandOptionValue};
+use twilight_model::application::interaction::application_command::{
+    CommandData, CommandOptionValue,
+};
 use twilight_model::application::interaction::Interaction;
 use twilight_model::http::interaction::{
     InteractionResponse, InteractionResponseData, InteractionResponseType,
@@ -10,9 +12,9 @@ use twilight_util::builder::command::{
     ChannelBuilder, CommandBuilder, RoleBuilder, StringBuilder, SubCommandBuilder, UserBuilder,
 };
 
-use crate::bot::commands::{InteractionResult, simple_response};
-use crate::bot::DISCORD_CACHE;
+use crate::bot::commands::{simple_response, InteractionResult};
 use crate::bot::emojis::EMOJIS;
+use crate::bot::DISCORD_CACHE;
 
 pub fn command_definition() -> Command {
     CommandBuilder::new(
@@ -34,39 +36,20 @@ pub fn command_definition() -> Command {
         ),
     )
     .option(
-        SubCommandBuilder::new(
-            "user",
-            "Get the API format for mentioning a user"
-        )
-        .option(
-            UserBuilder::new("target", "The user you want to mention").required(true),
+        SubCommandBuilder::new("user", "Get the API format for mentioning a user")
+            .option(UserBuilder::new("target", "The user you want to mention").required(true)),
+    )
+    .option(
+        SubCommandBuilder::new("channel", "Get the API format for mentioning a channel").option(
+            ChannelBuilder::new("target", "The channel you want to mention").required(true),
         ),
     )
     .option(
-        SubCommandBuilder::new(
-            "channel",
-            "Get the API format for mentioning a channel",
-        )
-        .option(
-            ChannelBuilder::new("target", "The channel you want to mention")
-                .required(true),
-        ),
+        SubCommandBuilder::new("role", "Get the API format for mentioning a role")
+            .option(RoleBuilder::new("target", "The role you want to mention").required(true)),
     )
     .option(
-        SubCommandBuilder::new(
-            "role",
-            "Get the API format for mentioning a role",
-        )
-        .option(
-            RoleBuilder::new("target", "The role you want to mention").required(true),
-        ),
-    )
-    .option(
-        SubCommandBuilder::new(
-            "emoji",
-            "Get the API format for a custom emoji",
-        )
-        .option(
+        SubCommandBuilder::new("emoji", "Get the API format for a custom emoji").option(
             StringBuilder::new("target", "The custom emoji you want to use")
                 .autocomplete(true)
                 .required(true),
@@ -142,7 +125,7 @@ pub async fn handle_command(
                 format!("API format for {0}: ```{0}```", value),
             )
             .await?;
-        },
+        }
         "text" => {
             let value = match options.pop().unwrap().value {
                 CommandOptionValue::String(e) => e,
@@ -171,8 +154,9 @@ pub async fn handle_autocomplete(
         CommandOptionValue::SubCommand(options) => options.clone(),
         _ => unreachable!(),
     };
+    println!("{:?}", options);
     let search = match &options.get(0).unwrap().value {
-        CommandOptionValue::String(e) => e,
+        CommandOptionValue::Focused(e, _) => e,
         _ => unreachable!(),
     };
 

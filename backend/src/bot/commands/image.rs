@@ -221,7 +221,7 @@ pub async fn handle_autocomplete(
         _ => unreachable!(),
     };
     let search = match &options.get(0).unwrap().value {
-        CommandOptionValue::String(e) => e,
+        CommandOptionValue::Focused(e, _) => e,
         _ => unreachable!(),
     };
 
