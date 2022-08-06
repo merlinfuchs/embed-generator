@@ -32,7 +32,7 @@ pub fn command_definition() -> Command {
 pub async fn handle_command(
     http: InteractionClient<'_>,
     interaction: Interaction,
-    cmd: &CommandData,
+    _cmd: Box<CommandData>,
 ) -> InteractionResult {
     let user = interaction.member.unwrap().user.unwrap();
     let avatar_url = user_avatar_url(user.id, user.discriminator, user.avatar, true);
@@ -119,9 +119,9 @@ pub async fn handle_command(
 pub async fn handle_modal(
     http: InteractionClient<'_>,
     interaction: Interaction,
-    modal: &ModalInteractionData,
+    modal: ModalInteractionData,
 ) -> InteractionResult {
-    if !modal
+    if !interaction
         .member
         .unwrap()
         .permissions

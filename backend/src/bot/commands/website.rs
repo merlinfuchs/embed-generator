@@ -18,7 +18,7 @@ pub fn command_definition() -> Command {
 pub async fn handle_command(
     http: InteractionClient<'_>,
     interaction: Interaction,
-    _cmd: &CommandData,
+    _cmd: Box<CommandData>,
 ) -> InteractionResult {
     simple_response(
         &http,

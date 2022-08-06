@@ -1,7 +1,7 @@
 use twilight_http::client::InteractionClient;
 use twilight_model::application::command::{Command, CommandType};
-use twilight_model::application::interaction::{ApplicationCommand, Interaction};
 use twilight_model::application::interaction::application_command::CommandData;
+use twilight_model::application::interaction::Interaction;
 use twilight_model::guild::Permissions;
 use twilight_model::id::marker::{ChannelMarker, InteractionMarker, WebhookMarker};
 use twilight_model::id::Id;
@@ -67,7 +67,7 @@ pub async fn get_webhook_for_channel(
 pub async fn handle_command(
     http: InteractionClient<'_>,
     interaction: Interaction,
-    _cmd: &CommandData,
+    _cmd: Box<CommandData>,
 ) -> InteractionResult {
     if !interaction
         .member
@@ -98,8 +98,13 @@ pub async fn handle_command(
         return Err(InteractionError::NoOp);
     }
 
-    let (webhook_id, webhook_token) =
-        get_webhook_for_channel(&http, interaction.channel_id.unwrap(), interaction.id, &interaction.token).await?;
+    let (webhook_id, webhook_token) = get_webhook_for_channel(
+        &http,
+        interaction.channel_id.unwrap(),
+        interaction.id,
+        &interaction.token,
+    )
+    .await?;
 
     simple_response(
         &http,

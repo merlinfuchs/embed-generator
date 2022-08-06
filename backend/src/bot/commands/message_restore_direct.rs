@@ -17,12 +17,17 @@ pub fn command_definition() -> Command {
 pub async fn handle_command(
     http: InteractionClient<'_>,
     interaction: Interaction,
-    cmd: &CommandData,
+    cmd: Box<CommandData>,
 ) -> InteractionResult {
     let msg_id = Id::new(cmd.target_id.unwrap().get());
-    let msg = cmd.resolved.as_ref().unwrap().messages.get(&msg_id).unwrap();
+    let msg = cmd
+        .resolved
+        .unwrap()
+        .messages
+        .remove(&msg_id)
+        .unwrap();
 
-    let msg_dump = message_to_dump(msg.clone());
+    let msg_dump = message_to_dump(msg);
 
     let client = awc::ClientBuilder::new().finish();
 

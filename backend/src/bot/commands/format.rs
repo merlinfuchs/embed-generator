@@ -10,9 +10,9 @@ use twilight_util::builder::command::{
     ChannelBuilder, CommandBuilder, RoleBuilder, StringBuilder, SubCommandBuilder, UserBuilder,
 };
 
-use crate::bot::commands::{simple_response, InteractionResult};
-use crate::bot::emojis::EMOJIS;
+use crate::bot::commands::{InteractionResult, simple_response};
 use crate::bot::DISCORD_CACHE;
+use crate::bot::emojis::EMOJIS;
 
 pub fn command_definition() -> Command {
     CommandBuilder::new(
@@ -78,7 +78,7 @@ pub fn command_definition() -> Command {
 pub async fn handle_command(
     http: InteractionClient<'_>,
     interaction: Interaction,
-    cmd: &CommandData,
+    cmd: Box<CommandData>,
 ) -> InteractionResult {
     let sub_cmd = cmd.options.get(0).unwrap();
     let mut options = match &sub_cmd.value {
@@ -164,15 +164,19 @@ pub async fn handle_command(
 
 pub async fn handle_autocomplete(
     http: InteractionClient<'_>,
-    cmd: Box<ApplicationCommandAutocomplete>,
+    interaction: Interaction,
+    cmd: Box<CommandData>,
 ) -> InteractionResult {
-    let sub_cmd = cmd.options.get(0).unwrap();
-    let search = match &sub_cmd.options.get(0).unwrap().value {
-        Some(e) => e,
+    let options = match &cmd.options.get(0).unwrap().value {
+        CommandOptionValue::SubCommand(options) => options.clone(),
+        _ => unreachable!(),
+    };
+    let search = match &options.get(0).unwrap().value {
+        CommandOptionValue::String(e) => e,
         _ => unreachable!(),
     };
 
-    let custom_emojis: Vec<CachedEmoji> = if let Some(guild_id) = cmd.guild_id {
+    let custom_emojis: Vec<CachedEmoji> = if let Some(guild_id) = interaction.guild_id {
         DISCORD_CACHE
             .guild_emojis(guild_id)
             .map(|e| {
@@ -218,8 +222,8 @@ pub async fn handle_autocomplete(
 
     choices.truncate(25);
     http.create_response(
-        cmd.id,
-        &cmd.token,
+        interaction.id,
+        &interaction.token,
         &InteractionResponse {
             kind: InteractionResponseType::ApplicationCommandAutocompleteResult,
             data: Some(InteractionResponseData {

@@ -3,8 +3,8 @@ use twilight_http::client::InteractionClient;
 use twilight_http::response::DeserializeBodyError;
 use twilight_model::application::command::Command;
 use twilight_model::application::component::ComponentType;
-use twilight_model::application::interaction::{Interaction, InteractionData};
 use twilight_model::application::interaction::message_component::MessageComponentInteractionData;
+use twilight_model::application::interaction::{Interaction, InteractionData, InteractionType};
 use twilight_model::channel::message::MessageFlags;
 use twilight_model::http::interaction::{
     InteractionResponse, InteractionResponseData, InteractionResponseType,
@@ -44,27 +44,44 @@ pub fn command_definitions() -> Vec<Command> {
 pub async fn handle_interaction(interaction: Interaction) -> InteractionResult {
     let http = DISCORD_HTTP.interaction(CONFIG.discord.oauth_client_id);
 
-    match &interaction.data {
-        InteractionData::ApplicationCommand(cmd) => match cmd.name.as_str() {
-            "format" => format::handle_command(http, interaction, cmd).await?,
-            "help" => help::handle_command(http, interaction, cmd).await?,
-            "invite" => invite::handle_command(http, interaction, cmd).await?,
-            "website" => website::handle_command(http, interaction, cmd).await?,
-            "message" => message::handle_command(http, interaction, cmd).await?,
-            "webhook" => webhook::handle_command(http, interaction, cmd).await?,
-            "image" => image::handle_command(http, interaction, cmd).await?,
-            "embed" => embed::handle_command(http, interaction, cmd).await?,
-            "Restore Message" => message_restore_direct::handle_command(http, interaction, cmd).await?,
-            "Dump Message" => message_json_direct::handle_command(http, interaction, cmd).await?,
-            _ => {}
-        },
+    let data = match interaction.data.clone() {
+        Some(d) => d,
+        None => return Ok(()),
+    };
+
+    match data {
+        InteractionData::ApplicationCommand(cmd)
+            if interaction.kind == InteractionType::ApplicationCommand =>
+        {
+            match cmd.name.as_str() {
+                "format" => format::handle_command(http, interaction, cmd).await?,
+                "help" => help::handle_command(http, interaction, cmd).await?,
+                "invite" => invite::handle_command(http, interaction, cmd).await?,
+                "website" => website::handle_command(http, interaction, cmd).await?,
+                "message" => message::handle_command(http, interaction, cmd).await?,
+                "webhook" => webhook::handle_command(http, interaction, cmd).await?,
+                "image" => image::handle_command(http, interaction, cmd).await?,
+                "embed" => embed::handle_command(http, interaction, cmd).await?,
+                "Restore Message" => {
+                    message_restore_direct::handle_command(http, interaction, cmd).await?
+                }
+                "Dump Message" => {
+                    message_json_direct::handle_command(http, interaction, cmd).await?
+                }
+                _ => {}
+            }
+        }
+        InteractionData::ApplicationCommand(cmd)
+            if interaction.kind == InteractionType::ApplicationCommandAutocomplete =>
+        {
+            match cmd.name.as_str() {
+                "format" => format::handle_autocomplete(http, interaction, cmd).await?,
+                "image" => image::handle_autocomplete(http, interaction, cmd).await?,
+                _ => {}
+            }
+        }
         InteractionData::MessageComponent(comp) => match comp.custom_id.as_str() {
             _ => handle_unknown_component(http, interaction, comp).await?,
-        },
-        InteractionData::ApplicationCommandAutocomplete(cmd) => match cmd.name.as_str() {
-            "format" => format::handle_autocomplete(http, interaction, cmd).await?,
-            "image" => image::handle_autocomplete(http, interaction, cmd).await?,
-            _ => {}
         },
         InteractionData::ModalSubmit(modal) => match modal.custom_id.as_str() {
             "embed" => embed::handle_modal(http, interaction, modal).await?,
@@ -78,18 +95,19 @@ pub async fn handle_interaction(interaction: Interaction) -> InteractionResult {
 
 async fn handle_unknown_component(
     http: InteractionClient<'_>,
-    mut comp: Box<MessageComponentInteractionData>,
+    interaction: Interaction,
+    mut comp: MessageComponentInteractionData,
 ) -> InteractionResult {
-    let response = match comp.data.component_type {
-        ComponentType::Button => Some(comp.data.custom_id),
-        ComponentType::SelectMenu => comp.data.values.pop(),
+    let response = match comp.component_type {
+        ComponentType::Button => Some(comp.custom_id),
+        ComponentType::SelectMenu => comp.values.pop(),
         _ => None,
     };
 
     if let Some(response) = response {
         http.create_response(
-            comp.id,
-            &comp.token,
+            interaction.id,
+            &interaction.token,
             &InteractionResponse {
                 kind: InteractionResponseType::ChannelMessageWithSource,
                 data: Some(InteractionResponseData {

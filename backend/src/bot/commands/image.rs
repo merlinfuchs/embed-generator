@@ -30,11 +30,8 @@ pub fn command_definition() -> Command {
     .option(
         SubCommandBuilder::new("avatar", "Get the avatar URL for a user")
             .option(
-                UserBuilder::new(
-                    "target",
-                    "The user or role you want the avatar URL for",
-                )
-                .required(true),
+                UserBuilder::new("target", "The user or role you want the avatar URL for")
+                    .required(true),
             )
             .option(
                 BooleanBuilder::new(
@@ -54,31 +51,17 @@ pub fn command_definition() -> Command {
         ),
     )
     .option(
-        SubCommandBuilder::new(
-            "emoji",
-            "Get the image URL for a custom or standard emoji",
-        )
-        .option(
-            StringBuilder::new(
-                "target",
-                "The custom emoji you want the image URL for",
-            )
-            .autocomplete(true)
-            .required(true),
+        SubCommandBuilder::new("emoji", "Get the image URL for a custom or standard emoji").option(
+            StringBuilder::new("target", "The custom emoji you want the image URL for")
+                .autocomplete(true)
+                .required(true),
         ),
     )
     .option(
-        SubCommandBuilder::new(
-            "sticker",
-            "Get the image URL for a custom sticker",
-        )
-        .option(
-            StringBuilder::new(
-                "target",
-                "The custom sticker you want the image URL for",
-            )
-            .autocomplete(true)
-            .required(true),
+        SubCommandBuilder::new("sticker", "Get the image URL for a custom sticker").option(
+            StringBuilder::new("target", "The custom sticker you want the image URL for")
+                .autocomplete(true)
+                .required(true),
         ),
     )
     .build()
@@ -135,7 +118,7 @@ pub fn user_avatar_url(
 pub async fn handle_command(
     http: InteractionClient<'_>,
     interaction: Interaction,
-    cmd: &CommandData,
+    cmd: Box<CommandData>,
 ) -> InteractionResult {
     let sub_cmd = cmd.options.get(0).unwrap();
     let mut options = match &sub_cmd.value {
@@ -157,7 +140,7 @@ pub async fn handle_command(
                 })
                 .unwrap_or_default();
 
-            let resolved = cmd.resolved.unwrap();
+            let resolved = cmd.resolved.as_ref().unwrap();
             let user = resolved.users.get(&user_id).unwrap();
 
             let url = user_avatar_url(user.id, user.discriminator, user.avatar, make_static);
@@ -229,17 +212,22 @@ pub async fn handle_command(
 
 pub async fn handle_autocomplete(
     http: InteractionClient<'_>,
-    cmd: Box<CommandAut>,
+    interaction: Interaction,
+    cmd: Box<CommandData>,
 ) -> InteractionResult {
     let sub_cmd = cmd.options.get(0).unwrap();
-    let search = match &sub_cmd.options.get(0).unwrap().value {
-        Some(e) => e,
+    let options = match &sub_cmd.value {
+        CommandOptionValue::SubCommand(options) => options.clone(),
+        _ => unreachable!(),
+    };
+    let search = match &options.get(0).unwrap().value {
+        CommandOptionValue::String(e) => e,
         _ => unreachable!(),
     };
 
     match sub_cmd.name.as_str() {
         "emoji" => {
-            let emojis: Vec<CachedEmoji> = if let Some(guild_id) = cmd.guild_id {
+            let emojis: Vec<CachedEmoji> = if let Some(guild_id) = interaction.guild_id {
                 DISCORD_CACHE
                     .guild_emojis(guild_id)
                     .map(|e| {
@@ -284,8 +272,8 @@ pub async fn handle_autocomplete(
 
             choices.truncate(25);
             http.create_response(
-                cmd.id,
-                &cmd.token,
+                interaction.id,
+                &interaction.token,
                 &InteractionResponse {
                     kind: InteractionResponseType::ApplicationCommandAutocompleteResult,
                     data: Some(InteractionResponseData {
@@ -328,8 +316,8 @@ pub async fn handle_autocomplete(
 
             choices.truncate(25);
             http.create_response(
-                cmd.id,
-                &cmd.token,
+                interaction.id,
+                &interaction.token,
                 &InteractionResponse {
                     kind: InteractionResponseType::ApplicationCommandAutocompleteResult,
                     data: Some(InteractionResponseData {

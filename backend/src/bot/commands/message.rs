@@ -55,7 +55,7 @@ pub fn command_definition() -> Command {
 pub async fn handle_command(
     http: InteractionClient<'_>,
     interaction: Interaction,
-    cmd: &CommandData,
+    cmd: Box<CommandData>,
 ) -> InteractionResult {
     let sub_cmd = cmd.options.get(0).unwrap();
     let options = match &sub_cmd.value {
@@ -156,7 +156,7 @@ pub fn message_to_dump(msg: Message) -> MessageDump {
 
 async fn handle_command_restore(
     http: InteractionClient<'_>,
-    interaction: &Interaction,
+    interaction: Interaction,
     mut options: Vec<CommandDataOption>,
 ) -> InteractionResult {
     let message_id_or_url = match options.pop().unwrap().value {
@@ -164,7 +164,7 @@ async fn handle_command_restore(
         _ => unreachable!(),
     };
 
-    let msg = get_message_from_id_or_url(&http, interaction, &message_id_or_url).await?;
+    let msg = get_message_from_id_or_url(&http, &interaction, &message_id_or_url).await?;
     let msg_dump = message_to_dump(msg);
 
     let client = awc::ClientBuilder::new().finish();
@@ -202,7 +202,6 @@ pub struct MessageDump {
 async fn handle_command_dump(
     http: InteractionClient<'_>,
     interaction: Interaction,
-    cmd: Box<ApplicationCommand>,
     mut options: Vec<CommandDataOption>,
 ) -> InteractionResult {
     let message_id_or_url = match options.pop().unwrap().value {
@@ -210,7 +209,7 @@ async fn handle_command_dump(
         _ => unreachable!(),
     };
 
-    let msg = get_message_from_id_or_url(&http, &cmd, &message_id_or_url).await?;
+    let msg = get_message_from_id_or_url(&http, &interaction, &message_id_or_url).await?;
 
     let msg_json = serde_json::to_string_pretty(&message_to_dump(msg))?;
 
