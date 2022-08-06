@@ -2,6 +2,8 @@
 
 A powerful tool for creating rich-embed Discord messages using webhooks.
 
+[![IMAGE ALT TEXT HERE](./tutorial.png)](https://www.youtube.com/watch?v=DnFP0MRJPIg)
+
 You will usually want to use the hosted version at https://message.style. There is not much benefit in hosting this yourself.
 
 ## Project Structure
