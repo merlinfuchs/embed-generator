@@ -1,10 +1,8 @@
 use twilight_cache_inmemory::model::CachedEmoji;
 use twilight_http::client::InteractionClient;
 use twilight_model::application::command::{Command, CommandOptionChoice, CommandType};
-use twilight_model::application::interaction::application_command::CommandOptionValue;
-use twilight_model::application::interaction::{
-    ApplicationCommand, ApplicationCommandAutocomplete,
-};
+use twilight_model::application::interaction::application_command::{CommandData, CommandOptionValue};
+use twilight_model::application::interaction::Interaction;
 use twilight_model::http::interaction::{
     InteractionResponse, InteractionResponseData, InteractionResponseType,
 };
@@ -18,60 +16,58 @@ use crate::bot::DISCORD_CACHE;
 
 pub fn command_definition() -> Command {
     CommandBuilder::new(
-        "format".into(),
-        "Get the API format for mentions, channels, roles, & custom emojis".into(),
+        "format",
+        "Get the API format for mentions, channels, roles, & custom emojis",
         CommandType::ChatInput,
     )
     .option(
         SubCommandBuilder::new(
-            "text".into(),
-            "Get the API format for a text with multiple mentions, channels, & custom emojis"
-                .into(),
+            "text",
+            "Get the API format for a text with multiple mentions, channels, & custom emojis",
         )
         .option(
             StringBuilder::new(
-                "text".into(),
-                "The text that you want to format (usually containing mentions or custom emojis)"
-                    .into(),
+                "text",
+                "The text that you want to format (usually containing mentions or custom emojis)",
             )
             .required(true),
         ),
     )
     .option(
         SubCommandBuilder::new(
-            "user".into(),
-            "Get the API format for mentioning a user".into(),
+            "user",
+            "Get the API format for mentioning a user"
         )
         .option(
-            UserBuilder::new("target".into(), "The user you want to mention".into()).required(true),
+            UserBuilder::new("target", "The user you want to mention").required(true),
         ),
     )
     .option(
         SubCommandBuilder::new(
-            "channel".into(),
-            "Get the API format for mentioning a channel".into(),
+            "channel",
+            "Get the API format for mentioning a channel",
         )
         .option(
-            ChannelBuilder::new("target".into(), "The channel you want to mention".into())
+            ChannelBuilder::new("target", "The channel you want to mention")
                 .required(true),
         ),
     )
     .option(
         SubCommandBuilder::new(
-            "role".into(),
-            "Get the API format for mentioning a role".into(),
+            "role",
+            "Get the API format for mentioning a role",
         )
         .option(
-            RoleBuilder::new("target".into(), "The role you want to mention".into()).required(true),
+            RoleBuilder::new("target", "The role you want to mention").required(true),
         ),
     )
     .option(
         SubCommandBuilder::new(
-            "emoji".into(),
-            "Get the API format for a custom emoji".into(),
+            "emoji",
+            "Get the API format for a custom emoji",
         )
         .option(
-            StringBuilder::new("target".into(), "The custom emoji you want to use".into())
+            StringBuilder::new("target", "The custom emoji you want to use")
                 .autocomplete(true)
                 .required(true),
         ),
@@ -81,9 +77,10 @@ pub fn command_definition() -> Command {
 
 pub async fn handle_command(
     http: InteractionClient<'_>,
-    cmd: Box<ApplicationCommand>,
+    interaction: Interaction,
+    cmd: &CommandData,
 ) -> InteractionResult {
-    let sub_cmd = cmd.data.options.get(0).unwrap();
+    let sub_cmd = cmd.options.get(0).unwrap();
     let mut options = match &sub_cmd.value {
         CommandOptionValue::SubCommand(options) => options.clone(),
         _ => unreachable!(),
@@ -98,8 +95,8 @@ pub async fn handle_command(
 
             simple_response(
                 &http,
-                cmd.id,
-                &cmd.token,
+                interaction.id,
+                &interaction.token,
                 format!("API format for <@{0}>: ```<@{0}>```", user_id),
             )
             .await?;
@@ -112,8 +109,8 @@ pub async fn handle_command(
 
             simple_response(
                 &http,
-                cmd.id,
-                &cmd.token,
+                interaction.id,
+                &interaction.token,
                 format!("API format for <@&{0}>: ```<@&{0}>```", role_id),
             )
             .await?;
@@ -126,8 +123,8 @@ pub async fn handle_command(
 
             simple_response(
                 &http,
-                cmd.id,
-                &cmd.token,
+                interaction.id,
+                &interaction.token,
                 format!("API format for <#{0}>: ```<#{0}>```", channel_id),
             )
             .await?;
@@ -140,8 +137,8 @@ pub async fn handle_command(
 
             simple_response(
                 &http,
-                cmd.id,
-                &cmd.token,
+                interaction.id,
+                &interaction.token,
                 format!("API format for {0}: ```{0}```", value),
             )
             .await?;
@@ -154,8 +151,8 @@ pub async fn handle_command(
 
             simple_response(
                 &http,
-                cmd.id,
-                &cmd.token,
+                interaction.id,
+                &interaction.token,
                 format!("API format for the provided text: ```{0}```", value),
             )
             .await?;
@@ -169,7 +166,7 @@ pub async fn handle_autocomplete(
     http: InteractionClient<'_>,
     cmd: Box<ApplicationCommandAutocomplete>,
 ) -> InteractionResult {
-    let sub_cmd = cmd.data.options.get(0).unwrap();
+    let sub_cmd = cmd.options.get(0).unwrap();
     let search = match &sub_cmd.options.get(0).unwrap().value {
         Some(e) => e,
         _ => unreachable!(),

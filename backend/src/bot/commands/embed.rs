@@ -2,8 +2,9 @@ use twilight_http::client::InteractionClient;
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::component::text_input::TextInputStyle;
 use twilight_model::application::component::{ActionRow, Component, TextInput};
-use twilight_model::application::interaction::modal::ModalSubmitInteraction;
-use twilight_model::application::interaction::ApplicationCommand;
+use twilight_model::application::interaction::application_command::CommandData;
+use twilight_model::application::interaction::modal::ModalInteractionData;
+use twilight_model::application::interaction::Interaction;
 use twilight_model::channel::ChannelType;
 use twilight_model::guild::Permissions;
 use twilight_model::http::interaction::{
@@ -19,8 +20,8 @@ use crate::bot::{get_bot_permissions_in_channel, DISCORD_CACHE, DISCORD_HTTP};
 
 pub fn command_definition() -> Command {
     CommandBuilder::new(
-        "embed".into(),
-        "Quickly create a simple embed message".into(),
+        "embed",
+        "Quickly create a simple embed message",
         CommandType::ChatInput,
     )
     .dm_permission(true)
@@ -30,14 +31,15 @@ pub fn command_definition() -> Command {
 
 pub async fn handle_command(
     http: InteractionClient<'_>,
-    cmd: Box<ApplicationCommand>,
+    interaction: Interaction,
+    cmd: &CommandData,
 ) -> InteractionResult {
-    let user = cmd.member.unwrap().user.unwrap();
+    let user = interaction.member.unwrap().user.unwrap();
     let avatar_url = user_avatar_url(user.id, user.discriminator, user.avatar, true);
 
     http.create_response(
-        cmd.id,
-        &cmd.token,
+        interaction.id,
+        &interaction.token,
         &InteractionResponse {
             kind: InteractionResponseType::Modal,
             data: Some(InteractionResponseData {
@@ -116,7 +118,8 @@ pub async fn handle_command(
 
 pub async fn handle_modal(
     http: InteractionClient<'_>,
-    modal: Box<ModalSubmitInteraction>,
+    interaction: Interaction,
+    modal: &ModalInteractionData,
 ) -> InteractionResult {
     if !modal
         .member
@@ -127,20 +130,20 @@ pub async fn handle_modal(
     {
         simple_response(
             &http,
-            modal.id,
-            &modal.token,
+            interaction.id,
+            &interaction.token,
             "You need **Manage Webhook** permissions to use this command.".into(),
         )
         .await?;
         return Err(InteractionError::NoOp);
     }
 
-    let bot_perms = get_bot_permissions_in_channel(modal.channel_id);
+    let bot_perms = get_bot_permissions_in_channel(interaction.channel_id.unwrap());
     if !bot_perms.contains(Permissions::MANAGE_WEBHOOKS) {
         simple_response(
             &http,
-            modal.id,
-            &modal.token,
+            interaction.id,
+            &interaction.token,
             "The bot needs **Manage Webhook** permissions to create webhooks.".into(),
         )
         .await?;
@@ -153,15 +156,21 @@ pub async fn handle_modal(
     let mut url = None;
     let mut description = None;
 
-    for component in modal.data.components {
+    for component in modal.components {
         for component in component.components {
-            match component.custom_id.as_str() {
-                "username" if component.value.len() != 0 => username = Some(component.value),
-                "avatar_url" if component.value.len() != 0 => avatar_url = Some(component.value),
-                "title" if component.value.len() != 0 => title = Some(component.value),
-                "url" if component.value.len() != 0 => url = Some(component.value),
-                "description" if component.value.len() != 0 => description = Some(component.value),
-                _ => {}
+            if let Some(value) = component.value {
+                match component.custom_id.as_str() {
+                    "username" if value.len() != 0 => username = Some(value),
+                    "avatar_url" if value.len() != 0 => {
+                        avatar_url = Some(value)
+                    }
+                    "title" if value.len() != 0 => title = Some(value),
+                    "url" if value.len() != 0 => url = Some(value),
+                    "description" if value.len() != 0 => {
+                        description = Some(value)
+                    }
+                    _ => {}
+                }
             }
         }
     }
@@ -169,8 +178,8 @@ pub async fn handle_modal(
     if title.is_none() && description.is_none() {
         simple_response(
             &http,
-            modal.id,
-            &modal.token,
+            interaction.id,
+            &interaction.token,
             "You have to set either the embed title or the embed description.".into(),
         )
         .await?;
@@ -180,8 +189,8 @@ pub async fn handle_modal(
     if title.is_none() && url.is_some() {
         simple_response(
             &http,
-            modal.id,
-            &modal.token,
+            interaction.id,
+            &interaction.token,
             "An embed URL without an embed title isn't possible.".into(),
         )
         .await?;
@@ -199,21 +208,21 @@ pub async fn handle_modal(
         embed = embed.description(description);
     }
 
-    let channel = DISCORD_CACHE.channel(modal.channel_id).unwrap();
+    let channel = DISCORD_CACHE
+        .channel(interaction.channel_id.unwrap())
+        .unwrap();
     let (channel_id, thread_id) = match channel.kind {
         ChannelType::GuildPrivateThread
         | ChannelType::GuildPublicThread
-        | ChannelType::GuildNewsThread => (channel.parent_id.unwrap(), Some(modal.channel_id)),
-        _ => (modal.channel_id, None),
+        | ChannelType::GuildNewsThread => (
+            channel.parent_id.unwrap(),
+            Some(interaction.channel_id.unwrap()),
+        ),
+        _ => (interaction.channel_id.unwrap(), None),
     };
 
-    let (webhook_id, webhook_token) = get_webhook_for_channel(
-        &http,
-        channel_id,
-        modal.id,
-        &modal.token,
-    )
-    .await?;
+    let (webhook_id, webhook_token) =
+        get_webhook_for_channel(&http, channel_id, interaction.id, &interaction.token).await?;
 
     let mut exec_req = DISCORD_HTTP.execute_webhook(webhook_id, &webhook_token);
     if let Some(thread_id) = thread_id {
@@ -235,8 +244,8 @@ pub async fn handle_modal(
 
     simple_response(
         &http,
-        modal.id,
-        &modal.token,
+        interaction.id,
+        &interaction.token,
         "Your embed message has been created!".into(),
     )
     .await?;

@@ -1,6 +1,7 @@
 use twilight_http::client::InteractionClient;
 use twilight_model::application::command::{Command, CommandType};
-use twilight_model::application::interaction::ApplicationCommand;
+use twilight_model::application::interaction::application_command::CommandData;
+use twilight_model::application::interaction::Interaction;
 use twilight_model::id::Id;
 use twilight_util::builder::command::CommandBuilder;
 
@@ -10,17 +11,18 @@ use crate::bot::commands::message::{
 use crate::bot::commands::{simple_response, InteractionResult};
 
 pub fn command_definition() -> Command {
-    CommandBuilder::new("Restore Message".into(), "".into(), CommandType::Message).build()
+    CommandBuilder::new("Restore Message", "", CommandType::Message).build()
 }
 
 pub async fn handle_command(
     http: InteractionClient<'_>,
-    cmd: Box<ApplicationCommand>,
+    interaction: Interaction,
+    cmd: &CommandData,
 ) -> InteractionResult {
-    let msg_id = Id::new(cmd.data.target_id.unwrap().get());
-    let msg = cmd.data.resolved.unwrap().messages.remove(&msg_id).unwrap();
+    let msg_id = Id::new(cmd.target_id.unwrap().get());
+    let msg = cmd.resolved.as_ref().unwrap().messages.get(&msg_id).unwrap();
 
-    let msg_dump = message_to_dump(msg);
+    let msg_dump = message_to_dump(msg.clone());
 
     let client = awc::ClientBuilder::new().finish();
 
@@ -33,8 +35,8 @@ pub async fn handle_command(
 
     simple_response(
         &http,
-        cmd.id,
-        &cmd.token,
+        interaction.id,
+        &interaction.token,
         format!(
             "You can edit the message here: https://discord.club/share/{}",
             resp.id

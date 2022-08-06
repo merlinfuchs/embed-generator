@@ -2398,9 +2398,9 @@ dependencies = [
 
 [[package]]
 name = "twilight-cache-inmemory"
-version = "0.11.1"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee8e2b587a21f10f5abe021d7f737642ea7667be99d3a03bdf6e57187a4f9f03"
+checksum = "7cd4d58a61cbd17bb8ae13877434b3efd13b721c6800fccda889f810e39d9c72"
 dependencies = [
  "bitflags",
  "dashmap",
@@ -2411,9 +2411,9 @@ dependencies = [
 
 [[package]]
 name = "twilight-gateway"
-version = "0.11.1"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bcf9892830808d1a2847ebd2e842726979f292ccff67db8c988b6167ebc0427c"
+checksum = "2e03ce45fe4bbc172c472780d6c006d354c742d58403b2c4c28a9e065ff4e30c"
 dependencies = [
  "bitflags",
  "flate2",
@@ -2434,9 +2434,9 @@ dependencies = [
 
 [[package]]
 name = "twilight-gateway-queue"
-version = "0.11.1"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "99db628118bca4789e98a928d60cf44bc67cca7d1ac5ea2ab22e65b6b0d640a7"
+checksum = "acbb9002e25edd2ffea0d5590554309e196a16c05564754bb28585a388eb320b"
 dependencies = [
  "tokio",
  "tracing",
@@ -2445,9 +2445,9 @@ dependencies = [
 
 [[package]]
 name = "twilight-http"
-version = "0.11.1"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92f608fc399bf8c6961747d3030dbe73d78a3de2ee20f7dca9b8befb0dc40094"
+checksum = "a790c974895903d1f6dad5b7443412244ec5a3d0ac865b9f602164bb62485185"
 dependencies = [
  "brotli",
  "hyper",
@@ -2465,9 +2465,9 @@ dependencies = [
 
 [[package]]
 name = "twilight-http-ratelimiting"
-version = "0.11.1"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "173ac00feb4dcf8f8005c8d304627790f4dfcbc0479ca9550fecb896616df253"
+checksum = "ae2f988cd4353156c58f8ea00332dd77b0b23c3857b78a06d9f02ad3edea14a8"
 dependencies = [
  "futures-util",
  "http",
@@ -2477,9 +2477,9 @@ dependencies = [
 
 [[package]]
 name = "twilight-model"
-version = "0.11.3"
+version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa7475388ee4cd61769e19d5ae100b2fbafcf570f4e9647350546eebd679214b"
+checksum = "2e1ec8a45b12f757e67d1b427b4b0286f8c39126c986198f2d8cd6e9b13a98c7"
 dependencies = [
  "bitflags",
  "serde 1.0.142",
@@ -2491,9 +2491,9 @@ dependencies = [
 
 [[package]]
 name = "twilight-util"
-version = "0.11.1"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a00a54f7f0d756fa4dd52fb08144a5cad7daad1a454b330ce6ab16bdbab750d8"
+checksum = "b70d18462269ead0abd8e66b7a1656911457af44d9a7f9873d8e7b64235a4227"
 dependencies = [
  "twilight-model",
  "twilight-validate",
@@ -2501,9 +2501,9 @@ dependencies = [
 
 [[package]]
 name = "twilight-validate"
-version = "0.11.1"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82d6f675e4b2aecbe60105ef40d5d88e08f0c6f5c23d9a3f93a6e3ed82c810db"
+checksum = "e002f0075b0d8beb5971563a9beeb932256d6a5080ca07939bc505e3bf085161"
 dependencies = [
  "twilight-model",
 ]

@@ -1,6 +1,7 @@
 use twilight_http::client::InteractionClient;
 use twilight_model::application::command::{Command, CommandType};
-use twilight_model::application::interaction::ApplicationCommand;
+use twilight_model::application::interaction::{ApplicationCommand, Interaction};
+use twilight_model::application::interaction::application_command::CommandData;
 use twilight_model::guild::Permissions;
 use twilight_model::id::marker::{ChannelMarker, InteractionMarker, WebhookMarker};
 use twilight_model::id::Id;
@@ -13,8 +14,8 @@ use crate::CONFIG;
 
 pub fn command_definition() -> Command {
     CommandBuilder::new(
-        "webhook".into(),
-        "Get a webhook for this channel".into(),
+        "webhook",
+        "Get a webhook for this channel",
         CommandType::ChatInput,
     )
     .default_member_permissions(Permissions::MANAGE_WEBHOOKS)
@@ -65,9 +66,10 @@ pub async fn get_webhook_for_channel(
 
 pub async fn handle_command(
     http: InteractionClient<'_>,
-    cmd: Box<ApplicationCommand>,
+    interaction: Interaction,
+    _cmd: &CommandData,
 ) -> InteractionResult {
-    if !cmd
+    if !interaction
         .member
         .unwrap()
         .permissions
@@ -76,20 +78,20 @@ pub async fn handle_command(
     {
         simple_response(
             &http,
-            cmd.id,
-            &cmd.token,
+            interaction.id,
+            &interaction.token,
             "You need **Manage Webhook** permissions to use this command.".into(),
         )
         .await?;
         return Err(InteractionError::NoOp);
     }
 
-    let bot_perms = get_bot_permissions_in_channel(cmd.channel_id);
+    let bot_perms = get_bot_permissions_in_channel(interaction.channel_id.unwrap());
     if !bot_perms.contains(Permissions::MANAGE_WEBHOOKS) {
         simple_response(
             &http,
-            cmd.id,
-            &cmd.token,
+            interaction.id,
+            &interaction.token,
             "The bot needs **Manage Webhook** permissions to create webhooks.".into(),
         )
         .await?;
@@ -97,12 +99,12 @@ pub async fn handle_command(
     }
 
     let (webhook_id, webhook_token) =
-        get_webhook_for_channel(&http, cmd.channel_id, cmd.id, &cmd.token).await?;
+        get_webhook_for_channel(&http, interaction.channel_id.unwrap(), interaction.id, &interaction.token).await?;
 
     simple_response(
         &http,
-        cmd.id,
-        &cmd.token,
+        interaction.id,
+        &interaction.token,
         format!(
             "https://discord.com/api/webhooks/{}/{}",
             webhook_id, webhook_token

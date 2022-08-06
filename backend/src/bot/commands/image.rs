@@ -1,10 +1,10 @@
 use twilight_cache_inmemory::model::{CachedEmoji, CachedSticker};
 use twilight_http::client::InteractionClient;
 use twilight_model::application::command::{Command, CommandOptionChoice, CommandType};
-use twilight_model::application::interaction::application_command::CommandOptionValue;
-use twilight_model::application::interaction::{
-    ApplicationCommand, ApplicationCommandAutocomplete,
+use twilight_model::application::interaction::application_command::{
+    CommandData, CommandOptionValue,
 };
+use twilight_model::application::interaction::Interaction;
 use twilight_model::channel::message::MessageFlags;
 use twilight_model::http::interaction::{
     InteractionResponse, InteractionResponseData, InteractionResponseType,
@@ -23,45 +23,45 @@ use crate::bot::DISCORD_CACHE;
 
 pub fn command_definition() -> Command {
     CommandBuilder::new(
-        "image".into(),
-        "Get the image URL for different entities".into(),
+        "image",
+        "Get the image URL for different entities",
         CommandType::ChatInput,
     )
     .option(
-        SubCommandBuilder::new("avatar".into(), "Get the avatar URL for a user".into())
+        SubCommandBuilder::new("avatar", "Get the avatar URL for a user")
             .option(
                 UserBuilder::new(
-                    "target".into(),
-                    "The user or role you want the avatar URL for".into(),
+                    "target",
+                    "The user or role you want the avatar URL for",
                 )
                 .required(true),
             )
             .option(
                 BooleanBuilder::new(
-                    "static".into(),
-                    "Whether animated avatars should be converted to static images".into(),
+                    "static",
+                    "Whether animated avatars should be converted to static images",
                 )
                 .required(false),
             ),
     )
     .option(
-        SubCommandBuilder::new("icon".into(), "Get the icon URL for this server".into()).option(
+        SubCommandBuilder::new("icon", "Get the icon URL for this server").option(
             BooleanBuilder::new(
-                "static".into(),
-                "Whether animated icons should be converted to static images".into(),
+                "static",
+                "Whether animated icons should be converted to static images",
             )
             .required(false),
         ),
     )
     .option(
         SubCommandBuilder::new(
-            "emoji".into(),
-            "Get the image URL for a custom or standard emoji".into(),
+            "emoji",
+            "Get the image URL for a custom or standard emoji",
         )
         .option(
             StringBuilder::new(
-                "target".into(),
-                "The custom emoji you want the image URL for".into(),
+                "target",
+                "The custom emoji you want the image URL for",
             )
             .autocomplete(true)
             .required(true),
@@ -69,13 +69,13 @@ pub fn command_definition() -> Command {
     )
     .option(
         SubCommandBuilder::new(
-            "sticker".into(),
-            "Get the image URL for a custom sticker".into(),
+            "sticker",
+            "Get the image URL for a custom sticker",
         )
         .option(
             StringBuilder::new(
-                "target".into(),
-                "The custom sticker you want the image URL for".into(),
+                "target",
+                "The custom sticker you want the image URL for",
             )
             .autocomplete(true)
             .required(true),
@@ -134,9 +134,10 @@ pub fn user_avatar_url(
 
 pub async fn handle_command(
     http: InteractionClient<'_>,
-    cmd: Box<ApplicationCommand>,
+    interaction: Interaction,
+    cmd: &CommandData,
 ) -> InteractionResult {
-    let sub_cmd = cmd.data.options.get(0).unwrap();
+    let sub_cmd = cmd.options.get(0).unwrap();
     let mut options = match &sub_cmd.value {
         CommandOptionValue::SubCommand(options) => options.clone(),
         _ => unreachable!(),
@@ -156,11 +157,11 @@ pub async fn handle_command(
                 })
                 .unwrap_or_default();
 
-            let resolved = cmd.data.resolved.unwrap();
+            let resolved = cmd.resolved.unwrap();
             let user = resolved.users.get(&user_id).unwrap();
 
             let url = user_avatar_url(user.id, user.discriminator, user.avatar, make_static);
-            image_response(&http, cmd.id, &cmd.token, url).await?;
+            image_response(&http, interaction.id, &interaction.token, url).await?;
         }
         "icon" => {
             let make_static = options
@@ -185,16 +186,21 @@ pub async fn handle_command(
                         icon,
                         format
                     );
-                    image_response(&http, cmd.id, &cmd.token, url).await?;
+                    image_response(&http, interaction.id, &interaction.token, url).await?;
                 } else {
-                    simple_response(&http, cmd.id, &cmd.token, "This server has no icon.".into())
-                        .await?;
+                    simple_response(
+                        &http,
+                        interaction.id,
+                        &interaction.token,
+                        "This server has no icon.".into(),
+                    )
+                    .await?;
                 }
             } else {
                 simple_response(
                     &http,
-                    cmd.id,
-                    &cmd.token,
+                    interaction.id,
+                    &interaction.token,
                     "This command can only be used inside a server.".into(),
                 )
                 .await?
@@ -206,7 +212,7 @@ pub async fn handle_command(
                 _ => unreachable!(),
             };
 
-            image_response(&http, cmd.id, &cmd.token, url).await?;
+            image_response(&http, interaction.id, &interaction.token, url).await?;
         }
         "sticker" => {
             let url = match options.pop().unwrap().value {
@@ -214,7 +220,7 @@ pub async fn handle_command(
                 _ => unreachable!(),
             };
 
-            image_response(&http, cmd.id, &cmd.token, url).await?;
+            image_response(&http, interaction.id, &interaction.token, url).await?;
         }
         _ => {}
     }
@@ -223,9 +229,9 @@ pub async fn handle_command(
 
 pub async fn handle_autocomplete(
     http: InteractionClient<'_>,
-    cmd: Box<ApplicationCommandAutocomplete>,
+    cmd: Box<CommandAut>,
 ) -> InteractionResult {
-    let sub_cmd = cmd.data.options.get(0).unwrap();
+    let sub_cmd = cmd.options.get(0).unwrap();
     let search = match &sub_cmd.options.get(0).unwrap().value {
         Some(e) => e,
         _ => unreachable!(),
