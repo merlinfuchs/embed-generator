@@ -26,6 +26,7 @@ This describes the easiest way to self host an instance of Embed Generator by cr
 You need to have NodeJS and NPM installed to build the frontend:
 
 ```
+cd frontend
 npm run build
 ```
 
@@ -36,18 +37,20 @@ You need to have [Rust](https://rustup.rs/) installed.
 If you want to include the frontend files in the backend binary (recommended):
 
 ```
+cd backend
 cargo build --release
 ```
 
 Otherwise you will need a HTTP server like Nginx to server the frontend for you:
 
 ```
+cd backend
 cargo build --release --no-default-features
 ```
 
 ### Install databases
 
-Install MongoDB and Redis on your server. I'm sure you can find instructions online!
+Install MongoDB and Redis on your device. I'm sure you can find instructions online!
 
 ### Configure the server
 
