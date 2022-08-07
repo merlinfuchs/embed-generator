@@ -21,30 +21,84 @@ The frontend is written in React and provides the user interface. It interacts w
 
 This describes the easiest way to self host an instance of Embed Generator by creating a single binary that contains both the backend and frontend.
 
+### Install the dependencies
+
+```
+cd frontend
+```
+
+then
+
+```
+yarn
+```
+
+or
+
+```
+npm install
+```
+
+### Starting the frontend
+
+```
+yarn start
+```
+
+or
+
+```
+npm run start
+```
+
+
 ### Building the frontend
 
 You need to have NodeJS and NPM installed to build the frontend:
 
 ```
-cd frontend
+yarn build
+```
+
+or
+
+```
 npm run build
 ```
 
 ### Build the backend
 
-You need to have [Rust](https://rustup.rs/) installed.
+Switch to the backend directory:
+
+```
+cd ../backend
+```
+
+if you are in frontend, otherwise
+
+```
+cd backend
+```
+
+You need to have Rust installed:
+
+[For Windows](https://win.rustup.rs/x86_64)
+
+For Linux:
+
+```
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
 
 If you want to include the frontend files in the backend binary (recommended):
 
 ```
-cd backend
 cargo build --release
 ```
 
 Otherwise you will need a HTTP server like Nginx to server the frontend for you:
 
 ```
-cd backend
 cargo build --release --no-default-features
 ```
 
