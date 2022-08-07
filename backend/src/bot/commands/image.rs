@@ -128,7 +128,7 @@ pub async fn handle_command(
 
     match sub_cmd.name.as_str() {
         "avatar" => {
-            let user_id = match options.pop().unwrap().value {
+            let user_id = match options.remove(0).value {
                 CommandOptionValue::User(u) => u,
                 _ => unreachable!(),
             };
