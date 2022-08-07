@@ -1,6 +1,6 @@
-use actix_web::{get, HttpResponseBuilder, Responder};
 use actix_web::http::StatusCode;
-use percent_encoding::{NON_ALPHANUMERIC, utf8_percent_encode};
+use actix_web::{get, HttpResponseBuilder, Responder};
+use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 
 use crate::config::CONFIG;
 

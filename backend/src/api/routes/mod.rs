@@ -1,7 +1,7 @@
 pub use auth_exchange::route_auth_exchange;
 pub use auth_redirect::route_auth_redirect;
 pub use guild_channel_list::route_guild_channel_list;
-pub use guild_channel_history_get::route_guild_channel_history_get;
+pub use guild_channel_message_list::route_guild_channel_message_list;
 pub use guild_emoji_list::route_guild_emoji_list;
 pub use guild_get::route_guild_get;
 pub use guild_list::route_guild_list;
@@ -23,7 +23,7 @@ pub use user_get_me::route_user_get_me;
 mod auth_exchange;
 mod auth_redirect;
 mod guild_channel_list;
-mod guild_channel_history_get;
+mod guild_channel_message_list;
 mod guild_emoji_list;
 mod guild_get;
 mod guild_list;

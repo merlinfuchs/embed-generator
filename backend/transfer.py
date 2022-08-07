@@ -13,7 +13,8 @@ for doc in old_db.messages.find({}):
     new_doc = {
         "_id": str(doc["_id"]),
         "owner_id": str(doc["user_id"]),
-        "updated_at": int(doc["last_updated"].timestamp()),
+        "created_at": doc["created_at"],
+        "updated_at": doc["last_updated"],
         "name": doc["name"],
         "description": None,
         "payload_json": json.dumps({

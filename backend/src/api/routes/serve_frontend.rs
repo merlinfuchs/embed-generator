@@ -1,8 +1,8 @@
 use std::borrow::Cow;
 use std::path::Path;
 
-use actix_web::{get, HttpResponse, Responder, web};
 use actix_web::web::Bytes;
+use actix_web::{get, web, HttpResponse, Responder};
 use mime::Mime;
 use rust_embed::RustEmbed;
 
@@ -18,9 +18,9 @@ fn get_mime_type_for_file(path: &Path) -> Mime {
             "png" => mime::IMAGE_PNG,
             "css" => mime::TEXT_CSS,
             "svg" => mime::IMAGE_SVG,
-            _ => mime::APPLICATION_OCTET_STREAM
-        }
-        None => mime::APPLICATION_OCTET_STREAM
+            _ => mime::APPLICATION_OCTET_STREAM,
+        },
+        None => mime::APPLICATION_OCTET_STREAM,
     }
 }
 
@@ -38,7 +38,10 @@ pub async fn route_serve_frontend(path: web::Path<String>) -> impl Responder {
 
     let (body, mime_type) = match FrontendFiles::get(raw_path.as_str()) {
         Some(f) => (cow_to_bytes(f.data), get_mime_type_for_file(path)),
-        None => (cow_to_bytes(FrontendFiles::get("index.html").unwrap().data), mime::TEXT_HTML)
+        None => (
+            cow_to_bytes(FrontendFiles::get("index.html").unwrap().data),
+            mime::TEXT_HTML,
+        ),
     };
 
     HttpResponse::Ok()

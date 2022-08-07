@@ -20,12 +20,7 @@ pub async fn handle_command(
     cmd: Box<CommandData>,
 ) -> InteractionResult {
     let msg_id = Id::new(cmd.target_id.unwrap().get());
-    let msg = cmd
-        .resolved
-        .unwrap()
-        .messages
-        .remove(&msg_id)
-        .unwrap();
+    let msg = cmd.resolved.unwrap().messages.remove(&msg_id).unwrap();
 
     let msg_dump = message_to_dump(msg);
 

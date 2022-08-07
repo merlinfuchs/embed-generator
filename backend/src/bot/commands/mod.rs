@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use awc::error::{JsonPayloadError, SendRequestError};
 use twilight_http::client::InteractionClient;
 use twilight_http::response::DeserializeBodyError;
@@ -12,7 +14,11 @@ use twilight_model::http::interaction::{
 use twilight_model::id::marker::InteractionMarker;
 use twilight_model::id::Id;
 
+use crate::bot::message::MessageVariablesReplace;
+use crate::bot::message::{MessageAction, MessagePayload};
+use crate::bot::message::{MessageHashIntegrity, ToMessageVariables};
 use crate::bot::DISCORD_HTTP;
+use crate::db::models::{ChannelMessageModel, MessageModel};
 use crate::CONFIG;
 
 mod embed;
@@ -96,29 +102,175 @@ pub async fn handle_interaction(interaction: Interaction) -> InteractionResult {
 async fn handle_unknown_component(
     http: InteractionClient<'_>,
     interaction: Interaction,
-    mut comp: MessageComponentInteractionData,
+    comp: MessageComponentInteractionData,
 ) -> InteractionResult {
+    // we have to check that the message was created by the bot and not manually by using a webhook
+    let message = interaction.message.as_ref().unwrap();
+    let message_timestamp = message.edited_timestamp.unwrap_or(message.timestamp);
+
+    // message integrity wasn't part of the initial release so we can't expect older messages to have it
+    if message_timestamp.as_secs() > 1659880800 {
+        if message.author.id != CONFIG.discord.oauth_client_id.cast()
+            && !ChannelMessageModel::exists_by_message_id_and_hash(
+                message.id,
+                &message.integrity_hash(),
+            )
+            .await?
+        {
+            simple_response(
+                &http,
+                interaction.id,
+                &interaction.token,
+                "Message integrity could not be validated".into(),
+            )
+            .await?;
+            return Ok(());
+        }
+    }
+
     let response = match comp.component_type {
-        ComponentType::Button => Some(comp.custom_id),
-        ComponentType::SelectMenu => comp.values.pop(),
-        _ => None,
+        ComponentType::Button => comp.custom_id.as_str(),
+        ComponentType::SelectMenu => match comp.values.get(0) {
+            Some(v) => v,
+            None => return Ok(()),
+        },
+        _ => return Ok(()),
     };
 
-    if let Some(response) = response {
-        http.create_response(
-            interaction.id,
-            &interaction.token,
-            &InteractionResponse {
-                kind: InteractionResponseType::ChannelMessageWithSource,
-                data: Some(InteractionResponseData {
-                    content: Some(response),
-                    flags: Some(MessageFlags::EPHEMERAL),
-                    ..Default::default()
-                }),
-            },
-        )
-        .exec()
-        .await?;
+    let actions = MessageAction::parse(response);
+    if actions.is_empty() {
+        let mut response = response.to_string();
+        let mut variables = HashMap::new();
+        interaction.to_message_variables(&mut variables);
+        response.replace_variables(&variables);
+        simple_response(&http, interaction.id, &interaction.token, response).await?;
+    } else {
+        handle_component_actions(http, interaction, comp, actions).await?;
+    }
+
+    Ok(())
+}
+
+async fn handle_component_actions(
+    http: InteractionClient<'_>,
+    interaction: Interaction,
+    _comp: MessageComponentInteractionData,
+    actions: Vec<MessageAction>,
+) -> InteractionResult {
+    for action in actions {
+        match action {
+            MessageAction::Unknown => {}
+            MessageAction::ResponseSavedMessage { message_id } => {
+                match MessageModel::find_by_id(&message_id).await? {
+                    Some(model) => {
+                        match serde_json::from_str::<MessagePayload>(&model.payload_json) {
+                            Ok(mut payload) => {
+                                let mut variables = HashMap::new();
+                                interaction.to_message_variables(&mut variables);
+                                payload.replace_variables(&variables);
+
+                                http.create_response(
+                                    interaction.id,
+                                    &interaction.token,
+                                    &InteractionResponse {
+                                        kind: InteractionResponseType::ChannelMessageWithSource,
+                                        data: Some(InteractionResponseData {
+                                            content: payload.content,
+                                            components: Some(payload.components),
+                                            embeds: Some(
+                                                payload
+                                                    .embeds
+                                                    .into_iter()
+                                                    .map(|e| e.into())
+                                                    .collect(),
+                                            ),
+                                            flags: Some(MessageFlags::EPHEMERAL),
+                                            ..Default::default()
+                                        }),
+                                    },
+                                )
+                                .exec()
+                                .await?;
+                            }
+                            Err(_) => {
+                                simple_response(
+                                    &http,
+                                    interaction.id,
+                                    &interaction.token,
+                                    "Invalid response message".into(),
+                                )
+                                .await?;
+                            }
+                        };
+                    }
+                    None => {
+                        simple_response(
+                            &http,
+                            interaction.id,
+                            &interaction.token,
+                            "Response message not found".into(),
+                        )
+                        .await?;
+                    }
+                }
+            }
+            MessageAction::RoleToggle { role_id } => {
+                let member = interaction.member.as_ref().unwrap();
+                let user_id = member.user.as_ref().unwrap().id;
+                let guild_id = interaction.guild_id.unwrap();
+                if member.roles.contains(&role_id) {
+                    match DISCORD_HTTP
+                        .remove_guild_member_role(guild_id, user_id, role_id)
+                        .exec()
+                        .await
+                    {
+                        Ok(_) => {
+                            simple_response(
+                                &http,
+                                interaction.id,
+                                &interaction.token,
+                                format!("You no longer have the <@&{}> role", role_id),
+                            )
+                            .await?;
+                        }
+                        Err(_) => {
+                            simple_response(
+                                &http,
+                                interaction.id,
+                                &interaction.token,
+                                "Failed to remove role. Does the bot have permissions to remove this role?".into(),
+                            )
+                            .await?;
+                        }
+                    }
+                } else {
+                    match DISCORD_HTTP
+                        .add_guild_member_role(guild_id, user_id, role_id)
+                        .exec()
+                        .await
+                    {
+                        Ok(_) => {
+                            simple_response(
+                                &http,
+                                interaction.id,
+                                &interaction.token,
+                                format!("You now have the <@&{}> role", role_id),
+                            )
+                            .await?;
+                        }
+                        Err(_) => {
+                            simple_response(
+                                &http,
+                                interaction.id,
+                                &interaction.token,
+                                "Failed to add role. Does the bot have permissions to remove this role?".into(),
+                            )
+                            .await?;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     Ok(())
@@ -155,6 +307,7 @@ pub enum InteractionError {
     JsonSerialize(serde_json::error::Error),
     AwcDeserialize(awc::error::JsonPayloadError),
     AwcRequest(SendRequestError),
+    Database(mongodb::error::Error),
 }
 
 impl From<twilight_http::Error> for InteractionError {
@@ -184,6 +337,12 @@ impl From<awc::error::JsonPayloadError> for InteractionError {
 impl From<SendRequestError> for InteractionError {
     fn from(e: SendRequestError) -> Self {
         Self::AwcRequest(e)
+    }
+}
+
+impl From<mongodb::error::Error> for InteractionError {
+    fn from(e: mongodb::error::Error) -> Self {
+        Self::Database(e)
     }
 }
 

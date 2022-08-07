@@ -51,7 +51,12 @@ where
         let context: Option<(Id<GuildMarker>, Id<UserMarker>)> = {
             let ext = req.extensions();
             match ext.get::<TokenClaims>() {
-                Some(token) => req.match_info().query("guild_id").parse().ok().map(|gid| (gid, token.user_id)),
+                Some(token) => req
+                    .match_info()
+                    .query("guild_id")
+                    .parse()
+                    .ok()
+                    .map(|gid| (gid, token.user_id)),
                 None => None,
             }
         };

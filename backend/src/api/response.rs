@@ -2,9 +2,9 @@ use std::borrow::Cow;
 use std::fmt::Debug;
 
 use actix_web::body::BoxBody;
+use actix_web::http::StatusCode;
 use actix_web::web::Json;
 use actix_web::{HttpResponse, ResponseError};
-use actix_web::http::StatusCode;
 use awc::error::{JsonPayloadError, SendRequestError};
 use log::error;
 use mongodb::error::Error as MongoError;
@@ -52,11 +52,11 @@ pub struct ErrorResponseWrapper {
 #[derive(Debug, Clone, thiserror::Error, Serialize)]
 #[serde(rename_all = "snake_case", tag = "code")]
 pub enum RouteError {
-    #[error("Not found")]
+    #[error("Not found: {entity}")]
     NotFound { entity: Cow<'static, str> },
     #[error("A database operation has failed")]
     DatabaseError,
-    #[error("Field validation failed")]
+    #[error("Field validation failed for {field}: {details}")]
     ValidationError {
         field: Cow<'static, str>,
         details: Cow<'static, str>,
@@ -81,6 +81,8 @@ pub enum RouteError {
     MessageLimitReached,
     #[error("Failed to send message")]
     MessageSendError(MessageSendError),
+    #[error("Invalid message action: {details}")]
+    InvalidMessageAction { details: Cow<'static, str> },
 }
 
 impl ResponseError for RouteError {
@@ -101,6 +103,7 @@ impl ResponseError for RouteError {
             DiscordApi => StatusCode::BAD_REQUEST,
             MessageLimitReached => StatusCode::FORBIDDEN,
             MessageSendError(_) => StatusCode::BAD_REQUEST,
+            InvalidMessageAction { .. } => StatusCode::BAD_REQUEST,
         }
     }
 

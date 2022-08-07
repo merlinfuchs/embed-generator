@@ -12,9 +12,9 @@ use twilight_gateway::Cluster;
 use twilight_http::Client;
 use twilight_http_ratelimiting::InMemoryRatelimiter;
 use twilight_model::gateway::event::Event;
-use twilight_model::gateway::Intents;
 use twilight_model::gateway::payload::outgoing::update_presence::UpdatePresencePayload;
 use twilight_model::gateway::presence::{Activity, ActivityType, Status};
+use twilight_model::gateway::Intents;
 use twilight_model::guild::Permissions;
 use twilight_model::id::marker::ChannelMarker;
 use twilight_model::id::Id;
@@ -22,9 +22,11 @@ use twilight_model::id::Id;
 use crate::bot::commands::{command_definitions, handle_interaction, InteractionError};
 use crate::bot::webhooks::delete_webhooks_for_channel;
 use crate::config::CONFIG;
+use crate::db::models::ChannelMessageModel;
 
 mod commands;
 pub mod emojis;
+pub mod message;
 pub mod webhooks;
 
 lazy_static! {
@@ -92,29 +94,27 @@ pub async fn run_bot() -> Result<(), Box<dyn Error>> {
         .queue(queue)
         .shard_scheme(shard_scheme)
         .presence(UpdatePresencePayload {
-            activities: vec![
-                Activity {
-                    application_id: None,
-                    assets: None,
-                    buttons: vec![],
-                    created_at: None,
-                    details: None,
-                    emoji: None,
-                    flags: None,
-                    id: None,
-                    instance: None,
-                    kind: ActivityType::Watching,
-                    name: "message.style".to_string(),
-                    party: None,
-                    secrets: None,
-                    state: None,
-                    timestamps: None,
-                    url: None
-                },
-            ],
+            activities: vec![Activity {
+                application_id: None,
+                assets: None,
+                buttons: vec![],
+                created_at: None,
+                details: None,
+                emoji: None,
+                flags: None,
+                id: None,
+                instance: None,
+                kind: ActivityType::Watching,
+                name: "message.style".to_string(),
+                party: None,
+                secrets: None,
+                state: None,
+                timestamps: None,
+                url: None,
+            }],
             status: Status::Online,
             afk: false,
-            since: None
+            since: None,
         })
         .build()
         .await?;
@@ -137,7 +137,9 @@ pub async fn run_bot() -> Result<(), Box<dyn Error>> {
                     }
                 }
             }
-            Event::MessageDelete(_) => {} // TODO: delete from last message store
+            Event::MessageDelete(m) => {
+                let _ = ChannelMessageModel::delete_by_message_id(m.id).await;
+            }
             Event::WebhooksUpdate(w) => delete_webhooks_for_channel(w.channel_id),
             _ => {}
         }

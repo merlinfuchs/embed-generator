@@ -3,8 +3,8 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
-use twilight_model::id::Id;
 use twilight_model::id::marker::UserMarker;
+use twilight_model::id::Id;
 
 use crate::CONFIG;
 

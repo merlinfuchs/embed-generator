@@ -1,7 +1,7 @@
 use actix_web::get;
 use actix_web::web::{Json, ReqData};
-use twilight_model::id::Id;
 use twilight_model::id::marker::GuildMarker;
+use twilight_model::id::Id;
 
 use crate::api::response::RouteResult;
 use crate::api::wire::GuildChannelWire;
