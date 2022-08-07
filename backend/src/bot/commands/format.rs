@@ -154,7 +154,6 @@ pub async fn handle_autocomplete(
         CommandOptionValue::SubCommand(options) => options.clone(),
         _ => unreachable!(),
     };
-    println!("{:?}", options);
     let search = match &options.get(0).unwrap().value {
         CommandOptionValue::Focused(e, _) => e,
         _ => unreachable!(),

@@ -15,12 +15,12 @@ fn parse_emoji_list(resp: String) -> Vec<(String, String, String)> {
             line.get(2).unwrap().as_str().trim(),
         );
         let sequence: String = raw
-            .split(" ")
+            .split(' ')
             .map(|v| v.to_string().to_lowercase())
             .collect::<Vec<String>>()
             .join("-");
         let unicode: String = raw
-            .split(" ")
+            .split(' ')
             .map(|v| {
                 char::from_u32(u32::from_str_radix(v, 16).unwrap())
                     .unwrap()

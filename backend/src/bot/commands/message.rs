@@ -1,4 +1,6 @@
+use std::time::Duration;
 use lazy_static::lazy_static;
+use nanoid::nanoid;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use twilight_http::client::InteractionClient;
@@ -17,6 +19,7 @@ use twilight_util::builder::command::{CommandBuilder, StringBuilder, SubCommandB
 
 use crate::bot::commands::{simple_response, InteractionError, InteractionResult};
 use crate::bot::DISCORD_HTTP;
+use crate::db::models::SharedMessageModel;
 
 lazy_static! {
     static ref SNOWFLAGE_RE: Regex = Regex::new("^[0-9]+$").unwrap();
@@ -92,10 +95,10 @@ async fn get_message_from_id_or_url(
     interaction: &Interaction,
     message_id_or_url: &str,
 ) -> Result<Message, InteractionError> {
-    let (channel_id, message_id) = match parse_message_id_or_url(&message_id_or_url) {
+    let (channel_id, message_id) = match parse_message_id_or_url(message_id_or_url) {
         Ok(v) => v,
         Err(e) => {
-            simple_response(&http, interaction.id, &interaction.token, e).await?;
+            simple_response(http, interaction.id, &interaction.token, e).await?;
             return Err(InteractionError::NoOp);
         }
     };
@@ -103,7 +106,7 @@ async fn get_message_from_id_or_url(
     let channel_id = channel_id.unwrap_or(interaction.channel_id.unwrap());
     if channel_id != interaction.channel_id.unwrap() {
         simple_response(
-            &http,
+            http,
             interaction.id,
             &interaction.token,
             "The message must belong to this channel".into(),
@@ -119,7 +122,7 @@ async fn get_message_from_id_or_url(
                 ErrorType::Response { status, .. } => match status.get() {
                     404 => {
                         simple_response(
-                            &http,
+                            http,
                             interaction.id,
                             &interaction.token,
                             "Can't find the message in this channel".into(),
@@ -167,21 +170,22 @@ async fn handle_command_restore(
     let msg = get_message_from_id_or_url(&http, &interaction, &message_id_or_url).await?;
     let msg_dump = message_to_dump(msg);
 
-    let client = awc::ClientBuilder::new().finish();
-    let resp: ClubShareCreateResponse = client
-        .post("https://api.discord.club/messages/share")
-        .send_json(&ClubShareCreateRequest { json: msg_dump })
-        .await?
-        .json()
-        .await?;
+    let share_id = nanoid!();
+    let expiry = Duration::from_secs(60 * 60 * 24);
+
+    let model = SharedMessageModel {
+        id: share_id.clone(),
+        payload_json: serde_json::to_string(&msg_dump)?,
+    };
+    model.save(expiry).await?;
 
     simple_response(
         &http,
         interaction.id,
         &interaction.token,
         format!(
-            "You can edit the message here: https://discord.club/share/{}",
-            resp.id
+            "You can edit the message here: https://message.style?share={}",
+            share_id
         ),
     )
     .await?;

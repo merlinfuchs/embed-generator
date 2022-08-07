@@ -30,8 +30,7 @@ pub async fn get_webhooks_for_channel(
         .await?
         .model()
         .await
-        .unwrap()
-        .into();
+        .unwrap();
 
     // we sort the vector to make sure that the bot always chooses the same webhook for the same channel
     webhooks.sort_by(|a, b| a.id.get().partial_cmp(&b.id.get()).unwrap());

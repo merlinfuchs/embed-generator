@@ -70,8 +70,7 @@ pub async fn route_message_send(
         .filter_map(|(i, a)| {
             let body = DataUrl::process(&a.data_url)
                 .ok()
-                .map(|d| d.decode_to_vec().ok().map(|b| b.0))
-                .flatten();
+                .and_then(|d| d.decode_to_vec().ok().map(|b| b.0));
 
             let filename = a
                 .name
@@ -164,7 +163,7 @@ pub async fn route_message_send(
                     &assigned_roles,
                 );
                 let overwrites = channel.permission_overwrites.as_deref().unwrap_or(&[]);
-                let perms = calculator.in_channel(channel.kind, &overwrites);
+                let perms = calculator.in_channel(channel.kind, overwrites);
 
                 (perms, false, highest_role)
             };
@@ -200,7 +199,7 @@ pub async fn route_message_send(
                             });
                         }
                     }
-                    MessageAction::RoleToggle { role_id } => {
+                    MessageAction::RoleToggle { role_id, .. } => {
                         if !is_owner && !perms.contains(Permissions::MANAGE_ROLES) {
                             return Err(RouteError::InvalidMessageAction {
                                 details: "Missing permission to manage roles".into(),
@@ -248,28 +247,26 @@ pub async fn route_message_send(
                     thread_id,
                     message_id,
                 )
+            } else if existing_webhook_count >= 10 {
+                return Err(RouteError::ChannelWebhookLimitReached);
             } else {
-                if existing_webhook_count >= 10 {
-                    return Err(RouteError::ChannelWebhookLimitReached);
-                } else {
-                    let webhook = DISCORD_HTTP
-                        .create_webhook(channel_id, "Embed Generator")
-                        .unwrap()
-                        .avatar(&ICON_DATA_URL)
-                        .exec()
-                        .await?
-                        .model()
-                        .await
-                        .unwrap();
+                let webhook = DISCORD_HTTP
+                    .create_webhook(channel_id, "Embed Generator")
+                    .unwrap()
+                    .avatar(&ICON_DATA_URL)
+                    .exec()
+                    .await?
+                    .model()
+                    .await
+                    .unwrap();
 
-                    (
-                        webhook.id,
-                        webhook.token.unwrap(),
-                        Some(channel_id),
-                        thread_id,
-                        message_id,
-                    )
-                }
+                (
+                    webhook.id,
+                    webhook.token.unwrap(),
+                    Some(channel_id),
+                    thread_id,
+                    message_id,
+                )
             }
         }
     };
@@ -289,7 +286,7 @@ pub async fn route_message_send(
             .unwrap()
             .exec()
             .await
-            .map_err(|e| MessageSendError::from(e))?;
+            .map_err(MessageSendError::from)?;
 
         Ok(message_id)
     } else {
@@ -305,7 +302,7 @@ pub async fn route_message_send(
             .wait()
             .exec()
             .await
-            .map_err(|e| MessageSendError::from(e))?
+            .map_err(MessageSendError::from)?
             .model()
             .await
             .unwrap();

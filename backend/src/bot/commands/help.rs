@@ -24,7 +24,7 @@ pub async fn handle_command(
         &http,
         interaction.id,
         &interaction.token,
-        "You can join our Discord Server with the following link: <https://discord.club/discord>"
+        "You can join our Discord Server with the following link: <https://message.style/api/link/discord>"
             .into(),
     )
     .await?;

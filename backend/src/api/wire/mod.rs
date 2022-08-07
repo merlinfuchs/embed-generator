@@ -1,6 +1,7 @@
 pub use auth::*;
 pub use guild::*;
 pub use message::*;
+pub use shared_message::*;
 pub use user::*;
 
 use crate::api::response::RouteError;
@@ -8,6 +9,7 @@ use crate::api::response::RouteError;
 mod auth;
 mod guild;
 mod message;
+mod shared_message;
 mod user;
 
 pub trait NormalizeValidate: Sized {

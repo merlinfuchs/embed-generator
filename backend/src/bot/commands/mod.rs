@@ -14,11 +14,12 @@ use twilight_model::http::interaction::{
 use twilight_model::id::marker::InteractionMarker;
 use twilight_model::id::Id;
 
-use crate::bot::message::MessageVariablesReplace;
 use crate::bot::message::{MessageAction, MessagePayload};
 use crate::bot::message::{MessageHashIntegrity, ToMessageVariables};
+use crate::bot::message::{MessageVariablesReplace, RoleToggleFlags};
 use crate::bot::DISCORD_HTTP;
 use crate::db::models::{ChannelMessageModel, MessageModel};
+use crate::db::RedisPoolError;
 use crate::CONFIG;
 
 mod embed;
@@ -109,23 +110,22 @@ async fn handle_unknown_component(
     let message_timestamp = message.edited_timestamp.unwrap_or(message.timestamp);
 
     // message integrity wasn't part of the initial release so we can't expect older messages to have it
-    if message_timestamp.as_secs() > 1659880800 {
-        if message.author.id != CONFIG.discord.oauth_client_id.cast()
-            && !ChannelMessageModel::exists_by_message_id_and_hash(
-                message.id,
-                &message.integrity_hash(),
-            )
-            .await?
-        {
-            simple_response(
-                &http,
-                interaction.id,
-                &interaction.token,
-                "Message integrity could not be validated".into(),
-            )
-            .await?;
-            return Ok(());
-        }
+    if message_timestamp.as_secs() > 1659880800
+        && message.author.id != CONFIG.discord.oauth_client_id.cast()
+        && !ChannelMessageModel::exists_by_message_id_and_hash(
+            message.id,
+            &message.integrity_hash(),
+        )
+        .await?
+    {
+        simple_response(
+            &http,
+            interaction.id,
+            &interaction.token,
+            "Message integrity could not be validated".into(),
+        )
+        .await?;
+        return Ok(());
     }
 
     let response = match comp.component_type {
@@ -204,7 +204,7 @@ async fn handle_component_actions(
                             }
                             Err(_) => {
                                 simple_response(
-                                    &http,
+                                    http,
                                     interaction.id,
                                     &interaction.token,
                                     "Invalid response message".into(),
@@ -215,7 +215,7 @@ async fn handle_component_actions(
                     }
                     None => {
                         simple_response(
-                            &http,
+                            http,
                             interaction.id,
                             &interaction.token,
                             "Response message not found".into(),
@@ -224,7 +224,7 @@ async fn handle_component_actions(
                     }
                 }
             }
-            MessageAction::RoleToggle { role_id } => {
+            MessageAction::RoleToggle { role_id, flags } => {
                 let member = interaction.member.as_ref().unwrap();
                 let user_id = member.user.as_ref().unwrap().id;
                 let guild_id = interaction.guild_id.unwrap();
@@ -235,17 +235,19 @@ async fn handle_component_actions(
                         .await
                     {
                         Ok(_) => {
-                            simple_response(
-                                &http,
-                                interaction.id,
-                                &interaction.token,
-                                format!("You no longer have the <@&{}> role", role_id),
-                            )
-                            .await?;
+                            if !flags.contains(RoleToggleFlags::SILENT) {
+                                simple_response(
+                                    http,
+                                    interaction.id,
+                                    &interaction.token,
+                                    format!("You no longer have the <@&{}> role", role_id),
+                                )
+                                .await?;
+                            }
                         }
                         Err(_) => {
                             simple_response(
-                                &http,
+                                http,
                                 interaction.id,
                                 &interaction.token,
                                 "Failed to remove role. Does the bot have permissions to remove this role?".into(),
@@ -260,17 +262,19 @@ async fn handle_component_actions(
                         .await
                     {
                         Ok(_) => {
-                            simple_response(
-                                &http,
-                                interaction.id,
-                                &interaction.token,
-                                format!("You now have the <@&{}> role", role_id),
-                            )
-                            .await?;
+                            if !flags.contains(RoleToggleFlags::SILENT) {
+                                simple_response(
+                                    http,
+                                    interaction.id,
+                                    &interaction.token,
+                                    format!("You now have the <@&{}> role", role_id),
+                                )
+                                .await?;
+                            }
                         }
                         Err(_) => {
                             simple_response(
-                                &http,
+                                http,
                                 interaction.id,
                                 &interaction.token,
                                 "Failed to add role. Does the bot have permissions to remove this role?".into(),
@@ -318,6 +322,7 @@ pub enum InteractionError {
     AwcDeserialize(awc::error::JsonPayloadError),
     AwcRequest(SendRequestError),
     Database(mongodb::error::Error),
+    Redis(RedisPoolError),
 }
 
 impl From<twilight_http::Error> for InteractionError {
@@ -353,6 +358,12 @@ impl From<SendRequestError> for InteractionError {
 impl From<mongodb::error::Error> for InteractionError {
     fn from(e: mongodb::error::Error) -> Self {
         Self::Database(e)
+    }
+}
+
+impl From<RedisPoolError> for InteractionError {
+    fn from(e: RedisPoolError) -> Self {
+        Self::Redis(e)
     }
 }
 

@@ -1,3 +1,6 @@
+use std::time::Duration;
+
+use nanoid::nanoid;
 use twilight_http::client::InteractionClient;
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::CommandData;
@@ -5,10 +8,9 @@ use twilight_model::application::interaction::Interaction;
 use twilight_model::id::Id;
 use twilight_util::builder::command::CommandBuilder;
 
-use crate::bot::commands::message::{
-    message_to_dump, ClubShareCreateRequest, ClubShareCreateResponse,
-};
+use crate::bot::commands::message::message_to_dump;
 use crate::bot::commands::{simple_response, InteractionResult};
+use crate::db::models::SharedMessageModel;
 
 pub fn command_definition() -> Command {
     CommandBuilder::new("Restore Message", "", CommandType::Message).build()
@@ -24,22 +26,22 @@ pub async fn handle_command(
 
     let msg_dump = message_to_dump(msg);
 
-    let client = awc::ClientBuilder::new().finish();
+    let share_id = nanoid!();
+    let expiry = Duration::from_secs(60 * 60 * 24);
 
-    let resp: ClubShareCreateResponse = client
-        .post("https://api.discord.club/messages/share")
-        .send_json(&ClubShareCreateRequest { json: msg_dump })
-        .await?
-        .json()
-        .await?;
+    let model = SharedMessageModel {
+        id: share_id.clone(),
+        payload_json: serde_json::to_string(&msg_dump)?,
+    };
+    model.save(expiry).await?;
 
     simple_response(
         &http,
         interaction.id,
         &interaction.token,
         format!(
-            "You can edit the message here: https://discord.club/share/{}",
-            resp.id
+            "You can edit the message here: https://message.style?share={}",
+            share_id
         ),
     )
     .await?;

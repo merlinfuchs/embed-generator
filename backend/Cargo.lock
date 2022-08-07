@@ -700,6 +700,7 @@ dependencies = [
  "actix-web",
  "awc",
  "base64",
+ "bitflags",
  "config",
  "dashmap",
  "data-url",

@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use bitflags::bitflags;
 use lazy_static::lazy_static;
 use regex::{Captures, Regex};
 use serde::{Deserialize, Serialize};
@@ -18,7 +19,8 @@ use twilight_model::util::Timestamp;
 use crate::bot::DISCORD_CACHE;
 
 lazy_static! {
-    static ref ACTION_STRING_RE: Regex = Regex::new(r"\{([0-9]+):([a-zA-Z0-9_-]+)\}$").unwrap();
+    static ref ACTION_STRING_RE: Regex =
+        Regex::new(r"\{([0-9]+):([a-zA-Z0-9_-]+)(?::([0-9]+))?\}$").unwrap();
     static ref MESSAGE_VARIABLE_RE: Regex =
         Regex::new(r"\{\{([a-z_\.]+)(?:\|([^{}|]*))?\}\}").unwrap();
 }
@@ -127,7 +129,7 @@ impl ToMessageVariables<'_> for Interaction {
                     guild.value().to_message_variables(variables);
                 }
                 None => {
-                    variables.insert("guild.id", guild_id.to_string().into());
+                    variables.insert("guild.id", guild_id.to_string());
                 }
             }
         }
@@ -137,7 +139,7 @@ impl ToMessageVariables<'_> for Interaction {
                 channel.value().to_message_variables(variables);
             }
             None => {
-                variables.insert("channel.id", self.channel_id.unwrap().to_string().into());
+                variables.insert("channel.id", self.channel_id.unwrap().to_string());
             }
         }
 
@@ -264,10 +266,21 @@ impl MessageVariablesReplace for EmbedField {
     }
 }
 
+bitflags! {
+    pub struct RoleToggleFlags: u8 {
+        const SILENT = 1;
+    }
+}
+
 pub enum MessageAction {
     Unknown,
-    ResponseSavedMessage { message_id: String },
-    RoleToggle { role_id: Id<RoleMarker> },
+    ResponseSavedMessage {
+        message_id: String,
+    },
+    RoleToggle {
+        role_id: Id<RoleMarker>,
+        flags: RoleToggleFlags,
+    },
 }
 
 impl MessageAction {
@@ -275,9 +288,10 @@ impl MessageAction {
         ACTION_STRING_RE
             .captures_iter(value)
             .map(|captures| {
-                let (action_type, arg) = (
+                let (action_type, arg, raw_flags) = (
                     captures.get(1).unwrap().as_str(),
                     captures.get(2).unwrap().as_str(),
+                    captures.get(3).map(|v| v.as_str()).unwrap_or_default(),
                 );
 
                 match action_type {
@@ -286,6 +300,9 @@ impl MessageAction {
                     },
                     "1" => MessageAction::RoleToggle {
                         role_id: arg.parse().unwrap_or(Id::new(1)),
+                        flags: RoleToggleFlags::from_bits_truncate(
+                            raw_flags.parse::<u8>().unwrap_or(0),
+                        ),
                     },
                     _ => MessageAction::Unknown,
                 }

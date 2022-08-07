@@ -35,7 +35,7 @@ impl MessageModel {
                 doc! {"_id": &self.id, "owner_id": self.owner_id.to_string()},
                 doc! {"$set": {
                     "name": &self.name,
-                    "description": self.description.as_ref().map(|s| s.as_str()),
+                    "description": self.description.as_deref(),
                     "payload_json": &self.payload_json,
                     "updated_at": self.updated_at,
                 }},

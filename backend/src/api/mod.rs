@@ -11,7 +11,8 @@ use crate::api::routes::{
     route_guild_channel_message_list, route_guild_emoji_list, route_guild_get, route_guild_list,
     route_guild_role_list, route_guild_sticker_list, route_link_discord, route_link_invite,
     route_link_source, route_message_create, route_message_delete, route_message_get,
-    route_message_list, route_message_send, route_message_update, route_user_get_me,
+    route_message_list, route_message_send, route_message_update, route_shared_message_get,
+    route_user_get_me,
 };
 use crate::config::CONFIG;
 
@@ -40,6 +41,7 @@ pub async fn serve_api() -> Result<(), Box<dyn Error>> {
                 .service(route_link_discord)
                 .service(route_link_invite)
                 .service(route_link_source)
+                .service(route_shared_message_get)
                 .service(
                     scope("")
                         .wrap(AuthCheck)

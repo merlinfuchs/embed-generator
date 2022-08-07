@@ -18,6 +18,7 @@ pub use message_send::route_message_send;
 pub use message_update::route_message_update;
 #[cfg(feature = "frontend")]
 pub use serve_frontend::route_serve_frontend;
+pub use shared_message_get::*;
 pub use user_get_me::route_user_get_me;
 
 mod auth_exchange;
@@ -38,4 +39,5 @@ mod message_send;
 mod message_update;
 #[cfg(feature = "frontend")]
 mod serve_frontend;
+mod shared_message_get;
 mod user_get_me;

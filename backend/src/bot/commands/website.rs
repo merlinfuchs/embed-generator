@@ -1,10 +1,16 @@
 use twilight_http::client::InteractionClient;
 use twilight_model::application::command::{Command, CommandType};
+use twilight_model::application::component::button::ButtonStyle;
+use twilight_model::application::component::{ActionRow, Button, Component};
 use twilight_model::application::interaction::application_command::CommandData;
 use twilight_model::application::interaction::Interaction;
+use twilight_model::channel::message::MessageFlags;
+use twilight_model::http::interaction::{
+    InteractionResponse, InteractionResponseData, InteractionResponseType,
+};
 use twilight_util::builder::command::CommandBuilder;
 
-use crate::bot::commands::{simple_response, InteractionResult};
+use crate::bot::commands::InteractionResult;
 
 pub fn command_definition() -> Command {
     CommandBuilder::new(
@@ -20,12 +26,29 @@ pub async fn handle_command(
     interaction: Interaction,
     _cmd: Box<CommandData>,
 ) -> InteractionResult {
-    simple_response(
-        &http,
+    http.create_response(
         interaction.id,
         &interaction.token,
-        "You can find the website of Embed Generator at: <https://discord.club>".into(),
+        &InteractionResponse {
+            kind: InteractionResponseType::ChannelMessageWithSource,
+            data: Some(InteractionResponseData {
+                content: Some("You can find the website at https://message.style".into()),
+                flags: Some(MessageFlags::EPHEMERAL),
+                components: Some(vec![Component::ActionRow(ActionRow {
+                    components: vec![Component::Button(Button {
+                        custom_id: None,
+                        disabled: false,
+                        emoji: None,
+                        label: Some("Website".into()),
+                        style: ButtonStyle::Link,
+                        url: Some("https://message.style".into()),
+                    })],
+                })]),
+                ..Default::default()
+            }),
+        },
     )
+    .exec()
     .await?;
     Ok(())
 }

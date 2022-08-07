@@ -37,29 +37,27 @@ pub async fn get_webhook_for_channel(
 
     let res = if let Some(webhook) = existing_webhook {
         (webhook.id, webhook.token.unwrap())
+    } else if existing_webhook_count >= 10 {
+        simple_response(
+            http,
+            interaction_id,
+            interaction_token,
+            "The bot can't create a new webhook because there are already 10 webhooks in this channel."
+                .into(),
+        )
+            .await?;
+        return Err(InteractionError::NoOp);
     } else {
-        if existing_webhook_count >= 10 {
-            simple_response(
-                &http,
-                interaction_id,
-                interaction_token,
-                "The bot can't create a new webhook because there are already 10 webhooks in this channel."
-                    .into(),
-            )
-                .await?;
-            return Err(InteractionError::NoOp);
-        } else {
-            let webhook = DISCORD_HTTP
-                .create_webhook(channel_id, "Embed Generator")
-                .unwrap()
-                .exec()
-                .await?
-                .model()
-                .await
-                .unwrap();
+        let webhook = DISCORD_HTTP
+            .create_webhook(channel_id, "Embed Generator")
+            .unwrap()
+            .exec()
+            .await?
+            .model()
+            .await
+            .unwrap();
 
-            (webhook.id, webhook.token.unwrap())
-        }
+        (webhook.id, webhook.token.unwrap())
     };
     Ok(res)
 }
@@ -113,8 +111,7 @@ pub async fn handle_command(
         format!(
             "https://discord.com/api/webhooks/{}/{}",
             webhook_id, webhook_token
-        )
-        .into(),
+        ),
     )
     .await?;
     Ok(())
