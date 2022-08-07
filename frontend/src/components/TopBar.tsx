@@ -3,8 +3,9 @@ import { Disclosure } from "@headlessui/react";
 import { LogoutIcon, MenuIcon, XIcon } from "@heroicons/react/outline";
 import useToken from "../hooks/useToken";
 import useUser from "../hooks/useUser";
-import { userAvatarUrl } from "../discord/utils";
+import { jsonToMessage, userAvatarUrl } from "../discord/utils";
 import MessageManager from "./MessageManager";
+import useMessage from "../hooks/useMessage";
 
 const navigation = [
   { name: "Discord Server", href: "/api/link/discord" },
@@ -17,14 +18,17 @@ export default function Example() {
   const [, setToken] = useToken();
   const user = useUser();
 
-  const requestMade = useRef(false);
+  const [, dispatch] = useMessage();
+
+  const exchangeRequest = useRef(false);
+  const sharedRequest = useRef(false);
 
   useEffect(() => {
     const url = new URL(window.location.toString());
     const code = url.searchParams.get("code");
 
-    if (code && !requestMade.current) {
-      requestMade.current = true;
+    if (code && !exchangeRequest.current) {
+      exchangeRequest.current = true;
 
       fetch("/api/auth/exchange", {
         method: "POST",
@@ -38,6 +42,29 @@ export default function Example() {
       window.history.pushState(null, "", url.toString());
     }
   }, [setToken]);
+
+  useEffect(() => {
+    const url = new URL(window.location.toString());
+    const share = url.searchParams.get("share");
+
+    fetch(`/api/shared/${share}`, {
+      method: "GET",
+    })
+      .then((resp) => resp.json())
+      .then((resp) => {
+        if (resp.success) {
+          dispatch({
+            type: "replace",
+            value: jsonToMessage(JSON.parse(resp.data.payload_json)),
+          });
+        }
+      });
+
+    if (share && !sharedRequest.current) {
+      url.searchParams.delete("share");
+      window.history.pushState(null, "", url.toString());
+    }
+  }, [dispatch]);
 
   return (
     <Disclosure as="nav" className="bg-dark-3 border-b border-dark-2 shadow-md">
