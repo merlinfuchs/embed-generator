@@ -102,29 +102,30 @@ pub async fn handle_interaction(interaction: Interaction) -> InteractionResult {
 async fn handle_unknown_component(
     http: InteractionClient<'_>,
     interaction: Interaction,
-    mut comp: MessageComponentInteractionData,
+    comp: MessageComponentInteractionData,
 ) -> InteractionResult {
     // we have to check that the message was created by the bot and not manually by using a webhook
-    if comp.message.author.id != CONFIG.discord.oauth_client_id.cast()
+    let message = interaction.message.as_ref().unwrap();
+    if message.author.id != CONFIG.discord.oauth_client_id.cast()
         && !ChannelMessageModel::exists_by_message_id_and_hash(
-            comp.message.id,
-            &comp.message.integrity_hash(),
+            message.id,
+            &message.integrity_hash(),
         )
         .await?
     {
         simple_response(
             &http,
-            comp.id,
-            &comp.token,
+            interaction.id,
+            &interaction.token,
             "Message integrity could not be validated".into(),
         )
         .await?;
         return Ok(());
     }
 
-    let response = match comp.data.component_type {
-        ComponentType::Button => comp.data.custom_id.as_str(),
-        ComponentType::SelectMenu => match comp.data.values.get(0) {
+    let response = match comp.component_type {
+        ComponentType::Button => comp.custom_id.as_str(),
+        ComponentType::SelectMenu => match comp.values.get(0) {
             Some(v) => v,
             None => return Ok(()),
         },
@@ -135,11 +136,11 @@ async fn handle_unknown_component(
     if actions.is_empty() {
         let mut response = response.to_string();
         let mut variables = HashMap::new();
-        comp.to_message_variables(&mut variables);
+        interaction.to_message_variables(&mut variables);
         response.replace_variables(&variables);
-        simple_response(&http, comp.id, &comp.token, response).await?;
+        simple_response(&http, interaction.id, &interaction.token, response).await?;
     } else {
-        handle_component_actions(http, comp, actions).await?;
+        handle_component_actions(http, interaction, comp, actions).await?;
     }
 
     Ok(())
@@ -147,7 +148,8 @@ async fn handle_unknown_component(
 
 async fn handle_component_actions(
     http: InteractionClient<'_>,
-    comp: Box<MessageComponentInteraction>,
+    interaction: Interaction,
+    _comp: MessageComponentInteractionData,
     actions: Vec<MessageAction>,
 ) -> InteractionResult {
     for action in actions {
@@ -159,12 +161,12 @@ async fn handle_component_actions(
                         match serde_json::from_str::<MessagePayload>(&model.payload_json) {
                             Ok(mut payload) => {
                                 let mut variables = HashMap::new();
-                                comp.to_message_variables(&mut variables);
+                                interaction.to_message_variables(&mut variables);
                                 payload.replace_variables(&variables);
 
                                 http.create_response(
-                                    comp.id,
-                                    &comp.token,
+                                    interaction.id,
+                                    &interaction.token,
                                     &InteractionResponse {
                                         kind: InteractionResponseType::ChannelMessageWithSource,
                                         data: Some(InteractionResponseData {
@@ -188,8 +190,8 @@ async fn handle_component_actions(
                             Err(_) => {
                                 simple_response(
                                     &http,
-                                    comp.id,
-                                    &comp.token,
+                                    interaction.id,
+                                    &interaction.token,
                                     "Invalid response message".into(),
                                 )
                                 .await?;
@@ -199,8 +201,8 @@ async fn handle_component_actions(
                     None => {
                         simple_response(
                             &http,
-                            comp.id,
-                            &comp.token,
+                            interaction.id,
+                            &interaction.token,
                             "Response message not found".into(),
                         )
                         .await?;
@@ -208,9 +210,9 @@ async fn handle_component_actions(
                 }
             }
             MessageAction::RoleToggle { role_id } => {
-                let member = comp.member.as_ref().unwrap();
+                let member = interaction.member.as_ref().unwrap();
                 let user_id = member.user.as_ref().unwrap().id;
-                let guild_id = comp.guild_id.unwrap();
+                let guild_id = interaction.guild_id.unwrap();
                 if member.roles.contains(&role_id) {
                     DISCORD_HTTP
                         .remove_guild_member_role(guild_id, user_id, role_id)

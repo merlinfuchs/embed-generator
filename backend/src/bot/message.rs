@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use twilight_cache_inmemory::model::CachedGuild;
 use twilight_model::application::component::Component;
-use twilight_model::application::interaction::MessageComponentInteraction;
+use twilight_model::application::interaction::Interaction;
 use twilight_model::channel::embed::{
     Embed, EmbedAuthor, EmbedField, EmbedFooter, EmbedImage, EmbedThumbnail,
 };
@@ -116,7 +116,7 @@ pub trait ToMessageVariables<'r> {
     fn to_message_variables(&'r self, variables: &mut MessageVariables<'_>);
 }
 
-impl ToMessageVariables<'_> for MessageComponentInteraction {
+impl ToMessageVariables<'_> for Interaction {
     fn to_message_variables(&self, variables: &mut MessageVariables<'_>) {
         let member = self.member.as_ref().unwrap();
         let user = member.user.as_ref().unwrap();
@@ -132,12 +132,12 @@ impl ToMessageVariables<'_> for MessageComponentInteraction {
             }
         }
 
-        match DISCORD_CACHE.channel(self.channel_id) {
+        match DISCORD_CACHE.channel(self.channel_id.unwrap()) {
             Some(channel) => {
                 channel.value().to_message_variables(variables);
             }
             None => {
-                variables.insert("channel.id", self.channel_id.to_string().into());
+                variables.insert("channel.id", self.channel_id.unwrap().to_string().into());
             }
         }
 
@@ -319,7 +319,8 @@ fn hash_component_integrity(hasher: &mut Sha256, component: &Component) {
         }
         Component::TextInput(input) => {
             hasher.update(input.custom_id.as_bytes());
-        }
+        },
+        Component::Unknown(_) => {}
     }
 }
 
