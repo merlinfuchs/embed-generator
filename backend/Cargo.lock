@@ -699,6 +699,7 @@ dependencies = [
  "actix-cors",
  "actix-web",
  "awc",
+ "base64",
  "config",
  "dashmap",
  "data-url",

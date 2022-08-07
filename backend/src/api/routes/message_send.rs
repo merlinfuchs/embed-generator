@@ -1,6 +1,7 @@
 use actix_web::post;
 use actix_web::web::{Json, ReqData};
 use data_url::DataUrl;
+use lazy_static::lazy_static;
 use twilight_model::channel::ChannelType;
 use twilight_model::guild::{Member, Permissions};
 use twilight_model::http::attachment::Attachment;
@@ -15,6 +16,12 @@ use crate::bot::{DISCORD_CACHE, DISCORD_HTTP};
 use crate::config::CONFIG;
 use crate::db::models::{ChannelMessagesModel, GuildsWithAccessModel};
 use crate::tokens::TokenClaims;
+
+const ICON_BYTES: &[u8] = include_bytes!("../../../../frontend/public/logo128.png");
+
+lazy_static! {
+    static ref ICON_DATA_URL: String = format!("data:image/png;base64,{}", base64::encode(ICON_BYTES));
+}
 
 #[post("/messages/send")]
 pub async fn route_message_send(
@@ -143,6 +150,7 @@ pub async fn route_message_send(
                     let webhook = DISCORD_HTTP
                         .create_webhook(channel_id, "Embed Generator")
                         .unwrap()
+                        .avatar(&ICON_DATA_URL)
                         .exec()
                         .await?
                         .model()
