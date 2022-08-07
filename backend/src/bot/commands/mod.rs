@@ -106,21 +106,26 @@ async fn handle_unknown_component(
 ) -> InteractionResult {
     // we have to check that the message was created by the bot and not manually by using a webhook
     let message = interaction.message.as_ref().unwrap();
-    if message.author.id != CONFIG.discord.oauth_client_id.cast()
-        && !ChannelMessageModel::exists_by_message_id_and_hash(
-            message.id,
-            &message.integrity_hash(),
-        )
-        .await?
-    {
-        simple_response(
-            &http,
-            interaction.id,
-            &interaction.token,
-            "Message integrity could not be validated".into(),
-        )
-        .await?;
-        return Ok(());
+    let message_timestamp = message.edited_timestamp.unwrap_or(message.timestamp);
+
+    // message integrity wasn't part of the initial release so we can't expect older messages to have it
+    if message_timestamp.as_secs() > 1659880800 {
+        if message.author.id != CONFIG.discord.oauth_client_id.cast()
+            && !ChannelMessageModel::exists_by_message_id_and_hash(
+                message.id,
+                &message.integrity_hash(),
+            )
+            .await?
+        {
+            simple_response(
+                &http,
+                interaction.id,
+                &interaction.token,
+                "Message integrity could not be validated".into(),
+            )
+            .await?;
+            return Ok(());
+        }
     }
 
     let response = match comp.component_type {
