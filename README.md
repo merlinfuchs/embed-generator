@@ -1,5 +1,8 @@
 # Embed Generator
 
+[![Release](https://github.com/merlinfuchs/embed-generator/actions/workflows/release.yml/badge.svg)](https://github.com/merlinfuchs/embed-generator/releases)
+[![Docker image](https://github.com/merlinfuchs/embed-generator/actions/workflows/docker.yml/badge.svg)](https://hub.docker.com/r/merlintor/embed-generator)
+
 A powerful tool for creating rich-embed Discord messages using webhooks.
 
 You will usually want to use the hosted version at https://message.style. There is not much benefit in hosting this
