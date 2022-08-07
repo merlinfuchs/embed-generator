@@ -239,7 +239,7 @@ export function jsonToMessage(json: any): Message {
                   ? compJson.custom_id
                   : "",
               placeholder:
-                compJson.placeholder === "string"
+                typeof compJson.placeholder === "string"
                   ? compJson.placeholder
                   : undefined,
               options: [],

@@ -47,20 +47,22 @@ export default function Example() {
     const url = new URL(window.location.toString());
     const share = url.searchParams.get("share");
 
-    fetch(`/api/shared/${share}`, {
-      method: "GET",
-    })
-      .then((resp) => resp.json())
-      .then((resp) => {
-        if (resp.success) {
-          dispatch({
-            type: "replace",
-            value: jsonToMessage(JSON.parse(resp.data.payload_json)),
-          });
-        }
-      });
-
     if (share && !sharedRequest.current) {
+      sharedRequest.current = true;
+
+      fetch(`/api/shared/${share}`, {
+        method: "GET",
+      })
+        .then((resp) => resp.json())
+        .then((resp) => {
+          if (resp.success) {
+            dispatch({
+              type: "replace",
+              value: jsonToMessage(JSON.parse(resp.data.payload_json)),
+            });
+          }
+        });
+
       url.searchParams.delete("share");
       window.history.pushState(null, "", url.toString());
     }
