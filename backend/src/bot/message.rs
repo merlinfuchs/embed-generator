@@ -18,7 +18,7 @@ use twilight_model::util::Timestamp;
 use crate::bot::DISCORD_CACHE;
 
 lazy_static! {
-    static ref ACTION_STRING_RE: Regex = Regex::new(r"\{([0-9]+):([a-zA-Z0-9]+)\}$").unwrap();
+    static ref ACTION_STRING_RE: Regex = Regex::new(r"\{([0-9]+):([a-zA-Z0-9_-]+)\}$").unwrap();
     static ref MESSAGE_VARIABLE_RE: Regex =
         Regex::new(r"\{\{([a-z_\.]+)(?:\|([^{}|]*))?\}\}").unwrap();
 }
