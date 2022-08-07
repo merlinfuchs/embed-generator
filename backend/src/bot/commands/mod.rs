@@ -214,15 +214,55 @@ async fn handle_component_actions(
                 let user_id = member.user.as_ref().unwrap().id;
                 let guild_id = interaction.guild_id.unwrap();
                 if member.roles.contains(&role_id) {
-                    DISCORD_HTTP
+                    match DISCORD_HTTP
                         .remove_guild_member_role(guild_id, user_id, role_id)
                         .exec()
-                        .await?;
+                        .await
+                    {
+                        Ok(_) => {
+                            simple_response(
+                                &http,
+                                interaction.id,
+                                &interaction.token,
+                                format!("You no longer have the <@&{}> role", role_id),
+                            )
+                            .await?;
+                        }
+                        Err(_) => {
+                            simple_response(
+                                &http,
+                                interaction.id,
+                                &interaction.token,
+                                "Failed to remove role. Does the bot have permissions to remove this role?".into(),
+                            )
+                            .await?;
+                        }
+                    }
                 } else {
-                    DISCORD_HTTP
+                    match DISCORD_HTTP
                         .add_guild_member_role(guild_id, user_id, role_id)
                         .exec()
-                        .await?;
+                        .await
+                    {
+                        Ok(_) => {
+                            simple_response(
+                                &http,
+                                interaction.id,
+                                &interaction.token,
+                                format!("You now have the <@&{}> role", role_id),
+                            )
+                            .await?;
+                        }
+                        Err(_) => {
+                            simple_response(
+                                &http,
+                                interaction.id,
+                                &interaction.token,
+                                "Failed to add role. Does the bot have permissions to remove this role?".into(),
+                            )
+                            .await?;
+                        }
+                    }
                 }
             }
         }

@@ -52,11 +52,11 @@ pub struct ErrorResponseWrapper {
 #[derive(Debug, Clone, thiserror::Error, Serialize)]
 #[serde(rename_all = "snake_case", tag = "code")]
 pub enum RouteError {
-    #[error("Not found")]
+    #[error("Not found: {entity}")]
     NotFound { entity: Cow<'static, str> },
     #[error("A database operation has failed")]
     DatabaseError,
-    #[error("Field validation failed")]
+    #[error("Field validation failed for {field}: {details}")]
     ValidationError {
         field: Cow<'static, str>,
         details: Cow<'static, str>,
@@ -81,7 +81,7 @@ pub enum RouteError {
     MessageLimitReached,
     #[error("Failed to send message")]
     MessageSendError(MessageSendError),
-    #[error("Invalid message action")]
+    #[error("Invalid message action: {details}")]
     InvalidMessageAction { details: Cow<'static, str> },
 }
 

@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use actix_web::post;
 use actix_web::web::{Json, ReqData};
 use data_url::DataUrl;
-use twilight_model::application::component::Component;
 use lazy_static::lazy_static;
+use twilight_model::application::component::Component;
 use twilight_model::channel::ChannelType;
 use twilight_model::guild::{Member, Permissions};
 use twilight_model::http::attachment::Attachment;
@@ -26,7 +26,8 @@ use crate::util::unix_now_mongodb;
 const ICON_BYTES: &[u8] = include_bytes!("../../../../frontend/public/logo128.png");
 
 lazy_static! {
-    static ref ICON_DATA_URL: String = format!("data:image/png;base64,{}", base64::encode(ICON_BYTES));
+    static ref ICON_DATA_URL: String =
+        format!("data:image/png;base64,{}", base64::encode(ICON_BYTES));
 }
 
 fn parse_component_actions(components: &[Component]) -> Vec<MessageAction> {
@@ -200,29 +201,30 @@ pub async fn route_message_send(
                         }
                     }
                     MessageAction::RoleToggle { role_id } => {
-                        if !is_owner {
-                            if !perms.contains(Permissions::MANAGE_ROLES) {
-                                return Err(RouteError::MissingChannelAccess);
-                            }
+                        if !is_owner && !perms.contains(Permissions::MANAGE_ROLES) {
+                            return Err(RouteError::InvalidMessageAction {
+                                details: "Missing permission to manage roles".into(),
+                            });
+                        }
 
-                            match DISCORD_CACHE.role(role_id) {
-                                Some(role) => {
-                                    if role.guild_id() != guild_id {
-                                        return Err(RouteError::InvalidMessageAction {
-                                            details: "Role to toggle is not in this guild".into(),
-                                        });
-                                    }
-                                    if role.position > highest_role {
-                                        return Err(RouteError::InvalidMessageAction {
-                                            details: "You don't have permissions to toggle that role".into(),
-                                        });
-                                    }
-                                }
-                                None => {
+                        match DISCORD_CACHE.role(role_id) {
+                            Some(role) => {
+                                if role.guild_id() != guild_id {
                                     return Err(RouteError::InvalidMessageAction {
-                                        details: "Unknown role to toggle".into(),
+                                        details: "Role to toggle is not in this guild".into(),
                                     });
                                 }
+                                if !is_owner && role.position > highest_role {
+                                    return Err(RouteError::InvalidMessageAction {
+                                        details: "You don't have permissions to toggle that role"
+                                            .into(),
+                                    });
+                                }
+                            }
+                            None => {
+                                return Err(RouteError::InvalidMessageAction {
+                                    details: "Unknown role to toggle".into(),
+                                });
                             }
                         }
                     }
