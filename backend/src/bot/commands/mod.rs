@@ -145,16 +145,26 @@ async fn handle_unknown_component(
         response.replace_variables(&variables);
         simple_response(&http, interaction.id, &interaction.token, response).await?;
     } else {
-        handle_component_actions(http, interaction, comp, actions).await?;
+        handle_component_actions(&http, &interaction, actions).await?;
+    }
+
+    if comp.component_type == ComponentType::SelectMenu {
+        // we reset the menu to the initial state
+        // TODO: it would be better if this was performed before the actions
+        let _ = http
+            .update_followup(&interaction.token, message.id)
+            .components(Some(&message.components))
+            .unwrap()
+            .exec()
+            .await;
     }
 
     Ok(())
 }
 
 async fn handle_component_actions(
-    http: InteractionClient<'_>,
-    interaction: Interaction,
-    _comp: MessageComponentInteractionData,
+    http: &InteractionClient<'_>,
+    interaction: &Interaction,
     actions: Vec<MessageAction>,
 ) -> InteractionResult {
     for action in actions {
