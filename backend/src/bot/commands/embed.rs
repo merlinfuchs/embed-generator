@@ -161,14 +161,10 @@ pub async fn handle_modal(
             if let Some(value) = component.value {
                 match component.custom_id.as_str() {
                     "username" if value.len() != 0 => username = Some(value),
-                    "avatar_url" if value.len() != 0 => {
-                        avatar_url = Some(value)
-                    }
+                    "avatar_url" if value.len() != 0 => avatar_url = Some(value),
                     "title" if value.len() != 0 => title = Some(value),
                     "url" if value.len() != 0 => url = Some(value),
-                    "description" if value.len() != 0 => {
-                        description = Some(value)
-                    }
+                    "description" if value.len() != 0 => description = Some(value),
                     _ => {}
                 }
             }

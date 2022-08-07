@@ -319,7 +319,7 @@ fn hash_component_integrity(hasher: &mut Sha256, component: &Component) {
         }
         Component::TextInput(input) => {
             hasher.update(input.custom_id.as_bytes());
-        },
+        }
         Component::Unknown(_) => {}
     }
 }

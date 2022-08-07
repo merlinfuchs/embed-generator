@@ -4,10 +4,10 @@ use nanoid::nanoid;
 
 use crate::api::response::{RouteError, RouteResult};
 use crate::api::wire::{MessageCreateRequestWire, MessageWire, NormalizeValidate};
-use crate::CONFIG;
 use crate::db::models::MessageModel;
 use crate::tokens::TokenClaims;
 use crate::util::unix_now_mongodb;
+use crate::CONFIG;
 
 #[post("/messages")]
 pub async fn route_message_create(
@@ -18,7 +18,7 @@ pub async fn route_message_create(
 
     let message_count = MessageModel::count_by_owner_id(token.user_id).await?;
     if message_count > CONFIG.limits.max_messages_per_user {
-        return Err(RouteError::MessageLimitReached)
+        return Err(RouteError::MessageLimitReached);
     }
 
     let model = MessageModel {
