@@ -2,14 +2,19 @@
 
 A powerful tool for creating rich-embed Discord messages using webhooks.
 
-You will usually want to use the hosted version at https://message.style. There is not much benefit in hosting this yourself.
+You will usually want to use the hosted version at https://message.style. There is not much benefit in hosting this
+yourself.
+
+## YouTube tutorial
+[![IMAGE ALT TEXT HERE](./tutorial.png)](https://www.youtube.com/watch?v=DnFP0MRJPIg)
 
 ## Project Structure
 
 ### backend
 
-The backend is written in Rust and provides API endpoints for the frontend to use. It handles authentication, saving messages, and interacting with the discord API.
-It also connects to the Discord gateway to receive events and build up a cache of guilds, channels, roles, emojis, and stickers.
+The backend is written in Rust and provides API endpoints for the frontend to use. It handles authentication, saving
+messages, and interacting with the discord API. It also connects to the Discord gateway to receive events and build up a
+cache of guilds, channels, roles, emojis, and stickers.
 
 ### frontend
 
@@ -17,35 +22,57 @@ The frontend is written in React and provides the user interface. It interacts w
 
 ## Self Hosting
 
-This describes the easiest way to self host an instance of Embed Generator by creating a single binary that contains both the backend and frontend.
+This describes the easiest way to self host an instance of Embed Generator by creating a single binary that contains
+both the backend and frontend.
 
-### Building the frontend
+### Build the frontend
 
-You need to have NodeJS and NPM installed to build the frontend:
+You can download NodeJS and NPM from [nodejs.org](https://nodejs.org/en/download/).
+Instead of NPM you can also use Yarn.
 
-```
+```sh
+# Switch to the frontend directory
+cd frontend
+
+# Install the dependencies
+npm install
+# or 
+yarn install
+
+# Start the development server (optional)
+npm run start
+# or
+yarn start
+
+# Build for production use
 npm run build
+# or
+yarn build
 ```
 
 ### Build the backend
 
-You need to have [Rust](https://rustup.rs/) installed.
+Use [rustup.rs](https://rustup.rs/) to install rust. The minimum supported rust version is 1.5.6.
 
-If you want to include the frontend files in the backend binary (recommended):
+```sh
+# Switch to the backend directory
+cd backend
+# or if you are in the frontend directoy
+cd ../backend
 
-```
+# Start the development server (optional)
+RUST_LOG=info cargo run
+
+# Build and include the frontend files in the backend binary (recommended)
 cargo build --release
-```
-
-Otherwise you will need a HTTP server like Nginx to server the frontend for you:
-
-```
+# Or build without the frontend files
+# You will need a HTTP server like Nginx to serve the frontend
 cargo build --release --no-default-features
 ```
 
 ### Install databases
 
-Install MongoDB and Redis on your server. I'm sure you can find instructions online!
+Install MongoDB and Redis on your device. I'm sure you can find instructions online!
 
 ### Configure the server
 
@@ -77,8 +104,10 @@ discord_invite = "" # the invite url to your discord server
 source = "" # the url to the github page (optional)
 ```
 
-You can also set the config values using environment variables. For example `EMBEDG_DISCORD__TOKEN` will set the discord token and `EMBEDG_JWT_SECRET` will set the jwt secret.
+You can also set the config values using environment variables. For example `EMBEDG_DISCORD__TOKEN` will set the discord
+token and `EMBEDG_JWT_SECRET` will set the jwt secret.
 
 ### Run the binary
 
-You should now be able to run the binary and host your own instance of Embed Generator. You usually want to deploy this behind an reverse proxy like Nginx and terminate TLS there.
+You should now be able to run the binary and host your own instance of Embed Generator. You usually want to deploy this
+behind a reverse proxy like Nginx and terminate TLS there.

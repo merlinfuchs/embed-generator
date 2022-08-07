@@ -895,14 +895,45 @@ function reducer(msg: Message, action: MessageAction): Message {
 }
 
 const defaultMessage: Message = {
-  content: "Welcome to Embed Generator!",
+  content:
+    "Welcome to Embed Generator! <:embedg:1002150066338926673>\n\nThis website allows you to create **fancy Discord messages** with embeds, buttons, and select menus. Without any coding skills you can create your own little **interactive FAQ, role menu, or just a nice looking anouncement message**. ",
   embeds: [
     {
-      id: getUniqueId(),
-      title: "This is an Embed!",
-      description: "Embeds are pretty cool if you ask me :)",
+      id: 0,
+      title: "Embeds",
+      description:
+        "**This is an embed!** It's the primary way to style your message! \n\nYou can change the text, add images, and structure your content.",
       color: 1412061,
+      fields: [
+        {
+          id: 0,
+          name: "Field 1",
+          value:
+            "Fields can be used to create simple tables with multiple columns.",
+          inline: true,
+        },
+        {
+          id: 1,
+          name: "Field 2",
+          value:
+            "Fields can be aligned next to each orther (inline) or below each other.",
+          inline: true,
+        },
+      ],
+      footer: {
+        text: "Emebd are pretty cool in my opionion!",
+      },
+      thumbnail: {
+        url: "https://message.style/logo128.png",
+      },
+    },
+    {
+      id: 1,
       fields: [],
+      color: 1412061,
+      title: "Buttons & Menus",
+      description:
+        "**Buttons and Select Menus can be used to make your message interactive.** \n\nThey are only available when you login with your Discord account.",
     },
   ],
   components: [],

@@ -5,7 +5,7 @@ import { ZodFormattedError } from "zod";
 import { Embed, EmbedField } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import EditorEmbedField from "./EditorEmbedField";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
+import useAutoAnimate from "../hooks/useAutoAnimate";
 
 interface Props {
   index: number;

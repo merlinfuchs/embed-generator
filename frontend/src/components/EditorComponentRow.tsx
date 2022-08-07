@@ -12,7 +12,7 @@ import { ComponentActionRow } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import EditorComponentButton from "./EditorComponentButton";
 import EditorComponentSelect from "./EditorComponentSelect";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
+import useAutoAnimate from "../hooks/useAutoAnimate";
 
 interface Props {
   index: number;

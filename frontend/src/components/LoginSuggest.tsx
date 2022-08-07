@@ -7,12 +7,15 @@ import {
   UploadIcon,
 } from "@heroicons/react/outline";
 import { useState } from "react";
+import useAutoAnimate from "../hooks/useAutoAnimate";
 
 export default function LoginSuggest() {
   const [collapsed, setCollapsed] = useState(true);
 
+  const [container] = useAutoAnimate<HTMLDivElement>();
+
   return (
-    <div className="p-3 bg-dark-3 rounded select-none">
+    <div className="p-3 bg-dark-3 rounded select-none" ref={container}>
       <div
         className="flex items-center px-3 py-3 space-x-3 cursor-pointer group"
         onClick={() => setCollapsed(!collapsed)}

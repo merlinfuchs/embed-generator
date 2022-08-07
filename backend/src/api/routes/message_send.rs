@@ -4,6 +4,7 @@ use actix_web::post;
 use actix_web::web::{Json, ReqData};
 use data_url::DataUrl;
 use twilight_model::application::component::Component;
+use lazy_static::lazy_static;
 use twilight_model::channel::ChannelType;
 use twilight_model::guild::{Member, Permissions};
 use twilight_model::http::attachment::Attachment;
@@ -21,6 +22,12 @@ use crate::config::CONFIG;
 use crate::db::models::{ChannelMessageModel, GuildsWithAccessModel, MessageModel};
 use crate::tokens::TokenClaims;
 use crate::util::unix_now_mongodb;
+
+const ICON_BYTES: &[u8] = include_bytes!("../../../../frontend/public/logo128.png");
+
+lazy_static! {
+    static ref ICON_DATA_URL: String = format!("data:image/png;base64,{}", base64::encode(ICON_BYTES));
+}
 
 fn parse_component_actions(components: &[Component]) -> Vec<MessageAction> {
     let mut result = vec![];
@@ -246,6 +253,7 @@ pub async fn route_message_send(
                     let webhook = DISCORD_HTTP
                         .create_webhook(channel_id, "Embed Generator")
                         .unwrap()
+                        .avatar(&ICON_DATA_URL)
                         .exec()
                         .await?
                         .model()

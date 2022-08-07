@@ -6,7 +6,7 @@ import { ComponentSelectMenu } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import EditorComponentSelectOption from "./EditorComponentSelectOption";
 import StyledInput from "./StyledInput";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
+import useAutoAnimate from "../hooks/useAutoAnimate";
 
 interface Props {
   index: number;

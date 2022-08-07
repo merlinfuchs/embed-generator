@@ -69,12 +69,6 @@ export default function SendMenu() {
 
   function sendMessage() {
     const msgPayload: Message = JSON.parse(JSON.stringify(msg));
-    if (!msgPayload.username) {
-      msgPayload.username = "Embed Generator";
-    }
-    if (!msgPayload.avatar_url) {
-      msgPayload.avatar_url = "https://message.style/logo128.png";
-    }
 
     if (selectedMode === "webhook") {
       if (webhookId && webhookToken) {

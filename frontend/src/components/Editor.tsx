@@ -9,7 +9,7 @@ import EditorComponentRow from "./EditorComponentRow";
 import EditorEmbed from "./EditorEmbed";
 import StyledInput from "./StyledInput";
 import StyledTextarea from "./StyledTextarea";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
+import useAutoAnimate from "../hooks/useAutoAnimate";
 import useSelectedMode from "../hooks/useSelectedMode";
 
 export default function Editor() {

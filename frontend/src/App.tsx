@@ -7,6 +7,8 @@ import PreviewModal from "./components/PreviewModal";
 import { useState } from "react";
 import PrivacyPolicyModal from "./components/PrivacyPolicyModal";
 import TermsModal from "./components/TermsModal";
+import SimpleBar from "simplebar-react";
+import "simplebar-react/dist/simplebar.min.css";
 
 function App() {
   const [previewModal, setPreviewModal] = useState(false);
@@ -20,32 +22,40 @@ function App() {
           <TopBar />
         </div>
         <div className="flex-auto flex overflow-hidden">
-          <div className="lg:w-7/12 flex-grow p-3 md:p-5 border-r-2 border-dark-3 overflow-y-auto flex flex-col">
-            <SendMenu />
-            <div className="border-b border-gray-600 my-5" />
-            <Editor />
-            <div className="mt-10">
-              <div className="flex mb-2 space-x-4">
-                <div
-                  className="cursor-pointer text-gray-300 hover:text-white"
-                  onClick={() => setPrivacyPolicyModal(true)}
-                >
-                  Privacy Policy
-                </div>
-                <div
-                  className="cursor-pointer text-gray-300 hover:text-white"
-                  onClick={() => setTermsModal(true)}
-                >
-                  Terms of Service
+          <div className="lg:w-7/12 flex-grow border-r-2 border-dark-3 overflow-y-hidden">
+            <SimpleBar className="max-h-full">
+              <div className="flex flex-col p-3 md:p-5">
+                <SendMenu />
+                <div className="border-b border-gray-600 my-5" />
+                <Editor />
+                <div className="mt-10">
+                  <div className="flex mb-2 space-x-4">
+                    <div
+                      className="cursor-pointer text-gray-300 hover:text-white"
+                      onClick={() => setPrivacyPolicyModal(true)}
+                    >
+                      Privacy Policy
+                    </div>
+                    <div
+                      className="cursor-pointer text-gray-300 hover:text-white"
+                      onClick={() => setTermsModal(true)}
+                    >
+                      Terms of Service
+                    </div>
+                  </div>
+                  <div className="text-gray-300 text-sm">
+                    © 2020 Merlin Fuchs & Contributors
+                  </div>
                 </div>
               </div>
-              <div className="text-gray-300 text-sm">
-                © 2020 Merlin Fuchs & Contributors
-              </div>
-            </div>
+            </SimpleBar>
           </div>
-          <div className="lg:w-5/12 flex-none hidden lg:block overflow-y-auto pl-4 pr-10">
-            <Preview />
+          <div className="lg:w-5/12 flex-none hidden lg:block overflow-y-hidden">
+            <SimpleBar className="max-h-full">
+              <div className="pl-4 pr-10">
+                <Preview />
+              </div>
+            </SimpleBar>
           </div>
         </div>
       </div>

@@ -13,7 +13,7 @@ const urlRefinement: [(v: string) => boolean, string] = [
   "Invalid URL",
 ];
 
-const IMAGE_PATH_RE = new RegExp("\\.(png|jpg|jpeg|webp)$");
+const IMAGE_PATH_RE = new RegExp("\\.(png|jpg|jpeg|webp|gif)$");
 const imageUrlRefinement: [(v: string) => boolean, string] = [
   (v) => {
     try {

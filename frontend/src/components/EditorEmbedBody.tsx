@@ -8,7 +8,7 @@ import ColorPicker from "./ColorPicker";
 import StyledInput from "./StyledInput";
 import StyledTextarea from "./StyledTextarea";
 
-import { useAutoAnimate } from "@formkit/auto-animate/react";
+import useAutoAnimate from "../hooks/useAutoAnimate";
 
 interface Props {
   index: number;

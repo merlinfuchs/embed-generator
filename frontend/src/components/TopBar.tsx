@@ -10,6 +10,7 @@ const navigation = [
   { name: "Discord Server", href: "/api/link/discord" },
   { name: "Invite Bot", href: "/api/link/invite" },
   { name: "Source Code", href: "/api/link/source" },
+  { name: "Tutorial", href: "https://www.youtube.com/watch?v=DnFP0MRJPIg" },
 ];
 
 export default function Example() {

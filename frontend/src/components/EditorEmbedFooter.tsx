@@ -6,7 +6,7 @@ import StyledInput from "./StyledInput";
 import { parse, formatISO, parseISO, format } from "date-fns";
 import { ZodFormattedError } from "zod";
 import { ExclamationCircleIcon } from "@heroicons/react/solid";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
+import useAutoAnimate from "../hooks/useAutoAnimate";
 
 interface Props {
   index: number;

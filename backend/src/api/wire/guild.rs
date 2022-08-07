@@ -52,7 +52,7 @@ impl From<&Role> for GuildRoleWire {
 pub struct GuildChannelWire {
     pub id: Id<ChannelMarker>,
     pub name: Option<String>,
-    pub position: Option<i64>,
+    pub position: Option<i16>,
     pub parent_id: Option<String>,
     #[serde(rename = "type")]
     pub kind: ChannelType,
