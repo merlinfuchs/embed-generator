@@ -11,6 +11,7 @@ use twilight_model::http::interaction::{
 use twilight_util::builder::command::CommandBuilder;
 
 use crate::bot::commands::InteractionResult;
+use crate::config::INVITE_URL;
 
 pub fn command_definition() -> Command {
     CommandBuilder::new(
@@ -32,26 +33,29 @@ pub async fn handle_command(
         &InteractionResponse {
             kind: InteractionResponseType::ChannelMessageWithSource,
             data: Some(InteractionResponseData {
-                content: Some("You can invite Embed Generator [here](<https://message.style/api/link/invite>).".into()),
+                content: Some(format!(
+                    "You can invite Embed Generator [here]({}).",
+                    INVITE_URL.as_str()
+                )),
                 flags: Some(MessageFlags::EPHEMERAL),
                 components: Some(vec![Component::ActionRow(ActionRow {
                     components: vec![
                         Component::Button(Button {
-                        custom_id: None,
-                        disabled: false,
-                        emoji: None,
-                        label: Some("Website".into()),
-                        style: ButtonStyle::Link,
-                        url: Some("https://message.style".into()),
-                    }),
+                            custom_id: None,
+                            disabled: false,
+                            emoji: None,
+                            label: Some("Website".into()),
+                            style: ButtonStyle::Link,
+                            url: Some("https://message.style".into()),
+                        }),
                         Component::Button(Button {
-                        custom_id: None,
-                        disabled: false,
-                        emoji: None,
-                        label: Some("Invite Bot".into()),
-                        style: ButtonStyle::Link,
-                        url: Some("https://message.style/api/link/invite".into()),
-                    })
+                            custom_id: None,
+                            disabled: false,
+                            emoji: None,
+                            label: Some("Invite Bot".into()),
+                            style: ButtonStyle::Link,
+                            url: Some(INVITE_URL.clone()),
+                        }),
                     ],
                 })]),
                 ..Default::default()

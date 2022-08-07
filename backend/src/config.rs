@@ -5,9 +5,15 @@ use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use twilight_model::id::marker::{ApplicationMarker, GuildMarker};
 use twilight_model::id::Id;
+use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 
 lazy_static! {
     pub static ref CONFIG: RootConfig = RootConfig::new().expect("Parsing config");
+    pub static ref INVITE_URL: String = format!(
+        "https://discord.com/api/oauth2/authorize?client_id={}&permissions=536871936&scope=identify%20guilds%20bot%20applications.commands&prompt=none&response_type=code&redirect_uri={}",
+        CONFIG.discord.oauth_client_id,
+        utf8_percent_encode(&CONFIG.discord.oauth_redirect_uri, NON_ALPHANUMERIC)
+    );
 }
 
 fn default_shard_count() -> u64 {

@@ -5,6 +5,7 @@ use twilight_model::application::interaction::Interaction;
 use twilight_util::builder::command::CommandBuilder;
 
 use crate::bot::commands::{simple_response, InteractionResult};
+use crate::CONFIG;
 
 pub fn command_definition() -> Command {
     CommandBuilder::new(
@@ -24,8 +25,11 @@ pub async fn handle_command(
         &http,
         interaction.id,
         &interaction.token,
-        "You can join our Discord Server with the following link: <https://message.style/api/link/discord>"
-            .into(),
+        format!(
+            "You can join our Discord Server with the following link: {}",
+            CONFIG.links.discord_invite
+        )
+        .into(),
     )
     .await?;
     Ok(())
