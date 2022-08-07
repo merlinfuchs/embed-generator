@@ -40,7 +40,7 @@ npm install
 yarn install
 
 # Start the development server (optional)
-npm run start
+npm run start --legacy-peer-deps
 # or
 yarn start
 
