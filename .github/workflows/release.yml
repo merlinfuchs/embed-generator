@@ -4,7 +4,6 @@ on:
   release:
     types: [created]
 
-name: Release
 jobs:
   release:
     name: release ${{ matrix.target }}
