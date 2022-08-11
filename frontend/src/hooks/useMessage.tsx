@@ -896,7 +896,7 @@ function reducer(msg: Message, action: MessageAction): Message {
 
 const defaultMessage: Message = {
   content:
-    "Welcome to Embed Generator! <:embedg:1002150066338926673>\n\nThis website allows you to create **fancy Discord messages** with embeds, buttons, and select menus. Without any coding skills you can create your own little **interactive FAQ, role menu, or just a nice looking anouncement message**. ",
+    "Welcome to Embed Generator! <:embedg:1002150066338926673>\n\nThis website allows you to create **fancy Discord messages** with embeds, buttons, and select menus. Without any coding skills you can create your own little **interactive FAQ, role menu, or just a nice looking announcement message**. ",
   embeds: [
     {
       id: 0,
@@ -916,12 +916,12 @@ const defaultMessage: Message = {
           id: 1,
           name: "Field 2",
           value:
-            "Fields can be aligned next to each orther (inline) or below each other.",
+            "Fields can be aligned next to each other (inline) or below each other.",
           inline: true,
         },
       ],
       footer: {
-        text: "Emebd are pretty cool in my opionion!",
+        text: "Embeds are pretty cool in my opinion!",
       },
       thumbnail: {
         url: "https://message.style/logo128.png",
