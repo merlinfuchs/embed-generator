@@ -12,6 +12,7 @@ import { ComponentButton, ComponentActionRow } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import StyledInput from "./StyledInput";
 import useAutoAnimate from "../hooks/useAutoAnimate";
+import EditorComponentResponse from "./EditorComponentResponse";
 
 interface Props {
   index: number;
@@ -149,12 +150,9 @@ export default function EditorComponentButton({
               errors={(errors as any)?.url?._errors}
             />
           ) : (
-            <StyledInput
-              type="text"
-              label="Response"
-              maxLength={100}
-              value={button.custom_id}
-              onChange={(value) =>
+            <EditorComponentResponse
+              customId={button.custom_id}
+              setCustomId={(value) =>
                 dispatch({
                   type: "setButtonCustomId",
                   index,

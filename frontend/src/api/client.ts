@@ -10,6 +10,7 @@ import {
   EmojiWire,
   MessageCreateRequestWire,
   MessageUpdateRequestWire,
+  RoleWire,
 } from "./wire";
 
 type ApiResponse<T> =
@@ -72,6 +73,10 @@ export default class APIClient {
 
   getGuildChannels(guildId: string): Promise<ApiResponse<ChannelWire[]>> {
     return this.apiRequest("GET", `/guilds/${guildId}/channels`);
+  }
+
+  getGuildRoles(guildId: string): Promise<ApiResponse<RoleWire[]>> {
+    return this.apiRequest("GET", `/guilds/${guildId}/roles`);
   }
 
   getGuildStickers(guildId: string): Promise<ApiResponse<StickerWire[]>> {

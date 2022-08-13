@@ -6,6 +6,7 @@ import { ComponentSelectMenuOption } from "../discord/types";
 import useMessage from "../hooks/useMessage";
 import StyledInput from "./StyledInput";
 import useAutoAnimate from "../hooks/useAutoAnimate";
+import EditorComponentResponse from "./EditorComponentResponse";
 
 interface Props {
   option: ComponentSelectMenuOption;
@@ -98,13 +99,9 @@ export default function EditorComponentSelectOption({
             }
             errors={errors?.description?._errors}
           />
-          <StyledInput
-            className="flex-auto"
-            type="text"
-            label="Response"
-            maxLength={100}
-            value={option.value}
-            onChange={(value) =>
+          <EditorComponentResponse
+            customId={option.value}
+            setCustomId={(value) =>
               dispatch({
                 type: "setSelectMenuOptionValue",
                 index,

@@ -12,10 +12,10 @@ import { SelectedGuildProvider } from "./hooks/useSelectedGuild";
 import { MessagesProvider } from "./hooks/useMessages";
 import { AlertsProvider } from "./hooks/useAlerts";
 import { ChannelsProvider } from "./hooks/useChannels";
-import { StickersProvider } from "./hooks/useStickers";
 import { AttachmentsProvider } from "./hooks/useAttachments";
 import { EmojisProvider } from "./hooks/useEmojis";
 import { MessageValidationProvider } from "./hooks/useMessageValidation";
+import { RolesProvider } from "./hooks/useRoles";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -29,7 +29,7 @@ root.render(
             <GuildsProvider>
               <SelectedGuildProvider>
                 <ChannelsProvider>
-                  <StickersProvider>
+                  <RolesProvider>
                     <EmojisProvider>
                       <SelectedModeProvider>
                         <MessageProvider>
@@ -41,7 +41,7 @@ root.render(
                         </MessageProvider>
                       </SelectedModeProvider>
                     </EmojisProvider>
-                  </StickersProvider>
+                  </RolesProvider>
                 </ChannelsProvider>
               </SelectedGuildProvider>
             </GuildsProvider>
