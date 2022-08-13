@@ -1,6 +1,5 @@
 use std::time::Duration;
 use lazy_static::lazy_static;
-use nanoid::nanoid;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use twilight_http::client::InteractionClient;
@@ -20,6 +19,7 @@ use twilight_util::builder::command::{CommandBuilder, StringBuilder, SubCommandB
 use crate::bot::commands::{simple_response, InteractionError, InteractionResult};
 use crate::bot::DISCORD_HTTP;
 use crate::db::models::SharedMessageModel;
+use crate::util::get_unique_id;
 
 lazy_static! {
     static ref SNOWFLAGE_RE: Regex = Regex::new("^[0-9]+$").unwrap();
@@ -170,7 +170,7 @@ async fn handle_command_restore(
     let msg = get_message_from_id_or_url(&http, &interaction, &message_id_or_url).await?;
     let msg_dump = message_to_dump(msg);
 
-    let share_id = nanoid!();
+    let share_id = get_unique_id();
     let expiry = Duration::from_secs(60 * 60 * 24);
 
     let model = SharedMessageModel {

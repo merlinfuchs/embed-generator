@@ -126,6 +126,8 @@ pub async fn route_message_send(
                 entity: "guild".into(),
             })?;
 
+            // TODO: check if bot has permissions in channel
+
             let (perms, is_owner, highest_role) = if guild.owner_id() == token.user_id {
                 (Permissions::all(), true, 0)
             } else {

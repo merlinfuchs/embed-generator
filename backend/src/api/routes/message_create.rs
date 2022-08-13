@@ -1,12 +1,11 @@
 use actix_web::post;
 use actix_web::web::{Json, ReqData};
-use nanoid::nanoid;
 
 use crate::api::response::{RouteError, RouteResult};
 use crate::api::wire::{MessageCreateRequestWire, MessageWire, NormalizeValidate};
 use crate::db::models::MessageModel;
 use crate::tokens::TokenClaims;
-use crate::util::unix_now_mongodb;
+use crate::util::{get_unique_id, unix_now_mongodb};
 use crate::CONFIG;
 
 #[post("/messages")]
@@ -22,7 +21,7 @@ pub async fn route_message_create(
     }
 
     let model = MessageModel {
-        id: nanoid!(),
+        id: get_unique_id(),
         owner_id: token.user_id,
         created_at: unix_now_mongodb(),
         updated_at: unix_now_mongodb(),
