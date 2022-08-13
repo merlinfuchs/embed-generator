@@ -15,7 +15,7 @@ import LoginSuggest from "./LoginSuggest";
 import SendErrorModal from "./SendErrorModal";
 
 const webhookUrlRegex =
-  /https?:\/\/(?:canary\.|ptb\.)?discord\.com\/api\/webhooks\/([0-9]+)\/([a-zA-Z0-9_-]+)/;
+  /https?:\/\/(?:canary\.|ptb\.)?discord(?:app)?\.com\/api\/webhooks\/([0-9]+)\/([a-zA-Z0-9_-]+)/;
 const messageUrlRegex =
   /https?:\/\/(?:canary\.|ptb\.)?discord(?:app)?\.com\/channels\/[0-9]+\/([0-9]+)\/([0-9]+)/;
 
