@@ -83,6 +83,14 @@ export interface EmojiWire {
   managed: boolean;
 }
 
+export interface RoleWire {
+  id: string;
+  name: string;
+  color: number;
+  mentionable: boolean;
+  managed: boolean;
+}
+
 export interface AttachmentWire {
   name: string;
   description: string | null;
