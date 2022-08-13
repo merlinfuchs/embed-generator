@@ -3,9 +3,9 @@ import json
 import pymongo
 from pymongo.errors import DuplicateKeyError
 
-old_db = pymongo.MongoClient("mongodb://localhost:27017/").dclub
+old_db = pymongo.MongoClient("mongodb://localhost:8181/").dclub
 
-new_db = pymongo.MongoClient("mongodb://localhost:8181/").embedg
+new_db = pymongo.MongoClient("mongodb://localhost:27017/").embedg
 
 new_docs = []
 
@@ -13,7 +13,7 @@ for doc in old_db.messages.find({}):
     new_doc = {
         "_id": str(doc["_id"]),
         "owner_id": str(doc["user_id"]),
-        "created_at": doc["created_at"],
+        "created_at": doc["last_updated"],
         "updated_at": doc["last_updated"],
         "name": doc["name"],
         "description": None,

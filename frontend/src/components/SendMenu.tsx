@@ -17,7 +17,7 @@ import SendErrorModal from "./SendErrorModal";
 const webhookUrlRegex =
   /https?:\/\/(?:canary\.|ptb\.)?discord\.com\/api\/webhooks\/([0-9]+)\/([a-zA-Z0-9_-]+)/;
 const messageUrlRegex =
-  /https?:\/\/(?:canary\.|ptb\.)?discord\.com\/channels\/[0-9]+\/([0-9]+)\/([0-9]+)/;
+  /https?:\/\/(?:canary\.|ptb\.)?discord(?:app)?\.com\/channels\/[0-9]+\/([0-9]+)\/([0-9]+)/;
 
 export default function SendMenu() {
   const client = useAPIClient();

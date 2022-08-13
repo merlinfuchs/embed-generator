@@ -11,18 +11,6 @@ yourself.
 ## YouTube tutorial
 [![IMAGE ALT TEXT HERE](./tutorial.png)](https://www.youtube.com/watch?v=DnFP0MRJPIg)
 
-## Project Structure
-
-### backend
-
-The backend is written in Rust and provides API endpoints for the frontend to use. It handles authentication, saving
-messages, and interacting with the discord API. It also connects to the Discord gateway to receive events and build up a
-cache of guilds, channels, roles, emojis, and stickers.
-
-### frontend
-
-The frontend is written in React and provides the user interface. It interacts with the backend over HTTP(s).
-
 ## Self Hosting
 
 This describes the easiest way to self host an instance of Embed Generator by creating a single binary that contains
