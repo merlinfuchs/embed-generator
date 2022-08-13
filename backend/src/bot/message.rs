@@ -267,19 +267,19 @@ impl MessageVariablesReplace for EmbedField {
 }
 
 bitflags! {
-    pub struct RoleToggleFlags: u8 {
-        const SILENT = 1;
+    pub struct ResponseSavedMessageFlags: u8 {
+        const EDIT = 1;
     }
 }
 
 pub enum MessageAction {
     Unknown,
     ResponseSavedMessage {
+        flags: ResponseSavedMessageFlags,
         message_id: String,
     },
     RoleToggle {
         role_id: Id<RoleMarker>,
-        flags: RoleToggleFlags,
     },
 }
 
@@ -297,12 +297,13 @@ impl MessageAction {
                 match action_type {
                     "0" => MessageAction::ResponseSavedMessage {
                         message_id: arg.to_string(),
+                        flags: ResponseSavedMessageFlags::from_bits_truncate(
+                            raw_flags.parse::<u8>().unwrap_or(0),
+                        ),
                     },
                     "1" => MessageAction::RoleToggle {
                         role_id: arg.parse().unwrap_or(Id::new(1)),
-                        flags: RoleToggleFlags::from_bits_truncate(
-                            raw_flags.parse::<u8>().unwrap_or(0),
-                        ),
+
                     },
                     _ => MessageAction::Unknown,
                 }

@@ -188,7 +188,7 @@ pub async fn route_message_send(
                             entity: "action".into(),
                         })
                     }
-                    MessageAction::ResponseSavedMessage { message_id } => {
+                    MessageAction::ResponseSavedMessage { message_id, .. } => {
                         if !MessageModel::exists_by_owner_id_and_id(token.user_id, &message_id)
                             .await?
                         {

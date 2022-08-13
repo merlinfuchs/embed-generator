@@ -5,22 +5,22 @@ use twilight_http::client::InteractionClient;
 use twilight_http::response::DeserializeBodyError;
 use twilight_model::application::command::Command;
 use twilight_model::application::component::ComponentType;
-use twilight_model::application::interaction::message_component::MessageComponentInteractionData;
 use twilight_model::application::interaction::{Interaction, InteractionData, InteractionType};
+use twilight_model::application::interaction::message_component::MessageComponentInteractionData;
 use twilight_model::channel::message::MessageFlags;
 use twilight_model::http::interaction::{
     InteractionResponse, InteractionResponseData, InteractionResponseType,
 };
-use twilight_model::id::marker::InteractionMarker;
 use twilight_model::id::Id;
+use twilight_model::id::marker::InteractionMarker;
 
+use crate::bot::DISCORD_HTTP;
 use crate::bot::message::{MessageAction, MessagePayload};
 use crate::bot::message::{MessageHashIntegrity, ToMessageVariables};
-use crate::bot::message::{MessageVariablesReplace, RoleToggleFlags};
-use crate::bot::DISCORD_HTTP;
+use crate::bot::message::{MessageVariablesReplace, ResponseSavedMessageFlags};
+use crate::CONFIG;
 use crate::db::models::{ChannelMessageModel, MessageModel};
 use crate::db::RedisPoolError;
-use crate::CONFIG;
 
 mod embed;
 mod format;
@@ -170,7 +170,7 @@ async fn handle_component_actions(
     for action in actions {
         match action {
             MessageAction::Unknown => {}
-            MessageAction::ResponseSavedMessage { message_id } => {
+            MessageAction::ResponseSavedMessage { message_id, flags } => {
                 match MessageModel::find_by_id(&message_id).await? {
                     Some(model) => {
                         match serde_json::from_str::<MessagePayload>(&model.payload_json) {
@@ -179,11 +179,17 @@ async fn handle_component_actions(
                                 interaction.to_message_variables(&mut variables);
                                 payload.replace_variables(&variables);
 
+                                let response_kind = if flags.contains(ResponseSavedMessageFlags::EDIT) {
+                                    InteractionResponseType::UpdateMessage
+                                } else {
+                                    InteractionResponseType::ChannelMessageWithSource
+                                };
+
                                 http.create_response(
                                     interaction.id,
                                     &interaction.token,
                                     &InteractionResponse {
-                                        kind: InteractionResponseType::ChannelMessageWithSource,
+                                        kind: response_kind,
                                         data: Some(InteractionResponseData {
                                             content: payload.content,
                                             components: Some(payload.components),
@@ -224,7 +230,7 @@ async fn handle_component_actions(
                     }
                 }
             }
-            MessageAction::RoleToggle { role_id, flags } => {
+            MessageAction::RoleToggle { role_id } => {
                 let member = interaction.member.as_ref().unwrap();
                 let user_id = member.user.as_ref().unwrap().id;
                 let guild_id = interaction.guild_id.unwrap();
@@ -235,15 +241,13 @@ async fn handle_component_actions(
                         .await
                     {
                         Ok(_) => {
-                            if !flags.contains(RoleToggleFlags::SILENT) {
-                                simple_response(
-                                    http,
-                                    interaction.id,
-                                    &interaction.token,
-                                    format!("You no longer have the <@&{}> role", role_id),
-                                )
-                                .await?;
-                            }
+                            simple_response(
+                                http,
+                                interaction.id,
+                                &interaction.token,
+                                format!("You no longer have the <@&{}> role", role_id),
+                            )
+                            .await?;
                         }
                         Err(_) => {
                             simple_response(
@@ -262,15 +266,13 @@ async fn handle_component_actions(
                         .await
                     {
                         Ok(_) => {
-                            if !flags.contains(RoleToggleFlags::SILENT) {
-                                simple_response(
-                                    http,
-                                    interaction.id,
-                                    &interaction.token,
-                                    format!("You now have the <@&{}> role", role_id),
-                                )
-                                .await?;
-                            }
+                            simple_response(
+                                http,
+                                interaction.id,
+                                &interaction.token,
+                                format!("You now have the <@&{}> role", role_id),
+                            )
+                            .await?;
                         }
                         Err(_) => {
                             simple_response(

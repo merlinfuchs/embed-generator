@@ -27,7 +27,7 @@ export default function BaseModal({
   }
 
   return (
-    <div className="fixed flex-col w-screen h-screen flex items-center justify-center bg-dark-1 top-0 left-0 bg-opacity-90 px-2 py-2 z-20">
+    <div className="fixed flex-col w-screen h-screen flex items-center justify-center bg-dark-1 top-0 left-0 bg-opacity-90 px-2 py-2 z-50">
       <ClickOutsideHandler
         onClickOutside={() => setVisible(false)}
         className={modalClass}
