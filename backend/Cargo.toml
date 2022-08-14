@@ -7,12 +7,12 @@ edition = "2021"
 tokio = { version = "1.18.2", features = ["macros", "rt-multi-thread"] }
 serde = { version = "1.0.137", features = ["derive"] }
 actix-web = "4.0.1"
-twilight-gateway = "0.12"
-twilight-http = "0.12"
-twilight-http-ratelimiting = "0.12"
-twilight-model = "0.12"
-twilight-cache-inmemory = { version = "0.12", features = ["permission-calculator"] }
-twilight-util = { version = "0.12", features = ["builder", "permission-calculator"] }
+twilight-gateway = "0.13"
+twilight-http = "0.13"
+twilight-http-ratelimiting = "0.13"
+twilight-model = "0.13"
+twilight-cache-inmemory = { version = "0.13", features = ["permission-calculator"] }
+twilight-util = { version = "0.13", features = ["builder", "permission-calculator"] }
 lazy_static = "1.4.0"
 rust-embed = { version = "6.4.0", optional = true }
 mime = "0.3.16"
