@@ -42,7 +42,7 @@ export default function PrivacyPolicyModal({ visible, setVisible }: Props) {
           <div>
             <div className="font-medium mb-1">Storage of information</div>
             <p>
-              All data is stored in datacenters located in Germany with securety
+              All data is stored in datacenters located in the USA with securety
               best-practices in mind. Requests may be routed to a global network
               of servers provided by Cloudfare. Cloudflare may store information
               about the request to protect our servers from potential attackers.
