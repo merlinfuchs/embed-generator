@@ -7,6 +7,10 @@ use mime::Mime;
 use rust_embed::RustEmbed;
 
 #[derive(RustEmbed)]
+#[folder = "../docs/build"]
+struct DocsFiles;
+
+#[derive(RustEmbed)]
 #[folder = "../frontend/build"]
 struct FrontendFiles;
 
@@ -40,6 +44,30 @@ pub async fn route_serve_frontend(path: web::Path<String>) -> impl Responder {
         Some(f) => (cow_to_bytes(f.data), get_mime_type_for_file(path)),
         None => (
             cow_to_bytes(FrontendFiles::get("index.html").unwrap().data),
+            mime::TEXT_HTML,
+        ),
+    };
+
+    HttpResponse::Ok()
+        .append_header(("Content-Type", mime_type))
+        .body(body)
+}
+
+#[get("/docs{path:.*}")]
+pub async fn route_serve_docs(path: web::Path<String>) -> impl Responder {
+    let full_path = path.into_inner();
+    let raw_path = if !full_path.is_empty() {
+        // path starts with a slash
+        &full_path[1..]
+    } else {
+        ""
+    };
+
+    let path = Path::new(raw_path);
+    let (body, mime_type) = match DocsFiles::get(raw_path) {
+        Some(f) => (cow_to_bytes(f.data), get_mime_type_for_file(path)),
+        None => (
+            cow_to_bytes(DocsFiles::get("index.html").unwrap().data),
             mime::TEXT_HTML,
         ),
     };

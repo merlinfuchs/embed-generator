@@ -8,10 +8,10 @@ import MessageManager from "./MessageManager";
 import useMessage from "../hooks/useMessage";
 
 const navigation = [
+  { name: "Documentation", href: "/docs", internal: true },
   { name: "Discord Server", href: "/api/link/discord" },
   { name: "Invite Bot", href: "/api/link/invite" },
   { name: "Source Code", href: "/api/link/source" },
-  { name: "Tutorial", href: "https://www.youtube.com/watch?v=DnFP0MRJPIg" },
 ];
 
 export default function Example() {
@@ -99,7 +99,7 @@ export default function Example() {
                       key={item.name}
                       href={item.href}
                       className="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-dark-4 hover:text-white"
-                      target="_blank"
+                      target={item.internal ? "_self" : "_blank"}
                       rel="noreferrer"
                     >
                       {item.name}
@@ -147,7 +147,7 @@ export default function Example() {
                   key={item.name}
                   href={item.href}
                   className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-dark-4 hover:text-white"
-                  target="_blank"
+                  target={item.internal ? "_self" : "_blank"}
                   rel="noreferrer"
                 >
                   {item.name}

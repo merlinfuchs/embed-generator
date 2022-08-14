@@ -26,12 +26,37 @@ Instead of NPM you can also use Yarn.
 cd frontend
 
 # Install the dependencies
+npm install --legacy-peer-deps
+# or 
+yarn install
+
+# Start the development server (optional)
+npm run start
+# or
+yarn start
+
+# Build for production use
+npm run build
+# or
+yarn build
+```
+
+### Build the documentation
+
+You can download NodeJS and NPM from [nodejs.org](https://nodejs.org/en/download/).
+Instead of NPM you can also use Yarn.
+
+```sh
+# Switch to the docs directory
+cd docs
+
+# Install the dependencies
 npm install
 # or 
 yarn install
 
 # Start the development server (optional)
-npm run start --legacy-peer-deps
+npm run start
 # or
 yarn start
 
@@ -54,10 +79,10 @@ cd ../backend
 # Start the development server (optional)
 RUST_LOG=info cargo run
 
-# Build and include the frontend files in the backend binary (recommended)
+# Build and include the frontend & docs files in the backend binary (recommended)
 cargo build --release
-# Or build without the frontend files
-# You will need a HTTP server like Nginx to serve the frontend
+# Or build without the frontend & docs files
+# You will need a HTTP server like Nginx to serve the frontend & docs
 cargo build --release --no-default-features
 ```
 

@@ -5,6 +5,9 @@ COPY . .
 # Build frontend
 RUN cd frontend && npm install --legacy-peer-deps && npm run build && cd ..
 
+# Build docs
+RUN cd docs && npm install && npm run build && cd ..
+
 # Build backend
 RUN apt-get update
 RUN apt-get install -y build-essential curl

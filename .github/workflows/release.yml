@@ -25,6 +25,8 @@ jobs:
           node-version: '16'
       - run: npm install --legacy-peer-deps && npm run build
         working-directory: ./frontend
+      - run: npm install && npm run build
+        working-directory: ./docs
       - name: Compile and release
         uses: rust-build/rust-build.action@latest
         env:
