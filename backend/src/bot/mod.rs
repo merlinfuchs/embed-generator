@@ -38,7 +38,7 @@ lazy_static! {
                 | ResourceType::CHANNEL
                 | ResourceType::GUILD
                 | ResourceType::EMOJI
-                | ResourceType::STICKER
+                // | ResourceType::STICKER
                 | ResourceType::MEMBER // only caches the bots member because we don't have the intent
         )
         .build();
