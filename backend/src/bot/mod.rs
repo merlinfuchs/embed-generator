@@ -27,6 +27,7 @@ use crate::db::models::ChannelMessageModel;
 mod commands;
 pub mod emojis;
 pub mod message;
+pub mod permissions;
 pub mod webhooks;
 
 lazy_static! {

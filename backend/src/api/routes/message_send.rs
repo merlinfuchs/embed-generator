@@ -8,14 +8,12 @@ use twilight_model::application::component::Component;
 use twilight_model::channel::ChannelType;
 use twilight_model::guild::{Member, Permissions};
 use twilight_model::http::attachment::Attachment;
-use twilight_model::id::marker::RoleMarker;
-use twilight_model::id::Id;
-use twilight_util::permission_calculator::PermissionCalculator;
 
 use crate::api::response::{MessageSendError, RouteError, RouteResult};
 use crate::api::wire::{MessageSendRequestWire, MessageSendResponseWire, MessageSendTargetWire};
 use crate::bot::message::{MessageAction, MessagePayload};
 use crate::bot::message::{MessageHashIntegrity, MessageVariablesReplace, ToMessageVariables};
+use crate::bot::permissions::get_member_permissions_for_channel;
 use crate::bot::webhooks::{get_webhooks_for_channel, CachedWebhook};
 use crate::bot::{DISCORD_CACHE, DISCORD_HTTP};
 use crate::config::CONFIG;
@@ -126,11 +124,21 @@ pub async fn route_message_send(
                 entity: "guild".into(),
             })?;
 
-            // TODO: check if bot has permissions in channel
+            let bot_user_id = CONFIG.discord.oauth_client_id.cast();
+            let bot_member = DISCORD_CACHE.member(guild_id, CONFIG.discord.oauth_client_id.cast());
+            let bot_perms = match bot_member {
+                Some(m) => {
+                    get_member_permissions_for_channel(bot_user_id, m.roles(), guild_id, channel_id)
+                        .unwrap_or(Permissions::empty())
+                }
+                None => Permissions::empty(),
+            };
 
-            let (perms, is_owner, highest_role) = if guild.owner_id() == token.user_id {
-                (Permissions::all(), true, 0)
-            } else {
+            if bot_perms.contains(Permissions::MANAGE_WEBHOOKS) {
+                return Err(RouteError::MissingChannelAccess);
+            }
+
+            let (perms, highest_role) = {
                 let member: Member = DISCORD_HTTP
                     .guild_member(guild_id, token.user_id)
                     .exec()
@@ -139,39 +147,25 @@ pub async fn route_message_send(
                     .await
                     .unwrap();
 
-                let everyone_role = DISCORD_CACHE
-                    .role(guild_id.cast())
-                    .map(|r| r.permissions)
-                    .unwrap_or(Permissions::empty());
-
-                let mut highest_role = 0;
-                let assigned_roles: Vec<(Id<RoleMarker>, Permissions)> = member
-                    .roles
-                    .into_iter()
-                    .filter_map(|role_id| {
-                        DISCORD_CACHE.role(role_id).map(|r| {
-                            if r.position > highest_role {
-                                highest_role = r.position;
-                            }
-                            (role_id, r.permissions)
-                        })
-                    })
-                    .collect();
-
-                let calculator = PermissionCalculator::new(
-                    guild_id,
+                let perms = get_member_permissions_for_channel(
                     token.user_id,
-                    everyone_role,
-                    &assigned_roles,
-                );
-                let overwrites = channel.permission_overwrites.as_deref().unwrap_or(&[]);
-                let perms = calculator.in_channel(channel.kind, overwrites);
+                    &member.roles,
+                    guild_id,
+                    channel_id,
+                )
+                .unwrap_or(Permissions::empty());
 
-                (perms, false, highest_role)
+                let highest_role = if guild.owner_id() == token.user_id {
+                    9999
+                } else {
+                    member.roles.iter().filter_map(|r| DISCORD_CACHE.role(*r).map(|r| r.position)).max().unwrap_or(0)
+                };
+
+                (perms, highest_role)
             };
 
             if !perms.contains(Permissions::MANAGE_WEBHOOKS) {
-                return Err(RouteError::MissingChannelAccess);
+                return Err(RouteError::BotMissingChannelAccess);
             }
 
             let (channel_id, thread_id) = match channel.kind {
@@ -202,7 +196,7 @@ pub async fn route_message_send(
                         }
                     }
                     MessageAction::RoleToggle { role_id, .. } => {
-                        if !is_owner && !perms.contains(Permissions::MANAGE_ROLES) {
+                        if !perms.contains(Permissions::MANAGE_ROLES) {
                             return Err(RouteError::InvalidMessageAction {
                                 details: "Missing permission to manage roles".into(),
                             });
@@ -215,7 +209,7 @@ pub async fn route_message_send(
                                         details: "Role to toggle is not in this guild".into(),
                                     });
                                 }
-                                if !is_owner && role.position > highest_role {
+                                if role.position > highest_role {
                                     return Err(RouteError::InvalidMessageAction {
                                         details: "You don't have permissions to toggle that role"
                                             .into(),

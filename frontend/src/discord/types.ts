@@ -169,7 +169,7 @@ export type Embed = z.infer<typeof embedValidator>;
 
 export const messageValidator = z
   .object({
-    username: z.string().max(25).optional(),
+    username: z.string().max(80).optional(),
     avatar_url: z
       .string()
       .refine(...imageUrlRefinement)

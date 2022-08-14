@@ -69,6 +69,8 @@ pub enum RouteError {
     MissingGuildAccess,
     #[error("You don't have access to the discord channel")]
     MissingChannelAccess,
+    #[error("The bot doesn't have access to the discord channel")]
+    BotMissingChannelAccess,
     #[error("The provided channel doesn't belong to the provided server")]
     GuildChannelMismatch,
     #[error("The bot can't create a new webhook because there are already 10 for the channel")]
@@ -97,6 +99,7 @@ impl ResponseError for RouteError {
             BackgroundRequestFailed { .. } => StatusCode::INTERNAL_SERVER_ERROR,
             MissingGuildAccess => StatusCode::FORBIDDEN,
             MissingChannelAccess => StatusCode::FORBIDDEN,
+            BotMissingChannelAccess => StatusCode::FORBIDDEN,
             GuildChannelMismatch => StatusCode::BAD_REQUEST,
             ChannelWebhookLimitReached => StatusCode::BAD_REQUEST,
             UnsupportedChannelType => StatusCode::BAD_REQUEST,
