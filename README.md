@@ -75,7 +75,7 @@ jwt_secret = "1234567890" # The secret for tokens (should be unguessable)
 host = "127.0.0.1" # The host to bind the API to (optional; default = "127.0.0.1")
 port = 8080 # The port to bind the API to (optional; default = 8080)
 
-mongo_url = "mongodb://127.0.0.1" # The URL to your MongoDB insance (optional; default = "mongodb://127.0.0.1")
+mongo_url = "mongodb://127.0.0.1" # The URL to your MongoDB instance (optional; default = "mongodb://127.0.0.1")
 redis_url = "redis://127.0.0.1" # The URL to your redis instance (optional; default = "redis://127.0.0.1")
 
 
@@ -88,7 +88,7 @@ shard_count = 1 # the shard count (optional; default = 1)
 
 [limits]
 max_messages_per_user = 25 # the max count of messages each user can have (optional; default = 25)
-max_message_size = 1000000 # the max size of a saved messages (optional; default = ~1MB)
+max_message_size = 1000000 # the max size of a saved message (optional; default = ~1MB)
 
 [links]
 discord_invite = "" # the invite url to your discord server
