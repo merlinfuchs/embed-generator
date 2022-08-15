@@ -16,3 +16,35 @@ select {
   background-position-x: 100%;
   background-position-y: 50%;
 }
+
+/* Customize scrollbar on firefox */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #18191c #36393e;
+}
+
+/* Customize scrollbar for all webkit browsers */
+
+/* total width */
+*::-webkit-scrollbar {
+  background-color: transparent;
+  width: 14px;
+}
+
+/* background of the scrollbar except button or resizer */
+*::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/* scrollbar itself */
+*::-webkit-scrollbar-thumb {
+  background-color: #18191c;
+  border-radius: 16px;
+  border: 3px solid #36393e;
+}
+
+/* set button(top and bottom of the scrollbar) */
+*::-webkit-scrollbar-button {
+  display: none;
+}
