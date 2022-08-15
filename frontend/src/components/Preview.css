@@ -2142,3 +2142,7 @@ Sources from: https://github.com/skyra-project/skyra.pw/blob/main/src/config/dis
 .hljs-strong {
   font-weight: 700;
 }
+
+.simplebar-mask {
+  z-index: initial !important;
+}
