@@ -1,3 +1,4 @@
+import { CheckIcon } from "@heroicons/react/outline";
 import { useMemo } from "react";
 import StyledInput from "./StyledInput";
 
@@ -83,20 +84,39 @@ export default function EditorComponentResponse({
         </select>
       </div>
       {!!action && action.type === "responseSavedMessage" && (
-        <StyledInput
-          className="flex-auto"
-          type="text"
-          label="Message ID"
-          value={action.messageId}
-          onChange={(v) =>
-            setAction({
-              type: "responseSavedMessage",
-              messageId: v,
-              flags: 0,
-            })
-          }
-          errors={errors}
-        />
+        <div className="flex space-x-2 flex-auto">
+          <StyledInput
+            className="flex-auto w-full"
+            type="text"
+            label="Message ID"
+            value={action.messageId}
+            onChange={(v) =>
+              setAction({
+                type: "responseSavedMessage",
+                messageId: v,
+                flags: action.flags,
+              })
+            }
+            errors={errors}
+          />
+          <div className="flex-none">
+            <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+              Edit
+            </div>
+            <div
+              className="bg-dark-2 w-10 h-10 rounded cursor-pointer flex items-center justify-center"
+              onClick={() =>
+                setAction({
+                  type: "responseSavedMessage",
+                  messageId: action.messageId,
+                  flags: action.flags & 1 ? 0 : 1,
+                })
+              }
+            >
+              {(action.flags & 1) === 1 && <CheckIcon className="w-8 h-8" />}
+            </div>
+          </div>
+        </div>
       )}
       {!!action && action.type === "roleToggle" && (
         <StyledInput
