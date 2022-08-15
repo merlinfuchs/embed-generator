@@ -1,4 +1,4 @@
-import { ChevronRightIcon } from "@heroicons/react/outline";
+import { CheckIcon, ChevronRightIcon } from "@heroicons/react/outline";
 import { ExclamationCircleIcon } from "@heroicons/react/solid";
 import { useMemo, useState } from "react";
 import useMessage from "../hooks/useMessage";
@@ -46,6 +46,22 @@ export default function Editor() {
 
   const [selectedMode] = useSelectedMode();
 
+  function togglePings() {
+    if (msg.allowed_mentions !== undefined) {
+      dispatchMsg({ type: "setAllowedMentions", value: undefined });
+    } else {
+      dispatchMsg({
+        type: "setAllowedMentions",
+        value: {
+          parse: [],
+          users: [],
+          roles: [],
+          replied_user: false,
+        },
+      });
+    }
+  }
+
   return (
     <div className="space-y-5 flex-auto">
       <div className="flex space-x-3">
@@ -70,6 +86,17 @@ export default function Editor() {
           }
           errors={errors?.avatar_url?._errors}
         />
+        <div className="flex-none">
+          <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+            Pings
+          </div>
+          <div
+            className="bg-dark-2 w-10 h-10 rounded cursor-pointer flex items-center justify-center"
+            onClick={togglePings}
+          >
+            {!msg.allowed_mentions && <CheckIcon className="w-8 h-8" />}
+          </div>
+        </div>
       </div>
       <StyledTextarea
         label="Content"

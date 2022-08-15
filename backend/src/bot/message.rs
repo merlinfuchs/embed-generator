@@ -12,6 +12,7 @@ use twilight_model::channel::embed::{
     Embed, EmbedAuthor, EmbedField, EmbedFooter, EmbedImage, EmbedThumbnail,
 };
 use twilight_model::channel::{Channel, Message};
+use twilight_model::channel::message::AllowedMentions;
 use twilight_model::id::marker::RoleMarker;
 use twilight_model::id::Id;
 use twilight_model::util::Timestamp;
@@ -61,6 +62,8 @@ pub struct MessagePayload {
     pub components: Vec<Component>,
     #[serde(default)]
     pub embeds: Vec<MessagePayloadEmbed>,
+    #[serde(default)]
+    pub allowed_mentions: Option<AllowedMentions>
 }
 
 impl From<Message> for MessagePayload {
@@ -71,6 +74,7 @@ impl From<Message> for MessagePayload {
             content: Some(m.content),
             components: m.components,
             embeds: m.embeds.into_iter().map(|e| e.into()).collect(),
+            allowed_mentions: None
         }
     }
 }

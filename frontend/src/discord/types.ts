@@ -167,6 +167,17 @@ export const embedValidator = z
 
 export type Embed = z.infer<typeof embedValidator>;
 
+export const allowedMentionsValidator = z.object({
+  parse: z.array(
+    z.literal("roles").or(z.literal("users")).or(z.literal("everyone"))
+  ),
+  roles: z.array(z.string()),
+  users: z.array(z.string()),
+  replied_user: z.boolean(),
+});
+
+export type AllowedMentions = z.infer<typeof allowedMentionsValidator>;
+
 export const messageValidator = z
   .object({
     username: z.string().max(80).optional(),
@@ -183,6 +194,7 @@ export const messageValidator = z
         z.object({ id: z.number().optional() }).and(componentActionRowValidator)
       )
       .max(5),
+    allowed_mentions: allowedMentionsValidator.optional(),
   })
   .superRefine((data, ctx) => {
     // this currently doesn't take attachments into account

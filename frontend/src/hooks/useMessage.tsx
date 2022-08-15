@@ -7,7 +7,12 @@ import {
   useMemo,
   useReducer,
 } from "react";
-import { ComponentButton, Embed, Message } from "../discord/types";
+import {
+  AllowedMentions,
+  ComponentButton,
+  Embed,
+  Message,
+} from "../discord/types";
 import { jsonToMessage, messageToJson } from "../discord/utils";
 import { getUniqueId } from "../util";
 
@@ -19,6 +24,7 @@ export type MessageAction =
   | { type: "setUsername"; value: string | undefined }
   | { type: "setAvatarUrl"; value: string | undefined }
   | { type: "setContent"; value: string | undefined }
+  | { type: "setAllowedMentions"; value: AllowedMentions | undefined }
   | {
       type: "addEmbed";
       value?: Embed;
@@ -285,6 +291,8 @@ function reducer(msg: Message, action: MessageAction): Message {
       return { ...msg, avatar_url: action.value };
     case "setContent":
       return { ...msg, content: action.value };
+    case "setAllowedMentions":
+      return { ...msg, allowed_mentions: action.value };
     case "addEmbed":
       if (msg.embeds.length < 10) {
         return {

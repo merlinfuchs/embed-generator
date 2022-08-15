@@ -134,8 +134,8 @@ pub async fn route_message_send(
                 None => Permissions::empty(),
             };
 
-            if bot_perms.contains(Permissions::MANAGE_WEBHOOKS) {
-                return Err(RouteError::MissingChannelAccess);
+            if !bot_perms.contains(Permissions::MANAGE_WEBHOOKS) {
+                return Err(RouteError::BotMissingChannelAccess);
             }
 
             let (perms, highest_role) = {
@@ -165,7 +165,7 @@ pub async fn route_message_send(
             };
 
             if !perms.contains(Permissions::MANAGE_WEBHOOKS) {
-                return Err(RouteError::BotMissingChannelAccess);
+                return Err(RouteError::MissingChannelAccess);
             }
 
             let (channel_id, thread_id) = match channel.kind {
