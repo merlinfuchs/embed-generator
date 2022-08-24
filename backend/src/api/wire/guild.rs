@@ -1,28 +1,27 @@
 use serde::{Deserialize, Serialize};
-use twilight_cache_inmemory::model::{CachedEmoji, CachedGuild, CachedSticker};
 use twilight_model::channel::message::sticker::StickerFormatType;
-use twilight_model::channel::{Channel, ChannelType};
-use twilight_model::guild::Role;
+use twilight_model::channel::ChannelType;
+
 use twilight_model::id::marker::{
     ChannelMarker, EmojiMarker, GuildMarker, RoleMarker, StickerMarker,
 };
 use twilight_model::id::Id;
 
+use crate::bot::cache::{CacheChannel, CacheEmoji, CacheGuild, CacheRole};
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GuildWire {
     pub id: Id<GuildMarker>,
     pub name: String,
-    pub description: Option<String>,
     pub icon: Option<String>,
 }
 
-impl From<&CachedGuild> for GuildWire {
-    fn from(g: &CachedGuild) -> Self {
+impl From<&CacheGuild> for GuildWire {
+    fn from(g: &CacheGuild) -> Self {
         Self {
-            id: g.id(),
-            name: g.name().to_string(),
-            description: g.description().map(|d| d.to_string()),
-            icon: g.icon().map(|h| h.to_string()),
+            id: g.id,
+            name: g.name.clone(),
+            icon: g.icon.as_ref().map(|h| h.to_string()),
         }
     }
 }
@@ -31,18 +30,14 @@ impl From<&CachedGuild> for GuildWire {
 pub struct GuildRoleWire {
     pub id: Id<RoleMarker>,
     pub name: String,
-    pub color: u32,
-    pub mentionable: bool,
     pub managed: bool,
 }
 
-impl From<&Role> for GuildRoleWire {
-    fn from(r: &Role) -> Self {
+impl From<&CacheRole> for GuildRoleWire {
+    fn from(r: &CacheRole) -> Self {
         Self {
             id: r.id,
             name: r.name.to_string(),
-            color: r.color,
-            mentionable: r.mentionable,
             managed: r.managed,
         }
     }
@@ -58,8 +53,8 @@ pub struct GuildChannelWire {
     pub kind: ChannelType,
 }
 
-impl From<&Channel> for GuildChannelWire {
-    fn from(c: &Channel) -> Self {
+impl From<&CacheChannel> for GuildChannelWire {
+    fn from(c: &CacheChannel) -> Self {
         Self {
             id: c.id,
             name: c.name.clone(),
@@ -79,14 +74,14 @@ pub struct GuildEmojiWire {
     pub managed: bool,
 }
 
-impl From<&CachedEmoji> for GuildEmojiWire {
-    fn from(e: &CachedEmoji) -> Self {
+impl From<&CacheEmoji> for GuildEmojiWire {
+    fn from(e: &CacheEmoji) -> Self {
         Self {
-            id: e.id(),
-            name: e.name().to_string(),
-            available: e.available(),
-            animated: e.animated(),
-            managed: e.managed(),
+            id: e.id,
+            name: e.name.clone(),
+            available: e.available,
+            animated: e.animated,
+            managed: e.managed,
         }
     }
 }
@@ -98,16 +93,4 @@ pub struct GuildStickerWire {
     pub description: String,
     pub available: bool,
     pub format_type: StickerFormatType,
-}
-
-impl From<&CachedSticker> for GuildStickerWire {
-    fn from(s: &CachedSticker) -> Self {
-        Self {
-            id: s.id(),
-            name: s.name().to_string(),
-            description: s.description().to_string(),
-            available: s.available(),
-            format_type: s.format_type(),
-        }
-    }
 }

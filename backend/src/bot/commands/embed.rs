@@ -16,7 +16,8 @@ use twilight_util::builder::embed::EmbedBuilder;
 use crate::bot::commands::image::user_avatar_url;
 use crate::bot::commands::webhook::get_webhook_for_channel;
 use crate::bot::commands::{simple_response, InteractionError, InteractionResult};
-use crate::bot::{get_bot_permissions_in_channel, DISCORD_CACHE, DISCORD_HTTP};
+use crate::bot::permissions::get_bot_permissions_for_channel;
+use crate::bot::{DISCORD_CACHE, DISCORD_HTTP};
 
 pub fn command_definition() -> Command {
     CommandBuilder::new(
@@ -138,7 +139,11 @@ pub async fn handle_modal(
         return Err(InteractionError::NoOp);
     }
 
-    let bot_perms = get_bot_permissions_in_channel(interaction.channel_id.unwrap());
+    let bot_perms = get_bot_permissions_for_channel(
+        interaction.guild_id.unwrap(),
+        interaction.channel_id.unwrap(),
+    )
+    .unwrap_or(Permissions::empty());
     if !bot_perms.contains(Permissions::MANAGE_WEBHOOKS) {
         simple_response(
             &http,

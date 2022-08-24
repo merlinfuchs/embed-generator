@@ -13,7 +13,7 @@ use crate::api::response::{MessageSendError, RouteError, RouteResult};
 use crate::api::wire::{MessageSendRequestWire, MessageSendResponseWire, MessageSendTargetWire};
 use crate::bot::message::{MessageAction, MessagePayload};
 use crate::bot::message::{MessageHashIntegrity, MessageVariablesReplace, ToMessageVariables};
-use crate::bot::permissions::get_member_permissions_for_channel;
+use crate::bot::permissions::{get_bot_permissions_for_channel, get_member_permissions_for_channel};
 use crate::bot::webhooks::{get_webhooks_for_channel, CachedWebhook};
 use crate::bot::{DISCORD_CACHE, DISCORD_HTTP};
 use crate::config::CONFIG;
@@ -124,15 +124,7 @@ pub async fn route_message_send(
                 entity: "guild".into(),
             })?;
 
-            let bot_user_id = CONFIG.discord.oauth_client_id.cast();
-            let bot_member = DISCORD_CACHE.member(guild_id, CONFIG.discord.oauth_client_id.cast());
-            let bot_perms = match bot_member {
-                Some(m) => {
-                    get_member_permissions_for_channel(bot_user_id, m.roles(), guild_id, channel_id)
-                        .unwrap_or(Permissions::empty())
-                }
-                None => Permissions::empty(),
-            };
+            let bot_perms = get_bot_permissions_for_channel(guild_id, channel_id).unwrap_or(Permissions::empty());
 
             if !bot_perms.contains(Permissions::MANAGE_WEBHOOKS) {
                 return Err(RouteError::BotMissingChannelAccess);
@@ -155,7 +147,7 @@ pub async fn route_message_send(
                 )
                 .unwrap_or(Permissions::empty());
 
-                let highest_role = if guild.owner_id() == token.user_id {
+                let highest_role = if guild.owner_id == token.user_id {
                     9999
                 } else {
                     member.roles.iter().filter_map(|r| DISCORD_CACHE.role(*r).map(|r| r.position)).max().unwrap_or(0)
@@ -204,7 +196,7 @@ pub async fn route_message_send(
 
                         match DISCORD_CACHE.role(role_id) {
                             Some(role) => {
-                                if role.guild_id() != guild_id {
+                                if role.guild_id != guild_id {
                                     return Err(RouteError::InvalidMessageAction {
                                         details: "Role to toggle is not in this guild".into(),
                                     });

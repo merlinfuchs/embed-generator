@@ -4,6 +4,7 @@ use twilight_model::id::Id;
 use twilight_util::permission_calculator::PermissionCalculator;
 
 use crate::bot::DISCORD_CACHE;
+use crate::CONFIG;
 
 pub fn get_member_permissions_for_channel(
     user_id: Id<UserMarker>,
@@ -17,7 +18,7 @@ pub fn get_member_permissions_for_channel(
         .unwrap_or(Permissions::empty());
 
     let roles: Vec<(Id<RoleMarker>, Permissions)> = roles_ids
-        .into_iter()
+        .iter()
         .filter_map(|role_id| {
             DISCORD_CACHE
                 .role(*role_id)
@@ -30,8 +31,20 @@ pub fn get_member_permissions_for_channel(
     let channel = DISCORD_CACHE.channel(channel_id).ok_or(())?;
 
     let calculator = PermissionCalculator::new(guild_id, user_id, everyone_role, &roles)
-        .owner_id(guild.owner_id());
+        .owner_id(guild.owner_id);
     let overwrites = channel.permission_overwrites.as_deref().unwrap_or(&[]);
 
     Ok(calculator.in_channel(channel.kind, overwrites))
+}
+
+pub fn get_bot_permissions_for_channel(
+    guild_id: Id<GuildMarker>,
+    channel_id: Id<ChannelMarker>,
+) -> Option<Permissions> {
+    let bot_user_id = CONFIG.discord.oauth_client_id.cast();
+    let bot_member = DISCORD_CACHE.bot_member(guild_id);
+    bot_member.map(|m| {
+        get_member_permissions_for_channel(bot_user_id, &m.roles, guild_id, channel_id)
+            .unwrap_or(Permissions::empty())
+    })
 }

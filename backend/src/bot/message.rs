@@ -5,17 +5,18 @@ use lazy_static::lazy_static;
 use regex::{Captures, Regex};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use twilight_cache_inmemory::model::CachedGuild;
+
 use twilight_model::application::component::Component;
 use twilight_model::application::interaction::Interaction;
 use twilight_model::channel::embed::{
     Embed, EmbedAuthor, EmbedField, EmbedFooter, EmbedImage, EmbedThumbnail,
 };
-use twilight_model::channel::{Channel, Message};
+use twilight_model::channel::{Message};
 use twilight_model::channel::message::AllowedMentions;
 use twilight_model::id::marker::RoleMarker;
 use twilight_model::id::Id;
 use twilight_model::util::Timestamp;
+use crate::bot::cache::{CacheChannel, CacheGuild};
 
 use crate::bot::DISCORD_CACHE;
 
@@ -130,7 +131,7 @@ impl ToMessageVariables<'_> for Interaction {
         if let Some(guild_id) = self.guild_id {
             match DISCORD_CACHE.guild(guild_id) {
                 Some(guild) => {
-                    guild.value().to_message_variables(variables);
+                    guild.to_message_variables(variables);
                 }
                 None => {
                     variables.insert("guild.id", guild_id.to_string());
@@ -140,7 +141,7 @@ impl ToMessageVariables<'_> for Interaction {
 
         match DISCORD_CACHE.channel(self.channel_id.unwrap()) {
             Some(channel) => {
-                channel.value().to_message_variables(variables);
+                channel.to_message_variables(variables);
             }
             None => {
                 variables.insert("channel.id", self.channel_id.unwrap().to_string());
@@ -166,19 +167,19 @@ impl ToMessageVariables<'_> for Interaction {
     }
 }
 
-impl ToMessageVariables<'_> for CachedGuild {
+impl ToMessageVariables<'_> for CacheGuild {
     fn to_message_variables(&self, variables: &mut MessageVariables<'_>) {
         variables.extend([
-            ("server.id", self.id().to_string()),
-            ("server.name", self.name().to_string()),
+            ("server.id", self.id.to_string()),
+            ("server.name", self.name.clone()),
         ]);
 
-        if let Some(icon) = self.icon() {
+        if let Some(icon) = self.icon.as_ref() {
             variables.insert(
                 "server.icon_url",
                 format!(
                     "https://cdn.discordapp.com/icons/{}/{}.png",
-                    self.id(),
+                    self.id,
                     icon
                 ),
             );
@@ -186,7 +187,7 @@ impl ToMessageVariables<'_> for CachedGuild {
     }
 }
 
-impl ToMessageVariables<'_> for Channel {
+impl ToMessageVariables<'_> for CacheChannel {
     fn to_message_variables(&self, variables: &mut MessageVariables<'_>) {
         variables.extend([
             ("channel.id", self.id.to_string()),

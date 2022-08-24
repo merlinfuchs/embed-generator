@@ -1,4 +1,4 @@
-use twilight_cache_inmemory::model::CachedEmoji;
+
 use twilight_http::client::InteractionClient;
 use twilight_model::application::command::{Command, CommandOptionChoice, CommandType};
 use twilight_model::application::interaction::application_command::{
@@ -12,6 +12,7 @@ use twilight_util::builder::command::{
     ChannelBuilder, CommandBuilder, RoleBuilder, StringBuilder, SubCommandBuilder, UserBuilder,
 };
 
+use crate::bot::cache::CacheEmoji;
 use crate::bot::commands::{simple_response, InteractionResult};
 use crate::bot::emojis::EMOJIS;
 use crate::bot::DISCORD_CACHE;
@@ -159,17 +160,13 @@ pub async fn handle_autocomplete(
         _ => unreachable!(),
     };
 
-    let custom_emojis: Vec<CachedEmoji> = if let Some(guild_id) = interaction.guild_id {
+    let custom_emojis: Vec<CacheEmoji> = if let Some(guild_id) = interaction.guild_id {
         DISCORD_CACHE
             .guild_emojis(guild_id)
             .map(|e| {
                 e.value()
                     .iter()
-                    .filter_map(|eid| {
-                        DISCORD_CACHE
-                            .emoji(*eid)
-                            .map(|e| e.value().resource().clone())
-                    })
+                    .filter_map(|eid| DISCORD_CACHE.emoji(*eid).map(|e| e.value().clone()))
                     .collect()
             })
             .unwrap_or_default()
@@ -179,15 +176,15 @@ pub async fn handle_autocomplete(
 
     let mut choices: Vec<CommandOptionChoice> = custom_emojis
         .into_iter()
-        .filter(|e| e.name().contains(search))
+        .filter(|e| e.name.contains(search))
         .map(|e| CommandOptionChoice::String {
-            name: e.name().to_string(),
+            name: e.name.clone(),
             name_localizations: None,
             value: format!(
                 "<{}:{}:{}>",
-                if e.animated() { "a" } else { "" },
-                e.name(),
-                e.id()
+                if e.animated { "a" } else { "" },
+                e.name.clone(),
+                e.id
             ),
         })
         .collect();

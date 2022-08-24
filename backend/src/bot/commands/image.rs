@@ -1,4 +1,4 @@
-use twilight_cache_inmemory::model::{CachedEmoji, CachedSticker};
+
 use twilight_http::client::InteractionClient;
 use twilight_model::application::command::{Command, CommandOptionChoice, CommandType};
 use twilight_model::application::interaction::application_command::{
@@ -17,6 +17,7 @@ use twilight_util::builder::command::{
 };
 use twilight_util::builder::embed::{EmbedBuilder, ImageSource};
 
+use crate::bot::cache::{CacheEmoji, CacheSticker};
 use crate::bot::commands::{simple_response, InteractionResult};
 use crate::bot::emojis::EMOJIS;
 use crate::bot::DISCORD_CACHE;
@@ -157,7 +158,7 @@ pub async fn handle_command(
 
             if let Some(guild_id) = cmd.guild_id {
                 let guild = DISCORD_CACHE.guild(guild_id).unwrap();
-                if let Some(icon) = guild.icon() {
+                if let Some(icon) = guild.icon.as_ref() {
                     let format = if icon.is_animated() && !make_static {
                         "gif"
                     } else {
@@ -165,9 +166,7 @@ pub async fn handle_command(
                     };
                     let url = format!(
                         "https://cdn.discordapp.com/icons/{}/{}.{}",
-                        guild.id(),
-                        icon,
-                        format
+                        guild.id, icon, format
                     );
                     image_response(&http, interaction.id, &interaction.token, url).await?;
                 } else {
@@ -227,17 +226,13 @@ pub async fn handle_autocomplete(
 
     match sub_cmd.name.as_str() {
         "emoji" => {
-            let emojis: Vec<CachedEmoji> = if let Some(guild_id) = interaction.guild_id {
+            let emojis: Vec<CacheEmoji> = if let Some(guild_id) = interaction.guild_id {
                 DISCORD_CACHE
                     .guild_emojis(guild_id)
                     .map(|e| {
                         e.value()
                             .iter()
-                            .filter_map(|eid| {
-                                DISCORD_CACHE
-                                    .emoji(*eid)
-                                    .map(|e| e.value().resource().clone())
-                            })
+                            .filter_map(|eid| DISCORD_CACHE.emoji(*eid).map(|e| e.value().clone()))
                             .collect()
                     })
                     .unwrap_or_default()
@@ -247,14 +242,14 @@ pub async fn handle_autocomplete(
 
             let mut choices: Vec<CommandOptionChoice> = emojis
                 .into_iter()
-                .filter(|e| e.name().contains(search))
+                .filter(|e| e.name.contains(search))
                 .map(|e| CommandOptionChoice::String {
-                    name: e.name().to_string(),
+                    name: e.name.clone(),
                     name_localizations: None,
                     value: format!(
                         "https://cdn.discordapp.com/emojis/{}.{}",
-                        e.id(),
-                        if e.animated() { "gif" } else { "png" },
+                        e.id,
+                        if e.animated { "gif" } else { "png" },
                     ),
                 })
                 .collect();
@@ -286,16 +281,14 @@ pub async fn handle_autocomplete(
             .await?;
         }
         "sticker" => {
-            let stickers: Vec<CachedSticker> = if let Some(guild_id) = cmd.guild_id {
+            let stickers: Vec<CacheSticker> = if let Some(guild_id) = cmd.guild_id {
                 DISCORD_CACHE
                     .guild_stickers(guild_id)
                     .map(|s| {
                         s.value()
                             .iter()
                             .filter_map(|eid| {
-                                DISCORD_CACHE
-                                    .sticker(*eid)
-                                    .map(|e| e.value().resource().clone())
+                                DISCORD_CACHE.sticker(*eid).map(|e| e.value().clone())
                             })
                             .collect()
                     })
@@ -306,11 +299,11 @@ pub async fn handle_autocomplete(
 
             let mut choices: Vec<CommandOptionChoice> = stickers
                 .into_iter()
-                .filter(|s| s.name().contains(search))
+                .filter(|s| s.name.contains(search))
                 .map(|s| CommandOptionChoice::String {
-                    name: s.name().to_string(),
+                    name: s.name.clone(),
                     name_localizations: None,
-                    value: format!("https://cdn.discordapp.com/stickers/{}.png", s.id(),),
+                    value: format!("https://cdn.discordapp.com/stickers/{}.png", s.id),
                 })
                 .collect();
 

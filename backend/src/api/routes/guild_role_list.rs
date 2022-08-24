@@ -19,7 +19,7 @@ pub async fn route_guild_role_list(
                 .filter_map(|rid| {
                     DISCORD_CACHE
                         .role(*rid)
-                        .map(|s| GuildRoleWire::from(s.value().resource()))
+                        .map(|s| GuildRoleWire::from(s.value()))
                 })
                 .collect()
         })

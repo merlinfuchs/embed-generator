@@ -8,8 +8,9 @@ use twilight_model::id::Id;
 use twilight_util::builder::command::CommandBuilder;
 
 use crate::bot::commands::{simple_response, InteractionError, InteractionResult};
+use crate::bot::permissions::get_bot_permissions_for_channel;
 use crate::bot::webhooks::{get_webhooks_for_channel, CachedWebhook};
-use crate::bot::{get_bot_permissions_in_channel, DISCORD_HTTP};
+use crate::bot::DISCORD_HTTP;
 use crate::CONFIG;
 
 pub fn command_definition() -> Command {
@@ -84,7 +85,11 @@ pub async fn handle_command(
         return Err(InteractionError::NoOp);
     }
 
-    let bot_perms = get_bot_permissions_in_channel(interaction.channel_id.unwrap());
+    let bot_perms = get_bot_permissions_for_channel(
+        interaction.guild_id.unwrap(),
+        interaction.channel_id.unwrap(),
+    )
+    .unwrap_or(Permissions::empty());
     if !bot_perms.contains(Permissions::MANAGE_WEBHOOKS) {
         simple_response(
             &http,

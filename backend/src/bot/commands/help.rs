@@ -28,8 +28,7 @@ pub async fn handle_command(
         format!(
             "You can join our Discord Server with the following link: {}",
             CONFIG.links.discord_invite
-        )
-        .into(),
+        ),
     )
     .await?;
     Ok(())

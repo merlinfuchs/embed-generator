@@ -5,7 +5,7 @@ use std::time::Duration;
 use futures_util::stream::StreamExt;
 use lazy_static::lazy_static;
 use log::{error, info};
-use twilight_cache_inmemory::{InMemoryCache, ResourceType};
+
 use twilight_gateway::cluster::ShardScheme;
 use twilight_gateway::queue::LocalQueue;
 use twilight_gateway::Cluster;
@@ -15,15 +15,17 @@ use twilight_model::gateway::event::Event;
 use twilight_model::gateway::payload::outgoing::update_presence::UpdatePresencePayload;
 use twilight_model::gateway::presence::{Activity, ActivityType, Status};
 use twilight_model::gateway::Intents;
-use twilight_model::guild::Permissions;
-use twilight_model::id::marker::ChannelMarker;
-use twilight_model::id::Id;
 
+
+
+
+use crate::bot::cache::DiscordCache;
 use crate::bot::commands::{command_definitions, handle_interaction, InteractionError};
 use crate::bot::webhooks::delete_webhooks_for_channel;
 use crate::config::CONFIG;
 use crate::db::models::ChannelMessageModel;
 
+pub mod cache;
 mod commands;
 pub mod emojis;
 pub mod message;
@@ -31,17 +33,7 @@ pub mod permissions;
 pub mod webhooks;
 
 lazy_static! {
-    pub static ref DISCORD_CACHE: InMemoryCache = InMemoryCache::builder()
-        .message_cache_size(0)
-        .resource_types(
-            ResourceType::ROLE
-                | ResourceType::CHANNEL
-                | ResourceType::GUILD
-                | ResourceType::EMOJI
-                // | ResourceType::STICKER
-                | ResourceType::MEMBER // only caches the bots member because we don't have the intent
-        )
-        .build();
+    pub static ref DISCORD_CACHE: DiscordCache = DiscordCache::new();
     pub static ref DISCORD_HTTP: Arc<Client> = Arc::new(
         Client::builder()
             .token(CONFIG.discord.token.clone())
@@ -49,14 +41,6 @@ lazy_static! {
             .timeout(Duration::from_secs(30))
             .build()
     );
-}
-
-pub fn get_bot_permissions_in_channel(channel_id: Id<ChannelMarker>) -> Permissions {
-    let user_id = Id::new(CONFIG.discord.oauth_client_id.get());
-    DISCORD_CACHE
-        .permissions()
-        .in_channel(user_id, channel_id)
-        .unwrap_or(Permissions::empty())
 }
 
 pub async fn sync_commands() -> Result<(), Box<dyn Error>> {

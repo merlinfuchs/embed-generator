@@ -8,7 +8,6 @@ export interface UserWire {
 export interface GuildWire {
   id: string;
   name: string;
-  discription: string | null;
   icon: string | null;
 }
 
@@ -86,8 +85,6 @@ export interface EmojiWire {
 export interface RoleWire {
   id: string;
   name: string;
-  color: number;
-  mentionable: boolean;
   managed: boolean;
 }
 

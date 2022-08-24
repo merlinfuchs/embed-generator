@@ -19,7 +19,7 @@ pub async fn route_guild_sticker_list(
                 .filter_map(|sid| {
                     DISCORD_CACHE
                         .sticker(*sid)
-                        .map(|s| GuildStickerWire::from(s.value().resource()))
+                        .map(|s| GuildStickerWire::from(s.value()))
                 })
                 .collect()
         })

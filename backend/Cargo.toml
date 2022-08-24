@@ -11,7 +11,6 @@ twilight-gateway = { version = "0.13", features = ["native", "zlib-stock"], defa
 twilight-http = { version = "0.13", features = ["native", "decompression"], default-features = false }
 twilight-http-ratelimiting = "0.13"
 twilight-model = "0.13"
-twilight-cache-inmemory = { version = "0.13", features = ["permission-calculator"] }
 twilight-util = { version = "0.13", features = ["builder", "permission-calculator"] }
 lazy_static = "1.4.0"
 rust-embed = { version = "6.4.0", optional = true }

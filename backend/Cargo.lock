@@ -724,7 +724,6 @@ dependencies = [
  "sha2 0.10.2",
  "thiserror",
  "tokio",
- "twilight-cache-inmemory",
  "twilight-gateway",
  "twilight-http",
  "twilight-http-ratelimiting",
@@ -2496,19 +2495,6 @@ dependencies = [
  "thiserror",
  "url",
  "utf-8",
-]
-
-[[package]]
-name = "twilight-cache-inmemory"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4791fbe7615d28c26d39a0c6a006257a3b2e7403d74f78cb96cd0abf97f6a151"
-dependencies = [
- "bitflags",
- "dashmap",
- "serde 1.0.142",
- "twilight-model",
- "twilight-util",
 ]
 
 [[package]]
