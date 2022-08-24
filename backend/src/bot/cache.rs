@@ -10,6 +10,8 @@ use twilight_model::id::marker::{
 use twilight_model::id::Id;
 use twilight_model::util::ImageHash;
 
+use crate::CONFIG;
+
 #[derive(Default)]
 pub struct DiscordCache {
     guilds: DashMap<Id<GuildMarker>, CacheGuild>,
@@ -106,6 +108,17 @@ impl DiscordCache {
                 }
                 self.guild_stickers
                     .insert(g.id, g.stickers.iter().map(|s| s.id).collect());
+
+                for m in &g.members {
+                    if m.user.id == CONFIG.discord.oauth_client_id.cast() {
+                        self.bot_members.insert(
+                            g.id,
+                            CacheBotMember {
+                                roles: m.roles.clone(),
+                            },
+                        );
+                    }
+                }
             }
             Event::GuildUpdate(g) => {
                 self.guilds.insert(
@@ -316,6 +329,38 @@ impl DiscordCache {
                     event.stickers.iter().map(|s| s.id).collect(),
                 );
             }
+            Event::MemberAdd(m) => {
+                if m.user.id == CONFIG.discord.oauth_client_id.cast() {
+                    self.bot_members.insert(
+                        m.guild_id,
+                        CacheBotMember {
+                            roles: m.roles.clone(),
+                        },
+                    );
+                }
+            }
+            Event::MemberUpdate(m) => {
+                if m.user.id == CONFIG.discord.oauth_client_id.cast() {
+                    self.bot_members.insert(
+                        m.guild_id,
+                        CacheBotMember {
+                            roles: m.roles.clone(),
+                        },
+                    );
+                }
+            }
+            Event::MemberRemove(m) => {
+                if m.user.id == CONFIG.discord.oauth_client_id.cast() {
+                    self.bot_members.remove(&m.guild_id);
+                }
+            }
+            Event::MemberChunk(e) => {
+                for m in &e.members {
+                    if m.user.id == CONFIG.discord.oauth_client_id.cast() {
+                        self.bot_members.remove(&e.guild_id);
+                    }
+                }
+            }
             _ => {}
         }
     }
@@ -404,7 +449,6 @@ pub struct CacheRole {
 
 #[derive(Clone, Debug)]
 pub struct CacheBotMember {
-    pub permissions: Permissions,
     pub roles: Vec<Id<RoleMarker>>,
 }
 
