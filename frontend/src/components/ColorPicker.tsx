@@ -30,7 +30,7 @@ export default function ColorPicker({ value, onChange }: Props) {
 
   const hexColor = useMemo(() => {
     if (value || value === 0) {
-      return value.toString(16);
+      return value.toString(16).padStart(6, "0");
     } else {
       return "";
     }
