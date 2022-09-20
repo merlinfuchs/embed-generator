@@ -7,8 +7,8 @@ edition = "2021"
 tokio = { version = "1.18.2", features = ["macros", "rt-multi-thread"] }
 serde = { version = "1.0.137", features = ["derive"] }
 actix-web = "4.0.1"
-twilight-gateway = { version = "0.13", features = ["native", "zlib-stock"], default-features = false }
-twilight-http = { version = "0.13", features = ["native", "decompression"], default-features = false }
+twilight-gateway = "0.13"
+twilight-http = "0.13"
 twilight-http-ratelimiting = "0.13"
 twilight-model = "0.13"
 twilight-util = { version = "0.13", features = ["builder", "permission-calculator"] }
