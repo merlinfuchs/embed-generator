@@ -129,8 +129,8 @@ export function jsonToMessage(json: any): Message {
         }
 
         if (
-          typeof embedJson.icon_url === "string" ||
-          embedJson.icon_url === undefined
+          typeof embedJson.footer.icon_url === "string" ||
+          embedJson.footer.icon_url === undefined
         ) {
           embed.footer = {
             text: embed.footer?.text || "",
