@@ -41,7 +41,7 @@ impl DiscordCache {
                     CacheGuild {
                         id: g.id,
                         name: g.name.clone(),
-                        icon: g.icon.clone(),
+                        icon: g.icon,
                         owner_id: g.owner_id,
                     },
                 );
@@ -126,7 +126,7 @@ impl DiscordCache {
                     CacheGuild {
                         id: g.id,
                         name: g.name.clone(),
-                        icon: g.icon.clone(),
+                        icon: g.icon,
                         owner_id: g.owner_id,
                     },
                 );

@@ -1,16 +1,17 @@
 use std::time::Duration;
+
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use twilight_http::client::InteractionClient;
 use twilight_http::error::ErrorType;
 use twilight_model::application::command::{Command, CommandType};
-use twilight_model::application::component::Component;
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue,
 };
 use twilight_model::application::interaction::Interaction;
-use twilight_model::channel::embed::Embed;
+use twilight_model::channel::message::embed::Embed;
+use twilight_model::channel::message::Component;
 use twilight_model::channel::Message;
 use twilight_model::id::marker::{ChannelMarker, MessageMarker};
 use twilight_model::id::Id;
@@ -103,7 +104,7 @@ async fn get_message_from_id_or_url(
         }
     };
 
-    let channel_id = channel_id.unwrap_or(interaction.channel_id.unwrap());
+    let channel_id = channel_id.unwrap_or_else(|| interaction.channel_id.unwrap());
     if channel_id != interaction.channel_id.unwrap() {
         simple_response(
             http,
@@ -115,7 +116,7 @@ async fn get_message_from_id_or_url(
         return Err(InteractionError::NoOp);
     }
 
-    let msg = match DISCORD_HTTP.message(channel_id, message_id).exec().await {
+    let msg = match DISCORD_HTTP.message(channel_id, message_id).await {
         Ok(m) => m.model().await?,
         Err(e) => {
             return match e.kind() {

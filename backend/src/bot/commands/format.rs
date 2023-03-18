@@ -1,6 +1,7 @@
-
 use twilight_http::client::InteractionClient;
-use twilight_model::application::command::{Command, CommandOptionChoice, CommandType};
+use twilight_model::application::command::{
+    Command, CommandOptionChoice, CommandOptionChoiceValue, CommandType,
+};
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandOptionValue,
 };
@@ -177,15 +178,15 @@ pub async fn handle_autocomplete(
     let mut choices: Vec<CommandOptionChoice> = custom_emojis
         .into_iter()
         .filter(|e| e.name.contains(search))
-        .map(|e| CommandOptionChoice::String {
+        .map(|e| CommandOptionChoice {
             name: e.name.clone(),
             name_localizations: None,
-            value: format!(
+            value: CommandOptionChoiceValue::String(format!(
                 "<{}:{}:{}>",
                 if e.animated { "a" } else { "" },
                 e.name.clone(),
                 e.id
-            ),
+            )),
         })
         .collect();
 
@@ -193,10 +194,10 @@ pub async fn handle_autocomplete(
         if choices.len() >= 25 {
             break;
         }
-        choices.push(CommandOptionChoice::String {
+        choices.push(CommandOptionChoice {
             name: format!("{} {}", unicode, name),
             name_localizations: None,
-            value: unicode.to_string(),
+            value: CommandOptionChoiceValue::String(unicode.to_string()),
         })
     }
 
@@ -212,7 +213,6 @@ pub async fn handle_autocomplete(
             }),
         },
     )
-    .exec()
     .await?;
 
     Ok(())

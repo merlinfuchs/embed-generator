@@ -6,18 +6,14 @@ use futures_util::stream::StreamExt;
 use lazy_static::lazy_static;
 use log::{error, info};
 
-use twilight_gateway::cluster::ShardScheme;
-use twilight_gateway::queue::LocalQueue;
-use twilight_gateway::Cluster;
+
+use twilight_gateway::stream::{self, ShardEventStream};
 use twilight_http::Client;
 use twilight_http_ratelimiting::InMemoryRatelimiter;
 use twilight_model::gateway::event::Event;
-use twilight_model::gateway::payload::outgoing::update_presence::UpdatePresencePayload;
-use twilight_model::gateway::presence::{Activity, ActivityType, Status};
+
+
 use twilight_model::gateway::Intents;
-
-
-
 
 use crate::bot::cache::DiscordCache;
 use crate::bot::commands::{command_definitions, handle_interaction, InteractionError};
@@ -47,11 +43,9 @@ pub async fn sync_commands() -> Result<(), Box<dyn Error>> {
     let http = DISCORD_HTTP.interaction(CONFIG.discord.oauth_client_id);
     if let Some(guild_id) = CONFIG.discord.test_guild_id {
         http.set_guild_commands(guild_id, &command_definitions())
-            .exec()
             .await?;
     } else {
         http.set_global_commands(&command_definitions())
-            .exec()
             .await?;
     }
     Ok(())
@@ -67,50 +61,59 @@ pub async fn run_bot() -> Result<(), Box<dyn Error>> {
         | Intents::GUILD_WEBHOOKS
         | Intents::GUILD_MESSAGES;
 
-    let queue = Arc::new(LocalQueue::new());
+    let bot_config = twilight_gateway::Config::new(CONFIG.discord.token.clone(), intents);
 
-    let shard_scheme = ShardScheme::Range {
-        from: 0,
-        to: CONFIG.discord.shard_count - 1,
-        total: CONFIG.discord.shard_count,
-    };
+    let mut shards = stream::create_range(
+        0..CONFIG.discord.shard_count,
+        CONFIG.discord.shard_count,
+        bot_config,
+        |_, builder| builder.build(),
+    )
+    .collect::<Vec<_>>();
 
-    let (cluster, mut events) = Cluster::builder(CONFIG.discord.token.clone(), intents)
-        .queue(queue)
-        .shard_scheme(shard_scheme)
-        .presence(UpdatePresencePayload {
-            activities: vec![Activity {
-                application_id: None,
-                assets: None,
-                buttons: vec![],
-                created_at: None,
-                details: None,
-                emoji: None,
-                flags: None,
-                id: None,
-                instance: None,
-                kind: ActivityType::Watching,
-                name: "message.style".to_string(),
-                party: None,
-                secrets: None,
-                state: None,
-                timestamps: None,
-                url: None,
-            }],
-            status: Status::Online,
-            afk: false,
-            since: None,
-        })
-        .build()
-        .await?;
+    /* let (cluster, mut events) = Cluster::builder(CONFIG.discord.token.clone(), intents)
+    .queue(queue)
+    .shard_scheme(shard_scheme)
+    .presence(UpdatePresencePayload {
+        activities: vec![Activity {
+            application_id: None,
+            assets: None,
+            buttons: vec![],
+            created_at: None,
+            details: None,
+            emoji: None,
+            flags: None,
+            id: None,
+            instance: None,
+            kind: ActivityType::Watching,
+            name: "message.style".to_string(),
+            party: None,
+            secrets: None,
+            state: None,
+            timestamps: None,
+            url: None,
+        }],
+        status: Status::Online,
+        afk: false,
+        since: None,
+    })
+    .build()
+    .await?; */
 
-    let cluster = Arc::new(cluster);
-    let cluster_spawn = cluster.clone();
-    tokio::spawn(async move {
-        cluster_spawn.up().await;
-    });
+    let mut events = ShardEventStream::new(shards.iter_mut());
 
     while let Some((_, event)) = events.next().await {
+        let event = match event {
+            Ok(e) => e,
+            Err(s) => {
+                error!("Receiving event failed: {:?}", s);
+                if s.is_fatal() {
+                    break;
+                }
+                continue;
+            }
+        };
+
         DISCORD_CACHE.update(&event);
 
         match event {
@@ -127,7 +130,7 @@ pub async fn run_bot() -> Result<(), Box<dyn Error>> {
             }
             Event::WebhooksUpdate(w) => delete_webhooks_for_channel(w.channel_id),
             _ => {}
-        }
+        };
     }
 
     Ok(())

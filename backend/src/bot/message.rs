@@ -6,17 +6,17 @@ use regex::{Captures, Regex};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
-use twilight_model::application::component::Component;
+use crate::bot::cache::{CacheChannel, CacheGuild};
 use twilight_model::application::interaction::Interaction;
-use twilight_model::channel::embed::{
+use twilight_model::channel::message::embed::{
     Embed, EmbedAuthor, EmbedField, EmbedFooter, EmbedImage, EmbedThumbnail,
 };
-use twilight_model::channel::{Message};
 use twilight_model::channel::message::AllowedMentions;
+use twilight_model::channel::message::Component;
+use twilight_model::channel::Message;
 use twilight_model::id::marker::RoleMarker;
 use twilight_model::id::Id;
 use twilight_model::util::Timestamp;
-use crate::bot::cache::{CacheChannel, CacheGuild};
 
 use crate::bot::DISCORD_CACHE;
 
@@ -64,7 +64,7 @@ pub struct MessagePayload {
     #[serde(default)]
     pub embeds: Vec<MessagePayloadEmbed>,
     #[serde(default)]
-    pub allowed_mentions: Option<AllowedMentions>
+    pub allowed_mentions: Option<AllowedMentions>,
 }
 
 impl From<Message> for MessagePayload {
@@ -75,7 +75,7 @@ impl From<Message> for MessagePayload {
             content: Some(m.content),
             components: m.components,
             embeds: m.embeds.into_iter().map(|e| e.into()).collect(),
-            allowed_mentions: None
+            allowed_mentions: None,
         }
     }
 }
@@ -177,11 +177,7 @@ impl ToMessageVariables<'_> for CacheGuild {
         if let Some(icon) = self.icon.as_ref() {
             variables.insert(
                 "server.icon_url",
-                format!(
-                    "https://cdn.discordapp.com/icons/{}/{}.png",
-                    self.id,
-                    icon
-                ),
+                format!("https://cdn.discordapp.com/icons/{}/{}.png", self.id, icon),
             );
         }
     }
@@ -308,7 +304,6 @@ impl MessageAction {
                     },
                     "1" => MessageAction::RoleToggle {
                         role_id: arg.parse().unwrap_or(Id::new(1)),
-
                     },
                     _ => MessageAction::Unknown,
                 }

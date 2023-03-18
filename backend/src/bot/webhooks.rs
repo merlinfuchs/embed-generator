@@ -26,7 +26,6 @@ pub async fn get_webhooks_for_channel(
 
     let mut webhooks: Vec<Webhook> = DISCORD_HTTP
         .channel_webhooks(channel_id)
-        .exec()
         .await?
         .model()
         .await

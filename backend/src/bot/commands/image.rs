@@ -1,6 +1,7 @@
-
 use twilight_http::client::InteractionClient;
-use twilight_model::application::command::{Command, CommandOptionChoice, CommandType};
+use twilight_model::application::command::{
+    Command, CommandOptionChoice, CommandOptionChoiceValue, CommandType,
+};
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandOptionValue,
 };
@@ -89,7 +90,6 @@ pub async fn image_response(
             }),
         },
     )
-    .exec()
     .await?;
     Ok(())
 }
@@ -243,14 +243,14 @@ pub async fn handle_autocomplete(
             let mut choices: Vec<CommandOptionChoice> = emojis
                 .into_iter()
                 .filter(|e| e.name.contains(search))
-                .map(|e| CommandOptionChoice::String {
+                .map(|e| CommandOptionChoice {
                     name: e.name.clone(),
                     name_localizations: None,
-                    value: format!(
+                    value: CommandOptionChoiceValue::String(format!(
                         "https://cdn.discordapp.com/emojis/{}.{}",
                         e.id,
                         if e.animated { "gif" } else { "png" },
-                    ),
+                    )),
                 })
                 .collect();
 
@@ -258,10 +258,13 @@ pub async fn handle_autocomplete(
                 if choices.len() >= 25 {
                     break;
                 }
-                choices.push(CommandOptionChoice::String {
+                choices.push(CommandOptionChoice {
                     name: format!("{} {}", unicode, name),
                     name_localizations: None,
-                    value: format!("https://twemoji.maxcdn.com/v/13.1.0/72x72/{}.png", seq),
+                    value: CommandOptionChoiceValue::String(format!(
+                        "https://twemoji.maxcdn.com/v/13.1.0/72x72/{}.png",
+                        seq
+                    )),
                 })
             }
 
@@ -277,7 +280,6 @@ pub async fn handle_autocomplete(
                     }),
                 },
             )
-            .exec()
             .await?;
         }
         "sticker" => {
@@ -300,10 +302,13 @@ pub async fn handle_autocomplete(
             let mut choices: Vec<CommandOptionChoice> = stickers
                 .into_iter()
                 .filter(|s| s.name.contains(search))
-                .map(|s| CommandOptionChoice::String {
+                .map(|s| CommandOptionChoice {
                     name: s.name.clone(),
                     name_localizations: None,
-                    value: format!("https://cdn.discordapp.com/stickers/{}.png", s.id),
+                    value: CommandOptionChoiceValue::String(format!(
+                        "https://cdn.discordapp.com/stickers/{}.png",
+                        s.id
+                    )),
                 })
                 .collect();
 
@@ -319,7 +324,6 @@ pub async fn handle_autocomplete(
                     }),
                 },
             )
-            .exec()
             .await?;
         }
         _ => {}

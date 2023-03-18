@@ -4,23 +4,23 @@ use awc::error::{JsonPayloadError, SendRequestError};
 use twilight_http::client::InteractionClient;
 use twilight_http::response::DeserializeBodyError;
 use twilight_model::application::command::Command;
-use twilight_model::application::component::ComponentType;
-use twilight_model::application::interaction::{Interaction, InteractionData, InteractionType};
 use twilight_model::application::interaction::message_component::MessageComponentInteractionData;
+use twilight_model::application::interaction::{Interaction, InteractionData, InteractionType};
+use twilight_model::channel::message::component::ComponentType;
 use twilight_model::channel::message::MessageFlags;
 use twilight_model::http::interaction::{
     InteractionResponse, InteractionResponseData, InteractionResponseType,
 };
-use twilight_model::id::Id;
 use twilight_model::id::marker::InteractionMarker;
+use twilight_model::id::Id;
 
-use crate::bot::DISCORD_HTTP;
 use crate::bot::message::{MessageAction, MessagePayload};
 use crate::bot::message::{MessageHashIntegrity, ToMessageVariables};
 use crate::bot::message::{MessageVariablesReplace, ResponseSavedMessageFlags};
-use crate::CONFIG;
+use crate::bot::DISCORD_HTTP;
 use crate::db::models::{ChannelMessageModel, MessageModel};
 use crate::db::RedisPoolError;
+use crate::CONFIG;
 
 mod embed;
 mod format;
@@ -87,9 +87,9 @@ pub async fn handle_interaction(interaction: Interaction) -> InteractionResult {
                 _ => {}
             }
         }
-        InteractionData::MessageComponent(comp) => match comp.custom_id.as_str() {
-            _ => handle_unknown_component(http, interaction, comp).await?,
-        },
+        InteractionData::MessageComponent(comp) => {
+            handle_unknown_component(http, interaction, comp).await?
+        }
         InteractionData::ModalSubmit(modal) => match modal.custom_id.as_str() {
             "embed" => embed::handle_modal(http, interaction, modal).await?,
             _ => {}
@@ -155,7 +155,6 @@ async fn handle_unknown_component(
             .update_followup(&interaction.token, message.id)
             .components(Some(&message.components))
             .unwrap()
-            .exec()
             .await;
     }
 
@@ -179,11 +178,12 @@ async fn handle_component_actions(
                                 interaction.to_message_variables(&mut variables);
                                 payload.replace_variables(&variables);
 
-                                let response_kind = if flags.contains(ResponseSavedMessageFlags::EDIT) {
-                                    InteractionResponseType::UpdateMessage
-                                } else {
-                                    InteractionResponseType::ChannelMessageWithSource
-                                };
+                                let response_kind =
+                                    if flags.contains(ResponseSavedMessageFlags::EDIT) {
+                                        InteractionResponseType::UpdateMessage
+                                    } else {
+                                        InteractionResponseType::ChannelMessageWithSource
+                                    };
 
                                 http.create_response(
                                     interaction.id,
@@ -205,7 +205,6 @@ async fn handle_component_actions(
                                         }),
                                     },
                                 )
-                                .exec()
                                 .await?;
                             }
                             Err(_) => {
@@ -237,7 +236,6 @@ async fn handle_component_actions(
                 if member.roles.contains(&role_id) {
                     match DISCORD_HTTP
                         .remove_guild_member_role(guild_id, user_id, role_id)
-                        .exec()
                         .await
                     {
                         Ok(_) => {
@@ -262,7 +260,6 @@ async fn handle_component_actions(
                 } else {
                     match DISCORD_HTTP
                         .add_guild_member_role(guild_id, user_id, role_id)
-                        .exec()
                         .await
                     {
                         Ok(_) => {
@@ -310,7 +307,6 @@ pub async fn simple_response(
             }),
         },
     )
-    .exec()
     .await?;
     Ok(())
 }

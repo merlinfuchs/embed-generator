@@ -14,8 +14,13 @@ pub async fn route_guild_emoji_list(
     let emojis: Vec<GuildEmojiWire> = DISCORD_CACHE
         .guild_emojis(guild_id.into_inner())
         .map(|e| {
-            e.value().iter()
-                .filter_map(|eid| DISCORD_CACHE.emoji(*eid).map(|s| GuildEmojiWire::from(s.value())))
+            e.value()
+                .iter()
+                .filter_map(|eid| {
+                    DISCORD_CACHE
+                        .emoji(*eid)
+                        .map(|s| GuildEmojiWire::from(s.value()))
+                })
                 .collect()
         })
         .unwrap_or_default();

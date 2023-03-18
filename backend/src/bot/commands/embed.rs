@@ -1,10 +1,10 @@
 use twilight_http::client::InteractionClient;
 use twilight_model::application::command::{Command, CommandType};
-use twilight_model::application::component::text_input::TextInputStyle;
-use twilight_model::application::component::{ActionRow, Component, TextInput};
 use twilight_model::application::interaction::application_command::CommandData;
 use twilight_model::application::interaction::modal::ModalInteractionData;
 use twilight_model::application::interaction::Interaction;
+use twilight_model::channel::message::component::TextInputStyle;
+use twilight_model::channel::message::component::{ActionRow, Component, TextInput};
 use twilight_model::channel::ChannelType;
 use twilight_model::guild::Permissions;
 use twilight_model::http::interaction::{
@@ -112,7 +112,6 @@ pub async fn handle_command(
             }),
         },
     )
-    .exec()
     .await?;
     Ok(())
 }
@@ -213,9 +212,9 @@ pub async fn handle_modal(
         .channel(interaction.channel_id.unwrap())
         .unwrap();
     let (channel_id, thread_id) = match channel.kind {
-        ChannelType::GuildPrivateThread
-        | ChannelType::GuildPublicThread
-        | ChannelType::GuildNewsThread => (
+        ChannelType::PrivateThread
+        | ChannelType::PublicThread
+        | ChannelType::AnnouncementThread => (
             channel.parent_id.unwrap(),
             Some(interaction.channel_id.unwrap()),
         ),
@@ -240,7 +239,6 @@ pub async fn handle_modal(
         )
         .embeds(&[embed.build()])
         .unwrap()
-        .exec()
         .await?;
 
     simple_response(

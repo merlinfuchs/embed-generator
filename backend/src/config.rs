@@ -2,10 +2,10 @@ use std::path::Path;
 
 use config::{Config, ConfigError, Environment, File};
 use lazy_static::lazy_static;
+use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 use serde::{Deserialize, Serialize};
 use twilight_model::id::marker::{ApplicationMarker, GuildMarker};
 use twilight_model::id::Id;
-use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 
 lazy_static! {
     pub static ref CONFIG: RootConfig = RootConfig::new().expect("Parsing config");

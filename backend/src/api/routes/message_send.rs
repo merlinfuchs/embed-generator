@@ -4,7 +4,7 @@ use actix_web::post;
 use actix_web::web::{Json, ReqData};
 use data_url::DataUrl;
 use lazy_static::lazy_static;
-use twilight_model::application::component::Component;
+use twilight_model::channel::message::Component;
 use twilight_model::channel::ChannelType;
 use twilight_model::guild::{Member, Permissions};
 use twilight_model::http::attachment::Attachment;
@@ -13,7 +13,9 @@ use crate::api::response::{MessageSendError, RouteError, RouteResult};
 use crate::api::wire::{MessageSendRequestWire, MessageSendResponseWire, MessageSendTargetWire};
 use crate::bot::message::{MessageAction, MessagePayload};
 use crate::bot::message::{MessageHashIntegrity, MessageVariablesReplace, ToMessageVariables};
-use crate::bot::permissions::{get_bot_permissions_for_channel, get_member_permissions_for_channel};
+use crate::bot::permissions::{
+    get_bot_permissions_for_channel, get_member_permissions_for_channel,
+};
 use crate::bot::webhooks::{get_webhooks_for_channel, CachedWebhook};
 use crate::bot::{DISCORD_CACHE, DISCORD_HTTP};
 use crate::config::CONFIG;
@@ -124,7 +126,8 @@ pub async fn route_message_send(
                 entity: "guild".into(),
             })?;
 
-            let bot_perms = get_bot_permissions_for_channel(guild_id, channel_id).unwrap_or(Permissions::empty());
+            let bot_perms = get_bot_permissions_for_channel(guild_id, channel_id)
+                .unwrap_or(Permissions::empty());
 
             if !bot_perms.contains(Permissions::MANAGE_WEBHOOKS) {
                 return Err(RouteError::BotMissingChannelAccess);
@@ -133,7 +136,6 @@ pub async fn route_message_send(
             let (perms, highest_role) = {
                 let member: Member = DISCORD_HTTP
                     .guild_member(guild_id, token.user_id)
-                    .exec()
                     .await?
                     .model()
                     .await
@@ -150,7 +152,12 @@ pub async fn route_message_send(
                 let highest_role = if guild.owner_id == token.user_id {
                     9999
                 } else {
-                    member.roles.iter().filter_map(|r| DISCORD_CACHE.role(*r).map(|r| r.position)).max().unwrap_or(0)
+                    member
+                        .roles
+                        .iter()
+                        .filter_map(|r| DISCORD_CACHE.role(*r).map(|r| r.position))
+                        .max()
+                        .unwrap_or(0)
                 };
 
                 (perms, highest_role)
@@ -161,10 +168,10 @@ pub async fn route_message_send(
             }
 
             let (channel_id, thread_id) = match channel.kind {
-                ChannelType::GuildPrivateThread
-                | ChannelType::GuildPublicThread
-                | ChannelType::GuildNewsThread => (channel.parent_id.unwrap(), Some(channel.id)),
-                ChannelType::GuildText | ChannelType::GuildNews => (channel.id, None),
+                ChannelType::PrivateThread
+                | ChannelType::PublicThread
+                | ChannelType::AnnouncementThread => (channel.parent_id.unwrap(), Some(channel.id)),
+                ChannelType::GuildText | ChannelType::GuildAnnouncement => (channel.id, None),
                 _ => return Err(RouteError::UnsupportedChannelType),
             };
 
@@ -242,7 +249,6 @@ pub async fn route_message_send(
                     .create_webhook(channel_id, "Embed Generator")
                     .unwrap()
                     .avatar(&ICON_DATA_URL)
-                    .exec()
                     .await?
                     .model()
                     .await
@@ -272,7 +278,6 @@ pub async fn route_message_send(
             .payload_json(&payload_json)
             .attachments(&attachments)
             .unwrap()
-            .exec()
             .await
             .map_err(MessageSendError::from)?;
 
@@ -288,7 +293,6 @@ pub async fn route_message_send(
             .attachments(&attachments)
             .unwrap()
             .wait()
-            .exec()
             .await
             .map_err(MessageSendError::from)?
             .model()

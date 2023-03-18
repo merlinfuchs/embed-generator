@@ -52,7 +52,6 @@ pub async fn get_webhook_for_channel(
         let webhook = DISCORD_HTTP
             .create_webhook(channel_id, "Embed Generator")
             .unwrap()
-            .exec()
             .await?
             .model()
             .await

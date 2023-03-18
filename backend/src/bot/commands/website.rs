@@ -1,9 +1,9 @@
 use twilight_http::client::InteractionClient;
 use twilight_model::application::command::{Command, CommandType};
-use twilight_model::application::component::button::ButtonStyle;
-use twilight_model::application::component::{ActionRow, Button, Component};
 use twilight_model::application::interaction::application_command::CommandData;
 use twilight_model::application::interaction::Interaction;
+use twilight_model::channel::message::component::ButtonStyle;
+use twilight_model::channel::message::component::{ActionRow, Button, Component};
 use twilight_model::channel::message::MessageFlags;
 use twilight_model::http::interaction::{
     InteractionResponse, InteractionResponseData, InteractionResponseType,
@@ -48,7 +48,6 @@ pub async fn handle_command(
             }),
         },
     )
-    .exec()
     .await?;
     Ok(())
 }
