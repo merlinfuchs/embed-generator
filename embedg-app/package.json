@@ -1,0 +1,40 @@
+{
+  "name": "embedg-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@codemirror/lang-json": "^6.0.1",
+    "@codemirror/lint": "^6.2.0",
+    "@formkit/auto-animate": "^1.0.0-beta.6",
+    "@heroicons/react": "^2.0.17",
+    "@uiw/codemirror-theme-github": "^4.19.11",
+    "@uiw/react-codemirror": "^4.19.11",
+    "autoprefixer": "^10.4.14",
+    "clsx": "^1.2.1",
+    "date-fns": "^2.29.3",
+    "highlight.js": "^11.7.0",
+    "immer": "^9.0.21",
+    "postcss": "^8.4.21",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-query": "^3.39.3",
+    "react-router-dom": "^6.10.0",
+    "simple-markdown": "^0.7.3",
+    "tailwindcss": "^3.3.1",
+    "zod": "^3.21.4",
+    "zustand": "^4.3.7"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.28",
+    "@types/react-dom": "^18.0.11",
+    "@vitejs/plugin-react-swc": "^3.0.0",
+    "typescript": "^4.9.3",
+    "vite": "^4.2.0"
+  }
+}

@@ -1,0 +1,12 @@
+packages:
+  - path: "github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
+    output_path: "embedg-app/src/api/wire.ts"
+    type_mappings:
+      null.String: "null | string"
+      null.Bool: "null | boolean"
+      null.Float: "null | number"
+      null.Int: "null | number"
+      uuid.UUID: "string /* uuid */"
+      uuid.NullUUID: "null | string /* uuid */"
+      time.Time: "string /* RFC3339 */"
+      json.RawMessage: "Record<string, any> | null"
