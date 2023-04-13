@@ -26,6 +26,12 @@ export default function MagicView() {
     }
   }, [data]);
 
+  useEffect(() => {
+    const data = JSON.stringify(useCurrentMessageStore.getState());
+    setBaseData(data);
+    setOutput(data);
+  }, []);
+
   function generate() {
     if (isLoading) {
       return;

@@ -2,7 +2,7 @@ import { useCurrentMessageStore } from "../state/message";
 import EditorEmbed from "./EditorEmbed";
 import { shallow } from "zustand/shallow";
 import { ChevronRightIcon } from "@heroicons/react/20/solid";
-import { useCollapsedState } from "../state/collapsed";
+import { useCollapsedState, useCollapsedStatesStore } from "../state/collapsed";
 import clsx from "clsx";
 import { getUniqueId } from "../util";
 import { AutoAnimate } from "../util/autoAnimate";
@@ -17,7 +17,14 @@ export default function EditorEmbedsSection() {
 
   const [collapsed, toggleCollapsed] = useCollapsedState("embeds");
 
-  console.log("render section");
+  const clearCollapsedWithPrefix = useCollapsedStatesStore(
+    (state) => state.clearCollapsedWithPrefix
+  );
+
+  function clear() {
+    clearEmbeds();
+    clearCollapsedWithPrefix("embeds");
+  }
 
   return (
     <AutoAnimate>
@@ -57,7 +64,7 @@ export default function EditorEmbedsSection() {
             </button>
             <button
               className="px-3 py-2 rounded text-white border-red border-2 hover:bg-red"
-              onClick={clearEmbeds}
+              onClick={clear}
             >
               Clear Embeds
             </button>

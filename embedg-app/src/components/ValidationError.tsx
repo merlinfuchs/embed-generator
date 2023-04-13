@@ -9,6 +9,7 @@ interface Props {
 
 export default function ValidationError({ schema, value }: Props) {
   const error = useValidationError(schema, value);
+  schema._type;
 
   if (error) {
     return (

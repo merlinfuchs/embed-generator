@@ -5,7 +5,7 @@ export const uniqueIdSchema = z.number();
 
 export type UniqueId = z.infer<typeof uniqueIdSchema>;
 
-export const embedFooterTextSchema = z.string().max(2048);
+export const embedFooterTextSchema = z.optional(z.string().max(2048));
 
 export type EmbedFooterText = z.infer<typeof embedFooterTextSchema>;
 
@@ -22,7 +22,7 @@ export const embedFooterSchema = z.optional(
 
 export type EmbedFooter = z.infer<typeof embedFooterSchema>;
 
-export const embedImageUrlSchema = z.string().url();
+export const embedImageUrlSchema = z.optional(z.string().url());
 
 export type EmbedImageUrl = z.infer<typeof embedImageUrlSchema>;
 
@@ -34,7 +34,7 @@ export const embedImageSchema = z.optional(
 
 export type EmbedImage = z.infer<typeof embedImageSchema>;
 
-export const embedThumbnailUrlSchema = z.string().url();
+export const embedThumbnailUrlSchema = z.optional(z.string().url());
 
 export type EmbedThumbnailUrl = z.infer<typeof embedThumbnailUrlSchema>;
 
@@ -101,9 +101,9 @@ export const embedUrlSchema = z.optional(z.string().url());
 
 export type EmbedUrl = z.infer<typeof embedUrlSchema>;
 
-export const embedTimestamp = z.optional(z.string());
+export const embedTimestampSchema = z.optional(z.string());
 
-export type EmbedTimestamp = z.infer<typeof embedTimestamp>;
+export type EmbedTimestamp = z.infer<typeof embedTimestampSchema>;
 
 export const embedColor = z.optional(z.number());
 
@@ -114,7 +114,7 @@ export const embedSchema = z.object({
   title: embedtitleSchema,
   description: embedDescriptionSchema,
   url: embedUrlSchema,
-  timestamp: embedTimestamp,
+  timestamp: embedTimestampSchema,
   color: embedColor,
   footer: embedFooterSchema,
   author: embedAuthorSchema,

@@ -6,6 +6,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/guilds"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/magic"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/saved_messages"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/send_message"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/users"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
@@ -52,4 +53,9 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 	guildsGroup.Get("/", guildsHanlder.HandleListGuilds)
 	guildsGroup.Get("/:guildID/channels", guildsHanlder.HandleListGuildChannels)
 	guildsGroup.Get("/:guildID/roles", guildsHanlder.HandleListGuildRoles)
+
+	sendMessageHandler := send_message.New(stores.bot)
+	sendMessageGroup := app.Group("/api/send-message", sessionMiddleware.SessionRequired())
+	sendMessageGroup.Post("/channel", helpers.WithRequestBodyValidated(sendMessageHandler.HandleSendMessageToChannel))
+	sendMessageGroup.Post("/webhook", helpers.WithRequestBodyValidated(sendMessageHandler.HandleSendMessageToWebhook))
 }

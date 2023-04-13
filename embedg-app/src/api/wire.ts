@@ -6,7 +6,7 @@
 export interface GuildWire {
   id: string;
   name: string;
-  icon: string;
+  icon: null | string;
   bot_send_permissions: boolean; // also true when the bot has send permissions in at least one channel
   user_send_permissions: boolean; // also true when the user has send permissions in at least one channel
 }
@@ -86,14 +86,14 @@ export interface MessageSendToWebhookRequestWire {
   webhook_token: string;
   thread_id: null | string;
   message_id: null | string;
-  data: Record<string, any> | null;
+  data: string;
   attachments: MessageSendRequestAttachmentWire[];
 }
 export interface MessageSendToChannelRequestWire {
   guild_id: string;
   channel_id: string;
   message_id: null | string;
-  data: Record<string, any> | null;
+  data: string;
   attachments: MessageSendRequestAttachmentWire[];
 }
 export interface MessageSendRequestAttachmentWire {

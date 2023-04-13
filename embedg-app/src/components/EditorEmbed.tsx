@@ -10,6 +10,10 @@ import {
   TrashIcon,
 } from "@heroicons/react/20/solid";
 import { shallow } from "zustand/shallow";
+import EditorEmbedImages from "./EditorEmbedImages";
+import EditorEmbedFooter from "./EditorEmbedFooter";
+import { useMemo } from "react";
+import { useCollapsedStatesStore } from "../state/collapsed";
 
 interface Props {
   embedIndex: number;
@@ -35,22 +39,43 @@ export default function EditorEmbed({ embedIndex }: Props) {
     shallow
   );
 
+  const color = useCurrentMessageStore(
+    (state) => state.embeds[embedIndex]?.color
+  );
+
+  const hexColor = useMemo(
+    () => (color !== undefined ? "#" + color.toString(16) : "#1f2225"),
+    [color]
+  );
+
+  const clearCollapsedWithPrefix = useCollapsedStatesStore(
+    (state) => state.clearCollapsedWithPrefix
+  );
+
+  function wrappedRemove() {
+    clearCollapsedWithPrefix(`embeds.${embedId}`);
+    remove(embedIndex);
+  }
+
   return (
-    <div className="mb-3 bg-dark-3 p-3 rounded-md border-l-4 border-green">
+    <div
+      className="mb-3 bg-dark-3 p-3 rounded-md border-l-4"
+      style={{ borderColor: hexColor }}
+    >
       <Collapsable
         title={`Embed ${embedIndex + 1}`}
         id={`embeds.${embedId}`}
         size="large"
         extra={
           embedName && (
-            <div className="text-gray-400 truncate flex space-x-3 pl-2">
+            <div className="text-gray-500 truncate flex space-x-2 pl-2">
               <div>-</div>
               <div className="truncate">{embedName}</div>
             </div>
           )
         }
         buttons={
-          <div className="flex-none text-gray-300 flex items-center space-x-1">
+          <div className="flex-none text-gray-300 flex items-center space-x-2">
             {embedIndex > 0 && (
               <ChevronUpIcon
                 className="h-6 w-6 flex-none"
@@ -75,7 +100,7 @@ export default function EditorEmbed({ embedIndex }: Props) {
             <TrashIcon
               className="h-5 w-5 flex-none"
               role="button"
-              onClick={() => remove(embedIndex)}
+              onClick={wrappedRemove}
             />
           </div>
         }
@@ -83,6 +108,8 @@ export default function EditorEmbed({ embedIndex }: Props) {
         <div className="space-y-4">
           <EditorEmbedAuthor embedIndex={embedIndex} />
           <EditorEmbedBody embedIndex={embedIndex} />
+          <EditorEmbedImages embedIndex={embedIndex} />
+          <EditorEmbedFooter embedIndex={embedIndex} />
           <EditorEmbedFields embedIndex={embedIndex} />
         </div>
       </Collapsable>

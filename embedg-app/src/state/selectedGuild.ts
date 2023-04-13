@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { useGuildsQuery } from "../api/queries";
 
 interface SelectedGuildStore {
   guildId: string | null;

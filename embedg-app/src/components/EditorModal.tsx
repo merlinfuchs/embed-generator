@@ -14,7 +14,7 @@ export default function ({ children, size = "xl", closeButton }: Props) {
 
   return (
     <div
-      className="fixed h-screen w-screen bg-black bg-opacity-70 flex flex-col items-center justify-center px-5 py-20 md:px-10 lg:px-20 xl:px-32 z-30"
+      className="fixed h-screen w-screen bg-black bg-opacity-70 flex flex-col items-center justify-center px-2 py-20 sm:px-5 md:px-10 lg:px-20 xl:px-32 z-30"
       onClick={(e) => e.target === e.currentTarget && navigate("/")}
     >
       <div

@@ -43,13 +43,13 @@ export default function EditorEmbedFields({ embedIndex }: Props) {
               })
             }
           >
-            Add Embed
+            Add Field
           </button>
           <button
             className="px-3 py-2 rounded text-white border-red border-2 hover:bg-red"
             onClick={() => clearFields(embedIndex)}
           >
-            Clear Embeds
+            Clear Fields
           </button>
         </div>
       </div>

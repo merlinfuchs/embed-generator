@@ -58,7 +58,7 @@ export default function EditorEmbedAuthor({ embedIndex }: Props) {
             onChange={(v) => setAuthorUrl(embedIndex, v || undefined)}
             className="w-1/2"
           >
-            <ValidationError schema={embedAuthorUrlSchema} value={authorName} />
+            <ValidationError schema={embedAuthorUrlSchema} value={authorUrl} />
           </EditorInput>
           <EditorInput
             type="url"
@@ -69,7 +69,7 @@ export default function EditorEmbedAuthor({ embedIndex }: Props) {
           >
             <ValidationError
               schema={embedAuthorIconUrlSchema}
-              value={authorName}
+              value={authorIconUrl}
             />
           </EditorInput>
         </div>

@@ -8,7 +8,7 @@ UPDATE saved_messages SET updated_at = $3, name = $4, description = $5, data = $
 DELETE FROM saved_messages WHERE id = $1 AND owner_id = $2;
 
 -- name: GetSavedMessage :one
-SELECT * FROM saved_messages WHERE id = $1 AND owner_id = $2;
+SELECT * FROM saved_messages WHERE id = $1 AND owner_id = $2m;
 
 -- name: GetSavedMessages :many
 SELECT * FROM saved_messages WHERE owner_id = $1;

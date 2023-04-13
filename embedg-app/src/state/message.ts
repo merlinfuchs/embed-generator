@@ -18,9 +18,16 @@ export interface MessageStore extends Message {
   deleteEmbed: (i: number) => void;
   setEmbedDescription: (i: number, description: string | undefined) => void;
   setEmbedTitle: (i: number, title: string | undefined) => void;
+  setEmbedUrl: (i: number, url: string | undefined) => void;
   setEmbedAuthorName: (i: number, name: string | undefined) => void;
   setEmbedAuthorUrl: (i: number, url: string | undefined) => void;
   setEmbedAuthorIconUrl: (i: number, icon_url: string | undefined) => void;
+  setEmbedThumbnailUrl: (i: number, url: string | undefined) => void;
+  setEmbedImageUrl: (i: number, url: string | undefined) => void;
+  setEmbedFooterText: (i: number, text: string | undefined) => void;
+  setEmbedFooterIconUrl: (i: number, icon_url: string | undefined) => void;
+  setEmbedColor: (i: number, color: number | undefined) => void;
+  setEmbedTimestamp: (i: number, timestamp: string | undefined) => void;
   addEmbedField: (i: number, field: EmbedField) => void;
   setEmbedFieldName: (i: number, j: number, name: string) => void;
   setEmbedFieldValue: (i: number, j: number, value: string) => void;
@@ -29,6 +36,10 @@ export interface MessageStore extends Message {
     j: number,
     inline: boolean | undefined
   ) => void;
+  moveEmbedFieldDown: (i: number, j: number) => void;
+  moveEmbedFieldUp: (i: number, j: number) => void;
+  deleteEmbedField: (i: number, j: number) => void;
+  duplicateEmbedField: (i: number, j: number) => void;
   clearEmbedFields: (i: number) => void;
 }
 
@@ -134,6 +145,13 @@ export const useCurrentMessageStore = create<MessageStore>()(
             }
           });
         },
+        setEmbedUrl: (i: number, url: string | undefined) => {
+          set((state) => {
+            if (state.embeds && state.embeds[i]) {
+              state.embeds[i].url = url;
+            }
+          });
+        },
         setEmbedAuthorName: (i: number, name: string | undefined) =>
           set((state) => {
             const embed = state.embeds && state.embeds[i];
@@ -203,6 +221,82 @@ export const useCurrentMessageStore = create<MessageStore>()(
               }
             }
           }),
+        setEmbedThumbnailUrl: (i: number, url: string | undefined) => {
+          set((state) => {
+            if (state.embeds && state.embeds[i]) {
+              state.embeds[i].thumbnail = url ? { url } : undefined;
+            }
+          });
+        },
+        setEmbedImageUrl: (i: number, url: string | undefined) => {
+          set((state) => {
+            if (state.embeds && state.embeds[i]) {
+              state.embeds[i].image = url ? { url } : undefined;
+            }
+          });
+        },
+        setEmbedFooterText: (i: number, text: string | undefined) => {
+          set((state) => {
+            const embed = state.embeds && state.embeds[i];
+            if (!embed) {
+              return;
+            }
+            if (!text) {
+              if (!embed.footer) {
+                return;
+              }
+              embed.footer.text = undefined;
+
+              if (!embed.footer.icon_url) {
+                embed.footer = undefined;
+              }
+            } else {
+              if (!embed.footer) {
+                embed.footer = { text };
+              } else {
+                embed.footer.text = text;
+              }
+            }
+          });
+        },
+        setEmbedFooterIconUrl: (i: number, icon_url: string | undefined) => {
+          set((state) => {
+            const embed = state.embeds && state.embeds[i];
+            if (!embed) {
+              return;
+            }
+            if (!icon_url) {
+              if (!embed.footer) {
+                return;
+              }
+              embed.footer.icon_url = undefined;
+
+              if (!embed.footer.text) {
+                embed.footer = undefined;
+              }
+            } else {
+              if (!embed.footer) {
+                embed.footer = { icon_url };
+              } else {
+                embed.footer.icon_url = icon_url;
+              }
+            }
+          });
+        },
+        setEmbedColor: (i: number, color: number | undefined) => {
+          set((state) => {
+            if (state.embeds && state.embeds[i]) {
+              state.embeds[i].color = color;
+            }
+          });
+        },
+        setEmbedTimestamp: (i: number, timestamp: string | undefined) => {
+          set((state) => {
+            if (state.embeds && state.embeds[i]) {
+              state.embeds[i].timestamp = timestamp;
+            }
+          });
+        },
         addEmbedField: (i: number, field: EmbedField) =>
           set((state) => {
             const embed = state.embeds && state.embeds[i];
@@ -255,6 +349,57 @@ export const useCurrentMessageStore = create<MessageStore>()(
             }
             field.inline = inline;
           }),
+        deleteEmbedField: (i: number, j: number) => {
+          set((state) => {
+            const embed = state.embeds && state.embeds[i];
+            if (!embed) {
+              return;
+            }
+            embed.fields && embed.fields.splice(j, 1);
+          });
+        },
+        moveEmbedFieldDown: (i: number, j: number) => {
+          set((state) => {
+            const embed = state.embeds && state.embeds[i];
+            if (!embed) {
+              return;
+            }
+            const field = embed.fields && embed.fields[j];
+            if (!field) {
+              return;
+            }
+            embed.fields && embed.fields.splice(j, 1);
+            embed.fields && embed.fields.splice(j + 1, 0, field);
+          });
+        },
+        moveEmbedFieldUp: (i: number, j: number) => {
+          set((state) => {
+            const embed = state.embeds && state.embeds[i];
+            if (!embed) {
+              return;
+            }
+            const field = embed.fields && embed.fields[j];
+            if (!field) {
+              return;
+            }
+            embed.fields && embed.fields.splice(j, 1);
+            embed.fields && embed.fields.splice(j - 1, 0, field);
+          });
+        },
+        duplicateEmbedField: (i: number, j: number) => {
+          set((state) => {
+            const embed = state.embeds && state.embeds[i];
+            if (!embed) {
+              return;
+            }
+            const field = embed.fields && embed.fields[j];
+            if (!field) {
+              return;
+            }
+            embed.fields &&
+              embed.fields.splice(j + 1, 0, { ...field, id: getUniqueId() });
+          });
+        },
         clearEmbedFields: (i: number) =>
           set((state) => {
             const embed = state.embeds && state.embeds[i];

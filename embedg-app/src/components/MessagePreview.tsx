@@ -1,7 +1,6 @@
 import "./MessagePreview.css";
 import { format, parseISO } from "date-fns";
 import { useState } from "react";
-import { getUniqueId } from "../util";
 import { Message } from "../discord/schema";
 // @ts-ignore
 import { toHTML } from "../discord/markdown";

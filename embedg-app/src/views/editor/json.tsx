@@ -32,9 +32,9 @@ export default function JsonView() {
 
   return (
     <EditorModal>
-      <div className="h-full flex flex-col p-3">
+      <div className="h-full flex flex-col p-1.5 md:p-3">
         <ReactCodeMirror
-          className="flex-1 rounded"
+          className="flex-1 rounded overflow-hidden"
           height="100%"
           width="100%"
           value={raw}

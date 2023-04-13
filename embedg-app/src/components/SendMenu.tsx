@@ -1,6 +1,8 @@
 import clsx from "clsx";
 import { useState } from "react";
+import { useSendMessageToChannelMutation } from "../api/mutations";
 import { useUserQuery } from "../api/queries";
+import { useCurrentMessageStore } from "../state/message";
 import { useSelectedGuildStore } from "../state/selectedGuild";
 import { ChannelSelect } from "./ChannelSelect";
 import GuildSelect from "./GuildSelect";
@@ -19,6 +21,26 @@ export default function SendMenu() {
 
   function toggleMode() {
     setMode((prev) => (prev === "webhook" ? "channel" : "webhook"));
+  }
+
+  const sendToChannelMutation = useSendMessageToChannelMutation();
+  const sendToWebhookMutation = useSendMessageToChannelMutation();
+
+  function send() {
+    if (mode === "channel") {
+      if (!selectedGuildId || !selectedChannnelId) {
+        return;
+      }
+
+      sendToChannelMutation.mutate({
+        guild_id: selectedGuildId,
+        channel_id: selectedChannnelId,
+        message_id: null,
+        data: JSON.stringify(useCurrentMessageStore.getState()),
+        attachments: [],
+      });
+    } else {
+    }
   }
 
   return (
@@ -81,8 +103,8 @@ export default function SendMenu() {
           </div>
         </div>
       ) : !!user ? (
-        <div>
-          <div className="flex mb-5">
+        <div className="space-y-5">
+          <div className="flex">
             <div className="flex-auto">
               <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
                 Server
@@ -112,6 +134,15 @@ export default function SendMenu() {
                 type="text"
                 className="bg-dark-2 px-3 py-2 rounded w-full focus:outline-none text-white"
               />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <div
+              className="bg-blurple hover:bg-blurple-dark px-3 py-2 rounded text-white cursor-pointer"
+              role="button"
+              onClick={send}
+            >
+              Send
             </div>
           </div>
         </div>
