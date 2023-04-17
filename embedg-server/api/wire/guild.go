@@ -7,8 +7,8 @@ type GuildWire struct {
 	Name string      `json:"name"`
 	Icon null.String `json:"icon"`
 
-	BotSendPermissions  bool `json:"bot_send_permissions"`  // also true when the bot has send permissions in at least one channel
-	UserSendPermissions bool `json:"user_send_permissions"` // also true when the user has send permissions in at least one channel
+	HasChannelWithUserAccess bool `json:"has_channel_with_user_access"`
+	HasChannelWithBotAccess  bool `json:"has_channel_with_bot_access"`
 }
 
 type GuildChannelWire struct {
@@ -18,8 +18,10 @@ type GuildChannelWire struct {
 	ParentID null.String `json:"parent_id"`
 	Type     int         `json:"type"`
 
-	BotSendPermissions  bool `json:"bot_send_permissions"`
-	UserSendPermissions bool `json:"user_send_permissions"`
+	UserAccess      bool   `json:"user_access"`
+	UserPermissions string `json:"user_permissions"`
+	BotAccess       bool   `json:"bot_access"`
+	BotPermissions  string `json:"bot_permissions"`
 }
 
 type GuildRoleWire struct {

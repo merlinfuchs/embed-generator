@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
@@ -16,18 +17,30 @@ import (
 
 type SavedMessagesHandler struct {
 	pg *postgres.PostgresStore
+	am *access.AccessManager
 }
 
-func New(pg *postgres.PostgresStore) *SavedMessagesHandler {
+func New(pg *postgres.PostgresStore, am *access.AccessManager) *SavedMessagesHandler {
 	return &SavedMessagesHandler{
 		pg: pg,
+		am: am,
 	}
 }
 
 func (h *SavedMessagesHandler) HandleListSavedMessages(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
+	ownerID := c.Query("guild_id")
+	if ownerID != "" {
+		if err := h.am.CheckGuildAccessForRequest(c, ownerID); err != nil {
+			return err
+		}
+	}
 
-	messages, err := h.pg.Q.GetSavedMessages(c.Context(), session.UserID)
+	if ownerID == "" {
+		ownerID = session.UserID
+	}
+
+	messages, err := h.pg.Q.GetSavedMessages(c.Context(), ownerID)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get saved messages")
 		return err

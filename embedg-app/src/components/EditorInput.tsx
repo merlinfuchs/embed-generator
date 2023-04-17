@@ -36,7 +36,7 @@ export default function EditorInput({
       </div>
       {type === "textarea" ? (
         <textarea
-          className="bg-dark-2 px-3 py-2 rounded w-full text-white ring-0 border-transparent focus:outline-none mb-1 h-26"
+          className="bg-dark-2 px-3 py-2 rounded w-full text-white ring-0 border-transparent focus:outline-none h-26"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           {...props}
@@ -44,13 +44,13 @@ export default function EditorInput({
       ) : (
         <input
           type={type || "text"}
-          className="bg-dark-2 px-3 py-2 rounded w-full text-white ring-0 border-transparent focus:outline-none mb-1"
+          className="bg-dark-2 px-3 py-2 rounded w-full text-white ring-0 border-transparent focus:outline-none"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           {...props}
         />
       )}
-      {children}
+      {children ? <div className="mt-1">{children}</div> : null}
     </div>
   );
 }

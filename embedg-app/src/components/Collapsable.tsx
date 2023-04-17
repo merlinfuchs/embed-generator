@@ -1,6 +1,6 @@
 import { ChevronRightIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
-import { ReactNode, useState } from "react";
+import { ReactNode } from "react";
 import { useCollapsedState } from "../state/collapsed";
 import { AutoAnimate } from "../util/autoAnimate";
 

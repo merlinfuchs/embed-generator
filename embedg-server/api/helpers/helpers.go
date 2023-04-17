@@ -68,6 +68,14 @@ func NotFound(code string, message string) *Error {
 	}
 }
 
+func Forbidden(code string, message string) *Error {
+	return &Error{
+		Status:  fiber.StatusForbidden,
+		Code:    code,
+		Message: message,
+	}
+}
+
 func Unauthorized(code string, message string) *Error {
 	return &Error{
 		Status:  fiber.StatusUnauthorized,

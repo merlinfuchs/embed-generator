@@ -25,7 +25,7 @@ type SessionManager struct {
 	pg *postgres.PostgresStore
 }
 
-func NewSessionStore(pg *postgres.PostgresStore) *SessionManager {
+func New(pg *postgres.PostgresStore) *SessionManager {
 	return &SessionManager{
 		pg: pg,
 	}

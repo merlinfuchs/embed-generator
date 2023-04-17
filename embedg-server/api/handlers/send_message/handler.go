@@ -5,21 +5,28 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/gofiber/fiber/v2"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 )
 
 type SendMessageHandler struct {
 	bot *bot.Bot
+	am  *access.AccessManager
 }
 
-func New(bot *bot.Bot) *SendMessageHandler {
+func New(bot *bot.Bot, am *access.AccessManager) *SendMessageHandler {
 	return &SendMessageHandler{
 		bot: bot,
+		am:  am,
 	}
 }
 
 func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.MessageSendToChannelRequestWire) error {
+	if err := h.am.CheckChannelAccessForRequest(c, req.ChannelID); err != nil {
+		return err
+	}
+
 	webhook, err := h.getWebhookForChannel(req.ChannelID)
 	if err != nil {
 		return err

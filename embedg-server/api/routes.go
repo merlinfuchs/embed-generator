@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/auth"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/guilds"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/magic"
@@ -24,9 +25,10 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 		return c.SendString("Hello, World 👋!")
 	})
 
-	sessionManager := session.NewSessionStore(stores.pg)
+	sessionManager := session.New(stores.pg)
+	accessManager := access.New(stores.bot)
 
-	authHandler := auth.New(stores.pg, sessionManager)
+	authHandler := auth.New(stores.pg, stores.bot, sessionManager)
 	app.Get("/api/auth/login", authHandler.HandleAuthRedirect)
 	app.Get("/api/auth/callback", authHandler.HandleAuthCallback)
 	app.Get("/api/auth/logout", authHandler.HandleAuthLogout)
@@ -37,7 +39,7 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 	usersGroup := app.Group("/api/users", sessionMiddleware.SessionRequired())
 	usersGroup.Get("/:userID", usersHandler.HandleGetUser)
 
-	savedMessagesHandler := saved_messages.New(stores.pg)
+	savedMessagesHandler := saved_messages.New(stores.pg, accessManager)
 	savedMessagesGroup := app.Group("/api/saved-messages", sessionMiddleware.SessionRequired())
 	savedMessagesGroup.Get("/", savedMessagesHandler.HandleListSavedMessages)
 	savedMessagesGroup.Get("/:messageID", savedMessagesHandler.HandleGetSavedMessage)
@@ -48,13 +50,14 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 	magicHandler := magic.New()
 	app.Post("/api/magic/message", helpers.WithRequestBody(magicHandler.HandleGenerateMagicMessage))
 
-	guildsHanlder := guilds.New(stores.pg, stores.bot)
+	guildsHanlder := guilds.New(stores.pg, stores.bot, accessManager)
 	guildsGroup := app.Group("/api/guilds", sessionMiddleware.SessionRequired())
 	guildsGroup.Get("/", guildsHanlder.HandleListGuilds)
+	guildsGroup.Get("/:guildID", guildsHanlder.HandleGetGuild)
 	guildsGroup.Get("/:guildID/channels", guildsHanlder.HandleListGuildChannels)
 	guildsGroup.Get("/:guildID/roles", guildsHanlder.HandleListGuildRoles)
 
-	sendMessageHandler := send_message.New(stores.bot)
+	sendMessageHandler := send_message.New(stores.bot, accessManager)
 	sendMessageGroup := app.Group("/api/send-message", sessionMiddleware.SessionRequired())
 	sendMessageGroup.Post("/channel", helpers.WithRequestBodyValidated(sendMessageHandler.HandleSendMessageToChannel))
 	sendMessageGroup.Post("/webhook", helpers.WithRequestBodyValidated(sendMessageHandler.HandleSendMessageToWebhook))

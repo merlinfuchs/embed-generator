@@ -6,6 +6,7 @@ import { useCurrentMessageStore } from "../state/message";
 import { useSelectedGuildStore } from "../state/selectedGuild";
 import { ChannelSelect } from "./ChannelSelect";
 import GuildSelect from "./GuildSelect";
+import LoginPrompt from "./LoginPrompt";
 
 export default function SendMenu() {
   const [mode, setMode] = useState<"webhook" | "channel">("channel");
@@ -147,7 +148,7 @@ export default function SendMenu() {
           </div>
         </div>
       ) : (
-        <div>Please login!</div>
+        <LoginPrompt />
       )}
     </div>
   );

@@ -16,6 +16,8 @@ func New(token string) (*Bot, error) {
 		return nil, err
 	}
 
+	session.Identify.Intents = discordgo.IntentGuilds | discordgo.IntentGuildMessages | discordgo.IntentGuildMembers
+
 	state := discordgo.NewState()
 	session.StateEnabled = true
 	session.State = state
