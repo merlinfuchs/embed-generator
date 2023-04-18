@@ -5,6 +5,10 @@ import {
   MessageSendResponseWire,
   MessageSendToChannelRequestWire,
   MessageSendToWebhookRequestWire,
+  SavedMessageCreateRequestWire,
+  SavedMessageCreateResponseWire,
+  SavedMessageDeleteResponseWire,
+  SavedMessageUpdateResponseWire,
 } from "./wire";
 
 export function useGenerateMagicMessageMutation() {
@@ -59,4 +63,92 @@ export function useSendMessageToWebhookMutation() {
       }
     });
   });
+}
+
+export function useCreatedSavedMessageMutation() {
+  return useMutation(
+    ({
+      req,
+      guildId,
+    }: {
+      req: SavedMessageCreateRequestWire;
+      guildId: string | null;
+    }) => {
+      let url = `/api/saved-messages`;
+      if (guildId) {
+        url += `?guild_id=${guildId}`;
+      }
+
+      return fetch(url, {
+        method: "POST",
+        body: JSON.stringify(req),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then(async (res) => {
+        if (res.ok) {
+          return (await res.json()) as SavedMessageCreateResponseWire;
+        } else {
+          throw new Error("Failed to send message to channel");
+        }
+      });
+    }
+  );
+}
+
+export function useUpdateSavedMessageMutation() {
+  return useMutation(
+    ({
+      messageId,
+      req,
+      guildId,
+    }: {
+      messageId: string;
+      req: SavedMessageCreateRequestWire;
+      guildId: string | null;
+    }) => {
+      let url = `/api/saved-messages/${messageId}`;
+      if (guildId) {
+        url += `?guild_id=${guildId}`;
+      }
+
+      return fetch(url, {
+        method: "PUT",
+        body: JSON.stringify(req),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then(async (res) => {
+        if (res.ok) {
+          return (await res.json()) as SavedMessageUpdateResponseWire;
+        } else {
+          throw new Error("Failed to send message to channel");
+        }
+      });
+    }
+  );
+}
+
+export function useDeleteSavedMessageMutation() {
+  return useMutation(
+    ({ messageId, guildId }: { messageId: string; guildId: string | null }) => {
+      let url = `/api/saved-messages/${messageId}`;
+      if (guildId) {
+        url += `?guild_id=${guildId}`;
+      }
+
+      return fetch(url, {
+        method: "Delete",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then(async (res) => {
+        if (res.ok) {
+          return (await res.json()) as SavedMessageDeleteResponseWire;
+        } else {
+          throw new Error("Failed to send message to channel");
+        }
+      });
+    }
+  );
 }

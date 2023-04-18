@@ -5,11 +5,17 @@ import { useNavigate } from "react-router-dom";
 
 interface Props {
   children: ReactNode;
-  size?: "xl" | "full";
+  width?: "md" | "lg" | "xl" | "full";
+  height?: "auto" | "full";
   closeButton?: boolean;
 }
 
-export default function ({ children, size = "xl", closeButton }: Props) {
+export default function ({
+  children,
+  width = "xl",
+  height = "auto",
+  closeButton,
+}: Props) {
   const navigate = useNavigate();
 
   return (
@@ -19,8 +25,15 @@ export default function ({ children, size = "xl", closeButton }: Props) {
     >
       <div
         className={clsx(
-          "bg-dark-3 w-full h-full rounded-xl flex-shrink",
-          size === "xl" && "max-w-7xl"
+          "bg-dark-3 w-full rounded-xl flex-shrink",
+          width === "xl"
+            ? "max-w-7xl"
+            : width == "lg"
+            ? "max-w-5xl"
+            : width === "md"
+            ? "max-w-3xl"
+            : null,
+          height === "full" && "h-full"
         )}
       >
         {closeButton !== false && (

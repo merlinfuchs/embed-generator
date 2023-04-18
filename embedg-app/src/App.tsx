@@ -2,6 +2,7 @@ import { lazy, ReactNode, Suspense } from "react";
 import { Route, Routes, Navigate } from "react-router-dom";
 import { ToastContainer } from "./util/toasts";
 import EditorView from "./views/editor/editor";
+import RequestLoadingIndicator from "./components/RequestLoadingIndicator";
 
 const LazyJsonView = lazy(() => import("./views/editor/json"));
 const LazyMagicView = lazy(() => import("./views/editor/magic"));
@@ -15,6 +16,7 @@ function SuspendedView({ children }: { children: ReactNode }) {
 function App() {
   return (
     <div className="h-screen w-screen overflow-y-auto">
+      <RequestLoadingIndicator />
       <Routes>
         <Route path="/" element={<EditorView />}>
           <Route

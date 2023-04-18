@@ -73,7 +73,7 @@ export default function MagicView() {
   }
 
   return (
-    <EditorModal>
+    <EditorModal height="full">
       <div className="flex h-full">
         <div className="w-1/2 p-5 overflow-y-auto">
           <div>
@@ -90,6 +90,7 @@ export default function MagicView() {
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             className="bg-dark-2 px-3 py-2 rounded w-full text-white focus:outline-none h-64 mt-0 mb-3"
+            placeholder="Enter a prompt..."
           />
           <div className="flex space-x-3">
             <button

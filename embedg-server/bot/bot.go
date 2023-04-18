@@ -2,36 +2,53 @@ package bot
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"github.com/merlinfuchs/embed-generator/embedg-server/bot/sharding"
 	"github.com/rs/zerolog/log"
 )
 
 type Bot struct {
-	Session *discordgo.Session
-	State   *discordgo.State
+	*sharding.ShardManager
 }
 
 func New(token string) (*Bot, error) {
-	session, err := discordgo.New("Bot " + token)
+	manager, err := sharding.New("Bot " + token)
 	if err != nil {
 		return nil, err
 	}
 
-	session.Identify.Intents = discordgo.IntentGuilds | discordgo.IntentGuildMessages | discordgo.IntentGuildMembers
+	manager.Intents = discordgo.IntentGuilds | discordgo.IntentGuildMessages | discordgo.IntentGuildEmojis // discordgo.IntentGuildMembers
+	manager.State = discordgo.NewState()
 
-	state := discordgo.NewState()
-	session.StateEnabled = true
-	session.State = state
+	manager.AddHandler(onReady)
+	manager.AddHandler(onConnect)
+	manager.AddHandler(onDisconnect)
+	manager.AddHandler(onResumed)
 
 	return &Bot{
-		Session: session,
-		State:   state,
+		ShardManager: manager,
 	}, nil
 }
 
 func (b *Bot) Start() error {
-	err := b.Session.Open()
+	err := b.ShardManager.Start()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to open discord session")
 	}
 	return err
+}
+
+func onReady(s *discordgo.Session, r *discordgo.Ready) {
+	log.Info().Msgf("Shard %d is ready", s.ShardID)
+}
+
+func onConnect(s *discordgo.Session, c *discordgo.Connect) {
+	log.Info().Msgf("Shard %d connected", s.ShardID)
+}
+
+func onDisconnect(s *discordgo.Session, d *discordgo.Disconnect) {
+	log.Info().Msgf("Shard %d disconnected", s.ShardID)
+}
+
+func onResumed(s *discordgo.Session, r *discordgo.Resumed) {
+	log.Info().Msgf("Shard %d resumed", s.ShardID)
 }

@@ -29,18 +29,21 @@ func New(pg *postgres.PostgresStore, am *access.AccessManager) *SavedMessagesHan
 
 func (h *SavedMessagesHandler) HandleListSavedMessages(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
-	ownerID := c.Query("guild_id")
-	if ownerID != "" {
-		if err := h.am.CheckGuildAccessForRequest(c, ownerID); err != nil {
+
+	guildID := c.Query("guild_id")
+
+	var messages []postgres.SavedMessage
+	var err error
+
+	if guildID != "" {
+		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 			return err
 		}
+		messages, err = h.pg.Q.GetSavedMessagesForGuild(c.Context(), sql.NullString{String: guildID, Valid: true})
+	} else {
+		messages, err = h.pg.Q.GetSavedMessagesForCreator(c.Context(), session.UserID)
 	}
 
-	if ownerID == "" {
-		ownerID = session.UserID
-	}
-
-	messages, err := h.pg.Q.GetSavedMessages(c.Context(), ownerID)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get saved messages")
 		return err
@@ -54,31 +57,20 @@ func (h *SavedMessagesHandler) HandleListSavedMessages(c *fiber.Ctx) error {
 	return c.JSON(wire.SavedMessageListResponseWire(res))
 }
 
-func (h *SavedMessagesHandler) HandleGetSavedMessage(c *fiber.Ctx) error {
-	session := c.Locals("session").(*session.Session)
-	messageID := c.Params("messageID")
-
-	message, err := h.pg.Q.GetSavedMessage(c.Context(), postgres.GetSavedMessageParams{
-		ID:      messageID,
-		OwnerID: session.UserID,
-	})
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return helpers.NotFound("unknown_message", "The message does not exist.")
-		}
-		log.Error().Err(err).Msg("Failed to get saved message")
-		return err
-	}
-
-	return c.JSON(wire.SavedMessageGetResponseWire(savedMessageModelToWire(message)))
-}
-
 func (h *SavedMessagesHandler) HandleCreateSavedMessage(c *fiber.Ctx, req wire.SavedMessageCreateRequestWire) error {
 	session := c.Locals("session").(*session.Session)
+	guildID := c.Query("guild_id")
+
+	if guildID != "" {
+		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+			return err
+		}
+	}
 
 	message, err := h.pg.Q.InsertSavedMessage(c.Context(), postgres.InsertSavedMessageParams{
 		ID:          util.UniqueID(),
-		OwnerID:     session.UserID,
+		CreatorID:   session.UserID,
+		GuildID:     sql.NullString{String: guildID, Valid: guildID != ""},
 		UpdatedAt:   time.Now().UTC(),
 		Name:        req.Name,
 		Description: sql.NullString{String: req.Description.String, Valid: req.Description.Valid},
@@ -95,15 +87,36 @@ func (h *SavedMessagesHandler) HandleCreateSavedMessage(c *fiber.Ctx, req wire.S
 func (h *SavedMessagesHandler) HandleUpdateSavedMessage(c *fiber.Ctx, req wire.SavedMessageUpdateRequestWire) error {
 	session := c.Locals("session").(*session.Session)
 	messageID := c.Params("messageID")
+	guildID := c.Query("guild_id")
 
-	message, err := h.pg.Q.UpdateSavedMessage(c.Context(), postgres.UpdateSavedMessageParams{
-		ID:          messageID,
-		OwnerID:     session.UserID,
-		UpdatedAt:   time.Now().UTC(),
-		Name:        req.Name,
-		Description: sql.NullString{String: req.Description.String, Valid: req.Description.Valid},
-		Data:        req.Data,
-	})
+	if guildID != "" {
+		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+			return err
+		}
+	}
+
+	var message postgres.SavedMessage
+	var err error
+	if guildID != "" {
+		message, err = h.pg.Q.UpdateSavedMessageForGuild(c.Context(), postgres.UpdateSavedMessageForGuildParams{
+			ID:          messageID,
+			GuildID:     sql.NullString{String: guildID, Valid: true},
+			UpdatedAt:   time.Now().UTC(),
+			Name:        req.Name,
+			Description: sql.NullString{String: req.Description.String, Valid: req.Description.Valid},
+			Data:        req.Data,
+		})
+	} else {
+		message, err = h.pg.Q.UpdateSavedMessageForCreator(c.Context(), postgres.UpdateSavedMessageForCreatorParams{
+			ID:          messageID,
+			CreatorID:   session.UserID,
+			UpdatedAt:   time.Now().UTC(),
+			Name:        req.Name,
+			Description: sql.NullString{String: req.Description.String, Valid: req.Description.Valid},
+			Data:        req.Data,
+		})
+	}
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return helpers.NotFound("unknown_message", "The message does not exist.")
@@ -118,11 +131,27 @@ func (h *SavedMessagesHandler) HandleUpdateSavedMessage(c *fiber.Ctx, req wire.S
 func (h *SavedMessagesHandler) HandleDeleteSavedMessage(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
 	messageID := c.Params("messageID")
+	guildID := c.Query("guild_id")
 
-	err := h.pg.Q.DeleteSavedMessage(c.Context(), postgres.DeleteSavedMessageParams{
-		ID:      messageID,
-		OwnerID: session.UserID,
-	})
+	if guildID != "" {
+		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+			return err
+		}
+	}
+
+	var err error
+	if guildID != "" {
+		err = h.pg.Q.DeleteSavedMessageForGuild(c.Context(), postgres.DeleteSavedMessageForGuildParams{
+			ID:      messageID,
+			GuildID: sql.NullString{String: guildID, Valid: true},
+		})
+	} else {
+		err = h.pg.Q.DeleteSavedMessageForCreator(c.Context(), postgres.DeleteSavedMessageForCreatorParams{
+			ID:        messageID,
+			CreatorID: session.UserID,
+		})
+	}
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return helpers.NotFound("unknown_message", "The message does not exist.")
@@ -137,7 +166,8 @@ func (h *SavedMessagesHandler) HandleDeleteSavedMessage(c *fiber.Ctx) error {
 func savedMessageModelToWire(model postgres.SavedMessage) wire.SavedMessageWire {
 	return wire.SavedMessageWire{
 		ID:          model.ID,
-		OwnerID:     model.OwnerID,
+		CreatorID:   model.CreatorID,
+		GuildID:     null.NewString(model.GuildID.String, model.GuildID.Valid),
 		UpdatedAt:   model.UpdatedAt,
 		Name:        model.Name,
 		Description: null.NewString(model.Description.String, model.Description.Valid),

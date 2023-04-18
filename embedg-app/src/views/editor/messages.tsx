@@ -5,6 +5,23 @@ import { useSavedMessagesQuery, useUserQuery } from "../../api/queries";
 import EditorInput from "../../components/EditorInput";
 import clsx from "clsx";
 import LoginPrompt from "../../components/LoginPrompt";
+import {
+  useCreatedSavedMessageMutation,
+  useDeleteSavedMessageMutation,
+  useUpdateSavedMessageMutation,
+} from "../../api/mutations";
+import { useCurrentMessageStore } from "../../state/message";
+import {
+  ArrowDownTrayIcon,
+  ArrowUpTrayIcon,
+  TrashIcon,
+} from "@heroicons/react/20/solid";
+import { SavedMessageWire } from "../../api/wire";
+import { parseISO } from "date-fns";
+
+function formatUpdatedAt(updatedAt: string): string {
+  return parseISO(updatedAt).toLocaleString();
+}
 
 export default function MessagesView() {
   const [source, setSource] = useState<string | null>(null);
@@ -16,21 +33,73 @@ export default function MessagesView() {
 
   const [newMessageName, setNewMessageName] = useState("");
 
-  function saveNewMessage() {
+  const createMessageMutation = useCreatedSavedMessageMutation();
+
+  function createMessage() {
     if (!newMessageName) {
       return;
     }
+
+    createMessageMutation.mutate(
+      {
+        guildId: guildId,
+        req: {
+          name: newMessageName,
+          description: "",
+          data: useCurrentMessageStore.getState(),
+        },
+      },
+      {
+        onSuccess: () => {
+          messagesQuery.refetch();
+          setNewMessageName("");
+        },
+      }
+    );
   }
 
-  function overwriteExistingMessage(id: string) {}
+  const updateMessageMutation = useUpdateSavedMessageMutation();
 
-  function restoreMessage(id: string) {}
+  function updateMessage(message: SavedMessageWire) {
+    updateMessageMutation.mutate(
+      {
+        messageId: message.id,
+        guildId: guildId,
+        req: {
+          name: message.name,
+          description: message.description,
+          data: useCurrentMessageStore.getState(),
+        },
+      },
+      {
+        onSuccess: () => {
+          messagesQuery.refetch();
+        },
+      }
+    );
+  }
 
-  function deleteMessage(id: string) {}
+  function restoreMessage(message: SavedMessageWire) {}
+
+  const deleteMessageMutation = useDeleteSavedMessageMutation();
+
+  function deleteMessage(message: SavedMessageWire) {
+    deleteMessageMutation.mutate(
+      {
+        messageId: message.id,
+        guildId: guildId,
+      },
+      {
+        onSuccess: () => {
+          messagesQuery.refetch();
+        },
+      }
+    );
+  }
 
   return (
-    <EditorModal>
-      <div className="p-4 space-y-5">
+    <EditorModal width="md">
+      <div className="p-4 space-y-5 flex flex-col h-full">
         {user ? (
           <>
             <div>
@@ -41,26 +110,65 @@ export default function MessagesView() {
                 <GuildOrUserSelect value={source} onChange={setSource} />
               </div>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-3 flex-auto">
               {messagesQuery?.data?.map((message) => (
-                <div key={message.id}></div>
+                <div
+                  key={message.id}
+                  className="bg-dark-2 p-3 rounded flex justify-between truncate space-x-3"
+                >
+                  <div className="flex-auto truncate">
+                    <div className="flex items-center space-x-1 truncate">
+                      <div className="text-white truncate">{message.name}</div>
+                      <div className="text-gray-500 text-xs hidden md:block">
+                        {message.id}
+                      </div>
+                    </div>
+                    <div className="text-gray-400 text-sm">
+                      {formatUpdatedAt(message.updated_at)}
+                    </div>
+                  </div>
+                  <div className="flex flex-none items-center space-x-4">
+                    <ArrowDownTrayIcon
+                      className="text-gray-300 h-5 w-5 hover:text-white cursor-pointer"
+                      role="button"
+                      onClick={() => restoreMessage(message)}
+                    />
+                    <ArrowUpTrayIcon
+                      className="text-gray-300 h-5 w-5 hover:Text-white cursor-pointer"
+                      role="button"
+                      onClick={() => updateMessage(message)}
+                    />
+                    <TrashIcon
+                      className="text-gray-300 h-5 w-5 hover:text-white cursor-pointer"
+                      role="button"
+                      onClick={() => deleteMessage(message)}
+                    />
+                  </div>
+                </div>
               ))}
+              {messagesQuery?.data?.length === 0 && (
+                <div className="text-gray-400">
+                  There are no saved messages yet. Enter a name below and click
+                  on "Save Message"
+                </div>
+              )}
             </div>
-            <div className="flex space-x-3 items-end">
+            <div className="flex space-x-3 items-end flex-none">
               <EditorInput
                 label="Message Name"
                 maxLength={25}
                 value={newMessageName}
                 onChange={setNewMessageName}
+                className="w-full"
               ></EditorInput>
               <button
                 className={clsx(
-                  "px-3 py-2 rounded text-white",
+                  "px-3 py-2 rounded text-white flex-none",
                   newMessageName
                     ? "bg-blurple hover:bg-blurple-dark"
                     : "bg-dark-2 cursor-not-allowed"
                 )}
-                onClick={saveNewMessage}
+                onClick={createMessage}
               >
                 Save Message
               </button>

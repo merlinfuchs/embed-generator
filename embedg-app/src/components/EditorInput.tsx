@@ -39,6 +39,7 @@ export default function EditorInput({
           className="bg-dark-2 px-3 py-2 rounded w-full text-white ring-0 border-transparent focus:outline-none h-26"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          maxLength={maxLength}
           {...props}
         />
       ) : (
@@ -47,6 +48,7 @@ export default function EditorInput({
           className="bg-dark-2 px-3 py-2 rounded w-full text-white ring-0 border-transparent focus:outline-none"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          maxLength={maxLength}
           {...props}
         />
       )}

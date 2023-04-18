@@ -7,8 +7,8 @@ export interface GuildWire {
   id: string;
   name: string;
   icon: null | string;
-  bot_send_permissions: boolean; // also true when the bot has send permissions in at least one channel
-  user_send_permissions: boolean; // also true when the user has send permissions in at least one channel
+  has_channel_with_user_access: boolean;
+  has_channel_with_bot_access: boolean;
 }
 export interface GuildChannelWire {
   id: string;
@@ -16,8 +16,10 @@ export interface GuildChannelWire {
   position: number /* int */;
   parent_id: null | string;
   type: number /* int */;
-  bot_send_permissions: boolean;
-  user_send_permissions: boolean;
+  user_access: boolean;
+  user_permissions: string;
+  bot_access: boolean;
+  bot_permissions: string;
 }
 export interface GuildRoleWire {
   id: string;
@@ -60,6 +62,7 @@ export interface GenerateMagicMessageResponseWire {
 export interface SavedMessageWire {
   id: string;
   owner_id: string;
+  guild_id: null | string;
   updated_at: string /* RFC3339 */;
   name: string;
   description: null | string;

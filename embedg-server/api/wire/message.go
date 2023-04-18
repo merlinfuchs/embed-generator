@@ -9,7 +9,8 @@ import (
 
 type SavedMessageWire struct {
 	ID          string          `json:"id"`
-	OwnerID     string          `json:"owner_id"`
+	CreatorID   string          `json:"owner_id"`
+	GuildID     null.String     `json:"guild_id"`
 	UpdatedAt   time.Time       `json:"updated_at"`
 	Name        string          `json:"name"`
 	Description null.String     `json:"description"`

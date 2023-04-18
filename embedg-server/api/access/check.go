@@ -15,7 +15,7 @@ func (m *AccessManager) CheckGuildAccessForRequest(c *fiber.Ctx, guildID string)
 	}
 
 	if !access.HasChannelWithBotAccess {
-		return helpers.Forbidden("missing_access", "The bot doesn't have access to this guild")
+		return helpers.Forbidden("bot_missing_access", "The bot doesn't have access to this guild")
 	}
 
 	if !access.HasChannelWithUserAccess {
@@ -34,7 +34,7 @@ func (m *AccessManager) CheckChannelAccessForRequest(c *fiber.Ctx, channelID str
 	}
 
 	if !access.BotAccess() {
-		return helpers.Forbidden("missing_access", "The bot doesn't have access to this channel")
+		return helpers.Forbidden("bot_missing_access", "The bot doesn't have access to this channel")
 	}
 
 	if !access.UserAccess() {

@@ -42,7 +42,6 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 	savedMessagesHandler := saved_messages.New(stores.pg, accessManager)
 	savedMessagesGroup := app.Group("/api/saved-messages", sessionMiddleware.SessionRequired())
 	savedMessagesGroup.Get("/", savedMessagesHandler.HandleListSavedMessages)
-	savedMessagesGroup.Get("/:messageID", savedMessagesHandler.HandleGetSavedMessage)
 	savedMessagesGroup.Post("/", helpers.WithRequestBodyValidated(savedMessagesHandler.HandleCreateSavedMessage))
 	savedMessagesGroup.Put("/:messageID", helpers.WithRequestBodyValidated(savedMessagesHandler.HandleUpdateSavedMessage))
 	savedMessagesGroup.Delete("/:messageID", savedMessagesHandler.HandleDeleteSavedMessage)
@@ -56,6 +55,8 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 	guildsGroup.Get("/:guildID", guildsHanlder.HandleGetGuild)
 	guildsGroup.Get("/:guildID/channels", guildsHanlder.HandleListGuildChannels)
 	guildsGroup.Get("/:guildID/roles", guildsHanlder.HandleListGuildRoles)
+	guildsGroup.Get("/:guildID/emojis", guildsHanlder.HandleListGuildEmojis)
+	guildsGroup.Get("/:guildID/stickers", guildsHanlder.HandleListGuildStickers)
 
 	sendMessageHandler := send_message.New(stores.bot, accessManager)
 	sendMessageGroup := app.Group("/api/send-message", sessionMiddleware.SessionRequired())

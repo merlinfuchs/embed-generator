@@ -135,13 +135,16 @@ func (h *GuildsHanlder) HandleListGuildChannels(c *fiber.Ctx) error {
 
 func (h *GuildsHanlder) HandleListGuildRoles(c *fiber.Ctx) error {
 	guildID := c.Params("guildID")
-	guild, err := h.bot.State.Guild(guildID)
-	if err != nil {
+	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
-	if guild == nil {
-		return helpers.NotFound("unknown_guild", "The guild does not exist.")
+	guild, err := h.bot.State.Guild(guildID)
+	if err != nil {
+		if err == discordgo.ErrStateNotFound {
+			return helpers.NotFound("unknown_guild", "The guild does not exist.")
+		}
+		return err
 	}
 
 	res := make([]wire.GuildRoleWire, len(guild.Roles))
@@ -150,6 +153,61 @@ func (h *GuildsHanlder) HandleListGuildRoles(c *fiber.Ctx) error {
 			ID:      role.ID,
 			Name:    role.Name,
 			Managed: role.Managed,
+		}
+	}
+
+	return c.JSON(res)
+}
+
+func (h *GuildsHanlder) HandleListGuildEmojis(c *fiber.Ctx) error {
+	guildID := c.Params("guildID")
+	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+		return err
+	}
+
+	guild, err := h.bot.State.Guild(guildID)
+	if err != nil {
+		if err == discordgo.ErrStateNotFound {
+			return helpers.NotFound("unknown_guild", "The guild does not exist.")
+		}
+		return err
+	}
+
+	res := make([]wire.GuildEmojiWire, len(guild.Emojis))
+	for i, emoji := range guild.Emojis {
+		res[i] = wire.GuildEmojiWire{
+			ID:        emoji.ID,
+			Name:      emoji.Name,
+			Managed:   emoji.Managed,
+			Available: emoji.Available,
+			Animated:  emoji.Animated,
+		}
+	}
+
+	return c.JSON(res)
+}
+
+func (h *GuildsHanlder) HandleListGuildStickers(c *fiber.Ctx) error {
+	guildID := c.Params("guildID")
+	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+		return err
+	}
+
+	guild, err := h.bot.State.Guild(guildID)
+	if err != nil {
+		if err == discordgo.ErrStateNotFound {
+			return helpers.NotFound("unknown_guild", "The guild does not exist.")
+		}
+		return err
+	}
+
+	res := make([]wire.GuildStickerWire, len(guild.Stickers))
+	for i, sticker := range guild.Stickers {
+		res[i] = wire.GuildStickerWire{
+			ID:          sticker.ID,
+			Name:        sticker.Name,
+			Available:   sticker.Available,
+			Description: sticker.Description,
 		}
 	}
 

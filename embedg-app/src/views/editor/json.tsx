@@ -31,7 +31,7 @@ export default function JsonView() {
   }
 
   return (
-    <EditorModal>
+    <EditorModal height="full">
       <div className="h-full flex flex-col p-1.5 md:p-3">
         <ReactCodeMirror
           className="flex-1 rounded overflow-hidden"
