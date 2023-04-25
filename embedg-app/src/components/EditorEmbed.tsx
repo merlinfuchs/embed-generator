@@ -17,12 +17,10 @@ import { useCollapsedStatesStore } from "../state/collapsed";
 
 interface Props {
   embedIndex: number;
+  embedId: number;
 }
 
-export default function EditorEmbed({ embedIndex }: Props) {
-  const embedId = useCurrentMessageStore(
-    (state) => state.embeds[embedIndex].id
-  );
+export default function EditorEmbed({ embedIndex, embedId }: Props) {
   const embedName = useCurrentMessageStore((state) => {
     const embed = state.embeds[embedIndex];
     return embed.author?.name || embed.title;
@@ -65,6 +63,7 @@ export default function EditorEmbed({ embedIndex }: Props) {
       <Collapsable
         title={`Embed ${embedIndex + 1}`}
         id={`embeds.${embedId}`}
+        valiationPathPrefix={`embeds.${embedIndex}`}
         size="large"
         extra={
           embedName && (
@@ -106,11 +105,11 @@ export default function EditorEmbed({ embedIndex }: Props) {
         }
       >
         <div className="space-y-4">
-          <EditorEmbedAuthor embedIndex={embedIndex} />
-          <EditorEmbedBody embedIndex={embedIndex} />
-          <EditorEmbedImages embedIndex={embedIndex} />
-          <EditorEmbedFooter embedIndex={embedIndex} />
-          <EditorEmbedFields embedIndex={embedIndex} />
+          <EditorEmbedAuthor embedIndex={embedIndex} embedId={embedId} />
+          <EditorEmbedBody embedIndex={embedIndex} embedId={embedId} />
+          <EditorEmbedImages embedIndex={embedIndex} embedId={embedId} />
+          <EditorEmbedFooter embedIndex={embedIndex} embedId={embedId} />
+          <EditorEmbedFields embedIndex={embedIndex} embedId={embedId} />
         </div>
       </Collapsable>
     </div>

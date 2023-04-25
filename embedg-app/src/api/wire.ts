@@ -89,14 +89,14 @@ export interface MessageSendToWebhookRequestWire {
   webhook_token: string;
   thread_id: null | string;
   message_id: null | string;
-  data: string;
+  data: Record<string, any> | null;
   attachments: MessageSendRequestAttachmentWire[];
 }
 export interface MessageSendToChannelRequestWire {
   guild_id: string;
   channel_id: string;
   message_id: null | string;
-  data: string;
+  data: Record<string, any> | null;
   attachments: MessageSendRequestAttachmentWire[];
 }
 export interface MessageSendRequestAttachmentWire {

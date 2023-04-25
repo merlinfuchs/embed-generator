@@ -7,6 +7,7 @@ type GuildWire struct {
 	Name string      `json:"name"`
 	Icon null.String `json:"icon"`
 
+	HasPremium               bool `json:"is_premium"`
 	HasChannelWithUserAccess bool `json:"has_channel_with_user_access"`
 	HasChannelWithBotAccess  bool `json:"has_channel_with_bot_access"`
 }

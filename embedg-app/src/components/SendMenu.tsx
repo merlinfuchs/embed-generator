@@ -7,8 +7,14 @@ import { useSelectedGuildStore } from "../state/selectedGuild";
 import { ChannelSelect } from "./ChannelSelect";
 import GuildSelect from "./GuildSelect";
 import LoginPrompt from "./LoginPrompt";
+import { useValidationErrorStore } from "../state/validationError";
+import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 
 export default function SendMenu() {
+  const validationError = useValidationErrorStore((state) =>
+    state.checkIssueByPathPrefix("")
+  );
+
   const [mode, setMode] = useState<"webhook" | "channel">("channel");
 
   const selectedGuildId = useSelectedGuildStore((state) => state.guildId);
@@ -28,6 +34,8 @@ export default function SendMenu() {
   const sendToWebhookMutation = useSendMessageToChannelMutation();
 
   function send() {
+    if (validationError) return;
+
     if (mode === "channel") {
       if (!selectedGuildId || !selectedChannnelId) {
         return;
@@ -37,7 +45,7 @@ export default function SendMenu() {
         guild_id: selectedGuildId,
         channel_id: selectedChannnelId,
         message_id: null,
-        data: JSON.stringify(useCurrentMessageStore.getState()),
+        data: useCurrentMessageStore.getState(),
         attachments: [],
       });
     } else {
@@ -137,13 +145,28 @@ export default function SendMenu() {
               />
             </div>
           </div>
+          <div>
+            {validationError && (
+              <div className="flex items-center text-red space-x-1">
+                <ExclamationCircleIcon className="h-5 w-5" />
+                <div>
+                  There are errors in your message. You have to fix them before
+                  sending the message.
+                </div>
+              </div>
+            )}
+          </div>
           <div className="flex justify-end">
             <div
-              className="bg-blurple hover:bg-blurple-dark px-3 py-2 rounded text-white cursor-pointer"
+              className={`px-3 py-2 rounded text-white ${
+                validationError
+                  ? "cursor-not-allowed bg-dark-2"
+                  : "bg-blurple hover:bg-blurple-dark cursor-pointer"
+              }`}
               role="button"
               onClick={send}
             >
-              Send
+              Send Message
             </div>
           </div>
         </div>

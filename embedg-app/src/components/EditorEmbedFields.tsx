@@ -7,9 +7,10 @@ import EditorEmbedField from "./EditorEmbedField";
 
 interface Props {
   embedIndex: number;
+  embedId: number;
 }
 
-export default function EditorEmbedFields({ embedIndex }: Props) {
+export default function EditorEmbedFields({ embedIndex, embedId }: Props) {
   const fields = useCurrentMessageStore(
     (state) => state.embeds[embedIndex].fields.map((e) => e.id),
     shallow
@@ -21,13 +22,19 @@ export default function EditorEmbedFields({ embedIndex }: Props) {
   ]);
 
   return (
-    <Collapsable id={`embeds.${embedIndex}.fields`} title="Fields">
+    <Collapsable
+      id={`embeds.${embedId}.fields`}
+      valiationPathPrefix={`embeds.${embedIndex}.fields`}
+      title="Fields"
+    >
       <div>
         <AutoAnimate className="space-y-2 mb-3">
           {fields.map((fieldId, fieldIndex) => (
             <EditorEmbedField
               embedIndex={embedIndex}
+              embedId={embedId}
               fieldIndex={fieldIndex}
+              fieldId={fieldId}
               key={fieldId}
             />
           ))}

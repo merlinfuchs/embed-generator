@@ -1,25 +1,14 @@
 import { shallow } from "zustand/shallow";
-import {
-  embedAuthorIconUrlSChema as embedAuthorIconUrlSchema,
-  embedAuthorNameSchema,
-  embedAuthorUrlSchema,
-  embedImageUrlSchema,
-  embedThumbnailUrlSchema,
-} from "../discord/schema";
 import { useCurrentMessageStore } from "../state/message";
 import Collapsable from "./Collapsable";
 import EditorInput from "./EditorInput";
-import ValidationError from "./ValidationError";
 
 interface Props {
   embedIndex: number;
+  embedId: number;
 }
 
-export default function EditorEmbedImages({ embedIndex }: Props) {
-  const embedId = useCurrentMessageStore(
-    (state) => state.embeds[embedIndex].id
-  );
-
+export default function EditorEmbedImages({ embedIndex, embedId }: Props) {
   const [imageUrl, setImageUrl] = useCurrentMessageStore(
     (state) => [state.embeds[embedIndex]?.image?.url, state.setEmbedImageUrl],
     shallow
@@ -34,27 +23,29 @@ export default function EditorEmbedImages({ embedIndex }: Props) {
   );
 
   return (
-    <Collapsable title="Images" id={`embeds.${embedId}.images`}>
+    <Collapsable
+      title="Images"
+      id={`embeds.${embedId}.images`}
+      valiationPathPrefix={[
+        `embeds.${embedIndex}.image`,
+        `embeds.${embedIndex}.thumbnail`,
+      ]}
+    >
       <div className="space-y-3">
         <EditorInput
           label="Image URL"
           type="url"
           value={imageUrl || ""}
           onChange={(v) => setImageUrl(embedIndex, v || undefined)}
-        >
-          <ValidationError schema={embedImageUrlSchema} value={imageUrl} />
-        </EditorInput>
+          validationPath={`embeds.${embedIndex}.image.url`}
+        />
         <EditorInput
           label="Thumbnail URL"
           type="url"
           value={thumbnailUrl || ""}
           onChange={(v) => setThumbnailUrl(embedIndex, v || undefined)}
-        >
-          <ValidationError
-            schema={embedThumbnailUrlSchema}
-            value={thumbnailUrl}
-          />
-        </EditorInput>
+          validationPath={`embeds.${embedIndex}.thumbnail.url`}
+        />
       </div>
     </Collapsable>
   );

@@ -1,26 +1,14 @@
 import { shallow } from "zustand/shallow";
-import {
-  embedAuthorIconUrlSChema as embedAuthorIconUrlSchema,
-  embedAuthorNameSchema,
-  embedAuthorUrlSchema,
-  embedFooterIconUrlSchema,
-  embedFooterTextSchema,
-  embedTimestampSchema,
-} from "../discord/schema";
 import { useCurrentMessageStore } from "../state/message";
 import Collapsable from "./Collapsable";
 import EditorInput from "./EditorInput";
-import ValidationError from "./ValidationError";
 
 interface Props {
   embedIndex: number;
+  embedId: number;
 }
 
-export default function EditorEmbedFooter({ embedIndex }: Props) {
-  const embedId = useCurrentMessageStore(
-    (state) => state.embeds[embedIndex].id
-  );
-
+export default function EditorEmbedFooter({ embedIndex, embedId }: Props) {
   const [footerText, setFooterText] = useCurrentMessageStore(
     (state) => [
       state.embeds[embedIndex]?.footer?.text,
@@ -42,17 +30,25 @@ export default function EditorEmbedFooter({ embedIndex }: Props) {
     shallow
   );
 
+  console.log("render footer", embedIndex);
+
   return (
-    <Collapsable title="Footer" id={`embeds.${embedId}.footer`}>
+    <Collapsable
+      title="Footer"
+      id={`embeds.${embedId}.footer`}
+      valiationPathPrefix={[
+        `embeds.${embedIndex}.footer`,
+        `embeds.${embedIndex}.timestamp`,
+      ]}
+    >
       <div className="space-y-3">
         <EditorInput
           label="Footer"
           value={footerText || ""}
           onChange={(v) => setFooterText(embedIndex, v || undefined)}
           maxLength={80}
-        >
-          <ValidationError schema={embedFooterTextSchema} value={footerText} />
-        </EditorInput>
+          validationPath={`embeds.${embedIndex}.footer.text`}
+        />
         <div className="flex space-x-3">
           <EditorInput
             type="url"
@@ -60,21 +56,16 @@ export default function EditorEmbedFooter({ embedIndex }: Props) {
             value={footerIconUrl || ""}
             onChange={(v) => setFooterIconUrl(embedIndex, v || undefined)}
             className="w-1/2"
-          >
-            <ValidationError
-              schema={embedFooterIconUrlSchema}
-              value={footerIconUrl}
-            />
-          </EditorInput>
+            validationPath={`embeds.${embedIndex}.footer.icon_url`}
+          />
           <EditorInput
             type="url"
-            label="Author Icon URL"
+            label="Timestamp"
             value={timestamp || ""}
             onChange={(v) => setTimestamp(embedIndex, v || undefined)}
             className="w-1/2"
-          >
-            <ValidationError schema={embedTimestampSchema} value={timestamp} />
-          </EditorInput>
+            validationPath={`embeds.${embedIndex}.timestamp`}
+          />
         </div>
       </div>
     </Collapsable>

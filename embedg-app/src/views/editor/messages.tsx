@@ -18,6 +18,8 @@ import {
 } from "@heroicons/react/20/solid";
 import { SavedMessageWire } from "../../api/wire";
 import { parseISO } from "date-fns";
+import { messageSchema } from "../../discord/schema";
+import { useNavigate } from "react-router-dom";
 
 function formatUpdatedAt(updatedAt: string): string {
   return parseISO(updatedAt).toLocaleString();
@@ -79,7 +81,18 @@ export default function MessagesView() {
     );
   }
 
-  function restoreMessage(message: SavedMessageWire) {}
+  const navigate = useNavigate();
+
+  function restoreMessage(message: SavedMessageWire) {
+    try {
+      const data = messageSchema.parse(message.data);
+      useCurrentMessageStore.setState(data);
+      navigate("/app");
+    } catch (e) {
+      console.error(e);
+      return;
+    }
+  }
 
   const deleteMessageMutation = useDeleteSavedMessageMutation();
 

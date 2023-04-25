@@ -52,7 +52,7 @@ type MessageSendToWebhookRequestWire struct {
 	WebhookToken string                             `json:"webhook_token"`
 	ThreadID     null.String                        `json:"thread_id"`
 	MessageID    null.String                        `json:"message_id"`
-	Data         string                             `json:"data"`
+	Data         json.RawMessage                    `json:"data"`
 	Attachments  []MessageSendRequestAttachmentWire `json:"attachments"`
 }
 
@@ -64,7 +64,7 @@ type MessageSendToChannelRequestWire struct {
 	GuildID     string                             `json:"guild_id"`
 	ChannelID   string                             `json:"channel_id"`
 	MessageID   null.String                        `json:"message_id"`
-	Data        string                             `json:"data"`
+	Data        json.RawMessage                    `json:"data"`
 	Attachments []MessageSendRequestAttachmentWire `json:"attachments"`
 }
 

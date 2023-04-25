@@ -10,6 +10,13 @@ import (
 	"time"
 )
 
+type MessageActionSet struct {
+	ID        string
+	MessageID string
+	SetID     string
+	Actions   json.RawMessage
+}
+
 type SavedMessage struct {
 	ID          string
 	CreatorID   string
@@ -30,8 +37,18 @@ type Session struct {
 }
 
 type User struct {
-	ID            string
-	Name          string
-	Discriminator string
-	Avatar        sql.NullString
+	ID               string
+	Name             string
+	Discriminator    string
+	Avatar           sql.NullString
+	StripeCustomerID sql.NullString
+	StripeEmail      sql.NullString
+}
+
+type UserSubscription struct {
+	ID       string
+	UserID   string
+	Status   string
+	PriceIds []string
+	GuildIds []string
 }

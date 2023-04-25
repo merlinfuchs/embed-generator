@@ -9,7 +9,6 @@ import { useCurrentMessageStore } from "../../state/message";
 
 export default function MagicView() {
   const navigate = useNavigate();
-  const replaceMessage = useCurrentMessageStore((state) => state.replace);
 
   const [history, setHistory] = useState<string[]>([]);
   const [baseData, setBaseData] = useState<string | null>(null);
@@ -67,7 +66,7 @@ export default function MagicView() {
 
   function save() {
     if (outputData) {
-      replaceMessage(outputData);
+      useCurrentMessageStore.setState(outputData);
       navigate("/");
     }
   }
@@ -96,7 +95,7 @@ export default function MagicView() {
             <button
               className={clsx(
                 "text-white px-3 py-2 rounded",
-                isLoading ? "bg-dark-5 cursor-default" : "bg-blurple"
+                isLoading ? "bg-dark-5 cursor-not-allowed" : "bg-blurple"
               )}
               onClick={generate}
             >

@@ -1,13 +1,20 @@
 package main
 
 import (
+	"fmt"
+	"io"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/merlinfuchs/embed-generator/embedg-server/api"
 	"github.com/merlinfuchs/embed-generator/embedg-server/buildinfo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/config"
 	"github.com/merlinfuchs/embed-generator/embedg-server/migrate"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/diode"
+	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog/pkgerrors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -46,7 +53,35 @@ func bindFlags(cmd *cobra.Command, args []string) {
 	viper.BindPFlag("cfg.watch_interval_sec", cmd.Flags().Lookup("cfg.watch_interval_sec"))
 }
 
+func setupLogger() {
+	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
+
+	logContext := log.With()
+
+	var writer io.Writer
+	if viper.GetBool("development") {
+		logContext = logContext.Caller()
+		writer = zerolog.ConsoleWriter{Out: os.Stdout}
+	} else {
+		writer = diode.NewWriter(os.Stderr, 1000, 0, func(missed int) {
+			fmt.Printf("Logger Dropped %d messages", missed)
+		})
+	}
+
+	log.Logger = logContext.Logger().Output(writer)
+
+	if viper.GetBool("debug") {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	} else {
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	}
+}
+
 func main() {
+	config.InitConfig()
+	setupLogger()
+
 	rand.Seed(time.Now().UnixNano())
 	if err := rootCmd.Execute(); err != nil {
 		panic(err)

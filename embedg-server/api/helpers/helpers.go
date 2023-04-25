@@ -92,3 +92,11 @@ func ValidationError(data json.RawMessage) *Error {
 		Data:    data,
 	}
 }
+
+func BadRequest(code string, message string) *Error {
+	return &Error{
+		Status:  fiber.StatusBadRequest,
+		Code:    code,
+		Message: message,
+	}
+}

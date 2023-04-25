@@ -8,3 +8,8 @@ type UserWire struct {
 	Discriminator string      `json:"discriminator"`
 	Avatar        null.String `json:"avatar"`
 }
+
+type PlanInfoWire struct {
+	Active      bool `json:"active"`
+	ServerCount int  `json:"server_count"`
+}

@@ -10,15 +10,12 @@ import (
 	embedgapp "github.com/merlinfuchs/embed-generator/embedg-app"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
-	"github.com/merlinfuchs/embed-generator/embedg-server/config"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
 func Serve() {
-	config.InitConfig()
-
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			var e *helpers.Error
@@ -36,7 +33,7 @@ func Serve() {
 	})
 
 	pg := postgres.NewPostgresStore()
-	bot, err := bot.New(viper.GetString("discord.token"))
+	bot, err := bot.New(viper.GetString("discord.token"), pg)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize bot")
 	}

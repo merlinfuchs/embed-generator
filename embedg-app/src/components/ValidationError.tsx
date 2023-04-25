@@ -1,23 +1,23 @@
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
-import { ZodType } from "zod";
-import { useValidationError } from "../util/validate";
+import { useValidationErrorStore } from "../state/validationError";
 
 interface Props {
-  schema: ZodType;
-  value: any;
+  path: string;
 }
 
-export default function ValidationError({ schema, value }: Props) {
-  const error = useValidationError(schema, value);
-  schema._type;
+export default function ValidationError({ path }: Props) {
+  const issue = useValidationErrorStore(
+    (state) => state.getIssueByPath(path)?.message
+  );
 
-  if (error) {
+  if (issue) {
     return (
-      <div className="text-red text-sm flex items-center space-x-1">
+      <div className="text-red text-sm flex items-center space-x-1 mt-1">
         <ExclamationCircleIcon className="h-5 w-5" />
-        <div>{error}</div>
+        <div>{issue}</div>
       </div>
     );
+  } else {
+    return null;
   }
-  return null;
 }

@@ -3,14 +3,16 @@ package bot
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot/sharding"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
 )
 
 type Bot struct {
 	*sharding.ShardManager
+	pg *postgres.PostgresStore
 }
 
-func New(token string) (*Bot, error) {
+func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 	manager, err := sharding.New("Bot " + token)
 	if err != nil {
 		return nil, err
@@ -24,9 +26,14 @@ func New(token string) (*Bot, error) {
 	manager.AddHandler(onDisconnect)
 	manager.AddHandler(onResumed)
 
-	return &Bot{
+	b := &Bot{
 		ShardManager: manager,
-	}, nil
+		pg:           pg,
+	}
+
+	b.AddHandler(b.onMessageDelete)
+
+	return b, nil
 }
 
 func (b *Bot) Start() error {
@@ -35,20 +42,4 @@ func (b *Bot) Start() error {
 		log.Fatal().Err(err).Msg("Failed to open discord session")
 	}
 	return err
-}
-
-func onReady(s *discordgo.Session, r *discordgo.Ready) {
-	log.Info().Msgf("Shard %d is ready", s.ShardID)
-}
-
-func onConnect(s *discordgo.Session, c *discordgo.Connect) {
-	log.Info().Msgf("Shard %d connected", s.ShardID)
-}
-
-func onDisconnect(s *discordgo.Session, d *discordgo.Disconnect) {
-	log.Info().Msgf("Shard %d disconnected", s.ShardID)
-}
-
-func onResumed(s *discordgo.Session, r *discordgo.Resumed) {
-	log.Info().Msgf("Shard %d resumed", s.ShardID)
 }

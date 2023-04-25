@@ -41,7 +41,7 @@ func (q *Queries) DeleteSavedMessageForGuild(ctx context.Context, arg DeleteSave
 }
 
 const getSavedMessagesForCreator = `-- name: GetSavedMessagesForCreator :many
-SELECT id, creator_id, guild_id, updated_at, name, description, data FROM saved_messages WHERE creator_id = $1 ORDER BY updated_at DESC
+SELECT id, creator_id, guild_id, updated_at, name, description, data FROM saved_messages WHERE creator_id = $1 AND guild_id IS NULL ORDER BY updated_at DESC
 `
 
 func (q *Queries) GetSavedMessagesForCreator(ctx context.Context, creatorID string) ([]SavedMessage, error) {

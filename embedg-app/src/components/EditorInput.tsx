@@ -1,15 +1,15 @@
 import { ZodType } from "zod";
+import ValidationError from "./ValidationError";
 
 interface Props {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  schema?: ZodType;
   maxLength?: number;
   type?: "text" | "url" | "textarea";
-  children?: React.ReactNode;
   props?: Record<string, any>;
   className?: string;
+  validationPath?: string;
 }
 
 export default function EditorInput({
@@ -18,9 +18,9 @@ export default function EditorInput({
   onChange,
   maxLength,
   type,
-  children,
   props,
   className,
+  validationPath,
 }: Props) {
   return (
     <div className={className}>
@@ -52,7 +52,7 @@ export default function EditorInput({
           {...props}
         />
       )}
-      {children ? <div className="mt-1">{children}</div> : null}
+      {validationPath && <ValidationError path={validationPath} />}
     </div>
   );
 }

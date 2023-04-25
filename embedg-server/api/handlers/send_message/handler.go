@@ -6,24 +6,33 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/actions"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 )
 
 type SendMessageHandler struct {
-	bot *bot.Bot
-	am  *access.AccessManager
+	bot           *bot.Bot
+	pg            *postgres.PostgresStore
+	accessManager *access.AccessManager
+	actionManager *actions.ActionManager
 }
 
-func New(bot *bot.Bot, am *access.AccessManager) *SendMessageHandler {
+func New(bot *bot.Bot, accessManager *access.AccessManager, actionManger *actions.ActionManager) *SendMessageHandler {
 	return &SendMessageHandler{
-		bot: bot,
-		am:  am,
+		bot:           bot,
+		accessManager: accessManager,
+		actionManager: actionManger,
 	}
 }
 
 func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.MessageSendToChannelRequestWire) error {
-	if err := h.am.CheckChannelAccessForRequest(c, req.ChannelID); err != nil {
+	session := c.Locals("session").(*session.Session)
+
+	if err := h.accessManager.CheckChannelAccessForRequest(c, req.ChannelID); err != nil {
 		return err
 	}
 
@@ -42,11 +51,40 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return err
 	}
 
+	components, actionSets, err := h.actionManager.ParseMessageComponentActions(req.Data, session.UserID, req.ChannelID)
+	if err != nil {
+		return err
+	}
+
+	params.Components = components
+
 	var msg *discordgo.Message
 	if threadID != "" {
 		msg, err = h.bot.Session.WebhookThreadExecute(webhook.ID, webhook.Token, true, threadID, params)
 	} else {
 		msg, err = h.bot.Session.WebhookExecute(webhook.ID, webhook.Token, true, params)
+	}
+	if err != nil {
+		return err
+	}
+
+	// TODO: move into access manager
+	// TODO: delete action set on message delete
+	for _, actionSet := range actionSets {
+		rawActions, err := json.Marshal(actionSet.Actions)
+		if err != nil {
+			return err
+		}
+
+		_, err = h.pg.Q.InsertMessageActionSet(c.Context(), postgres.InsertMessageActionSetParams{
+			ID:        util.UniqueID(),
+			MessageID: msg.ID,
+			SetID:     actionSet.ID,
+			Actions:   rawActions,
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	return c.JSON(wire.MessageSendResponseWire{

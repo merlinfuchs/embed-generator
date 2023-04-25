@@ -48,12 +48,27 @@ func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 			return err
 		}
 
+		subscriptions, err := h.pg.Q.GetSubscriptionsForGuild(c.Context(), guildID)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to get subscriptions for guild")
+			return err
+		}
+
+		hasPremium := false
+		for _, subscription := range subscriptions {
+			if subscription.Status == "active" || subscription.Status == "trialing" {
+				hasPremium = true
+				break
+			}
+		}
+
 		res = append(res, wire.GuildWire{
 			ID:                       guild.ID,
 			Name:                     guild.Name,
 			Icon:                     null.NewString(guild.Icon, guild.Icon != ""),
 			HasChannelWithUserAccess: access.HasChannelWithUserAccess,
 			HasChannelWithBotAccess:  access.HasChannelWithBotAccess,
+			HasPremium:               hasPremium,
 		})
 	}
 

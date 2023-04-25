@@ -1,11 +1,5 @@
 import { useCurrentMessageStore } from "../state/message";
-import {
-  messageContentSchema,
-  webhookUsernameSchema,
-  webhookAvatarUrlSchema,
-} from "../discord/schema";
 import EditorInput from "./EditorInput";
-import ValidationError from "./ValidationError";
 
 export default function EditorMessageContentFields() {
   const username = useCurrentMessageStore((state) => state.username);
@@ -26,9 +20,8 @@ export default function EditorMessageContentFields() {
             value={username || ""}
             onChange={(v) => setUsername(v || undefined)}
             maxLength={80}
-          >
-            <ValidationError schema={webhookUsernameSchema} value={username} />
-          </EditorInput>
+            validationPath={`username`}
+          />
         </div>
         <div className="w-1/2">
           <EditorInput
@@ -36,12 +29,8 @@ export default function EditorMessageContentFields() {
             label="Avatar URL"
             value={avatarUrl || ""}
             onChange={(v) => setAvatarUrl(v || undefined)}
-          >
-            <ValidationError
-              schema={webhookAvatarUrlSchema}
-              value={avatarUrl}
-            />
-          </EditorInput>
+            validationPath={`avatar_url`}
+          />
         </div>
       </div>
       <div>
@@ -51,9 +40,8 @@ export default function EditorMessageContentFields() {
           value={content}
           onChange={(v) => setContent(v)}
           maxLength={2000}
-        >
-          <ValidationError schema={messageContentSchema} value={content} />
-        </EditorInput>
+          validationPath={`content`}
+        />
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import clsx from "clsx";
 import { ReactNode } from "react";
 import { useCollapsedState } from "../state/collapsed";
 import { AutoAnimate } from "../util/autoAnimate";
+import ValidationErrorIndicator from "./ValidationErrorIndicator";
 
 interface Props {
   id: string;
@@ -11,6 +12,8 @@ interface Props {
   extra?: ReactNode;
   buttons?: ReactNode;
   size?: "medium" | "large";
+  valiationPathPrefix?: string | string[];
+  defaultCollapsed?: boolean;
 }
 
 export default function Collapsable({
@@ -20,8 +23,10 @@ export default function Collapsable({
   size,
   extra,
   buttons,
+  valiationPathPrefix,
+  defaultCollapsed,
 }: Props) {
-  const [collapsed, toggleCollapsed] = useCollapsedState(id);
+  const [collapsed, toggleCollapsed] = useCollapsedState(id, defaultCollapsed);
 
   if (!size) {
     size = "medium";
@@ -45,6 +50,11 @@ export default function Collapsable({
           <div className={clsx("flex-none", size === "large" && "text-lg")}>
             {title}
           </div>
+          {valiationPathPrefix && (
+            <div className="flex-none">
+              <ValidationErrorIndicator pathPrefix={valiationPathPrefix} />
+            </div>
+          )}
           {extra}
         </div>
         <div className="flex-none">{buttons}</div>

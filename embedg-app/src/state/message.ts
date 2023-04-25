@@ -1,7 +1,16 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import { EmbedField, Message, MessageEmbed } from "../discord/schema";
+import {
+  MessageComponentButtonStyle,
+  EmbedField,
+  Message,
+  MessageComponentActionRow,
+  MessageComponentButton,
+  MessageEmbed,
+  MessageComponentSelectMenuOption,
+  MessageComponentSelectMenu,
+} from "../discord/schema";
 import { getUniqueId } from "../util";
 
 export interface MessageStore extends Message {
@@ -19,7 +28,7 @@ export interface MessageStore extends Message {
   setEmbedDescription: (i: number, description: string | undefined) => void;
   setEmbedTitle: (i: number, title: string | undefined) => void;
   setEmbedUrl: (i: number, url: string | undefined) => void;
-  setEmbedAuthorName: (i: number, name: string | undefined) => void;
+  setEmbedAuthorName: (i: number, name: string) => void;
   setEmbedAuthorUrl: (i: number, url: string | undefined) => void;
   setEmbedAuthorIconUrl: (i: number, icon_url: string | undefined) => void;
   setEmbedThumbnailUrl: (i: number, url: string | undefined) => void;
@@ -41,6 +50,49 @@ export interface MessageStore extends Message {
   deleteEmbedField: (i: number, j: number) => void;
   duplicateEmbedField: (i: number, j: number) => void;
   clearEmbedFields: (i: number) => void;
+  addComponentRow: (row: MessageComponentActionRow) => void;
+  clearComponentRows: () => void;
+  moveComponentRowUp: (i: number) => void;
+  moveComponentRowDown: (i: number) => void;
+  duplicateComponentRow: (i: number) => void;
+  deleteComponentRow: (i: number) => void;
+  addButton: (i: number, button: MessageComponentButton) => void;
+  clearButtons: (i: number) => void;
+  moveButtonDown: (i: number, j: number) => void;
+  moveButtonUp: (i: number, j: number) => void;
+  duplicateButton: (i: number, j: number) => void;
+  deleteButton: (i: number, j: number) => void;
+  setButtonStyle: (
+    i: number,
+    j: number,
+    style: MessageComponentButtonStyle
+  ) => void;
+  setButtonLabel: (i: number, j: number, label: string) => void;
+  setButtonUrl: (i: number, j: number, url: string | undefined) => void;
+  setSelectMenuPlaceholder: (
+    i: number,
+    j: number,
+    placeholder: string | undefined
+  ) => void;
+  addSelectMenuOption: (
+    i: number,
+    j: number,
+    option: MessageComponentSelectMenuOption
+  ) => void;
+  clearSelectMenuOptions: (i: number, j: number) => void;
+  moveSelectMenuOptionDown: (i: number, j: number, k: number) => void;
+  moveSelectMenuOptionUp: (i: number, j: number, k: number) => void;
+  duplicateSelectMenuOption: (i: number, j: number, k: number) => void;
+  deleteSelectMenuOption: (i: number, j: number, k: number) => void;
+  setSelectMenuOptionLabel: (
+    i: number,
+    j: number,
+    k: number,
+    label: string
+  ) => void;
+
+  getSelectMenu: (i: number, j: number) => MessageComponentSelectMenu | null;
+  getButton: (i: number, j: number) => MessageComponentButton | null;
 }
 
 const defaultMessage: Message = {
@@ -68,7 +120,7 @@ export const emptyMessage: Message = {
 export const useCurrentMessageStore = create<MessageStore>()(
   immer(
     persist(
-      (set) => ({
+      (set, get) => ({
         ...defaultMessage,
 
         clear: () => set(defaultMessage),
@@ -152,7 +204,7 @@ export const useCurrentMessageStore = create<MessageStore>()(
             }
           });
         },
-        setEmbedAuthorName: (i: number, name: string | undefined) =>
+        setEmbedAuthorName: (i: number, name: string) =>
           set((state) => {
             const embed = state.embeds && state.embeds[i];
             if (!embed) {
@@ -162,8 +214,8 @@ export const useCurrentMessageStore = create<MessageStore>()(
               if (!embed.author) {
                 return;
               }
-              embed.author.name = undefined;
 
+              embed.author.name = name;
               if (!embed.author.icon_url && !embed.author.url) {
                 embed.author = undefined;
               }
@@ -192,7 +244,7 @@ export const useCurrentMessageStore = create<MessageStore>()(
               }
             } else {
               if (!embed.author) {
-                embed.author = { url };
+                embed.author = { url, name: "" };
               } else {
                 embed.author.url = url;
               }
@@ -215,7 +267,7 @@ export const useCurrentMessageStore = create<MessageStore>()(
               }
             } else {
               if (!embed.author) {
-                embed.author = { icon_url };
+                embed.author = { icon_url, name: "" };
               } else {
                 embed.author.icon_url = icon_url;
               }
@@ -408,8 +460,319 @@ export const useCurrentMessageStore = create<MessageStore>()(
             }
             embed.fields = [];
           }),
+        addComponentRow: (row: MessageComponentActionRow) =>
+          set((state) => {
+            if (!state.components) {
+              state.components = [row];
+            } else {
+              state.components.push(row);
+            }
+          }),
+        clearComponentRows: () =>
+          set((state) => {
+            state.components = [];
+          }),
+        moveComponentRowUp: (i: number) =>
+          set((state) => {
+            const row = state.components && state.components[i];
+            if (!row) {
+              return;
+            }
+            state.components.splice(i, 1);
+            state.components.splice(i - 1, 0, row);
+          }),
+        moveComponentRowDown: (i: number) =>
+          set((state) => {
+            const row = state.components && state.components[i];
+            if (!row) {
+              return;
+            }
+            state.components.splice(i, 1);
+            state.components.splice(i + 1, 0, row);
+          }),
+        duplicateComponentRow: (i: number) =>
+          set((state) => {
+            const row = state.components && state.components[i];
+            if (!row) {
+              return;
+            }
+            state.components.splice(i + 1, 0, { ...row, id: getUniqueId() });
+          }),
+        deleteComponentRow: (i: number) =>
+          set((state) => {
+            state.components.splice(i, 1);
+          }),
+        addButton: (i: number, button: MessageComponentButton) =>
+          set((state) => {
+            const row = state.components && state.components[i];
+            if (!row) {
+              return;
+            }
+            if (!row.components) {
+              row.components = [button];
+            } else {
+              row.components.push(button);
+            }
+          }),
+        clearButtons: (i: number) =>
+          set((state) => {
+            const row = state.components && state.components[i];
+            if (!row) {
+              return;
+            }
+            row.components = [];
+          }),
+        deleteButton: (i: number, j: number) =>
+          set((state) => {
+            const row = state.components && state.components[i];
+            if (!row) {
+              return;
+            }
+            row.components && row.components.splice(j, 1);
+          }),
+        moveButtonUp: (i: number, j: number) =>
+          set((state) => {
+            const row = state.components && state.components[i];
+            if (!row) {
+              return;
+            }
+            const button = row.components && row.components[j];
+            if (!button) {
+              return;
+            }
+            row.components && row.components.splice(j, 1);
+            row.components && row.components.splice(j - 1, 0, button);
+          }),
+        moveButtonDown: (i: number, j: number) =>
+          set((state) => {
+            const row = state.components && state.components[i];
+            if (!row) {
+              return;
+            }
+            const button = row.components && row.components[j];
+            if (!button) {
+              return;
+            }
+            row.components && row.components.splice(j, 1);
+            row.components && row.components.splice(j + 1, 0, button);
+          }),
+        duplicateButton: (i: number, j: number) =>
+          set((state) => {
+            const row = state.components && state.components[i];
+            if (!row) {
+              return;
+            }
+            const button = row.components && row.components[j];
+            if (!button) {
+              return;
+            }
+            row.components &&
+              row.components.splice(j + 1, 0, { ...button, id: getUniqueId() });
+          }),
+        setButtonStyle: (
+          i: number,
+          j: number,
+          style: MessageComponentButtonStyle
+        ) =>
+          set((state) => {
+            const row = state.components && state.components[i];
+            if (!row) {
+              return;
+            }
+            const button = row.components && row.components[j];
+            if (!button || button.type !== 2) {
+              return;
+            }
+            button.style = style;
+          }),
+        setButtonLabel: (i: number, j: number, label: string) =>
+          set((state) => {
+            const row = state.components && state.components[i];
+            if (!row) {
+              return;
+            }
+            const button = row.components && row.components[j];
+            if (!button || button.type !== 2) {
+              return;
+            }
+            button.label = label;
+          }),
+        setButtonUrl: (i: number, j: number, url: string | undefined) =>
+          set((state) => {
+            const row = state.components && state.components[i];
+            if (!row) {
+              return;
+            }
+            const button = row.components && row.components[j];
+            if (!button || button.type !== 2) {
+              return;
+            }
+            button.url = url;
+          }),
+        setSelectMenuPlaceholder: (
+          i: number,
+          j: number,
+          placeholder: string | undefined
+        ) =>
+          set((state) => {
+            const row = state.components && state.components[i];
+            if (!row) {
+              return;
+            }
+            const selectMenu = row.components && row.components[j];
+            if (!selectMenu || selectMenu.type !== 3) {
+              return;
+            }
+            selectMenu.placeholder = placeholder;
+          }),
+        addSelectMenuOption: (
+          i: number,
+          j: number,
+          option: MessageComponentSelectMenuOption
+        ) =>
+          set((state) => {
+            const row = state.components && state.components[i];
+            if (!row) {
+              return;
+            }
+            const selectMenu = row.components && row.components[j];
+            if (!selectMenu || selectMenu.type !== 3) {
+              return;
+            }
+            if (!selectMenu.options) {
+              selectMenu.options = [option];
+            } else {
+              selectMenu.options.push(option);
+            }
+          }),
+        clearSelectMenuOptions: (i: number, j: number) =>
+          set((state) => {
+            const row = state.components && state.components[i];
+            if (!row) {
+              return;
+            }
+            const selectMenu = row.components && row.components[j];
+            if (!selectMenu || selectMenu.type !== 3) {
+              return;
+            }
+            selectMenu.options = [];
+          }),
+        moveSelectMenuOptionDown: (i: number, j: number, k: number) =>
+          set((state) => {
+            const row = state.components && state.components[i];
+            if (!row) {
+              return;
+            }
+            const selectMenu = row.components && row.components[j];
+            if (!selectMenu || selectMenu.type !== 3) {
+              return;
+            }
+            const option = selectMenu.options && selectMenu.options[k];
+            if (!option) {
+              return;
+            }
+            selectMenu.options && selectMenu.options.splice(k, 1);
+            selectMenu.options && selectMenu.options.splice(k + 1, 0, option);
+          }),
+        moveSelectMenuOptionUp: (i: number, j: number, k: number) =>
+          set((state) => {
+            const row = state.components && state.components[i];
+            if (!row) {
+              return;
+            }
+            const selectMenu = row.components && row.components[j];
+            if (!selectMenu || selectMenu.type !== 3) {
+              return;
+            }
+            const option = selectMenu.options && selectMenu.options[k];
+            if (!option) {
+              return;
+            }
+            selectMenu.options && selectMenu.options.splice(k, 1);
+            selectMenu.options && selectMenu.options.splice(k - 1, 0, option);
+          }),
+        duplicateSelectMenuOption: (i: number, j: number, k: number) =>
+          set((state) => {
+            const row = state.components && state.components[i];
+            if (!row) {
+              return;
+            }
+            const selectMenu = row.components && row.components[j];
+            if (!selectMenu || selectMenu.type !== 3) {
+              return;
+            }
+            const option = selectMenu.options && selectMenu.options[k];
+            if (!option) {
+              return;
+            }
+            selectMenu.options &&
+              selectMenu.options.splice(k + 1, 0, {
+                ...option,
+                id: getUniqueId(),
+              });
+          }),
+        deleteSelectMenuOption: (i: number, j: number, k: number) =>
+          set((state) => {
+            const row = state.components && state.components[i];
+            if (!row) {
+              return;
+            }
+            const selectMenu = row.components && row.components[j];
+            if (!selectMenu || selectMenu.type !== 3) {
+              return;
+            }
+            selectMenu.options && selectMenu.options.splice(k, 1);
+          }),
+        setSelectMenuOptionLabel: (
+          i: number,
+          j: number,
+          k: number,
+          label: string
+        ) =>
+          set((state) => {
+            const row = state.components && state.components[i];
+            if (!row) {
+              return;
+            }
+            const selectMenu = row.components && row.components[j];
+            if (!selectMenu || selectMenu.type !== 3) {
+              return;
+            }
+            const option = selectMenu.options && selectMenu.options[k];
+            if (!option) {
+              return;
+            }
+            option.label = label;
+          }),
+
+        getSelectMenu: (i: number, j: number) => {
+          const state = get();
+          const row = state.components && state.components[i];
+          if (!row) {
+            return null;
+          }
+
+          const selectMenu = row.components && row.components[j];
+          if (selectMenu && selectMenu.type === 3) {
+            return selectMenu;
+          }
+          return null;
+        },
+        getButton: (i: number, j: number) => {
+          const state = get();
+          const row = state.components && state.components[i];
+          if (!row) {
+            return null;
+          }
+
+          const button = row.components && row.components[j];
+          if (button && button.type === 2) {
+            return button;
+          }
+          return null;
+        },
       }),
-      { name: "current-message" }
+      { name: "current-message", version: 0 }
     )
   )
 );

@@ -13,11 +13,13 @@ export const useCollapsedStatesStore = create<CollapsedStatesStore>()(
   persist(
     (set, get) => ({
       states: {},
-      getCollapsed: (key: string, def: boolean = false) =>
-        get().states[key] || def,
+      getCollapsed: (key: string, def: boolean = false) => {
+        const state = get().states[key];
+        return state === undefined ? def : state;
+      },
       toggleCollapsed: (key: string, def: boolean = false) => {
         const states = get().states;
-        const current = states[key] || def;
+        const current = states[key] === undefined ? def : states[key];
         states[key] = !current;
         set({ states });
       },

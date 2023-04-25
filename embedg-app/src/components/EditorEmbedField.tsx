@@ -6,18 +6,23 @@ import {
   TrashIcon,
 } from "@heroicons/react/20/solid";
 import { shallow } from "zustand/shallow";
-import { embedFieldNameSchema, embedFieldValueSchema } from "../discord/schema";
 import { useCurrentMessageStore } from "../state/message";
 import Collapsable from "./Collapsable";
 import EditorInput from "./EditorInput";
-import ValidationError from "./ValidationError";
 
 interface Props {
   embedIndex: number;
+  embedId: number;
   fieldIndex: number;
+  fieldId: number;
 }
 
-export default function EditorEmbedField({ embedIndex, fieldIndex }: Props) {
+export default function EditorEmbedField({
+  embedIndex,
+  embedId,
+  fieldIndex,
+  fieldId,
+}: Props) {
   const fieldCount = useCurrentMessageStore(
     (state) => state.embeds[embedIndex].fields.length
   );
@@ -55,7 +60,8 @@ export default function EditorEmbedField({ embedIndex, fieldIndex }: Props) {
   return (
     <div className="border-2 border-dark-6 rounded-md p-3">
       <Collapsable
-        id={`embeds.${embedIndex}.fields.${fieldIndex}`}
+        id={`embeds.${embedId}.fields.${fieldId}`}
+        valiationPathPrefix={`embeds.${embedIndex}.fields.${fieldIndex}`}
         title={`Field ${fieldIndex + 1}`}
         extra={
           name && (
@@ -104,9 +110,8 @@ export default function EditorEmbedField({ embedIndex, fieldIndex }: Props) {
               onChange={(v) => setName(embedIndex, fieldIndex, v)}
               maxLength={256}
               className="w-full"
-            >
-              <ValidationError schema={embedFieldNameSchema} value={name} />
-            </EditorInput>
+              validationPath={`embeds.${embedIndex}.fields.${fieldIndex}.name`}
+            />
             <div>
               <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
                 Inline
@@ -126,9 +131,8 @@ export default function EditorEmbedField({ embedIndex, fieldIndex }: Props) {
             value={value}
             onChange={(v) => setValue(embedIndex, fieldIndex, v)}
             maxLength={1024}
-          >
-            <ValidationError schema={embedFieldValueSchema} value={value} />
-          </EditorInput>
+            validationPath={`embeds.${embedIndex}.fields.${fieldIndex}.value`}
+          />
         </div>
       </Collapsable>
     </div>

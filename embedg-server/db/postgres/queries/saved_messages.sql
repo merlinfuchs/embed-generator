@@ -14,7 +14,7 @@ DELETE FROM saved_messages WHERE id = $1 AND creator_id = $2;
 DELETE FROM saved_messages WHERE id = $1 AND guild_id = $2;
 
 -- name: GetSavedMessagesForCreator :many
-SELECT * FROM saved_messages WHERE creator_id = $1 ORDER BY updated_at DESC;
+SELECT * FROM saved_messages WHERE creator_id = $1 AND guild_id IS NULL ORDER BY updated_at DESC;
 
 -- name: GetSavedMessagesForGuild :many
 SELECT * FROM saved_messages WHERE guild_id = $1 ORDER BY updated_at DESC;
