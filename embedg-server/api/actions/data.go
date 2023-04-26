@@ -3,7 +3,8 @@ package actions
 import "github.com/bwmarrin/discordgo"
 
 type MessageWithActions struct {
-	Components []ActionRowWithActions
+	Components []ActionRowWithActions `json:"components"`
+	Actions    map[string]ActionSet   `json:"actions"`
 }
 
 type ActionRowWithActions struct {
@@ -17,16 +18,26 @@ type ComponentWithActions struct {
 	Actions []Action
 
 	// Button
-	Style discordgo.ButtonStyle     `json:"style"`
-	Label string                    `json:"label"`
-	Emoji *discordgo.ComponentEmoji `json:"emoji"`
-	URL   string                    `json:"url"`
+	Style       discordgo.ButtonStyle     `json:"style"`
+	Label       string                    `json:"label"`
+	Emoji       *discordgo.ComponentEmoji `json:"emoji"`
+	URL         string                    `json:"url"`
+	ActionSetID string                    `json:"action_set_id"`
 
 	// Select Menu
 	Placeholder string                       `json:"placeholder"`
 	MinValues   *int                         `json:"min_values"`
 	MaxValues   int                          `json:"max_values"`
 	Options     []discordgo.SelectMenuOption `json:"options"`
+}
+
+type ComponentSelectOptionWithActions struct {
+	Label       string                    `json:"label"`
+	Value       string                    `json:"value"`
+	Description string                    `json:"description"`
+	Emoji       *discordgo.ComponentEmoji `json:"emoji"`
+	Default     bool                      `json:"default"`
+	ActionSetID string                    `json:"action_set_id"`
 }
 
 type ActionType int
@@ -44,6 +55,5 @@ type Action struct {
 }
 
 type ActionSet struct {
-	ID      string   `json:"id"`
 	Actions []Action `json:"actions"`
 }

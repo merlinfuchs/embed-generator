@@ -39,7 +39,11 @@ export default function EditorComponentSelectMenu({
   );
 
   function addOption() {
-    add(rowIndex, compIndex, { id: getUniqueId(), label: "" });
+    add(rowIndex, compIndex, {
+      id: getUniqueId(),
+      label: "",
+      action_set_id: getUniqueId().toString(),
+    });
   }
 
   const setPlaceholder = useCurrentMessageStore(

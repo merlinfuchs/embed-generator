@@ -4,12 +4,11 @@ import {
   DocumentDuplicateIcon,
   TrashIcon,
 } from "@heroicons/react/20/solid";
-import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";
 import { shallow } from "zustand/shallow";
 import { useCurrentMessageStore } from "../state/message";
 import EditorInput from "./EditorInput";
-import EditorComponentActions from "./EditorComponentActions";
+import EditorComponentActions from "./EditorActionSet";
 
 interface Props {
   rowIndex: number;
@@ -55,7 +54,7 @@ export default function EditorComponentSelectMenuOption({
   }
 
   return (
-    <AutoAnimate className="p-3 border-2 border-dark-6 rounded-md">
+    <div className="p-3 border-2 border-dark-6 rounded-md">
       <Collapsable
         id={`components.${rowId}.select.${compId}.options.${optionId}`}
         valiationPathPrefix={`components.${rowIndex}.components.${compIndex}.options.${optionIndex}`}
@@ -107,9 +106,9 @@ export default function EditorComponentSelectMenuOption({
             onChange={(v) => setLabel(rowIndex, compIndex, optionIndex, v)}
             className="flex-auto"
           />
-          <EditorComponentActions />
+          <EditorComponentActions setId={option.action_set_id} />
         </div>
       </Collapsable>
-    </AutoAnimate>
+    </div>
   );
 }

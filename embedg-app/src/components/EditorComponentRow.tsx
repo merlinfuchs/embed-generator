@@ -111,6 +111,7 @@ export default function EditorComponentRow({ rowIndex, rowId }: Props) {
                         type: 2,
                         style: 2,
                         label: "",
+                        action_set_id: getUniqueId().toString(),
                       })
                     }
                   >

@@ -5,11 +5,10 @@ import {
   TrashIcon,
 } from "@heroicons/react/20/solid";
 import { useCurrentMessageStore } from "../state/message";
-import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";
 import { shallow } from "zustand/shallow";
 import EditorInput from "./EditorInput";
-import EditorComponentActions from "./EditorComponentActions";
+import EditorActionSet from "./EditorActionSet";
 
 interface Props {
   rowIndex: number;
@@ -60,13 +59,6 @@ export default function EditorComponentButton({
     shallow
   );
 
-  if (!style) {
-    // This is not a button (shouldn't happen)
-    return <div></div>;
-  }
-
-  const borderColor = buttonBorderColors[style];
-
   const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
     (state) => [
       state.moveButtonUp,
@@ -76,8 +68,20 @@ export default function EditorComponentButton({
     ],
     shallow
   );
+
+  const actionSetId = useCurrentMessageStore(
+    (state) => state.getButton(rowIndex, compIndex)?.action_set_id || ""
+  );
+
+  if (!style) {
+    // This is not a button (shouldn't happen)
+    return <div></div>;
+  }
+
+  const borderColor = buttonBorderColors[style];
+
   return (
-    <AutoAnimate
+    <div
       className={`bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow border-2 ${borderColor}`}
     >
       <Collapsable
@@ -163,10 +167,10 @@ export default function EditorComponentButton({
               validationPath={`components.${rowIndex}.components.${compIndex}.url`}
             />
           ) : (
-            <EditorComponentActions />
+            <EditorActionSet setId={actionSetId} />
           )}
         </div>
       </Collapsable>
-    </AutoAnimate>
+    </div>
   );
 }

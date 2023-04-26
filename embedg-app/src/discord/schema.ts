@@ -204,6 +204,7 @@ export const buttonSchema = z.object({
   style: buttonStyleSchema,
   label: z.string().min(1),
   url: z.optional(z.string().refine(...urlRefinement)),
+  action_set_id: z.string(),
 });
 
 export type MessageComponentButton = z.infer<typeof buttonSchema>;
@@ -211,6 +212,7 @@ export type MessageComponentButton = z.infer<typeof buttonSchema>;
 export const selectMenuOptionSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
   label: z.string().min(1).max(100),
+  action_set_id: z.string(),
 });
 
 export type MessageComponentSelectMenuOption = z.infer<
@@ -233,6 +235,28 @@ export const actionRowSchema = z.object({
 });
 
 export type MessageComponentActionRow = z.infer<typeof actionRowSchema>;
+
+export const messageAction = z
+  .object({
+    type: z.literal(1), // text response
+    id: uniqueIdSchema.default(() => getUniqueId()),
+    text: z.string().min(1).max(2000),
+  })
+  .or(
+    z.object({
+      type: z.literal(2).or(z.literal(3)).or(z.literal(4)), // toggle, add, remove role
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      target: z.string().min(1),
+    })
+  );
+
+export type MessageAction = z.infer<typeof messageAction>;
+
+export const messageActionSet = z.object({
+  actions: z.array(messageAction).min(1).max(5),
+});
+
+export type MessageActionSet = z.infer<typeof messageActionSet>;
 
 export const messageContentSchema = z.string().max(2000);
 
@@ -275,6 +299,7 @@ export const messageSchema = z
     allowed_mentions: messageAllowedMentionsSchema,
     components: z.array(actionRowSchema).default([]),
     thread_name: messageThreadName,
+    actions: z.record(z.string(), messageActionSet),
   })
   .superRefine((data, ctx) => {
     // this currently doesn't take attachments into account

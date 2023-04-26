@@ -11,7 +11,9 @@ export interface ValidationErrorStore {
 export const useValidationErrorStore = create<ValidationErrorStore>()(
   (set, get) => ({
     error: null,
-    setError: (error) => set({ error }),
+    setError: (error) => {
+      set({ error });
+    },
     getIssueByPath: (path) => {
       const state = get();
       if (!state.error) return null;

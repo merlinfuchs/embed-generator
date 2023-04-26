@@ -32,7 +32,6 @@ func (m *ActionManager) ParseMessageComponentActions(raw json.RawMessage, userID
 			}
 
 			actionSet := ActionSet{
-				ID:      customID,
 				Actions: make([]Action, len(component.Actions)),
 			}
 
