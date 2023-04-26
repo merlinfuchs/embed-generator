@@ -41,11 +41,14 @@ func (h *UsersHandler) HandleGetUser(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.JSON(wire.UserWire{
-		ID:            user.ID,
-		Name:          user.Name,
-		Discriminator: user.Discriminator,
-		Avatar:        null.NewString(user.Avatar.String, user.Avatar.Valid),
+	return c.JSON(wire.UserResponseWire{
+		Success: true,
+		Data: wire.UserWire{
+			ID:            user.ID,
+			Name:          user.Name,
+			Discriminator: user.Discriminator,
+			Avatar:        null.NewString(user.Avatar.String, user.Avatar.Valid),
+		},
 	})
 }
 
@@ -74,8 +77,11 @@ func (h *UsersHandler) HandleGetUserPlan(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.JSON(wire.PlanInfoWire{
-		Active:      active,
-		ServerCount: planInfo.ServerCount,
+	return c.JSON(wire.PlanInfoResponseWire{
+		Success: true,
+		Data: wire.PlanInfoWire{
+			Active:      active,
+			ServerCount: planInfo.ServerCount,
+		},
 	})
 }

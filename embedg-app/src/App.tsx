@@ -8,6 +8,7 @@ const LazyJsonView = lazy(() => import("./views/editor/json"));
 const LazyMagicView = lazy(() => import("./views/editor/magic"));
 const LazyMessagesView = lazy(() => import("./views/editor/messages"));
 const LazySendView = lazy(() => import("./views/editor/send"));
+const LazyPremiumView = lazy(() => import("./views/editor/premium"));
 
 function SuspendedView({ children }: { children: ReactNode }) {
   return <Suspense>{children}</Suspense>;
@@ -48,6 +49,14 @@ function App() {
             element={
               <SuspendedView>
                 <LazyJsonView />
+              </SuspendedView>
+            }
+          />
+          <Route
+            path="/premium"
+            element={
+              <SuspendedView>
+                <LazyPremiumView />
               </SuspendedView>
             }
           />

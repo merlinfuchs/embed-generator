@@ -1,5 +1,10 @@
 import { create } from "zustand";
 import { getUniqueId } from ".";
+import {
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  InformationCircleIcon,
+} from "@heroicons/react/20/solid";
 
 interface Toast {
   message: string;
@@ -44,9 +49,16 @@ export function ToastContainer() {
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className="bg-dark-2 rounded-md p-3 shadow-lg text-white"
+          className="bg-dark-2 rounded-md py-3 pl-3 pr-5 shadow-lg text-white flex items-center space-x-2"
         >
-          {toast.message}
+          {toast.type === "success" ? (
+            <CheckCircleIcon className="w-7 h-7 text-green" />
+          ) : toast.type === "error" ? (
+            <ExclamationCircleIcon className="w-7 h-7 text-red" />
+          ) : (
+            <InformationCircleIcon className="w-7 h-7 tex-blurple" />
+          )}
+          <div className="text-gray-200">{toast.message}</div>
         </div>
       ))}
     </div>

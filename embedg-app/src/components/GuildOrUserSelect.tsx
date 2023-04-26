@@ -15,7 +15,7 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
   const { data: guilds, isLoading } = useGuildsQuery();
 
   const guild = useMemo(
-    () => guilds && guilds.find((g) => g.id === value),
+    () => guilds && guilds.success && guilds.data.find((g) => g.id === value),
     [guilds, value]
   );
 
@@ -40,14 +40,14 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
           role="button"
           className="flex-auto"
         >
-          {value === "user" && user ? (
+          {value === "user" && user?.success ? (
             <div className="flex items-center space-x-2 cursor-pointer w-full">
               <img
-                src={userAvatarUrl(user)}
+                src={userAvatarUrl(user.data)}
                 className="guild icon url w-8 h-8 rounded-full flex-none"
               />
               <div className="text-lg text-gray-300 flex-auto truncate">
-                {user.name}
+                {user.data.name}
               </div>
               <ChevronDownIcon
                 className={clsx(
@@ -78,27 +78,29 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
         </div>
         {open && (
           <div className="absolute bg-dark-2 top-14 left-0 rounded shadow-lg w-full border-2 border-dark-2 z-10">
-            {user && (
+            {user?.success && (
               <div
                 className="py-2 flex space-x-2 items-center hover:bg-dark-3 rounded cursor-pointer px-3"
                 role="button"
                 onClick={() => selectValue("user")}
               >
                 <img
-                  src={userAvatarUrl(user)}
+                  src={userAvatarUrl(user.data)}
                   alt="icon"
                   className="h-8 w-8 rounded-full"
                 />
                 <div>
-                  <div className="text-gray-300 leading-tight">{user.name}</div>
+                  <div className="text-gray-300 leading-tight">
+                    {user.data.name}
+                  </div>
                   <div className="text-gray-400 text-xs leading-tight">
                     your personal account
                   </div>
                 </div>
               </div>
             )}
-            {guilds && guilds.length ? (
-              guilds.map((g) => (
+            {guilds?.success && guilds.data.length ? (
+              guilds.data.map((g) => (
                 <div
                   key={g.id}
                   className="py-2 flex space-x-2 items-center hover:bg-dark-3 rounded cursor-pointer px-3"

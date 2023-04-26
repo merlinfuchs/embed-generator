@@ -14,17 +14,17 @@ export default function GuildSelect({ guildId, onChange }: Props) {
   const { data: guilds, isLoading } = useGuildsQuery();
 
   const guild = useMemo(
-    () => guilds && guilds.find((g) => g.id === guildId),
+    () => guilds?.success && guilds.data.find((g) => g.id === guildId),
     [guilds, guildId]
   );
 
   useEffect(() => {
     if (!guildId) {
-      if (guilds && guilds.length > 0) {
-        onChange(guilds[0].id);
+      if (guilds?.success && guilds.data.length > 0) {
+        onChange(guilds.data[0].id);
       }
     } else if (!isLoading) {
-      if (!guilds || !guilds.find((g) => g.id === guildId)) {
+      if (!guilds?.success || !guilds.data.find((g) => g.id === guildId)) {
         onChange(null);
       }
     }
@@ -67,8 +67,8 @@ export default function GuildSelect({ guildId, onChange }: Props) {
         </div>
         {open && (
           <div className="absolute bg-dark-2 top-14 left-0 rounded shadow-lg w-full border-2 border-dark-2 z-10">
-            {guilds && guilds.length ? (
-              guilds.map((g) => (
+            {guilds?.success && guilds.data.length ? (
+              guilds.data.map((g) => (
                 <div
                   key={g.id}
                   className="py-2 flex space-x-2 items-center hover:bg-dark-3 rounded cursor-pointer px-3"

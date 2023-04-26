@@ -6,10 +6,12 @@ const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (err) => {
       if (err instanceof APIError) {
-        useToasts.getState().create({
-          type: "error",
-          message: err.message,
-        });
+        if (err.status !== 401) {
+          useToasts.getState().create({
+            type: "error",
+            message: err.message,
+          });
+        }
       } else {
         useToasts.getState().create({
           type: "error",
@@ -25,12 +27,7 @@ const queryClient = new QueryClient({
         if (failureCount >= 3) {
           return false;
         }
-        if (err instanceof APIError) {
-          if (err.status === 401 || err.status === 404) {
-            return false;
-          }
-        }
-        return true;
+        return err.status >= 500;
       },
       staleTime: 1000 * 60 * 3,
     },

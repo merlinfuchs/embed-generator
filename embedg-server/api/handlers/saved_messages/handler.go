@@ -54,7 +54,10 @@ func (h *SavedMessagesHandler) HandleListSavedMessages(c *fiber.Ctx) error {
 		res[i] = savedMessageModelToWire(message)
 	}
 
-	return c.JSON(wire.SavedMessageListResponseWire(res))
+	return c.JSON(wire.SavedMessageListResponseWire{
+		Success: true,
+		Data:    res,
+	})
 }
 
 func (h *SavedMessagesHandler) HandleCreateSavedMessage(c *fiber.Ctx, req wire.SavedMessageCreateRequestWire) error {
@@ -81,7 +84,10 @@ func (h *SavedMessagesHandler) HandleCreateSavedMessage(c *fiber.Ctx, req wire.S
 		return err
 	}
 
-	return c.JSON(wire.SavedMessageCreateResponseWire(savedMessageModelToWire(message)))
+	return c.JSON(wire.SavedMessageCreateResponseWire{
+		Success: true,
+		Data:    savedMessageModelToWire(message),
+	})
 }
 
 func (h *SavedMessagesHandler) HandleUpdateSavedMessage(c *fiber.Ctx, req wire.SavedMessageUpdateRequestWire) error {
@@ -125,7 +131,10 @@ func (h *SavedMessagesHandler) HandleUpdateSavedMessage(c *fiber.Ctx, req wire.S
 		return err
 	}
 
-	return c.JSON(wire.SavedMessageUpdateResponseWire(savedMessageModelToWire(message)))
+	return c.JSON(wire.SavedMessageUpdateResponseWire{
+		Success: true,
+		Data:    savedMessageModelToWire(message),
+	})
 }
 
 func (h *SavedMessagesHandler) HandleDeleteSavedMessage(c *fiber.Ctx) error {
@@ -160,7 +169,10 @@ func (h *SavedMessagesHandler) HandleDeleteSavedMessage(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.JSON(wire.SavedMessageDeleteResponseWire{})
+	return c.JSON(wire.SavedMessageDeleteResponseWire{
+		Success: true,
+		Data:    struct{}{},
+	})
 }
 
 func savedMessageModelToWire(model postgres.SavedMessage) wire.SavedMessageWire {

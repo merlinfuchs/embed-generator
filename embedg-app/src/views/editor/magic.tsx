@@ -19,9 +19,9 @@ export default function MagicView() {
   const { data, mutate, isLoading } = useGenerateMagicMessageMutation();
 
   useEffect(() => {
-    if (data) {
-      setBaseData(data.data);
-      setOutput(data.data);
+    if (data?.success) {
+      setBaseData(data.data.data);
+      setOutput(data.data.data);
     }
   }, [data]);
 

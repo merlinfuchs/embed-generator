@@ -14,7 +14,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
   const { data: channels } = useGuildChannelsQuery(guildId);
 
   const channel = useMemo(
-    () => channels && channels.find((c) => c.id === channelId),
+    () => channels?.success && channels.data.find((c) => c.id === channelId),
     [channels, channelId]
   );
 
@@ -52,8 +52,8 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
         </div>
         {open && (
           <div className="absolute bg-dark-2 top-14 left-0 rounded shadow-lg w-full border-2 border-dark-2 z-10 max-h-48 overflow-y-auto overflow-x-none">
-            {channels && channels.length ? (
-              channels.map((c) => (
+            {channels?.success && channels.data.length ? (
+              channels.data.map((c) => (
                 <div
                   key={c.id}
                   className="py-2 flex space-x-2 items-center hover:bg-dark-3 rounded cursor-pointer px-3"

@@ -9,7 +9,7 @@ import {
 import { useState } from "react";
 import { AutoAnimate } from "../util/autoAnimate";
 
-export default function LoginPrompt() {
+export default function LogginSuggest() {
   const [collapsed, setCollapsed] = useState(true);
 
   return (

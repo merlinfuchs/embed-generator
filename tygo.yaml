@@ -10,3 +10,7 @@ packages:
       uuid.NullUUID: "null | string /* uuid */"
       time.Time: "string /* RFC3339 */"
       json.RawMessage: "Record<string, any> | null"
+    exclude_files:
+      - "base.go"
+    frontmatter: |
+      import {APIResponse} from "./base"

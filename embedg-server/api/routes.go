@@ -2,8 +2,8 @@ package api
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/auth"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/guilds"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/magic"
@@ -58,9 +58,9 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 	guildsGroup.Get("/:guildID/emojis", guildsHanlder.HandleListGuildEmojis)
 	guildsGroup.Get("/:guildID/stickers", guildsHanlder.HandleListGuildStickers)
 
-	actionManager := &actions.ActionManager{}
+	actionParser := parser.New(accessManager, stores.pg, stores.bot)
 
-	sendMessageHandler := send_message.New(stores.bot, accessManager, actionManager)
+	sendMessageHandler := send_message.New(stores.bot, accessManager, actionParser)
 	sendMessageGroup := app.Group("/api/send-message", sessionMiddleware.SessionRequired())
 	sendMessageGroup.Post("/channel", helpers.WithRequestBodyValidated(sendMessageHandler.HandleSendMessageToChannel))
 	sendMessageGroup.Post("/webhook", helpers.WithRequestBodyValidated(sendMessageHandler.HandleSendMessageToWebhook))

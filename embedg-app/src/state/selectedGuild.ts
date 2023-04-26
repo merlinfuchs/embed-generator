@@ -20,5 +20,7 @@ export const useSelectedGuildStore = create<SelectedGuildStore>()(
 export default function useSelectedGuild() {
   const { data: guilds } = useGuildsQuery();
   const selectedGuildId = useSelectedGuildStore((state) => state.guildId);
-  return guilds?.find((guild) => guild.id === selectedGuildId);
+  return guilds?.success
+    ? guilds.data.find((guild) => guild.id === selectedGuildId)
+    : null;
 }

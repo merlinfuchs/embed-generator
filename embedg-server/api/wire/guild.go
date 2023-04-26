@@ -12,6 +12,10 @@ type GuildWire struct {
 	HasChannelWithBotAccess  bool `json:"has_channel_with_bot_access"`
 }
 
+type ListGuildsResponseWire APIResponse[[]GuildWire]
+
+type GetGuildResponseWire APIResponse[GuildWire]
+
 type GuildChannelWire struct {
 	ID       string      `json:"id"`
 	Name     string      `json:"name"`
@@ -25,11 +29,15 @@ type GuildChannelWire struct {
 	BotPermissions  string `json:"bot_permissions"`
 }
 
+type ListChannelsResponseWire APIResponse[[]GuildChannelWire]
+
 type GuildRoleWire struct {
 	ID      string `json:"id"`
 	Name    string `json:"name"`
 	Managed bool   `json:"managed"`
 }
+
+type ListRolesResponseWire APIResponse[[]GuildRoleWire]
 
 type GuildEmojiWire struct {
 	ID        string `json:"id"`
@@ -39,6 +47,8 @@ type GuildEmojiWire struct {
 	Managed   bool   `json:"managed"`
 }
 
+type ListEmojisResponseWire APIResponse[[]GuildEmojiWire]
+
 type GuildStickerWire struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
@@ -46,3 +56,5 @@ type GuildStickerWire struct {
 	Available   bool   `json:"available"`
 	FormantType int    `json:"formant_type"`
 }
+
+type ListStickersResponseWire APIResponse[[]GuildStickerWire]

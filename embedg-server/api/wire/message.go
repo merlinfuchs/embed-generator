@@ -17,9 +17,9 @@ type SavedMessageWire struct {
 	Data        json.RawMessage `json:"data"`
 }
 
-type SavedMessageListResponseWire []SavedMessageWire
+type SavedMessageListResponseWire APIResponse[[]SavedMessageWire]
 
-type SavedMessageGetResponseWire SavedMessageWire
+type SavedMessageGetResponseWire APIResponse[SavedMessageWire]
 
 type SavedMessageCreateRequestWire struct {
 	Name        string          `json:"name"`
@@ -31,7 +31,7 @@ func (req SavedMessageCreateRequestWire) Validate() error {
 	return nil
 }
 
-type SavedMessageCreateResponseWire SavedMessageWire
+type SavedMessageCreateResponseWire APIResponse[SavedMessageWire]
 
 type SavedMessageUpdateRequestWire struct {
 	Name        string          `json:"name"`
@@ -43,9 +43,9 @@ func (req SavedMessageUpdateRequestWire) Validate() error {
 	return nil
 }
 
-type SavedMessageUpdateResponseWire SavedMessageWire
+type SavedMessageUpdateResponseWire APIResponse[SavedMessageWire]
 
-type SavedMessageDeleteResponseWire struct{}
+type SavedMessageDeleteResponseWire APIResponse[struct{}]
 
 type MessageSendToWebhookRequestWire struct {
 	WebhookID    string                             `json:"webhook_id"`
@@ -78,6 +78,8 @@ type MessageSendRequestAttachmentWire struct {
 	DataURL     string      `json:"data_url"`
 }
 
-type MessageSendResponseWire struct {
+type MessageSendResponseDataWire struct {
 	MessageID string `json:"message_id"`
 }
+
+type MessageSendResponseWire APIResponse[MessageSendResponseDataWire]

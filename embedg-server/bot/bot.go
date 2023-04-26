@@ -2,6 +2,7 @@ package bot
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot/sharding"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
@@ -9,7 +10,8 @@ import (
 
 type Bot struct {
 	*sharding.ShardManager
-	pg *postgres.PostgresStore
+	pg            *postgres.PostgresStore
+	actionHandler *handler.ActionHandler
 }
 
 func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
@@ -21,15 +23,17 @@ func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 	manager.Intents = discordgo.IntentGuilds | discordgo.IntentGuildMessages | discordgo.IntentGuildEmojis // discordgo.IntentGuildMembers
 	manager.State = discordgo.NewState()
 
-	manager.AddHandler(onReady)
-	manager.AddHandler(onConnect)
-	manager.AddHandler(onDisconnect)
-	manager.AddHandler(onResumed)
-
 	b := &Bot{
-		ShardManager: manager,
-		pg:           pg,
+		ShardManager:  manager,
+		pg:            pg,
+		actionHandler: handler.New(pg),
 	}
+
+	b.AddHandler(onReady)
+	b.AddHandler(onConnect)
+	b.AddHandler(onDisconnect)
+	b.AddHandler(onResumed)
+	b.AddHandler(b.onInteractionCreate)
 
 	b.AddHandler(b.onMessageDelete)
 

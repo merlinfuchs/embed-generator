@@ -12,6 +12,8 @@ type GenerateMagicMessagePromptWire struct {
 	Text string `json:"text"`
 }
 
-type GenerateMagicMessageResponseWire struct {
+type GenerateMagicMessageResponseDataWire struct {
 	Data string `json:"data"`
 }
+
+type GenerateMagicMessageResponseWire APIResponse[GenerateMagicMessageResponseDataWire]

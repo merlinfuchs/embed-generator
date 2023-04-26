@@ -3,7 +3,12 @@ import {
   GuildChannelWire,
   GuildRoleWire,
   GuildWire,
+  ListChannelsResponseWire,
+  ListGuildsResponseWire,
+  ListRolesResponseWire,
+  SavedMessageListResponseWire,
   SavedMessageWire,
+  UserResponseWire,
   UserWire,
 } from "./wire";
 
@@ -14,7 +19,7 @@ export class APIError extends Error {
 }
 
 export function useUserQuery(userId = "@me") {
-  return useQuery<UserWire>(["users", userId], () => {
+  return useQuery<UserResponseWire>(["users", userId], () => {
     return fetch(`/api/users/${userId}`).then((res) => {
       if (res.ok) {
         return res.json();
@@ -26,7 +31,7 @@ export function useUserQuery(userId = "@me") {
 }
 
 export function useGuildsQuery() {
-  return useQuery<GuildWire[]>(["guilds"], () => {
+  return useQuery<ListGuildsResponseWire>(["guilds"], () => {
     return fetch(`/api/guilds`).then((res) => {
       if (res.ok) {
         return res.json();
@@ -38,7 +43,7 @@ export function useGuildsQuery() {
 }
 
 export function useGuildChannelsQuery(guildId: string | null) {
-  return useQuery<GuildChannelWire[]>(
+  return useQuery<ListChannelsResponseWire>(
     ["guild", guildId, "channels"],
     () => {
       return fetch(`/api/guilds/${guildId}/channels`).then((res) => {
@@ -54,7 +59,7 @@ export function useGuildChannelsQuery(guildId: string | null) {
 }
 
 export function useGuildRolesQuery(guildId: string | null) {
-  return useQuery<GuildRoleWire[]>(
+  return useQuery<ListRolesResponseWire[]>(
     ["guild", guildId, "roles"],
     () => {
       return fetch(`/api/guilds/${guildId}/roles`).then((res) => {
@@ -70,20 +75,23 @@ export function useGuildRolesQuery(guildId: string | null) {
 }
 
 export function useSavedMessagesQuery(guildId: string | null) {
-  return useQuery<SavedMessageWire[]>(["saved-messages", guildId], () => {
-    let url = `/api/saved-messages`;
-    if (guildId) {
-      url += `?guild_id=${guildId}`;
-    }
-    return fetch(url).then((res) => {
-      if (res.ok) {
-        return res.json();
-      } else {
-        throw new APIError(
-          res.status,
-          "Failed to fetch saved messages for guild"
-        );
+  return useQuery<SavedMessageListResponseWire>(
+    ["saved-messages", guildId],
+    () => {
+      let url = `/api/saved-messages`;
+      if (guildId) {
+        url += `?guild_id=${guildId}`;
       }
-    });
-  });
+      return fetch(url).then((res) => {
+        if (res.ok) {
+          return res.json();
+        } else {
+          throw new APIError(
+            res.status,
+            "Failed to fetch saved messages for guild"
+          );
+        }
+      });
+    }
+  );
 }

@@ -6,7 +6,7 @@ import { useCurrentMessageStore } from "../state/message";
 import { useSelectedGuildStore } from "../state/selectedGuild";
 import { ChannelSelect } from "./ChannelSelect";
 import GuildSelect from "./GuildSelect";
-import LoginPrompt from "./LoginPrompt";
+import LoginSuggest from "./LoginSuggest";
 import { useValidationErrorStore } from "../state/validationError";
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 
@@ -171,7 +171,7 @@ export default function SendMenu() {
           </div>
         </div>
       ) : (
-        <LoginPrompt />
+        <LoginSuggest />
       )}
     </div>
   );

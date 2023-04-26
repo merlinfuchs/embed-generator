@@ -8,6 +8,7 @@ import { useCurrentMessageStore } from "../../state/message";
 import { debounce } from "debounce";
 import { Message, messageSchema } from "../../discord/schema";
 import { useValidationErrorStore } from "../../state/validationError";
+import hetznerLogo from "../../assets/hetzner.svg";
 
 export default function EditorView() {
   const setValidationError = useValidationErrorStore((state) => state.setError);

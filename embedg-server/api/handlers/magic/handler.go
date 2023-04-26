@@ -72,6 +72,9 @@ func (h *MagicHandler) HandleGenerateMagicMessage(c *fiber.Ctx, req wire.Generat
 	}
 
 	return c.JSON(wire.GenerateMagicMessageResponseWire{
-		Data: output[jsonStart : jsonEnd+1],
+		Success: true,
+		Data: wire.GenerateMagicMessageResponseDataWire{
+			Data: output[jsonStart : jsonEnd+1],
+		},
 	})
 }

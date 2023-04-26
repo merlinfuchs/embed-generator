@@ -4,7 +4,7 @@ import GuildOrUserSelect from "../../components/GuildOrUserSelect";
 import { useSavedMessagesQuery, useUserQuery } from "../../api/queries";
 import EditorInput from "../../components/EditorInput";
 import clsx from "clsx";
-import LoginPrompt from "../../components/LoginPrompt";
+import LoginSuggest from "../../components/LoginSuggest";
 import {
   useCreatedSavedMessageMutation,
   useDeleteSavedMessageMutation,
@@ -123,49 +123,53 @@ export default function MessagesView() {
                 <GuildOrUserSelect value={source} onChange={setSource} />
               </div>
             </div>
-            <div className="space-y-3 flex-auto">
-              {messagesQuery?.data?.map((message) => (
-                <div
-                  key={message.id}
-                  className="bg-dark-2 p-3 rounded flex justify-between truncate space-x-3"
-                >
-                  <div className="flex-auto truncate">
-                    <div className="flex items-center space-x-1 truncate">
-                      <div className="text-white truncate">{message.name}</div>
-                      <div className="text-gray-500 text-xs hidden md:block">
-                        {message.id}
+            {messagesQuery.isSuccess && messagesQuery.data.success && (
+              <div className="space-y-3 flex-auto">
+                {messagesQuery.data.data.map((message) => (
+                  <div
+                    key={message.id}
+                    className="bg-dark-2 p-3 rounded flex justify-between truncate space-x-3"
+                  >
+                    <div className="flex-auto truncate">
+                      <div className="flex items-center space-x-1 truncate">
+                        <div className="text-white truncate">
+                          {message.name}
+                        </div>
+                        <div className="text-gray-500 text-xs hidden md:block">
+                          {message.id}
+                        </div>
+                      </div>
+                      <div className="text-gray-400 text-sm">
+                        {formatUpdatedAt(message.updated_at)}
                       </div>
                     </div>
-                    <div className="text-gray-400 text-sm">
-                      {formatUpdatedAt(message.updated_at)}
+                    <div className="flex flex-none items-center space-x-4">
+                      <ArrowDownTrayIcon
+                        className="text-gray-300 h-5 w-5 hover:text-white cursor-pointer"
+                        role="button"
+                        onClick={() => restoreMessage(message)}
+                      />
+                      <ArrowUpTrayIcon
+                        className="text-gray-300 h-5 w-5 hover:Text-white cursor-pointer"
+                        role="button"
+                        onClick={() => updateMessage(message)}
+                      />
+                      <TrashIcon
+                        className="text-gray-300 h-5 w-5 hover:text-white cursor-pointer"
+                        role="button"
+                        onClick={() => deleteMessage(message)}
+                      />
                     </div>
                   </div>
-                  <div className="flex flex-none items-center space-x-4">
-                    <ArrowDownTrayIcon
-                      className="text-gray-300 h-5 w-5 hover:text-white cursor-pointer"
-                      role="button"
-                      onClick={() => restoreMessage(message)}
-                    />
-                    <ArrowUpTrayIcon
-                      className="text-gray-300 h-5 w-5 hover:Text-white cursor-pointer"
-                      role="button"
-                      onClick={() => updateMessage(message)}
-                    />
-                    <TrashIcon
-                      className="text-gray-300 h-5 w-5 hover:text-white cursor-pointer"
-                      role="button"
-                      onClick={() => deleteMessage(message)}
-                    />
+                ))}
+                {messagesQuery.data.data.length === 0 && (
+                  <div className="text-gray-400">
+                    There are no saved messages yet. Enter a name below and
+                    click on "Save Message"
                   </div>
-                </div>
-              ))}
-              {messagesQuery?.data?.length === 0 && (
-                <div className="text-gray-400">
-                  There are no saved messages yet. Enter a name below and click
-                  on "Save Message"
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
             <div className="flex space-x-3 items-end flex-none">
               <EditorInput
                 label="Message Name"
@@ -188,7 +192,7 @@ export default function MessagesView() {
             </div>
           </>
         ) : (
-          <LoginPrompt />
+          <LoginSuggest />
         )}
       </div>
     </EditorModal>

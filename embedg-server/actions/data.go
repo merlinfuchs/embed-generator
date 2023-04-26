@@ -3,8 +3,14 @@ package actions
 import "github.com/bwmarrin/discordgo"
 
 type MessageWithActions struct {
-	Components []ActionRowWithActions `json:"components"`
-	Actions    map[string]ActionSet   `json:"actions"`
+	Content         string                            `json:"content,omitempty"`
+	Username        string                            `json:"username,omitempty"`
+	AvatarURL       string                            `json:"avatar_url,omitempty"`
+	TTS             bool                              `json:"tts,omitempty"`
+	Embeds          []*discordgo.MessageEmbed         `json:"embeds,omitempty"`
+	AllowedMentions *discordgo.MessageAllowedMentions `json:"allowed_mentions,omitempty"`
+	Components      []ActionRowWithActions            `json:"components"`
+	Actions         map[string]ActionSet              `json:"actions"`
 }
 
 type ActionRowWithActions struct {
@@ -25,15 +31,14 @@ type ComponentWithActions struct {
 	ActionSetID string                    `json:"action_set_id"`
 
 	// Select Menu
-	Placeholder string                       `json:"placeholder"`
-	MinValues   *int                         `json:"min_values"`
-	MaxValues   int                          `json:"max_values"`
-	Options     []discordgo.SelectMenuOption `json:"options"`
+	Placeholder string                             `json:"placeholder"`
+	MinValues   *int                               `json:"min_values"`
+	MaxValues   int                                `json:"max_values"`
+	Options     []ComponentSelectOptionWithActions `json:"options"`
 }
 
 type ComponentSelectOptionWithActions struct {
 	Label       string                    `json:"label"`
-	Value       string                    `json:"value"`
 	Description string                    `json:"description"`
 	Emoji       *discordgo.ComponentEmoji `json:"emoji"`
 	Default     bool                      `json:"default"`
@@ -43,15 +48,16 @@ type ComponentSelectOptionWithActions struct {
 type ActionType int
 
 const (
-	ActionTypeTextResponse ActionType = 0
-	ActionTypeAddRole      ActionType = 1
-	ActionTypeRemoveRole   ActionType = 2
-	ActionTypeToggleRole   ActionType = 3
+	ActionTypeTextResponse ActionType = 1
+	ActionTypeAddRole      ActionType = 2
+	ActionTypeRemoveRole   ActionType = 3
+	ActionTypeToggleRole   ActionType = 4
 )
 
 type Action struct {
 	Type     ActionType `json:"type"`
 	TargetID string     `json:"target_id"`
+	Text     string     `json:"text"`
 }
 
 type ActionSet struct {

@@ -2,12 +2,14 @@ import {
   ArrowLeftOnRectangleIcon,
   ArrowRightOnRectangleIcon,
   EllipsisVerticalIcon,
+  StarIcon,
 } from "@heroicons/react/20/solid";
 import clsx from "clsx";
 import { useState } from "react";
 import { useUserQuery } from "../api/queries";
 import { userAvatarUrl } from "../util/discord";
 import ClickOutsideHandler from "./ClickOutsideHandler";
+import { Link } from "react-router-dom";
 
 export default function EditorMoreMenu() {
   const [open, setOpen] = useState(false);
@@ -27,17 +29,17 @@ export default function EditorMoreMenu() {
         {open && (
           <div className="absolute w-64 bg-dark-3 rounded-md top-12 right-1 shadow-lg text-white">
             <div>
-              {user ? (
+              {user && user.success ? (
                 <div className="flex items-center px-4 space-x-3 py-3 overflow-x-hidden select-none">
                   <img
-                    src={userAvatarUrl(user)}
+                    src={userAvatarUrl(user.data)}
                     alt=""
                     className="w-10 h-10 rounded-full bg-dark-2 flex-none"
                   />
                   <div className="flex flex-auto overflow-x-hidden">
-                    <div className="text-white truncate">{user.name}</div>
+                    <div className="text-white truncate">{user.data.name}</div>
                     <div className="text-gray-400 italic">
-                      #{user.discriminator}
+                      #{user.data.discriminator}
                     </div>
                   </div>
                   <a
@@ -66,13 +68,13 @@ export default function EditorMoreMenu() {
               )}
               <div className="border-b-2 border-dark-4"></div>
             </div>
-            <a
-              className="flex items-center space-x-2 text-sm px-3 py-2 hover:bg-dark-2 rounded-b"
-              href="/api/auth/logout"
+            <Link
+              to="/premium"
+              className="flex items-center space-x-2 text-sm px-3 py-3 hover:bg-dark-2 rounded-b-md"
             >
-              <ArrowLeftOnRectangleIcon className="w-5 h-5" />
-              <div>Logout</div>
-            </a>
+              <StarIcon className="w-5 h-5" />
+              <div>Premium</div>
+            </Link>
           </div>
         )}
       </div>

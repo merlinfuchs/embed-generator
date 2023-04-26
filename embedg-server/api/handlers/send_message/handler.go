@@ -5,27 +5,28 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/gofiber/fiber/v2"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
-	"github.com/merlinfuchs/embed-generator/embedg-server/util"
+	"github.com/rs/zerolog/log"
 )
 
 type SendMessageHandler struct {
 	bot           *bot.Bot
 	pg            *postgres.PostgresStore
 	accessManager *access.AccessManager
-	actionManager *actions.ActionManager
+	actionParser  *parser.ActionParser
 }
 
-func New(bot *bot.Bot, accessManager *access.AccessManager, actionManger *actions.ActionManager) *SendMessageHandler {
+func New(bot *bot.Bot, accessManager *access.AccessManager, actionParser *parser.ActionParser) *SendMessageHandler {
 	return &SendMessageHandler{
 		bot:           bot,
 		accessManager: accessManager,
-		actionManager: actionManger,
+		actionParser:  actionParser,
 	}
 }
 
@@ -45,14 +46,30 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		threadID = req.ChannelID
 	}
 
-	params := &discordgo.WebhookParams{}
-	err = json.Unmarshal([]byte(req.Data), params)
+	data := &actions.MessageWithActions{}
+	err = json.Unmarshal([]byte(req.Data), data)
 	if err != nil {
 		return err
 	}
 
-	components, actionSets, err := h.actionManager.ParseMessageComponentActions(req.Data, session.UserID, req.ChannelID)
+	err = h.actionParser.CheckPermissionsForActionSets(data.Actions, session.UserID, req.ChannelID)
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to check permissions for action sets")
+		return err
+	}
+
+	params := &discordgo.WebhookParams{
+		Content:         data.Content,
+		Username:        data.Username,
+		AvatarURL:       data.AvatarURL,
+		TTS:             data.TTS,
+		Embeds:          data.Embeds,
+		AllowedMentions: data.AllowedMentions,
+	}
+
+	components, err := h.actionParser.ParseMessageComponents(data.Components)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to parse message components")
 		return err
 	}
 
@@ -68,27 +85,17 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return err
 	}
 
-	// TODO: move into access manager
-	// TODO: delete action set on message delete
-	for _, actionSet := range actionSets {
-		rawActions, err := json.Marshal(actionSet.Actions)
-		if err != nil {
-			return err
-		}
-
-		_, err = h.pg.Q.InsertMessageActionSet(c.Context(), postgres.InsertMessageActionSetParams{
-			ID:        util.UniqueID(),
-			MessageID: msg.ID,
-			SetID:     actionSet.ID,
-			Actions:   rawActions,
-		})
-		if err != nil {
-			return err
-		}
+	err = h.actionParser.CreateActionsForMessage(data.Actions, msg.ID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create actions for message")
+		return err
 	}
 
 	return c.JSON(wire.MessageSendResponseWire{
-		MessageID: msg.ID,
+		Success: true,
+		Data: wire.MessageSendResponseDataWire{
+			MessageID: msg.ID,
+		},
 	})
 }
 

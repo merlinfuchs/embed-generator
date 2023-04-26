@@ -72,7 +72,10 @@ func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(res)
+	return c.JSON(wire.ListGuildsResponseWire{
+		Success: true,
+		Data:    res,
+	})
 }
 
 func (h *GuildsHanlder) HandleGetGuild(c *fiber.Ctx) error {
@@ -105,7 +108,10 @@ func (h *GuildsHanlder) HandleGetGuild(c *fiber.Ctx) error {
 		HasChannelWithBotAccess:  access.HasChannelWithBotAccess,
 	}
 
-	return c.JSON(res)
+	return c.JSON(wire.GetGuildResponseWire{
+		Success: true,
+		Data:    res,
+	})
 }
 
 func (h *GuildsHanlder) HandleListGuildChannels(c *fiber.Ctx) error {
@@ -145,7 +151,10 @@ func (h *GuildsHanlder) HandleListGuildChannels(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.JSON(res)
+	return c.JSON(wire.ListChannelsResponseWire{
+		Success: true,
+		Data:    res,
+	})
 }
 
 func (h *GuildsHanlder) HandleListGuildRoles(c *fiber.Ctx) error {
@@ -171,7 +180,10 @@ func (h *GuildsHanlder) HandleListGuildRoles(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.JSON(res)
+	return c.JSON(wire.ListRolesResponseWire{
+		Success: true,
+		Data:    res,
+	})
 }
 
 func (h *GuildsHanlder) HandleListGuildEmojis(c *fiber.Ctx) error {
@@ -199,7 +211,10 @@ func (h *GuildsHanlder) HandleListGuildEmojis(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.JSON(res)
+	return c.JSON(wire.ListEmojisResponseWire{
+		Success: true,
+		Data:    res,
+	})
 }
 
 func (h *GuildsHanlder) HandleListGuildStickers(c *fiber.Ctx) error {
@@ -226,5 +241,8 @@ func (h *GuildsHanlder) HandleListGuildStickers(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.JSON(res)
+	return c.JSON(wire.ListStickersResponseWire{
+		Success: true,
+		Data:    res,
+	})
 }
