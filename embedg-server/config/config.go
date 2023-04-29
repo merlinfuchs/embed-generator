@@ -16,7 +16,7 @@ func InitConfig() {
 		viper.SetConfigFile(CfgFile)
 	} else {
 		viper.AddConfigPath("./")
-		viper.SetConfigName("embedg")
+		viper.SetConfigName("config")
 	}
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "__"))

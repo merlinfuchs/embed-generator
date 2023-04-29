@@ -3,8 +3,8 @@ package guilds
 import (
 	"fmt"
 
-	"github.com/bwmarrin/discordgo"
 	"github.com/gofiber/fiber/v2"
+	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
@@ -177,6 +177,7 @@ func (h *GuildsHanlder) HandleListGuildRoles(c *fiber.Ctx) error {
 			ID:      role.ID,
 			Name:    role.Name,
 			Managed: role.Managed,
+			Color:   role.Color,
 		}
 	}
 

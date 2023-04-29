@@ -10,6 +10,7 @@ import {
   SavedMessageDeleteResponseWire,
   SavedMessageUpdateResponseWire,
 } from "./wire";
+import { handleApiResponse } from "./queries";
 
 export function useGenerateMagicMessageMutation() {
   return useMutation((req: GenerateMagicMessageRequestWire) => {
@@ -19,13 +20,9 @@ export function useGenerateMagicMessageMutation() {
       headers: {
         "Content-Type": "application/json",
       },
-    }).then(async (res) => {
-      if (res.ok) {
-        return (await res.json()) as GenerateMagicMessageResponseWire;
-      } else {
-        throw new Error("Failed to generate magic message");
-      }
-    });
+    }).then((res) =>
+      handleApiResponse<GenerateMagicMessageResponseWire>(res.json())
+    );
   });
 }
 
@@ -37,13 +34,7 @@ export function useSendMessageToChannelMutation() {
       headers: {
         "Content-Type": "application/json",
       },
-    }).then(async (res) => {
-      if (res.ok) {
-        return (await res.json()) as MessageSendResponseWire;
-      } else {
-        throw new Error("Failed to send message to channel");
-      }
-    });
+    }).then((res) => handleApiResponse<MessageSendResponseWire>(res.json()));
   });
 }
 
@@ -85,13 +76,9 @@ export function useCreatedSavedMessageMutation() {
         headers: {
           "Content-Type": "application/json",
         },
-      }).then(async (res) => {
-        if (res.ok) {
-          return (await res.json()) as SavedMessageCreateResponseWire;
-        } else {
-          throw new Error("Failed to send message to channel");
-        }
-      });
+      }).then((res) =>
+        handleApiResponse<SavedMessageCreateResponseWire>(res.json())
+      );
     }
   );
 }
@@ -118,13 +105,9 @@ export function useUpdateSavedMessageMutation() {
         headers: {
           "Content-Type": "application/json",
         },
-      }).then(async (res) => {
-        if (res.ok) {
-          return (await res.json()) as SavedMessageUpdateResponseWire;
-        } else {
-          throw new Error("Failed to send message to channel");
-        }
-      });
+      }).then((res) =>
+        handleApiResponse<SavedMessageUpdateResponseWire>(res.json())
+      );
     }
   );
 }
@@ -142,13 +125,9 @@ export function useDeleteSavedMessageMutation() {
         headers: {
           "Content-Type": "application/json",
         },
-      }).then(async (res) => {
-        if (res.ok) {
-          return (await res.json()) as SavedMessageDeleteResponseWire;
-        } else {
-          throw new Error("Failed to send message to channel");
-        }
-      });
+      }).then((res) =>
+        handleApiResponse<SavedMessageDeleteResponseWire>(res.json())
+      );
     }
   );
 }

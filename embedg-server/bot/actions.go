@@ -3,7 +3,7 @@ package bot
 import (
 	"strings"
 
-	"github.com/bwmarrin/discordgo"
+	"github.com/merlinfuchs/discordgo"
 	"github.com/rs/zerolog/log"
 )
 

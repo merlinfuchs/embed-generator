@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bwmarrin/discordgo"
+	"github.com/merlinfuchs/discordgo"
 	"github.com/spf13/viper"
 )
 

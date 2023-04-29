@@ -48,12 +48,12 @@ type SavedMessageUpdateResponseWire APIResponse[SavedMessageWire]
 type SavedMessageDeleteResponseWire APIResponse[struct{}]
 
 type MessageSendToWebhookRequestWire struct {
-	WebhookID    string                             `json:"webhook_id"`
-	WebhookToken string                             `json:"webhook_token"`
-	ThreadID     null.String                        `json:"thread_id"`
-	MessageID    null.String                        `json:"message_id"`
-	Data         json.RawMessage                    `json:"data"`
-	Attachments  []MessageSendRequestAttachmentWire `json:"attachments"`
+	WebhookID    string                   `json:"webhook_id"`
+	WebhookToken string                   `json:"webhook_token"`
+	ThreadID     null.String              `json:"thread_id"`
+	MessageID    null.String              `json:"message_id"`
+	Data         json.RawMessage          `json:"data"`
+	Attachments  []*MessageAttachmentWire `json:"attachments"`
 }
 
 func (req MessageSendToWebhookRequestWire) Validate() error {
@@ -61,18 +61,18 @@ func (req MessageSendToWebhookRequestWire) Validate() error {
 }
 
 type MessageSendToChannelRequestWire struct {
-	GuildID     string                             `json:"guild_id"`
-	ChannelID   string                             `json:"channel_id"`
-	MessageID   null.String                        `json:"message_id"`
-	Data        json.RawMessage                    `json:"data"`
-	Attachments []MessageSendRequestAttachmentWire `json:"attachments"`
+	GuildID     string                   `json:"guild_id"`
+	ChannelID   string                   `json:"channel_id"`
+	MessageID   null.String              `json:"message_id"`
+	Data        json.RawMessage          `json:"data"`
+	Attachments []*MessageAttachmentWire `json:"attachments"`
 }
 
 func (req MessageSendToChannelRequestWire) Validate() error {
 	return nil
 }
 
-type MessageSendRequestAttachmentWire struct {
+type MessageAttachmentWire struct {
 	Name        string      `json:"name"`
 	Description null.String `json:"description"`
 	DataURL     string      `json:"data_url"`
@@ -83,3 +83,31 @@ type MessageSendResponseDataWire struct {
 }
 
 type MessageSendResponseWire APIResponse[MessageSendResponseDataWire]
+
+type MessageRestoreFromWebhookRequestWire struct {
+	WebhookID    string      `json:"webhook_id"`
+	WebhookToken string      `json:"webhook_token"`
+	ThreadID     null.String `json:"thread_id"`
+	MessageID    string      `json:"message_id"`
+}
+
+func (req MessageRestoreFromWebhookRequestWire) Validate() error {
+	return nil
+}
+
+type MessageRestoreFromChannelRequestWire struct {
+	GuildID   string `json:"guild_id"`
+	ChannelID string `json:"channel_id"`
+	MessageID string `json:"message_id"`
+}
+
+func (req MessageRestoreFromChannelRequestWire) Validate() error {
+	return nil
+}
+
+type MessageRestoreResponseDataWire struct {
+	Data        json.RawMessage          `json:"data"`
+	Attachments []*MessageAttachmentWire `json:"attachments"`
+}
+
+type MessageRestoreResponseWire APIResponse[MessageRestoreResponseDataWire]

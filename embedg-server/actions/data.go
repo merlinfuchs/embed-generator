@@ -1,6 +1,6 @@
 package actions
 
-import "github.com/bwmarrin/discordgo"
+import "github.com/merlinfuchs/discordgo"
 
 type MessageWithActions struct {
 	Content         string                            `json:"content,omitempty"`
@@ -49,9 +49,9 @@ type ActionType int
 
 const (
 	ActionTypeTextResponse ActionType = 1
-	ActionTypeAddRole      ActionType = 2
-	ActionTypeRemoveRole   ActionType = 3
-	ActionTypeToggleRole   ActionType = 4
+	ActionTypeToggleRole   ActionType = 2
+	ActionTypeAddRole      ActionType = 3
+	ActionTypeRemoveRole   ActionType = 4
 )
 
 type Action struct {

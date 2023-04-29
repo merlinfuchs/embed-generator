@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/bwmarrin/discordgo"
+	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
@@ -49,7 +49,7 @@ func (m *ActionParser) ParseMessageComponents(data []actions.ActionRowWithAction
 				for x, option := range component.Options {
 					options[x] = discordgo.SelectMenuOption{
 						Label:       option.Label,
-						Value:       "action" + option.ActionSetID,
+						Value:       "action:" + option.ActionSetID,
 						Description: option.Description,
 						Default:     option.Default,
 					}
@@ -79,6 +79,11 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 		return err
 	}
 
+	guild, err := m.bot.State.Guild(channel.GuildID)
+	if err != nil {
+		return err
+	}
+
 	channelAccess, err := m.accessManager.GetChannelAccessForUser(userID, channelID)
 	if err != nil {
 		return err
@@ -89,6 +94,8 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 		return err
 	}
 
+	memberIsOwner := guild.OwnerID == userID
+
 	highestRolePosition := 0
 	for _, roleID := range member.Roles {
 		role, err := m.bot.State.Role(channel.GuildID, roleID)
@@ -98,7 +105,7 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 	}
 
 	if !channelAccess.UserAccess() {
-		return fmt.Errorf("user %s has no access to channel %s", userID, channelID)
+		return fmt.Errorf("You have no access to the channel %s", channelID)
 	}
 
 	for _, actionSet := range actionSets {
@@ -108,19 +115,19 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 				break
 			case actions.ActionTypeAddRole, actions.ActionTypeRemoveRole, actions.ActionTypeToggleRole:
 				if channelAccess.UserPermissions&discordgo.PermissionManageRoles == 0 {
-					return fmt.Errorf("user %s has no permission to manage roles in channel %s", userID, channelID)
+					return fmt.Errorf("You have no permission to manage roles in the channel %s", channelID)
 				}
 
 				role, err := m.bot.State.Role(channel.GuildID, action.TargetID)
 				if err != nil {
 					if err == discordgo.ErrStateNotFound {
-						return fmt.Errorf("role %s does not exist", action.TargetID)
+						return fmt.Errorf("Role %s does not exist", action.TargetID)
 					}
 					return err
 				}
 
-				if role.Position >= highestRolePosition {
-					return fmt.Errorf("user can not assign role %s", action.TargetID)
+				if !memberIsOwner && role.Position >= highestRolePosition {
+					return fmt.Errorf("You can not assign the role %s", action.TargetID)
 				}
 
 				break

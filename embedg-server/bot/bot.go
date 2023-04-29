@@ -1,7 +1,7 @@
 package bot
 
 import (
-	"github.com/bwmarrin/discordgo"
+	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot/sharding"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
@@ -22,6 +22,13 @@ func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 
 	manager.Intents = discordgo.IntentGuilds | discordgo.IntentGuildMessages | discordgo.IntentGuildEmojis // discordgo.IntentGuildMembers
 	manager.State = discordgo.NewState()
+	manager.Presence = &discordgo.GatewayStatusUpdate{
+		Game: discordgo.Activity{
+			Name: "message.style",
+			Type: discordgo.ActivityTypeWatching,
+		},
+		Status: string(discordgo.StatusOnline),
+	}
 
 	b := &Bot{
 		ShardManager:  manager,

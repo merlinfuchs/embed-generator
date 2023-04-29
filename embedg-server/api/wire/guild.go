@@ -35,6 +35,7 @@ type GuildRoleWire struct {
 	ID      string `json:"id"`
 	Name    string `json:"name"`
 	Managed bool   `json:"managed"`
+	Color   int    `json:"color"`
 }
 
 type ListRolesResponseWire APIResponse[[]GuildRoleWire]

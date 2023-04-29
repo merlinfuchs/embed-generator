@@ -8,6 +8,8 @@ import {
   TrashIcon,
 } from "@heroicons/react/20/solid";
 import EditorInput from "./EditorInput";
+import { RoleSelect } from "./RoleSelect";
+import { useSelectedGuildStore } from "../state/selectedGuild";
 
 interface Props {
   setId: string;
@@ -31,6 +33,8 @@ const actionDescriptions = {
 };
 
 export default function EditorAction({ setId, actionIndex }: Props) {
+  const selectedGuildId = useSelectedGuildStore((state) => state.guildId);
+
   const action = useCurrentMessageStore(
     (state) => state.actions[setId]?.actions[actionIndex],
     shallow
@@ -50,11 +54,11 @@ export default function EditorAction({ setId, actionIndex }: Props) {
     shallow
   );
 
-  const [setType, setText, setTarget] = useCurrentMessageStore(
+  const [setType, setText, setTargetId] = useCurrentMessageStore(
     (state) => [
       state.setActionType,
       state.setActionText,
-      state.setActionTarget,
+      state.setActionTargetId,
     ],
     shallow
   );
@@ -133,10 +137,10 @@ export default function EditorAction({ setId, actionIndex }: Props) {
               onChange={(v) => setText(setId, actionIndex, v)}
             />
           ) : action.type === 2 || action.type === 3 || action.type === 4 ? (
-            <EditorInput
-              label="Role"
-              value={action.target}
-              onChange={(v) => setTarget(setId, actionIndex, v)}
+            <RoleSelect
+              guildId={selectedGuildId}
+              roleId={action.target_id || null}
+              onChange={(v) => setTargetId(setId, actionIndex, v || "")}
             />
           ) : null}
 

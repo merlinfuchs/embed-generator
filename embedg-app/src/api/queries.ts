@@ -1,16 +1,13 @@
 import { useQuery } from "react-query";
 import {
-  GuildChannelWire,
-  GuildRoleWire,
-  GuildWire,
   ListChannelsResponseWire,
   ListGuildsResponseWire,
   ListRolesResponseWire,
   SavedMessageListResponseWire,
-  SavedMessageWire,
   UserResponseWire,
-  UserWire,
 } from "./wire";
+import { APIResponse } from "./base";
+import { useToasts } from "../util/toasts";
 
 export class APIError extends Error {
   constructor(public status: number, message: string) {
@@ -18,27 +15,35 @@ export class APIError extends Error {
   }
 }
 
+const silentErrorCodes = new Set(["invalid_session"]);
+
+export function handleApiResponse<T extends APIResponse<any>>(
+  resp: Promise<T>
+): Promise<T> {
+  return resp.then((res) => {
+    if (!res.success) {
+      if (!silentErrorCodes.has(res.error.code)) {
+        useToasts.getState().create({
+          type: "error",
+          message: res.error.message,
+        });
+      }
+    }
+    return res;
+  });
+}
+
 export function useUserQuery(userId = "@me") {
   return useQuery<UserResponseWire>(["users", userId], () => {
-    return fetch(`/api/users/${userId}`).then((res) => {
-      if (res.ok) {
-        return res.json();
-      } else {
-        throw new APIError(res.status, "Failed to fetch user");
-      }
-    });
+    return fetch(`/api/users/${userId}`).then((res) =>
+      handleApiResponse(res.json())
+    );
   });
 }
 
 export function useGuildsQuery() {
   return useQuery<ListGuildsResponseWire>(["guilds"], () => {
-    return fetch(`/api/guilds`).then((res) => {
-      if (res.ok) {
-        return res.json();
-      } else {
-        throw new APIError(res.status, "Failed to fetch guilds");
-      }
-    });
+    return fetch(`/api/guilds`).then((res) => handleApiResponse(res.json()));
   });
 }
 
@@ -46,29 +51,21 @@ export function useGuildChannelsQuery(guildId: string | null) {
   return useQuery<ListChannelsResponseWire>(
     ["guild", guildId, "channels"],
     () => {
-      return fetch(`/api/guilds/${guildId}/channels`).then((res) => {
-        if (res.ok) {
-          return res.json();
-        } else {
-          throw new APIError(res.status, "Failed to fetch guild channels");
-        }
-      });
+      return fetch(`/api/guilds/${guildId}/channels`).then((res) =>
+        handleApiResponse(res.json())
+      );
     },
     { enabled: !!guildId }
   );
 }
 
 export function useGuildRolesQuery(guildId: string | null) {
-  return useQuery<ListRolesResponseWire[]>(
+  return useQuery<ListRolesResponseWire>(
     ["guild", guildId, "roles"],
     () => {
-      return fetch(`/api/guilds/${guildId}/roles`).then((res) => {
-        if (res.ok) {
-          return res.json();
-        } else {
-          throw new APIError(res.status, "Failed to fetch guild roles");
-        }
-      });
+      return fetch(`/api/guilds/${guildId}/roles`).then((res) =>
+        handleApiResponse(res.json())
+      );
     },
     { enabled: !!guildId }
   );
@@ -82,16 +79,7 @@ export function useSavedMessagesQuery(guildId: string | null) {
       if (guildId) {
         url += `?guild_id=${guildId}`;
       }
-      return fetch(url).then((res) => {
-        if (res.ok) {
-          return res.json();
-        } else {
-          throw new APIError(
-            res.status,
-            "Failed to fetch saved messages for guild"
-          );
-        }
-      });
+      return fetch(url).then((res) => handleApiResponse(res.json()));
     }
   );
 }

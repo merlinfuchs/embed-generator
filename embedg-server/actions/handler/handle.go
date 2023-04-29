@@ -3,8 +3,9 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
-	"github.com/bwmarrin/discordgo"
+	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
@@ -22,6 +23,10 @@ func New(pg *postgres.PostgresStore) *ActionHandler {
 
 func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i *discordgo.InteractionCreate, data discordgo.MessageComponentInteractionData) error {
 	actionSetID := data.CustomID[7:]
+
+	if actionSetID == "options" {
+		actionSetID = data.Values[0][7:]
+	}
 
 	col, err := m.pg.Q.GetMessageActionSet(context.TODO(), postgres.GetMessageActionSetParams{
 		MessageID: i.Message.ID,
@@ -41,7 +46,8 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i *discord
 
 	responded := false
 	for _, action := range actionSet.Actions {
-		if action.Type == actions.ActionTypeTextResponse {
+		switch action.Type {
+		case actions.ActionTypeTextResponse:
 			var err error
 			if !responded {
 				err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -61,6 +67,25 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i *discord
 			} else {
 				responded = true
 			}
+		case actions.ActionTypeToggleRole:
+			hasRole := false
+			for _, roleID := range i.Member.Roles {
+				if roleID == action.TargetID {
+					hasRole = true
+				}
+			}
+
+			var err error
+			if hasRole {
+				fmt.Println("add role")
+				err = s.GuildMemberRoleRemove(i.GuildID, i.Member.User.ID, action.TargetID)
+			} else {
+				fmt.Println("remove role")
+				err = s.GuildMemberRoleAdd(i.GuildID, i.Member.User.ID, action.TargetID)
+			}
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to toggle role")
+			}
 		}
 	}
 
@@ -68,7 +93,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i *discord
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: "Hello World! " + data.CustomID,
+				Content: "No response",
 				Flags:   discordgo.MessageFlagsEphemeral,
 			},
 		})

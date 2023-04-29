@@ -21,10 +21,15 @@ func (e *Error) Error() string {
 	return e.Message
 }
 
-func (e *Error) MarshalJSON() ([]byte, error) {
-	wrapped := APIResponse[any]{
+func (e Error) MarshalJSON() ([]byte, error) {
+	type Alias Error
+
+	wrapped := struct {
+		Success bool  `json:"success"`
+		Error   Alias `json:"error,omitempty"`
+	}{
 		Success: false,
-		Error:   e,
+		Error:   Alias(e),
 	}
 
 	return json.Marshal(wrapped)

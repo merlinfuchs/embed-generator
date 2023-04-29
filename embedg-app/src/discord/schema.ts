@@ -246,7 +246,7 @@ export const messageAction = z
     z.object({
       type: z.literal(2).or(z.literal(3)).or(z.literal(4)), // toggle, add, remove role
       id: uniqueIdSchema.default(() => getUniqueId()),
-      target: z.string().min(1),
+      target_id: z.string().min(1),
     })
   );
 
@@ -299,7 +299,7 @@ export const messageSchema = z
     allowed_mentions: messageAllowedMentionsSchema,
     components: z.array(actionRowSchema).default([]),
     thread_name: messageThreadName,
-    actions: z.record(z.string(), messageActionSet),
+    actions: z.record(z.string(), messageActionSet).default({}),
   })
   .superRefine((data, ctx) => {
     // this currently doesn't take attachments into account

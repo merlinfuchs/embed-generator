@@ -14,6 +14,7 @@ import EditorEmbedImages from "./EditorEmbedImages";
 import EditorEmbedFooter from "./EditorEmbedFooter";
 import { useMemo } from "react";
 import { useCollapsedStatesStore } from "../state/collapsed";
+import { colorIntToHex } from "../util/discord";
 
 interface Props {
   embedIndex: number;
@@ -42,7 +43,7 @@ export default function EditorEmbed({ embedIndex, embedId }: Props) {
   );
 
   const hexColor = useMemo(
-    () => (color !== undefined ? "#" + color.toString(16) : "#1f2225"),
+    () => (color !== undefined ? colorIntToHex(color) : "#1f2225"),
     [color]
   );
 

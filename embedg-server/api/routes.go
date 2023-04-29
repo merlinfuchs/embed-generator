@@ -61,9 +61,10 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 	actionParser := parser.New(accessManager, stores.pg, stores.bot)
 
 	sendMessageHandler := send_message.New(stores.bot, accessManager, actionParser)
-	sendMessageGroup := app.Group("/api/send-message", sessionMiddleware.SessionRequired())
-	sendMessageGroup.Post("/channel", helpers.WithRequestBodyValidated(sendMessageHandler.HandleSendMessageToChannel))
-	sendMessageGroup.Post("/webhook", helpers.WithRequestBodyValidated(sendMessageHandler.HandleSendMessageToWebhook))
+	app.Post("/send-message/channel", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(sendMessageHandler.HandleSendMessageToChannel))
+	app.Post("/send-message/webhook", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(sendMessageHandler.HandleSendMessageToWebhook))
+	app.Post("/restore-message/channel", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(sendMessageHandler.HandleRestoreMessageFromChannel))
+	app.Post("/restore-message/webhook", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(sendMessageHandler.HandleRestoreMessageFromWebhook))
 
 	paymentsHandler := payments.New(stores.pg, premiumManager)
 

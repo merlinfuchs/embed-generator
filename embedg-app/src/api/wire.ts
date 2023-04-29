@@ -30,6 +30,7 @@ export interface GuildRoleWire {
   id: string;
   name: string;
   managed: boolean;
+  color: number /* int */;
 }
 export type ListRolesResponseWire = APIResponse<GuildRoleWire[]>;
 export interface GuildEmojiWire {
@@ -99,16 +100,16 @@ export interface MessageSendToWebhookRequestWire {
   thread_id: null | string;
   message_id: null | string;
   data: Record<string, any> | null;
-  attachments: MessageSendRequestAttachmentWire[];
+  attachments: (MessageAttachmentWire | undefined)[];
 }
 export interface MessageSendToChannelRequestWire {
   guild_id: string;
   channel_id: string;
   message_id: null | string;
   data: Record<string, any> | null;
-  attachments: MessageSendRequestAttachmentWire[];
+  attachments: (MessageAttachmentWire | undefined)[];
 }
-export interface MessageSendRequestAttachmentWire {
+export interface MessageAttachmentWire {
   name: string;
   description: null | string;
   data_url: string;
@@ -117,6 +118,22 @@ export interface MessageSendResponseDataWire {
   message_id: string;
 }
 export type MessageSendResponseWire = APIResponse<MessageSendResponseDataWire>;
+export interface MessageRestoreFromWebhookRequestWire {
+  webhook_id: string;
+  webhook_token: string;
+  thread_id: null | string;
+  message_id: string;
+}
+export interface MessageRestoreFromChannelRequestWire {
+  guild_id: string;
+  channel_id: string;
+  message_id: string;
+}
+export interface MessageRestoreResponseDataWire {
+  data: Record<string, any> | null;
+  attachments: (MessageAttachmentWire | undefined)[];
+}
+export type MessageRestoreResponseWire = APIResponse<MessageRestoreResponseDataWire>;
 
 //////////
 // source: user.go

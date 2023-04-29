@@ -99,7 +99,7 @@ export interface MessageStore extends Message {
   duplicateAction: (id: string, i: number) => void;
   setActionType: (id: string, i: number, type: number) => void;
   setActionText: (id: string, i: number, text: string) => void;
-  setActionTarget: (id: string, i: number, target: string) => void;
+  setActionTargetId: (id: string, i: number, target: string) => void;
 
   getSelectMenu: (i: number, j: number) => MessageComponentSelectMenu | null;
   getButton: (i: number, j: number) => MessageComponentButton | null;
@@ -919,7 +919,7 @@ export const useCurrentMessageStore = create<MessageStore>()(
               actionSet.actions[i] = {
                 type,
                 id: action.id,
-                target: "",
+                target_id: "",
               };
             }
           }),
@@ -931,12 +931,12 @@ export const useCurrentMessageStore = create<MessageStore>()(
               action.text = text;
             }
           }),
-        setActionTarget: (id: string, i: number, target: string) =>
+        setActionTargetId: (id: string, i: number, target: string) =>
           set((state) => {
             const actionSet = state.actions[id];
             const action = actionSet.actions[i];
             if (action.type === 2 || action.type === 3 || action.type === 4) {
-              action.target = target;
+              action.target_id = target;
             }
           }),
 

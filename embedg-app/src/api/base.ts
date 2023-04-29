@@ -9,7 +9,7 @@ export type APIResponse<T> =
     };
 
 export type APIError = {
-  Code: string;
-  Message: string;
-  Data?: Record<string, any>;
+  code: string;
+  message: string;
+  data?: Record<string, any>;
 };
