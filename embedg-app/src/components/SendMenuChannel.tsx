@@ -98,8 +98,8 @@ export default function SendMenuChannel() {
           />
         </div>
       </div>
-      <div className="flex space-x-3">
-        <div className="flex-auto">
+      <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+        <div className="flex-auto sm:w-1/2">
           <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
             Channel
           </div>
@@ -109,7 +109,7 @@ export default function SendMenuChannel() {
             onChange={setSelectedChannelId}
           />
         </div>
-        <div className="flex-auto">
+        <div className="flex-auto sm:w-1/2">
           <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
             Message ID or URL
           </div>
