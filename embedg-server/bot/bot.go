@@ -22,13 +22,13 @@ func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 
 	manager.Intents = discordgo.IntentGuilds | discordgo.IntentGuildMessages | discordgo.IntentGuildEmojis // discordgo.IntentGuildMembers
 	manager.State = discordgo.NewState()
-	/* manager.Presence = &discordgo.GatewayStatusUpdate{
+	manager.Presence = &discordgo.GatewayStatusUpdate{
 		Game: discordgo.Activity{
 			Name: "message.style",
 			Type: discordgo.ActivityTypeWatching,
 		},
 		Status: string(discordgo.StatusOnline),
-	} */
+	}
 
 	b := &Bot{
 		ShardManager:  manager,
