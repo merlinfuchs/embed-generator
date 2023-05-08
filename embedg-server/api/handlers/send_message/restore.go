@@ -108,6 +108,7 @@ func downloadMessageAttachments(attachments []*discordgo.MessageAttachment) (fil
 				Name:        attachment.Filename,
 				Description: null.String{},
 				DataURL:     dataURL.String(),
+				Size:        attachment.Size,
 			}
 		}(attachment)
 	}

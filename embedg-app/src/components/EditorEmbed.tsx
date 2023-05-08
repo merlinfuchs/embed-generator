@@ -47,18 +47,13 @@ export default function EditorEmbed({ embedIndex, embedId }: Props) {
     [color]
   );
 
-  const clearCollapsedWithPrefix = useCollapsedStatesStore(
-    (state) => state.clearCollapsedWithPrefix
-  );
-
   function wrappedRemove() {
-    clearCollapsedWithPrefix(`embeds.${embedId}`);
     remove(embedIndex);
   }
 
   return (
     <div
-      className="mb-3 bg-dark-3 p-3 rounded-md border-l-4"
+      className="bg-dark-3 p-3 rounded-md border-l-4"
       style={{ borderColor: hexColor }}
     >
       <Collapsable
@@ -66,6 +61,7 @@ export default function EditorEmbed({ embedIndex, embedId }: Props) {
         id={`embeds.${embedId}`}
         valiationPathPrefix={`embeds.${embedIndex}`}
         size="large"
+        defaultCollapsed={true}
         extra={
           embedName && (
             <div className="text-gray-500 truncate flex space-x-2 pl-2">

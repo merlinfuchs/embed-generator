@@ -76,6 +76,7 @@ type MessageAttachmentWire struct {
 	Name        string      `json:"name"`
 	Description null.String `json:"description"`
 	DataURL     string      `json:"data_url"`
+	Size        int         `json:"size"`
 }
 
 type MessageSendResponseDataWire struct {

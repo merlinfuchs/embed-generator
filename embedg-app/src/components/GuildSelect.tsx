@@ -39,7 +39,7 @@ export default function GuildSelect({ guildId, onChange }: Props) {
 
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
-      <div className="px-3 rounded bg-dark-2 relative flex items-center h-12">
+      <div className="px-3 rounded bg-dark-2 relative flex items-center h-10">
         <div
           onClick={() => setOpen((prev) => !prev)}
           role="button"
@@ -49,7 +49,7 @@ export default function GuildSelect({ guildId, onChange }: Props) {
             <div className="flex items-center space-x-2 cursor-pointer w-full">
               <img
                 src={guildIconUrl(guild)}
-                className="guild icon url w-8 h-8 rounded-full flex-none"
+                className="guild icon url w-7 h-7 rounded-full flex-none"
               />
               <div className="text-lg text-gray-300 flex-auto truncate">
                 {guild.name}
@@ -78,7 +78,7 @@ export default function GuildSelect({ guildId, onChange }: Props) {
                   <img
                     src={guildIconUrl(g)}
                     alt="icon"
-                    className="h-8 w-8 rounded-full"
+                    className="h-7 w-7 rounded-full"
                   />
                   <div className="text-gray-300">{g.name}</div>
                 </div>

@@ -2,6 +2,9 @@ import { useMutation } from "react-query";
 import {
   GenerateMagicMessageRequestWire,
   GenerateMagicMessageResponseWire,
+  MessageRestoreFromChannelRequestWire,
+  MessageRestoreFromWebhookRequestWire,
+  MessageRestoreResponseWire,
   MessageSendResponseWire,
   MessageSendToChannelRequestWire,
   MessageSendToWebhookRequestWire,
@@ -46,13 +49,31 @@ export function useSendMessageToWebhookMutation() {
       headers: {
         "Content-Type": "application/json",
       },
-    }).then(async (res) => {
-      if (res.ok) {
-        return (await res.json()) as MessageSendResponseWire;
-      } else {
-        throw new Error("Failed to send message to channel");
-      }
-    });
+    }).then((res) => handleApiResponse<MessageSendResponseWire>(res.json()));
+  });
+}
+
+export function useRestoreMessageFromWebhookMutation() {
+  return useMutation((req: MessageRestoreFromWebhookRequestWire) => {
+    return fetch(`/api/restore-message/webhook`, {
+      method: "POST",
+      body: JSON.stringify(req),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }).then((res) => handleApiResponse<MessageRestoreResponseWire>(res.json()));
+  });
+}
+
+export function useRestoreMessageFromChannelMutation() {
+  return useMutation((req: MessageRestoreFromChannelRequestWire) => {
+    return fetch(`/api/restore-message/channel`, {
+      method: "POST",
+      body: JSON.stringify(req),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }).then((res) => handleApiResponse<MessageRestoreResponseWire>(res.json()));
   });
 }
 

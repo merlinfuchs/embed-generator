@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"strings"
 
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
@@ -24,7 +24,7 @@ func New(pg *postgres.PostgresStore) *ActionHandler {
 func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i *discordgo.InteractionCreate, data discordgo.MessageComponentInteractionData) error {
 	actionSetID := data.CustomID[7:]
 
-	if actionSetID == "options" {
+	if strings.HasPrefix(actionSetID, "action:options:") {
 		actionSetID = data.Values[0][7:]
 	}
 
@@ -77,10 +77,8 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i *discord
 
 			var err error
 			if hasRole {
-				fmt.Println("add role")
 				err = s.GuildMemberRoleRemove(i.GuildID, i.Member.User.ID, action.TargetID)
 			} else {
-				fmt.Println("remove role")
 				err = s.GuildMemberRoleAdd(i.GuildID, i.Member.User.ID, action.TargetID)
 			}
 			if err != nil {

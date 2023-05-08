@@ -8,7 +8,8 @@ import { useCurrentMessageStore } from "../../state/message";
 import { debounce } from "debounce";
 import { Message, messageSchema } from "../../discord/schema";
 import { useValidationErrorStore } from "../../state/validationError";
-import hetznerLogo from "../../assets/hetzner.svg";
+import EditorAttachments from "../../components/EditorAttachments";
+import SendMenu from "../../components/SendMenu";
 
 export default function EditorView() {
   const setValidationError = useValidationErrorStore((state) => state.setError);
@@ -28,7 +29,10 @@ export default function EditorView() {
       <div className="lg:w-1/2 lg:h-full bg-dark-4 lg:overflow-y-auto no-scrollbar">
         <EditorMenuBar />
         <div className="p-5 space-y-5">
+          <SendMenu />
+          <div className="border border-dark-6"></div>
           <EditorMessageContentFields />
+          <EditorAttachments />
           <EditorEmbeds />
           <EditorComponents />
         </div>

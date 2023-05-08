@@ -105,7 +105,7 @@ export interface MessageStore extends Message {
   getButton: (i: number, j: number) => MessageComponentButton | null;
 }
 
-const defaultMessage: Message = {
+export const defaultMessage: Message = {
   username: undefined,
   avatar_url: undefined,
   content: "Hello World",

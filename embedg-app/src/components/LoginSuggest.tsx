@@ -58,8 +58,8 @@ export default function LogginSuggest() {
           </div>
           <div className="flex justify-end pt-2">
             <a
-              className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark"
-              href="/api/auth/redirect"
+              className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white"
+              href="/api/auth/login"
             >
               <div>Login Now</div>
             </a>

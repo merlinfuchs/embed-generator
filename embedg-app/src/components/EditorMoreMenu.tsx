@@ -9,7 +9,6 @@ import { useState } from "react";
 import { useUserQuery } from "../api/queries";
 import { userAvatarUrl } from "../util/discord";
 import ClickOutsideHandler from "./ClickOutsideHandler";
-import { Link } from "react-router-dom";
 
 export default function EditorMoreMenu() {
   const [open, setOpen] = useState(false);
@@ -27,7 +26,7 @@ export default function EditorMoreMenu() {
           onClick={() => setOpen((prev) => !prev)}
         />
         {open && (
-          <div className="absolute w-64 bg-dark-3 rounded-md top-12 right-1 shadow-lg text-white">
+          <div className="absolute w-64 bg-dark-3 rounded-md top-12 right-1 shadow-lg text-white z-20">
             <div>
               {user && user.success ? (
                 <div className="flex items-center px-4 space-x-3 py-3 overflow-x-hidden select-none">
@@ -68,6 +67,7 @@ export default function EditorMoreMenu() {
               )}
               <div className="border-b-2 border-dark-4"></div>
             </div>
+            {/*
             <Link
               to="/premium"
               className="flex items-center space-x-2 text-sm px-3 py-3 hover:bg-dark-2 rounded-b-md"
@@ -75,6 +75,7 @@ export default function EditorMoreMenu() {
               <StarIcon className="w-5 h-5" />
               <div>Premium</div>
             </Link>
+            */}
           </div>
         )}
       </div>

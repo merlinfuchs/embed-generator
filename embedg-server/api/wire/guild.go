@@ -32,10 +32,11 @@ type GuildChannelWire struct {
 type ListChannelsResponseWire APIResponse[[]GuildChannelWire]
 
 type GuildRoleWire struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	Managed bool   `json:"managed"`
-	Color   int    `json:"color"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Managed  bool   `json:"managed"`
+	Color    int    `json:"color"`
+	Position int    `json:"position"`
 }
 
 type ListRolesResponseWire APIResponse[[]GuildRoleWire]

@@ -5,6 +5,7 @@ import { useCollapsedStatesStore } from "../state/collapsed";
 import { getUniqueId } from "../util";
 import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";
+import clsx from "clsx";
 
 export default function EditorEmbeds() {
   const embeds = useCurrentMessageStore(
@@ -14,23 +15,19 @@ export default function EditorEmbeds() {
   const addEmbed = useCurrentMessageStore((state) => state.addEmbed);
   const clearEmbeds = useCurrentMessageStore((state) => state.clearEmbeds);
 
-  const clearCollapsedWithPrefix = useCollapsedStatesStore(
-    (state) => state.clearCollapsedWithPrefix
-  );
-
-  function clear() {
-    clearEmbeds();
-    clearCollapsedWithPrefix("embeds");
-  }
-
   return (
     <Collapsable
       id="embeds"
       title="Embeds"
       size="large"
       valiationPathPrefix="embeds"
+      extra={
+        <div className="text-sm italic font-light text-gray-400">
+          {embeds.length} / 10
+        </div>
+      }
     >
-      <AutoAnimate>
+      <AutoAnimate className="space-y-3 mb-3">
         {embeds.map((id, i) => (
           <div key={id}>
             <EditorEmbed embedIndex={i} embedId={id} />
@@ -39,8 +36,14 @@ export default function EditorEmbeds() {
       </AutoAnimate>
       <div className="space-x-3">
         <button
-          className="bg-blurple px-3 py-2 rounded text-white hover:bg-blurple-dark"
+          className={clsx(
+            "px-3 py-2 rounded text-white",
+            embeds.length < 10
+              ? "bg-blurple hover:bg-blurple-dark"
+              : "bg-dark-3 cursor-not-allowed"
+          )}
           onClick={() =>
+            embeds.length < 10 &&
             addEmbed({
               id: getUniqueId(),
               description: "",
@@ -52,7 +55,7 @@ export default function EditorEmbeds() {
         </button>
         <button
           className="px-3 py-2 rounded text-white border-red border-2 hover:bg-red"
-          onClick={clear}
+          onClick={clearEmbeds}
         >
           Clear Embeds
         </button>

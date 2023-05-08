@@ -5,6 +5,7 @@ import { Message } from "../discord/schema";
 // @ts-ignore
 import { toHTML } from "../discord/markdown";
 import { colorIntToHex } from "../util/discord";
+import { useSendSettingsStore } from "../state/sendSettings";
 
 const buttonColors = {
   1: "discord-button-primary",
@@ -21,7 +22,7 @@ interface ButtonResponse {
 
 export default function MessagePreview({ msg }: { msg: Message }) {
   const currentTime = format(new Date(), "hh:mm aa");
-
+  const sendMode = useSendSettingsStore((state) => state.mode);
   const [responses, setResponses] = useState<ButtonResponse[]>([]);
 
   return (
@@ -205,61 +206,53 @@ export default function MessagePreview({ msg }: { msg: Message }) {
                   })}
 
                 <div className="discord-attachments">
-                  {/*msg.components.map((row) => (
-                    <div className="discord-action-row" key={row.id}>
-                      {row.components.map((comp) =>
-                        comp.type === 2 ? (
-                          comp.style === 5 ? (
-                            <a
-                              className={`discord-button discord-button-hoverable ${
-                                buttonColors[comp.style]
-                              }`}
-                              key={comp.id}
-                              target="_blank"
-                              href={comp.url}
-                              rel="noreferrer"
-                            >
-                              <span>{comp.label}</span>
-                              <svg
-                                className="discord-button-launch"
-                                aria-hidden="false"
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
+                  {sendMode === "channel" &&
+                    msg.components.map((row) => (
+                      <div className="discord-action-row" key={row.id}>
+                        {row.components.map((comp) =>
+                          comp.type === 2 ? (
+                            comp.style === 5 ? (
+                              <a
+                                className={`discord-button discord-button-hoverable ${
+                                  buttonColors[comp.style]
+                                }`}
+                                key={comp.id}
+                                target="_blank"
+                                href={comp.url}
+                                rel="noreferrer"
                               >
-                                <path
-                                  fill="currentColor"
-                                  d="M10 5V3H5.375C4.06519 3 3 4.06519 3 5.375V18.625C3 19.936 4.06519 21 5.375 21H18.625C19.936 21 21 19.936 21 18.625V14H19V19H5V5H10Z"
-                                ></path>
-                                <path
-                                  fill="currentColor"
-                                  d="M21 2.99902H14V4.99902H17.586L9.29297 13.292L10.707 14.706L19 6.41302V9.99902H21V2.99902Z"
-                                ></path>
-                              </svg>
-                            </a>
-                          ) : (
-                            <div
-                              className={`discord-button discord-button-hoverable ${
-                                buttonColors[comp.style]
-                              }`}
-                              key={comp.id}
-                              onClick={() =>
-                                setResponses([
-                                  ...responses,
-                                  {
-                                    id: getUniqueId(),
-                                    text: comp.custom_id,
-                                  },
-                                ])
-                              }
-                            >
-                              <span>{comp.label}</span>
-                            </div>
-                          )
-                        ) : undefined
-                      )}
-                    </div>
-                            ))*/}
+                                <span>{comp.label}</span>
+                                <svg
+                                  className="discord-button-launch"
+                                  aria-hidden="false"
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    fill="currentColor"
+                                    d="M10 5V3H5.375C4.06519 3 3 4.06519 3 5.375V18.625C3 19.936 4.06519 21 5.375 21H18.625C19.936 21 21 19.936 21 18.625V14H19V19H5V5H10Z"
+                                  ></path>
+                                  <path
+                                    fill="currentColor"
+                                    d="M21 2.99902H14V4.99902H17.586L9.29297 13.292L10.707 14.706L19 6.41302V9.99902H21V2.99902Z"
+                                  ></path>
+                                </svg>
+                              </a>
+                            ) : (
+                              <div
+                                className={`discord-button discord-button-hoverable ${
+                                  buttonColors[comp.style]
+                                }`}
+                                key={comp.id}
+                              >
+                                <span>{comp.label}</span>
+                              </div>
+                            )
+                          ) : undefined
+                        )}
+                      </div>
+                    ))}
                 </div>
               </div>
             </div>

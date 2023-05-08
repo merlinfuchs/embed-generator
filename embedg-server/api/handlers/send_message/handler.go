@@ -149,8 +149,11 @@ func (h *SendMessageHandler) getWebhookForChannel(channelID string) (*discordgo.
 	if err != nil {
 		return nil, err
 	}
-	if len(webhooks) > 0 {
-		return webhooks[0], nil
+
+	for _, webhook := range webhooks {
+		if webhook.ApplicationID == h.bot.State.User.ID {
+			return webhook, nil
+		}
 	}
 
 	webhook, err := h.bot.Session.WebhookCreate(channel.ID, "Embed Generator", "")

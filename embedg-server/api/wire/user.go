@@ -7,6 +7,7 @@ type UserWire struct {
 	Name          string      `json:"name"`
 	Discriminator string      `json:"discriminator"`
 	Avatar        null.String `json:"avatar"`
+	IsTester      bool        `json:"is_tester"`
 }
 
 type UserResponseWire APIResponse[UserWire]

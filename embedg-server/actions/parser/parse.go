@@ -57,7 +57,7 @@ func (m *ActionParser) ParseMessageComponents(data []actions.ActionRowWithAction
 
 				ar.Components[y] = discordgo.SelectMenu{
 					MenuType:    discordgo.StringSelectMenu,
-					CustomID:    "action:options",
+					CustomID:    "action:options:" + util.UniqueID(),
 					Placeholder: component.Placeholder,
 					MinValues:   component.MinValues,
 					MaxValues:   component.MaxValues,

@@ -33,6 +33,11 @@ export default function EditorActionSet({ setId }: Props) {
       id={`actions.${setId}`}
       valiationPathPrefix={`actions.${setId}`}
       title="Actions"
+      extra={
+        <div className="text-sm italic font-light text-gray-400">
+          {actions.length} / 5
+        </div>
+      }
     >
       <AutoAnimate className="space-y-2">
         {actions.map((id, i) => (

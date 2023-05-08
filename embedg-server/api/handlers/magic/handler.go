@@ -4,18 +4,36 @@ import (
 	"context"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	openai "github.com/sashabaranov/go-openai"
 	"github.com/spf13/viper"
 )
 
-type MagicHandler struct{}
+// TODO: investigate https://github.com/1rgs/jsonformer
+
+type MagicHandler struct {
+	pg *postgres.PostgresStore
+}
 
 func New() *MagicHandler {
 	return &MagicHandler{}
 }
 
 func (h *MagicHandler) HandleGenerateMagicMessage(c *fiber.Ctx, req wire.GenerateMagicMessageRequestWire) error {
+	session := c.Locals("session").(*session.Session)
+
+	user, err := h.pg.Q.GetUser(c.Context(), session.UserID)
+	if err != nil {
+		return err
+	}
+
+	if !user.IsTester {
+		return helpers.Forbidden("not_tester", "This feature is only available to testers!")
+	}
+
 	messages := []openai.ChatCompletionMessage{
 		{
 			Role:    openai.ChatMessageRoleSystem,

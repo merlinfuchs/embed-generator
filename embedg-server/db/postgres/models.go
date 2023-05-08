@@ -43,6 +43,7 @@ type User struct {
 	Avatar           sql.NullString
 	StripeCustomerID sql.NullString
 	StripeEmail      sql.NullString
+	IsTester         bool
 }
 
 type UserSubscription struct {

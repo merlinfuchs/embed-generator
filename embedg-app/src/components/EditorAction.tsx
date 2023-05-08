@@ -9,7 +9,7 @@ import {
 } from "@heroicons/react/20/solid";
 import EditorInput from "./EditorInput";
 import { RoleSelect } from "./RoleSelect";
-import { useSelectedGuildStore } from "../state/selectedGuild";
+import { useSendSettingsStore } from "../state/sendSettings";
 
 interface Props {
   setId: string;
@@ -33,7 +33,7 @@ const actionDescriptions = {
 };
 
 export default function EditorAction({ setId, actionIndex }: Props) {
-  const selectedGuildId = useSelectedGuildStore((state) => state.guildId);
+  const selectedGuildId = useSendSettingsStore((state) => state.guildId);
 
   const action = useCurrentMessageStore(
     (state) => state.actions[setId]?.actions[actionIndex],

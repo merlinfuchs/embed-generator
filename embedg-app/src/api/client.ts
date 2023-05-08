@@ -9,13 +9,15 @@ const queryClient = new QueryClient({
         if (err.status !== 401) {
           useToasts.getState().create({
             type: "error",
+            title: `API Error (${err.status})`,
             message: err.message,
           });
         }
       } else {
         useToasts.getState().create({
           type: "error",
-          message: "An unknown error occurred",
+          title: "Unexpect API error",
+          message: `${err}`,
         });
       }
     },

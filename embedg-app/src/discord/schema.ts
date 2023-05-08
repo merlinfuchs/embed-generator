@@ -204,7 +204,7 @@ export const buttonSchema = z.object({
   style: buttonStyleSchema,
   label: z.string().min(1),
   url: z.optional(z.string().refine(...urlRefinement)),
-  action_set_id: z.string(),
+  action_set_id: z.string().default(() => getUniqueId().toString()),
 });
 
 export type MessageComponentButton = z.infer<typeof buttonSchema>;
@@ -212,7 +212,7 @@ export type MessageComponentButton = z.infer<typeof buttonSchema>;
 export const selectMenuOptionSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
   label: z.string().min(1).max(100),
-  action_set_id: z.string(),
+  action_set_id: z.string().default(() => getUniqueId().toString()),
 });
 
 export type MessageComponentSelectMenuOption = z.infer<
@@ -295,11 +295,20 @@ export const messageSchema = z
     username: webhookUsernameSchema,
     avatar_url: webhookAvatarUrlSchema,
     tts: messageTtsSchema.default(false),
-    embeds: z.array(embedSchema).default([]),
+    embeds: z.preprocess(
+      (d) => d ?? [],
+      z.array(embedSchema).max(10).default([])
+    ),
     allowed_mentions: messageAllowedMentionsSchema,
-    components: z.array(actionRowSchema).default([]),
+    components: z.preprocess(
+      (d) => d ?? [],
+      z.array(actionRowSchema).max(5).default([])
+    ),
     thread_name: messageThreadName,
-    actions: z.record(z.string(), messageActionSet).default({}),
+    actions: z.preprocess(
+      (d) => d ?? {},
+      z.record(z.string(), messageActionSet).default({})
+    ),
   })
   .superRefine((data, ctx) => {
     // this currently doesn't take attachments into account
@@ -313,3 +322,30 @@ export const messageSchema = z
   });
 
 export type Message = z.infer<typeof messageSchema>;
+
+export function parseMessageWithAction(raw: any) {
+  const parsedData = messageSchema.parse(raw);
+
+  // create messing action sets
+  for (const row of parsedData.components) {
+    for (const comp of row.components) {
+      if (comp.type === 2) {
+        if (!parsedData.actions[comp.action_set_id]) {
+          parsedData.actions[comp.action_set_id] = {
+            actions: [],
+          };
+        }
+      } else {
+        for (const option of comp.options) {
+          if (!parsedData.actions[option.action_set_id]) {
+            parsedData.actions[option.action_set_id] = {
+              actions: [],
+            };
+          }
+        }
+      }
+    }
+  }
+
+  return parsedData;
+}

@@ -7,6 +7,7 @@ import {
 } from "@heroicons/react/20/solid";
 
 interface Toast {
+  title: string;
   message: string;
   type?: "success" | "error" | "info";
   timeout?: number;
@@ -38,27 +39,30 @@ export const useToasts = create<ToastStore>()((set) => ({
       set((state) => ({
         toasts: state.toasts.filter((t) => t.id !== id),
       }));
-    }, toast.timeout || 3000);
+    }, toast.timeout || 5000);
   },
 }));
 
 export function ToastContainer() {
   const toasts = useToasts((state) => state.toasts);
   return (
-    <div className="fixed top-5 right-5 space-y-3 z-50">
+    <div className="fixed top-5 right-5 space-y-3 z-50 w-96">
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className="bg-dark-2 rounded-md py-3 pl-3 pr-5 shadow-lg text-white flex items-center space-x-2"
+          className="bg-dark-2 rounded-md py-3 pl-3 pr-5 shadow-lg text-white flex space-x-3 items-center"
         >
           {toast.type === "success" ? (
-            <CheckCircleIcon className="w-7 h-7 text-green" />
+            <CheckCircleIcon className="w-7 h-7 text-green flex-none" />
           ) : toast.type === "error" ? (
-            <ExclamationCircleIcon className="w-7 h-7 text-red" />
+            <ExclamationCircleIcon className="w-7 h-7 text-red flex-none" />
           ) : (
-            <InformationCircleIcon className="w-7 h-7 tex-blurple" />
+            <InformationCircleIcon className="w-7 h-7 tex-blurple flex-none" />
           )}
-          <div className="text-gray-200">{toast.message}</div>
+          <div>
+            <div className="text-gray-200 mb-1">{toast.title}</div>
+            <div className="text-gray-300 text-sm">{toast.message}</div>
+          </div>
         </div>
       ))}
     </div>

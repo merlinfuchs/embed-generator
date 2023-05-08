@@ -48,6 +48,7 @@ func (h *UsersHandler) HandleGetUser(c *fiber.Ctx) error {
 			Name:          user.Name,
 			Discriminator: user.Discriminator,
 			Avatar:        null.NewString(user.Avatar.String, user.Avatar.Valid),
+			IsTester:      user.IsTester,
 		},
 	})
 }

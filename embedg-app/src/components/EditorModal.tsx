@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 interface Props {
   children: ReactNode;
-  width?: "md" | "lg" | "xl" | "full";
+  width?: "xs" | "sm" | "md" | "lg" | "xl" | "full";
   height?: "auto" | "full";
   closeButton?: boolean;
 }
@@ -32,7 +32,11 @@ export default function ({
             ? "max-w-5xl"
             : width === "md"
             ? "max-w-3xl"
-            : null,
+            : width === "sm"
+            ? "max-w-xl"
+            : width === "xs"
+            ? "max-w-md"
+            : "",
           height === "full" && "h-full"
         )}
       >

@@ -20,7 +20,7 @@ const silentErrorCodes = new Set(["invalid_session"]);
 export function handleApiResponse<T extends APIResponse<any>>(
   resp: Promise<T>
 ): Promise<T> {
-  return resp.then((res) => {
+  return resp; /*.then((res) => {
     if (!res.success) {
       if (!silentErrorCodes.has(res.error.code)) {
         useToasts.getState().create({
@@ -30,7 +30,7 @@ export function handleApiResponse<T extends APIResponse<any>>(
       }
     }
     return res;
-  });
+  });*/
 }
 
 export function useUserQuery(userId = "@me") {

@@ -174,10 +174,11 @@ func (h *GuildsHanlder) HandleListGuildRoles(c *fiber.Ctx) error {
 	res := make([]wire.GuildRoleWire, len(guild.Roles))
 	for i, role := range guild.Roles {
 		res[i] = wire.GuildRoleWire{
-			ID:      role.ID,
-			Name:    role.Name,
-			Managed: role.Managed,
-			Color:   role.Color,
+			ID:       role.ID,
+			Name:     role.Name,
+			Managed:  role.Managed,
+			Color:    role.Color,
+			Position: role.Position,
 		}
 	}
 

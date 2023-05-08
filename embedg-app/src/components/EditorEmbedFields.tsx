@@ -4,6 +4,7 @@ import { getUniqueId } from "../util";
 import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";
 import EditorEmbedField from "./EditorEmbedField";
+import clsx from "clsx";
 
 interface Props {
   embedIndex: number;
@@ -26,6 +27,11 @@ export default function EditorEmbedFields({ embedIndex, embedId }: Props) {
       id={`embeds.${embedId}.fields`}
       valiationPathPrefix={`embeds.${embedIndex}.fields`}
       title="Fields"
+      extra={
+        <div className="text-sm italic font-light text-gray-400">
+          {fields.length} / 25
+        </div>
+      }
     >
       <div>
         <AutoAnimate className="space-y-2 mb-3">
@@ -41,8 +47,14 @@ export default function EditorEmbedFields({ embedIndex, embedId }: Props) {
         </AutoAnimate>
         <div className="space-x-3">
           <button
-            className="bg-blurple px-3 py-2 rounded text-white hover:bg-blurple-dark"
+            className={clsx(
+              "px-3 py-2 rounded text-white",
+              fields.length < 25
+                ? "bg-blurple hover:bg-blurple-dark"
+                : "bg-dark-3 cursor-not-allowed"
+            )}
             onClick={() =>
+              fields.length < 25 &&
               addField(embedIndex, {
                 id: getUniqueId(),
                 name: "",

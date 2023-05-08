@@ -3,69 +3,66 @@ import {
   CodeBracketSquareIcon,
   SparklesIcon,
   RectangleStackIcon,
-  PaperAirplaneIcon,
+  LinkIcon,
 } from "@heroicons/react/20/solid";
-import clsx from "clsx";
-import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { useCurrentMessageStore } from "../state/message";
-import { useToasts } from "../util/toasts";
 import EditorMoreMenu from "./EditorMoreMenu";
+import { useUserQuery } from "../api/queries";
 
 export default function EditorMenuBar() {
-  const toasts = useToasts();
+  /*
 
-  const clear = useCurrentMessageStore((state) => state.clear);
-
-  const [clearConfirm, setClearConfirm] = useState(false);
-  const clearConfirmTimeout = useRef(0);
-
-  function clearWithConfirm() {
-    if (clearConfirm) {
-      clear();
-      setClearConfirm(false);
-      clearTimeout(clearConfirmTimeout.current);
-    } else {
-      setClearConfirm(true);
-      clearTimeout(clearConfirmTimeout.current);
-      clearConfirmTimeout.current = setTimeout(() => {
-        setClearConfirm(false);
-        toasts.create({
-          message: "Click twice to clear the message.",
-        });
-      }, 2000);
-    }
-  }
+          <Link to="/send">
+            <PaperAirplaneIcon className="text-white bg-blurple hover:bg-blurple-dark rounded-full cursor-pointer p-2 w-9 h-9" />
+          </Link>
+          */
+  const { data: user } = useUserQuery();
 
   return (
     <div className="flex justify-between items-center mb-5 mt-5">
       <div className="pl-5 bg-dark-2 py-1.5 pr-2 rounded-r">
         <div className="space-x-3.5 flex items-center">
-          <Link to="/messages">
-            <RectangleStackIcon className="text-white bg-dark-3 hover:bg-dark-4 rounded-full cursor-pointer p-2 w-9 h-9" />
-          </Link>
-          <Link to="/json">
-            <CodeBracketSquareIcon className="text-white bg-dark-3 hover:bg-dark-4 rounded-full cursor-pointer p-2 w-9 h-9" />
-          </Link>
-          <TrashIcon
-            className={clsx(
-              "text-white rounded-full cursor-pointer p-2 w-9 h-9",
-              clearConfirm ? "bg-red" : "bg-dark-3 hover:bg-dark-4"
-            )}
-            role="button"
-            onClick={clearWithConfirm}
-          />
-          <Link to="/magic">
-            <SparklesIcon className="text-white bg-dark-3 hover:bg-dark-4 rounded-full cursor-pointer p-2 w-9 h-9" />
-          </Link>
-          <Link to="/send">
-            <PaperAirplaneIcon className="text-white bg-blurple hover:bg-blurple-dark rounded-full cursor-pointer p-2 w-9 h-9" />
-          </Link>
+          <Button label="Clear Message" href="/clear">
+            <TrashIcon />
+          </Button>
+          <Button label="Share Message" href="/share">
+            <LinkIcon />
+          </Button>
+          <Button label="JSON Code" href="/json">
+            <CodeBracketSquareIcon />
+          </Button>
+          <Button label="Messages" href="/messages">
+            <RectangleStackIcon />
+          </Button>
+          {user?.success && user.data.is_tester && (
+            <Button label="AI Assistant" href="/magic">
+              <SparklesIcon />
+            </Button>
+          )}
         </div>
       </div>
       <div className="pr-5">
         <EditorMoreMenu />
       </div>
     </div>
+  );
+}
+
+interface ButtonProps {
+  label: string;
+  children: React.ReactNode;
+  href: string;
+}
+
+function Button({ label, children, href }: ButtonProps) {
+  return (
+    <Link
+      className="text-white bg-dark-3 hover:bg-dark-4 rounded-full cursor-pointer p-2"
+      to={href}
+    >
+      <div className="flex-none h-5 w-5" title={label}>
+        {children}
+      </div>
+    </Link>
   );
 }

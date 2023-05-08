@@ -20,6 +20,8 @@ import { SavedMessageWire } from "../../api/wire";
 import { parseISO } from "date-fns";
 import { messageSchema } from "../../discord/schema";
 import { useNavigate } from "react-router-dom";
+import MessageExportImport from "../../components/MessageExportImport";
+import { useToasts } from "../../util/toasts";
 
 function formatUpdatedAt(updatedAt: string): string {
   return parseISO(updatedAt).toLocaleString();
@@ -34,6 +36,8 @@ export default function MessagesView() {
   const messagesQuery = useSavedMessagesQuery(guildId);
 
   const [newMessageName, setNewMessageName] = useState("");
+
+  const createToast = useToasts((state) => state.create);
 
   const createMessageMutation = useCreatedSavedMessageMutation();
 
@@ -52,9 +56,17 @@ export default function MessagesView() {
         },
       },
       {
-        onSuccess: () => {
-          messagesQuery.refetch();
-          setNewMessageName("");
+        onSuccess: (resp) => {
+          if (resp.success) {
+            messagesQuery.refetch();
+            setNewMessageName("");
+          } else {
+            createToast({
+              title: "Failed to save message",
+              message: resp.error.message,
+              type: "error",
+            });
+          }
         },
       }
     );
@@ -74,8 +86,16 @@ export default function MessagesView() {
         },
       },
       {
-        onSuccess: () => {
-          messagesQuery.refetch();
+        onSuccess: (resp) => {
+          if (resp.success) {
+            messagesQuery.refetch();
+          } else {
+            createToast({
+              title: "Failed to update message",
+              message: resp.error.message,
+              type: "error",
+            });
+          }
         },
       }
     );
@@ -89,8 +109,11 @@ export default function MessagesView() {
       useCurrentMessageStore.setState(data);
       navigate("/app");
     } catch (e) {
-      console.error(e);
-      return;
+      createToast({
+        title: "Failed to restore message",
+        message: `${e}`,
+        type: "error",
+      });
     }
   }
 
@@ -103,8 +126,16 @@ export default function MessagesView() {
         guildId: guildId,
       },
       {
-        onSuccess: () => {
-          messagesQuery.refetch();
+        onSuccess: (resp) => {
+          if (resp.success) {
+            messagesQuery.refetch();
+          } else {
+            createToast({
+              title: "Failed to delete message",
+              message: resp.error.message,
+              type: "error",
+            });
+          }
         },
       }
     );
@@ -190,6 +221,7 @@ export default function MessagesView() {
                 Save Message
               </button>
             </div>
+            <MessageExportImport />
           </>
         ) : (
           <LoginSuggest />

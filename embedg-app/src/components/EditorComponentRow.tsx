@@ -42,7 +42,7 @@ export default function EditorComponentRow({ rowIndex, rowId }: Props) {
   );
 
   return (
-    <div className="mb-3 bg-dark-3 p-3 rounded-md">
+    <div className="bg-dark-3 p-3 rounded-md">
       <Collapsable
         id={`components.${rowId}`}
         valiationPathPrefix={`components.${rowIndex}.components`}
@@ -76,6 +76,11 @@ export default function EditorComponentRow({ rowIndex, rowId }: Props) {
               role="button"
               onClick={() => remove(rowIndex)}
             />
+          </div>
+        }
+        extra={
+          <div className="text-sm italic font-light text-gray-400">
+            {components.length} / 5
           </div>
         }
       >

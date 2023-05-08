@@ -52,6 +52,9 @@ export default function EditorComponentSelectMenu({
 
   return (
     <div className="space-y-4">
+      <div className="text-gray-400 text-sm">
+        Select Menus do currently not appear in the preview.
+      </div>
       <EditorInput
         label="Placeholder"
         maxLength={150}

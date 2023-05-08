@@ -31,6 +31,7 @@ export interface GuildRoleWire {
   name: string;
   managed: boolean;
   color: number /* int */;
+  position: number /* int */;
 }
 export type ListRolesResponseWire = APIResponse<GuildRoleWire[]>;
 export interface GuildEmojiWire {
@@ -113,6 +114,7 @@ export interface MessageAttachmentWire {
   name: string;
   description: null | string;
   data_url: string;
+  size: number /* int */;
 }
 export interface MessageSendResponseDataWire {
   message_id: string;
@@ -143,6 +145,7 @@ export interface UserWire {
   name: string;
   discriminator: string;
   avatar: null | string;
+  is_tester: boolean;
 }
 export type UserResponseWire = APIResponse<UserWire>;
 export interface PlanInfoWire {

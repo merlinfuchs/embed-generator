@@ -5,7 +5,7 @@ import { useCurrentMessageStore } from "../../state/message";
 import { json, jsonParseLinter } from "@codemirror/lang-json";
 import { githubDark } from "@uiw/codemirror-theme-github";
 import { linter, lintGutter } from "@codemirror/lint";
-import { messageSchema } from "../../discord/schema";
+import { messageSchema, parseMessageWithAction } from "../../discord/schema";
 import { useNavigate } from "react-router-dom";
 
 export default function JsonView() {
@@ -22,7 +22,8 @@ export default function JsonView() {
   function save() {
     try {
       const data = JSON.parse(raw);
-      const parsedData = messageSchema.parse(data);
+      const parsedData = parseMessageWithAction(data);
+
       msg.replace(parsedData);
       navigate("/");
     } catch (e) {

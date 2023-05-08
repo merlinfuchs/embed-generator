@@ -20,7 +20,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id string) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, name, discriminator, avatar, stripe_customer_id, stripe_email FROM users WHERE id = $1
+SELECT id, name, discriminator, avatar, stripe_customer_id, stripe_email, is_tester FROM users WHERE id = $1
 `
 
 func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
@@ -33,12 +33,13 @@ func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
 		&i.Avatar,
 		&i.StripeCustomerID,
 		&i.StripeEmail,
+		&i.IsTester,
 	)
 	return i, err
 }
 
 const getUserByStripeCustomerId = `-- name: GetUserByStripeCustomerId :one
-SELECT id, name, discriminator, avatar, stripe_customer_id, stripe_email FROM users WHERE stripe_customer_id = $1
+SELECT id, name, discriminator, avatar, stripe_customer_id, stripe_email, is_tester FROM users WHERE stripe_customer_id = $1
 `
 
 func (q *Queries) GetUserByStripeCustomerId(ctx context.Context, stripeCustomerID sql.NullString) (User, error) {
@@ -51,12 +52,13 @@ func (q *Queries) GetUserByStripeCustomerId(ctx context.Context, stripeCustomerI
 		&i.Avatar,
 		&i.StripeCustomerID,
 		&i.StripeEmail,
+		&i.IsTester,
 	)
 	return i, err
 }
 
 const updateUserStripeCustomerId = `-- name: UpdateUserStripeCustomerId :one
-UPDATE users SET stripe_customer_id = $2 WHERE id = $1 RETURNING id, name, discriminator, avatar, stripe_customer_id, stripe_email
+UPDATE users SET stripe_customer_id = $2 WHERE id = $1 RETURNING id, name, discriminator, avatar, stripe_customer_id, stripe_email, is_tester
 `
 
 type UpdateUserStripeCustomerIdParams struct {
@@ -74,12 +76,13 @@ func (q *Queries) UpdateUserStripeCustomerId(ctx context.Context, arg UpdateUser
 		&i.Avatar,
 		&i.StripeCustomerID,
 		&i.StripeEmail,
+		&i.IsTester,
 	)
 	return i, err
 }
 
 const updateUserStripeEmail = `-- name: UpdateUserStripeEmail :one
-UPDATE users SET stripe_email = $2 WHERE id = $1 RETURNING id, name, discriminator, avatar, stripe_customer_id, stripe_email
+UPDATE users SET stripe_email = $2 WHERE id = $1 RETURNING id, name, discriminator, avatar, stripe_customer_id, stripe_email, is_tester
 `
 
 type UpdateUserStripeEmailParams struct {
@@ -97,12 +100,13 @@ func (q *Queries) UpdateUserStripeEmail(ctx context.Context, arg UpdateUserStrip
 		&i.Avatar,
 		&i.StripeCustomerID,
 		&i.StripeEmail,
+		&i.IsTester,
 	)
 	return i, err
 }
 
 const upsertUser = `-- name: UpsertUser :one
-INSERT INTO users (id, name, discriminator, avatar) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO UPDATE SET name = $2, discriminator = $3, avatar = $4 RETURNING id, name, discriminator, avatar, stripe_customer_id, stripe_email
+INSERT INTO users (id, name, discriminator, avatar) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO UPDATE SET name = $2, discriminator = $3, avatar = $4 RETURNING id, name, discriminator, avatar, stripe_customer_id, stripe_email, is_tester
 `
 
 type UpsertUserParams struct {
@@ -127,6 +131,7 @@ func (q *Queries) UpsertUser(ctx context.Context, arg UpsertUserParams) (User, e
 		&i.Avatar,
 		&i.StripeCustomerID,
 		&i.StripeEmail,
+		&i.IsTester,
 	)
 	return i, err
 }
