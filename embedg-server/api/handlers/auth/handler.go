@@ -28,7 +28,7 @@ type AuthHandler struct {
 
 func New(pg *postgres.PostgresStore, bot *bot.Bot, sessionManager *session.SessionManager) *AuthHandler {
 	conf := &oauth2.Config{
-		RedirectURL:  fmt.Sprintf("%s/api/auth/callback", viper.GetString("api.public_url")),
+		RedirectURL:  fmt.Sprintf("%s/auth/callback", viper.GetString("api.public_url")),
 		ClientID:     viper.GetString("discord.client_id"),
 		ClientSecret: viper.GetString("discord.client_secret"),
 		Scopes:       []string{discord.ScopeIdentify, discord.ScopeGuilds},

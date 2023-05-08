@@ -9,6 +9,7 @@ You will usually want to use the hosted version at https://message.style. There 
 yourself.
 
 ## YouTube tutorial
+
 [![IMAGE ALT TEXT HERE](./tutorial.png)](https://www.youtube.com/watch?v=DnFP0MRJPIg)
 
 ## Self Hosting
@@ -16,87 +17,84 @@ yourself.
 This describes the easiest way to self host an instance of Embed Generator by creating a single binary that contains
 both the backend and frontend.
 
-### Build the frontend
+### Build the app (frontend)
 
 You can download NodeJS and NPM from [nodejs.org](https://nodejs.org/en/download/).
-Instead of NPM you can also use Yarn.
 
 ```sh
-# Switch to the frontend directory
+# Switch to the embedg-app directory
 cd frontend
 
-# Install the dependencies
-npm install
-# or 
+# Install yarn globally
+npm install -g yarn
+
+# Install dependencies
 yarn install
 
 # Start the development server (optional)
-npm run start --legacy-peer-deps
-# or
-yarn start
+yarn dev
 
 # Build for production use
-npm run build
-# or
 yarn build
 ```
 
-### Build the backend
+### Build the server (backend)
 
-Use [rustup.rs](https://rustup.rs/) to install rust. The minimum supported rust version is 1.5.6.
+Install Go from [go.dev](https://go.dev/doc/install).
 
 ```sh
 # Switch to the backend directory
-cd backend
+cd embedg-server
 # or if you are in the frontend directoy
-cd ../backend
+cd ../embedg-server
 
 # Start the development server (optional)
-RUST_LOG=info cargo run
+go run main.go server
 
-# Build and include the frontend files in the backend binary (recommended)
-cargo build --release
-# Or build without the frontend files
-# You will need a HTTP server like Nginx to serve the frontend
-cargo build --release --no-default-features
+# Build and include the frontend files in the backend binary
+go build
 ```
+
+Before you can start the server you must have built the frontend atleast once. Otherwise the server won't start!
 
 ### Install databases
 
-Install MongoDB and Redis on your device. I'm sure you can find instructions online!
+Install PostgresQL on your device and create a user and database. I'm sure you can find instructions online!
 
 ### Configure the server
 
-To configure the server you can create a file called `Config.toml` with the following fields:
+To configure the server you can create a file called `config.yaml` with the following fields:
 
 ```toml
-jwt_secret = "1234567890" # The secret for tokens (should be unguessable)
+development: true
 
-host = "127.0.0.1" # The host to bind the API to (optional; default = "127.0.0.1")
-port = 8080 # The port to bind the API to (optional; default = 8080)
+discord:
+  client_id: ""
+  client_secret: ""
+  token: ""
 
-mongo_url = "mongodb://127.0.0.1" # The URL to your MongoDB instance (optional; default = "mongodb://127.0.0.1")
-redis_url = "redis://127.0.0.1" # The URL to your redis instance (optional; default = "redis://127.0.0.1")
+openai:
+  api_key: "" # for ChatGPT integration (optional)
 
+postgres:
+  host: "localhost"
+  port: 5432
+  dbname: "embedg"
+  user: "postgres"
+  password: ""
 
-[discord]
-token = "" # the discord token of your bot
-oauth_client_id = "" # the client / application id of your bot
-oauth_client_secret = "" # the oauth client secret of your bot
-oauth_redirect_uri = "" # the public url where the frontend will be available (must be added on Discord as the oauth redirect uri)
-shard_count = 1 # the shard count (optional; default = 1)
+app:
+  public_url: "http://localhost:5173/app"
+  server_static: true # Set to false if you don't want the serve the frontend files (you will need a HTTP server like Nginx to host it instead)
 
-[limits]
-max_messages_per_user = 25 # the max count of messages each user can have (optional; default = 25)
-max_message_size = 1000000 # the max size of a saved message (optional; default = ~1MB)
-
-[links]
-discord_invite = "" # the invite url to your discord server
-source = "" # the url to the github page (optional)
+api:
+  public_url: "http://localhost:5173/api"
+  host: "localhost"
+  port: 8080
 ```
 
 You can also set the config values using environment variables. For example `EMBEDG_DISCORD__TOKEN` will set the discord
-token and `EMBEDG_JWT_SECRET` will set the jwt secret.
+token.
 
 ### Run the binary
 

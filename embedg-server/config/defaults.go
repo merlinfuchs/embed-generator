@@ -18,5 +18,5 @@ func setupDefaults() {
 	// API defaults
 	v.SetDefault("api.host", "localhost")
 	v.SetDefault("api.port", 8080)
-	v.SetDefault("api.public_url", "http://localhost:5173")
+	v.SetDefault("api.public_url", "http://localhost:5173/api")
 }
