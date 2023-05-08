@@ -12,6 +12,8 @@ import {
   SavedMessageCreateResponseWire,
   SavedMessageDeleteResponseWire,
   SavedMessageUpdateResponseWire,
+  SavedMessagesImportRequestWire,
+  SavedMessagesImportResponseWire,
 } from "./wire";
 import { handleApiResponse } from "./queries";
 
@@ -142,12 +144,39 @@ export function useDeleteSavedMessageMutation() {
       }
 
       return fetch(url, {
-        method: "Delete",
+        method: "DELETE",
         headers: {
           "Content-Type": "application/json",
         },
       }).then((res) =>
         handleApiResponse<SavedMessageDeleteResponseWire>(res.json())
+      );
+    }
+  );
+}
+
+export function useImportSavedMessagesMutation() {
+  return useMutation(
+    ({
+      req,
+      guildId,
+    }: {
+      req: SavedMessagesImportRequestWire;
+      guildId: string | null;
+    }) => {
+      let url = `/api/saved-messages`;
+      if (guildId) {
+        url += `?guild_id=${guildId}`;
+      }
+
+      return fetch(url, {
+        method: "PATCH",
+        body: JSON.stringify(req),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) =>
+        handleApiResponse<SavedMessagesImportResponseWire>(res.json())
       );
     }
   );

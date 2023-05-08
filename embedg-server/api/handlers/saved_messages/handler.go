@@ -175,6 +175,41 @@ func (h *SavedMessagesHandler) HandleDeleteSavedMessage(c *fiber.Ctx) error {
 	})
 }
 
+func (h *SavedMessagesHandler) HandleImportSavedMessages(c *fiber.Ctx, req wire.SavedMessagesImportRequestWire) error {
+	session := c.Locals("session").(*session.Session)
+	guildID := c.Query("guild_id")
+
+	if guildID != "" {
+		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+			return err
+		}
+	}
+
+	res := make([]wire.SavedMessageWire, len(req.Messages))
+
+	for i, msg := range req.Messages {
+		message, err := h.pg.Q.InsertSavedMessage(c.Context(), postgres.InsertSavedMessageParams{
+			ID:          util.UniqueID(),
+			CreatorID:   session.UserID,
+			GuildID:     sql.NullString{String: guildID, Valid: guildID != ""},
+			UpdatedAt:   time.Now().UTC(),
+			Name:        msg.Name,
+			Description: sql.NullString{String: msg.Description.String, Valid: msg.Description.Valid},
+			Data:        msg.Data,
+		})
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to create saved message")
+			return err
+		}
+		res[i] = savedMessageModelToWire(message)
+	}
+
+	return c.JSON(wire.SavedMessagesImportResponseWire{
+		Success: true,
+		Data:    res,
+	})
+}
+
 func savedMessageModelToWire(model postgres.SavedMessage) wire.SavedMessageWire {
 	return wire.SavedMessageWire{
 		ID:          model.ID,

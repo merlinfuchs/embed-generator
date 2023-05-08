@@ -3,7 +3,7 @@ WORKDIR /root/
 COPY . .
 
 # Build frontend
-RUN cd embedg-app && npm install -g yarn && yarn install && yarn build && cd ..
+RUN cd embedg-app && yarn install && yarn build && cd ..
 
 # Build backend
 RUN apt-get update

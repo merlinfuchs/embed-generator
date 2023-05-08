@@ -43,6 +43,7 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 	savedMessagesGroup := app.Group("/api/saved-messages", sessionMiddleware.SessionRequired())
 	savedMessagesGroup.Get("/", savedMessagesHandler.HandleListSavedMessages)
 	savedMessagesGroup.Post("/", helpers.WithRequestBodyValidated(savedMessagesHandler.HandleCreateSavedMessage))
+	savedMessagesGroup.Patch("/", helpers.WithRequestBodyValidated(savedMessagesHandler.HandleImportSavedMessages))
 	savedMessagesGroup.Put("/:messageID", helpers.WithRequestBodyValidated(savedMessagesHandler.HandleUpdateSavedMessage))
 	savedMessagesGroup.Delete("/:messageID", savedMessagesHandler.HandleDeleteSavedMessage)
 

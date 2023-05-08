@@ -95,6 +95,15 @@ export interface SavedMessageUpdateRequestWire {
 export type SavedMessageUpdateResponseWire = APIResponse<SavedMessageWire>;
 export type SavedMessageDeleteResponseWire = APIResponse<{
   }>;
+export type SavedMessagesImportResponseWire = APIResponse<SavedMessageWire[]>;
+export interface SavedMessagesImportRequestWire {
+  messages: SavedMessageImportDataWire[];
+}
+export interface SavedMessageImportDataWire {
+  name: string;
+  description: null | string;
+  data: Record<string, any> | null;
+}
 export interface MessageSendToWebhookRequestWire {
   webhook_id: string;
   webhook_token: string;

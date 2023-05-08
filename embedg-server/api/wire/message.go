@@ -47,6 +47,22 @@ type SavedMessageUpdateResponseWire APIResponse[SavedMessageWire]
 
 type SavedMessageDeleteResponseWire APIResponse[struct{}]
 
+type SavedMessagesImportResponseWire APIResponse[[]SavedMessageWire]
+
+type SavedMessagesImportRequestWire struct {
+	Messages []SavedMessageImportDataWire `json:"messages"`
+}
+
+type SavedMessageImportDataWire struct {
+	Name        string          `json:"name"`
+	Description null.String     `json:"description"`
+	Data        json.RawMessage `json:"data"`
+}
+
+func (req SavedMessagesImportRequestWire) Validate() error {
+	return nil
+}
+
 type MessageSendToWebhookRequestWire struct {
 	WebhookID    string                   `json:"webhook_id"`
 	WebhookToken string                   `json:"webhook_token"`

@@ -221,7 +221,12 @@ export default function MessagesView() {
                 Save Message
               </button>
             </div>
-            <MessageExportImport />
+            <MessageExportImport
+              guildId={guildId}
+              messages={
+                messagesQuery.data?.success ? messagesQuery.data.data : []
+              }
+            />
           </>
         ) : (
           <LoginSuggest />

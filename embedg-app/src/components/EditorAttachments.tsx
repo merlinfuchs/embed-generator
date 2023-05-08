@@ -30,25 +30,26 @@ export default function EditorAttachments() {
 
   function handleFileSelected(e: ChangeEvent<HTMLInputElement>) {
     if (!e.target.files) return;
-    const file = e.target.files[0];
-    if (!file) return;
 
-    if (file.size > 8_000_000) {
-      alert("File too large! Max 8MB");
-      return;
+    for (let i = 0; i < e.target.files.length; i++) {
+      const file = e.target.files[i];
+      if (file.size > 8_000_000) {
+        alert("File too large! Max 8MB");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        addAttachment({
+          id: getUniqueId(),
+          size: file.size,
+          name: file.name,
+          description: null,
+          data_url: e.target?.result as string,
+        });
+      };
+      reader.readAsDataURL(file);
     }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      addAttachment({
-        id: getUniqueId(),
-        size: file.size,
-        name: file.name,
-        description: null,
-        data_url: e.target?.result as string,
-      });
-    };
-    reader.readAsDataURL(file);
   }
 
   return (
