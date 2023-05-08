@@ -1,4 +1,7 @@
-import { ChevronDownIcon } from "@heroicons/react/20/solid";
+import {
+  ChatBubbleLeftRightIcon,
+  ChevronDownIcon,
+} from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useMemo, useState } from "react";
 import { useGuildChannelsQuery } from "../api/queries";
@@ -129,20 +132,29 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
                   key={c.id}
                   className={clsx(
                     "py-2 flex space-x-2 items-center hover:bg-dark-3 rounded pr-3",
-                    c.level === 0 ? "pl-3" : c.level === 1 ? "pl-5" : "pl-7",
+                    c.level === 0 ? "pl-2" : c.level === 1 ? "pl-4" : "pl-6",
                     c.canSelect ? "cursor-pointer" : "cursor-not-allowed"
                   )}
                   role="button"
                   onClick={() => c.canSelect && selectChannel(c.id)}
                 >
-                  {c.canSelect ? (
-                    <div className="text-xl italic text-gray-400 font-light">
+                  {c.type === 4 ? (
+                    <ChevronDownIcon className="h-5 w-5 text-gray-300" />
+                  ) : c.type === 15 ? (
+                    <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-300" />
+                  ) : (
+                    <div className="text-xl italic text-gray-400 font-light pl-1">
                       #
                     </div>
-                  ) : (
-                    <ChevronDownIcon className="h-5 w-5 text-gray-300" />
                   )}
-                  <div className="text-gray-300 truncate">{c.name}</div>
+                  <div
+                    className={clsx(
+                      "truncate",
+                      c.canSelect ? "text-gray-300" : "text-gray-400"
+                    )}
+                  >
+                    {c.name}
+                  </div>
                 </div>
               ))
             ) : (

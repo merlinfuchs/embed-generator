@@ -130,7 +130,8 @@ func (h *GuildsHanlder) HandleListGuildChannels(c *fiber.Ctx) error {
 		return err
 	}
 
-	res := make([]wire.GuildChannelWire, len(guild.Channels))
+	res := make([]wire.GuildChannelWire, len(guild.Channels)+len(guild.Threads))
+
 	for i, channel := range guild.Channels {
 		access, err := h.am.GetChannelAccessForUser(session.UserID, channel.ID)
 		if err != nil {
@@ -139,6 +140,26 @@ func (h *GuildsHanlder) HandleListGuildChannels(c *fiber.Ctx) error {
 		}
 
 		res[i] = wire.GuildChannelWire{
+			ID:              channel.ID,
+			Name:            channel.Name,
+			Position:        channel.Position,
+			ParentID:        null.NewString(channel.ParentID, channel.ParentID != ""),
+			Type:            int(channel.Type),
+			UserAccess:      access.UserAccess(),
+			UserPermissions: fmt.Sprintf("%d", access.UserPermissions),
+			BotAccess:       access.BotAccess(),
+			BotPermissions:  fmt.Sprintf("%d", access.BotPermissions),
+		}
+	}
+
+	for i, channel := range guild.Threads {
+		access, err := h.am.GetChannelAccessForUser(session.UserID, channel.ID)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to check channel access")
+			return err
+		}
+
+		res[i+len(guild.Channels)] = wire.GuildChannelWire{
 			ID:              channel.ID,
 			Name:            channel.Name,
 			Position:        channel.Position,
