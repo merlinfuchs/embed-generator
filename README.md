@@ -1,7 +1,7 @@
 # Embed Generator
 
-[![Release](https://github.com/merlinfuchs/embed-generator/actions/workflows/release.yml/badge.svg)](https://github.com/merlinfuchs/embed-generator/releases)
-[![Docker image](https://github.com/merlinfuchs/embed-generator/actions/workflows/docker.yml/badge.svg)](https://hub.docker.com/r/merlintor/embed-generator)
+[![Release](https://github.com/merlinfuchs/embed-generator/actions/workflows/release.yaml/badge.svg)](https://github.com/merlinfuchs/embed-generator/releases)
+[![Docker image](https://github.com/merlinfuchs/embed-generator/actions/workflows/docker.yaml/badge.svg)](https://hub.docker.com/r/merlintor/embed-generator)
 
 A powerful tool for creating rich-embed Discord messages using webhooks.
 
@@ -10,7 +10,7 @@ yourself.
 
 ## YouTube tutorial
 
-[![IMAGE ALT TEXT HERE](./tutorial.png)](https://www.youtube.com/watch?v=DnFP0MRJPIg)
+[![Youtube Tutorial](./tutorial.png)](https://www.youtube.com/watch?v=DnFP0MRJPIg)
 
 ## Self Hosting
 
@@ -23,7 +23,7 @@ You can download NodeJS and NPM from [nodejs.org](https://nodejs.org/en/download
 
 ```sh
 # Switch to the embedg-app directory
-cd frontend
+cd embedg-app
 
 # Install yarn globally
 npm install -g yarn

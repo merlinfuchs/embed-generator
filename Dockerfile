@@ -3,17 +3,18 @@ WORKDIR /root/
 COPY . .
 
 # Build frontend
-RUN cd frontend && npm install --legacy-peer-deps && npm run build && cd ..
+RUN cd embedg-app && npm install -g yarn && yarn install && yarn build && cd ..
 
 # Build backend
 RUN apt-get update
 RUN apt-get install -y build-essential curl
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH=/root/.cargo/bin:$PATH
-RUN cd backend && cargo build --release && cd ..
+RUN curl -OL https://golang.org/dl/go1.20.4.linux-amd64.tar.gz
+RUN sudo tar -C /usr/local -xvf go1.20.4.linux-amd64.tar.gz
+ENV PATH=$PATH:/usr/local/go/bin
+RUN cd embedg-server && go build && cd ..
 
 FROM debian:bullseye-slim
 WORKDIR /root/
-COPY --from=0 /root/backend/target/release/embed-generator ./
+COPY --from=0 /root/embedg-server/embedg-server ./
 EXPOSE 8080
-CMD ["./embed-generator"]
+CMD ["./embedg-server"]
