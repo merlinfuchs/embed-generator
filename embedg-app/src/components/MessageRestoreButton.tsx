@@ -42,17 +42,27 @@ export default function MessageRestoreButton() {
   const createToast = useToasts((state) => state.create);
 
   function restoreData(data: MessageRestoreResponseDataWire) {
-    const parsedData = parseMessageWithAction(data.data);
-    useCurrentMessageStore.getState().replace(parsedData);
+    try {
+      const parsedData = parseMessageWithAction(data.data);
+      useCurrentMessageStore.getState().replace(parsedData);
 
-    useCurrentAttachmentsStore.getState().replaceAttachments(
-      data.attachments
-        .filter((a) => !!a)
-        .map((a) => ({
-          id: getUniqueId(),
-          ...a!,
-        }))
-    );
+      if (data.attachments) {
+        useCurrentAttachmentsStore.getState().replaceAttachments(
+          data.attachments
+            .filter((a) => !!a)
+            .map((a) => ({
+              id: getUniqueId(),
+              ...a!,
+            }))
+        );
+      }
+    } catch (e) {
+      createToast({
+        type: "error",
+        title: "Failed to restore message",
+        message: `${e}`,
+      });
+    }
   }
 
   function restoreMessage() {
