@@ -22,7 +22,6 @@ jobs:
         working-directory: ./embedg-app
       - name: Set up Go
         uses: actions/setup-go@v4
-        working-directory: ./embedg-server
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v4
         with:
