@@ -19,9 +19,7 @@ const imageUrlRefinement: [(v: string) => boolean, string] = [
   (v) => {
     try {
       const url = new URL(v);
-      return (
-        !!url.hostname.match(HOSTNAME_RE) && !!url.pathname.match(IMAGE_PATH_RE)
-      );
+      return !!url.hostname.match(HOSTNAME_RE); // && !!url.pathname.match(IMAGE_PATH_RE) TODO: make better image url regex
     } catch {
       return false;
     }
