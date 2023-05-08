@@ -17,6 +17,8 @@ yourself.
 This describes the easiest way to self host an instance of Embed Generator by creating a single binary that contains
 both the backend and frontend.
 
+You can find prebuilt binaries of the server with the frontend files included [here](https://github.com/merlinfuchs/embed-generator/releases/latest).
+
 ### Build the app (frontend)
 
 You can download NodeJS and NPM from [nodejs.org](https://nodejs.org/en/download/).
