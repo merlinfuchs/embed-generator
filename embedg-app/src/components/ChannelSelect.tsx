@@ -1,6 +1,6 @@
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useGuildChannelsQuery } from "../api/queries";
 import ClickOutsideHandler from "./ClickOutsideHandler";
 
@@ -10,13 +10,13 @@ interface Props {
   onChange: (channelId: string | null) => void;
 }
 
-export function ChannelSelect({ guildId, channelId, onChange }: Props) {
-  const { data: channels } = useGuildChannelsQuery(guildId);
+function canSelectChannelType(type: number) {
+  // text, announcement, announcement thread, text thread, stage
+  return type === 0 || type === 5 || type === 10 || type === 11;
+}
 
-  const channel = useMemo(
-    () => channels?.success && channels.data.find((c) => c.id === channelId),
-    [channels, channelId]
-  );
+export function ChannelSelect({ guildId, channelId, onChange }: Props) {
+  const { data } = useGuildChannelsQuery(guildId);
 
   function selectChannel(channelId: string) {
     onChange(channelId);
@@ -24,6 +24,77 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
   }
 
   const [open, setOpen] = useState(false);
+
+  const channels = useMemo(() => {
+    const rawChannels = data?.success ? data.data : [];
+
+    // Sort channels by position, this is important for the next steps
+    rawChannels.sort((a, b) =>
+      a.position === b.position && a.type === 4 ? 1 : a.position - b.position
+    );
+
+    const res = [];
+
+    // This is really inefficient but it should be fine because there are never more than 500 channels
+    for (const rootChannel of rawChannels) {
+      if (rootChannel.parent_id) continue;
+
+      if (
+        rootChannel.type === 0 ||
+        rootChannel.type === 4 ||
+        rootChannel.type === 5 ||
+        rootChannel.type === 13 ||
+        rootChannel.type === 15
+      ) {
+        // text, category, announcement, stage, forum
+        res.push({
+          ...rootChannel,
+          level: 0,
+          canSelect: canSelectChannelType(rootChannel.type),
+        });
+      }
+
+      for (const childChannel of rawChannels) {
+        if (childChannel.parent_id !== rootChannel.id) continue;
+
+        if (
+          childChannel.type === 0 ||
+          childChannel.type === 5 ||
+          childChannel.type === 10 ||
+          childChannel.type === 11 ||
+          childChannel.type === 13 ||
+          childChannel.type === 15
+        ) {
+          // text, announcement, announcement thread, text thread, stage, forum
+          res.push({
+            ...childChannel,
+            level: 1,
+            canSelect: canSelectChannelType(childChannel.type),
+          });
+        }
+
+        for (const childThread of rawChannels) {
+          if (childThread.parent_id !== childChannel.id) continue;
+
+          if (childThread.type === 10 || childThread.type === 11) {
+            // announcement thread, text thread
+            res.push({
+              ...childThread,
+              level: 2,
+              canSelect: canSelectChannelType(childThread.type),
+            });
+          }
+        }
+      }
+    }
+
+    return res;
+  }, [data]);
+
+  const channel = useMemo(
+    () => channels.find((c) => c.id === channelId),
+    [channels, channelId]
+  );
 
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
@@ -52,17 +123,25 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
         </div>
         {open && (
           <div className="absolute bg-dark-2 top-14 left-0 rounded shadow-lg w-full border-2 border-dark-2 z-10 max-h-48 overflow-y-auto overflow-x-none">
-            {channels?.success && channels.data.length ? (
-              channels.data.map((c) => (
+            {channels.length ? (
+              channels.map((c) => (
                 <div
                   key={c.id}
-                  className="py-2 flex space-x-2 items-center hover:bg-dark-3 rounded cursor-pointer px-3"
+                  className={clsx(
+                    "py-2 flex space-x-2 items-center hover:bg-dark-3 rounded pr-3",
+                    c.level === 0 ? "pl-3" : c.level === 1 ? "pl-5" : "pl-7",
+                    c.canSelect ? "cursor-pointer" : "cursor-not-allowed"
+                  )}
                   role="button"
-                  onClick={() => selectChannel(c.id)}
+                  onClick={() => c.canSelect && selectChannel(c.id)}
                 >
-                  <div className="text-xl italic text-gray-400 font-light">
-                    #
-                  </div>
+                  {c.canSelect ? (
+                    <div className="text-xl italic text-gray-400 font-light">
+                      #
+                    </div>
+                  ) : (
+                    <ChevronDownIcon className="h-5 w-5 text-gray-300" />
+                  )}
                   <div className="text-gray-300 truncate">{c.name}</div>
                 </div>
               ))

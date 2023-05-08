@@ -32,6 +32,12 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
 
   const [open, setOpen] = useState(false);
 
+  useEffect(() => {
+    if (guilds?.success) {
+      guilds.data.sort((a, b) => a.name.localeCompare(b.name));
+    }
+  }, [guilds]);
+
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
       <div className="px-3 rounded bg-dark-2 relative flex items-center h-12">
