@@ -65,7 +65,7 @@ Install PostgresQL on your device and create a user and database. I'm sure you c
 
 To configure the server you can create a file called `config.yaml` with the following fields:
 
-```toml
+```yaml
 development: true
 
 discord:
