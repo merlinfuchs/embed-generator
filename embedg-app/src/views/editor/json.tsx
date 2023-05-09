@@ -5,7 +5,7 @@ import { useCurrentMessageStore } from "../../state/message";
 import { json, jsonParseLinter } from "@codemirror/lang-json";
 import { githubDark } from "@uiw/codemirror-theme-github";
 import { linter, lintGutter } from "@codemirror/lint";
-import { messageSchema, parseMessageWithAction } from "../../discord/schema";
+import { parseMessageWithAction } from "../../discord/restoreSchema";
 import { useNavigate } from "react-router-dom";
 
 export default function JsonView() {
