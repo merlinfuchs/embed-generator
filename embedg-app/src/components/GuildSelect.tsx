@@ -1,4 +1,4 @@
-import { ChevronDownIcon } from "@heroicons/react/20/solid";
+import { ChevronDownIcon, PlusCircleIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
 import { useEffect, useMemo, useState } from "react";
 import { useGuildsQuery } from "../api/queries";
@@ -73,7 +73,7 @@ export default function GuildSelect({ guildId, onChange }: Props) {
         </div>
         {open && (
           <div className="absolute bg-dark-2 top-14 left-0 rounded shadow-lg w-full border-2 border-dark-2 z-10">
-            {guilds?.success && guilds.data.length ? (
+            {guilds?.success &&
               guilds.data.map((g) => (
                 <div
                   key={g.id}
@@ -88,10 +88,15 @@ export default function GuildSelect({ guildId, onChange }: Props) {
                   />
                   <div className="text-gray-300">{g.name}</div>
                 </div>
-              ))
-            ) : (
-              <div className="p-2 text-gray-300">No servers found</div>
-            )}
+              ))}
+            <a
+              className="py-2 flex space-x-2 items-center hover:bg-dark-3 rounded cursor-pointer px-3"
+              role="button"
+              href="/invite"
+            >
+              <PlusCircleIcon className="w-7 h-7 text-gray-300" />
+              <div className="text-gray-300">Invite the bot</div>
+            </a>
           </div>
         )}
       </div>

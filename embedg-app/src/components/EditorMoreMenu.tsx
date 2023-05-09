@@ -1,7 +1,11 @@
 import {
   ArrowLeftOnRectangleIcon,
   ArrowRightOnRectangleIcon,
+  ChatBubbleLeftIcon,
+  CodeBracketIcon,
   EllipsisVerticalIcon,
+  PlusCircleIcon,
+  PlusIcon,
   StarIcon,
 } from "@heroicons/react/20/solid";
 import clsx from "clsx";
@@ -67,6 +71,27 @@ export default function EditorMoreMenu() {
               )}
               <div className="border-b-2 border-dark-4"></div>
             </div>
+            <a
+              href="/discord"
+              className="flex items-center space-x-2 text-sm px-3 py-3 hover:bg-dark-2"
+            >
+              <ChatBubbleLeftIcon className="w-5 h-5" />
+              <div>Discord Server</div>
+            </a>
+            <a
+              href="/invite"
+              className="flex items-center space-x-2 text-sm px-3 py-3 hover:bg-dark-2"
+            >
+              <PlusCircleIcon className="w-5 h-5" />
+              <div>Invite Bode</div>
+            </a>
+            <a
+              href="/source"
+              className="flex items-center space-x-2 text-sm px-3 py-3 hover:bg-dark-2 rounded-b-md"
+            >
+              <CodeBracketIcon className="w-5 h-5" />
+              <div>Source Code</div>
+            </a>
             {/*
             <Link
               to="/premium"
