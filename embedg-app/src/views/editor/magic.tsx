@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useGenerateMagicMessageMutation } from "../../api/mutations";
 import EditorModal from "../../components/EditorModal";
 import MessagePreview from "../../components/MessagePreview";
-import { messageSchema, parseMessageWithAction } from "../../discord/schema";
+import { parseMessageWithAction } from "../../discord/restoreSchema";
 import { useCurrentMessageStore } from "../../state/message";
 
 export default function MagicView() {

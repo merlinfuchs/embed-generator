@@ -7,7 +7,7 @@ import {
 } from "../api/mutations";
 import { webhookUrlRegex } from "../discord/util";
 import { MessageRestoreResponseDataWire } from "../api/wire";
-import { parseMessageWithAction } from "../discord/schema";
+import { parseMessageWithAction } from "../discord/restoreSchema";
 import { useCurrentMessageStore } from "../state/message";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import { getUniqueId } from "../util";

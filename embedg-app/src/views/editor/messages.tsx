@@ -22,6 +22,7 @@ import { messageSchema } from "../../discord/schema";
 import { useNavigate } from "react-router-dom";
 import MessageExportImport from "../../components/MessageExportImport";
 import { useToasts } from "../../util/toasts";
+import { parseMessageWithAction } from "../../discord/restoreSchema";
 
 function formatUpdatedAt(updatedAt: string): string {
   return parseISO(updatedAt).toLocaleString();
@@ -105,7 +106,7 @@ export default function MessagesView() {
 
   function restoreMessage(message: SavedMessageWire) {
     try {
-      const data = messageSchema.parse(message.data);
+      const data = parseMessageWithAction(message.data);
       useCurrentMessageStore.setState(data);
       navigate("/app");
     } catch (e) {
