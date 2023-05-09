@@ -35,7 +35,7 @@ export default function EditorActionSet({ setId }: Props) {
       title="Actions"
       extra={
         <div className="text-sm italic font-light text-gray-400">
-          {actions.length} / 5
+          {actions.length} / 2
         </div>
       }
     >
@@ -45,7 +45,7 @@ export default function EditorActionSet({ setId }: Props) {
         ))}
       </AutoAnimate>
       <div className="space-x-3 mt-3 text-sm">
-        {actions.length < 5 ? (
+        {actions.length < 2 ? (
           <button
             className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white"
             onClick={add}
