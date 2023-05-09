@@ -47,8 +47,8 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 	savedMessagesGroup.Put("/:messageID", helpers.WithRequestBodyValidated(savedMessagesHandler.HandleUpdateSavedMessage))
 	savedMessagesGroup.Delete("/:messageID", savedMessagesHandler.HandleDeleteSavedMessage)
 
-	magicHandler := magic.New()
-	app.Post("/api/magic/message", helpers.WithRequestBody(magicHandler.HandleGenerateMagicMessage))
+	magicHandler := magic.New(stores.pg)
+	app.Post("/api/magic/message", sessionMiddleware.SessionRequired(), helpers.WithRequestBody(magicHandler.HandleGenerateMagicMessage))
 
 	guildsHanlder := guilds.New(stores.pg, stores.bot, accessManager)
 	guildsGroup := app.Group("/api/guilds", sessionMiddleware.SessionRequired())

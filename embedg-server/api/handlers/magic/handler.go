@@ -18,8 +18,8 @@ type MagicHandler struct {
 	pg *postgres.PostgresStore
 }
 
-func New() *MagicHandler {
-	return &MagicHandler{}
+func New(pg *postgres.PostgresStore) *MagicHandler {
+	return &MagicHandler{pg}
 }
 
 func (h *MagicHandler) HandleGenerateMagicMessage(c *fiber.Ctx, req wire.GenerateMagicMessageRequestWire) error {
