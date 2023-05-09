@@ -1,11 +1,11 @@
 # Embed Generator
 
+[![Release](https://github.com/merlinfuchs/embed-generator/actions/workflows/release.yaml/badge.svg)](https://github.com/merlinfuchs/embed-generator/releases)
+[![Docker image](https://github.com/merlinfuchs/embed-generator/actions/workflows/docker.yaml/badge.svg)](https://hub.docker.com/r/merlintor/embed-generator)
+
 [![Release](https://img.shields.io/github/v/release/merlinfuchs/embed-generator)](https://github.com/merlinfuchs/embed-generator/releases/latest)
 [![MIT License](https://img.shields.io/github/license/merlinfuchs/embed-generator)](LICENSE)
 [![Discord Server](https://img.shields.io/discord/730045476459642900)](https://message.style/discord)
-
-[![Release](https://github.com/merlinfuchs/embed-generator/actions/workflows/release.yaml/badge.svg)](https://github.com/merlinfuchs/embed-generator/releases)
-[![Docker image](https://github.com/merlinfuchs/embed-generator/actions/workflows/docker.yaml/badge.svg)](https://hub.docker.com/r/merlintor/embed-generator)
 
 A powerful tool for creating rich-embed Discord messages using webhooks.
 
