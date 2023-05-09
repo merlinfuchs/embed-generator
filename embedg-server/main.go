@@ -10,6 +10,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api"
 	"github.com/merlinfuchs/embed-generator/embedg-server/buildinfo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/config"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/transfer"
 	"github.com/merlinfuchs/embed-generator/embedg-server/migrate"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/diode"
@@ -37,6 +38,12 @@ func init() {
 		Use: "server",
 		Run: func(cmd *cobra.Command, args []string) {
 			api.Serve()
+		},
+	})
+	rootCmd.AddCommand(&cobra.Command{
+		Use: "transferdb",
+		Run: func(cmd *cobra.Command, args []string) {
+			transfer.TransferDB()
 		},
 	})
 	rootCmd.AddCommand(migrate.Setup())
