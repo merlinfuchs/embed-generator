@@ -144,7 +144,8 @@ export default function MessagesView() {
   return (
     <EditorModal width="md">
       <div className="p-4 space-y-5 flex flex-col h-full">
-        {user ? (
+        <div className="text-white text-lg">Saved Messages</div>
+        {user?.success ? (
           <>
             <div>
               <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
@@ -229,7 +230,7 @@ export default function MessagesView() {
             />
           </>
         ) : (
-          <LoginSuggest />
+          <LoginSuggest alwaysExpanded={true} />
         )}
       </div>
     </EditorModal>

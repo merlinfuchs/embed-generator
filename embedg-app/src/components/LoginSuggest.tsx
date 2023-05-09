@@ -9,14 +9,18 @@ import {
 import { useState } from "react";
 import { AutoAnimate } from "../util/autoAnimate";
 
-export default function LogginSuggest() {
-  const [collapsed, setCollapsed] = useState(true);
+interface Props {
+  alwaysExpanded?: boolean;
+}
+
+export default function LogginSuggest({ alwaysExpanded }: Props) {
+  const [collapsed, setCollapsed] = useState(!alwaysExpanded);
 
   return (
     <AutoAnimate className="p-3 bg-dark-2 rounded select-none">
       <div
         className="flex items-center px-3 py-3 space-x-3 cursor-pointer group"
-        onClick={() => setCollapsed(!collapsed)}
+        onClick={() => !alwaysExpanded && setCollapsed(!collapsed)}
       >
         <ArrowLeftOnRectangleIcon className="text-blurple h-14 w-14 flex-none" />
         <div className="flex-auto">
@@ -28,7 +32,9 @@ export default function LogginSuggest() {
             in
           </div>
         </div>
-        <InformationCircleIcon className="w-8 h-8 text-gray-400 group-hover:text-gray-100 flex-none" />
+        {!alwaysExpanded && (
+          <InformationCircleIcon className="w-8 h-8 text-gray-400 group-hover:text-gray-100 flex-none" />
+        )}
       </div>
       {!collapsed && (
         <div className="space-y-2 mt-4">

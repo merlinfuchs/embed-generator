@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { ZodObject, ZodType, z } from "zod";
 import { getUniqueId } from "../util";
 
 const HOSTNAME_RE = new RegExp("\\.[a-zA-Z]{2,}$");
@@ -117,7 +117,7 @@ export const embedFieldInlineSchma = z.optional(z.boolean());
 export type EmbedFieldInline = z.infer<typeof embedFieldInlineSchma>;
 
 export const embedFieldSchema = z.object({
-  id: uniqueIdSchema.default(() => getUniqueId()),
+  id: nullDefault(uniqueIdSchema.default(() => getUniqueId())),
   name: embedFieldNameSchema,
   value: embedFieldValueSchema,
   inline: embedFieldInlineSchma,
@@ -147,7 +147,7 @@ export type EmbedColor = z.infer<typeof embedColor>;
 
 export const embedSchema = z
   .object({
-    id: uniqueIdSchema.default(() => getUniqueId()),
+    id: nullDefault(uniqueIdSchema.default(() => getUniqueId())),
     title: embedtitleSchema,
     description: embedDescriptionSchema,
     url: embedUrlSchema,
@@ -157,7 +157,7 @@ export const embedSchema = z
     author: embedAuthorSchema,
     image: embedImageSchema,
     thumbnail: embedThumbnailSchema,
-    fields: z.array(embedFieldSchema).default([]),
+    fields: nullDefault(z.array(embedFieldSchema).default([])),
   })
   .superRefine((data, ctx) => {
     if (
@@ -197,20 +197,24 @@ export const buttonStyleSchema = z
 export type MessageComponentButtonStyle = z.infer<typeof buttonStyleSchema>;
 
 export const buttonSchema = z.object({
-  id: uniqueIdSchema.default(() => getUniqueId()),
+  id: nullDefault(uniqueIdSchema.default(() => getUniqueId())),
   type: z.literal(2),
   style: buttonStyleSchema,
   label: z.string().min(1),
   url: z.optional(z.string().refine(...urlRefinement)),
-  action_set_id: z.string().default(() => getUniqueId().toString()),
+  action_set_id: nullDefault(
+    z.string().default(() => getUniqueId().toString())
+  ),
 });
 
 export type MessageComponentButton = z.infer<typeof buttonSchema>;
 
 export const selectMenuOptionSchema = z.object({
-  id: uniqueIdSchema.default(() => getUniqueId()),
+  id: nullDefault(uniqueIdSchema.default(() => getUniqueId())),
   label: z.string().min(1).max(100),
-  action_set_id: z.string().default(() => getUniqueId().toString()),
+  action_set_id: nullDefault(
+    z.string().default(() => getUniqueId().toString())
+  ),
 });
 
 export type MessageComponentSelectMenuOption = z.infer<
@@ -218,7 +222,7 @@ export type MessageComponentSelectMenuOption = z.infer<
 >;
 
 export const selectMenuSchema = z.object({
-  id: uniqueIdSchema.default(() => getUniqueId()),
+  id: nullDefault(uniqueIdSchema.default(() => getUniqueId())),
   type: z.literal(3),
   placeholder: z.optional(z.string().max(150)),
   options: z.array(selectMenuOptionSchema).min(1).max(25),
@@ -227,7 +231,7 @@ export const selectMenuSchema = z.object({
 export type MessageComponentSelectMenu = z.infer<typeof selectMenuSchema>;
 
 export const actionRowSchema = z.object({
-  id: uniqueIdSchema.default(() => getUniqueId()),
+  id: nullDefault(uniqueIdSchema.default(() => getUniqueId())),
   type: z.literal(1),
   components: z.array(buttonSchema.or(selectMenuSchema)).min(1).max(5),
 });
@@ -289,24 +293,15 @@ export const messageThreadName = z.optional(z.string().max(100));
 
 export const messageSchema = z
   .object({
-    content: messageContentSchema.default(""),
+    content: nullDefault(messageContentSchema.default("")),
     username: webhookUsernameSchema,
     avatar_url: webhookAvatarUrlSchema,
-    tts: messageTtsSchema.default(false),
-    embeds: z.preprocess(
-      (d) => d ?? [],
-      z.array(embedSchema).max(10).default([])
-    ),
+    tts: nullDefault(messageTtsSchema.default(false)),
+    embeds: nullDefault(z.array(embedSchema).max(10).default([])),
     allowed_mentions: messageAllowedMentionsSchema,
-    components: z.preprocess(
-      (d) => d ?? [],
-      z.array(actionRowSchema).max(5).default([])
-    ),
+    components: nullDefault(z.array(actionRowSchema).max(5).default([])),
     thread_name: messageThreadName,
-    actions: z.preprocess(
-      (d) => d ?? {},
-      z.record(z.string(), messageActionSet).default({})
-    ),
+    actions: nullDefault(z.record(z.string(), messageActionSet).default({})),
   })
   .superRefine((data, ctx) => {
     // this currently doesn't take attachments into account
@@ -346,4 +341,8 @@ export function parseMessageWithAction(raw: any) {
   }
 
   return parsedData;
+}
+
+function nullDefault(schema: ZodType) {
+  return z.preprocess((d) => d ?? undefined, schema);
 }
