@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -37,6 +39,10 @@ type OldUsers struct {
 func TransferDB() {
 	pg := postgres.NewPostgresStore()
 
+	redisDB := redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+	})
+
 	mongoURL := viper.GetString("mongo.url")
 	if mongoURL == "" {
 		mongoURL = "mongodb://localhost:27017"
@@ -49,9 +55,11 @@ func TransferDB() {
 
 	coll := mongo.Database("embedg").Collection("messages")
 
+	var skip int64 = 0
+
 	cursor, err := coll.Find(context.TODO(), bson.M{
 		// "owner_id": "386861188891279362",
-	})
+	}, options.Find().SetBatchSize(100).SetSkip(skip).SetSort(bson.M{"updated_at": -1}))
 	if err != nil {
 		panic(err)
 	}
@@ -61,6 +69,7 @@ func TransferDB() {
 		panic(err)
 	}
 
+	i := skip
 	for cursor.Next(context.Background()) {
 		var result OldSavedMessage
 		if err := cursor.Decode(&result); err != nil {
@@ -73,23 +82,48 @@ func TransferDB() {
 				panic(err)
 			}
 
-			user, err := session.User(result.OwnerID)
+			raw, err := redisDB.Get(context.Background(), "users:"+result.OwnerID).Result()
 			if err != nil {
-				panic(err)
-			}
+				if err != redis.Nil {
+					panic(err)
+				}
 
-			pg.Q.UpsertUser(context.TODO(), postgres.UpsertUserParams{
-				ID:            user.ID,
-				Name:          user.Username,
-				Discriminator: user.Discriminator,
-				Avatar:        sql.NullString{String: user.Avatar, Valid: user.Avatar != ""},
-			})
+				user, err := session.User(result.OwnerID)
+				if err != nil {
+					panic(err)
+				}
+
+				fmt.Println("fetched user")
+
+				pg.Q.UpsertUser(context.TODO(), postgres.UpsertUserParams{
+					ID:            user.ID,
+					Name:          user.Username,
+					Discriminator: user.Discriminator,
+					Avatar:        sql.NullString{String: user.Avatar, Valid: user.Avatar != ""},
+				})
+			} else {
+				var user OldUsers
+				err = json.Unmarshal([]byte(raw), &user)
+				if err != nil {
+					panic(err)
+				}
+
+				fmt.Println("got user from redis")
+
+				pg.Q.UpsertUser(context.TODO(), postgres.UpsertUserParams{
+					ID:            user.ID,
+					Name:          user.Username,
+					Discriminator: user.Discriminator,
+					Avatar:        sql.NullString{String: user.Avatar, Valid: user.Avatar != ""},
+				})
+			}
 		}
 
 		var msgData actions.MessageWithActions
 		err = json.Unmarshal([]byte(result.PayloadJSON), &msgData)
 		if err != nil {
-			panic(err)
+			fmt.Println("Failed to unmarshal message", result.ID)
+			continue
 		}
 
 		if msgData.Content == "" && len(msgData.Components) == 0 && len(msgData.Embeds) == 0 {
@@ -125,5 +159,8 @@ func TransferDB() {
 			}
 			panic(err)
 		}
+
+		i++
+		fmt.Println(i)
 	}
 }
