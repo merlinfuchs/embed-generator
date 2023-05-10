@@ -54,6 +54,8 @@ cd embedg-server
 # or if you are in the frontend directoy
 cd ../embedg-server
 
+# Configure the server (see steps below)
+
 # Run database migrations
 go run main.go migrate postgres up
 
@@ -97,7 +99,9 @@ app:
   server_static: true # Set to false if you don't want the serve the frontend files (you will need a HTTP server like Nginx to host it instead)
 
 api:
+  # Make sure to add {public_url}/auth/callback to the OAuth2 Redirect URLs of your application in the Discord dev portal
   public_url: "http://localhost:5173/api"
+
   host: "localhost"
   port: 8080
 ```
