@@ -70,6 +70,10 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		AllowedMentions: data.AllowedMentions,
 	}
 
+	if params.AvatarURL == "" {
+		params.AvatarURL = "https://message.style/logo-512.png"
+	}
+
 	attachments := make([]*discordgo.MessageAttachment, len(req.Attachments))
 
 	for i, attachment := range req.Attachments {
@@ -183,6 +187,10 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		TTS:             data.TTS,
 		Embeds:          data.Embeds,
 		AllowedMentions: data.AllowedMentions,
+	}
+
+	if params.AvatarURL == "" {
+		params.AvatarURL = "https://message.style/logo-512.png"
 	}
 
 	attachments := make([]*discordgo.MessageAttachment, len(req.Attachments))
