@@ -78,7 +78,7 @@ export const embedThumbnailSchema = z.optional(
 
 export type EmbedThumbnail = z.infer<typeof embedThumbnailSchema>;
 
-export const embedAuthorNameSchema = z.string().min(1);
+export const embedAuthorNameSchema = z.string().min(1).max(256);
 
 export type EmbedAuthorName = z.infer<typeof embedAuthorNameSchema>;
 
@@ -125,9 +125,9 @@ export const embedFieldSchema = z.object({
 
 export type EmbedField = z.infer<typeof embedFieldSchema>;
 
-export const embedtitleSchema = z.optional(z.string().max(256));
+export const embedTitleSchema = z.optional(z.string().max(256));
 
-export type EmbedTitle = z.infer<typeof embedtitleSchema>;
+export type EmbedTitle = z.infer<typeof embedTitleSchema>;
 
 export const embedDescriptionSchema = z.optional(z.string().max(4096));
 
@@ -148,7 +148,7 @@ export type EmbedColor = z.infer<typeof embedColor>;
 export const embedSchema = z
   .object({
     id: uniqueIdSchema.default(() => getUniqueId()),
-    title: embedtitleSchema,
+    title: embedTitleSchema,
     description: embedDescriptionSchema,
     url: embedUrlSchema,
     timestamp: embedTimestampSchema,
@@ -157,7 +157,7 @@ export const embedSchema = z
     author: embedAuthorSchema,
     image: embedImageSchema,
     thumbnail: embedThumbnailSchema,
-    fields: z.array(embedFieldSchema).default([]),
+    fields: z.array(embedFieldSchema).max(25).default([]),
   })
   .superRefine((data, ctx) => {
     if (
@@ -196,14 +196,24 @@ export const buttonStyleSchema = z
 
 export type MessageComponentButtonStyle = z.infer<typeof buttonStyleSchema>;
 
-export const buttonSchema = z.object({
-  id: uniqueIdSchema.default(() => getUniqueId()),
-  type: z.literal(2),
-  style: buttonStyleSchema,
-  label: z.string().min(1),
-  url: z.optional(z.string().refine(...urlRefinement)),
-  action_set_id: z.string().default(() => getUniqueId().toString()),
-});
+export const buttonSchema = z
+  .object({
+    id: uniqueIdSchema.default(() => getUniqueId()),
+    type: z.literal(2),
+    style: z.literal(1).or(z.literal(2)).or(z.literal(3)).or(z.literal(4)),
+    label: z.string().min(1),
+    action_set_id: z.string().default(() => getUniqueId().toString()),
+  })
+  .or(
+    z.object({
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      type: z.literal(2),
+      style: z.literal(5),
+      label: z.string().min(1),
+      url: z.string().refine(...urlRefinement),
+      action_set_id: z.string().default(() => getUniqueId().toString()),
+    })
+  );
 
 export type MessageComponentButton = z.infer<typeof buttonSchema>;
 

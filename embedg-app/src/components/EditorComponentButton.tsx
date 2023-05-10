@@ -43,13 +43,10 @@ export default function EditorComponentButton({
     shallow
   );
 
-  const [url, setUrl] = useCurrentMessageStore(
-    (state) => [
-      state.getButton(rowIndex, compIndex)?.url || "",
-      state.setButtonUrl,
-    ],
-    shallow
-  );
+  const [url, setUrl] = useCurrentMessageStore((state) => {
+    const button = state.getButton(rowIndex, compIndex);
+    return [button?.style === 5 ? button.url : "", state.setButtonUrl];
+  }, shallow);
 
   const [style, setStyle] = useCurrentMessageStore(
     (state) => [
@@ -162,8 +159,8 @@ export default function EditorComponentButton({
             <EditorInput
               label="URL"
               type="url"
-              value={url || ""}
-              onChange={(v) => setUrl(rowIndex, compIndex, v || undefined)}
+              value={url}
+              onChange={(v) => setUrl(rowIndex, compIndex, v)}
               validationPath={`components.${rowIndex}.components.${compIndex}.url`}
             />
           ) : (

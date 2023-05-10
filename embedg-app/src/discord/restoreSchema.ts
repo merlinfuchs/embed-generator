@@ -200,20 +200,30 @@ export const buttonStyleSchema = z
 
 export type MessageComponentButtonStyle = z.infer<typeof buttonStyleSchema>;
 
-export const buttonSchema = z.object({
-  id: z.preprocess(
-    (d) => d ?? undefined,
-    uniqueIdSchema.default(() => getUniqueId())
-  ),
-  type: z.literal(2),
-  style: buttonStyleSchema,
-  label: z.preprocess((d) => d ?? undefined, z.string().default("")),
-  url: z.preprocess((d) => d ?? undefined, z.optional(z.string())),
-  action_set_id: z.preprocess(
-    (d) => d ?? undefined,
-    z.string().default(() => getUniqueId().toString())
-  ),
-});
+export const buttonSchema = z
+  .object({
+    id: z.preprocess(
+      (d) => d ?? undefined,
+      uniqueIdSchema.default(() => getUniqueId())
+    ),
+    type: z.literal(2),
+    style: z.literal(1).or(z.literal(2)).or(z.literal(3)).or(z.literal(4)),
+    label: z.preprocess((d) => d ?? undefined, z.string().default("")),
+    action_set_id: z.preprocess(
+      (d) => d ?? undefined,
+      z.string().default(() => getUniqueId().toString())
+    ),
+  })
+  .or(
+    z.object({
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      type: z.literal(2),
+      style: z.literal(5),
+      label: z.preprocess((d) => d ?? undefined, z.string().default("")),
+      url: z.preprocess((d) => d ?? undefined, z.string().default("")),
+      action_set_id: z.string().default(() => getUniqueId().toString()),
+    })
+  );
 
 export type MessageComponentButton = z.infer<typeof buttonSchema>;
 
@@ -253,7 +263,7 @@ export const actionRowSchema = z.object({
     (d) => d ?? undefined,
     uniqueIdSchema.default(() => getUniqueId())
   ),
-  type: z.literal(1),
+  type: z.preprocess((d) => d ?? undefined, z.literal(1).default(1)),
   components: z.preprocess(
     (d) => d ?? undefined,
     z.array(buttonSchema.or(selectMenuSchema)).default([])

@@ -37,12 +37,20 @@ func (m *ActionParser) ParseMessageComponents(data []actions.ActionRowWithAction
 
 		for y, component := range row.Components {
 			if component.Type == discordgo.ButtonComponent {
-				ar.Components[y] = discordgo.Button{
-					CustomID: "action:" + component.ActionSetID,
-					Label:    component.Label,
-					Style:    component.Style,
-					Disabled: component.Disabled,
-					URL:      component.URL,
+				if component.Style == discordgo.LinkButton {
+					ar.Components[y] = discordgo.Button{
+						Label:    component.Label,
+						Style:    component.Style,
+						Disabled: component.Disabled,
+						URL:      component.URL,
+					}
+				} else {
+					ar.Components[y] = discordgo.Button{
+						CustomID: "action:" + component.ActionSetID,
+						Label:    component.Label,
+						Style:    component.Style,
+						Disabled: component.Disabled,
+					}
 				}
 			} else if component.Type == discordgo.SelectMenuComponent {
 				options := make([]discordgo.SelectMenuOption, len(component.Options))

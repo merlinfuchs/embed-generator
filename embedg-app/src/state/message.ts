@@ -69,7 +69,7 @@ export interface MessageStore extends Message {
     style: MessageComponentButtonStyle
   ) => void;
   setButtonLabel: (i: number, j: number, label: string) => void;
-  setButtonUrl: (i: number, j: number, url: string | undefined) => void;
+  setButtonUrl: (i: number, j: number, url: string) => void;
   setSelectMenuPlaceholder: (
     i: number,
     j: number,
@@ -670,6 +670,9 @@ export const useCurrentMessageStore = create<MessageStore>()(
               return;
             }
             button.style = style;
+            if (button.style === 5) {
+              button.url = "";
+            }
           }),
         setButtonLabel: (i: number, j: number, label: string) =>
           set((state) => {
@@ -683,14 +686,14 @@ export const useCurrentMessageStore = create<MessageStore>()(
             }
             button.label = label;
           }),
-        setButtonUrl: (i: number, j: number, url: string | undefined) =>
+        setButtonUrl: (i: number, j: number, url: string) =>
           set((state) => {
             const row = state.components && state.components[i];
             if (!row) {
               return;
             }
             const button = row.components && row.components[j];
-            if (!button || button.type !== 2) {
+            if (!button || button.type !== 2 || button.style !== 5) {
               return;
             }
             button.url = url;
