@@ -11,6 +11,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
+	"github.com/rs/zerolog/log"
 )
 
 type ActionParser struct {
@@ -153,12 +154,20 @@ func (m *ActionParser) CreateActionsForMessage(actionSets map[string]actions.Act
 			return err
 		}
 
-		m.pg.Q.InsertMessageActionSet(context.TODO(), postgres.InsertMessageActionSetParams{
+		err = m.pg.Q.DeleteMessageActionSetsForMessage(context.TODO(), messageID)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to delete message action sets")
+		}
+
+		_, err = m.pg.Q.InsertMessageActionSet(context.TODO(), postgres.InsertMessageActionSetParams{
 			ID:        util.UniqueID(),
 			MessageID: messageID,
 			SetID:     actionSetID,
 			Actions:   raw,
 		})
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to insert message action set")
+		}
 	}
 	return nil
 }
