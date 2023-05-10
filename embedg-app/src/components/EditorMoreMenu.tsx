@@ -83,7 +83,7 @@ export default function EditorMoreMenu() {
               className="flex items-center space-x-2 text-sm px-3 py-3 hover:bg-dark-2"
             >
               <PlusCircleIcon className="w-5 h-5" />
-              <div>Invite Bode</div>
+              <div>Invite Bot</div>
             </a>
             <a
               href="/source"
