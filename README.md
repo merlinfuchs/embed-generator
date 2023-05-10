@@ -54,6 +54,9 @@ cd embedg-server
 # or if you are in the frontend directoy
 cd ../embedg-server
 
+# Run database migrations
+go run main.go migrate postgres up
+
 # Start the development server (optional)
 go run main.go server
 
