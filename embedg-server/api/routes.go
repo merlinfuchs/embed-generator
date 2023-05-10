@@ -1,8 +1,6 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
@@ -18,6 +16,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/spf13/viper"
 )
 
@@ -77,8 +76,7 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 	app.Post("/api/pay/webhook", paymentsHandler.HandleWebhook)
 
 	app.Get("/invite", func(c *fiber.Ctx) error {
-		inviteURL := fmt.Sprintf("https://discord.com/oauth2/authorize?client_id=%s&scope=bot%%20applications.commands&permissions=536871936", viper.GetString("discord.client_id"))
-		return c.Redirect(inviteURL, 302)
+		return c.Redirect(util.BotInviteURL(), 302)
 	})
 
 	app.Get("/discord", func(c *fiber.Ctx) error {

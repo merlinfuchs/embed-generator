@@ -3,6 +3,7 @@ package bot
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/merlinfuchs/discordgo"
@@ -11,6 +12,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
+
+var MessageIDRe = regexp.MustCompile("https?://(?:canary\\.|ptb\\.)?discord\\.com/channels/[0-9]+/([0-9]+)/([0-9]+)")
 
 func (b *Bot) RegisterCommand() error {
 	_, err := b.Session.ApplicationCommandBulkOverwrite(viper.GetString("discord.client_id"), "", []*discordgo.ApplicationCommand{
@@ -204,13 +207,7 @@ func (b *Bot) RegisterCommand() error {
 func (b *Bot) handleCommandInteraction(s *discordgo.Session, i *discordgo.Interaction, data discordgo.ApplicationCommandInteractionData) error {
 	switch data.Name {
 	case "invite":
-		return s.InteractionRespond(i, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "You can invite Embed Generator [here](%s).",
-				Flags:   discordgo.MessageFlagsEphemeral,
-			},
-		})
+		return b.handleInviteCommand(s, i, data)
 	case "website":
 		return b.handleWebsiteCommand(s, i, data)
 	case "help":
@@ -232,15 +229,39 @@ func (b *Bot) handleCommandInteraction(s *discordgo.Session, i *discordgo.Intera
 }
 
 func (b *Bot) handleHelpCommand(s *discordgo.Session, i *discordgo.Interaction, data discordgo.ApplicationCommandInteractionData) error {
-	return textResponse(s, i, "Help")
+	return helpResponse(s, i)
 }
 
 func (b *Bot) handleInviteCommand(s *discordgo.Session, i *discordgo.Interaction, data discordgo.ApplicationCommandInteractionData) error {
-	return textResponse(s, i, "Invite")
+	return helpResponse(s, i)
 }
 
 func (b *Bot) handleWebsiteCommand(s *discordgo.Session, i *discordgo.Interaction, data discordgo.ApplicationCommandInteractionData) error {
-	return textResponse(s, i, "Website")
+	return helpResponse(s, i)
+}
+
+func helpResponse(s *discordgo.Session, i *discordgo.Interaction) error {
+	return fancyResponse(s, i, "**The best way to generate rich embed messages for your Discord Server!**\n\nhttps://www.youtube.com/watch?v=DnFP0MRJPIg", []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.Button{
+					Style: discordgo.LinkButton,
+					Label: "Website",
+					URL:   "https://message.style",
+				},
+				discordgo.Button{
+					Style: discordgo.LinkButton,
+					Label: "Invite Bot",
+					URL:   util.BotInviteURL(),
+				},
+				discordgo.Button{
+					Style: discordgo.LinkButton,
+					Label: "Discord Server",
+					URL:   viper.GetString("links.discord"),
+				},
+			},
+		},
+	})
 }
 
 func (b *Bot) handleFormatCommand(s *discordgo.Session, i *discordgo.Interaction, data discordgo.ApplicationCommandInteractionData) error {
@@ -313,36 +334,35 @@ func (b *Bot) handleMessageCommand(s *discordgo.Session, i *discordgo.Interactio
 	subCMD := data.Options[0]
 
 	messageID := subCMD.Options[0].StringValue()
-	// TODO: regex message url
-	message, err := s.ChannelMessage(i.ChannelID, messageID)
-	if err != nil {
-		if err.(*discordgo.RESTError).Message.Code == discordgo.ErrCodeUnknownMessage {
-			return textResponse(s, i, "Message not found.")
-		}
-		return err
-	}
 
-	messageDump, err := json.MarshalIndent(actions.MessageWithActions{
-		Username:  message.Author.Username,
-		AvatarURL: message.Author.AvatarURL("1024"),
-		Content:   message.Content,
-		Embeds:    message.Embeds,
-		// TODO: Components: message.Components,
-	}, "", "  ")
-	if err != nil {
-		return err
+	match := MessageIDRe.FindStringSubmatch(messageID)
+	if match != nil {
+		messageID = match[2]
 	}
 
 	switch subCMD.Name {
 	case "restore":
-		paste, err := util.CreateVaultBinPaste(string(messageDump), "json")
+		return textResponse(s, i, fmt.Sprintf("Go to <https://message.style> select the channel and paste `%s` into the message id field to restore a message.", messageID))
+	case "dump":
+		message, err := s.ChannelMessage(i.ChannelID, messageID)
 		if err != nil {
-			log.Error().Err(err).Msg("Failed to create vaultb.in paste")
-			return textResponse(s, i, "Failed to create vaultb.in paste.")
+			if err.(*discordgo.RESTError).Message.Code == discordgo.ErrCodeUnknownMessage {
+				return textResponse(s, i, "Message not found.")
+			}
+			return err
 		}
 
-		return textResponse(s, i, fmt.Sprintf("You can find the JSON code here: <%s>", paste.URL()))
-	case "dump":
+		messageDump, err := json.MarshalIndent(actions.MessageWithActions{
+			Username:  message.Author.Username,
+			AvatarURL: message.Author.AvatarURL("1024"),
+			Content:   message.Content,
+			Embeds:    message.Embeds,
+			// TODO: Components: message.Components,
+		}, "", "  ")
+		if err != nil {
+			return err
+		}
+
 		paste, err := util.CreateVaultBinPaste(string(messageDump), "json")
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to create vaultb.in paste")
@@ -356,27 +376,7 @@ func (b *Bot) handleMessageCommand(s *discordgo.Session, i *discordgo.Interactio
 }
 
 func (b *Bot) handleRestoreContextCommand(s *discordgo.Session, i *discordgo.Interaction, data discordgo.ApplicationCommandInteractionData) error {
-	messageID := data.TargetID
-	message := data.Resolved.Messages[messageID]
-
-	messageDump, err := json.MarshalIndent(actions.MessageWithActions{
-		Username:  message.Author.Username,
-		AvatarURL: message.Author.AvatarURL("1024"),
-		Content:   message.Content,
-		Embeds:    message.Embeds,
-		// TODO: Components: message.Components,
-	}, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	paste, err := util.CreateVaultBinPaste(string(messageDump), "json")
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to create vaultb.in paste")
-		return textResponse(s, i, "Failed to create vaultb.in paste.")
-	}
-
-	return textResponse(s, i, fmt.Sprintf("You can find the JSON code here: <%s>", paste.URL()))
+	return textResponse(s, i, fmt.Sprintf("Go to <https://message.style> select the channel and paste `%s` into the message id field to restore a message.", data.TargetID))
 }
 
 func (b *Bot) handleJSONContextCommand(s *discordgo.Session, i *discordgo.Interaction, data discordgo.ApplicationCommandInteractionData) error {
@@ -433,6 +433,18 @@ func imageUrlResponse(s *discordgo.Session, i *discordgo.Interaction, url string
 					},
 				},
 			},
+		},
+	})
+}
+
+func fancyResponse(s *discordgo.Session, i *discordgo.Interaction, content string, embeds []*discordgo.MessageEmbed, components []discordgo.MessageComponent) error {
+	return s.InteractionRespond(i, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content:    content,
+			Flags:      discordgo.MessageFlagsEphemeral,
+			Embeds:     embeds,
+			Components: components,
 		},
 	})
 }
