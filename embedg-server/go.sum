@@ -844,6 +844,8 @@ github.com/merlinfuchs/discordgo v0.0.0-20230429080720-fa5a04d13a82 h1:hFHQXYXR7
 github.com/merlinfuchs/discordgo v0.0.0-20230429080720-fa5a04d13a82/go.mod h1:xAeB1tSUX3ilHSX7DKudmCAuIj5z/UZJDCbr8QKpMzI=
 github.com/merlinfuchs/discordgo v0.0.0-20230429082819-79a2601d85fb h1:os6c/1lvtP1EcGStFHN6DYlpXpZiVUMpZS3MswUW4Q8=
 github.com/merlinfuchs/discordgo v0.0.0-20230429082819-79a2601d85fb/go.mod h1:xAeB1tSUX3ilHSX7DKudmCAuIj5z/UZJDCbr8QKpMzI=
+github.com/merlinfuchs/discordgo v0.0.0-20230510080117-4f78fc2d0501 h1:Icn9JUgHtVsyTni+FaSSsiN9Kwp7zhIc15Zd4jZ04ZU=
+github.com/merlinfuchs/discordgo v0.0.0-20230510080117-4f78fc2d0501/go.mod h1:xAeB1tSUX3ilHSX7DKudmCAuIj5z/UZJDCbr8QKpMzI=
 github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
 github.com/miekg/pkcs11 v1.0.3/go.mod h1:XsNlhZGX73bx86s2hdc/FuaLm2CPZJemRLMA+WTFxgs=
 github.com/mistifyio/go-zfs v2.1.2-0.20190413222219-f784269be439+incompatible/go.mod h1:8AuVvqP/mXw1px98n46wfvcGfQ4ci2FwoAjKYxuo3Z4=

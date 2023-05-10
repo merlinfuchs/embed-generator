@@ -38,11 +38,11 @@ type ChannelAccess struct {
 }
 
 func (c *ChannelAccess) UserAccess() bool {
-	return c.UserPermissions&discordgo.PermissionManageWebhooks != 0
+	return c.UserPermissions&(discordgo.PermissionManageWebhooks|discordgo.PermissionAdministrator) != 0
 }
 
 func (c *ChannelAccess) BotAccess() bool {
-	return c.BotPermissions&discordgo.PermissionManageWebhooks != 0
+	return c.BotPermissions&(discordgo.PermissionManageWebhooks|discordgo.PermissionAdministrator) != 0
 }
 
 func (m *AccessManager) GetGuildAccessForUser(userID string, guildID string) (GuildAccess, error) {
