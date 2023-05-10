@@ -26,7 +26,7 @@ func New(pg *postgres.PostgresStore) *ActionHandler {
 func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i *discordgo.InteractionCreate, data discordgo.MessageComponentInteractionData) error {
 	actionSetID := data.CustomID[7:]
 
-	if strings.HasPrefix(actionSetID, "action:options:") {
+	if strings.HasPrefix(actionSetID, "options:") {
 		actionSetID = data.Values[0][7:]
 	}
 
@@ -110,6 +110,10 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i *discord
 			}
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to toggle role")
+				respond(&discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("Failed to toggle role"),
+					Flags:   discordgo.MessageFlagsEphemeral,
+				})
 			}
 		case actions.ActionTypeAddRole:
 			err := s.GuildMemberRoleAdd(i.GuildID, i.Member.User.ID, action.TargetID)
@@ -120,6 +124,10 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i *discord
 				})
 			} else {
 				log.Error().Err(err).Msg("Failed to add role")
+				respond(&discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("Failed to add role"),
+					Flags:   discordgo.MessageFlagsEphemeral,
+				})
 			}
 		case actions.ActionTypeRemoveRole:
 			err := s.GuildMemberRoleRemove(i.GuildID, i.Member.User.ID, action.TargetID)
@@ -130,6 +138,10 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i *discord
 				})
 			} else {
 				log.Error().Err(err).Msg("Failed to remove role")
+				respond(&discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("Failed to remove role"),
+					Flags:   discordgo.MessageFlagsEphemeral,
+				})
 			}
 		}
 	}
