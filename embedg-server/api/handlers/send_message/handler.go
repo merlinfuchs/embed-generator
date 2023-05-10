@@ -3,6 +3,7 @@ package send_message
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/discordgo"
@@ -69,7 +70,9 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		AllowedMentions: data.AllowedMentions,
 	}
 
-	for _, attachment := range req.Attachments {
+	attachments := make([]*discordgo.MessageAttachment, len(req.Attachments))
+
+	for i, attachment := range req.Attachments {
 		dataURL, err := dataurl.DecodeString(attachment.DataURL)
 		if err != nil {
 			return helpers.BadRequest("invalid_attachments", "Failed to parse attachment data URL")
@@ -80,6 +83,10 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 			ContentType: dataURL.ContentType(),
 			Reader:      bytes.NewReader(dataURL.Data),
 		})
+
+		attachments[i] = &discordgo.MessageAttachment{
+			ID: fmt.Sprintf("%d", i),
+		}
 	}
 
 	components, err := h.actionParser.ParseMessageComponents(data.Components)
@@ -98,6 +105,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 				Components:      &params.Components,
 				AllowedMentions: params.AllowedMentions,
 				Files:           params.Files,
+				Attachments:     &attachments,
 			})
 		} else {
 			msg, err = h.bot.Session.WebhookThreadExecute(webhook.ID, webhook.Token, true, threadID, params)
@@ -110,6 +118,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 				Components:      &params.Components,
 				AllowedMentions: params.AllowedMentions,
 				Files:           params.Files,
+				Attachments:     &attachments,
 			})
 		} else {
 			msg, err = h.bot.Session.WebhookExecute(webhook.ID, webhook.Token, true, params)
@@ -176,7 +185,9 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		AllowedMentions: data.AllowedMentions,
 	}
 
-	for _, attachment := range req.Attachments {
+	attachments := make([]*discordgo.MessageAttachment, len(req.Attachments))
+
+	for i, attachment := range req.Attachments {
 		dataURL, err := dataurl.DecodeString(attachment.DataURL)
 		if err != nil {
 			return helpers.BadRequest("invalid_attachments", "Failed to parse attachment data URL")
@@ -187,6 +198,10 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 			ContentType: dataURL.ContentType(),
 			Reader:      bytes.NewReader(dataURL.Data),
 		})
+
+		attachments[i] = &discordgo.MessageAttachment{
+			ID: fmt.Sprintf("%d", i),
+		}
 	}
 
 	var msg *discordgo.Message
@@ -198,6 +213,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 				Components:      &params.Components,
 				AllowedMentions: params.AllowedMentions,
 				Files:           params.Files,
+				Attachments:     &attachments,
 			})
 		} else {
 			msg, err = h.bot.Session.WebhookThreadExecute(req.WebhookID, req.WebhookToken, true, req.ThreadID.String, params)
@@ -210,6 +226,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 				Components:      &params.Components,
 				AllowedMentions: params.AllowedMentions,
 				Files:           params.Files,
+				Attachments:     &attachments,
 			})
 		} else {
 			msg, err = h.bot.Session.WebhookExecute(req.WebhookID, req.WebhookToken, true, params)
