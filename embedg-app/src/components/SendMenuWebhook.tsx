@@ -58,14 +58,14 @@ export default function SendMenuWebhook() {
 
   const createToast = useToasts((state) => state.create);
 
-  function send() {
+  function send(edit: boolean) {
     if (validationError || !webhookId || !webhookToken) return;
 
     sendToWebhookMutation.mutate(
       {
         webhook_id: webhookId,
         webhook_token: webhookToken,
-        message_id: messageId,
+        message_id: edit ? messageId : null,
         thread_id: threadId,
         data: useCurrentMessageStore.getState(),
         attachments: useCurrentAttachmentsStore.getState().attachments,
@@ -145,18 +145,33 @@ export default function SendMenuWebhook() {
           </div>
         )}
       </div>
-      <div className="flex justify-end space-x-2 items-center">
+      <div className="flex justify-end flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2 items-end md:items-center">
         <MessageRestoreButton />
-        <div
-          className={`px-3 py-2 rounded text-white ${
-            validationError || !webhookId || !webhookToken
-              ? "cursor-not-allowed bg-dark-2"
-              : "bg-blurple hover:bg-blurple-dark cursor-pointer"
-          }`}
-          role="button"
-          onClick={send}
-        >
-          {messageId ? "Edit" : "Send"} Message
+        <div className="flex items-center space-x-2">
+          {messageId && (
+            <div
+              className={`px-3 py-2 rounded text-white ${
+                validationError || !webhookId || !webhookToken
+                  ? "cursor-not-allowed bg-dark-2"
+                  : "bg-blurple hover:bg-blurple-dark cursor-pointer"
+              }`}
+              role="button"
+              onClick={() => send(false)}
+            >
+              Edit Message
+            </div>
+          )}
+          <div
+            className={`px-3 py-2 rounded text-white ${
+              validationError || !webhookId || !webhookToken
+                ? "cursor-not-allowed bg-dark-2"
+                : "bg-blurple hover:bg-blurple-dark cursor-pointer"
+            }`}
+            role="button"
+            onClick={() => send(false)}
+          >
+            Send Message
+          </div>
         </div>
       </div>
     </div>
