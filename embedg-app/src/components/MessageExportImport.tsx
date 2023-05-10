@@ -1,45 +1,47 @@
 import { ChangeEvent, useRef } from "react";
-import { messageSchema } from "../discord/schema";
+import { messageSchema } from "../discord/restoreSchema";
 import { z } from "zod";
 import { useToasts } from "../util/toasts";
 import { SavedMessageWire } from "../api/wire";
 import { useImportSavedMessagesMutation } from "../api/mutations";
 import { useQueryClient } from "react-query";
 
-const messageExportSchema = z.object({
-  messages: z.array(
-    z.object({
-      name: z.string(),
-      description: z.string().nullable(),
-      data: messageSchema,
-    })
-  ),
-});
-
-type MessageExport = z.infer<typeof messageExportSchema>;
-
-const messageExportDiscohookSchema = z
+const messageExportSchema = z
   .object({
-    backups: z.array(
+    messages: z.array(
       z.object({
         name: z.string(),
-        messages: z.array(
-          z.object({
-            data: messageSchema,
-          })
-        ),
+        description: z.string().nullable(),
+        data: messageSchema,
       })
     ),
   })
-  .transform((data) => ({
-    messages: data.backups.flatMap((b) =>
-      b.messages.map((m) => ({
-        name: b.name,
-        description: null,
-        data: m.data,
+  .or(
+    z
+      .object({
+        backups: z.array(
+          z.object({
+            name: z.string(),
+            messages: z.array(
+              z.object({
+                data: messageSchema,
+              })
+            ),
+          })
+        ),
+      })
+      .transform((data) => ({
+        messages: data.backups.flatMap((b) =>
+          b.messages.map((m) => ({
+            name: b.name,
+            description: null,
+            data: m.data,
+          }))
+        ),
       }))
-    ),
-  }));
+  );
+
+type MessageExport = z.infer<typeof messageExportSchema>;
 
 interface Props {
   messages: SavedMessageWire[];
@@ -67,10 +69,7 @@ export default function MessageExportImport({ messages, guildId }: Props) {
         try {
           const data = JSON.parse(e.target?.result as string);
 
-          let parsed = messageExportSchema.safeParse(data);
-          if (parsed.success) {
-            parsed = messageExportSchema.safeParse(data);
-          }
+          const parsed = messageExportSchema.safeParse(data);
 
           if (parsed.success) {
             importMutation.mutate(
