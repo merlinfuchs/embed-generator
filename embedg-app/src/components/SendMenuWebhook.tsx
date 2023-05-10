@@ -74,6 +74,11 @@ export default function SendMenuWebhook() {
         onSuccess: (resp) => {
           if (resp.success) {
             setMessageId(resp.data.message_id);
+            createToast({
+              type: "success",
+              title: "Message has been sent",
+              message: "The message has been sent to the given webhook!",
+            });
           } else {
             createToast({
               type: "error",

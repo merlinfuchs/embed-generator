@@ -18,7 +18,6 @@ import {
 } from "@heroicons/react/20/solid";
 import { SavedMessageWire } from "../../api/wire";
 import { parseISO } from "date-fns";
-import { messageSchema } from "../../discord/schema";
 import { useNavigate } from "react-router-dom";
 import MessageExportImport from "../../components/MessageExportImport";
 import { useToasts } from "../../util/toasts";
@@ -144,7 +143,7 @@ export default function MessagesView() {
 
   return (
     <EditorModal width="md">
-      <div className="p-4 space-y-5 flex flex-col h-full">
+      <div className="p-4 space-y-5 flex flex-col h-full overflow-hidden">
         <div className="text-white text-lg">Saved Messages</div>
         {user?.success ? (
           <>
@@ -157,7 +156,7 @@ export default function MessagesView() {
               </div>
             </div>
             {messagesQuery.isSuccess && messagesQuery.data.success && (
-              <div className="space-y-3 flex-auto">
+              <div className="space-y-3 flex-auto overflow-y-auto">
                 {messagesQuery.data.data.map((message) => (
                   <div
                     key={message.id}

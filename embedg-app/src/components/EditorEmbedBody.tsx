@@ -49,7 +49,7 @@ export default function EditorEmbedBody({ embedIndex, embedId }: Props) {
           label="Title"
           value={title || ""}
           onChange={(v) => setTitle(embedIndex, v || undefined)}
-          maxLength={80}
+          maxLength={256}
           validationPath={`embeds.${embedIndex}.title`}
         />
         <EditorInput
@@ -57,7 +57,7 @@ export default function EditorEmbedBody({ embedIndex, embedId }: Props) {
           label="Description"
           value={description || ""}
           onChange={(v) => setDescription(embedIndex, v || undefined)}
-          maxLength={80}
+          maxLength={4096}
           validationPath={`embeds.${embedIndex}.description`}
         />
         <div className="flex space-x-3">

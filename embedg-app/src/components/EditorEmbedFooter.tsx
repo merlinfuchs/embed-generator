@@ -46,7 +46,7 @@ export default function EditorEmbedFooter({ embedIndex, embedId }: Props) {
           label="Footer"
           value={footerText || ""}
           onChange={(v) => setFooterText(embedIndex, v || undefined)}
-          maxLength={80}
+          maxLength={2048}
           validationPath={`embeds.${embedIndex}.footer.text`}
         />
         <div className="flex space-x-3">

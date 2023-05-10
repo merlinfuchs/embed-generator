@@ -20,12 +20,12 @@ export default function ({
 
   return (
     <div
-      className="fixed h-screen w-screen bg-black bg-opacity-70 flex flex-col items-center justify-center px-2 py-20 sm:px-5 md:px-10 lg:px-20 xl:px-32 z-30"
+      className="fixed h-screen w-screen bg-black bg-opacity-70 flex flex-col items-center justify-center px-2 py-20 sm:px-5 md:px-10 lg:px-20 xl:px-32 z-30 overflow-hidden"
       onClick={(e) => e.target === e.currentTarget && navigate("/")}
     >
       <div
         className={clsx(
-          "bg-dark-3 w-full rounded-xl flex-shrink",
+          "bg-dark-3 w-full rounded-xl flex-shrink overflow-hidden",
           width === "xl"
             ? "max-w-7xl"
             : width == "lg"

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -34,6 +35,10 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i *discord
 		SetID:     actionSetID,
 	})
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+
 		log.Error().Err(err).Msg("Failed to get action set")
 		return err
 	}

@@ -43,7 +43,7 @@ export default function EditorEmbedAuthor({ embedIndex, embedId }: Props) {
           label="Author"
           value={authorName || ""}
           onChange={(v) => setAuthorName(embedIndex, v)}
-          maxLength={80}
+          maxLength={256}
           validationPath={`embeds.${embedIndex}.author.name`}
         />
         <div className="flex space-x-3">

@@ -91,6 +91,9 @@ func (m *AccessManager) GetChannelAccessForUser(userID string, channelID string)
 
 	res.UserPermissions, err = m.ComputeUserPermissionsForChannel(userID, channelID)
 	if err != nil {
+		if derr, ok := err.(*discordgo.RESTError); ok && derr.Message.Code == discordgo.ErrCodeUnknownMember {
+			return res, nil
+		}
 		return res, err
 	}
 
