@@ -9,8 +9,8 @@ type MessageWithActions struct {
 	TTS             bool                              `json:"tts,omitempty"`
 	Embeds          []*discordgo.MessageEmbed         `json:"embeds,omitempty"`
 	AllowedMentions *discordgo.MessageAllowedMentions `json:"allowed_mentions,omitempty"`
-	Components      []ActionRowWithActions            `json:"components"`
-	Actions         map[string]ActionSet              `json:"actions"`
+	Components      []ActionRowWithActions            `json:"components,omitempty"`
+	Actions         map[string]ActionSet              `json:"actions,omitempty"`
 }
 
 type ActionRowWithActions struct {

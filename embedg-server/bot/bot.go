@@ -48,7 +48,13 @@ func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 }
 
 func (b *Bot) Start() error {
-	err := b.ShardManager.Start()
+	err := b.RegisterCommand()
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to register command")
+		return err
+	}
+
+	err = b.ShardManager.Start()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to open discord session")
 	}
