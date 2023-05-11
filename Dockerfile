@@ -11,7 +11,7 @@ RUN apt-get install -y build-essential curl
 RUN curl -OL https://golang.org/dl/go1.20.4.linux-amd64.tar.gz
 RUN tar -C /usr/local -xvf go1.20.4.linux-amd64.tar.gz
 ENV PATH=$PATH:/usr/local/go/bin
-RUN cd embedg-server && go build && cd ..
+RUN cd embedg-server && go build --tags embedapp && cd ..
 
 FROM debian:bullseye-slim
 WORKDIR /root/
