@@ -2,3 +2,4 @@ go 1.18
 
 use ./embedg-server
 use ./embedg-app
+use ./embedg-site

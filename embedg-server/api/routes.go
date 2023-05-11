@@ -86,8 +86,4 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 	app.Get("/source", func(c *fiber.Ctx) error {
 		return c.Redirect(viper.GetString("links.source"), 302)
 	})
-
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.Redirect("/app", 302)
-	})
 }

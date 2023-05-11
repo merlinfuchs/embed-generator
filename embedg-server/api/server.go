@@ -11,6 +11,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	embedgsite "github.com/merlinfuchs/embed-generator/embedg-site"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
@@ -42,6 +43,13 @@ func Serve() {
 
 	app.Use("/app/", filesystem.New(filesystem.Config{
 		Root:         http.FS(embedgapp.DistFS),
+		Browse:       false,
+		NotFoundFile: "dist/index.html",
+		PathPrefix:   "/dist",
+	}))
+
+	app.Use("/", filesystem.New(filesystem.Config{
+		Root:         http.FS(embedgsite.DistFS),
 		Browse:       false,
 		NotFoundFile: "dist/index.html",
 		PathPrefix:   "/dist",
