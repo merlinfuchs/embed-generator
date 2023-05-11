@@ -270,7 +270,21 @@ export const messageContentSchema = z.string().max(2000);
 
 export type MessageContent = z.infer<typeof messageContentSchema>;
 
-export const webhookUsernameSchema = z.optional(z.string().max(80));
+export const webhookUsernameSchema = z.optional(
+  z
+    .string()
+    .max(80)
+    .refine(
+      (val) =>
+        !val.toLowerCase().includes("clyde") &&
+        !val.toLowerCase().includes("discord"),
+      "Username can't contain 'clyde' or 'discord'"
+    )
+    .refine(
+      (val) => val.toLowerCase() !== "everyone" && val.toLowerCase() !== "here",
+      "Username can't be 'everyone'  or 'here'"
+    )
+);
 
 export type WebhookUsername = z.infer<typeof webhookUsernameSchema>;
 
