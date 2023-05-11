@@ -38,7 +38,7 @@ export default function MessagePreview({ msg }: { msg: Message }) {
         <div className="discord-message">
           <div className="discord-message-inner">
             <div className="discord-author-avatar">
-              <img src={msg.avatar_url || "/logo.svg"} alt="" />
+              <img src={msg.avatar_url || "/app/logo.svg"} alt="" />
             </div>
             <div className="discord-message-content">
               <span className="discord-author-info">
@@ -265,7 +265,7 @@ export default function MessagePreview({ msg }: { msg: Message }) {
           >
             <div className="discord-replied-message">
               <img
-                src={msg.avatar_url || "/logo.svg"}
+                src={msg.avatar_url || "/app/logo.svg"}
                 alt=""
                 className="discord-replied-message-avatar"
               />
@@ -281,7 +281,7 @@ export default function MessagePreview({ msg }: { msg: Message }) {
             </div>
             <div className="discord-message-inner">
               <div className="discord-author-avatar">
-                <img src="/logo.svg" alt="" />
+                <img src="/app/logo.svg" alt="" />
               </div>
               <div className="discord-message-content">
                 <span className="discord-author-info">

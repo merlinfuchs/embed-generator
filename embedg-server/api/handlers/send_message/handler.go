@@ -71,7 +71,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 	}
 
 	if params.AvatarURL == "" {
-		params.AvatarURL = "https://message.style/logo-512.png"
+		params.AvatarURL = "https://message.style/app/logo-512.png"
 	}
 
 	attachments := make([]*discordgo.MessageAttachment, len(req.Attachments))
@@ -190,7 +190,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 	}
 
 	if params.AvatarURL == "" {
-		params.AvatarURL = "https://message.style/logo-512.png"
+		params.AvatarURL = "https://message.style/app/logo-512.png"
 	}
 
 	attachments := make([]*discordgo.MessageAttachment, len(req.Attachments))
