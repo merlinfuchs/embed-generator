@@ -60,9 +60,12 @@ cd ../embedg-server
 go run main.go migrate postgres up
 
 # Start the development server (optional)
-go run main.go server
+go run --tags embedapp main.go server
 
 # Build and include the frontend files in the backend binary
+go build --tags embedapp
+
+# Build without including the frontend files in the backend binary (you need to serve yourself)
 go build
 ```
 
@@ -96,7 +99,6 @@ postgres:
 
 app:
   public_url: "http://localhost:5173/app"
-  server_static: true # Set to false if you don't want the serve the frontend files (you will need a HTTP server like Nginx to host it instead)
 
 api:
   # Make sure to add {public_url}/auth/callback to the OAuth2 Redirect URLs of your application in the Discord dev portal

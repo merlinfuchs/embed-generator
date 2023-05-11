@@ -40,14 +40,12 @@ func Serve() {
 
 	RegisterRoutes(app, &stores{pg, bot})
 
-	if viper.GetBool("app.serve_static") {
-		app.Use("/", filesystem.New(filesystem.Config{
-			Root:         http.FS(embedgapp.DistFS),
-			Browse:       false,
-			NotFoundFile: "dist/index.html",
-			PathPrefix:   "/dist",
-		}))
-	}
+	app.Use("/", filesystem.New(filesystem.Config{
+		Root:         http.FS(embedgapp.DistFS),
+		Browse:       false,
+		NotFoundFile: "dist/index.html",
+		PathPrefix:   "/dist",
+	}))
 
 	go bot.Start()
 

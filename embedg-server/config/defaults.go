@@ -13,7 +13,6 @@ func setupDefaults() {
 	v.SetDefault("postgres.password", "")
 
 	v.SetDefault("app.public_url", "http://localhost:5173/app")
-	v.SetDefault("app.serve_static", true)
 
 	// API defaults
 	v.SetDefault("api.host", "localhost")

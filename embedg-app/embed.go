@@ -1,3 +1,6 @@
+//go:build embedapp
+// +build embedapp
+
 package embedgapp
 
 import "embed"
