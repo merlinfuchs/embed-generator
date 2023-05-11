@@ -17,7 +17,10 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: "18"
-      - name: Build Frontend
+      - name: Build Site
+        run: npm install -g yarn && yarn install && yarn build
+        working-directory: ./embedg-site
+      - name: Build App
         run: npm install -g yarn && yarn install && yarn build
         working-directory: ./embedg-app
       - name: Set up Go

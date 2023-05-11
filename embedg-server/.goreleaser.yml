@@ -2,3 +2,4 @@ builds:
   - binary: embedg-server
     tags:
       - embedapp
+      - embedsite
