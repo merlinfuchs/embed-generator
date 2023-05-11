@@ -156,7 +156,7 @@ export default function SendMenuWebhook() {
                   : "bg-blurple hover:bg-blurple-dark cursor-pointer"
               }`}
               role="button"
-              onClick={() => send(false)}
+              onClick={() => send(true)}
             >
               Edit Message
             </div>
