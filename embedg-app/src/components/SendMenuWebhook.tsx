@@ -114,7 +114,7 @@ export default function SendMenuWebhook() {
           <input
             type="text"
             className="bg-dark-2 px-3 py-2 rounded w-full focus:outline-none text-white"
-            onChange={(e) => setThreadId(e.target.value)}
+            onChange={(e) => setThreadId(e.target.value || null)}
             value={threadId ?? ""}
           />
         </div>
