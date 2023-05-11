@@ -1,5 +1,5 @@
 ---
-title: Markdown page example
+title: Privacy Policy
 ---
 
 # Markdown page example
