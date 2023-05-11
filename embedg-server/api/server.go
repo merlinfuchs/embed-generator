@@ -40,7 +40,7 @@ func Serve() {
 
 	RegisterRoutes(app, &stores{pg, bot})
 
-	app.Use("/", filesystem.New(filesystem.Config{
+	app.Use("/app/", filesystem.New(filesystem.Config{
 		Root:         http.FS(embedgapp.DistFS),
 		Browse:       false,
 		NotFoundFile: "dist/index.html",
