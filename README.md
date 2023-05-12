@@ -23,7 +23,7 @@ both the backend and frontend.
 
 You can find prebuilt binaries of the server with the frontend files included [here](https://github.com/merlinfuchs/embed-generator/releases/latest).
 
-### Build the app (frontend)
+### Build the app
 
 You can download NodeJS and NPM from [nodejs.org](https://nodejs.org/en/download/).
 
@@ -39,6 +39,25 @@ yarn install
 
 # Start the development server (optional)
 yarn dev
+
+# Build for production use
+yarn build
+```
+
+### Build the site (home page & docs)
+
+```sh
+# Switch to the embedg-app directory
+cd embedg-site
+
+# Install yarn globally
+npm install -g yarn
+
+# Install dependencies
+yarn install
+
+# Start the development server (optional)
+yarn start
 
 # Build for production use
 yarn build
@@ -60,16 +79,14 @@ cd ../embedg-server
 go run main.go migrate postgres up
 
 # Start the development server (optional)
-go run --tags embedapp main.go server
+go run --tags "embedapp embedsite" main.go server
 
-# Build and include the frontend files in the backend binary
-go build --tags embedapp
+# Build and include the frontend files in the backend binary (build app and site first)
+go build --tags  "embedapp embedsite"
 
 # Build without including the frontend files in the backend binary (you need to serve yourself)
 go build
 ```
-
-Before you can start the server you must have built the frontend atleast once. Otherwise the server won't start!
 
 ### Install databases
 
