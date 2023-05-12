@@ -148,15 +148,15 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 }
 
 func (m *ActionParser) CreateActionsForMessage(actionSets map[string]actions.ActionSet, messageID string) error {
+	err := m.pg.Q.DeleteMessageActionSetsForMessage(context.TODO(), messageID)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to delete message action sets")
+	}
+
 	for actionSetID, actionSet := range actionSets {
 		raw, err := json.Marshal(actionSet)
 		if err != nil {
 			return err
-		}
-
-		err = m.pg.Q.DeleteMessageActionSetsForMessage(context.TODO(), messageID)
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to delete message action sets")
 		}
 
 		_, err = m.pg.Q.InsertMessageActionSet(context.TODO(), postgres.InsertMessageActionSetParams{
