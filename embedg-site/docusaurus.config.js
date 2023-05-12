@@ -8,7 +8,7 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 const config = {
   title: "Embed Generator",
   tagline: "Under construction...",
-  favicon: "img/favicon.ico",
+  favicon: "img/logo.svg",
 
   // Set the production url of your site here
   url: "https://message.style",
@@ -52,7 +52,7 @@ const config = {
             "https://github.com/merlinfuchs/embed-generator/tree/main/embedg-site/",
         },
         theme: {
-          customCss: require.resolve("./src/css/custom.css"),
+          customCss: require.resolve("./src/css/global.css"),
         },
       }),
     ],
