@@ -61,12 +61,29 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+      metadata: [
+        {
+          name: "description",
+          content:
+            "The best way to create rich embed messages for your Discord server.",
+        },
+        {
+          name: "og:description",
+          content:
+            "The best way to create rich embed messages for your Discord server.",
+        },
+      ],
+
+      colorMode: {
+        defaultMode: "dark",
+      },
+
       // Replace with your project's social card
-      image: "img/docusaurus-social-card.jpg",
+      image: "img/example.png",
       navbar: {
         title: "Embed Generator",
         logo: {
-          alt: "My Site Logo",
+          alt: "Embed Generator",
           src: "img/logo.svg",
           className: "rounded-full",
         },
@@ -77,7 +94,7 @@ const config = {
             position: "left",
             label: "Tutorial",
           },
-          { to: "/blog", label: "Blog", position: "left" },
+          // { to: "/blog", label: "Blog", position: "left" },
           {
             href: "https://github.com/merlinfuchs/embed-generator",
             label: "GitHub",
@@ -93,7 +110,7 @@ const config = {
             items: [
               {
                 label: "Tutorial",
-                to: "/docs/intro",
+                to: "/docs",
               },
             ],
           },

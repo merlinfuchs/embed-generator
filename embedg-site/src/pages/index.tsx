@@ -1,14 +1,18 @@
 import React from "react";
-
-import "../css/tailwind.css";
 import HomeHero from "../components/HomeHero";
 import HomeHeader from "../components/HomeHeader";
+import HomeFeatures from "../components/HomeFeatures";
+import HomeFooter from "../components/HomeFooter";
+
+import "../css/tailwind.css";
 
 export default function Home(): JSX.Element {
   return (
-    <div className="h-screen w-screen bg-dark-2">
+    <div className="min-h-screen w-screen bg-dark-2">
       <HomeHeader />
       <HomeHero />
+      <HomeFeatures />
+      <HomeFooter />
     </div>
   );
 }
