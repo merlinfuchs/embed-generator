@@ -3,16 +3,12 @@ import React from "react";
 
 export default function HomeHero(): JSX.Element {
   return (
-    <div className="bg-blurple px-16">
+    <div className="bg-blurple md:px-16">
       <div className="flex max-w-7xl mx-auto py-20 flex-col lg:flex-row lg:flex-row-reverse items-center">
-        <div className="lg:w-1/2 px-6 mb-10 lg:mb-0">
-          <img
-            src="/img/example2.png"
-            alt=""
-            className="rounded-lg shadow-lg"
-          />
+        <div className="lg:w-1/2 px-6 lg:pr-0 lg:pl-12 xl:pl-20 mb-10 lg:mb-0">
+          <img src="/img/example.jpg" alt="" className="rounded-lg shadow-lg" />
         </div>
-        <div className="lg:w-1/2 px-12 lg:pl-0 lg:pr-12 xl:pr-20">
+        <div className="lg:w-1/2 px-12">
           <div className="text-gray-100 font-bold text-6xl leading-tight mb-6">
             The best way to create embeds!
           </div>

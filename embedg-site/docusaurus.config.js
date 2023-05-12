@@ -79,7 +79,7 @@ const config = {
       },
 
       // Replace with your project's social card
-      image: "img/example.png",
+      image: "img/example.jpg",
       navbar: {
         title: "Embed Generator",
         logo: {
