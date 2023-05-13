@@ -141,7 +141,7 @@ export const embedTimestampSchema = z.optional(z.string());
 
 export type EmbedTimestamp = z.infer<typeof embedTimestampSchema>;
 
-export const embedColor = z.optional(z.number());
+export const embedColor = z.optional(z.number().max(16777215));
 
 export type EmbedColor = z.infer<typeof embedColor>;
 

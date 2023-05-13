@@ -3,6 +3,7 @@ import { useCurrentMessageStore } from "../state/message";
 import Collapsable from "./Collapsable";
 import ColorPicker from "./ColorPicker";
 import EditorInput from "./EditorInput";
+import ValidationError from "./ValidationError";
 
 interface Props {
   embedIndex: number;
@@ -77,6 +78,7 @@ export default function EditorEmbedBody({ embedIndex, embedId }: Props) {
               value={color}
               onChange={(v) => setColor(embedIndex, v)}
             />
+            <ValidationError path={`embeds.${embedIndex}.color`} />
           </div>
         </div>
       </div>

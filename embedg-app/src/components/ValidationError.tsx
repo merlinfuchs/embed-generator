@@ -13,7 +13,7 @@ export default function ValidationError({ path }: Props) {
   if (issue) {
     return (
       <div className="text-red text-sm flex items-center space-x-1 mt-1">
-        <ExclamationCircleIcon className="h-5 w-5" />
+        <ExclamationCircleIcon className="h-5 w-5 flex-none" />
         <div>{issue}</div>
       </div>
     );
