@@ -65,6 +65,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i *discord
 				Embeds:     data.Embeds,
 				Components: data.Components,
 				Files:      data.Files,
+				Flags:      data.Flags,
 			})
 		}
 
