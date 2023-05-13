@@ -3,7 +3,7 @@ import React from "react";
 export default function HomeFooter(): JSX.Element {
   return (
     <div className="bg-dark-1 px-16 text-white">
-      <div className="max-w-7xl mx-auto grid grid-cols-3 py-12">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-5 py-12">
         <div className="space-y-3">
           <div className="text-lg font-medium">Docs</div>
           <div className="space-y-2 flex flex-col">

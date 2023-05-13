@@ -28,7 +28,8 @@ export default function HomeHeader(): JSX.Element {
             </a>
             <div className="h-1 w-1 bg-gray-400 rounded-full hidden sm:block"></div>
             <a className="hover:text-white text-gray-300" href="/docs">
-              Documentation
+              <span className="hidden sm:inline">Documentation</span>
+              <span className="inline sm:hidden">Docs</span>
             </a>
           </div>
           <a
