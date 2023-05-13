@@ -179,16 +179,19 @@ export default function MessagesView() {
                       <ArrowDownTrayIcon
                         className="text-gray-300 h-5 w-5 hover:text-white cursor-pointer"
                         role="button"
+                        title="Restore Message"
                         onClick={() => restoreMessage(message)}
                       />
                       <ArrowUpTrayIcon
                         className="text-gray-300 h-5 w-5 hover:Text-white cursor-pointer"
                         role="button"
+                        title="Overwrite Message"
                         onClick={() => updateMessage(message)}
                       />
                       <TrashIcon
                         className="text-gray-300 h-5 w-5 hover:text-white cursor-pointer"
                         role="button"
+                        title="Delete Message"
                         onClick={() => deleteMessage(message)}
                       />
                     </div>
