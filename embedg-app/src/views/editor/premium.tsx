@@ -90,7 +90,7 @@ export default function PremiumView() {
               </div>
             </div>
             <div className="flex justify-end">
-              {hasSubscription && (
+              {guildId && hasSubscription && (
                 <a
                   href={`/api/pay/portal?guild_id=${guildId}`}
                   className="border-2 px-3 py-2 rounded border-dark-7 hover:bg-dark-6 cursor-pointer text-white"
@@ -98,7 +98,7 @@ export default function PremiumView() {
                   Manage Subscription
                 </a>
               )}
-              {!hasActiveSubscription && (
+              {guildId && !hasActiveSubscription && (
                 <a
                   className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white flex items-center"
                   href={`/api/pay/checkout?plan=premium_server&guild_id=${guildId}`}

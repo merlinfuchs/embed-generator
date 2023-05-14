@@ -71,13 +71,13 @@ export default function EditorMoreMenu() {
               )}
               <div className="border-b-2 border-dark-4"></div>
             </div>
-            <Link
+            {/*<Link
               to="/premium"
               className="flex items-center space-x-2 text-sm px-3 py-3 hover:bg-dark-2"
             >
               <StarIcon className="w-5 h-5" />
               <div>Premium</div>
-            </Link>
+              </Link>*/}
             <a
               href="/discord"
               target="_blank"
