@@ -22,18 +22,23 @@ import { useNavigate } from "react-router-dom";
 import MessageExportImport from "../../components/MessageExportImport";
 import { useToasts } from "../../util/toasts";
 import { parseMessageWithAction } from "../../discord/restoreSchema";
+import { usePremiumStatus } from "../../util/premium";
 
 function formatUpdatedAt(updatedAt: string): string {
   return parseISO(updatedAt).toLocaleString();
 }
 
 export default function MessagesView() {
+  const maxMessages = usePremiumStatus().benefits.maxSavedMessages;
   const [source, setSource] = useState<string | null>(null);
 
   const { data: user } = useUserQuery();
 
   const guildId = useMemo(() => (source === "user" ? null : source), [source]);
   const messagesQuery = useSavedMessagesQuery(guildId);
+  const messageCount = messagesQuery.data?.success
+    ? messagesQuery.data.data.length
+    : 0;
 
   const [newMessageName, setNewMessageName] = useState("");
 
@@ -42,6 +47,15 @@ export default function MessagesView() {
   const createMessageMutation = useCreatedSavedMessageMutation();
 
   function createMessage() {
+    if (messageCount >= maxMessages) {
+      createToast({
+        title: "Failed to save message",
+        message: `You have reached the maximum number of saved messages (${maxMessages})`,
+        type: "error",
+      });
+      return;
+    }
+
     if (!newMessageName) {
       return;
     }
@@ -144,7 +158,12 @@ export default function MessagesView() {
   return (
     <EditorModal width="md">
       <div className="p-4 space-y-5 flex flex-col h-full overflow-hidden">
-        <div className="text-white text-lg">Saved Messages</div>
+        <div className="flex space-x-2 items-center">
+          <div className="text-white text-lg">Saved Messages</div>
+          <div className="font-light italic text-gray-400">
+            {messageCount} / {maxMessages}
+          </div>
+        </div>
         {user?.success ? (
           <>
             <div>

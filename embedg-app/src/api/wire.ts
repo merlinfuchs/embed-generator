@@ -8,7 +8,7 @@ export interface GuildWire {
   id: string;
   name: string;
   icon: null | string;
-  is_premium: boolean;
+  has_premium: boolean;
   has_channel_with_user_access: boolean;
   has_channel_with_bot_access: boolean;
 }

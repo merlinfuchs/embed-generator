@@ -101,12 +101,27 @@ func (h *GuildsHanlder) HandleGetGuild(c *fiber.Ctx) error {
 		return err
 	}
 
+	hasPremium := true
+	_, err = h.pg.Q.GetActiveSubscriptionForGuild(c.Context(), postgres.GetActiveSubscriptionForGuildParams{
+		GuildID: guild.ID,
+		Column2: "premium_server",
+	})
+	if err != nil {
+		if err == sql.ErrNoRows {
+			hasPremium = false
+		} else {
+			log.Error().Err(err).Msg("Failed to get subscriptions for guild")
+			return err
+		}
+	}
+
 	res := wire.GuildWire{
 		ID:                       guild.ID,
 		Name:                     guild.Name,
 		Icon:                     null.NewString(guild.Icon, guild.Icon != ""),
 		HasChannelWithUserAccess: access.HasChannelWithUserAccess,
 		HasChannelWithBotAccess:  access.HasChannelWithBotAccess,
+		HasPremium:               hasPremium,
 	}
 
 	return c.JSON(wire.GetGuildResponseWire{

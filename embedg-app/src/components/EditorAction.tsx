@@ -10,6 +10,7 @@ import {
 import EditorInput from "./EditorInput";
 import { RoleSelect } from "./RoleSelect";
 import { useSendSettingsStore } from "../state/sendSettings";
+import { usePremiumStatus } from "../util/premium";
 
 interface Props {
   setId: string;
@@ -31,6 +32,7 @@ const actionDescriptions = {
 };
 
 export default function EditorAction({ setId, actionIndex }: Props) {
+  const maxActions = usePremiumStatus().benefits.maxActionsPerComponent;
   const selectedGuildId = useSendSettingsStore((state) => state.guildId);
 
   const action = useCurrentMessageStore(
@@ -83,7 +85,7 @@ export default function EditorAction({ setId, actionIndex }: Props) {
                 onClick={() => moveDown(setId, actionIndex)}
               />
             )}
-            {actionCount < 2 && (
+            {actionCount < maxActions && (
               <DocumentDuplicateIcon
                 className="h-5 w-5 flex-none"
                 role="button"

@@ -4,12 +4,15 @@ import EditorAction from "./EditorAction";
 import Collapsable from "./Collapsable";
 import { getUniqueId } from "../util";
 import { AutoAnimate } from "../util/autoAnimate";
+import { usePremiumStatus } from "../util/premium";
 
 interface Props {
   setId: string;
 }
 
 export default function EditorActionSet({ setId }: Props) {
+  const maxActions = usePremiumStatus().benefits.maxActionsPerComponent;
+
   const actions = useCurrentMessageStore(
     (state) => state.actions[setId]?.actions.map((a) => a.id) || [],
     shallow
@@ -35,7 +38,7 @@ export default function EditorActionSet({ setId }: Props) {
       title="Actions"
       extra={
         <div className="text-sm italic font-light text-gray-400">
-          {actions.length} / 2
+          {actions.length} / {maxActions}
         </div>
       }
     >
@@ -45,7 +48,7 @@ export default function EditorActionSet({ setId }: Props) {
         ))}
       </AutoAnimate>
       <div className="space-x-3 mt-3 text-sm">
-        {actions.length < 2 ? (
+        {actions.length < maxActions ? (
           <button
             className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white"
             onClick={add}
