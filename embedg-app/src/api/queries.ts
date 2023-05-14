@@ -1,6 +1,7 @@
 import { useQuery } from "react-query";
 import {
   ListChannelsResponseWire,
+  ListGuildSubscriptionsResponseWire,
   ListGuildsResponseWire,
   ListRolesResponseWire,
   SavedMessageListResponseWire,
@@ -81,5 +82,16 @@ export function useSavedMessagesQuery(guildId: string | null) {
       }
       return fetch(url).then((res) => handleApiResponse(res.json()));
     }
+  );
+}
+
+export function useGuildSubscriptionsQuery(guildId: string | null) {
+  return useQuery<ListGuildSubscriptionsResponseWire>(
+    ["saved-messages", guildId],
+    () => {
+      let url = `/api/pay/subscriptions?guild_id=${guildId}`;
+      return fetch(url).then((res) => handleApiResponse(res.json()));
+    },
+    { enabled: !!guildId }
   );
 }

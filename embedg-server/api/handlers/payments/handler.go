@@ -68,6 +68,8 @@ func (h *PaymentsHandler) HandleCreateCheckoutSession(c *fiber.Ctx) error {
 		return err
 	}
 
+	returnURL := viper.GetString("app.public_url") + "/premium"
+
 	checkoutParams := &stripe.CheckoutSessionParams{
 		AllowPromotionCodes: stripe.Bool(true),
 		SubscriptionData: &stripe.CheckoutSessionSubscriptionDataParams{
@@ -84,8 +86,8 @@ func (h *PaymentsHandler) HandleCreateCheckoutSession(c *fiber.Ctx) error {
 				Quantity: stripe.Int64(1),
 			},
 		},
-		SuccessURL: stripe.String(viper.GetString("app.public_url")),
-		CancelURL:  stripe.String(viper.GetString("app.public_url")),
+		SuccessURL: &returnURL,
+		CancelURL:  &returnURL,
 	}
 
 	s, err := checkoutsession.New(checkoutParams)
@@ -117,7 +119,7 @@ func (h *PaymentsHandler) HandleCreatePortalSession(c *fiber.Ctx) error {
 
 	params := &stripe.BillingPortalSessionParams{
 		Customer:  &stripeCustomerID,
-		ReturnURL: stripe.String(viper.GetString("app.public_url")),
+		ReturnURL: stripe.String(viper.GetString("app.public_url") + "/premium"),
 	}
 	ps, err := portalsession.New(params)
 	if err != nil {

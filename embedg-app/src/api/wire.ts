@@ -50,6 +50,12 @@ export interface GuildStickerWire {
   formant_type: number /* int */;
 }
 export type ListStickersResponseWire = APIResponse<GuildStickerWire[]>;
+export interface GuildSubscriptionWire {
+  updated_at: string /* RFC3339 */;
+  plan: string;
+  status: string;
+}
+export type ListGuildSubscriptionsResponseWire = APIResponse<GuildSubscriptionWire[]>;
 
 //////////
 // source: magic.go
@@ -157,8 +163,3 @@ export interface UserWire {
   is_tester: boolean;
 }
 export type UserResponseWire = APIResponse<UserWire>;
-export interface PlanInfoWire {
-  active: boolean;
-  server_count: number /* int */;
-}
-export type PlanInfoResponseWire = APIResponse<PlanInfoWire>;

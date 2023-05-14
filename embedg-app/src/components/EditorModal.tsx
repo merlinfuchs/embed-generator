@@ -25,7 +25,7 @@ export default function ({
     >
       <div
         className={clsx(
-          "bg-dark-3 w-full rounded-xl flex-shrink overflow-hidden",
+          "bg-dark-3 w-full rounded-xl flex-shrink overflow-x-hidden overflow-y-auto",
           width === "xl"
             ? "max-w-7xl"
             : width == "lg"

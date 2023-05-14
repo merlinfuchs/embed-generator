@@ -5,7 +5,6 @@ import {
   CodeBracketIcon,
   EllipsisVerticalIcon,
   PlusCircleIcon,
-  PlusIcon,
   StarIcon,
 } from "@heroicons/react/20/solid";
 import clsx from "clsx";
@@ -13,6 +12,7 @@ import { useState } from "react";
 import { useUserQuery } from "../api/queries";
 import { userAvatarUrl } from "../util/discord";
 import ClickOutsideHandler from "./ClickOutsideHandler";
+import { Link } from "react-router-dom";
 
 export default function EditorMoreMenu() {
   const [open, setOpen] = useState(false);
@@ -71,8 +71,16 @@ export default function EditorMoreMenu() {
               )}
               <div className="border-b-2 border-dark-4"></div>
             </div>
+            <Link
+              to="/premium"
+              className="flex items-center space-x-2 text-sm px-3 py-3 hover:bg-dark-2"
+            >
+              <StarIcon className="w-5 h-5" />
+              <div>Premium</div>
+            </Link>
             <a
               href="/discord"
+              target="_blank"
               className="flex items-center space-x-2 text-sm px-3 py-3 hover:bg-dark-2"
             >
               <ChatBubbleLeftIcon className="w-5 h-5" />
@@ -80,6 +88,7 @@ export default function EditorMoreMenu() {
             </a>
             <a
               href="/invite"
+              target="_blank"
               className="flex items-center space-x-2 text-sm px-3 py-3 hover:bg-dark-2"
             >
               <PlusCircleIcon className="w-5 h-5" />
@@ -87,6 +96,7 @@ export default function EditorMoreMenu() {
             </a>
             <a
               href="/source"
+              target="_blank"
               className="flex items-center space-x-2 text-sm px-3 py-3 hover:bg-dark-2 rounded-b-md"
             >
               <CodeBracketIcon className="w-5 h-5" />
