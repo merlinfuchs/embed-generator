@@ -3,7 +3,5 @@ CREATE TABLE IF NOT EXISTS users (
     name TEXT NOT NULL,
     discriminator TEXT NOT NULL,
     avatar TEXT,
-    stripe_customer_id TEXT,
-    stripe_email TEXT,
     is_tester BOOLEAN NOT NULL DEFAULT FALSE
 );

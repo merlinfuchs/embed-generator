@@ -5,78 +5,79 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/premium"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"github.com/stripe/stripe-go/v74"
 	portalsession "github.com/stripe/stripe-go/v74/billingportal/session"
 	checkoutsession "github.com/stripe/stripe-go/v74/checkout/session"
-	"github.com/stripe/stripe-go/v74/customer"
 )
 
 type PaymentsHandler struct {
 	pg             *postgres.PostgresStore
 	premiumManager *premium.PremiumManager
+	accessManager  *access.AccessManager
 }
 
-func New(pg *postgres.PostgresStore, premiumManager *premium.PremiumManager) *PaymentsHandler {
+func New(pg *postgres.PostgresStore, premiumManager *premium.PremiumManager, accessManager *access.AccessManager) *PaymentsHandler {
 	stripe.Key = viper.GetString("stripe.api_key")
 
 	return &PaymentsHandler{
 		pg:             pg,
 		premiumManager: premiumManager,
+		accessManager:  accessManager,
 	}
 }
 
 func (h *PaymentsHandler) HandleCreateCheckoutSession(c *fiber.Ctx) error {
+	session := c.Locals("session").(*session.Session)
+
 	plan := h.premiumManager.GetPlanByID(c.Query("plan"))
 	if plan == nil {
 		return helpers.BadRequest("unknown_plan", "Plan does not exist")
 	}
 
-	session := c.Locals("session").(*session.Session)
+	guildID := c.Query("guild_id")
+	if guildID == "" {
+		return helpers.BadRequest("no_guild_id", "No guild id provided")
+	}
 
-	user, err := h.pg.Q.GetUser(c.Context(), session.UserID)
-	if err != nil {
+	if err := h.accessManager.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
-	customerID := user.StripeCustomerID.String
+	_, err := h.pg.Q.GetActiveSubscriptionForGuild(c.Context(), postgres.GetActiveSubscriptionForGuildParams{
+		GuildID: guildID,
+		Column2: plan.PriceID,
+	})
+	if err == nil {
+		return helpers.BadRequest("already_subscribed", "Server is already subscribed to this plan")
+	} else if err != sql.ErrNoRows {
+		return err
+	}
 
-	if customerID == "" {
-		cus, err := customer.New(&stripe.CustomerParams{
-			Name: &user.Name,
-			Params: stripe.Params{
-				Metadata: map[string]string{
-					"user_id": user.ID,
-				},
-			},
-		})
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to create customer")
-			return err
-		}
-
-		_, err = h.pg.Q.UpdateUserStripeCustomerId(c.Context(), postgres.UpdateUserStripeCustomerIdParams{
-			ID:               user.ID,
-			StripeCustomerID: sql.NullString{String: cus.ID, Valid: true},
-		})
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to set user stripe customer id")
-			return err
-		}
-
-		customerID = cus.ID
+	var customerID *string
+	if stripeCustomerID, err := h.pg.Q.GetStripeCustomerIdForGuild(c.Context(), guildID); err == nil {
+		customerID = &stripeCustomerID
+	} else if err != sql.ErrNoRows {
+		return err
 	}
 
 	checkoutParams := &stripe.CheckoutSessionParams{
 		AllowPromotionCodes: stripe.Bool(true),
-		ClientReferenceID:   &session.UserID,
-		Customer:            &customerID,
-		Mode:                stripe.String(string(stripe.CheckoutSessionModeSubscription)),
+		SubscriptionData: &stripe.CheckoutSessionSubscriptionDataParams{
+			Metadata: map[string]string{
+				"guild_id": guildID,
+				"user_id":  session.UserID,
+			},
+		},
+		Customer: customerID,
+		Mode:     stripe.String(string(stripe.CheckoutSessionModeSubscription)),
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
 			{
 				Price:    stripe.String(plan.PriceID),
@@ -97,19 +98,25 @@ func (h *PaymentsHandler) HandleCreateCheckoutSession(c *fiber.Ctx) error {
 }
 
 func (h *PaymentsHandler) HandleCreatePortalSession(c *fiber.Ctx) error {
-	session := c.Locals("session").(*session.Session)
+	guildID := c.Query("guild_id")
+	if guildID == "" {
+		return helpers.BadRequest("no_guild_id", "No guild id provided")
+	}
 
-	user, err := h.pg.Q.GetUser(c.Context(), session.UserID)
-	if err != nil {
+	if err := h.accessManager.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
-	if !user.StripeCustomerID.Valid {
-		return helpers.BadRequest("no_stripe_customer", "User has no stripe customer")
+	stripeCustomerID, err := h.pg.Q.GetStripeCustomerIdForGuild(c.Context(), guildID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return helpers.BadRequest("no_stripe_customer", "Server has no stripe customer")
+		}
+		return err
 	}
 
 	params := &stripe.BillingPortalSessionParams{
-		Customer:  &user.StripeCustomerID.String,
+		Customer:  &stripeCustomerID,
 		ReturnURL: stripe.String(viper.GetString("app.public_url")),
 	}
 	ps, err := portalsession.New(params)
@@ -119,4 +126,46 @@ func (h *PaymentsHandler) HandleCreatePortalSession(c *fiber.Ctx) error {
 	}
 
 	return c.Redirect(ps.URL, http.StatusSeeOther)
+}
+
+func (h *PaymentsHandler) HandleListSubscriptions(c *fiber.Ctx) error {
+	guildID := c.Query("guild_id")
+	if guildID == "" {
+		return helpers.BadRequest("no_guild_id", "No guild id provided")
+	}
+
+	if err := h.accessManager.CheckGuildAccessForRequest(c, guildID); err != nil {
+		return err
+	}
+
+	subscriptions, err := h.pg.Q.GetSubscriptionsForGuild(c.Context(), guildID)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get subscriptions for guild")
+		return err
+	}
+
+	res := make([]wire.GuildSubscriptionWire, 0)
+
+	for _, subscription := range subscriptions {
+		var plan *premium.Plan
+		for _, priceID := range subscription.PriceIds {
+			plan = h.premiumManager.GetPlanByPriceID(priceID)
+			if plan != nil {
+				break
+			}
+		}
+
+		if plan != nil {
+			res = append(res, wire.GuildSubscriptionWire{
+				Plan:      plan.ID,
+				Status:    subscription.Status,
+				UpdatedAt: subscription.UpdatedAt,
+			})
+		}
+	}
+
+	return c.JSON(wire.ListGuildSubscriptionsResponseWire{
+		Success: true,
+		Data:    res,
+	})
 }

@@ -11,10 +11,3 @@ type UserWire struct {
 }
 
 type UserResponseWire APIResponse[UserWire]
-
-type PlanInfoWire struct {
-	Active      bool `json:"active"`
-	ServerCount int  `json:"server_count"`
-}
-
-type PlanInfoResponseWire APIResponse[PlanInfoWire]

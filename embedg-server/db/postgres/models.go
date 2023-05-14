@@ -36,20 +36,20 @@ type Session struct {
 	ExpiresAt   time.Time
 }
 
-type User struct {
+type Subscription struct {
 	ID               string
-	Name             string
-	Discriminator    string
-	Avatar           sql.NullString
-	StripeCustomerID sql.NullString
-	StripeEmail      sql.NullString
-	IsTester         bool
+	UserID           string
+	GuildID          string
+	StripeCustomerID string
+	UpdatedAt        time.Time
+	Status           string
+	PriceIds         []string
 }
 
-type UserSubscription struct {
-	ID       string
-	UserID   string
-	Status   string
-	PriceIds []string
-	GuildIds []string
+type User struct {
+	ID            string
+	Name          string
+	Discriminator string
+	Avatar        sql.NullString
+	IsTester      bool
 }

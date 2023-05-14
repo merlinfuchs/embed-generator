@@ -1,6 +1,7 @@
 package guilds
 
 import (
+	"database/sql"
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
@@ -48,17 +49,17 @@ func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 			return err
 		}
 
-		subscriptions, err := h.pg.Q.GetSubscriptionsForGuild(c.Context(), guildID)
+		hasPremium := true
+		_, err = h.pg.Q.GetActiveSubscriptionForGuild(c.Context(), postgres.GetActiveSubscriptionForGuildParams{
+			GuildID: guild.ID,
+			Column2: "premium_server",
+		})
 		if err != nil {
-			log.Error().Err(err).Msg("Failed to get subscriptions for guild")
-			return err
-		}
-
-		hasPremium := false
-		for _, subscription := range subscriptions {
-			if subscription.Status == "active" || subscription.Status == "trialing" {
-				hasPremium = true
-				break
+			if err == sql.ErrNoRows {
+				hasPremium = false
+			} else {
+				log.Error().Err(err).Msg("Failed to get subscriptions for guild")
+				return err
 			}
 		}
 

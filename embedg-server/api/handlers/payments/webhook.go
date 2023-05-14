@@ -1,8 +1,8 @@
 package payments
 
 import (
-	"database/sql"
 	"encoding/json"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
@@ -29,10 +29,11 @@ func (h *PaymentsHandler) HandleWebhook(c *fiber.Ctx) error {
 			return err
 		}
 
-		user, err := h.pg.Q.GetUserByStripeCustomerId(c.Context(), sql.NullString{String: subscription.Customer.ID, Valid: true})
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to get user for subscription event")
-			return err
+		guildID := subscription.Metadata["guild_id"]
+		userID := subscription.Metadata["user_id"]
+		if guildID == "" || userID == "" {
+			log.Error().Msg("Missing metadata in subscription event")
+			return c.SendStatus(400)
 		}
 
 		pricesIDs := make([]string, len(subscription.Items.Data))
@@ -40,32 +41,18 @@ func (h *PaymentsHandler) HandleWebhook(c *fiber.Ctx) error {
 			pricesIDs[i] = item.Price.ID
 		}
 
-		_, err = h.pg.Q.UpsertUserSubscription(c.Context(), postgres.UpsertUserSubscriptionParams{
-			ID:       subscription.ID,
-			UserID:   user.ID,
-			Status:   string(subscription.Status),
-			PriceIds: pricesIDs,
+		_, err = h.pg.Q.UpsertSubscription(c.Context(), postgres.UpsertSubscriptionParams{
+			ID:               subscription.ID,
+			UserID:           userID,
+			GuildID:          guildID,
+			Status:           string(subscription.Status),
+			StripeCustomerID: subscription.Customer.ID,
+			PriceIds:         pricesIDs,
+			UpdatedAt:        time.Now().UTC(),
 		})
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to upsert subscription")
 			return err
-		}
-	case "customer.updated":
-		customer, err := parseWebhookEvent[stripe.Customer](event.Data.Raw)
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to parse webhook event")
-			return err
-		}
-
-		if customer.Email != "" {
-			_, err = h.pg.Q.UpdateUserStripeEmail(c.Context(), postgres.UpdateUserStripeEmailParams{
-				ID:          customer.Metadata["user_id"],
-				StripeEmail: sql.NullString{String: customer.Email, Valid: true},
-			})
-			if err != nil {
-				log.Error().Err(err).Msg("Failed to update user")
-				return err
-			}
 		}
 	default:
 		log.Debug().Str("event_type", event.Type).Msg("Unhandled event type")

@@ -1,6 +1,9 @@
 package premium
 
 import (
+	"fmt"
+
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
@@ -30,7 +33,12 @@ func (m *PremiumManager) GetPlanByPriceID(priceID string) *Plan {
 
 func New() *PremiumManager {
 	plans := make([]*Plan, 0)
-	viper.UnmarshalKey("stripe.plans", &plans)
+	err := viper.UnmarshalKey("stripe.plans", &plans)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to unmarshal plans")
+	}
+
+	fmt.Println(plans[0].ID, plans[0].PriceID)
 
 	return &PremiumManager{
 		plans: plans,

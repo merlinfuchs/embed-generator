@@ -52,37 +52,3 @@ func (h *UsersHandler) HandleGetUser(c *fiber.Ctx) error {
 		},
 	})
 }
-
-func (h *UsersHandler) HandleGetUserPlan(c *fiber.Ctx) error {
-	session := c.Locals("session").(*session.Session)
-
-	subscriptions, err := h.pg.Q.GetSubscriptionsForUser(c.Context(), session.UserID)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to get subscriptions for user")
-		return err
-	}
-
-	active := false
-	var planInfo premium.PlanInfo
-	for _, subscription := range subscriptions {
-		if subscription.Status == "active" || subscription.Status == "trialing" {
-			for _, priceID := range subscription.PriceIds {
-				plan := h.premiumManager.GetPlanByPriceID(priceID)
-				if plan != nil {
-					planInfo = plan.Info()
-					active = true
-					break
-				}
-			}
-			break
-		}
-	}
-
-	return c.JSON(wire.PlanInfoResponseWire{
-		Success: true,
-		Data: wire.PlanInfoWire{
-			Active:      active,
-			ServerCount: planInfo.ServerCount,
-		},
-	})
-}

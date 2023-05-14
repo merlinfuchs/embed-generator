@@ -69,10 +69,11 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 	app.Post("/api/restore-message/channel", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(sendMessageHandler.HandleRestoreMessageFromChannel))
 	app.Post("/api/restore-message/webhook", helpers.WithRequestBodyValidated(sendMessageHandler.HandleRestoreMessageFromWebhook))
 
-	paymentsHandler := payments.New(stores.pg, premiumManager)
+	paymentsHandler := payments.New(stores.pg, premiumManager, accessManager)
 
 	app.Get("/api/pay/checkout", sessionMiddleware.SessionRequired(), paymentsHandler.HandleCreateCheckoutSession)
 	app.Get("/api/pay/portal", sessionMiddleware.SessionRequired(), paymentsHandler.HandleCreatePortalSession)
+	app.Get("/api/pay/subscriptions", sessionMiddleware.SessionRequired(), paymentsHandler.HandleListSubscriptions)
 	app.Post("/api/pay/webhook", paymentsHandler.HandleWebhook)
 
 	app.Get("/invite", func(c *fiber.Ctx) error {
