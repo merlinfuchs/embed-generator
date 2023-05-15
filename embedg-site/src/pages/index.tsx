@@ -8,7 +8,7 @@ import "../css/tailwind.css";
 
 export default function Home(): JSX.Element {
   return (
-    <div className="min-h-screen w-screen bg-dark-2">
+    <div className="min-h-screen bg-dark-2">
       <HomeHeader />
       <HomeHero />
       <HomeFeatures />
