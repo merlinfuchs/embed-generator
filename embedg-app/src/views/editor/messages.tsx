@@ -29,7 +29,6 @@ function formatUpdatedAt(updatedAt: string): string {
 }
 
 export default function MessagesView() {
-  const maxMessages = usePremiumStatus().benefits.maxSavedMessages;
   const [source, setSource] = useState<string | null>(null);
 
   const { data: user } = useUserQuery();
@@ -39,6 +38,8 @@ export default function MessagesView() {
   const messageCount = messagesQuery.data?.success
     ? messagesQuery.data.data.length
     : 0;
+
+  const maxMessages = usePremiumStatus(guildId).benefits.maxSavedMessages;
 
   const [newMessageName, setNewMessageName] = useState("");
 

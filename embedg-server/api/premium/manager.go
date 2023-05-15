@@ -1,8 +1,6 @@
 package premium
 
 import (
-	"fmt"
-
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
@@ -37,8 +35,6 @@ func New() *PremiumManager {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to unmarshal plans")
 	}
-
-	fmt.Println(plans[0].ID, plans[0].PriceID)
 
 	return &PremiumManager{
 		plans: plans,

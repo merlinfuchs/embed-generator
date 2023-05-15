@@ -21,7 +21,7 @@ const benefitsWithoutPremium = {
   maxSavedMessages: 25,
 };
 
-export function usePremiumStatus(guildId?: string): PremiumStatus {
+export function usePremiumStatus(guildId?: string | null): PremiumStatus {
   const { data: guilds } = useGuildsQuery();
   const selectedGuildId = guildId || useSendSettingsStore((s) => s.guildId);
 
