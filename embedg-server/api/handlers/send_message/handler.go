@@ -2,6 +2,7 @@ package send_message
 
 import (
 	"bytes"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 
@@ -18,6 +19,9 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/vincent-petithory/dataurl"
 )
+
+//go:embed logo-512.png
+var logoFile []byte
 
 type SendMessageHandler struct {
 	bot           *bot.Bot
@@ -68,10 +72,6 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		TTS:             data.TTS,
 		Embeds:          data.Embeds,
 		AllowedMentions: data.AllowedMentions,
-	}
-
-	if params.AvatarURL == "" {
-		params.AvatarURL = "https://message.style/app/logo-512.png"
 	}
 
 	attachments := make([]*discordgo.MessageAttachment, len(req.Attachments))
@@ -169,7 +169,8 @@ func (h *SendMessageHandler) getWebhookForChannel(channelID string) (*discordgo.
 		}
 	}
 
-	webhook, err := h.bot.Session.WebhookCreate(channel.ID, "Embed Generator", "")
+	logoDataURL := dataurl.New(logoFile, "image/png")
+	webhook, err := h.bot.Session.WebhookCreate(channel.ID, "Embed Generator", logoDataURL.String())
 	return webhook, err
 }
 
@@ -187,10 +188,6 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		TTS:             data.TTS,
 		Embeds:          data.Embeds,
 		AllowedMentions: data.AllowedMentions,
-	}
-
-	if params.AvatarURL == "" {
-		params.AvatarURL = "https://message.style/app/logo-512.png"
 	}
 
 	attachments := make([]*discordgo.MessageAttachment, len(req.Attachments))
