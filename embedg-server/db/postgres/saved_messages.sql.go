@@ -40,6 +40,30 @@ func (q *Queries) DeleteSavedMessageForGuild(ctx context.Context, arg DeleteSave
 	return err
 }
 
+const getSavedMessageForGuild = `-- name: GetSavedMessageForGuild :one
+SELECT id, creator_id, guild_id, updated_at, name, description, data FROM saved_messages WHERE guild_id = $1 AND id = $2
+`
+
+type GetSavedMessageForGuildParams struct {
+	GuildID sql.NullString
+	ID      string
+}
+
+func (q *Queries) GetSavedMessageForGuild(ctx context.Context, arg GetSavedMessageForGuildParams) (SavedMessage, error) {
+	row := q.db.QueryRowContext(ctx, getSavedMessageForGuild, arg.GuildID, arg.ID)
+	var i SavedMessage
+	err := row.Scan(
+		&i.ID,
+		&i.CreatorID,
+		&i.GuildID,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Description,
+		&i.Data,
+	)
+	return i, err
+}
+
 const getSavedMessagesForCreator = `-- name: GetSavedMessagesForCreator :many
 SELECT id, creator_id, guild_id, updated_at, name, description, data FROM saved_messages WHERE creator_id = $1 AND guild_id IS NULL ORDER BY updated_at DESC
 `

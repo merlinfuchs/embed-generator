@@ -144,6 +144,27 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i *discord
 					Flags:   discordgo.MessageFlagsEphemeral,
 				})
 			}
+		case actions.ActionTypeSavedMessageResponse:
+			msg, err := m.pg.Q.GetSavedMessageForGuild(context.TODO(), postgres.GetSavedMessageForGuildParams{
+				GuildID: sql.NullString{Valid: true, String: i.GuildID},
+				ID:      action.TargetID,
+			})
+			if err != nil {
+				return err
+			}
+
+			data := &actions.MessageWithActions{}
+			err = json.Unmarshal(msg.Data, data)
+			if err != nil {
+				return err
+			}
+
+			// TODO: components
+			respond(&discordgo.InteractionResponseData{
+				Content: data.Content,
+				Embeds:  data.Embeds,
+				Flags:   discordgo.MessageFlagsEphemeral,
+			})
 		}
 	}
 

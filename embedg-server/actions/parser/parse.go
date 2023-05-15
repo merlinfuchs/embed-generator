@@ -2,6 +2,7 @@ package parser
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 
@@ -117,34 +118,74 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 		return fmt.Errorf("You have no access to the channel %s", channelID)
 	}
 
-	for _, actionSet := range actionSets {
-		for _, action := range actionSet.Actions {
-			switch action.Type {
-			case actions.ActionTypeTextResponse:
-				break
-			case actions.ActionTypeAddRole, actions.ActionTypeRemoveRole, actions.ActionTypeToggleRole:
-				if channelAccess.UserPermissions&discordgo.PermissionManageRoles == 0 {
-					return fmt.Errorf("You have no permission to manage roles in the channel %s", channelID)
-				}
+	var checkActions func(actionSets map[string]actions.ActionSet, nestingLevel int) error
 
-				role, err := m.bot.State.Role(channel.GuildID, action.TargetID)
-				if err != nil {
-					if err == discordgo.ErrStateNotFound {
-						return fmt.Errorf("Role %s does not exist", action.TargetID)
-					}
-					return err
-				}
-
-				if !memberIsOwner && role.Position >= highestRolePosition {
-					return fmt.Errorf("You can not assign the role %s", action.TargetID)
-				}
-
-				break
-			}
-		}
+	// workaround because closures can't be directly recursive
+	recurCheckActions := func(actionSets map[string]actions.ActionSet, nestingLevel int) error {
+		return checkActions(actionSets, nestingLevel)
 	}
 
-	return nil
+	checkActions = func(actionSets map[string]actions.ActionSet, nestingLevel int) error {
+		if nestingLevel > 5 {
+			return fmt.Errorf("You can't nest more than 5 saved messages with actions")
+		}
+
+		for _, actionSet := range actionSets {
+			for _, action := range actionSet.Actions {
+				switch action.Type {
+				case actions.ActionTypeTextResponse:
+					break
+				case actions.ActionTypeAddRole, actions.ActionTypeRemoveRole, actions.ActionTypeToggleRole:
+					if channelAccess.UserPermissions&discordgo.PermissionManageRoles == 0 {
+						return fmt.Errorf("You have no permission to manage roles in the channel %s", channelID)
+					}
+
+					role, err := m.bot.State.Role(channel.GuildID, action.TargetID)
+					if err != nil {
+						if err == discordgo.ErrStateNotFound {
+							return fmt.Errorf("Role %s does not exist", action.TargetID)
+						}
+						return err
+					}
+
+					if !memberIsOwner && role.Position >= highestRolePosition {
+						return fmt.Errorf("You can not assign the role %s", action.TargetID)
+					}
+
+					break
+
+				case actions.ActionTypeSavedMessageResponse:
+					msg, err := m.pg.Q.GetSavedMessageForGuild(context.TODO(), postgres.GetSavedMessageForGuildParams{
+						GuildID: sql.NullString{Valid: true, String: channel.GuildID},
+						ID:      action.TargetID,
+					})
+					if err != nil {
+						if err == sql.ErrNoRows {
+							return fmt.Errorf("Saved message %s does not exist or belongs to a different server", action.TargetID)
+						}
+						return err
+					}
+
+					data := &actions.MessageWithActions{}
+					err = json.Unmarshal(msg.Data, data)
+					if err != nil {
+						return err
+					}
+
+					err = m.CheckPermissionsForActionSets(data.Actions, userID, channelID)
+					if err != nil {
+						return err
+					}
+
+					return recurCheckActions(data.Actions, nestingLevel+1)
+				}
+			}
+		}
+
+		return nil
+	}
+
+	return checkActions(actionSets, 0)
 }
 
 func (m *ActionParser) CreateActionsForMessage(actionSets map[string]actions.ActionSet, messageID string) error {

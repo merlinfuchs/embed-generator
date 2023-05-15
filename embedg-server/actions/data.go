@@ -48,10 +48,11 @@ type ComponentSelectOptionWithActions struct {
 type ActionType int
 
 const (
-	ActionTypeTextResponse ActionType = 1
-	ActionTypeToggleRole   ActionType = 2
-	ActionTypeAddRole      ActionType = 3
-	ActionTypeRemoveRole   ActionType = 4
+	ActionTypeTextResponse         ActionType = 1
+	ActionTypeToggleRole           ActionType = 2
+	ActionTypeAddRole              ActionType = 3
+	ActionTypeRemoveRole           ActionType = 4
+	ActionTypeSavedMessageResponse ActionType = 5
 )
 
 type Action struct {

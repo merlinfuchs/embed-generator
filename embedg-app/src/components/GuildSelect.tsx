@@ -68,7 +68,7 @@ export default function GuildSelect({ guildId, onChange }: Props) {
               />
             </div>
           ) : (
-            <div className="text-gray-300">Select guild</div>
+            <div className="text-gray-300">Select server</div>
           )}
         </div>
         {open && (

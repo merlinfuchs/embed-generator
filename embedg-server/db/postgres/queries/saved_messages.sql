@@ -18,3 +18,6 @@ SELECT * FROM saved_messages WHERE creator_id = $1 AND guild_id IS NULL ORDER BY
 
 -- name: GetSavedMessagesForGuild :many
 SELECT * FROM saved_messages WHERE guild_id = $1 ORDER BY updated_at DESC;
+
+-- name: GetSavedMessageForGuild :one
+SELECT * FROM saved_messages WHERE guild_id = $1 AND id = $2;

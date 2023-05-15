@@ -9,21 +9,27 @@ interface PremiumStatus {
 interface PremiumBenefits {
   maxActionsPerComponent: number;
   maxSavedMessages: number;
+  actionRespondSavedMessag: boolean;
 }
 
 const benefitsWithPremium = {
   maxActionsPerComponent: 5,
   maxSavedMessages: 50,
+  actionRespondSavedMessag: true,
 };
 
 const benefitsWithoutPremium = {
   maxActionsPerComponent: 2,
   maxSavedMessages: 25,
+  actionRespondSavedMessag: false,
 };
 
 export function usePremiumStatus(guildId?: string | null): PremiumStatus {
   const { data: guilds } = useGuildsQuery();
-  const selectedGuildId = guildId || useSendSettingsStore((s) => s.guildId);
+  let selectedGuildId = useSendSettingsStore((s) => s.guildId);
+  if (guildId) {
+    selectedGuildId = guildId;
+  }
 
   if (!guilds?.success) {
     return {

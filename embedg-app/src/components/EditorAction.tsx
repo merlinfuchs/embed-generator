@@ -11,6 +11,7 @@ import EditorInput from "./EditorInput";
 import { RoleSelect } from "./RoleSelect";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { usePremiumStatus } from "../util/premium";
+import SavedMessageSelect from "./SavedMessageSelect";
 
 interface Props {
   setId: string;
@@ -22,6 +23,7 @@ const actionTypes = {
   2: "Toggle Role",
   3: "Add Role",
   4: "Remove Role",
+  5: "Saved Message Response",
 } as const;
 
 const actionDescriptions = {
@@ -29,6 +31,7 @@ const actionDescriptions = {
   2: "Toggle a role for the user.",
   3: "Add a role to the user.",
   4: "Remove a role from the user.",
+  5: "Respond with a saved message.",
 };
 
 export default function EditorAction({ setId, actionIndex }: Props) {
@@ -140,6 +143,12 @@ export default function EditorAction({ setId, actionIndex }: Props) {
             <RoleSelect
               guildId={selectedGuildId}
               roleId={action.target_id || null}
+              onChange={(v) => setTargetId(setId, actionIndex, v || "")}
+            />
+          ) : action.type === 5 ? (
+            <SavedMessageSelect
+              guildId={selectedGuildId}
+              messageId={action.target_id || null}
               onChange={(v) => setTargetId(setId, actionIndex, v || "")}
             />
           ) : null}
