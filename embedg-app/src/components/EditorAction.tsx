@@ -2,6 +2,7 @@ import { shallow } from "zustand/shallow";
 import { useCurrentMessageStore } from "../state/message";
 import Collapsable from "./Collapsable";
 import {
+  CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   DocumentDuplicateIcon,
@@ -61,11 +62,12 @@ export default function EditorAction({ setId, actionIndex }: Props) {
     shallow
   );
 
-  const [setType, setText, setTargetId] = useCurrentMessageStore(
+  const [setType, setText, setTargetId, setPublic] = useCurrentMessageStore(
     (state) => [
       state.setActionType,
       state.setActionText,
       state.setActionTargetId,
+      state.setActionPublic,
     ],
     shallow
   );
@@ -135,6 +137,22 @@ export default function EditorAction({ setId, actionIndex }: Props) {
                 ))}
               </select>
             </div>
+            {(action.type === 1 || action.type === 5) && (
+              <div className="flex-none">
+                <div className="mb-1.5 flex">
+                  <div className="uppercase text-gray-300 text-sm font-medium">
+                    Public
+                  </div>
+                </div>
+                <div
+                  role="button"
+                  onClick={() => setPublic(setId, actionIndex, !action.public)}
+                  className="h-9 w-9 rounded bg-dark-2 p-1"
+                >
+                  {action.public && <CheckIcon className="text-white" />}
+                </div>
+              </div>
+            )}
           </div>
           {action.type === 1 || action.type === 6 ? (
             <EditorInput
