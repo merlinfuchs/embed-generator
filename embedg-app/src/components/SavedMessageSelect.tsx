@@ -70,7 +70,7 @@ export default function SavedMessageSelect({
         </div>
         {open && (
           <div className="absolute bg-dark-2 top-14 left-0 rounded shadow-lg w-full border-2 border-dark-2 z-10">
-            {messages?.success &&
+            {messages?.success && messages.data.length > 0 ? (
               messages.data.map((m) => (
                 <div
                   key={m.id}
@@ -81,7 +81,10 @@ export default function SavedMessageSelect({
                   <div></div>
                   <div className="text-gray-300">{m.name}</div>
                 </div>
-              ))}
+              ))
+            ) : (
+              <div className="text-gray-300 p-2">No saved messages</div>
+            )}
           </div>
         )}
       </div>
