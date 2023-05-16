@@ -115,11 +115,10 @@ func (b *Bot) handleEmbedComponentInteraction(s *discordgo.Session, i *discordgo
 			discordgo.ActionsRow{
 				Components: []discordgo.MessageComponent{
 					discordgo.TextInput{
-						CustomID:  "embed:description",
-						Label:     "Description",
-						MaxLength: 4096,
-						Value:     currentEmbed.Title,
-						Style:     discordgo.TextInputParagraph,
+						CustomID: "embed:description",
+						Label:    "Description",
+						Value:    currentEmbed.Title,
+						Style:    discordgo.TextInputParagraph,
 					},
 				},
 			},
