@@ -1,13 +1,16 @@
 package bot
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -348,29 +351,41 @@ func (b *Bot) handleMessageCommand(s *discordgo.Session, i *discordgo.Interactio
 		messageID = match[2]
 	}
 
+	message, err := s.ChannelMessage(i.ChannelID, messageID)
+	if err != nil {
+		if rerr, ok := err.(*discordgo.RESTError); ok && rerr.Message.Code == discordgo.ErrCodeUnknownMessage {
+			return textResponse(s, i, "Message not found.")
+		}
+		return err
+	}
+
+	messageDump, err := json.MarshalIndent(actions.MessageWithActions{
+		Username:  message.Author.Username,
+		AvatarURL: message.Author.AvatarURL("1024"),
+		Content:   message.Content,
+		Embeds:    message.Embeds,
+		// TODO: Components: message.Components,
+	}, "", "  ")
+	if err != nil {
+		return err
+	}
+
 	switch subCMD.Name {
 	case "restore":
-		return textResponse(s, i, fmt.Sprintf("Go to <https://message.style> select the channel and paste `%s` into the message id field to restore a message.", messageID))
+		msg, err := b.pg.Q.InsertSharedMessage(context.TODO(), postgres.InsertSharedMessageParams{
+			ID:        util.UniqueID(),
+			CreatedAt: time.Now().UTC(),
+			ExpiresAt: time.Now().UTC().Add(time.Hour * 24),
+			Data:      messageDump,
+		})
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to insert shared message")
+			return textResponse(s, i, "Failed to create shared message.")
+		}
+
+		url := fmt.Sprintf("%s/share/%s", viper.GetString("app.public_url"), msg.ID)
+		return textResponse(s, i, fmt.Sprintf("Click this link to restore the message: [message.style](<%s>)", url))
 	case "dump":
-		message, err := s.ChannelMessage(i.ChannelID, messageID)
-		if err != nil {
-			if rerr, ok := err.(*discordgo.RESTError); ok && rerr.Message.Code == discordgo.ErrCodeUnknownMessage {
-				return textResponse(s, i, "Message not found.")
-			}
-			return err
-		}
-
-		messageDump, err := json.MarshalIndent(actions.MessageWithActions{
-			Username:  message.Author.Username,
-			AvatarURL: message.Author.AvatarURL("1024"),
-			Content:   message.Content,
-			Embeds:    message.Embeds,
-			// TODO: Components: message.Components,
-		}, "", "  ")
-		if err != nil {
-			return err
-		}
-
 		paste, err := util.CreateVaultBinPaste(string(messageDump), "json")
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to create vaultb.in paste")
@@ -384,7 +399,33 @@ func (b *Bot) handleMessageCommand(s *discordgo.Session, i *discordgo.Interactio
 }
 
 func (b *Bot) handleRestoreContextCommand(s *discordgo.Session, i *discordgo.Interaction, data discordgo.ApplicationCommandInteractionData) error {
-	return textResponse(s, i, fmt.Sprintf("Go to <https://message.style> select the channel and paste `%s` into the message id field to restore a message.", data.TargetID))
+	messageID := data.TargetID
+	message := data.Resolved.Messages[messageID]
+
+	messageDump, err := json.MarshalIndent(actions.MessageWithActions{
+		Username:  message.Author.Username,
+		AvatarURL: message.Author.AvatarURL("1024"),
+		Content:   message.Content,
+		Embeds:    message.Embeds,
+		// TODO: Components: message.Components,
+	}, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	msg, err := b.pg.Q.InsertSharedMessage(context.TODO(), postgres.InsertSharedMessageParams{
+		ID:        util.UniqueID(),
+		CreatedAt: time.Now().UTC(),
+		ExpiresAt: time.Now().UTC().Add(time.Hour * 24),
+		Data:      messageDump,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to insert shared message")
+		return textResponse(s, i, "Failed to create shared message.")
+	}
+
+	url := fmt.Sprintf("%s/share/%s", viper.GetString("app.public_url"), msg.ID)
+	return textResponse(s, i, fmt.Sprintf("Click this link to restore the message: [message.style](<%s>)", url))
 }
 
 func (b *Bot) handleJSONContextCommand(s *discordgo.Session, i *discordgo.Interaction, data discordgo.ApplicationCommandInteractionData) error {
