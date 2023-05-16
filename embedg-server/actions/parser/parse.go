@@ -120,11 +120,6 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 
 	var checkActions func(actionSets map[string]actions.ActionSet, nestingLevel int) error
 
-	// workaround because closures can't be directly recursive
-	recurCheckActions := func(actionSets map[string]actions.ActionSet, nestingLevel int) error {
-		return checkActions(actionSets, nestingLevel)
-	}
-
 	checkActions = func(actionSets map[string]actions.ActionSet, nestingLevel int) error {
 		if nestingLevel > 5 {
 			return fmt.Errorf("You can't nest more than 5 saved messages with actions")
@@ -133,7 +128,7 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 		for _, actionSet := range actionSets {
 			for _, action := range actionSet.Actions {
 				switch action.Type {
-				case actions.ActionTypeTextResponse:
+				case actions.ActionTypeTextResponse, actions.ActionTypeTextDM:
 					break
 				case actions.ActionTypeAddRole, actions.ActionTypeRemoveRole, actions.ActionTypeToggleRole:
 					if channelAccess.UserPermissions&discordgo.PermissionManageRoles == 0 {
@@ -151,10 +146,8 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 					if !memberIsOwner && role.Position >= highestRolePosition {
 						return fmt.Errorf("You can not assign the role %s", action.TargetID)
 					}
-
 					break
-
-				case actions.ActionTypeSavedMessageResponse:
+				case actions.ActionTypeSavedMessageResponse, actions.ActionTypeSavedMessageDM:
 					msg, err := m.pg.Q.GetSavedMessageForGuild(context.TODO(), postgres.GetSavedMessageForGuildParams{
 						GuildID: sql.NullString{Valid: true, String: channel.GuildID},
 						ID:      action.TargetID,
@@ -172,12 +165,7 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 						return err
 					}
 
-					err = m.CheckPermissionsForActionSets(data.Actions, userID, channelID)
-					if err != nil {
-						return err
-					}
-
-					return recurCheckActions(data.Actions, nestingLevel+1)
+					return checkActions(data.Actions, nestingLevel+1)
 				}
 			}
 		}

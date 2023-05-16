@@ -100,6 +100,7 @@ export interface MessageStore extends Message {
   setActionType: (id: string, i: number, type: number) => void;
   setActionText: (id: string, i: number, text: string) => void;
   setActionTargetId: (id: string, i: number, target: string) => void;
+  setActionPublic: (id: string, i: number, val: boolean) => void;
 
   getSelectMenu: (i: number, j: number) => MessageComponentSelectMenu | null;
   getButton: (i: number, j: number) => MessageComponentButton | null;
@@ -912,17 +913,25 @@ export const useCurrentMessageStore = create<MessageStore>()(
             const actionSet = state.actions[id];
             const action = actionSet.actions[i];
 
-            if (type === 1) {
+            if (type === 1 || type === 6) {
               actionSet.actions[i] = {
                 type,
                 id: action.id,
                 text: "",
+                public: false,
               };
-            } else if (type === 2 || type === 3 || type === 4 || type === 5) {
+            } else if (
+              type === 2 ||
+              type === 3 ||
+              type === 4 ||
+              type === 5 ||
+              type === 7
+            ) {
               actionSet.actions[i] = {
                 type,
                 id: action.id,
                 target_id: "",
+                public: false,
               };
             }
           }),
@@ -930,7 +939,7 @@ export const useCurrentMessageStore = create<MessageStore>()(
           set((state) => {
             const actionSet = state.actions[id];
             const action = actionSet.actions[i];
-            if (action.type === 1) {
+            if (action.type === 1 || action.type === 6) {
               action.text = text;
             }
           }),
@@ -942,10 +951,17 @@ export const useCurrentMessageStore = create<MessageStore>()(
               action.type === 2 ||
               action.type === 3 ||
               action.type === 4 ||
-              action.type === 5
+              action.type === 5 ||
+              action.type === 7
             ) {
               action.target_id = target;
             }
+          }),
+        setActionPublic: (id: string, i: number, val: boolean) =>
+          set((state) => {
+            const actionSet = state.actions[id];
+            const action = actionSet.actions[i];
+            action.public = val;
           }),
 
         getSelectMenu: (i: number, j: number) => {

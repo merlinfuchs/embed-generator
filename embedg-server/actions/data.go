@@ -53,12 +53,15 @@ const (
 	ActionTypeAddRole              ActionType = 3
 	ActionTypeRemoveRole           ActionType = 4
 	ActionTypeSavedMessageResponse ActionType = 5
+	ActionTypeTextDM               ActionType = 6
+	ActionTypeSavedMessageDM       ActionType = 7
 )
 
 type Action struct {
 	Type     ActionType `json:"type"`
 	TargetID string     `json:"target_id"`
 	Text     string     `json:"text"`
+	Public   bool       `json:"public"`
 }
 
 type ActionSet struct {

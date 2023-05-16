@@ -79,9 +79,14 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i *discord
 	for _, action := range actionSet.Actions {
 		switch action.Type {
 		case actions.ActionTypeTextResponse:
+			var flags discordgo.MessageFlags
+			if !action.Public {
+				flags = discordgo.MessageFlagsEphemeral
+			}
+
 			respond(&discordgo.InteractionResponseData{
 				Content: action.Text,
-				Flags:   discordgo.MessageFlagsEphemeral,
+				Flags:   flags,
 			})
 		case actions.ActionTypeToggleRole:
 			hasRole := false
@@ -112,7 +117,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i *discord
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to toggle role")
 				respond(&discordgo.InteractionResponseData{
-					Content: fmt.Sprintf("Failed to toggle role"),
+					Content: "Failed to toggle role",
 					Flags:   discordgo.MessageFlagsEphemeral,
 				})
 			}
@@ -126,7 +131,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i *discord
 			} else {
 				log.Error().Err(err).Msg("Failed to add role")
 				respond(&discordgo.InteractionResponseData{
-					Content: fmt.Sprintf("Failed to add role"),
+					Content: "Failed to add role",
 					Flags:   discordgo.MessageFlagsEphemeral,
 				})
 			}
@@ -140,7 +145,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i *discord
 			} else {
 				log.Error().Err(err).Msg("Failed to remove role")
 				respond(&discordgo.InteractionResponseData{
-					Content: fmt.Sprintf("Failed to remove role"),
+					Content: "Failed to remove role",
 					Flags:   discordgo.MessageFlagsEphemeral,
 				})
 			}
@@ -159,12 +164,82 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i *discord
 				return err
 			}
 
+			var flags discordgo.MessageFlags
+			if !action.Public {
+				flags = discordgo.MessageFlagsEphemeral
+			}
+
 			// TODO: components
 			respond(&discordgo.InteractionResponseData{
 				Content: data.Content,
 				Embeds:  data.Embeds,
+				Flags:   flags,
+			})
+		case actions.ActionTypeTextDM:
+			dmChannel, err := s.UserChannelCreate(i.Member.User.ID)
+			if err != nil {
+				respond(&discordgo.InteractionResponseData{
+					Content: "Failed to send DM",
+					Flags:   discordgo.MessageFlagsEphemeral,
+				})
+				return nil
+			}
+			_, err = s.ChannelMessageSend(dmChannel.ID, action.Text)
+			if err != nil {
+				respond(&discordgo.InteractionResponseData{
+					Content: "Failed to send DM",
+					Flags:   discordgo.MessageFlagsEphemeral,
+				})
+				return nil
+			}
+
+			respond(&discordgo.InteractionResponseData{
+				Content: "You have received a DM!",
 				Flags:   discordgo.MessageFlagsEphemeral,
 			})
+			break
+		case actions.ActionTypeSavedMessageDM:
+			msg, err := m.pg.Q.GetSavedMessageForGuild(context.TODO(), postgres.GetSavedMessageForGuildParams{
+				GuildID: sql.NullString{Valid: true, String: i.GuildID},
+				ID:      action.TargetID,
+			})
+			if err != nil {
+				return err
+			}
+
+			data := &actions.MessageWithActions{}
+			err = json.Unmarshal(msg.Data, data)
+			if err != nil {
+				return err
+			}
+
+			dmChannel, err := s.UserChannelCreate(i.Member.User.ID)
+			if err != nil {
+				respond(&discordgo.InteractionResponseData{
+					Content: "Failed to send DM",
+					Flags:   discordgo.MessageFlagsEphemeral,
+				})
+				return nil
+			}
+
+			// TODO: components
+			_, err = s.ChannelMessageSendComplex(dmChannel.ID, &discordgo.MessageSend{
+				Content: data.Content,
+				Embeds:  data.Embeds,
+			})
+			if err != nil {
+				respond(&discordgo.InteractionResponseData{
+					Content: "Failed to send DM",
+					Flags:   discordgo.MessageFlagsEphemeral,
+				})
+				return nil
+			}
+
+			respond(&discordgo.InteractionResponseData{
+				Content: "You have received a DM!",
+				Flags:   discordgo.MessageFlagsEphemeral,
+			})
+			break
 		}
 	}
 

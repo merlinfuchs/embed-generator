@@ -20,18 +20,22 @@ interface Props {
 
 const actionTypes = {
   1: "Text Response",
+  6: "Text DM",
+  5: "Saved Message Response",
+  7: "Saved Message DM",
   2: "Toggle Role",
   3: "Add Role",
   4: "Remove Role",
-  5: "Saved Message Response",
 } as const;
 
 const actionDescriptions = {
-  1: "Send a text response to the user.",
+  1: "Respond with a text message to the channel.",
   2: "Toggle a role for the user.",
   3: "Add a role to the user.",
   4: "Remove a role from the user.",
-  5: "Respond with a saved message.",
+  5: "Respond with a saved message to the channel.",
+  6: "Send a text message to the user via DM.",
+  7: "Send a saved message to the user via DM.",
 };
 
 export default function EditorAction({ setId, actionIndex }: Props) {
@@ -132,7 +136,7 @@ export default function EditorAction({ setId, actionIndex }: Props) {
               </select>
             </div>
           </div>
-          {action.type === 1 ? (
+          {action.type === 1 || action.type === 6 ? (
             <EditorInput
               label="Response"
               type="textarea"
@@ -145,7 +149,7 @@ export default function EditorAction({ setId, actionIndex }: Props) {
               roleId={action.target_id || null}
               onChange={(v) => setTargetId(setId, actionIndex, v || "")}
             />
-          ) : action.type === 5 ? (
+          ) : action.type === 5 || action.type === 7 ? (
             <SavedMessageSelect
               guildId={selectedGuildId}
               messageId={action.target_id || null}

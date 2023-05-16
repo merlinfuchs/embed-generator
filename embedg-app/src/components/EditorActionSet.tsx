@@ -28,6 +28,7 @@ export default function EditorActionSet({ setId }: Props) {
       id: getUniqueId(),
       type: 1,
       text: "",
+      public: false,
     });
   }
 
