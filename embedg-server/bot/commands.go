@@ -419,7 +419,7 @@ func (b *Bot) handleAvatarUrlContextCommand(s *discordgo.Session, i *discordgo.I
 }
 
 func (b *Bot) handleEmbedCommand(s *discordgo.Session, i *discordgo.Interaction, data discordgo.ApplicationCommandInteractionData) error {
-	return fancyResponse(s, i, "", []*discordgo.MessageEmbed{}, embedEditComponent())
+	return fancyResponse(s, i, "If you want to have more options to customize your message go to [message.style](<https://message.style/app>)!", []*discordgo.MessageEmbed{}, embedEditComponent())
 }
 
 func textResponse(s *discordgo.Session, i *discordgo.Interaction, content string) error {
