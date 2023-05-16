@@ -200,6 +200,12 @@ func (b *Bot) RegisterCommand() error {
 			Type: discordgo.UserApplicationCommand,
 			Name: "Avatar Url",
 		},
+		{
+			Name:                     "embed",
+			Description:              "Create an embed message",
+			DMPermission:             util.Ptr(false),
+			DefaultMemberPermissions: util.Ptr(int64(discordgo.PermissionManageWebhooks)),
+		},
 	})
 	return err
 }
@@ -224,6 +230,8 @@ func (b *Bot) handleCommandInteraction(s *discordgo.Session, i *discordgo.Intera
 		return b.handleJSONContextCommand(s, i, data)
 	case "Avatar Url":
 		return b.handleAvatarUrlContextCommand(s, i, data)
+	case "embed":
+		return b.handleEmbedCommand(s, i, data)
 	}
 	return nil
 }
@@ -410,6 +418,10 @@ func (b *Bot) handleAvatarUrlContextCommand(s *discordgo.Session, i *discordgo.I
 	return imageUrlResponse(s, i, user.AvatarURL("1024"))
 }
 
+func (b *Bot) handleEmbedCommand(s *discordgo.Session, i *discordgo.Interaction, data discordgo.ApplicationCommandInteractionData) error {
+	return fancyResponse(s, i, "", []*discordgo.MessageEmbed{}, embedEditComponent())
+}
+
 func textResponse(s *discordgo.Session, i *discordgo.Interaction, content string) error {
 	return s.InteractionRespond(i, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -447,4 +459,66 @@ func fancyResponse(s *discordgo.Session, i *discordgo.Interaction, content strin
 			Components: components,
 		},
 	})
+}
+
+func embedEditComponent() []discordgo.MessageComponent {
+	return []discordgo.MessageComponent{
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.Button{
+					Style:    discordgo.PrimaryButton,
+					Label:    "Set Author",
+					CustomID: "embed:author",
+				},
+				discordgo.Button{
+					Style:    discordgo.PrimaryButton,
+					Label:    "Set Title",
+					CustomID: "embed:title",
+				},
+				discordgo.Button{
+					Style:    discordgo.PrimaryButton,
+					Label:    "Set Description",
+					CustomID: "embed:description",
+				},
+				discordgo.Button{
+					Style:    discordgo.PrimaryButton,
+					Label:    "Set Color",
+					CustomID: "embed:color",
+				},
+			},
+		},
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.Button{
+					Style:    discordgo.PrimaryButton,
+					Label:    "Set Image",
+					CustomID: "embed:image",
+				},
+				discordgo.Button{
+					Style:    discordgo.PrimaryButton,
+					Label:    "Set Thumbnail",
+					CustomID: "embed:thumbnail",
+				},
+				discordgo.Button{
+					Style:    discordgo.PrimaryButton,
+					Label:    "Set Footer",
+					CustomID: "embed:footer",
+				},
+			},
+		},
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.Button{
+					Style:    discordgo.DangerButton,
+					Label:    "Cancel",
+					CustomID: "embed:cancel",
+				},
+				discordgo.Button{
+					Style:    discordgo.SuccessButton,
+					Label:    "Submit",
+					CustomID: "embed:submit",
+				},
+			},
+		},
+	}
 }

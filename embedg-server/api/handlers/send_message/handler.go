@@ -2,7 +2,6 @@ package send_message
 
 import (
 	"bytes"
-	_ "embed"
 	"encoding/json"
 	"fmt"
 
@@ -19,9 +18,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/vincent-petithory/dataurl"
 )
-
-//go:embed logo-512.png
-var logoFile []byte
 
 type SendMessageHandler struct {
 	bot           *bot.Bot
@@ -45,7 +41,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return err
 	}
 
-	webhook, err := h.getWebhookForChannel(req.ChannelID)
+	webhook, err := h.bot.GetWebhookForChannel(req.ChannelID)
 	if err != nil {
 		return err
 	}
@@ -144,34 +140,6 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 			MessageID: msg.ID,
 		},
 	})
-}
-
-func (h *SendMessageHandler) getWebhookForChannel(channelID string) (*discordgo.Webhook, error) {
-	channel, err := h.bot.State.Channel(channelID)
-	if err != nil {
-		return nil, err
-	}
-	if channel.Type == discordgo.ChannelTypeGuildNewsThread || channel.Type == discordgo.ChannelTypeGuildPublicThread {
-		channel, err = h.bot.State.Channel(channel.ParentID)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	webhooks, err := h.bot.Session.ChannelWebhooks(channel.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, webhook := range webhooks {
-		if webhook.ApplicationID == h.bot.State.User.ID {
-			return webhook, nil
-		}
-	}
-
-	logoDataURL := dataurl.New(logoFile, "image/png")
-	webhook, err := h.bot.Session.WebhookCreate(channel.ID, "Embed Generator", logoDataURL.String())
-	return webhook, err
 }
 
 func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.MessageSendToWebhookRequestWire) error {

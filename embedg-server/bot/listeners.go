@@ -41,16 +41,16 @@ func (b *Bot) onInteractionCreate(s *discordgo.Session, i *discordgo.Interaction
 				log.Error().Err(err).Msg("Failed to handle action interaction")
 			}
 		} else {
-			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "This component is not supported anymore. Please update the message at <https://message.style> to fix this.",
-					Flags:   discordgo.MessageFlagsEphemeral,
-				},
-			})
+			err := b.handleComponentInteraction(s, i.Interaction, data)
 			if err != nil {
-				log.Error().Err(err).Msg("Failed to handle interaction for legacy component")
+				log.Error().Err(err).Msg("Failed to handle component interaction")
 			}
+		}
+	} else if i.Type == discordgo.InteractionModalSubmit {
+		data := i.ModalSubmitData()
+		err := b.handleModalInteraction(s, i.Interaction, data)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to handle modal interaction")
 		}
 	} else if i.Type == discordgo.InteractionApplicationCommand {
 		data := i.ApplicationCommandData()

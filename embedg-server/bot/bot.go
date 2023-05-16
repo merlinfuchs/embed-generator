@@ -1,12 +1,18 @@
 package bot
 
 import (
+	_ "embed"
+
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot/sharding"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
+	"github.com/vincent-petithory/dataurl"
 )
+
+//go:embed logo-512.png
+var logoFile []byte
 
 type Bot struct {
 	*sharding.ShardManager
@@ -59,4 +65,32 @@ func (b *Bot) Start() error {
 		log.Fatal().Err(err).Msg("Failed to open discord session")
 	}
 	return err
+}
+
+func (b *Bot) GetWebhookForChannel(channelID string) (*discordgo.Webhook, error) {
+	channel, err := b.State.Channel(channelID)
+	if err != nil {
+		return nil, err
+	}
+	if channel.Type == discordgo.ChannelTypeGuildNewsThread || channel.Type == discordgo.ChannelTypeGuildPublicThread {
+		channel, err = b.State.Channel(channel.ParentID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	webhooks, err := b.Session.ChannelWebhooks(channel.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, webhook := range webhooks {
+		if webhook.ApplicationID == b.State.User.ID {
+			return webhook, nil
+		}
+	}
+
+	logoDataURL := dataurl.New(logoFile, "image/png")
+	webhook, err := b.Session.WebhookCreate(channel.ID, "Embed Generator", logoDataURL.String())
+	return webhook, err
 }
