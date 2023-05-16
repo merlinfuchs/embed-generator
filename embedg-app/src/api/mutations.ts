@@ -14,6 +14,8 @@ import {
   SavedMessageUpdateResponseWire,
   SavedMessagesImportRequestWire,
   SavedMessagesImportResponseWire,
+  SharedMessageCreateRequestWire,
+  SharedMessageGetResponseWire,
 } from "./wire";
 import { handleApiResponse } from "./queries";
 
@@ -180,4 +182,18 @@ export function useImportSavedMessagesMutation() {
       );
     }
   );
+}
+
+export function useSharedMessageCreateMutation() {
+  return useMutation((req: SharedMessageCreateRequestWire) => {
+    return fetch("/api/shared-messages", {
+      method: "POST",
+      body: JSON.stringify(req),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }).then((res) =>
+      handleApiResponse<SharedMessageGetResponseWire>(res.json())
+    );
+  });
 }

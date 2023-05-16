@@ -10,6 +10,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/payments"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/saved_messages"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/send_message"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/shared_messages"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/users"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/premium"
@@ -48,6 +49,11 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 	savedMessagesGroup.Patch("/", helpers.WithRequestBodyValidated(savedMessagesHandler.HandleImportSavedMessages))
 	savedMessagesGroup.Put("/:messageID", helpers.WithRequestBodyValidated(savedMessagesHandler.HandleUpdateSavedMessage))
 	savedMessagesGroup.Delete("/:messageID", savedMessagesHandler.HandleDeleteSavedMessage)
+
+	sharedMessageHandler := shared_messages.New(stores.bot, stores.pg)
+	sharedMessagesGroup := app.Group("/api/shared-messages")
+	sharedMessagesGroup.Post("/", helpers.WithRequestBodyValidated(sharedMessageHandler.HandleCreateSharedMessage))
+	sharedMessagesGroup.Get("/:messageID", sharedMessageHandler.HandleGetSharedMessage)
 
 	magicHandler := magic.New(stores.pg)
 	app.Post("/api/magic/message", sessionMiddleware.SessionRequired(), helpers.WithRequestBody(magicHandler.HandleGenerateMagicMessage))

@@ -25,11 +25,9 @@ export default function EditorMenuBar() {
           <Button label="Clear Message" href="/clear">
             <TrashIcon />
           </Button>
-          {/*
           <Button label="Share Message" href="/share">
             <LinkIcon />
           </Button>
-          */}
           <Button label="JSON Code" href="/json">
             <CodeBracketSquareIcon />
           </Button>

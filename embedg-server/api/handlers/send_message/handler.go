@@ -14,14 +14,12 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
 	"github.com/vincent-petithory/dataurl"
 )
 
 type SendMessageHandler struct {
 	bot           *bot.Bot
-	pg            *postgres.PostgresStore
 	accessManager *access.AccessManager
 	actionParser  *parser.ActionParser
 }

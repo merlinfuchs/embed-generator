@@ -36,6 +36,13 @@ type Session struct {
 	ExpiresAt   time.Time
 }
 
+type SharedMessage struct {
+	ID        string
+	CreatedAt time.Time
+	ExpiresAt time.Time
+	Data      json.RawMessage
+}
+
 type Subscription struct {
 	ID               string
 	UserID           string

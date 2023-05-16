@@ -153,6 +153,22 @@ export interface MessageRestoreResponseDataWire {
 export type MessageRestoreResponseWire = APIResponse<MessageRestoreResponseDataWire>;
 
 //////////
+// source: shared_message.go
+
+export interface SharedMessageWire {
+  id: string;
+  created_at: string /* RFC3339 */;
+  expires_at: string /* RFC3339 */;
+  data: Record<string, any> | null;
+  url: string;
+}
+export interface SharedMessageCreateRequestWire {
+  data: Record<string, any> | null;
+}
+export type SharedMessageCreateResponseWire = APIResponse<SharedMessageWire>;
+export type SharedMessageGetResponseWire = APIResponse<SharedMessageWire>;
+
+//////////
 // source: user.go
 
 export interface UserWire {

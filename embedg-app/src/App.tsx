@@ -6,6 +6,7 @@ import RequestLoadingIndicator from "./components/RequestLoadingIndicator";
 import SendView from "./views/editor/send";
 import ClearView from "./views/editor/clear";
 import ShareView from "./views/editor/share";
+import ShareRestoreView from "./views/editor/shareRestore";
 
 const LazyJsonView = lazy(() => import("./views/editor/json"));
 const LazyMagicView = lazy(() => import("./views/editor/magic"));
@@ -25,6 +26,10 @@ function App() {
           <Route path="/send" element={<SendView />} />
           <Route path="/clear" element={<ClearView />} />
           <Route path="/share" element={<ShareView />} />
+          <Route
+            path="/share/:sharedMessageId"
+            element={<ShareRestoreView />}
+          />
           <Route
             path="/messages"
             element={

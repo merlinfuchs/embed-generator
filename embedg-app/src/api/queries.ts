@@ -5,6 +5,7 @@ import {
   ListGuildsResponseWire,
   ListRolesResponseWire,
   SavedMessageListResponseWire,
+  SharedMessageGetResponseWire,
   UserResponseWire,
 } from "./wire";
 import { APIResponse } from "./base";
@@ -87,11 +88,22 @@ export function useSavedMessagesQuery(guildId: string | null) {
 
 export function useGuildSubscriptionsQuery(guildId: string | null) {
   return useQuery<ListGuildSubscriptionsResponseWire>(
-    ["saved-messages", guildId],
+    ["guild", guildId, "subscriptions"],
     () => {
       let url = `/api/pay/subscriptions?guild_id=${guildId}`;
       return fetch(url).then((res) => handleApiResponse(res.json()));
     },
     { enabled: !!guildId }
+  );
+}
+
+export function useSharedMessageQuery(messageId: string | null) {
+  return useQuery<SharedMessageGetResponseWire>(
+    ["shared-message", messageId],
+    () => {
+      let url = `/api/shared-messages/${messageId}`;
+      return fetch(url).then((res) => handleApiResponse(res.json()));
+    },
+    { enabled: !!messageId }
   );
 }
