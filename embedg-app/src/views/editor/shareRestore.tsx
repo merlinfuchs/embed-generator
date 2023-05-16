@@ -52,7 +52,7 @@ export default function ShareRestoreView() {
   }
 
   return (
-    <EditorModal>
+    <EditorModal width="md">
       <div className="flex flex-col">
         <div className="rounded-r-xl bg-dark-4 overflow-y-auto">
           <div className="rounded text-white h-full px-5 py-3">
