@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/discordgo"
@@ -103,6 +104,13 @@ func downloadMessageAttachments(attachments []*discordgo.MessageAttachment) (fil
 			}
 
 			body, err := ioutil.ReadAll(resp.Body)
+
+			parts := strings.Split(attachment.ContentType, "/")
+			if len(parts) != 2 {
+				filesC <- nil
+				return
+			}
+
 			dataURL := dataurl.New(body, attachment.ContentType)
 			filesC <- &wire.MessageAttachmentWire{
 				Name:        attachment.Filename,
