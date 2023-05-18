@@ -670,9 +670,11 @@ export const useCurrentMessageStore = create<MessageStore>()(
             if (!button || button.type !== 2) {
               return;
             }
+
             button.style = style;
             if (button.style === 5) {
               button.url = "";
+              state.actions[button.action_set_id] = { actions: [] };
             }
           }),
         setButtonLabel: (i: number, j: number, label: string) =>

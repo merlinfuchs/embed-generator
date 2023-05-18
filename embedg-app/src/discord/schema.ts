@@ -268,7 +268,7 @@ export const messageAction = z
 export type MessageAction = z.infer<typeof messageAction>;
 
 export const messageActionSet = z.object({
-  actions: z.array(messageAction).min(1).max(5),
+  actions: z.array(messageAction).max(5), //.min(1),
 });
 
 export type MessageActionSet = z.infer<typeof messageActionSet>;
