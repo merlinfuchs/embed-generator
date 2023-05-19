@@ -12,6 +12,7 @@ const LazyJsonView = lazy(() => import("./views/editor/json"));
 const LazyMagicView = lazy(() => import("./views/editor/magic"));
 const LazyMessagesView = lazy(() => import("./views/editor/messages"));
 const LazyPremiumView = lazy(() => import("./views/editor/premium"));
+const LazyShareRestoreView = lazy(() => import("./views/editor/shareRestore"));
 
 function SuspendedView({ children }: { children: ReactNode }) {
   return <Suspense>{children}</Suspense>;
@@ -28,7 +29,11 @@ function App() {
           <Route path="/share" element={<ShareView />} />
           <Route
             path="/share/:sharedMessageId"
-            element={<ShareRestoreView />}
+            element={
+              <SuspendedView>
+                <LazyShareRestoreView />
+              </SuspendedView>
+            }
           />
           <Route
             path="/messages"
