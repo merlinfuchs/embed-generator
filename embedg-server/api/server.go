@@ -57,5 +57,8 @@ func Serve() {
 
 	go bot.Start()
 
-	app.Listen(fmt.Sprintf("%s:%d", viper.GetString("api.host"), viper.GetInt("api.port")))
+	err = app.Listen(fmt.Sprintf("%s:%d", viper.GetString("api.host"), viper.GetInt("api.port")))
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to start server")
+	}
 }
