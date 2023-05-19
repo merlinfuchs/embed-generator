@@ -97,8 +97,6 @@ Install PostgresQL on your device and create a user and database. I'm sure you c
 To configure the server you can create a file called `config.yaml` with the following fields:
 
 ```yaml
-development: true
-
 discord:
   client_id: ""
   client_secret: ""
@@ -123,6 +121,9 @@ api:
 
   host: "localhost"
   port: 8080
+
+log:
+  use_json: false # Enable to this to have easily parsable JSON log messages (you usually don't want this)
 ```
 
 You can also set the config values using environment variables. For example `EMBEDG_DISCORD__TOKEN` will set the discord

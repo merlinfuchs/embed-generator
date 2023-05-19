@@ -31,7 +31,6 @@ type Migrater interface {
 
 func Migrate(storeName string, operation string, opts MigrateOpts) {
 	config.InitConfig()
-	viper.Set("development", true)
 
 	telemetry.SetupLogger()
 

@@ -33,10 +33,10 @@ func SetupLogger() {
 	}
 
 	logWriters := make([]io.Writer, 0)
-	if viper.GetBool("development") {
-		logWriters = append(logWriters, zerolog.ConsoleWriter{Out: os.Stdout})
-	} else {
+	if viper.GetBool("log.use_json") {
 		logWriters = append(logWriters, syncWriter())
+	} else {
+		logWriters = append(logWriters, zerolog.ConsoleWriter{Out: os.Stdout})
 	}
 
 	if viper.GetString("logging.filename") != "" {
