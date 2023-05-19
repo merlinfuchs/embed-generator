@@ -142,7 +142,7 @@ export default function SendMenuChannel() {
         <div className="flex items-center space-x-2">
           {messageId && (
             <div
-              className={`px-3 py-2 rounded text-white ${
+              className={`px-3 py-2 rounded text-white flex items-center space-x-3 ${
                 validationError || !selectedChannnelId
                   ? "cursor-not-allowed bg-dark-2"
                   : "bg-blurple hover:bg-blurple-dark cursor-pointer"
@@ -150,11 +150,14 @@ export default function SendMenuChannel() {
               role="button"
               onClick={() => send(true)}
             >
-              Edit Message
+              {sendToChannelMutation.isLoading && (
+                <div className="h-2 w-2 bg-white rounded-full animate-ping"></div>
+              )}
+              <div>Edit Message</div>
             </div>
           )}
           <div
-            className={`px-3 py-2 rounded text-white ${
+            className={`px-3 py-2 rounded text-white flex items-center space-x-3 ${
               validationError || !selectedChannnelId
                 ? "cursor-not-allowed bg-dark-2"
                 : "bg-blurple hover:bg-blurple-dark cursor-pointer"
@@ -162,7 +165,10 @@ export default function SendMenuChannel() {
             role="button"
             onClick={() => send(false)}
           >
-            Send Message
+            {sendToChannelMutation.isLoading && (
+              <div className="h-2 w-2 bg-white rounded-full animate-ping"></div>
+            )}
+            <div>Send Message</div>
           </div>
         </div>
       </div>
