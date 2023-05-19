@@ -31,6 +31,7 @@ func Serve() {
 				})
 			}
 		},
+		BodyLimit: 1024 * 1024 * 32, // 23 MB
 	})
 
 	pg := postgres.NewPostgresStore()

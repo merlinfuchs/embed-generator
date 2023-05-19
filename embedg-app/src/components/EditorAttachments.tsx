@@ -33,8 +33,8 @@ export default function EditorAttachments() {
 
     for (let i = 0; i < e.target.files.length; i++) {
       const file = e.target.files[i];
-      if (file.size > 8_000_000) {
-        alert("File too large! Max 8MB");
+      if (file.size > 25 * 1024 * 1024) {
+        alert("File too large! Max 25MB");
         return;
       }
 
@@ -67,10 +67,10 @@ export default function EditorAttachments() {
           <div
             className={clsx(
               "text-sm italic font-light",
-              totalBytes < 8_000_000 ? "text-gray-400" : "text-red"
+              totalBytes < 25 * 1024 * 1024 ? "text-gray-400" : "text-red"
             )}
           >
-            {Math.round(totalBytes / 10_000) / 100} / 8MB
+            {Math.round(totalBytes / 10_000) / 100} / 25MB
           </div>
         </div>
       }
