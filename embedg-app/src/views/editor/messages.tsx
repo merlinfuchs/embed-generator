@@ -23,6 +23,7 @@ import MessageExportImport from "../../components/MessageExportImport";
 import { useToasts } from "../../util/toasts";
 import { parseMessageWithAction } from "../../discord/restoreSchema";
 import { usePremiumStatus } from "../../util/premium";
+import Tooltip from "../../components/Tooltip";
 
 function formatUpdatedAt(updatedAt: string): string {
   return parseISO(updatedAt).toLocaleString();
@@ -196,24 +197,27 @@ export default function MessagesView() {
                       </div>
                     </div>
                     <div className="flex flex-none items-center space-x-4">
-                      <ArrowDownTrayIcon
-                        className="text-gray-300 h-5 w-5 hover:text-white cursor-pointer"
-                        role="button"
-                        title="Restore Message"
-                        onClick={() => restoreMessage(message)}
-                      />
-                      <ArrowUpTrayIcon
-                        className="text-gray-300 h-5 w-5 hover:Text-white cursor-pointer"
-                        role="button"
-                        title="Overwrite Message"
-                        onClick={() => updateMessage(message)}
-                      />
-                      <TrashIcon
-                        className="text-gray-300 h-5 w-5 hover:text-white cursor-pointer"
-                        role="button"
-                        title="Delete Message"
-                        onClick={() => deleteMessage(message)}
-                      />
+                      <Tooltip text="Restore Message">
+                        <ArrowDownTrayIcon
+                          className="text-gray-300 h-5 w-5 hover:text-white cursor-pointer"
+                          role="button"
+                          onClick={() => restoreMessage(message)}
+                        />
+                      </Tooltip>
+                      <Tooltip text="Overwrite Message">
+                        <ArrowUpTrayIcon
+                          className="text-gray-300 h-5 w-5 hover:text-white cursor-pointer"
+                          role="button"
+                          onClick={() => updateMessage(message)}
+                        />
+                      </Tooltip>
+                      <Tooltip text="Delete Message">
+                        <TrashIcon
+                          className="text-gray-300 h-5 w-5 hover:text-white cursor-pointer"
+                          role="button"
+                          onClick={() => deleteMessage(message)}
+                        />
+                      </Tooltip>
                     </div>
                   </div>
                 ))}

@@ -8,6 +8,7 @@ import {
 import { Link } from "react-router-dom";
 import EditorMoreMenu from "./EditorMoreMenu";
 import { useUserQuery } from "../api/queries";
+import Tooltip from "./Tooltip";
 
 export default function EditorMenuBar() {
   /*
@@ -56,13 +57,13 @@ interface ButtonProps {
 
 function Button({ label, children, href }: ButtonProps) {
   return (
-    <Link
-      className="text-white bg-dark-3 hover:bg-dark-4 rounded-full cursor-pointer p-2"
-      to={href}
-    >
-      <div className="flex-none h-5 w-5" title={label}>
-        {children}
-      </div>
-    </Link>
+    <Tooltip text={label}>
+      <Link
+        className="text-white bg-dark-3 hover:bg-dark-4 rounded-full cursor-pointer p-2 block"
+        to={href}
+      >
+        <div className="flex-none h-5 w-5">{children}</div>
+      </Link>
+    </Tooltip>
   );
 }
