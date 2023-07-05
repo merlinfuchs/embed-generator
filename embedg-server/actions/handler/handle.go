@@ -240,6 +240,47 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i *discord
 				Flags:   discordgo.MessageFlagsEphemeral,
 			})
 			break
+		case actions.ActionTypeTextEdit:
+			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseUpdateMessage,
+				Data: &discordgo.InteractionResponseData{
+					Content: action.Text,
+				},
+			})
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to respond to interaction")
+			} else {
+				responded = true
+			}
+			break
+		case actions.ActionTypeSavedMessageEdit:
+			msg, err := m.pg.Q.GetSavedMessageForGuild(context.TODO(), postgres.GetSavedMessageForGuildParams{
+				GuildID: sql.NullString{Valid: true, String: i.GuildID},
+				ID:      action.TargetID,
+			})
+			if err != nil {
+				return err
+			}
+
+			data := &actions.MessageWithActions{}
+			err = json.Unmarshal(msg.Data, data)
+			if err != nil {
+				return err
+			}
+
+			// TODO: components
+			err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseUpdateMessage,
+				Data: &discordgo.InteractionResponseData{
+					Content: data.Content,
+					Embeds:  data.Embeds,
+				},
+			})
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to respond to interaction")
+			} else {
+				responded = true
+			}
 		}
 	}
 

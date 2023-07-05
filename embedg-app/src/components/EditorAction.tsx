@@ -13,6 +13,7 @@ import { RoleSelect } from "./RoleSelect";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { usePremiumStatus } from "../util/premium";
 import SavedMessageSelect from "./SavedMessageSelect";
+import { useMemo } from "react";
 
 interface Props {
   setId: string;
@@ -22,8 +23,10 @@ interface Props {
 const actionTypes = {
   1: "Text Response",
   6: "Text DM",
+  8: "Text Message Edit",
   5: "Saved Message Response",
   7: "Saved Message DM",
+  9: "Saved Message Edit",
   2: "Toggle Role",
   3: "Add Role",
   4: "Remove Role",
@@ -37,7 +40,9 @@ const actionDescriptions = {
   5: "Respond with a saved message to the channel.",
   6: "Send a text message to the user via DM.",
   7: "Send a saved message to the user via DM.",
-};
+  8: "Edit the message with a new text message.",
+  9: "Edit the message with a saved message.",
+} as const;
 
 export default function EditorAction({ setId, actionIndex }: Props) {
   const maxActions = usePremiumStatus().benefits.maxActionsPerComponent;
@@ -71,6 +76,83 @@ export default function EditorAction({ setId, actionIndex }: Props) {
     ],
     shallow
   );
+
+  const actionTypeGroup = useMemo(() => {
+    switch (action.type) {
+      case 1:
+      case 6:
+      case 8:
+        return "text_response";
+      case 5:
+      case 7:
+      case 9:
+        return "saved_message_response";
+      case 2:
+        return "toggle_role";
+      case 3:
+        return "add_role";
+      case 4:
+        return "remove_role";
+    }
+  }, [action.type]);
+
+  function setActionTypeGroup(type: string) {
+    switch (type) {
+      case "text_response":
+        setType(setId, actionIndex, 1);
+        break;
+      case "saved_message_response":
+        setType(setId, actionIndex, 5);
+        break;
+      case "toggle_role":
+        setType(setId, actionIndex, 2);
+        break;
+      case "add_role":
+        setType(setId, actionIndex, 3);
+        break;
+      case "remove_role":
+        setType(setId, actionIndex, 4);
+        break;
+    }
+  }
+
+  const responseStyle = useMemo(() => {
+    switch (action.type) {
+      case 1 || 5:
+        return "channel";
+      case 6 || 7:
+        return "dm";
+      case 8 || 9:
+        return "edit";
+    }
+  }, [action.type]);
+
+  function setResponseStyle(style: string) {
+    console.log(style);
+    switch (style) {
+      case "channel":
+        if (actionTypeGroup === "text_response") {
+          setType(setId, actionIndex, 1);
+        } else {
+          setType(setId, actionIndex, 5);
+        }
+        break;
+      case "dm":
+        if (actionTypeGroup === "text_response") {
+          setType(setId, actionIndex, 6);
+        } else {
+          setType(setId, actionIndex, 7);
+        }
+        break;
+      case "edit":
+        if (actionTypeGroup === "text_response") {
+          setType(setId, actionIndex, 8);
+        } else {
+          setType(setId, actionIndex, 9);
+        }
+        break;
+    }
+  }
 
   return (
     <div className="p-3 border-2 border-dark-6 rounded-md">
@@ -125,18 +207,37 @@ export default function EditorAction({ setId, actionIndex }: Props) {
               </div>
               <select
                 className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
-                value={action.type.toString()}
-                onChange={(v) =>
-                  setType(setId, actionIndex, parseInt(v.target.value))
-                }
+                value={actionTypeGroup}
+                onChange={(v) => setActionTypeGroup(v.target.value)}
               >
-                {Object.entries(actionTypes).map(([key, value]) => (
-                  <option value={key.toString()} key={key}>
-                    {value}
-                  </option>
-                ))}
+                <option value="text_response">Text Response</option>
+                <option value="saved_message_response">
+                  Saved Message Response
+                </option>
+                <option value="toggle_role">Toggle Role</option>
+                <option value="add_role">Add Role</option>
+                <option value="remove_role">Remove Role</option>
               </select>
             </div>
+            {(actionTypeGroup === "text_response" ||
+              actionTypeGroup === "saved_message_response") && (
+              <div className="flex-none">
+                <div className="mb-1.5 flex">
+                  <div className="uppercase text-gray-300 text-sm font-medium">
+                    Style
+                  </div>
+                </div>
+                <select
+                  className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
+                  value={responseStyle}
+                  onChange={(v) => setResponseStyle(v.target.value)}
+                >
+                  <option value="channel">Channel Message</option>
+                  <option value="dm">Direct Message</option>
+                  <option value="edit">Edit Message</option>
+                </select>
+              </div>
+            )}
             {(action.type === 1 || action.type === 5) && (
               <div className="flex-none">
                 <div className="mb-1.5 flex">
@@ -154,7 +255,7 @@ export default function EditorAction({ setId, actionIndex }: Props) {
               </div>
             )}
           </div>
-          {action.type === 1 || action.type === 6 ? (
+          {action.type === 1 || action.type === 6 || action.type === 8 ? (
             <EditorInput
               label="Response"
               type="textarea"
@@ -167,7 +268,7 @@ export default function EditorAction({ setId, actionIndex }: Props) {
               roleId={action.target_id || null}
               onChange={(v) => setTargetId(setId, actionIndex, v || "")}
             />
-          ) : action.type === 5 || action.type === 7 ? (
+          ) : action.type === 5 || action.type === 7 || action.type === 9 ? (
             <SavedMessageSelect
               guildId={selectedGuildId}
               messageId={action.target_id || null}
