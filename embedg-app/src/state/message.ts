@@ -942,7 +942,7 @@ export const useCurrentMessageStore = create<MessageStore>()(
           set((state) => {
             const actionSet = state.actions[id];
             const action = actionSet.actions[i];
-            if (action.type === 1 || action.type === 6) {
+            if (action.type === 1 || action.type === 6 || action.type === 8) {
               action.text = text;
             }
           }),
@@ -955,7 +955,8 @@ export const useCurrentMessageStore = create<MessageStore>()(
               action.type === 3 ||
               action.type === 4 ||
               action.type === 5 ||
-              action.type === 7
+              action.type === 7 ||
+              action.type === 9
             ) {
               action.target_id = target;
             }

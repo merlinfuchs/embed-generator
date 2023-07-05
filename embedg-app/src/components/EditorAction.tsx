@@ -128,7 +128,6 @@ export default function EditorAction({ setId, actionIndex }: Props) {
   }, [action.type]);
 
   function setResponseStyle(style: string) {
-    console.log(style);
     switch (style) {
       case "channel":
         if (actionTypeGroup === "text_response") {
