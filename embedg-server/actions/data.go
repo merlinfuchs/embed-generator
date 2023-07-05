@@ -55,6 +55,8 @@ const (
 	ActionTypeSavedMessageResponse ActionType = 5
 	ActionTypeTextDM               ActionType = 6
 	ActionTypeSavedMessageDM       ActionType = 7
+	ActionTypeTextEdit             ActionType = 8
+	ActionTypeSavedMessageEdit     ActionType = 9
 )
 
 type Action struct {

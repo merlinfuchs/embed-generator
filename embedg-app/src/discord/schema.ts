@@ -238,7 +238,7 @@ export type MessageComponentActionRow = z.infer<typeof actionRowSchema>;
 
 export const messageAction = z
   .object({
-    type: z.literal(1).or(z.literal(6)), // text response
+    type: z.literal(1).or(z.literal(6)).or(z.literal(8)), // text response
     id: uniqueIdSchema.default(() => getUniqueId()),
     text: z.string().min(1).max(2000),
     public: z.boolean().default(false),
@@ -248,9 +248,10 @@ export const messageAction = z
       type: z
         .literal(2)
         .or(z.literal(3))
-        .or(z.literal(4))
+        .or(z.literal(4)) // toggle, add, remove role
         .or(z.literal(5))
-        .or(z.literal(7)), // toggle, add, remove role
+        .or(z.literal(7))
+        .or(z.literal(9)), // saved messages responses
       id: uniqueIdSchema.default(() => getUniqueId()),
       target_id: z.string().min(1),
       public: z.boolean().default(false),

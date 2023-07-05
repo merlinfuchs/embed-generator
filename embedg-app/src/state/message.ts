@@ -915,7 +915,7 @@ export const useCurrentMessageStore = create<MessageStore>()(
             const actionSet = state.actions[id];
             const action = actionSet.actions[i];
 
-            if (type === 1 || type === 6) {
+            if (type === 1 || type === 6 || type === 8) {
               actionSet.actions[i] = {
                 type,
                 id: action.id,
@@ -927,7 +927,8 @@ export const useCurrentMessageStore = create<MessageStore>()(
               type === 3 ||
               type === 4 ||
               type === 5 ||
-              type === 7
+              type === 7 ||
+              type === 9
             ) {
               actionSet.actions[i] = {
                 type,
@@ -941,7 +942,7 @@ export const useCurrentMessageStore = create<MessageStore>()(
           set((state) => {
             const actionSet = state.actions[id];
             const action = actionSet.actions[i];
-            if (action.type === 1 || action.type === 6) {
+            if (action.type === 1 || action.type === 6 || action.type === 8) {
               action.text = text;
             }
           }),
@@ -954,7 +955,8 @@ export const useCurrentMessageStore = create<MessageStore>()(
               action.type === 3 ||
               action.type === 4 ||
               action.type === 5 ||
-              action.type === 7
+              action.type === 7 ||
+              action.type === 9
             ) {
               action.target_id = target;
             }

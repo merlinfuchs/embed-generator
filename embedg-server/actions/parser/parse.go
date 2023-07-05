@@ -128,7 +128,7 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 		for _, actionSet := range actionSets {
 			for _, action := range actionSet.Actions {
 				switch action.Type {
-				case actions.ActionTypeTextResponse, actions.ActionTypeTextDM:
+				case actions.ActionTypeTextResponse, actions.ActionTypeTextDM, actions.ActionTypeTextEdit:
 					break
 				case actions.ActionTypeAddRole, actions.ActionTypeRemoveRole, actions.ActionTypeToggleRole:
 					if channelAccess.UserPermissions&discordgo.PermissionManageRoles == 0 {
@@ -147,7 +147,7 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 						return fmt.Errorf("You can not assign the role %s", action.TargetID)
 					}
 					break
-				case actions.ActionTypeSavedMessageResponse, actions.ActionTypeSavedMessageDM:
+				case actions.ActionTypeSavedMessageResponse, actions.ActionTypeSavedMessageDM, actions.ActionTypeSavedMessageEdit:
 					msg, err := m.pg.Q.GetSavedMessageForGuild(context.TODO(), postgres.GetSavedMessageForGuildParams{
 						GuildID: sql.NullString{Valid: true, String: channel.GuildID},
 						ID:      action.TargetID,
