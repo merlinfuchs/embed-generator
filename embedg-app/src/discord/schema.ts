@@ -175,14 +175,6 @@ export const embedSchema = z
         message: "Description is required when no other fields are set",
       });
     }
-
-    if (data.url && !data.title) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["title"],
-        message: "Title is required required when URL is set",
-      });
-    }
   });
 
 export type MessageEmbed = z.infer<typeof embedSchema>;
