@@ -1,0 +1,47 @@
+.react-datetime-picker {
+  @apply w-full;
+}
+
+.react-datetime-picker__wrapper {
+  @apply h-10 bg-dark-2 rounded border-none text-gray-100 px-3 w-full;
+}
+
+.react-datetime-picker__inputGroup {
+  @apply flex-auto w-full;
+}
+
+.react-datetime-picker__inputGroup__input {
+  @apply focus:outline-none focus:bg-dark-3;
+}
+
+.react-datetime-picker__button svg {
+  @apply stroke-gray-100;
+}
+
+.react-calendar {
+  @apply bg-dark-2 rounded border-none text-gray-100;
+}
+
+.react-calendar button {
+  @apply focus:bg-dark-3 hover:bg-dark-3 !important;
+}
+
+.react-calendar__navigation__label {
+  @apply bg-dark-2 !important;
+}
+
+.react-datetime-picker__clock {
+  @apply bg-dark-2 rounded border-none text-gray-100;
+}
+
+.react-clock__face {
+  @apply bg-dark-3 !important;
+}
+
+.react-clock__face div {
+  @apply bg-gray-100 !important;
+}
+
+.react-clock__hand div {
+  @apply bg-gray-100 !important;
+}

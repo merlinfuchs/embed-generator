@@ -223,7 +223,7 @@ export default function EditorAction({ setId, actionIndex }: Props) {
               <div className="flex-none">
                 <div className="mb-1.5 flex">
                   <div className="uppercase text-gray-300 text-sm font-medium">
-                    Style
+                    Target
                   </div>
                 </div>
                 <select
