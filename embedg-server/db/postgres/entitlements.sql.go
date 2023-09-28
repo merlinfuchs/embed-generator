@@ -47,6 +47,42 @@ func (q *Queries) GetActiveEntitlementForGuild(ctx context.Context, guildID sql.
 	return items, nil
 }
 
+const getActiveEntitlementForUser = `-- name: GetActiveEntitlementForUser :many
+SELECT id, user_id, guild_id, updated_at, deleted, sku_id, starts_at, ends_at FROM entitlements WHERE deleted = false AND ends_at > NOW() AND user_id = $1
+`
+
+func (q *Queries) GetActiveEntitlementForUser(ctx context.Context, userID sql.NullString) ([]Entitlement, error) {
+	rows, err := q.db.QueryContext(ctx, getActiveEntitlementForUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Entitlement
+	for rows.Next() {
+		var i Entitlement
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.GuildID,
+			&i.UpdatedAt,
+			&i.Deleted,
+			&i.SkuID,
+			&i.StartsAt,
+			&i.EndsAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const upsertEntitlement = `-- name: UpsertEntitlement :one
 /*
 id TEXT PRIMARY KEY,

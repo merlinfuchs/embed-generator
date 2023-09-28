@@ -20,11 +20,6 @@ type Entitlement struct {
 }
 
 func (b *Bot) HandleEntitlementEvent(e *Entitlement) {
-	if e.GuildID == "" {
-		log.Warn().Msg("Non guild entitlment received")
-		return
-	}
-
 	_, err := b.pg.Q.UpsertEntitlement(context.Background(), postgres.UpsertEntitlementParams{
 		ID: e.ID,
 		UserID: sql.NullString{

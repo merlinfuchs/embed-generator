@@ -54,6 +54,24 @@ func (m *PremiumManager) GetPlanFeaturesForGuild(ctx context.Context, guildID st
 	return planFeatures, nil
 }
 
+func (m *PremiumManager) GetPlanFeaturesForUser(ctx context.Context, userID string) (PlanFeatures, error) {
+	planFeatures := m.defaultPlanFeatures
+
+	entitlements, err := m.pg.Q.GetActiveEntitlementForUser(ctx, sql.NullString{String: userID, Valid: true})
+	if err != nil {
+		return planFeatures, fmt.Errorf("Failed to retrieve entitlments for user: %w", err)
+	}
+
+	for _, entitlement := range entitlements {
+		plan := m.GetPlanBySKUID(entitlement.SkuID)
+		if plan != nil {
+			planFeatures.Merge(plan.Features)
+		}
+	}
+
+	return planFeatures, nil
+}
+
 func New(pg *postgres.PostgresStore) *PremiumManager {
 	plans := make([]*Plan, 0)
 	err := viper.UnmarshalKey("stripe.plans", &plans)

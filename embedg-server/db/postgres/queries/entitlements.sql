@@ -1,6 +1,9 @@
 -- name: GetActiveEntitlementForGuild :many
 SELECT * FROM entitlements WHERE deleted = false AND ends_at > NOW() AND guild_id = $1;
 
+-- name: GetActiveEntitlementForUser :many
+SELECT * FROM entitlements WHERE deleted = false AND ends_at > NOW() AND user_id = $1;
+
 
 /*
 id TEXT PRIMARY KEY,
