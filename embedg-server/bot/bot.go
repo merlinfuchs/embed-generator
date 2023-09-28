@@ -47,6 +47,7 @@ func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 	b.AddHandler(onDisconnect)
 	b.AddHandler(onResumed)
 	b.AddHandler(b.onInteractionCreate)
+	b.AddHandler(b.onEvent)
 
 	b.AddHandler(b.onMessageDelete)
 

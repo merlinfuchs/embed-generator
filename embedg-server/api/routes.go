@@ -7,7 +7,6 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/auth"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/guilds"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/magic"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/payments"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/saved_messages"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/send_message"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/shared_messages"
@@ -29,7 +28,7 @@ type stores struct {
 func RegisterRoutes(app *fiber.App, stores *stores) {
 	sessionManager := session.New(stores.pg)
 	accessManager := access.New(stores.bot)
-	premiumManager := premium.New()
+	premiumManager := premium.New(stores.pg)
 
 	authHandler := auth.New(stores.pg, stores.bot, sessionManager)
 	app.Get("/api/auth/login", authHandler.HandleAuthRedirect)
@@ -58,7 +57,7 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 	magicHandler := magic.New(stores.pg)
 	app.Post("/api/magic/message", sessionMiddleware.SessionRequired(), helpers.WithRequestBody(magicHandler.HandleGenerateMagicMessage))
 
-	guildsHanlder := guilds.New(stores.pg, stores.bot, accessManager)
+	guildsHanlder := guilds.New(stores.pg, stores.bot, accessManager, premiumManager)
 	guildsGroup := app.Group("/api/guilds", sessionMiddleware.SessionRequired())
 	guildsGroup.Get("/", guildsHanlder.HandleListGuilds)
 	guildsGroup.Get("/:guildID", guildsHanlder.HandleGetGuild)
@@ -74,13 +73,6 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 	app.Post("/api/send-message/webhook", helpers.WithRequestBodyValidated(sendMessageHandler.HandleSendMessageToWebhook))
 	app.Post("/api/restore-message/channel", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(sendMessageHandler.HandleRestoreMessageFromChannel))
 	app.Post("/api/restore-message/webhook", helpers.WithRequestBodyValidated(sendMessageHandler.HandleRestoreMessageFromWebhook))
-
-	paymentsHandler := payments.New(stores.pg, premiumManager, accessManager)
-
-	app.Get("/api/pay/checkout", sessionMiddleware.SessionRequired(), paymentsHandler.HandleCreateCheckoutSession)
-	app.Get("/api/pay/portal", sessionMiddleware.SessionRequired(), paymentsHandler.HandleCreatePortalSession)
-	app.Get("/api/pay/subscriptions", sessionMiddleware.SessionRequired(), paymentsHandler.HandleListSubscriptions)
-	app.Post("/api/pay/webhook", paymentsHandler.HandleWebhook)
 
 	app.Get("/invite", func(c *fiber.Ctx) error {
 		return c.Redirect(util.BotInviteURL(), 302)

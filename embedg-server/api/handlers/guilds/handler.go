@@ -1,13 +1,13 @@
 package guilds
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/premium"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
@@ -17,16 +17,18 @@ import (
 )
 
 type GuildsHanlder struct {
-	pg  *postgres.PostgresStore
-	bot *bot.Bot
-	am  *access.AccessManager
+	pg   *postgres.PostgresStore
+	bot  *bot.Bot
+	am   *access.AccessManager
+	prem *premium.PremiumManager
 }
 
-func New(pg *postgres.PostgresStore, bot *bot.Bot, am *access.AccessManager) *GuildsHanlder {
+func New(pg *postgres.PostgresStore, bot *bot.Bot, am *access.AccessManager, prem *premium.PremiumManager) *GuildsHanlder {
 	return &GuildsHanlder{
-		pg:  pg,
-		bot: bot,
-		am:  am,
+		pg:   pg,
+		bot:  bot,
+		am:   am,
+		prem: prem,
 	}
 }
 
@@ -49,18 +51,10 @@ func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 			return err
 		}
 
-		hasPremium := true
-		_, err = h.pg.Q.GetActiveSubscriptionForGuild(c.Context(), postgres.GetActiveSubscriptionForGuildParams{
-			GuildID: guild.ID,
-			Column2: "premium_server",
-		})
+		planFeatures, err := h.prem.GetPlanFeaturesForGuild(c.Context(), guild.ID)
 		if err != nil {
-			if err == sql.ErrNoRows {
-				hasPremium = false
-			} else {
-				log.Error().Err(err).Msg("Failed to get subscriptions for guild")
-				return err
-			}
+			log.Error().Err(err).Msg("Failed to get subscriptions for guild")
+			return err
 		}
 
 		res = append(res, wire.GuildWire{
@@ -69,7 +63,7 @@ func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 			Icon:                     null.NewString(guild.Icon, guild.Icon != ""),
 			HasChannelWithUserAccess: access.HasChannelWithUserAccess,
 			HasChannelWithBotAccess:  access.HasChannelWithBotAccess,
-			HasPremium:               hasPremium,
+			PlanFeatures:             planFeatures,
 		})
 	}
 
@@ -101,18 +95,10 @@ func (h *GuildsHanlder) HandleGetGuild(c *fiber.Ctx) error {
 		return err
 	}
 
-	hasPremium := true
-	_, err = h.pg.Q.GetActiveSubscriptionForGuild(c.Context(), postgres.GetActiveSubscriptionForGuildParams{
-		GuildID: guild.ID,
-		Column2: "premium_server",
-	})
+	planFeatures, err := h.prem.GetPlanFeaturesForGuild(c.Context(), guild.ID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			hasPremium = false
-		} else {
-			log.Error().Err(err).Msg("Failed to get subscriptions for guild")
-			return err
-		}
+		log.Error().Err(err).Msg("Failed to get subscriptions for guild")
+		return err
 	}
 
 	res := wire.GuildWire{
@@ -121,7 +107,7 @@ func (h *GuildsHanlder) HandleGetGuild(c *fiber.Ctx) error {
 		Icon:                     null.NewString(guild.Icon, guild.Icon != ""),
 		HasChannelWithUserAccess: access.HasChannelWithUserAccess,
 		HasChannelWithBotAccess:  access.HasChannelWithBotAccess,
-		HasPremium:               hasPremium,
+		PlanFeatures:             planFeatures,
 	}
 
 	return c.JSON(wire.GetGuildResponseWire{
