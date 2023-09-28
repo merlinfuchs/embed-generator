@@ -41,9 +41,11 @@ export default function EditorMoreMenu() {
                   />
                   <div className="flex flex-auto overflow-x-hidden">
                     <div className="text-white truncate">{user.data.name}</div>
-                    <div className="text-gray-400 italic">
-                      #{user.data.discriminator}
-                    </div>
+                    {user.data.discriminator !== "0" && (
+                      <div className="text-gray-400 italic">
+                        #{user.data.discriminator}
+                      </div>
+                    )}
                   </div>
                   <a
                     className="rounded-full hover:bg-dark-2 p-2"

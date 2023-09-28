@@ -1,8 +1,7 @@
-import { ChevronDownIcon, PlusCircleIcon } from "@heroicons/react/20/solid";
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
 import { useEffect, useMemo, useState } from "react";
-import { useGuildsQuery, useSavedMessagesQuery } from "../api/queries";
-import { guildIconUrl } from "../discord/cdn";
+import { useSavedMessagesQuery } from "../api/queries";
 import ClickOutsideHandler from "./ClickOutsideHandler";
 
 interface Props {
