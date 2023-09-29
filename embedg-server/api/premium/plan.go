@@ -8,7 +8,7 @@ type Plan struct {
 }
 
 type PlanFeatures struct {
-	MaxSavedMessages int `mapstructure:"max_saved_messages" json:"max_saved_messages"`
+	MaxSavedMessages int `mapstructure:"max_saved_messages"`
 }
 
 func (f *PlanFeatures) Merge(b PlanFeatures) {

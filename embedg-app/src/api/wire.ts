@@ -8,7 +8,6 @@ export interface GuildWire {
   id: string;
   name: string;
   icon: null | string;
-  has_premium: boolean;
   has_channel_with_user_access: boolean;
   has_channel_with_bot_access: boolean;
 }
@@ -151,6 +150,28 @@ export interface MessageRestoreResponseDataWire {
   attachments: (MessageAttachmentWire | undefined)[];
 }
 export type MessageRestoreResponseWire = APIResponse<MessageRestoreResponseDataWire>;
+
+//////////
+// source: premium.go
+
+export interface GetPremiumPlanFeaturesResponseDataWire {
+  max_saved_messages: number /* int */;
+}
+export type GetPremiumPlanFeaturesResponseWire = APIResponse<GetPremiumPlanFeaturesResponseDataWire>;
+export interface PremiumEntitlementWire {
+  id: string;
+  sku_id: string;
+  user_id: null | string;
+  guild_id: null | string;
+  updated_at: string /* RFC3339 */;
+  deleted: boolean;
+  starts_at: string /* RFC3339 */;
+  ends_at: string /* RFC3339 */;
+}
+export interface ListPremiumEntitlementsResponseDataWire {
+  entitlements: PremiumEntitlementWire[];
+}
+export type ListPremiumEntitlementsResponseWire = APIResponse<ListPremiumEntitlementsResponseDataWire>;
 
 //////////
 // source: shared_message.go

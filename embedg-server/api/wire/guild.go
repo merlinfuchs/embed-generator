@@ -3,7 +3,6 @@ package wire
 import (
 	"time"
 
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/premium"
 	"gopkg.in/guregu/null.v4"
 )
 
@@ -12,9 +11,8 @@ type GuildWire struct {
 	Name string      `json:"name"`
 	Icon null.String `json:"icon"`
 
-	PlanFeatures             premium.PlanFeatures `json:"plan_features"`
-	HasChannelWithUserAccess bool                 `json:"has_channel_with_user_access"`
-	HasChannelWithBotAccess  bool                 `json:"has_channel_with_bot_access"`
+	HasChannelWithUserAccess bool `json:"has_channel_with_user_access"`
+	HasChannelWithBotAccess  bool `json:"has_channel_with_bot_access"`
 }
 
 type ListGuildsResponseWire APIResponse[[]GuildWire]

@@ -7,6 +7,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/auth"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/guilds"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/magic"
+	premium_handler "github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/premium"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/saved_messages"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/send_message"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/shared_messages"
@@ -73,6 +74,11 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 	app.Post("/api/send-message/webhook", helpers.WithRequestBodyValidated(sendMessageHandler.HandleSendMessageToWebhook))
 	app.Post("/api/restore-message/channel", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(sendMessageHandler.HandleRestoreMessageFromChannel))
 	app.Post("/api/restore-message/webhook", helpers.WithRequestBodyValidated(sendMessageHandler.HandleRestoreMessageFromWebhook))
+
+	premiumHandler := premium_handler.New(stores.pg, stores.bot, accessManager, premiumManager)
+
+	app.Get("/api/premium/features", premiumHandler.HandleGetFeatures)
+	app.Get("/api/premium/entitlements", premiumHandler.HandleListEntitlements)
 
 	app.Get("/invite", func(c *fiber.Ctx) error {
 		return c.Redirect(util.BotInviteURL(), 302)

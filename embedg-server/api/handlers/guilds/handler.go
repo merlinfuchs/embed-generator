@@ -51,19 +51,12 @@ func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 			return err
 		}
 
-		planFeatures, err := h.prem.GetPlanFeaturesForGuild(c.Context(), guild.ID)
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to get subscriptions for guild")
-			return err
-		}
-
 		res = append(res, wire.GuildWire{
 			ID:                       guild.ID,
 			Name:                     guild.Name,
 			Icon:                     null.NewString(guild.Icon, guild.Icon != ""),
 			HasChannelWithUserAccess: access.HasChannelWithUserAccess,
 			HasChannelWithBotAccess:  access.HasChannelWithBotAccess,
-			PlanFeatures:             planFeatures,
 		})
 	}
 
@@ -95,19 +88,12 @@ func (h *GuildsHanlder) HandleGetGuild(c *fiber.Ctx) error {
 		return err
 	}
 
-	planFeatures, err := h.prem.GetPlanFeaturesForGuild(c.Context(), guild.ID)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to get subscriptions for guild")
-		return err
-	}
-
 	res := wire.GuildWire{
 		ID:                       guild.ID,
 		Name:                     guild.Name,
 		Icon:                     null.NewString(guild.Icon, guild.Icon != ""),
 		HasChannelWithUserAccess: access.HasChannelWithUserAccess,
 		HasChannelWithBotAccess:  access.HasChannelWithBotAccess,
-		PlanFeatures:             planFeatures,
 	}
 
 	return c.JSON(wire.GetGuildResponseWire{

@@ -29,17 +29,8 @@ func (h *UsersHandler) HandleGetUser(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
 	userID := c.Params("userID")
 
-	var planFeatures *premium.PlanFeatures
 	if userID == "@me" {
 		userID = session.UserID
-
-		// we only retrieve plan features for the auth user
-		features, err := h.prem.GetPlanFeaturesForUser(c.Context(), session.UserID)
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to get plan features for user")
-		}
-
-		planFeatures = &features
 	}
 
 	user, err := h.pg.Q.GetUser(c.Context(), userID)
@@ -59,7 +50,6 @@ func (h *UsersHandler) HandleGetUser(c *fiber.Ctx) error {
 			Discriminator: user.Discriminator,
 			Avatar:        null.NewString(user.Avatar.String, user.Avatar.Valid),
 			IsTester:      user.IsTester,
-			PlanFeatures:  planFeatures,
 		},
 	})
 }
