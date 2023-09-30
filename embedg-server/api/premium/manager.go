@@ -74,7 +74,7 @@ func (m *PremiumManager) GetPlanFeaturesForUser(ctx context.Context, userID stri
 
 func New(pg *postgres.PostgresStore) *PremiumManager {
 	plans := make([]*Plan, 0)
-	err := viper.UnmarshalKey("stripe.plans", &plans)
+	err := viper.UnmarshalKey("premium.plans", &plans)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to unmarshal plans")
 	}

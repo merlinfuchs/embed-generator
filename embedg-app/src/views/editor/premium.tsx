@@ -6,7 +6,10 @@ import {
   SparklesIcon,
   StarIcon,
 } from "@heroicons/react/20/solid";
-import { useGuildSubscriptionsQuery, useUserQuery } from "../../api/queries";
+import {
+  usePremiumGuildEntitlementsQuery,
+  useUserQuery,
+} from "../../api/queries";
 import EditorModal from "../../components/EditorModal";
 import LogginSuggest from "../../components/LoginSuggest";
 import { useSendSettingsStore } from "../../state/sendSettings";
@@ -21,15 +24,9 @@ export default function PremiumView() {
 
   const { data: user } = useUserQuery();
 
-  const { data: subscriptions } = useGuildSubscriptionsQuery(guildId);
+  const { data } = usePremiumGuildEntitlementsQuery(guildId);
 
-  const hasSubscription =
-    subscriptions?.success && subscriptions.data.length !== 0;
-  const hasActiveSubscription =
-    hasSubscription &&
-    subscriptions.data.some(
-      (s) => s.status === "active" || s.status === "trialing"
-    );
+  const hasEntitlement = data?.success && data.data.entitlements.length !== 0;
 
   return (
     <EditorModal width="md">
@@ -43,7 +40,7 @@ export default function PremiumView() {
                   Embed Generator <span className="text-yellow">Premium</span>
                 </div>
                 <div className="text-light text-sm text-gray-400">
-                  {hasActiveSubscription
+                  {guildId && hasEntitlement
                     ? "You are subscribed to Embed Generator Premium and have access to all features!"
                     : "Subscribe to Embed Generator Premium to unlock all features!"}
                 </div>
@@ -88,24 +85,6 @@ export default function PremiumView() {
                   each interactive component on your message
                 </div>
               </div>
-            </div>
-            <div className="flex justify-end">
-              {guildId && hasSubscription && (
-                <a
-                  href={`/api/pay/portal?guild_id=${guildId}`}
-                  className="border-2 px-3 py-2 rounded border-dark-7 hover:bg-dark-6 cursor-pointer text-white"
-                >
-                  Manage Subscription
-                </a>
-              )}
-              {guildId && !hasActiveSubscription && (
-                <a
-                  className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white flex items-center"
-                  href={`/api/pay/checkout?plan=premium_server&guild_id=${guildId}`}
-                >
-                  <div>Subscribe Now</div>
-                </a>
-              )}
             </div>
           </div>
         ) : (

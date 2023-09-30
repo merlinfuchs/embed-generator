@@ -1,8 +1,9 @@
 import { useQuery } from "react-query";
 import {
+  GetPremiumPlanFeaturesResponseWire,
   ListChannelsResponseWire,
-  ListGuildSubscriptionsResponseWire,
   ListGuildsResponseWire,
+  ListPremiumEntitlementsResponseWire,
   ListRolesResponseWire,
   SavedMessageListResponseWire,
   SharedMessageGetResponseWire,
@@ -86,17 +87,6 @@ export function useSavedMessagesQuery(guildId: string | null) {
   );
 }
 
-export function useGuildSubscriptionsQuery(guildId: string | null) {
-  return useQuery<ListGuildSubscriptionsResponseWire>(
-    ["guild", guildId, "subscriptions"],
-    () => {
-      let url = `/api/pay/subscriptions?guild_id=${guildId}`;
-      return fetch(url).then((res) => handleApiResponse(res.json()));
-    },
-    { enabled: !!guildId }
-  );
-}
-
 export function useSharedMessageQuery(messageId: string | null) {
   return useQuery<SharedMessageGetResponseWire>(
     ["shared-message", messageId],
@@ -105,5 +95,27 @@ export function useSharedMessageQuery(messageId: string | null) {
       return fetch(url).then((res) => handleApiResponse(res.json()));
     },
     { enabled: !!messageId }
+  );
+}
+
+export function usePremiumGuildFeaturesQuery(guildId?: string | null) {
+  return useQuery<GetPremiumPlanFeaturesResponseWire>(
+    ["premium", "features", guildId],
+    () =>
+      fetch(`/api/premium/features?guild_id=${guildId}`).then((res) =>
+        handleApiResponse(res.json())
+      ),
+    { enabled: !!guildId }
+  );
+}
+
+export function usePremiumGuildEntitlementsQuery(guildId?: string | null) {
+  return useQuery<ListPremiumEntitlementsResponseWire>(
+    ["premium", "entitlements", guildId],
+    () =>
+      fetch(`/api/premium/entitlements?guild_id=${guildId}`).then((res) =>
+        handleApiResponse(res.json())
+      ),
+    { enabled: !!guildId }
   );
 }

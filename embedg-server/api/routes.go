@@ -77,8 +77,8 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 
 	premiumHandler := premium_handler.New(stores.pg, stores.bot, accessManager, premiumManager)
 
-	app.Get("/api/premium/features", premiumHandler.HandleGetFeatures)
-	app.Get("/api/premium/entitlements", premiumHandler.HandleListEntitlements)
+	app.Get("/api/premium/features", sessionMiddleware.SessionRequired(), premiumHandler.HandleGetFeatures)
+	app.Get("/api/premium/entitlements", sessionMiddleware.SessionRequired(), premiumHandler.HandleListEntitlements)
 
 	app.Get("/invite", func(c *fiber.Ctx) error {
 		return c.Redirect(util.BotInviteURL(), 302)

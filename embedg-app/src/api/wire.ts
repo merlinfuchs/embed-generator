@@ -49,12 +49,6 @@ export interface GuildStickerWire {
   formant_type: number /* int */;
 }
 export type ListStickersResponseWire = APIResponse<GuildStickerWire[]>;
-export interface GuildSubscriptionWire {
-  updated_at: string /* RFC3339 */;
-  plan: string;
-  status: string;
-}
-export type ListGuildSubscriptionsResponseWire = APIResponse<GuildSubscriptionWire[]>;
 
 //////////
 // source: magic.go
@@ -156,6 +150,9 @@ export type MessageRestoreResponseWire = APIResponse<MessageRestoreResponseDataW
 
 export interface GetPremiumPlanFeaturesResponseDataWire {
   max_saved_messages: number /* int */;
+  max_actions_per_component: number /* int */;
+  advanced_action_types: boolean;
+  ai_assistant: boolean;
 }
 export type GetPremiumPlanFeaturesResponseWire = APIResponse<GetPremiumPlanFeaturesResponseDataWire>;
 export interface PremiumEntitlementWire {

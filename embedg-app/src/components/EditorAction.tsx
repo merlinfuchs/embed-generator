@@ -11,9 +11,9 @@ import {
 import EditorInput from "./EditorInput";
 import { RoleSelect } from "./RoleSelect";
 import { useSendSettingsStore } from "../state/sendSettings";
-import { usePremiumStatus } from "../util/premium";
 import SavedMessageSelect from "./SavedMessageSelect";
 import { useMemo } from "react";
+import { usePremiumFeatures } from "../util/premium";
 
 interface Props {
   setId: string;
@@ -45,7 +45,8 @@ const actionDescriptions = {
 } as const;
 
 export default function EditorAction({ setId, actionIndex }: Props) {
-  const maxActions = usePremiumStatus().benefits.maxActionsPerComponent;
+  const features = usePremiumFeatures();
+  const maxActions = features?.max_actions_per_component || 0;
   const selectedGuildId = useSendSettingsStore((state) => state.guildId);
 
   const action = useCurrentMessageStore(

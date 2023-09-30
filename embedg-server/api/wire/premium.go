@@ -7,7 +7,10 @@ import (
 )
 
 type GetPremiumPlanFeaturesResponseDataWire struct {
-	MaxSavedMessages int `json:"max_saved_messages"`
+	MaxSavedMessages       int  `json:"max_saved_messages"`
+	MaxActionsPerComponent int  `json:"max_actions_per_component"`
+	AdvancedActionTypes    bool `json:"advanced_action_types"`
+	AIAssistant            bool `json:"ai_assistant"`
 }
 
 type GetPremiumPlanFeaturesResponseWire APIResponse[GetPremiumPlanFeaturesResponseDataWire]

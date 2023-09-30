@@ -22,8 +22,8 @@ import { useNavigate } from "react-router-dom";
 import MessageExportImport from "../../components/MessageExportImport";
 import { useToasts } from "../../util/toasts";
 import { parseMessageWithAction } from "../../discord/restoreSchema";
-import { usePremiumStatus } from "../../util/premium";
 import Tooltip from "../../components/Tooltip";
+import { usePremiumFeatures } from "../../util/premium";
 
 function formatUpdatedAt(updatedAt: string): string {
   return parseISO(updatedAt).toLocaleString();
@@ -40,7 +40,8 @@ export default function MessagesView() {
     ? messagesQuery.data.data.length
     : 0;
 
-  const maxMessages = usePremiumStatus(guildId).benefits.maxSavedMessages;
+  const features = usePremiumFeatures(guildId);
+  const maxMessages = features?.max_saved_messages || 0;
 
   const [newMessageName, setNewMessageName] = useState("");
 

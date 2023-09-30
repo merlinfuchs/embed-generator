@@ -8,7 +8,10 @@ type Plan struct {
 }
 
 type PlanFeatures struct {
-	MaxSavedMessages int `mapstructure:"max_saved_messages"`
+	MaxSavedMessages       int  `mapstructure:"max_saved_messages"`
+	MaxActionsPerComponent int  `mapstructure:"max_actions_per_component"`
+	AdvancedActionTypes    bool `mapstructure:"advanced_action_types"`
+	AIAssistant            bool `mapstructure:"ai_assistant"`
 }
 
 func (f *PlanFeatures) Merge(b PlanFeatures) {

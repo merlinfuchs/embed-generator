@@ -1,8 +1,6 @@
 package wire
 
 import (
-	"time"
-
 	"gopkg.in/guregu/null.v4"
 )
 
@@ -63,11 +61,3 @@ type GuildStickerWire struct {
 }
 
 type ListStickersResponseWire APIResponse[[]GuildStickerWire]
-
-type GuildSubscriptionWire struct {
-	UpdatedAt time.Time `json:"updated_at"`
-	Plan      string    `json:"plan"`
-	Status    string    `json:"status"`
-}
-
-type ListGuildSubscriptionsResponseWire APIResponse[[]GuildSubscriptionWire]
