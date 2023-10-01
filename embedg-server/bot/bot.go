@@ -8,6 +8,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot/sharding"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 	"github.com/vincent-petithory/dataurl"
 )
 
@@ -85,7 +86,7 @@ func (b *Bot) GetWebhookForChannel(channelID string) (*discordgo.Webhook, error)
 	}
 
 	for _, webhook := range webhooks {
-		if webhook.ApplicationID == b.State.User.ID {
+		if webhook.ApplicationID == viper.GetString("discord.client_id") {
 			return webhook, nil
 		}
 	}

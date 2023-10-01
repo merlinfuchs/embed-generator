@@ -7,6 +7,7 @@ import (
 	"github.com/jellydator/ttlcache/v3"
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
+	"github.com/spf13/viper"
 )
 
 type AccessManager struct {
@@ -137,7 +138,7 @@ func (m *AccessManager) ComputeUserPermissionsForChannel(userID string, channelI
 }
 
 func (m *AccessManager) ComputeBotPermissionsForChannel(channelID string) (int64, error) {
-	perms, err := m.bot.State.UserChannelPermissions(m.bot.State.User.ID, channelID)
+	perms, err := m.bot.State.UserChannelPermissions(viper.GetString("discord.client_id"), channelID)
 	if err == discordgo.ErrStateNotFound {
 		return 0, nil
 	}
