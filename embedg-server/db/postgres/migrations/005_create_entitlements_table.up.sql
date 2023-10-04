@@ -5,6 +5,6 @@ CREATE TABLE IF NOT EXISTS entitlements (
   updated_at TIMESTAMP NOT NULL,
   deleted BOOLEAN NOT NULL,
   sku_id TEXT NOT NULL,
-  starts_at TIMESTAMP NOT NULL,
-  ends_at TIMESTAMP NOT NULL
+  starts_at TIMESTAMP,
+  ends_at TIMESTAMP
 );

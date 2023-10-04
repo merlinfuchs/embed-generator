@@ -7,6 +7,7 @@ import (
 
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
+	"gopkg.in/guregu/null.v4"
 )
 
 type Entitlement struct {
@@ -15,8 +16,8 @@ type Entitlement struct {
 	UserID   string    `json:"user_id"`
 	GuildID  string    `json:"guild_id"`
 	Deleted  bool      `json:"deleted"`
-	StartsAt time.Time `json:"starts_at"`
-	EndsAt   time.Time `json:"ends_at"`
+	StartsAt null.Time `json:"starts_at"`
+	EndsAt   null.Time `json:"ends_at"`
 }
 
 func (b *Bot) HandleEntitlementEvent(e *Entitlement) {
@@ -33,8 +34,8 @@ func (b *Bot) HandleEntitlementEvent(e *Entitlement) {
 		UpdatedAt: time.Now().UTC(),
 		Deleted:   e.Deleted,
 		SkuID:     e.SKUID,
-		StartsAt:  e.StartsAt,
-		EndsAt:    e.EndsAt,
+		StartsAt:  e.StartsAt.NullTime,
+		EndsAt:    e.EndsAt.NullTime,
 	})
 	if err != nil {
 		log.Error().Err(err).Str("guild_id", e.GuildID).Str("user_id", e.UserID).Msg("Failed to create entitlement")

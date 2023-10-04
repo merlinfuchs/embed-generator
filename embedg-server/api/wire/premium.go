@@ -22,8 +22,8 @@ type PremiumEntitlementWire struct {
 	GuildID   null.String `json:"guild_id"`
 	UpdatedAt time.Time   `json:"updated_at"`
 	Deleted   bool        `json:"deleted"`
-	StartsAt  time.Time   `json:"starts_at"`
-	EndsAt    time.Time   `json:"ends_at"`
+	StartsAt  null.Time   `json:"starts_at"`
+	EndsAt    null.Time   `json:"ends_at"`
 }
 
 type ListPremiumEntitlementsResponseDataWire struct {

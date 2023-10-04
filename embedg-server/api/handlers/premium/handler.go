@@ -94,8 +94,8 @@ func (h *PremiumHandler) HandleListEntitlements(c *fiber.Ctx) error {
 			GuildID:   null.NewString(e.GuildID.String, e.GuildID.Valid),
 			UpdatedAt: e.UpdatedAt,
 			Deleted:   e.Deleted,
-			StartsAt:  e.StartsAt,
-			EndsAt:    e.EndsAt,
+			StartsAt:  null.Time{NullTime: e.StartsAt},
+			EndsAt:    null.Time{NullTime: e.EndsAt},
 		}
 	}
 
