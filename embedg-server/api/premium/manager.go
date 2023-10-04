@@ -79,7 +79,10 @@ func New(pg *postgres.PostgresStore) *PremiumManager {
 		log.Fatal().Err(err).Msg("Failed to unmarshal plans")
 	}
 
-	defaultPlanFeatures := PlanFeatures{}
+	defaultPlanFeatures := PlanFeatures{
+		MaxSavedMessages:       25,
+		MaxActionsPerComponent: 2,
+	}
 	for _, plan := range plans {
 		if plan.Default {
 			defaultPlanFeatures = plan.Features
