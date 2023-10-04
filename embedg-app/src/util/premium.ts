@@ -1,54 +1,30 @@
-import { useGuildsQuery } from "../api/queries";
+import {
+  usePremiumGuildFeaturesQuery,
+  usePremiumUserFeaturesQuery,
+} from "../api/queries";
 import { useSendSettingsStore } from "../state/sendSettings";
 
-interface PremiumStatus {
-  hasPremium: boolean;
-  benefits: PremiumBenefits;
+export function usePremiumGuildFeatures(guildId?: string | null) {
+  const selectedGuildID = useSendSettingsStore().guildId;
+  if (guildId === undefined) {
+    guildId = selectedGuildID;
+  }
+
+  const { data } = usePremiumGuildFeaturesQuery(guildId);
+
+  if (!data?.success) {
+    return null;
+  }
+
+  return data.data;
 }
 
-interface PremiumBenefits {
-  maxActionsPerComponent: number;
-  maxSavedMessages: number;
-  actionRespondSavedMessag: boolean;
-}
+export function usePremiumUserFeatures() {
+  const { data } = usePremiumUserFeaturesQuery();
 
-const benefitsWithPremium = {
-  maxActionsPerComponent: 5,
-  maxSavedMessages: 50,
-  actionRespondSavedMessag: true,
-};
-
-const benefitsWithoutPremium = {
-  maxActionsPerComponent: 2,
-  maxSavedMessages: 25,
-  actionRespondSavedMessag: false,
-};
-
-export function usePremiumStatus(guildId?: string | null): PremiumStatus {
-  const { data: guilds } = useGuildsQuery();
-  let selectedGuildId = useSendSettingsStore((s) => s.guildId);
-  if (guildId) {
-    selectedGuildId = guildId;
+  if (!data?.success) {
+    return null;
   }
 
-  if (!guilds?.success) {
-    return {
-      hasPremium: false,
-      benefits: benefitsWithoutPremium,
-    };
-  }
-
-  const selectedGuild = guilds?.data.find((g) => g.id === selectedGuildId);
-
-  if (!selectedGuild || !selectedGuild.has_premium) {
-    return {
-      hasPremium: false,
-      benefits: benefitsWithoutPremium,
-    };
-  } else {
-    return {
-      hasPremium: true,
-      benefits: benefitsWithPremium,
-    };
-  }
+  return data.data;
 }

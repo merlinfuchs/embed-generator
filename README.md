@@ -124,6 +124,26 @@ api:
 
 log:
   use_json: false # Enable to this to have easily parsable JSON log messages (you usually don't want this)
+
+# Here you can configure multiple tiers/plans which are linked to a Discord SKU
+premium:
+  plans:
+    # The default plan that all users automatically have
+    - id: default
+      default: true
+      features:
+        max_saved_messages: 25
+        max_actions_per_component: 2
+        advanced_action_types: false
+        ai_assistant: false
+    # An additional premium plan that will apply when the user or guild has the SKU
+    - id: premium_server
+      sku_id: "123"
+      features:
+        max_saved_messages: 100
+        max_actions_per_component: 5
+        advanced_action_types: true
+        ai_assistant: true
 ```
 
 You can also set the config values using environment variables. For example `EMBEDG_DISCORD__TOKEN` will set the discord

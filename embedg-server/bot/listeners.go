@@ -3,6 +3,7 @@ package bot
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"strings"
 
 	"github.com/merlinfuchs/discordgo"
@@ -58,5 +59,18 @@ func (b *Bot) onInteractionCreate(s *discordgo.Session, i *discordgo.Interaction
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to handle command interaction")
 		}
+	}
+}
+
+func (b *Bot) onEvent(s *discordgo.Session, e *discordgo.Event) {
+	if e.Type == "ENTITLEMENT_CREATE" || e.Type == "ENTITLEMENT_UPDATE" || e.Type == "ENTITLEMENT_DELETE" {
+		entitlement := &Entitlement{}
+		err := json.Unmarshal(e.RawData, entitlement)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to unmarshal entitlement")
+			return
+		}
+
+		b.HandleEntitlementEvent(entitlement)
 	}
 }

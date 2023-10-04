@@ -20,8 +20,13 @@ export default function GuildSelect({ guildId, onChange }: Props) {
 
   useEffect(() => {
     if (!guildId) {
-      if (guilds?.success && guilds.data.length > 0) {
-        onChange(guilds.data[0].id);
+      if (guilds?.success) {
+        const defaultGuild = guilds.data.find(
+          (g) => g.has_channel_with_bot_access
+        );
+        if (defaultGuild) {
+          onChange(defaultGuild.id);
+        }
       }
     } else if (!isLoading) {
       if (!guilds?.success || !guilds.data.find((g) => g.id === guildId)) {
@@ -77,9 +82,16 @@ export default function GuildSelect({ guildId, onChange }: Props) {
               guilds.data.map((g) => (
                 <div
                   key={g.id}
-                  className="py-2 flex space-x-2 items-center hover:bg-dark-3 rounded cursor-pointer px-3"
+                  className={clsx(
+                    "py-2 flex space-x-2 items-center rounded px-3",
+                    g.has_channel_with_bot_access
+                      ? "hover:bg-dark-3 cursor-pointer"
+                      : "opacity-60 cursor-not-allowed"
+                  )}
                   role="button"
-                  onClick={() => selectGuild(g.id)}
+                  onClick={() =>
+                    g.has_channel_with_bot_access && selectGuild(g.id)
+                  }
                 >
                   <img
                     src={guildIconUrl(g)}

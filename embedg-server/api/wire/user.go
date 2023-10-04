@@ -1,6 +1,8 @@
 package wire
 
-import "gopkg.in/guregu/null.v4"
+import (
+	"gopkg.in/guregu/null.v4"
+)
 
 type UserWire struct {
 	ID            string      `json:"id"`

@@ -1,8 +1,6 @@
 package wire
 
 import (
-	"time"
-
 	"gopkg.in/guregu/null.v4"
 )
 
@@ -11,7 +9,6 @@ type GuildWire struct {
 	Name string      `json:"name"`
 	Icon null.String `json:"icon"`
 
-	HasPremium               bool `json:"has_premium"`
 	HasChannelWithUserAccess bool `json:"has_channel_with_user_access"`
 	HasChannelWithBotAccess  bool `json:"has_channel_with_bot_access"`
 }
@@ -64,11 +61,3 @@ type GuildStickerWire struct {
 }
 
 type ListStickersResponseWire APIResponse[[]GuildStickerWire]
-
-type GuildSubscriptionWire struct {
-	UpdatedAt time.Time `json:"updated_at"`
-	Plan      string    `json:"plan"`
-	Status    string    `json:"status"`
-}
-
-type ListGuildSubscriptionsResponseWire APIResponse[[]GuildSubscriptionWire]

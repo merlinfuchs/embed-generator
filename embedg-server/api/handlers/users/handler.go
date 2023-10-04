@@ -14,13 +14,14 @@ import (
 )
 
 type UsersHandler struct {
-	pg             *postgres.PostgresStore
-	premiumManager *premium.PremiumManager
+	pg   *postgres.PostgresStore
+	prem *premium.PremiumManager
 }
 
-func New(pg *postgres.PostgresStore, premiumManager *premium.PremiumManager) *UsersHandler {
+func New(pg *postgres.PostgresStore, prem *premium.PremiumManager) *UsersHandler {
 	return &UsersHandler{
-		pg: pg,
+		pg:   pg,
+		prem: prem,
 	}
 }
 
