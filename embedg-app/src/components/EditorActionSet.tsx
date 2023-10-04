@@ -4,14 +4,14 @@ import EditorAction from "./EditorAction";
 import Collapsable from "./Collapsable";
 import { getUniqueId } from "../util";
 import { AutoAnimate } from "../util/autoAnimate";
-import { usePremiumFeatures } from "../util/premium";
+import { usePremiumGuildFeatures } from "../util/premium";
 
 interface Props {
   setId: string;
 }
 
 export default function EditorActionSet({ setId }: Props) {
-  const features = usePremiumFeatures();
+  const features = usePremiumGuildFeatures();
   const maxActions = features?.max_actions_per_component || 0;
 
   const actions = useCurrentMessageStore(

@@ -3,7 +3,7 @@ package premium
 type Plan struct {
 	ID       string       `mapstructure:"id"`
 	SKUID    string       `mapstructure:"sku_id"`
-	Default  bool         `mapstructure:"bool"`
+	Default  bool         `mapstructure:"default"`
 	Features PlanFeatures `mapstructure:"features"`
 }
 
@@ -18,4 +18,10 @@ func (f *PlanFeatures) Merge(b PlanFeatures) {
 	if b.MaxSavedMessages > f.MaxSavedMessages {
 		f.MaxSavedMessages = b.MaxSavedMessages
 	}
+	if b.MaxActionsPerComponent > f.MaxActionsPerComponent {
+		f.MaxActionsPerComponent = b.MaxActionsPerComponent
+	}
+
+	f.AdvancedActionTypes = f.AdvancedActionTypes || b.AdvancedActionTypes
+	f.AIAssistant = f.AIAssistant || b.AIAssistant
 }

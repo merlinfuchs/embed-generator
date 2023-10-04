@@ -109,9 +109,16 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
               guilds.data.map((g) => (
                 <div
                   key={g.id}
-                  className="py-2 flex space-x-2 items-center hover:bg-dark-3 rounded cursor-pointer px-3"
+                  className={clsx(
+                    "py-2 flex space-x-2 items-center rounded px-3",
+                    g.has_channel_with_bot_access
+                      ? "hover:bg-dark-3 cursor-pointer"
+                      : "opacity-60 cursor-not-allowed"
+                  )}
                   role="button"
-                  onClick={() => selectValue(g.id)}
+                  onClick={() =>
+                    g.has_channel_with_bot_access && selectValue(g.id)
+                  }
                 >
                   <img
                     src={guildIconUrl(g)}

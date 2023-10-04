@@ -54,7 +54,10 @@ func (h *PremiumHandler) HandleGetFeatures(c *fiber.Ctx) error {
 	return c.JSON(wire.GetPremiumPlanFeaturesResponseWire{
 		Success: true,
 		Data: wire.GetPremiumPlanFeaturesResponseDataWire{
-			MaxSavedMessages: features.MaxSavedMessages,
+			MaxSavedMessages:       features.MaxSavedMessages,
+			MaxActionsPerComponent: features.MaxActionsPerComponent,
+			AdvancedActionTypes:    features.AdvancedActionTypes,
+			AIAssistant:            features.AIAssistant,
 		},
 	})
 }

@@ -119,3 +119,13 @@ export function usePremiumGuildEntitlementsQuery(guildId?: string | null) {
     { enabled: !!guildId }
   );
 }
+
+export function usePremiumUserFeaturesQuery() {
+  return useQuery<GetPremiumPlanFeaturesResponseWire>(
+    ["premium", "features", "user"],
+    () =>
+      fetch(`/api/premium/features`).then((res) =>
+        handleApiResponse(res.json())
+      )
+  );
+}

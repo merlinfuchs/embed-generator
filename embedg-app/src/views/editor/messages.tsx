@@ -23,7 +23,10 @@ import MessageExportImport from "../../components/MessageExportImport";
 import { useToasts } from "../../util/toasts";
 import { parseMessageWithAction } from "../../discord/restoreSchema";
 import Tooltip from "../../components/Tooltip";
-import { usePremiumFeatures } from "../../util/premium";
+import {
+  usePremiumGuildFeatures,
+  usePremiumUserFeatures,
+} from "../../util/premium";
 
 function formatUpdatedAt(updatedAt: string): string {
   return parseISO(updatedAt).toLocaleString();
@@ -40,8 +43,12 @@ export default function MessagesView() {
     ? messagesQuery.data.data.length
     : 0;
 
-  const features = usePremiumFeatures(guildId);
-  const maxMessages = features?.max_saved_messages || 0;
+  const guildFeatures = usePremiumGuildFeatures(guildId);
+  const userFeatures = usePremiumUserFeatures();
+  const maxMessages =
+    (source === "user"
+      ? userFeatures?.max_saved_messages
+      : guildFeatures?.max_saved_messages) || 0;
 
   const [newMessageName, setNewMessageName] = useState("");
 
