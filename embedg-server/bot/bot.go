@@ -51,6 +51,8 @@ func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 
 	b.AddHandler(b.onMessageDelete)
 
+	go b.lazyTierTask()
+
 	return b, nil
 }
 
