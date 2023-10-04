@@ -48,7 +48,7 @@ func (q *Queries) GetActiveEntitlementForGuild(ctx context.Context, guildID sql.
 }
 
 const getActiveEntitlementForUser = `-- name: GetActiveEntitlementForUser :many
-SELECT id, user_id, guild_id, updated_at, deleted, sku_id, starts_at, ends_at FROM entitlements WHERE deleted = false AND ends_at > NOW() AND user_id = $1
+SELECT id, user_id, guild_id, updated_at, deleted, sku_id, starts_at, ends_at FROM entitlements WHERE deleted = false AND (starts_at IS NULL OR starts_at < NOW()) AND (ends_at IS NULL OR ends_at > NOW()) AND user_id = $1
 `
 
 func (q *Queries) GetActiveEntitlementForUser(ctx context.Context, userID sql.NullString) ([]Entitlement, error) {
