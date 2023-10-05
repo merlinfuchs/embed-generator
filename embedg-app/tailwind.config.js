@@ -25,6 +25,7 @@ export default {
         256: "64rem",
       },
       width: {
+        18: "4.5rem",
         128: "32rem",
         160: "40rem",
         192: "48rem",

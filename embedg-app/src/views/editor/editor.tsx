@@ -10,6 +10,7 @@ import { Message, messageSchema } from "../../discord/schema";
 import { useValidationErrorStore } from "../../state/validationError";
 import EditorAttachments from "../../components/EditorAttachments";
 import SendMenu from "../../components/SendMenu";
+import EditorSideNav from "../../components/EditorSideNav";
 
 export default function EditorView() {
   const setValidationError = useValidationErrorStore((state) => state.setError);
@@ -25,20 +26,23 @@ export default function EditorView() {
   });
 
   return (
-    <div className="flex flex-col lg:flex-row h-full">
-      <div className="lg:w-1/2 lg:h-full bg-dark-4 lg:overflow-y-auto no-scrollbar">
-        <EditorMenuBar />
-        <div className="p-5 space-y-5">
-          <SendMenu />
-          <div className="border border-dark-6"></div>
-          <EditorMessageContentFields />
-          <EditorAttachments />
-          <EditorEmbeds />
-          <EditorComponents />
+    <div className="flex h-full w-full">
+      <EditorSideNav />
+      <div className="flex flex-col lg:flex-row h-full flex-auto">
+        <div className="lg:w-1/2 lg:h-full bg-dark-4 lg:overflow-y-auto no-scrollbar">
+          <div className="p-5 space-y-5">
+            <SendMenu />
+            <div className="border border-dark-6"></div>
+            <EditorMenuBar />
+            <EditorMessageContentFields />
+            <EditorAttachments />
+            <EditorEmbeds />
+            <EditorComponents />
+          </div>
         </div>
-      </div>
-      <div className="lg:w-1/2 lg:h-full bg-dark-4 border-t-2 lg:border-t-0 lg:border-l-2 border-dark-3 px-5 py-2 lg:overflow-y-auto no-scrollbar">
-        <EditorMessagePreview />
+        <div className="lg:w-1/2 lg:h-full bg-dark-4 border-t-2 lg:border-t-0 lg:border-l-2 border-dark-3 px-5 py-2 lg:overflow-y-auto no-scrollbar">
+          <EditorMessagePreview />
+        </div>
       </div>
       <Outlet />
     </div>
