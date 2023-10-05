@@ -63,7 +63,7 @@ export default function EditorComponents() {
       }
     >
       {sendMode === "webhook" && (
-        <div className="text-gray-400 mb-3 text-sm">
+        <div className="text-orange-300 mb-3 text-sm font-light">
           Interactive components are only available when selecting a server and
           channel at the top instead of sending to a webhook.
         </div>

@@ -130,7 +130,7 @@ export default function SendMenuWebhook() {
           />
         </div>
       </div>
-      <div className="text-gray-400">
+      <div className="text-orange-300 font-light">
         Interactive components are only available when selecting a server and
         channel instead of sending to a webhook.
       </div>

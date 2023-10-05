@@ -27,8 +27,7 @@ export default function EditorView() {
 
   return (
     <div className="flex h-full w-full">
-      <EditorSideNav />
-      <div className="flex flex-col lg:flex-row h-full flex-auto">
+      <div className="flex flex-col lg:flex-row h-full flex-auto w-full">
         <div className="lg:w-1/2 lg:h-full bg-dark-4 lg:overflow-y-auto no-scrollbar">
           <div className="p-5 space-y-5">
             <SendMenu />

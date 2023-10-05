@@ -9,17 +9,20 @@ import {
   ChevronDoubleLeftIcon,
   Bars3Icon,
   PlusCircleIcon,
+  ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useEffect, useMemo, useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import ClickOutsideHandler from "./ClickOutsideHandler";
-import { useGuildsQuery } from "../api/queries";
+import { useGuildsQuery, useUserQuery } from "../api/queries";
 import { guildIconUrl } from "../discord/cdn";
 
 export default function EditorSideNav() {
   const [preCollapsed, setCollapsed] = useState(true);
   const [hidden, setHidden] = useState(true);
+
+  const { data: user } = useUserQuery();
 
   const collapsed = preCollapsed && hidden;
 
@@ -50,7 +53,30 @@ export default function EditorSideNav() {
               </div>
             </div>
             <div className="mb-7">
-              <NavigationGuildSelect collapsed={collapsed} />
+              {user && user.success ? (
+                <NavigationGuildSelect collapsed={collapsed} />
+              ) : (
+                <a
+                  className={clsx(
+                    "bg-dark-2 flex items-center mx-3 group",
+                    collapsed ? "rounded-full p-2" : "rounded p-2"
+                  )}
+                  href="/api/auth/login"
+                >
+                  <ArrowRightOnRectangleIcon className="h-8 w-8 flex-none text-gray-300 group-hover:text-white" />
+                  {!collapsed && (
+                    <div className="ml-5">
+                      <div className="text-gray-300 group-hover:text-white mb-1">
+                        Login
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        Many features are only available after loggin in with
+                        your Discord account!
+                      </div>
+                    </div>
+                  )}
+                </a>
+              )}
             </div>
             <div
               className={clsx(
@@ -80,12 +106,23 @@ export default function EditorSideNav() {
             </div>
           </div>
           <div className="flex flex-col items-center py-5 space-y-7">
-            <NavigationButton
-              href="/logout"
-              label="Logout"
-              icon={ArrowLeftOnRectangleIcon}
-              collapsed={collapsed}
-            />
+            {user && user.success && (
+              <a
+                className={clsx(
+                  "flex w-full items-center",
+                  collapsed ? "px-4" : "px-5"
+                )}
+                href="/api/auth/logout"
+              >
+                <ArrowLeftOnRectangleIcon className="h-8 w-8 flex-none text-gray-300 hover:text-white" />
+                {!collapsed && (
+                  <div className={clsx("ml-5 text-gray-300 hover:text-white")}>
+                    Logout
+                  </div>
+                )}
+              </a>
+            )}
+
             <NavigationButton
               href="/settings"
               label="Settings"
@@ -208,7 +245,7 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
       <div
         className={clsx(
           "relative flex items-center cursor-pointer",
-          collapsed ? "group" : "bg-dark-2 mx-3 rounded p-2"
+          collapsed ? "group" : "bg-dark-2 mx-3 rounded px-2 py-1"
         )}
         role="button"
         onClick={() => setOpen((prev) => !prev)}
@@ -252,7 +289,7 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
       {open && (
         <div
           className={clsx(
-            "absolute bg-dark-2 rounded shadow-lg w-64 border-2 border-dark-2 z-10",
+            "absolute bg-dark-2 rounded shadow-lg w-64 max-h-128 overflow-y-auto border-2 border-dark-2 z-10",
             collapsed ? "top-14 left-0" : "top-16 left-3"
           )}
         >

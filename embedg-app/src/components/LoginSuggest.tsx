@@ -3,8 +3,8 @@ import {
   FaceSmileIcon,
   InformationCircleIcon,
   LinkIcon,
-  ArrowLeftOnRectangleIcon,
   ArrowUpTrayIcon,
+  ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { AutoAnimate } from "../util/autoAnimate";
@@ -22,7 +22,7 @@ export default function LogginSuggest({ alwaysExpanded }: Props) {
         className="flex items-center px-3 py-3 space-x-3 cursor-pointer group"
         onClick={() => !alwaysExpanded && setCollapsed(!collapsed)}
       >
-        <ArrowLeftOnRectangleIcon className="text-blurple h-14 w-14 flex-none" />
+        <ArrowRightOnRectangleIcon className="text-blurple h-14 w-14 flex-none" />
         <div className="flex-auto">
           <div className="text-base font-bold text-white">
             Login for <span className="text-green">all features</span>
