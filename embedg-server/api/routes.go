@@ -4,9 +4,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/assistant"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/auth"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/guilds"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/magic"
 	premium_handler "github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/premium"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/saved_messages"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/send_message"
@@ -55,8 +55,8 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 	sharedMessagesGroup.Post("/", helpers.WithRequestBodyValidated(sharedMessageHandler.HandleCreateSharedMessage))
 	sharedMessagesGroup.Get("/:messageID", sharedMessageHandler.HandleGetSharedMessage)
 
-	magicHandler := magic.New(stores.pg)
-	app.Post("/api/magic/message", sessionMiddleware.SessionRequired(), helpers.WithRequestBody(magicHandler.HandleGenerateMagicMessage))
+	assistantHandler := assistant.New(stores.pg, accessManager, premiumManager)
+	app.Post("/api/assistant/message", sessionMiddleware.SessionRequired(), helpers.WithRequestBody(assistantHandler.HandleAssistantGenerateMessage))
 
 	guildsHanlder := guilds.New(stores.pg, stores.bot, accessManager, premiumManager)
 	guildsGroup := app.Group("/api/guilds", sessionMiddleware.SessionRequired())

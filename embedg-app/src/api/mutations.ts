@@ -1,7 +1,7 @@
 import { useMutation } from "react-query";
 import {
-  GenerateMagicMessageRequestWire,
-  GenerateMagicMessageResponseWire,
+  AssistantGenerateMessageRequestWire,
+  AssistantGenerateMessageResponseWire,
   MessageRestoreFromChannelRequestWire,
   MessageRestoreFromWebhookRequestWire,
   MessageRestoreResponseWire,
@@ -19,18 +19,26 @@ import {
 } from "./wire";
 import { handleApiResponse } from "./queries";
 
-export function useGenerateMagicMessageMutation() {
-  return useMutation((req: GenerateMagicMessageRequestWire) => {
-    return fetch(`/api/magic/message`, {
-      method: "POST",
-      body: JSON.stringify(req),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }).then((res) =>
-      handleApiResponse<GenerateMagicMessageResponseWire>(res.json())
-    );
-  });
+export function useAssistantGenerateMessageMutation() {
+  return useMutation(
+    ({
+      guildId,
+      req,
+    }: {
+      req: AssistantGenerateMessageRequestWire;
+      guildId: string;
+    }) => {
+      return fetch(`/api/assistant/message?guild_id=${guildId}`, {
+        method: "POST",
+        body: JSON.stringify(req),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) =>
+        handleApiResponse<AssistantGenerateMessageResponseWire>(res.json())
+      );
+    }
+  );
 }
 
 export function useSendMessageToChannelMutation() {

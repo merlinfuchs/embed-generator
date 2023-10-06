@@ -53,7 +53,7 @@ export type ListStickersResponseWire = APIResponse<GuildStickerWire[]>;
 //////////
 // source: magic.go
 
-export interface GenerateMagicMessageRequestWire {
+export interface AssistantGenerateMessageRequestWire {
   base_data: null | string;
   prompt: string;
 }
@@ -61,10 +61,10 @@ export interface GenerateMagicMessagePromptWire {
   type: string;
   text: string;
 }
-export interface GenerateMagicMessageResponseDataWire {
+export interface AssistantGenerateMessageResponseDataWire {
   data: string;
 }
-export type GenerateMagicMessageResponseWire = APIResponse<GenerateMagicMessageResponseDataWire>;
+export type AssistantGenerateMessageResponseWire = APIResponse<AssistantGenerateMessageResponseDataWire>;
 
 //////////
 // source: message.go
@@ -162,8 +162,8 @@ export interface PremiumEntitlementWire {
   guild_id: null | string;
   updated_at: string /* RFC3339 */;
   deleted: boolean;
-  starts_at: string /* RFC3339 */;
-  ends_at: string /* RFC3339 */;
+  starts_at: any /* null.Time */;
+  ends_at: any /* null.Time */;
 }
 export interface ListPremiumEntitlementsResponseDataWire {
   entitlements: PremiumEntitlementWire[];

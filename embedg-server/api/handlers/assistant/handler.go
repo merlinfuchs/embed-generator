@@ -1,11 +1,12 @@
-package magic
+package assistant
 
 import (
 	"context"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/premium"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	openai "github.com/sashabaranov/go-openai"
@@ -14,24 +15,34 @@ import (
 
 // TODO: investigate https://github.com/1rgs/jsonformer
 
-type MagicHandler struct {
+type AssistantHandler struct {
 	pg *postgres.PostgresStore
+	am *access.AccessManager
+	pm *premium.PremiumManager
 }
 
-func New(pg *postgres.PostgresStore) *MagicHandler {
-	return &MagicHandler{pg}
+func New(pg *postgres.PostgresStore, am *access.AccessManager, pm *premium.PremiumManager) *AssistantHandler {
+	return &AssistantHandler{
+		pg: pg,
+		am: am,
+		pm: pm,
+	}
 }
 
-func (h *MagicHandler) HandleGenerateMagicMessage(c *fiber.Ctx, req wire.GenerateMagicMessageRequestWire) error {
-	session := c.Locals("session").(*session.Session)
+func (h *AssistantHandler) HandleAssistantGenerateMessage(c *fiber.Ctx, req wire.AssistantGenerateMessageRequestWire) error {
+	guildID := c.Query("guild_id")
 
-	user, err := h.pg.Q.GetUser(c.Context(), session.UserID)
+	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+		return err
+	}
+
+	features, err := h.pm.GetPlanFeaturesForGuild(c.Context(), guildID)
 	if err != nil {
 		return err
 	}
 
-	if !user.IsTester {
-		return helpers.Forbidden("not_tester", "This feature is only available to testers!")
+	if !features.AIAssistant {
+		return helpers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
 	}
 
 	messages := []openai.ChatCompletionMessage{
@@ -89,9 +100,9 @@ func (h *MagicHandler) HandleGenerateMagicMessage(c *fiber.Ctx, req wire.Generat
 		}
 	}
 
-	return c.JSON(wire.GenerateMagicMessageResponseWire{
+	return c.JSON(wire.AssistantGenerateMessageResponseWire{
 		Success: true,
-		Data: wire.GenerateMagicMessageResponseDataWire{
+		Data: wire.AssistantGenerateMessageResponseDataWire{
 			Data: output[jsonStart : jsonEnd+1],
 		},
 	})

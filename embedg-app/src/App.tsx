@@ -3,13 +3,12 @@ import { Route, Routes, Navigate } from "react-router-dom";
 import { ToastContainer } from "./util/toasts";
 import EditorView from "./views/editor/editor";
 import RequestLoadingIndicator from "./components/RequestLoadingIndicator";
-import SendView from "./views/editor/send";
 import ClearView from "./views/editor/clear";
 import ShareView from "./views/editor/share";
 import EditorSideNav from "./components/SideNav";
 
 const LazyJsonView = lazy(() => import("./views/editor/json"));
-const LazyMagicView = lazy(() => import("./views/editor/magic"));
+const LazyAssistantView = lazy(() => import("./views/editor/assisstant"));
 const LazyMessagesView = lazy(() => import("./views/editor/messages"));
 const LazyPremiumView = lazy(() => import("./views/editor/premium"));
 const LazyShareRestoreView = lazy(() => import("./views/editor/shareRestore"));
@@ -37,10 +36,10 @@ function App() {
               }
             />
             <Route
-              path="magic"
+              path="assistant"
               element={
                 <SuspendedView>
-                  <LazyMagicView />
+                  <LazyAssistantView />
                 </SuspendedView>
               }
             />

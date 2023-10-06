@@ -5,17 +5,22 @@ import {
   LinkIcon,
 } from "@heroicons/react/20/solid";
 import { Link } from "react-router-dom";
-import { useUserQuery } from "../api/queries";
 import Tooltip from "./Tooltip";
+import { usePremiumGuildFeatures } from "../util/premium";
+import clsx from "clsx";
 
 export default function EditorMenuBar() {
-  const { data: user } = useUserQuery();
+  const aiAssistantAllowed = usePremiumGuildFeatures()?.ai_assistant;
 
   return (
     <div className="flex justify-end items-center mb-5 mt-5">
       <div className="space-x-3.5 flex items-center">
-        {user?.success && user.data.is_tester && (
-          <Button label="AI Assistant" href="/magic">
+        {aiAssistantAllowed && (
+          <Button
+            label="AI Assistant"
+            href="/editor/assistant"
+            highlight={true}
+          >
             <SparklesIcon />
           </Button>
         )}
@@ -37,13 +42,17 @@ interface ButtonProps {
   label: string;
   children: React.ReactNode;
   href: string;
+  highlight?: boolean;
 }
 
-function Button({ label, children, href }: ButtonProps) {
+function Button({ label, children, href, highlight }: ButtonProps) {
   return (
     <Tooltip text={label}>
       <Link
-        className="text-white bg-dark-2 hover:bg-dark-3 rounded-full cursor-pointer p-2 block"
+        className={clsx(
+          "bg-dark-2 hover:bg-dark-3 rounded-full cursor-pointer p-2 block",
+          highlight ? "text-yellow" : "text-white"
+        )}
         to={href}
       >
         <div className="flex-none h-5 w-5">{children}</div>
