@@ -151,11 +151,11 @@ export default function SideNav() {
         ></div>
       )}
       <div
-        className="block xl:hidden fixed w-12 h-12 rounded-full bg-blurple bottom-3 left-3 flex items-center justify-center cursor-pointer z-20"
+        className="block xl:hidden fixed w-12 h-12 rounded-full bg-blurple bottom-3 left-3 flex items-center justify-center cursor-pointer z-10"
         onClick={() => setHidden((h) => !h)}
         role="button"
       >
-        <Bars3Icon className="text-gray-300 h-10 w-10" />
+        <Bars3Icon className="text-gray-200 h-10 w-10" />
       </div>
     </>
   );

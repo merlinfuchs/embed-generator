@@ -286,7 +286,9 @@ export default function MessagesView() {
           />
         </>
       ) : (
-        <LoginSuggest alwaysExpanded={true} />
+        <div className="pb-10">
+          <LoginSuggest alwaysExpanded={true} />
+        </div>
       )}
     </div>
   );
