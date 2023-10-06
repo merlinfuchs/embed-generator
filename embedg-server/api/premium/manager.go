@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -12,6 +13,7 @@ import (
 
 type PremiumManager struct {
 	pg                  *postgres.PostgresStore
+	bot                 *bot.Bot
 	plans               []*Plan
 	defaultPlanFeatures PlanFeatures
 }
@@ -72,7 +74,7 @@ func (m *PremiumManager) GetPlanFeaturesForUser(ctx context.Context, userID stri
 	return planFeatures, nil
 }
 
-func New(pg *postgres.PostgresStore) *PremiumManager {
+func New(pg *postgres.PostgresStore, bot *bot.Bot) *PremiumManager {
 	plans := make([]*Plan, 0)
 	err := viper.UnmarshalKey("premium.plans", &plans)
 	if err != nil {
@@ -89,9 +91,14 @@ func New(pg *postgres.PostgresStore) *PremiumManager {
 		}
 	}
 
-	return &PremiumManager{
+	manager := &PremiumManager{
 		pg:                  pg,
+		bot:                 bot,
 		plans:               plans,
 		defaultPlanFeatures: defaultPlanFeatures,
 	}
+
+	go manager.lazyPremiumRolesTask()
+
+	return manager
 }

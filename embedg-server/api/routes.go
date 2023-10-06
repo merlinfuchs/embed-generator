@@ -29,7 +29,7 @@ type stores struct {
 func RegisterRoutes(app *fiber.App, stores *stores) {
 	sessionManager := session.New(stores.pg)
 	accessManager := access.New(stores.bot)
-	premiumManager := premium.New(stores.pg)
+	premiumManager := premium.New(stores.pg, stores.bot)
 
 	authHandler := auth.New(stores.pg, stores.bot, sessionManager)
 	app.Get("/api/auth/login", authHandler.HandleAuthRedirect)
