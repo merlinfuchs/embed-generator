@@ -383,7 +383,7 @@ func (b *Bot) handleMessageCommand(s *discordgo.Session, i *discordgo.Interactio
 			return textResponse(s, i, "Failed to create shared message.")
 		}
 
-		url := fmt.Sprintf("%s/share/%s", viper.GetString("app.public_url"), msg.ID)
+		url := fmt.Sprintf("%s/editor/share/%s", viper.GetString("app.public_url"), msg.ID)
 		return textResponse(s, i, fmt.Sprintf("Click this link to restore the message: [message.style](<%s>)", url))
 	case "dump":
 		paste, err := util.CreateVaultBinPaste(string(messageDump), "json")
@@ -424,7 +424,7 @@ func (b *Bot) handleRestoreContextCommand(s *discordgo.Session, i *discordgo.Int
 		return textResponse(s, i, "Failed to create shared message.")
 	}
 
-	url := fmt.Sprintf("%s/share/%s", viper.GetString("app.public_url"), msg.ID)
+	url := fmt.Sprintf("%s/editor/share/%s", viper.GetString("app.public_url"), msg.ID)
 	return textResponse(s, i, fmt.Sprintf("Click this link to restore the message: [message.style](<%s>)", url))
 }
 

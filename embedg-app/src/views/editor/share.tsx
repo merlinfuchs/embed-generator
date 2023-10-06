@@ -72,7 +72,7 @@ export default function ShareView() {
           </button>
           <button
             className="px-3 py-2 rounded text-white bg-dark-6 hover:bg-dark-7"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/editor")}
           >
             Close
           </button>

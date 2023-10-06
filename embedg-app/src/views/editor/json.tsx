@@ -25,7 +25,7 @@ export default function JsonView() {
       const parsedData = parseMessageWithAction(data);
 
       msg.replace(parsedData);
-      navigate("/");
+      navigate("/editor");
     } catch (e) {
       console.error(e);
     }
@@ -51,7 +51,7 @@ export default function JsonView() {
         <div className="mt-3 flex justify-end space-x-2">
           <button
             className="border-2 border-dark-7 hover:bg-dark-5 px-3 py-2 rounded text-white"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/editor")}
           >
             Cancel
           </button>

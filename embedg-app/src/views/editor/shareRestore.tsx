@@ -47,7 +47,7 @@ export default function ShareRestoreView() {
   function save() {
     if (parsedData) {
       useCurrentMessageStore.setState(parsedData);
-      navigate("/");
+      navigate("/editor");
     }
   }
 
@@ -62,7 +62,7 @@ export default function ShareRestoreView() {
         <div className="flex justify-end space-x-3 p-3">
           <button
             className="text-white px-3 py-2 rounded border-2 border-red hover:bg-red"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/editor")}
           >
             Cancel
           </button>

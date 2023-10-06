@@ -51,7 +51,7 @@ func (h *SharedMessageHandler) HandleCreateSharedMessage(c *fiber.Ctx, req wire.
 			CreatedAt: msg.CreatedAt,
 			ExpiresAt: msg.ExpiresAt,
 			Data:      msg.Data,
-			URL:       fmt.Sprintf("%s/share/%s", viper.GetString("app.public_url"), msg.ID),
+			URL:       fmt.Sprintf("%s/editor/share/%s", viper.GetString("app.public_url"), msg.ID),
 		},
 	})
 }
@@ -75,7 +75,7 @@ func (h *SharedMessageHandler) HandleGetSharedMessage(c *fiber.Ctx) error {
 			CreatedAt: msg.CreatedAt,
 			ExpiresAt: msg.ExpiresAt,
 			Data:      msg.Data,
-			URL:       fmt.Sprintf("%s/share/%s", viper.GetString("app.public_url"), msg.ID),
+			URL:       fmt.Sprintf("%s/editor/share/%s", viper.GetString("app.public_url"), msg.ID),
 		},
 	})
 }
