@@ -135,12 +135,18 @@ export default function AssistantView() {
             <div className="flex justify-end space-x-3">
               <button
                 className={clsx(
-                  "text-white px-3 py-2 rounded",
-                  isLoading ? "bg-dark-5 cursor-not-allowed" : "bg-blurple"
+                  "text-white px-3 py-2 rounded flex items-center space-x-3",
+                  isLoading ? "bg-dark-5 cursor-not-allowed " : "bg-blurple"
                 )}
                 onClick={generate}
               >
-                Submit
+                {isLoading && (
+                  <div className="relative">
+                    <div className="h-4 w-4 rounded-full bg-blurple"></div>
+                    <div className="h-4 w-4 rounded-full bg-blurple animate-ping absolute inset-0"></div>
+                  </div>
+                )}
+                <div>Submit</div>
               </button>
             </div>
           </div>

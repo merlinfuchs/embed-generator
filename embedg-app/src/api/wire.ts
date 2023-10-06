@@ -2,6 +2,18 @@
 import {APIResponse} from "./base"
 
 //////////
+// source: assistant.go
+
+export interface AssistantGenerateMessageRequestWire {
+  base_data: null | string;
+  prompt: string;
+}
+export interface AssistantGenerateMessageResponseDataWire {
+  data: string;
+}
+export type AssistantGenerateMessageResponseWire = APIResponse<AssistantGenerateMessageResponseDataWire>;
+
+//////////
 // source: guild.go
 
 export interface GuildWire {
@@ -49,22 +61,6 @@ export interface GuildStickerWire {
   formant_type: number /* int */;
 }
 export type ListStickersResponseWire = APIResponse<GuildStickerWire[]>;
-
-//////////
-// source: magic.go
-
-export interface AssistantGenerateMessageRequestWire {
-  base_data: null | string;
-  prompt: string;
-}
-export interface GenerateMagicMessagePromptWire {
-  type: string;
-  text: string;
-}
-export interface AssistantGenerateMessageResponseDataWire {
-  data: string;
-}
-export type AssistantGenerateMessageResponseWire = APIResponse<AssistantGenerateMessageResponseDataWire>;
 
 //////////
 // source: message.go
@@ -153,6 +149,7 @@ export interface GetPremiumPlanFeaturesResponseDataWire {
   max_actions_per_component: number /* int */;
   advanced_action_types: boolean;
   ai_assistant: boolean;
+  is_premium: boolean;
 }
 export type GetPremiumPlanFeaturesResponseWire = APIResponse<GetPremiumPlanFeaturesResponseDataWire>;
 export interface PremiumEntitlementWire {

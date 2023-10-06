@@ -12,6 +12,7 @@ type PlanFeatures struct {
 	MaxActionsPerComponent int  `mapstructure:"max_actions_per_component"`
 	AdvancedActionTypes    bool `mapstructure:"advanced_action_types"`
 	AIAssistant            bool `mapstructure:"ai_assistant"`
+	IsPremium              bool `mapstructure:"is_premium"`
 }
 
 func (f *PlanFeatures) Merge(b PlanFeatures) {
@@ -24,4 +25,5 @@ func (f *PlanFeatures) Merge(b PlanFeatures) {
 
 	f.AdvancedActionTypes = f.AdvancedActionTypes || b.AdvancedActionTypes
 	f.AIAssistant = f.AIAssistant || b.AIAssistant
+	f.IsPremium = f.IsPremium || b.IsPremium
 }
