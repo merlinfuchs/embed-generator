@@ -2,7 +2,6 @@ import {
   TrashIcon,
   CodeBracketSquareIcon,
   SparklesIcon,
-  RectangleStackIcon,
   LinkIcon,
 } from "@heroicons/react/20/solid";
 import { Link } from "react-router-dom";
@@ -15,20 +14,20 @@ export default function EditorMenuBar() {
   return (
     <div className="flex justify-end items-center mb-5 mt-5">
       <div className="space-x-3.5 flex items-center">
-        <Button label="Clear Message" href="/clear">
-          <TrashIcon />
-        </Button>
-        <Button label="Share Message" href="/share">
-          <LinkIcon />
-        </Button>
-        <Button label="JSON Code" href="/json">
-          <CodeBracketSquareIcon />
-        </Button>
         {user?.success && user.data.is_tester && (
           <Button label="AI Assistant" href="/magic">
             <SparklesIcon />
           </Button>
         )}
+        <Button label="Share Message" href="/editor/share">
+          <LinkIcon />
+        </Button>
+        <Button label="JSON Code" href="/editor/json">
+          <CodeBracketSquareIcon />
+        </Button>
+        <Button label="Clear Message" href="/editor/clear">
+          <TrashIcon />
+        </Button>
       </div>
     </div>
   );

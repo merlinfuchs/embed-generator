@@ -10,7 +10,7 @@ import { Message, messageSchema } from "../../discord/schema";
 import { useValidationErrorStore } from "../../state/validationError";
 import EditorAttachments from "../../components/EditorAttachments";
 import SendMenu from "../../components/SendMenu";
-import EditorSideNav from "../../components/EditorSideNav";
+import EditorSideNav from "../../components/SideNav";
 
 export default function EditorView() {
   const setValidationError = useValidationErrorStore((state) => state.setError);

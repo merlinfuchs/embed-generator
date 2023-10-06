@@ -67,7 +67,7 @@ export default function MagicView() {
   function save() {
     if (outputData) {
       useCurrentMessageStore.setState(outputData);
-      navigate("/");
+      navigate("/editor");
     }
   }
 

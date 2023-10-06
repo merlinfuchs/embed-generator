@@ -20,8 +20,8 @@ export default function ({
 
   return (
     <div
-      className="fixed h-screen w-screen bg-black bg-opacity-70 flex flex-col items-center justify-center px-2 py-20 sm:px-5 md:px-10 lg:px-20 xl:px-32 z-30 overflow-hidden"
-      onClick={(e) => e.target === e.currentTarget && navigate("/")}
+      className="fixed h-[100dvh] w-[100vw] bg-black bg-opacity-70 flex flex-col items-center justify-center px-2 py-20 sm:px-5 md:px-10 lg:px-20 xl:px-32 z-30 overflow-hidden top-0 left-0"
+      onClick={(e) => e.target === e.currentTarget && navigate("/editor")}
     >
       <div
         className={clsx(
@@ -44,7 +44,7 @@ export default function ({
           <XMarkIcon
             className="text-gray-400 h-8 w-8 cursor-pointer absolute top-2 right-2"
             role="button"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/editor")}
           />
         )}
         {children}

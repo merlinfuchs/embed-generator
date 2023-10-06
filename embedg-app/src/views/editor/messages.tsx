@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import EditorModal from "../../components/EditorModal";
 import GuildOrUserSelect from "../../components/GuildOrUserSelect";
 import { useSavedMessagesQuery, useUserQuery } from "../../api/queries";
@@ -27,13 +27,21 @@ import {
   usePremiumGuildFeatures,
   usePremiumUserFeatures,
 } from "../../util/premium";
+import { useSendSettingsStore } from "../../state/sendSettings";
 
 function formatUpdatedAt(updatedAt: string): string {
   return parseISO(updatedAt).toLocaleString();
 }
 
 export default function MessagesView() {
+  const selectedGuildId = useSendSettingsStore((s) => s.guildId);
+
   const [source, setSource] = useState<string | null>(null);
+  useEffect(() => {
+    if (selectedGuildId) {
+      setSource(selectedGuildId);
+    }
+  }, [selectedGuildId]);
 
   const { data: user } = useUserQuery();
 
@@ -131,7 +139,7 @@ export default function MessagesView() {
     try {
       const data = parseMessageWithAction(message.data);
       useCurrentMessageStore.setState(data);
-      navigate("/app");
+      navigate("/editor");
     } catch (e) {
       createToast({
         title: "Failed to restore message",
@@ -166,16 +174,23 @@ export default function MessagesView() {
   }
 
   return (
-    <div className="space-y-5 flex flex-col max-w-5xl mx-auto w-full my-20">
-      <div className="flex space-x-2 items-center">
-        <div className="text-white text-lg">Saved Messages</div>
-        <div className="font-light italic text-gray-400">
-          {messageCount} / {maxMessages}
+    <div className="flex flex-col max-w-5xl mx-auto px-4 w-full my-5 lg:my-20">
+      <div className="mb-10">
+        <div className="flex space-x-4 items-center mb-3">
+          <div className="text-white text-2xl">Saved Messages</div>
+          <div className="font-light italic text-gray-400">
+            {messageCount} / {maxMessages}
+          </div>
+        </div>
+        <div className="text-gray-400 font-light text-sm">
+          You can save the message that you are currently working on in the
+          editor to continue working on it later. Saved Messages are stored in
+          the cloud and can be accessed from any device.
         </div>
       </div>
       {user?.success ? (
         <>
-          <div>
+          <div className="mb-8">
             <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
               Show Messages For
             </div>
@@ -184,7 +199,7 @@ export default function MessagesView() {
             </div>
           </div>
           {messagesQuery.isSuccess && messagesQuery.data.success && (
-            <div className="space-y-3 flex-auto overflow-y-auto">
+            <div className="space-y-5 overflow-y-auto mb-8">
               {messagesQuery.data.data.map((message) => (
                 <div
                   key={message.id}
@@ -201,40 +216,49 @@ export default function MessagesView() {
                       {formatUpdatedAt(message.updated_at)}
                     </div>
                   </div>
-                  <div className="flex flex-none items-center space-x-4">
-                    <Tooltip text="Restore Message">
-                      <ArrowDownTrayIcon
-                        className="text-gray-300 h-5 w-5 hover:text-white cursor-pointer"
-                        role="button"
-                        onClick={() => restoreMessage(message)}
-                      />
-                    </Tooltip>
-                    <Tooltip text="Overwrite Message">
-                      <ArrowUpTrayIcon
-                        className="text-gray-300 h-5 w-5 hover:text-white cursor-pointer"
-                        role="button"
-                        onClick={() => updateMessage(message)}
-                      />
-                    </Tooltip>
-                    <Tooltip text="Delete Message">
-                      <TrashIcon
-                        className="text-gray-300 h-5 w-5 hover:text-white cursor-pointer"
-                        role="button"
-                        onClick={() => deleteMessage(message)}
-                      />
-                    </Tooltip>
+                  <div className="flex flex-none items-center space-x-4 md:space-x-3">
+                    <div
+                      className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
+                      role="button"
+                      onClick={() => restoreMessage(message)}
+                    >
+                      <Tooltip text="Restore Message">
+                        <ArrowDownTrayIcon className="h-5 w-5" />
+                      </Tooltip>
+                      <div className="hidden md:block ml-2">Restore</div>
+                    </div>
+                    <div
+                      className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
+                      role="button"
+                      onClick={() => updateMessage(message)}
+                    >
+                      <Tooltip text="Overwrite Message">
+                        <ArrowUpTrayIcon className="h-5 w-5" />
+                      </Tooltip>
+                      <div className="hidden md:block ml-2">Overwrite</div>
+                    </div>
+                    <div
+                      className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
+                      role="button"
+                      onClick={() => deleteMessage(message)}
+                    >
+                      <Tooltip text="Delete Message">
+                        <TrashIcon className="h-5 w-5" />
+                      </Tooltip>
+                      <div className="hidden md:block ml-2">Delete</div>
+                    </div>
                   </div>
                 </div>
               ))}
               {messagesQuery.data.data.length === 0 && (
-                <div className="text-gray-400">
+                <div className="text-gray-400 font-light">
                   There are no saved messages yet. Enter a name below and click
                   on "Save Message"
                 </div>
               )}
             </div>
           )}
-          <div className="flex space-x-3 items-end flex-none">
+          <div className="flex space-x-3 items-end flex-none mb-5">
             <EditorInput
               label="Message Name"
               maxLength={25}

@@ -17,9 +17,13 @@ import { NavLink } from "react-router-dom";
 import ClickOutsideHandler from "./ClickOutsideHandler";
 import { useGuildsQuery, useUserQuery } from "../api/queries";
 import { guildIconUrl } from "../discord/cdn";
+import { useSendSettingsStore } from "../state/sendSettings";
+import { shallow } from "zustand/shallow";
 
-export default function EditorSideNav() {
-  const [preCollapsed, setCollapsed] = useState(true);
+export default function SideNav() {
+  const [preCollapsed, setCollapsed] = useState(
+    document.body.clientWidth < 1680
+  );
   const [hidden, setHidden] = useState(true);
 
   const { data: user } = useUserQuery();
@@ -30,8 +34,8 @@ export default function EditorSideNav() {
     <>
       <div
         className={clsx(
-          "h-full bg-dark-3 flex-none transition-all fixed z-30",
-          collapsed ? "w-16" : "w-64",
+          "h-full bg-dark-3 flex-none transition-all fixed z-30 shadow",
+          collapsed ? "w-16" : "w-56",
           hidden && "hidden xl:relative xl:block"
         )}
       >
@@ -81,54 +85,62 @@ export default function EditorSideNav() {
             <div
               className={clsx(
                 "h-0.5 bg-dark-4 rounded-full mb-7",
-                collapsed ? "w-12" : "w-56 mx-auto"
+                collapsed ? "w-12" : "w-52 mx-auto"
               )}
             ></div>
             <div className="flex flex-col space-y-4">
               <NavigationButton
                 href="/editor"
-                label="Editor"
+                label="Message Editor"
                 icon={PencilSquareIcon}
                 collapsed={collapsed}
+                setHidden={setHidden}
               />
               <NavigationButton
                 href="/messages"
-                label="Messages"
+                label="Saved Messages"
                 icon={RectangleStackIcon}
                 collapsed={collapsed}
+                setHidden={setHidden}
               />
-              <NavigationButton
+              {/*<NavigationButton
                 href="/premium"
                 label="Premium"
                 icon={StarIcon}
                 collapsed={collapsed}
-              />
+                setHidden={setHidden}
+              />*/}
             </div>
           </div>
           <div className="flex flex-col items-center py-5 space-y-7">
             {user && user.success && (
               <a
                 className={clsx(
-                  "flex w-full items-center",
+                  "flex w-full items-center group",
                   collapsed ? "px-4" : "px-5"
                 )}
                 href="/api/auth/logout"
               >
-                <ArrowLeftOnRectangleIcon className="h-8 w-8 flex-none text-gray-300 hover:text-white" />
+                <ArrowLeftOnRectangleIcon className="h-8 w-8 flex-none text-gray-300 group-hover:text-white" />
                 {!collapsed && (
-                  <div className={clsx("ml-5 text-gray-300 hover:text-white")}>
+                  <div
+                    className={clsx(
+                      "ml-5 text-gray-300 group-hover:text-white"
+                    )}
+                  >
                     Logout
                   </div>
                 )}
               </a>
             )}
 
-            <NavigationButton
+            {/*<NavigationButton
               href="/settings"
               label="Settings"
               icon={Cog6ToothIcon}
               collapsed={collapsed}
-            />
+              setHidden={setHidden}
+                    />*/}
           </div>
         </div>
       </div>
@@ -154,18 +166,21 @@ function NavigationButton({
   label,
   icon,
   collapsed,
+  setHidden,
 }: {
   href: string;
   label: string;
   collapsed: boolean;
   icon: any;
+  setHidden: (hidden: boolean) => void;
 }) {
   const Icon = icon;
 
   return (
     <NavLink
-      className="flex w-full items-center pr-4"
+      className="flex w-full items-center pr-4 group"
       to={href}
+      onClick={() => setHidden(true)}
       children={({ isActive }) => (
         <>
           <div
@@ -178,15 +193,17 @@ function NavigationButton({
           <Icon
             className={clsx(
               "h-8 w-8 flex-none",
-              isActive ? "text-blurple" : "text-gray-300 hover:text-white"
+              isActive ? "text-blurple" : "text-gray-300 group-hover:text-white"
             )}
             aria-label={label}
           />
           {!collapsed && (
             <div
               className={clsx(
-                "ml-5",
-                isActive ? "text-blurple" : "text-gray-300 hover:text-white"
+                "ml-5 truncate",
+                isActive
+                  ? "text-blurple"
+                  : "text-gray-300 group-hover:text-white"
               )}
             >
               {label}
@@ -206,7 +223,10 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
     }
   }, [guilds]);
 
-  const [guildId, setGuildId] = useState<string | null>(null);
+  const [guildId, setGuildId] = useSendSettingsStore(
+    (state) => [state.guildId, state.setGuildId],
+    shallow
+  );
 
   const guild = useMemo(
     () => guilds?.success && guilds.data.find((g) => g.id === guildId),

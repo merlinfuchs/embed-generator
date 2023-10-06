@@ -7,7 +7,7 @@ export default function ClearView() {
 
   function clear() {
     useCurrentMessageStore.setState(defaultMessage);
-    navigate("/");
+    navigate("/editor");
   }
 
   return (
@@ -24,7 +24,7 @@ export default function ClearView() {
         <div className="space-x-2 flex justify-end">
           <button
             className="px-3 py-2 rounded text-white bg-dark-6 hover:bg-dark-7"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/editor")}
           >
             Cancel
           </button>

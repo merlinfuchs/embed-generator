@@ -28,7 +28,7 @@ export default function PremiumView() {
   const hasEntitlement = data?.success && data.data.entitlements.length !== 0;
 
   return (
-    <div className="p-5 max-w-5xl mx-auto my-20 w-full">
+    <div className="px-4 max-w-5xl mx-auto my-20 w-full my-5 lg:my-20">
       {user && user.success ? (
         <div>
           <div className="flex items-center px-3 py-3 space-x-3 mb-4">
