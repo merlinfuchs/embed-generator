@@ -14,6 +14,19 @@ export interface AssistantGenerateMessageResponseDataWire {
 export type AssistantGenerateMessageResponseWire = APIResponse<AssistantGenerateMessageResponseDataWire>;
 
 //////////
+// source: custom_bots.go
+
+export interface CustomBotInfoWire {
+}
+export interface CustomBotUpdateConfigRequestWire {
+  token: string;
+}
+export interface CustomBotUpdateConfigResponseDataWire {
+}
+export type CustomBotUpdateConfigResponseWire = APIResponse<CustomBotUpdateConfigResponseDataWire>;
+export type CustomBotUpdateInfoResponseWire = APIResponse<CustomBotInfoWire>;
+
+//////////
 // source: guild.go
 
 export interface GuildWire {

@@ -10,6 +10,18 @@ import (
 	"time"
 )
 
+type CustomBot struct {
+	ID            string
+	GuildID       string
+	ApplicationID string
+	Token         string
+	PublicKey     string
+	UserID        string
+	UserName      string
+	UserAvatar    sql.NullString
+	CreatedAt     time.Time
+}
+
 type Entitlement struct {
 	ID        string
 	UserID    sql.NullString

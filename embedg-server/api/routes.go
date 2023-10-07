@@ -6,6 +6,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/assistant"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/auth"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/custom_bots"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/guilds"
 	premium_handler "github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/premium"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/saved_messages"
@@ -79,6 +80,12 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 
 	app.Get("/api/premium/features", sessionMiddleware.SessionRequired(), premiumHandler.HandleGetFeatures)
 	app.Get("/api/premium/entitlements", sessionMiddleware.SessionRequired(), premiumHandler.HandleListEntitlements)
+
+	customBotHandler := custom_bots.New(stores.pg, stores.bot, accessManager)
+
+	app.Post("/api/custombot", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(customBotHandler.HandleConfigureCustomBot))
+	app.Get("/api/custombot", sessionMiddleware.SessionRequired(), customBotHandler.HandleGetCustomBot)
+	app.Post("/api/gateway/:customBotID", customBotHandler.HandleCustomBotInteraction)
 
 	app.Get("/invite", func(c *fiber.Ctx) error {
 		return c.Redirect(util.BotInviteURL(), 302)
