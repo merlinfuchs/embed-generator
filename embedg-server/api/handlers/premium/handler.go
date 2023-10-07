@@ -74,9 +74,9 @@ func (h *PremiumHandler) HandleListEntitlements(c *fiber.Ctx) error {
 		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 			return err
 		}
-		entitlements, err = h.pg.Q.GetActiveEntitlementForGuild(c.Context(), sql.NullString{String: guildID, Valid: true})
+		entitlements, err = h.pg.Q.GetActiveEntitlementsForGuild(c.Context(), sql.NullString{String: guildID, Valid: true})
 	} else {
-		entitlements, err = h.pg.Q.GetActiveEntitlementForUser(c.Context(), sql.NullString{String: session.UserID, Valid: true})
+		entitlements, err = h.pg.Q.GetActiveEntitlementsForUser(c.Context(), sql.NullString{String: session.UserID, Valid: true})
 	}
 
 	if err != nil {

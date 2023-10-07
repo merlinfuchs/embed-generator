@@ -41,7 +41,7 @@ func (m *PremiumManager) GetPlanBySKUID(skuID string) *Plan {
 func (m *PremiumManager) GetPlanFeaturesForGuild(ctx context.Context, guildID string) (PlanFeatures, error) {
 	planFeatures := m.defaultPlanFeatures
 
-	entitlements, err := m.pg.Q.GetActiveEntitlementForGuild(ctx, sql.NullString{String: guildID, Valid: true})
+	entitlements, err := m.pg.Q.GetActiveEntitlementsForGuild(ctx, sql.NullString{String: guildID, Valid: true})
 	if err != nil {
 		return planFeatures, fmt.Errorf("Failed to retrieve entitlments for guild: %w", err)
 	}
@@ -59,7 +59,7 @@ func (m *PremiumManager) GetPlanFeaturesForGuild(ctx context.Context, guildID st
 func (m *PremiumManager) GetPlanFeaturesForUser(ctx context.Context, userID string) (PlanFeatures, error) {
 	planFeatures := m.defaultPlanFeatures
 
-	entitlements, err := m.pg.Q.GetActiveEntitlementForUser(ctx, sql.NullString{String: userID, Valid: true})
+	entitlements, err := m.pg.Q.GetActiveEntitlementsForUser(ctx, sql.NullString{String: userID, Valid: true})
 	if err != nil {
 		return planFeatures, fmt.Errorf("Failed to retrieve entitlments for user: %w", err)
 	}
@@ -72,6 +72,27 @@ func (m *PremiumManager) GetPlanFeaturesForUser(ctx context.Context, userID stri
 	}
 
 	return planFeatures, nil
+}
+
+func (m *PremiumManager) GetEntitledUserIDs(ctx context.Context) ([]string, error) {
+	entitlements, err := m.pg.Q.GetEntitlements(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to retrieve entitlments: %w", err)
+	}
+
+	userIDs := make(map[string]struct{}, len(entitlements))
+	for _, entitlement := range entitlements {
+		if entitlement.UserID.Valid {
+			userIDs[entitlement.UserID.String] = struct{}{}
+		}
+	}
+
+	res := make([]string, 0, len(userIDs))
+	for userID := range userIDs {
+		res = append(res, userID)
+	}
+
+	return res, nil
 }
 
 func New(pg *postgres.PostgresStore, bot *bot.Bot) *PremiumManager {

@@ -1,9 +1,11 @@
--- name: GetActiveEntitlementForGuild :many
+-- name: GetActiveEntitlementsForGuild :many
 SELECT * FROM entitlements WHERE deleted = false AND (starts_at IS NULL OR starts_at < NOW()) AND (ends_at IS NULL OR ends_at > NOW()) AND guild_id = $1;
 
--- name: GetActiveEntitlementForUser :many
+-- name: GetActiveEntitlementsForUser :many
 SELECT * FROM entitlements WHERE deleted = false AND (starts_at IS NULL OR starts_at < NOW()) AND (ends_at IS NULL OR ends_at > NOW()) AND user_id = $1;
 
+-- name: GetEntitlements :many
+SELECT * FROM entitlements;
 
 /*
 id TEXT PRIMARY KEY,

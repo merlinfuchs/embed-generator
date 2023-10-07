@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/merlinfuchs/discordgo"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
@@ -26,44 +27,45 @@ func (m *PremiumManager) assignPremiumRoles() error {
 		return nil
 	}
 
-	after := "0"
-	for {
-		members, err := m.bot.Session.GuildMembers(guildID, after, 1000)
+	userIDs, err := m.GetEntitledUserIDs(context.Background())
+	if err != nil {
+		return fmt.Errorf("Failed to get entitled user IDs: %w", err)
+	}
+
+	for _, userID := range userIDs {
+		features, err := m.GetPlanFeaturesForUser(context.Background(), userID)
 		if err != nil {
-			return fmt.Errorf("Failed to get guild members to assign premium roles: %w", err)
+			log.Error().Err(err).Msg("Failed to get plan features for guild")
+			continue
 		}
 
-		if len(members) == 0 {
-			break
-		}
-
-		for _, member := range members {
-			after = member.User.ID
-
-			features, err := m.GetPlanFeaturesForUser(context.Background(), member.User.ID)
-			if err != nil {
-				log.Error().Err(err).Msg("Failed to get plan features for guild")
+		member, err := m.bot.Session.GuildMember(guildID, userID)
+		if err != nil {
+			if derr, ok := err.(*discordgo.RESTError); ok && derr.Message.Code == discordgo.ErrCodeUnknownMember {
 				continue
 			}
 
-			hasPremiumRole := false
-			for _, r := range member.Roles {
-				if r == roleID {
-					hasPremiumRole = true
-					break
-				}
-			}
+			log.Error().Err(err).Msg("Failed to get guild member")
+			continue
+		}
 
-			if features.IsPremium && !hasPremiumRole {
-				err = m.bot.Session.GuildMemberRoleAdd(guildID, member.User.ID, roleID)
-				if err != nil {
-					log.Error().Err(err).Msg("Failed to add premium role")
-				}
-			} else if !features.IsPremium && hasPremiumRole {
-				err = m.bot.Session.GuildMemberRoleRemove(guildID, member.User.ID, roleID)
-				if err != nil {
-					log.Error().Err(err).Msg("Failed to remove premium role")
-				}
+		hasPremiumRole := false
+		for _, r := range member.Roles {
+			if r == roleID {
+				hasPremiumRole = true
+				break
+			}
+		}
+
+		if features.IsPremium && !hasPremiumRole {
+			err = m.bot.Session.GuildMemberRoleAdd(guildID, userID, roleID)
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to add premium role")
+			}
+		} else if !features.IsPremium && hasPremiumRole {
+			err = m.bot.Session.GuildMemberRoleRemove(guildID, userID, roleID)
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to remove premium role")
 			}
 		}
 	}
