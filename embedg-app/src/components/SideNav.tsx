@@ -134,13 +134,13 @@ export default function SideNav() {
               </a>
             )}
 
-            {/*<NavigationButton
+            <NavigationButton
               href="/settings"
               label="Settings"
               icon={Cog6ToothIcon}
               collapsed={collapsed}
               setHidden={setHidden}
-                    />*/}
+            />
           </div>
         </div>
       </div>

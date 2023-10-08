@@ -116,6 +116,8 @@ func (b *Bot) GetWebhookForChannel(channelID string) (*discordgo.Webhook, error)
 		}
 	}
 
+	// TODO: get avatar and username from custom bot if configured
+
 	logoDataURL := dataurl.New(logoFile, "image/png")
 	webhook, err := session.WebhookCreate(channel.ID, "Embed Generator", logoDataURL.String())
 	if err != nil {

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"slices"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
@@ -68,8 +70,7 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 	}
 
 	isMember := true
-	hasPermissions := false // TODO
-	_, err = session.GuildMember(guildID, user.ID)
+	member, err := session.GuildMember(guildID, user.ID)
 	if err != nil {
 		if derr, ok := err.(*discordgo.RESTError); ok && (derr.Message.Code == discordgo.ErrCodeMissingAccess || derr.Message.Code == discordgo.ErrCodeUnknownGuild) {
 			isMember = false
@@ -78,7 +79,20 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 		}
 	}
 
-	// TODO: check if bot has manage webhook permissions
+	guild, err := h.bot.State.Guild(guildID)
+	if err != nil {
+		return err
+	}
+
+	hasPermissions := false
+	for _, role := range guild.Roles {
+		if slices.Contains(member.Roles, role.ID) || role.ID == guildID {
+			if role.Permissions&discordgo.PermissionManageWebhooks != 0 {
+				hasPermissions = true
+				break
+			}
+		}
+	}
 
 	customBot, err := h.pg.Q.UpsertCustomBot(c.Context(), postgres.UpsertCustomBotParams{
 		ID:                util.UniqueID(),
@@ -157,8 +171,7 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 
 	isMember := true
 	tokenValid := true
-	hasPermissions := false // TODO
-	_, err = session.GuildMember(guildID, customBot.UserID)
+	member, err := session.GuildMember(guildID, customBot.UserID)
 	if err != nil {
 		if derr, ok := err.(*discordgo.RESTError); ok {
 			if derr.Response.StatusCode == 401 {
@@ -170,6 +183,21 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 			}
 		}
 		return err
+	}
+
+	guild, err := h.bot.State.Guild(guildID)
+	if err != nil {
+		return err
+	}
+
+	hasPermissions := false
+	for _, role := range guild.Roles {
+		if slices.Contains(member.Roles, role.ID) || role.ID == guildID {
+			if role.Permissions&discordgo.PermissionManageWebhooks != 0 {
+				hasPermissions = true
+				break
+			}
+		}
 	}
 
 	return c.JSON(wire.CustomBotGetResponseWire{

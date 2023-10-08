@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
@@ -98,5 +100,9 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 
 	app.Get("/source", func(c *fiber.Ctx) error {
 		return c.Redirect(viper.GetString("links.source"), 302)
+	})
+
+	app.Get("/premium", func(c *fiber.Ctx) error {
+		return c.Redirect(fmt.Sprintf("https://discord.com/application-directory/%s/premium", viper.GetString("discord.client_id")), 302)
 	})
 }
