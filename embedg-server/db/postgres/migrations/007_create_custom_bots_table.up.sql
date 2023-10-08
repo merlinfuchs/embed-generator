@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS custom_bots (
     public_key TEXT NOT NULL,
     user_id TEXT NOT NULL,
     user_name TEXT NOT NULL,
+    user_discriminator TEXT NOT NULL,
     user_avatar TEXT,
+    handled_first_interaction BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMP NOT NULL
 );

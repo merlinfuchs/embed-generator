@@ -37,6 +37,11 @@ func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 		return fmt.Errorf("application id mismatch")
 	}
 
+	err = h.pg.Q.SetCustomBotHandledFirstInteraction(c.Context(), customBotID)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to set custom bot handled first interaction")
+	}
+
 	if interaction.Type == discordgo.InteractionPing {
 		return c.JSON(discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponsePong,

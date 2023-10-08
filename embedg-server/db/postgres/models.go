@@ -11,15 +11,17 @@ import (
 )
 
 type CustomBot struct {
-	ID            string
-	GuildID       string
-	ApplicationID string
-	Token         string
-	PublicKey     string
-	UserID        string
-	UserName      string
-	UserAvatar    sql.NullString
-	CreatedAt     time.Time
+	ID                      string
+	GuildID                 string
+	ApplicationID           string
+	Token                   string
+	PublicKey               string
+	UserID                  string
+	UserName                string
+	UserDiscriminator       string
+	UserAvatar              sql.NullString
+	HandledFirstInteraction bool
+	CreatedAt               time.Time
 }
 
 type Entitlement struct {

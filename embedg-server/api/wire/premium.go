@@ -11,6 +11,7 @@ type GetPremiumPlanFeaturesResponseDataWire struct {
 	MaxActionsPerComponent int  `json:"max_actions_per_component"`
 	AdvancedActionTypes    bool `json:"advanced_action_types"`
 	AIAssistant            bool `json:"ai_assistant"`
+	CustomBot              bool `json:"custom_bot"`
 	IsPremium              bool `json:"is_premium"`
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/premium"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
@@ -21,13 +22,15 @@ type CustomBotsHandler struct {
 	pg  *postgres.PostgresStore
 	bot *bot.Bot
 	am  *access.AccessManager
+	pm  *premium.PremiumManager
 }
 
-func New(pg *postgres.PostgresStore, bot *bot.Bot, am *access.AccessManager) *CustomBotsHandler {
+func New(pg *postgres.PostgresStore, bot *bot.Bot, am *access.AccessManager, pm *premium.PremiumManager) *CustomBotsHandler {
 	return &CustomBotsHandler{
 		pg:  pg,
 		bot: bot,
 		am:  am,
+		pm:  pm,
 	}
 }
 
@@ -35,6 +38,15 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 	guildID := c.Query("guild_id")
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
+	}
+
+	features, err := h.pm.GetPlanFeaturesForGuild(c.Context(), guildID)
+	if err != nil {
+		return err
+	}
+
+	if !features.CustomBot {
+		return helpers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
 	}
 
 	session, err := discordgo.New("Bot " + req.Token)
@@ -56,26 +68,29 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 	}
 
 	isMember := true
+	hasPermissions := false // TODO
 	_, err = session.GuildMember(guildID, user.ID)
 	if err != nil {
-		if derr, ok := err.(*discordgo.RESTError); ok && derr.Message.Code == discordgo.ErrCodeMissingAccess {
+		if derr, ok := err.(*discordgo.RESTError); ok && (derr.Message.Code == discordgo.ErrCodeMissingAccess || derr.Message.Code == discordgo.ErrCodeUnknownGuild) {
 			isMember = false
+		} else {
+			return fmt.Errorf("Failed to check if custom bot is member of guild: %w", err)
 		}
-		return err
 	}
 
 	// TODO: check if bot has manage webhook permissions
 
 	customBot, err := h.pg.Q.UpsertCustomBot(c.Context(), postgres.UpsertCustomBotParams{
-		ID:            util.UniqueID(),
-		GuildID:       guildID,
-		ApplicationID: app.ID,
-		UserID:        user.ID,
-		UserName:      user.Username,
-		UserAvatar:    sql.NullString{String: user.Avatar, Valid: user.Avatar != ""},
-		Token:         req.Token,
-		PublicKey:     app.VerifyKey,
-		CreatedAt:     time.Now().UTC(),
+		ID:                util.UniqueID(),
+		GuildID:           guildID,
+		ApplicationID:     app.ID,
+		UserID:            user.ID,
+		UserName:          user.Username,
+		UserDiscriminator: user.Discriminator,
+		UserAvatar:        sql.NullString{String: user.Avatar, Valid: user.Avatar != ""},
+		Token:             req.Token,
+		PublicKey:         app.VerifyKey,
+		CreatedAt:         time.Now().UTC(),
 	})
 	if err != nil {
 		return err
@@ -84,17 +99,40 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 	return c.JSON(wire.CustomBotConfigureResponseWire{
 		Success: true,
 		Data: wire.CustomBotInfoWire{
-			ID:            customBot.ID,
-			ApplicationID: customBot.ApplicationID,
-			UserID:        customBot.UserID,
-			UserName:      customBot.UserName,
-			UserAvatar:    null.String{NullString: customBot.UserAvatar},
+			ID:                customBot.ID,
+			ApplicationID:     customBot.ApplicationID,
+			UserID:            customBot.UserID,
+			UserName:          customBot.UserName,
+			UserDiscriminator: customBot.UserDiscriminator,
+			UserAvatar:        null.String{NullString: customBot.UserAvatar},
 
-			TokenValid:             true,
-			IsMember:               isMember,
-			InviteURL:              botInvite(customBot.ApplicationID, guildID),
-			InteractionEndpointURL: interactionEndpointURL(customBot.ID),
+			TokenValid:              true,
+			IsMember:                isMember,
+			HasPermissions:          hasPermissions,
+			HandledFirstInteraction: customBot.HandledFirstInteraction,
+			InviteURL:               botInvite(customBot.ApplicationID, guildID),
+			InteractionEndpointURL:  interactionEndpointURL(customBot.ID),
 		},
+	})
+}
+
+func (h *CustomBotsHandler) HandleDisableCustomBot(c *fiber.Ctx) error {
+	guildID := c.Query("guild_id")
+	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+		return err
+	}
+
+	_, err := h.pg.Q.DeleteCustomBot(c.Context(), guildID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return helpers.NotFound("not_configured", "There is no custom bot configured right now")
+		}
+		return err
+	}
+
+	return c.JSON(wire.CustomBotDisableResponseWire{
+		Success: true,
+		Data:    wire.CustomBotDisableResponseDataWire{},
 	})
 }
 
@@ -119,7 +157,7 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 
 	isMember := true
 	tokenValid := true
-	hasPermissions := true // TODO
+	hasPermissions := false // TODO
 	_, err = session.GuildMember(guildID, customBot.UserID)
 	if err != nil {
 		if derr, ok := err.(*discordgo.RESTError); ok {
@@ -134,20 +172,22 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.JSON(wire.CustomBotConfigureResponseWire{
+	return c.JSON(wire.CustomBotGetResponseWire{
 		Success: true,
 		Data: wire.CustomBotInfoWire{
-			ID:            customBot.ID,
-			ApplicationID: customBot.ApplicationID,
-			UserID:        customBot.UserID,
-			UserName:      customBot.UserName,
-			UserAvatar:    null.String{NullString: customBot.UserAvatar},
+			ID:                customBot.ID,
+			ApplicationID:     customBot.ApplicationID,
+			UserID:            customBot.UserID,
+			UserName:          customBot.UserName,
+			UserDiscriminator: customBot.UserDiscriminator,
+			UserAvatar:        null.String{NullString: customBot.UserAvatar},
 
-			TokenValid:             tokenValid,
-			IsMember:               isMember,
-			HasPermissions:         hasPermissions,
-			InviteURL:              botInvite(customBot.ApplicationID, guildID),
-			InteractionEndpointURL: interactionEndpointURL(customBot.ID),
+			TokenValid:              tokenValid,
+			IsMember:                isMember,
+			HasPermissions:          hasPermissions,
+			HandledFirstInteraction: customBot.HandledFirstInteraction,
+			InviteURL:               botInvite(customBot.ApplicationID, guildID),
+			InteractionEndpointURL:  interactionEndpointURL(customBot.ID),
 		},
 	})
 }

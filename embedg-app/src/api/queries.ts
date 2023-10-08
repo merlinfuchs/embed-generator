@@ -1,5 +1,6 @@
 import { useQuery } from "react-query";
 import {
+  CustomBotGetResponseWire,
   GetPremiumPlanFeaturesResponseWire,
   ListChannelsResponseWire,
   ListGuildsResponseWire,
@@ -10,7 +11,6 @@ import {
   UserResponseWire,
 } from "./wire";
 import { APIResponse } from "./base";
-import { useToasts } from "../util/toasts";
 
 export class APIError extends Error {
   constructor(public status: number, message: string) {
@@ -127,5 +127,16 @@ export function usePremiumUserFeaturesQuery() {
       fetch(`/api/premium/features`).then((res) =>
         handleApiResponse(res.json())
       )
+  );
+}
+
+export function useCustomBotQuery(guildId: string | null) {
+  return useQuery<CustomBotGetResponseWire>(
+    ["custombot", guildId],
+    () =>
+      fetch(`/api/custom-bot?guild_id=${guildId}`).then((res) =>
+        handleApiResponse(res.json())
+      ),
+    { enabled: !!guildId }
   );
 }
