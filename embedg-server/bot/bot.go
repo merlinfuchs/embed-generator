@@ -1,7 +1,10 @@
 package bot
 
 import (
+	"context"
+	"database/sql"
 	_ "embed"
+	"fmt"
 
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
@@ -18,7 +21,7 @@ var logoFile []byte
 type Bot struct {
 	*sharding.ShardManager
 	pg            *postgres.PostgresStore
-	actionHandler *handler.ActionHandler
+	ActionHandler *handler.ActionHandler
 }
 
 func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
@@ -40,7 +43,7 @@ func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 	b := &Bot{
 		ShardManager:  manager,
 		pg:            pg,
-		actionHandler: handler.New(pg),
+		ActionHandler: handler.New(pg),
 	}
 
 	b.AddHandler(onReady)
@@ -74,27 +77,52 @@ func (b *Bot) Start() error {
 func (b *Bot) GetWebhookForChannel(channelID string) (*discordgo.Webhook, error) {
 	channel, err := b.State.Channel(channelID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to get channel: %w", err)
 	}
+
 	if channel.Type == discordgo.ChannelTypeGuildNewsThread || channel.Type == discordgo.ChannelTypeGuildPublicThread {
 		channel, err = b.State.Channel(channel.ParentID)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Failed to get parent channel: %w", err)
 		}
 	}
 
-	webhooks, err := b.Session.ChannelWebhooks(channel.ID)
+	customBot, err := b.pg.Q.GetCustomBotByGuildID(context.Background(), channel.GuildID)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, fmt.Errorf("Failed to get custom bot: %w", err)
+	}
+
+	session := b.Session
+	if customBot.Token != "" {
+		session, err = discordgo.New("Bot " + customBot.Token)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to create custom bot session: %w", err)
+		}
+	}
+
+	webhooks, err := session.ChannelWebhooks(channel.ID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to get webhooks: %w", err)
+	}
+
+	clientID := viper.GetString("discord.client_id")
+	if customBot.ApplicationID != "" {
+		clientID = customBot.ApplicationID
 	}
 
 	for _, webhook := range webhooks {
-		if webhook.ApplicationID == viper.GetString("discord.client_id") {
+		if webhook.ApplicationID == clientID {
 			return webhook, nil
 		}
 	}
 
+	// TODO: get avatar and username from custom bot if configured
+
 	logoDataURL := dataurl.New(logoFile, "image/png")
-	webhook, err := b.Session.WebhookCreate(channel.ID, "Embed Generator", logoDataURL.String())
-	return webhook, err
+	webhook, err := session.WebhookCreate(channel.ID, "Embed Generator", logoDataURL.String())
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create webhook: %w", err)
+	}
+
+	return webhook, nil
 }

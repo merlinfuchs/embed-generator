@@ -2,6 +2,9 @@ import { useMutation } from "react-query";
 import {
   AssistantGenerateMessageRequestWire,
   AssistantGenerateMessageResponseWire,
+  CustomBotConfigureRequestWire,
+  CustomBotConfigureResponseWire,
+  CustomBotDisableResponseWire,
   MessageRestoreFromChannelRequestWire,
   MessageRestoreFromWebhookRequestWire,
   MessageRestoreResponseWire,
@@ -202,6 +205,41 @@ export function useSharedMessageCreateMutation() {
       },
     }).then((res) =>
       handleApiResponse<SharedMessageGetResponseWire>(res.json())
+    );
+  });
+}
+
+export function useCustomBotConfigureMutation() {
+  return useMutation(
+    ({
+      guildId,
+      req,
+    }: {
+      guildId: string;
+      req: CustomBotConfigureRequestWire;
+    }) => {
+      return fetch(`/api/custom-bot?guild_id=${guildId}`, {
+        method: "POST",
+        body: JSON.stringify(req),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) =>
+        handleApiResponse<CustomBotConfigureResponseWire>(res.json())
+      );
+    }
+  );
+}
+
+export function useCustomBotDisableMutation() {
+  return useMutation(({ guildId }: { guildId: string }) => {
+    return fetch(`/api/custom-bot?guild_id=${guildId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }).then((res) =>
+      handleApiResponse<CustomBotDisableResponseWire>(res.json())
     );
   });
 }

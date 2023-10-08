@@ -41,7 +41,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 
 	webhook, err := h.bot.GetWebhookForChannel(req.ChannelID)
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to get webhook for channel: %w", err)
 	}
 	threadID := ""
 	if webhook.ChannelID != req.ChannelID {
@@ -123,7 +123,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		}
 	}
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to send message: %w", err)
 	}
 
 	err = h.actionParser.CreateActionsForMessage(data.Actions, msg.ID)

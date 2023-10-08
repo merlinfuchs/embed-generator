@@ -14,6 +14,32 @@ export interface AssistantGenerateMessageResponseDataWire {
 export type AssistantGenerateMessageResponseWire = APIResponse<AssistantGenerateMessageResponseDataWire>;
 
 //////////
+// source: custom_bots.go
+
+export interface CustomBotInfoWire {
+  id: string;
+  application_id: string;
+  user_id: string;
+  user_name: string;
+  user_discriminator: string;
+  user_avatar: null | string;
+  token_valid: boolean;
+  is_member: boolean;
+  has_permissions: boolean;
+  handled_first_interaction: boolean;
+  invite_url: string;
+  interaction_endpoint_url: string;
+}
+export interface CustomBotConfigureRequestWire {
+  token: string;
+}
+export type CustomBotConfigureResponseWire = APIResponse<CustomBotInfoWire>;
+export type CustomBotGetResponseWire = APIResponse<CustomBotInfoWire>;
+export interface CustomBotDisableResponseDataWire {
+}
+export type CustomBotDisableResponseWire = APIResponse<CustomBotDisableResponseDataWire>;
+
+//////////
 // source: guild.go
 
 export interface GuildWire {
@@ -149,6 +175,7 @@ export interface GetPremiumPlanFeaturesResponseDataWire {
   max_actions_per_component: number /* int */;
   advanced_action_types: boolean;
   ai_assistant: boolean;
+  custom_bot: boolean;
   is_premium: boolean;
 }
 export type GetPremiumPlanFeaturesResponseWire = APIResponse<GetPremiumPlanFeaturesResponseDataWire>;
