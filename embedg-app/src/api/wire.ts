@@ -42,26 +42,30 @@ export interface CustomCommandWire {
   id: string;
   name: string;
   description: string;
-  Actions: Record<string, any> | null;
+  enabled: boolean;
+  parameters: Record<string, any> | null;
+  actions: Record<string, any> | null;
+  created_at: string /* RFC3339 */;
 }
 export type ListCustomCommandsResponseWire = APIResponse<CustomCommandWire[]>;
 export type CustomCommandGetResponseWire = APIResponse<CustomCommandWire>;
 export interface CustomCommandCreateRequestWire {
   name: string;
-  description: null | string;
+  description: string;
+  parameters: Record<string, any> | null;
   actions: Record<string, any> | null;
 }
 export type CustomCommandCreateResponseWire = APIResponse<CustomCommandWire>;
 export interface CustomCommandUpdateRequestWire {
   name: string;
-  description: null | string;
+  description: string;
+  enabled: boolean;
+  parameters: Record<string, any> | null;
   actions: Record<string, any> | null;
 }
 export type CustomCommandUpdateResponseWire = APIResponse<CustomCommandWire>;
 export type CustomCommandDeleteResponseWire = APIResponse<{
   }>;
-export interface CustomCommandsDeployequestWire {
-}
 export type CustomCommandsDeployResponseWire = APIResponse<{
   }>;
 

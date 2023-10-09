@@ -30,6 +30,7 @@ type CustomCommand struct {
 	Name        string
 	Description string
 	Enabled     bool
+	Parameters  json.RawMessage
 	Actions     json.RawMessage
 	CreatedAt   time.Time
 	UpdatedAt   time.Time

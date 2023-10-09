@@ -1,8 +1,6 @@
 package helpers
 
 import (
-	"encoding/json"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 )
@@ -31,7 +29,7 @@ func Unauthorized(code string, message string) *wire.Error {
 	}
 }
 
-func ValidationError(data json.RawMessage) *wire.Error {
+func ValidationError(data interface{}) *wire.Error {
 	return &wire.Error{
 		Status:  fiber.StatusBadRequest,
 		Code:    "validation_error",

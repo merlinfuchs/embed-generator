@@ -46,6 +46,7 @@ type CustomCommandWire struct {
 	Name        string          `json:"name"`
 	Description string          `json:"description"`
 	Enabled     bool            `json:"enabled"`
+	Parameters  json.RawMessage `json:"parameters"`
 	Actions     json.RawMessage `json:"actions"`
 	CreatedAt   time.Time       `json:"created_at"`
 }
@@ -57,6 +58,7 @@ type CustomCommandGetResponseWire APIResponse[CustomCommandWire]
 type CustomCommandCreateRequestWire struct {
 	Name        string          `json:"name"`
 	Description string          `json:"description"`
+	Parameters  json.RawMessage `json:"parameters"`
 	Actions     json.RawMessage `json:"actions"`
 }
 
@@ -74,6 +76,8 @@ type CustomCommandCreateResponseWire APIResponse[CustomCommandWire]
 type CustomCommandUpdateRequestWire struct {
 	Name        string          `json:"name"`
 	Description string          `json:"description"`
+	Enabled     bool            `json:"enabled"`
+	Parameters  json.RawMessage `json:"parameters"`
 	Actions     json.RawMessage `json:"actions"`
 }
 
