@@ -88,6 +88,11 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 	app.Post("/api/custom-bot", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(customBotHandler.HandleConfigureCustomBot))
 	app.Get("/api/custom-bot", sessionMiddleware.SessionRequired(), customBotHandler.HandleGetCustomBot)
 	app.Delete("/api/custom-bot", sessionMiddleware.SessionRequired(), customBotHandler.HandleDisableCustomBot)
+	app.Get("/api/custom-bot/commands", sessionMiddleware.SessionRequired(), customBotHandler.HandleListCustomCommands)
+	app.Get("/api/custom-bot/commands/:commandID", sessionMiddleware.SessionRequired(), customBotHandler.HandleGetCustomCommand)
+	app.Post("/api/custom-bot/commands", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(customBotHandler.HandleCreateCustomCommand))
+	app.Put("/api/custom-bot/commands/:commandID", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(customBotHandler.HandleUpdateCustomCommand))
+	app.Delete("/api/custom-bot/commands/:commandID", sessionMiddleware.SessionRequired(), customBotHandler.HandleDeleteCustomCommand)
 	app.Post("/api/gateway/:customBotID", customBotHandler.HandleCustomBotInteraction)
 
 	app.Get("/invite", func(c *fiber.Ctx) error {

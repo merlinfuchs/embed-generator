@@ -9,10 +9,11 @@ import EditorSideNav from "./components/SideNav";
 
 const LazyJsonView = lazy(() => import("./views/editor/json"));
 const LazyAssistantView = lazy(() => import("./views/editor/assisstant"));
-const LazyMessagesView = lazy(() => import("./views/editor/messages"));
-const LazyPremiumView = lazy(() => import("./views/editor/premium"));
+const LazyMessagesView = lazy(() => import("./views/messages"));
+const LazyPremiumView = lazy(() => import("./views/premium"));
 const LazyShareRestoreView = lazy(() => import("./views/editor/shareRestore"));
-const LazySettingsView = lazy(() => import("./views/editor/settings"));
+const LazySettingsView = lazy(() => import("./views/settings"));
+const LazyCommandsView = lazy(() => import("./views/commands"));
 
 function SuspendedView({ children }: { children: ReactNode }) {
   return <Suspense>{children}</Suspense>;
@@ -59,6 +60,14 @@ function App() {
             element={
               <SuspendedView>
                 <LazyMessagesView />
+              </SuspendedView>
+            }
+          />
+          <Route
+            path="/commands"
+            element={
+              <SuspendedView>
+                <LazyCommandsView />
               </SuspendedView>
             }
           />

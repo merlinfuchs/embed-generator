@@ -38,6 +38,32 @@ export type CustomBotGetResponseWire = APIResponse<CustomBotInfoWire>;
 export interface CustomBotDisableResponseDataWire {
 }
 export type CustomBotDisableResponseWire = APIResponse<CustomBotDisableResponseDataWire>;
+export interface CustomCommandWire {
+  id: string;
+  name: string;
+  description: string;
+  Actions: Record<string, any> | null;
+}
+export type ListCustomCommandsResponseWire = APIResponse<CustomCommandWire[]>;
+export type CustomCommandGetResponseWire = APIResponse<CustomCommandWire>;
+export interface CustomCommandCreateRequestWire {
+  name: string;
+  description: null | string;
+  actions: Record<string, any> | null;
+}
+export type CustomCommandCreateResponseWire = APIResponse<CustomCommandWire>;
+export interface CustomCommandUpdateRequestWire {
+  name: string;
+  description: null | string;
+  actions: Record<string, any> | null;
+}
+export type CustomCommandUpdateResponseWire = APIResponse<CustomCommandWire>;
+export type CustomCommandDeleteResponseWire = APIResponse<{
+  }>;
+export interface CustomCommandsDeployequestWire {
+}
+export type CustomCommandsDeployResponseWire = APIResponse<{
+  }>;
 
 //////////
 // source: guild.go

@@ -1,33 +1,33 @@
 import { useEffect, useMemo, useState } from "react";
-import EditorModal from "../../components/EditorModal";
-import GuildOrUserSelect from "../../components/GuildOrUserSelect";
-import { useSavedMessagesQuery, useUserQuery } from "../../api/queries";
-import EditorInput from "../../components/EditorInput";
+import EditorModal from "../components/EditorModal";
+import GuildOrUserSelect from "../components/GuildOrUserSelect";
+import { useSavedMessagesQuery, useUserQuery } from "../api/queries";
+import EditorInput from "../components/EditorInput";
 import clsx from "clsx";
-import LoginSuggest from "../../components/LoginSuggest";
+import LoginSuggest from "../components/LoginSuggest";
 import {
   useCreatedSavedMessageMutation,
   useDeleteSavedMessageMutation,
   useUpdateSavedMessageMutation,
-} from "../../api/mutations";
-import { useCurrentMessageStore } from "../../state/message";
+} from "../api/mutations";
+import { useCurrentMessageStore } from "../state/message";
 import {
   ArrowDownTrayIcon,
   ArrowUpTrayIcon,
   TrashIcon,
 } from "@heroicons/react/20/solid";
-import { SavedMessageWire } from "../../api/wire";
+import { SavedMessageWire } from "../api/wire";
 import { parseISO } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import MessageExportImport from "../../components/MessageExportImport";
-import { useToasts } from "../../util/toasts";
-import { parseMessageWithAction } from "../../discord/restoreSchema";
-import Tooltip from "../../components/Tooltip";
+import MessageExportImport from "../components/MessageExportImport";
+import { useToasts } from "../util/toasts";
+import { parseMessageWithAction } from "../discord/restoreSchema";
+import Tooltip from "../components/Tooltip";
 import {
   usePremiumGuildFeatures,
   usePremiumUserFeatures,
-} from "../../util/premium";
-import { useSendSettingsStore } from "../../state/sendSettings";
+} from "../util/premium";
+import { useSendSettingsStore } from "../state/sendSettings";
 
 function formatUpdatedAt(updatedAt: string): string {
   return parseISO(updatedAt).toLocaleString();

@@ -1,4 +1,4 @@
-import SettingsCustomBot from "../../components/SettingsCustomBot";
+import SettingsCustomBot from "../components/SettingsCustomBot";
 
 export default function SettingsView() {
   return (
