@@ -49,9 +49,11 @@ type CustomCommandWire struct {
 	Parameters  json.RawMessage `json:"parameters"`
 	Actions     json.RawMessage `json:"actions"`
 	CreatedAt   time.Time       `json:"created_at"`
+	UpdatedAt   time.Time       `json:"updated_at"`
+	DeployedAt  null.Time       `json:"deployed_at"`
 }
 
-type ListCustomCommandsResponseWire APIResponse[[]CustomCommandWire]
+type CustomCommandsListResponseWire APIResponse[[]CustomCommandWire]
 
 type CustomCommandGetResponseWire APIResponse[CustomCommandWire]
 

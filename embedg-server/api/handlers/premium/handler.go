@@ -59,6 +59,7 @@ func (h *PremiumHandler) HandleGetFeatures(c *fiber.Ctx) error {
 			AdvancedActionTypes:    features.AdvancedActionTypes,
 			AIAssistant:            features.AIAssistant,
 			CustomBot:              features.CustomBot,
+			MaxCustomCommands:      features.MaxCustomCommands,
 			IsPremium:              features.IsPremium,
 		},
 	})

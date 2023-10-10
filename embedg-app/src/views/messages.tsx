@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import EditorModal from "../components/EditorModal";
 import GuildOrUserSelect from "../components/GuildOrUserSelect";
 import { useSavedMessagesQuery, useUserQuery } from "../api/queries";
 import EditorInput from "../components/EditorInput";

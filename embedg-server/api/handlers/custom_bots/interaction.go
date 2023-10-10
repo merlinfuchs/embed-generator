@@ -75,6 +75,14 @@ func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 				return nil
 			}
 		}
+	} else if interaction.Type == discordgo.InteractionApplicationCommand {
+		return c.JSON(discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "Hello world!",
+				Flags:   1 << 6,
+			},
+		})
 	}
 
 	return c.SendStatus(200)

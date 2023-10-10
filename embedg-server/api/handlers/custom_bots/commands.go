@@ -12,6 +12,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
+	"gopkg.in/guregu/null.v4"
 )
 
 func (h *CustomBotsHandler) HandleListCustomCommands(c *fiber.Ctx) error {
@@ -35,10 +36,12 @@ func (h *CustomBotsHandler) HandleListCustomCommands(c *fiber.Ctx) error {
 			Parameters:  cmd.Parameters,
 			Actions:     cmd.Actions,
 			CreatedAt:   cmd.CreatedAt,
+			UpdatedAt:   cmd.UpdatedAt,
+			DeployedAt:  null.Time{NullTime: cmd.DeployedAt},
 		})
 	}
 
-	return c.JSON(wire.ListCustomCommandsResponseWire{
+	return c.JSON(wire.CustomCommandsListResponseWire{
 		Success: true,
 		Data:    res,
 	})
@@ -71,6 +74,8 @@ func (h *CustomBotsHandler) HandleGetCustomCommand(c *fiber.Ctx) error {
 			Parameters:  command.Parameters,
 			Actions:     command.Actions,
 			CreatedAt:   command.CreatedAt,
+			UpdatedAt:   command.UpdatedAt,
+			DeployedAt:  null.Time{NullTime: command.DeployedAt},
 		},
 	})
 }
@@ -125,6 +130,8 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 			Parameters:  command.Parameters,
 			Actions:     command.Actions,
 			CreatedAt:   command.CreatedAt,
+			UpdatedAt:   command.UpdatedAt,
+			DeployedAt:  null.Time{NullTime: command.DeployedAt},
 		},
 	})
 }
@@ -152,6 +159,7 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 		Name:        req.Name,
 		Description: req.Description,
 		Enabled:     req.Enabled,
+		Parameters:  req.Parameters,
 		Actions:     req.Actions,
 		UpdatedAt:   time.Now().UTC(),
 	})
@@ -169,6 +177,7 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 			Parameters:  command.Parameters,
 			Actions:     command.Actions,
 			CreatedAt:   command.CreatedAt,
+			UpdatedAt:   command.UpdatedAt,
 		},
 	})
 }
@@ -195,7 +204,7 @@ func (h *CustomBotsHandler) HandleDeleteCustomCommand(c *fiber.Ctx) error {
 	})
 }
 
-func (h *CustomBotsHandler) HandlDeployCustomCommands(c *fiber.Ctx) error {
+func (h *CustomBotsHandler) HandleDeployCustomCommands(c *fiber.Ctx) error {
 	guildID := c.Query("guild_id")
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
@@ -237,9 +246,20 @@ func (h *CustomBotsHandler) HandlDeployCustomCommands(c *fiber.Ctx) error {
 		return fmt.Errorf("Failed to create custom bot session: %w", err)
 	}
 
-	_, err = session.ApplicationCommandBulkOverwrite(customBot.Token, guildID, payload)
+	_, err = session.ApplicationCommandBulkOverwrite(customBot.ApplicationID, guildID, payload)
 	if err != nil {
 		return fmt.Errorf("Failed to deploy commands: %w", err)
+	}
+
+	_, err = h.pg.Q.SetCustomCommandsDeployedAt(c.Context(), postgres.SetCustomCommandsDeployedAtParams{
+		GuildID: guildID,
+		DeployedAt: sql.NullTime{
+			Time:  time.Now().UTC(),
+			Valid: true,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("Failed to set deployed_at: %w", err)
 	}
 
 	return c.JSON(wire.CustomCommandsDeployResponseWire{
@@ -269,6 +289,9 @@ func commandsToPayload(commands []postgres.CustomCommand) (error, []*discordgo.A
 
 		if rootCMD == nil {
 			rootCMD = &discordgo.ApplicationCommand{
+				Type:        discordgo.ChatApplicationCommand,
+				Name:        nameParts[0],
+				Description: cmd.Description,
 				// TODO
 			}
 		}
@@ -288,14 +311,17 @@ func commandsToPayload(commands []postgres.CustomCommand) (error, []*discordgo.A
 					}
 				}
 			}
-		}
 
-		if secondCMD == nil {
-			secondCMD = &discordgo.ApplicationCommandOption{
-				// TODO
+			if secondCMD == nil {
+				secondCMD = &discordgo.ApplicationCommandOption{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        nameParts[1],
+					Description: cmd.Description,
+					// TODO
+				}
 			}
+			rootCMD.Options = append(rootCMD.Options, secondCMD)
 		}
-		rootCMD.Options = append(rootCMD.Options, secondCMD)
 
 		var thirdCMD *discordgo.ApplicationCommandOption
 		if len(nameParts) >= 3 {
@@ -307,22 +333,25 @@ func commandsToPayload(commands []postgres.CustomCommand) (error, []*discordgo.A
 					}, nil
 				}
 			}
-		}
 
-		if thirdCMD == nil {
-			thirdCMD = &discordgo.ApplicationCommandOption{
-				// TODO
+			if thirdCMD == nil {
+				thirdCMD = &discordgo.ApplicationCommandOption{
+					Name:        nameParts[2],
+					Description: cmd.Description,
+					// TODO
+				}
 			}
+			secondCMD.Type = discordgo.ApplicationCommandOptionSubCommandGroup
+			secondCMD.Options = append(secondCMD.Options, thirdCMD)
 		}
-		secondCMD.Options = append(secondCMD.Options, thirdCMD)
 	}
 
 	return nil, res
 }
 
 type NameCollisionError struct {
-	FirstName  string
-	SecondName string
+	FirstName  string `json:"first_name"`
+	SecondName string `json:"second_name"`
 }
 
 func (e *NameCollisionError) Error() string {

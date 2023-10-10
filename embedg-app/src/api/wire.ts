@@ -46,8 +46,10 @@ export interface CustomCommandWire {
   parameters: Record<string, any> | null;
   actions: Record<string, any> | null;
   created_at: string /* RFC3339 */;
+  updated_at: string /* RFC3339 */;
+  deployed_at: null | string /* RFC3339 */;
 }
-export type ListCustomCommandsResponseWire = APIResponse<CustomCommandWire[]>;
+export type CustomCommandsListResponseWire = APIResponse<CustomCommandWire[]>;
 export type CustomCommandGetResponseWire = APIResponse<CustomCommandWire>;
 export interface CustomCommandCreateRequestWire {
   name: string;
@@ -206,6 +208,7 @@ export interface GetPremiumPlanFeaturesResponseDataWire {
   advanced_action_types: boolean;
   ai_assistant: boolean;
   custom_bot: boolean;
+  max_custom_commands: number /* int */;
   is_premium: boolean;
 }
 export type GetPremiumPlanFeaturesResponseWire = APIResponse<GetPremiumPlanFeaturesResponseDataWire>;
@@ -216,8 +219,8 @@ export interface PremiumEntitlementWire {
   guild_id: null | string;
   updated_at: string /* RFC3339 */;
   deleted: boolean;
-  starts_at: any /* null.Time */;
-  ends_at: any /* null.Time */;
+  starts_at: null | string /* RFC3339 */;
+  ends_at: null | string /* RFC3339 */;
 }
 export interface ListPremiumEntitlementsResponseDataWire {
   entitlements: PremiumEntitlementWire[];
