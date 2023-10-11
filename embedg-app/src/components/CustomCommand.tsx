@@ -15,6 +15,9 @@ import {
 import { useSendSettingsStore } from "../state/sendSettings";
 import { useQueryClient } from "react-query";
 import { useToasts } from "../util/toasts";
+import EditorInput from "./EditorInput";
+import CommandActionSet from "./CommandActionSet";
+import { useCommandActionStore } from "../state/message";
 
 export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
   const guildId = useSendSettingsStore((s) => s.guildId);
@@ -31,6 +34,8 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
   function save() {
     if (name.length == 0 || description.length == 0) return;
 
+    const actions = useCommandActionStore.getState().actions[cmd.id];
+
     updateMutation.mutate(
       {
         guildId: guildId!,
@@ -40,7 +45,7 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
           description,
           enabled: true,
           parameters: null,
-          actions: null,
+          actions: actions || null,
         },
       },
       {
@@ -109,42 +114,21 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
             </div>
           </div>
           <div className="space-y-5">
-            <div>
-              <div className="mb-1.5 flex">
-                <div className="uppercase text-gray-300 text-sm font-medium">
-                  Name
-                </div>
-                <div className="text-sm italic font-light text-gray-400 ml-2">
-                  {name.length} / 32
-                </div>
-              </div>
-              <input
-                type="text"
-                className="bg-dark-2 px-3 py-2 rounded text-white ring-0 border-transparent focus:outline-none w-full max-w-sm"
-                minLength={1}
-                maxLength={32}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-            <div>
-              <div className="mb-1.5 flex">
-                <div className="uppercase text-gray-300 text-sm font-medium">
-                  Description
-                </div>
-                <div className="text-sm italic font-light text-gray-400 ml-2">
-                  {description.length} / 100
-                </div>
-              </div>
-              <input
-                type="text"
-                className="bg-dark-2 px-3 py-2 rounded w-full text-white ring-0 border-transparent focus:outline-none"
-                minLength={1}
-                maxLength={100}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
+            <EditorInput
+              label="Name"
+              type="text"
+              maxLength={32}
+              value={name}
+              onChange={setName}
+            />
+            <EditorInput
+              label="Description"
+              type="text"
+              maxLength={100}
+              value={description}
+              onChange={setDescription}
+            />
+            <CommandActionSet cmdId={cmd.id} />
           </div>
         </div>
       ) : (
