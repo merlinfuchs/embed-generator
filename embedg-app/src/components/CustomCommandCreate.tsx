@@ -52,7 +52,11 @@ export default function CustomCommandCreate({
 
   return (
     <div className="bg-dark-3 p-5 rounded-lg">
-      <div className="text-lg text-gray-300 mb-5">New Command</div>
+      <div className="flex items-center space-x-2 truncate text-lg mb-5 truncate">
+        <div className="text-white truncate">
+          <span className="font-bold text-gray-500 text-xl">/</span> {name}
+        </div>
+      </div>
       <div className="space-y-5 mb-5">
         <div>
           <div className="mb-1.5 flex">

@@ -48,44 +48,43 @@ func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 		})
 	}
 
+	handle := false
 	if interaction.Type == discordgo.InteractionMessageComponent {
 		data := interaction.MessageComponentData()
 		if strings.HasPrefix(data.CustomID, "action:") {
-			respCh := make(chan *discordgo.InteractionResponse, 0)
-
-			ri := &handler.RestInteraction{
-				Inner:           interaction.Interaction,
-				Session:         h.bot.Session,
-				InitialResponse: respCh,
-			}
-
-			go func() {
-				err := h.bot.ActionHandler.HandleActionInteraction(h.bot.Session, ri, data)
-				if err != nil {
-					log.Error().Err(err).Msg("Failed to handle action interaction")
-				}
-			}()
-
-			select {
-			case resp := <-respCh:
-				return c.JSON(resp)
-			case <-c.Context().Done():
-				return nil
-			case <-time.After(3 * time.Second):
-				return nil
-			}
+			handle = true
 		}
 	} else if interaction.Type == discordgo.InteractionApplicationCommand {
-		return c.JSON(discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "Hello world!",
-				Flags:   1 << 6,
-			},
-		})
+		handle = true
 	}
 
-	return c.SendStatus(200)
+	if handle {
+		respCh := make(chan *discordgo.InteractionResponse, 0)
+
+		ri := &handler.RestInteraction{
+			Inner:           interaction.Interaction,
+			Session:         h.bot.Session,
+			InitialResponse: respCh,
+		}
+
+		go func() {
+			err := h.bot.ActionHandler.HandleActionInteraction(h.bot.Session, ri)
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to handle action interaction")
+			}
+		}()
+
+		select {
+		case resp := <-respCh:
+			return c.JSON(resp)
+		case <-c.Context().Done():
+			return c.SendStatus(fiber.StatusNoContent)
+		case <-time.After(3 * time.Second):
+			return c.SendStatus(fiber.StatusInternalServerError)
+		}
+	} else {
+		return c.SendStatus(fiber.StatusBadRequest)
+	}
 }
 
 func verifyInteractionSignaure(c *fiber.Ctx, publicKey string) bool {

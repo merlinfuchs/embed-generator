@@ -20,6 +20,11 @@ type RequestBodyValidatable interface {
 	Validate() error
 }
 
+type RequestBodyNormalizeValidate interface {
+	Validate() error
+	Normalize()
+}
+
 func WithRequestBodyValidated[R RequestBodyValidatable](handler func(c *fiber.Ctx, req R) error) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var req R

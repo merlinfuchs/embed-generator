@@ -77,6 +77,33 @@ func (q *Queries) GetCustomCommand(ctx context.Context, arg GetCustomCommandPara
 	return i, err
 }
 
+const getCustomCommandByName = `-- name: GetCustomCommandByName :one
+SELECT id, guild_id, name, description, enabled, parameters, actions, created_at, updated_at, deployed_at FROM custom_commands WHERE name = $1 AND guild_id = $2
+`
+
+type GetCustomCommandByNameParams struct {
+	Name    string
+	GuildID string
+}
+
+func (q *Queries) GetCustomCommandByName(ctx context.Context, arg GetCustomCommandByNameParams) (CustomCommand, error) {
+	row := q.db.QueryRowContext(ctx, getCustomCommandByName, arg.Name, arg.GuildID)
+	var i CustomCommand
+	err := row.Scan(
+		&i.ID,
+		&i.GuildID,
+		&i.Name,
+		&i.Description,
+		&i.Enabled,
+		&i.Parameters,
+		&i.Actions,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeployedAt,
+	)
+	return i, err
+}
+
 const getCustomCommands = `-- name: GetCustomCommands :many
 SELECT id, guild_id, name, description, enabled, parameters, actions, created_at, updated_at, deployed_at FROM custom_commands WHERE guild_id = $1
 `

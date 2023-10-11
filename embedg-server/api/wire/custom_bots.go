@@ -3,6 +3,7 @@ package wire
 import (
 	"encoding/json"
 	"regexp"
+	"strings"
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -64,13 +65,17 @@ type CustomCommandCreateRequestWire struct {
 	Actions     json.RawMessage `json:"actions"`
 }
 
-var commandNameRegex = regexp.MustCompile(`^[-_\p{L}\p{N}]{1,32}$`)
+var commandNameRegex = regexp.MustCompile(`^([-_\p{L}\p{N}]+ ?){3}$`)
 
 func (r CustomCommandCreateRequestWire) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.Name, validation.Required, validation.Length(1, 32), validation.Match(commandNameRegex)),
 		validation.Field(&r.Description, validation.Required, validation.Length(1, 100)),
 	)
+}
+
+func (r *CustomCommandCreateRequestWire) Normalize() {
+	r.Name = strings.TrimSpace(r.Name)
 }
 
 type CustomCommandCreateResponseWire APIResponse[CustomCommandWire]
@@ -88,6 +93,10 @@ func (r CustomCommandUpdateRequestWire) Validate() error {
 		validation.Field(&r.Name, validation.Required, validation.Length(1, 32), validation.Match(commandNameRegex)),
 		validation.Field(&r.Description, validation.Required, validation.Length(1, 100)),
 	)
+}
+
+func (r *CustomCommandUpdateRequestWire) Normalize() {
+	r.Name = strings.TrimSpace(r.Name)
 }
 
 type CustomCommandUpdateResponseWire APIResponse[CustomCommandWire]

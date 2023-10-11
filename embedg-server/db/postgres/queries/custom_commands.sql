@@ -4,6 +4,9 @@ SELECT * FROM custom_commands WHERE guild_id = $1;
 -- name: GetCustomCommand :one
 SELECT * FROM custom_commands WHERE id = $1 AND guild_id = $2;
 
+-- name: GetCustomCommandByName :one
+SELECT * FROM custom_commands WHERE name = $1 AND guild_id = $2;
+
 -- name: CountCustomCommands :one
 SELECT COUNT(*) FROM custom_commands WHERE guild_id = $1;
 

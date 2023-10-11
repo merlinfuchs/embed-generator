@@ -81,6 +81,8 @@ func (h *CustomBotsHandler) HandleGetCustomCommand(c *fiber.Ctx) error {
 }
 
 func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.CustomCommandCreateRequestWire) error {
+	req.Normalize()
+
 	guildID := c.Query("guild_id")
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
@@ -137,6 +139,8 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 }
 
 func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.CustomCommandUpdateRequestWire) error {
+	req.Normalize()
+
 	guildID := c.Query("guild_id")
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
@@ -283,6 +287,7 @@ func commandsToPayload(commands []postgres.CustomCommand) (error, []*discordgo.A
 					}, nil
 				} else {
 					rootCMD = c
+					break
 				}
 			}
 		}
@@ -294,8 +299,8 @@ func commandsToPayload(commands []postgres.CustomCommand) (error, []*discordgo.A
 				Description: cmd.Description,
 				// TODO
 			}
+			res = append(res, rootCMD)
 		}
-		res = append(res, rootCMD)
 
 		var secondCMD *discordgo.ApplicationCommandOption
 		if len(nameParts) >= 2 {
@@ -308,6 +313,7 @@ func commandsToPayload(commands []postgres.CustomCommand) (error, []*discordgo.A
 						}, nil
 					} else {
 						secondCMD = c
+						break
 					}
 				}
 			}
@@ -319,11 +325,10 @@ func commandsToPayload(commands []postgres.CustomCommand) (error, []*discordgo.A
 					Description: cmd.Description,
 					// TODO
 				}
+				rootCMD.Options = append(rootCMD.Options, secondCMD)
 			}
-			rootCMD.Options = append(rootCMD.Options, secondCMD)
 		}
 
-		var thirdCMD *discordgo.ApplicationCommandOption
 		if len(nameParts) >= 3 {
 			for _, c := range secondCMD.Options {
 				if c.Name == nameParts[2] {
@@ -334,15 +339,13 @@ func commandsToPayload(commands []postgres.CustomCommand) (error, []*discordgo.A
 				}
 			}
 
-			if thirdCMD == nil {
-				thirdCMD = &discordgo.ApplicationCommandOption{
-					Name:        nameParts[2],
-					Description: cmd.Description,
-					// TODO
-				}
-			}
 			secondCMD.Type = discordgo.ApplicationCommandOptionSubCommandGroup
-			secondCMD.Options = append(secondCMD.Options, thirdCMD)
+			secondCMD.Options = append(secondCMD.Options, &discordgo.ApplicationCommandOption{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        nameParts[2],
+				Description: cmd.Description,
+				// TODO
+			})
 		}
 	}
 
