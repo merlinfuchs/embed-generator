@@ -9,6 +9,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/discordgo"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/premium"
@@ -21,18 +22,20 @@ import (
 )
 
 type CustomBotsHandler struct {
-	pg  *postgres.PostgresStore
-	bot *bot.Bot
-	am  *access.AccessManager
-	pm  *premium.PremiumManager
+	pg           *postgres.PostgresStore
+	bot          *bot.Bot
+	am           *access.AccessManager
+	pm           *premium.PremiumManager
+	actionParser *parser.ActionParser
 }
 
-func New(pg *postgres.PostgresStore, bot *bot.Bot, am *access.AccessManager, pm *premium.PremiumManager) *CustomBotsHandler {
+func New(pg *postgres.PostgresStore, bot *bot.Bot, am *access.AccessManager, pm *premium.PremiumManager, actionParser *parser.ActionParser) *CustomBotsHandler {
 	return &CustomBotsHandler{
-		pg:  pg,
-		bot: bot,
-		am:  am,
-		pm:  pm,
+		pg:           pg,
+		bot:          bot,
+		am:           am,
+		pm:           pm,
+		actionParser: actionParser,
 	}
 }
 

@@ -2,13 +2,16 @@ package custom_bots
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/discordgo"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
@@ -81,6 +84,7 @@ func (h *CustomBotsHandler) HandleGetCustomCommand(c *fiber.Ctx) error {
 }
 
 func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.CustomCommandCreateRequestWire) error {
+	session := c.Locals("session").(*session.Session)
 	req.Normalize()
 
 	guildID := c.Query("guild_id")
@@ -106,7 +110,19 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return helpers.Forbidden("insufficient_plan", "You have reached the maximum number of custom commands for your plan!")
 	}
 
-	// TODO: check that command name doesn't coflict with other commands
+	actionSet := actions.ActionSet{}
+	err = json.Unmarshal(req.Actions, &actionSet)
+	if err != nil {
+		return err
+	}
+
+	actionSets := map[string]actions.ActionSet{
+		"root": actionSet,
+	}
+	err = h.actionParser.CheckPermissionsForActionSets(actionSets, session.UserID, guildID, "")
+	if err != nil {
+		return helpers.BadRequest("invalid_actions", err.Error())
+	}
 
 	command, err := h.pg.Q.InsertCustomCommand(c.Context(), postgres.InsertCustomCommandParams{
 		ID:          util.UniqueID(),
@@ -139,6 +155,7 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 }
 
 func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.CustomCommandUpdateRequestWire) error {
+	session := c.Locals("session").(*session.Session)
 	req.Normalize()
 
 	guildID := c.Query("guild_id")
@@ -155,7 +172,19 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return helpers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
 	}
 
-	// TODO: check that command name doesn't coflict with other commands
+	actionSet := actions.ActionSet{}
+	err = json.Unmarshal(req.Actions, &actionSet)
+	if err != nil {
+		return err
+	}
+
+	actionSets := map[string]actions.ActionSet{
+		"root": actionSet,
+	}
+	err = h.actionParser.CheckPermissionsForActionSets(actionSets, session.UserID, guildID, "")
+	if err != nil {
+		return helpers.BadRequest("invalid_actions", err.Error())
+	}
 
 	command, err := h.pg.Q.UpdateCustomCommand(c.Context(), postgres.UpdateCustomCommandParams{
 		ID:          c.Params("commandID"),

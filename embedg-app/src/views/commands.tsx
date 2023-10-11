@@ -106,8 +106,13 @@ export default function CommandsView() {
               Deploy Commands
             </button>
             <button
-              className="px-3 py-2 rounded border-2 border-dark-7 hover:bg-dark-6 cursor-pointer text-white"
-              onClick={() => setCreate(true)}
+              className={clsx(
+                "px-3 py-2 rounded border-2 text-white",
+                commands.length < maxCommands
+                  ? "border-dark-7 hover:bg-dark-6 cursor-pointer"
+                  : "border-dark-6 text-gray-300 cursor-not-allowed"
+              )}
+              onClick={() => commands.length < maxCommands && setCreate(true)}
             >
               New Command
             </button>
