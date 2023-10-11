@@ -104,13 +104,13 @@ export default function SideNav() {
                 collapsed={collapsed}
                 setHidden={setHidden}
               />
-              <NavigationButton
+              {/*<NavigationButton
                 href="/commands"
                 label="Commands"
                 icon={CommandLineIcon}
                 collapsed={collapsed}
                 setHidden={setHidden}
-              />
+              />*/}
               {/*<NavigationButton
                 href="/premium"
                 label="Premium"
