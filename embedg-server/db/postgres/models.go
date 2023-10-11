@@ -24,6 +24,19 @@ type CustomBot struct {
 	CreatedAt               time.Time
 }
 
+type CustomCommand struct {
+	ID          string
+	GuildID     string
+	Name        string
+	Description string
+	Enabled     bool
+	Parameters  json.RawMessage
+	Actions     json.RawMessage
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeployedAt  sql.NullTime
+}
+
 type Entitlement struct {
 	ID        string
 	UserID    sql.NullString

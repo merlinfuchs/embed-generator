@@ -3,12 +3,14 @@ import {
   CustomBotGetResponseWire,
   GetPremiumPlanFeaturesResponseWire,
   ListChannelsResponseWire,
+  CustomCommandsListResponseWire,
   ListGuildsResponseWire,
   ListPremiumEntitlementsResponseWire,
   ListRolesResponseWire,
   SavedMessageListResponseWire,
   SharedMessageGetResponseWire,
   UserResponseWire,
+  CustomCommandGetResponseWire,
 } from "./wire";
 import { APIResponse } from "./base";
 
@@ -132,11 +134,36 @@ export function usePremiumUserFeaturesQuery() {
 
 export function useCustomBotQuery(guildId: string | null) {
   return useQuery<CustomBotGetResponseWire>(
-    ["custombot", guildId],
+    ["custom-bot", guildId],
     () =>
       fetch(`/api/custom-bot?guild_id=${guildId}`).then((res) =>
         handleApiResponse(res.json())
       ),
     { enabled: !!guildId }
+  );
+}
+
+export function useCustomCmmandsQuery(guildId: string | null) {
+  return useQuery<CustomCommandsListResponseWire>(
+    ["custom-bot", guildId, "commands"],
+    () =>
+      fetch(`/api/custom-bot/commands?guild_id=${guildId}`).then((res) =>
+        handleApiResponse(res.json())
+      ),
+    { enabled: !!guildId }
+  );
+}
+
+export function useCustomCmmandQuery(
+  guildId: string | null,
+  commandId: string | null
+) {
+  return useQuery<CustomCommandGetResponseWire>(
+    ["custom-bot", guildId, "commands", commandId],
+    () =>
+      fetch(`/api/custom-bot/commands/${commandId}?guild_id=${guildId}`).then(
+        (res) => handleApiResponse(res.json())
+      ),
+    { enabled: !!guildId && !!commandId }
   );
 }

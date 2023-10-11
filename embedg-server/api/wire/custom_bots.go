@@ -1,6 +1,14 @@
 package wire
 
-import "gopkg.in/guregu/null.v4"
+import (
+	"encoding/json"
+	"regexp"
+	"strings"
+	"time"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"gopkg.in/guregu/null.v4"
+)
 
 type CustomBotInfoWire struct {
 	ID                string      `json:"id"`
@@ -33,3 +41,66 @@ type CustomBotGetResponseWire APIResponse[CustomBotInfoWire]
 type CustomBotDisableResponseDataWire struct{}
 
 type CustomBotDisableResponseWire APIResponse[CustomBotDisableResponseDataWire]
+
+type CustomCommandWire struct {
+	ID          string          `json:"id"`
+	Name        string          `json:"name"`
+	Description string          `json:"description"`
+	Enabled     bool            `json:"enabled"`
+	Parameters  json.RawMessage `json:"parameters"`
+	Actions     json.RawMessage `json:"actions"`
+	CreatedAt   time.Time       `json:"created_at"`
+	UpdatedAt   time.Time       `json:"updated_at"`
+	DeployedAt  null.Time       `json:"deployed_at"`
+}
+
+type CustomCommandsListResponseWire APIResponse[[]CustomCommandWire]
+
+type CustomCommandGetResponseWire APIResponse[CustomCommandWire]
+
+type CustomCommandCreateRequestWire struct {
+	Name        string          `json:"name"`
+	Description string          `json:"description"`
+	Parameters  json.RawMessage `json:"parameters"`
+	Actions     json.RawMessage `json:"actions"`
+}
+
+var commandNameRegex = regexp.MustCompile(`^([-_\p{L}\p{N}]+ ?){3}$`)
+
+func (r CustomCommandCreateRequestWire) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Name, validation.Required, validation.Length(1, 32), validation.Match(commandNameRegex)),
+		validation.Field(&r.Description, validation.Required, validation.Length(1, 100)),
+	)
+}
+
+func (r *CustomCommandCreateRequestWire) Normalize() {
+	r.Name = strings.TrimSpace(r.Name)
+}
+
+type CustomCommandCreateResponseWire APIResponse[CustomCommandWire]
+
+type CustomCommandUpdateRequestWire struct {
+	Name        string          `json:"name"`
+	Description string          `json:"description"`
+	Enabled     bool            `json:"enabled"`
+	Parameters  json.RawMessage `json:"parameters"`
+	Actions     json.RawMessage `json:"actions"`
+}
+
+func (r CustomCommandUpdateRequestWire) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Name, validation.Required, validation.Length(1, 32), validation.Match(commandNameRegex)),
+		validation.Field(&r.Description, validation.Required, validation.Length(1, 100)),
+	)
+}
+
+func (r *CustomCommandUpdateRequestWire) Normalize() {
+	r.Name = strings.TrimSpace(r.Name)
+}
+
+type CustomCommandUpdateResponseWire APIResponse[CustomCommandWire]
+
+type CustomCommandDeleteResponseWire APIResponse[struct{}]
+
+type CustomCommandsDeployResponseWire APIResponse[struct{}]

@@ -83,23 +83,39 @@ func (m *ActionParser) ParseMessageComponents(data []actions.ActionRowWithAction
 	return components, nil
 }
 
-func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actions.ActionSet, userID string, channelID string) error {
-	channel, err := m.bot.State.Channel(channelID)
+func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actions.ActionSet, userID string, guildID string, channelID string) error {
+	var channel *discordgo.Channel
+	if channelID != "" {
+		var err error
+		channel, err = m.bot.State.Channel(channelID)
+		if err != nil {
+			return err
+		}
+
+		if channel.GuildID != guildID {
+			return fmt.Errorf("Channel %s does not belong to guild %s", channelID, guildID)
+		}
+	}
+
+	guild, err := m.bot.State.Guild(guildID)
 	if err != nil {
 		return err
 	}
 
-	guild, err := m.bot.State.Guild(channel.GuildID)
-	if err != nil {
-		return err
+	var channelAccess *access.ChannelAccess
+	if channelID != "" {
+		ca, err := m.accessManager.GetChannelAccessForUser(userID, channelID)
+		if err != nil {
+			return err
+		}
+		channelAccess = &ca
+
+		if !channelAccess.UserAccess() {
+			return fmt.Errorf("You have no access to the channel %s", channelID)
+		}
 	}
 
-	channelAccess, err := m.accessManager.GetChannelAccessForUser(userID, channelID)
-	if err != nil {
-		return err
-	}
-
-	member, err := m.accessManager.GetGuildMember(channel.GuildID, userID)
+	member, err := m.accessManager.GetGuildMember(guildID, userID)
 	if err != nil {
 		return err
 	}
@@ -107,15 +123,24 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 	memberIsOwner := guild.OwnerID == userID
 
 	highestRolePosition := 0
+	var permissions int64
+
+	defaultRole, err := m.bot.State.Role(guildID, guildID)
+	if err == nil {
+		highestRolePosition = defaultRole.Position
+		permissions = defaultRole.Permissions
+	}
+
 	for _, roleID := range member.Roles {
-		role, err := m.bot.State.Role(channel.GuildID, roleID)
+		role, err := m.bot.State.Role(guildID, roleID)
 		if err == nil && role.Position > highestRolePosition {
 			highestRolePosition = role.Position
+			permissions |= role.Permissions
 		}
 	}
 
-	if !channelAccess.UserAccess() {
-		return fmt.Errorf("You have no access to the channel %s", channelID)
+	if channelAccess != nil {
+		permissions = channelAccess.UserPermissions
 	}
 
 	var checkActions func(actionSets map[string]actions.ActionSet, nestingLevel int) error
@@ -131,11 +156,11 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 				case actions.ActionTypeTextResponse, actions.ActionTypeTextDM, actions.ActionTypeTextEdit:
 					break
 				case actions.ActionTypeAddRole, actions.ActionTypeRemoveRole, actions.ActionTypeToggleRole:
-					if channelAccess.UserPermissions&discordgo.PermissionManageRoles == 0 {
+					if permissions&discordgo.PermissionManageRoles == 0 {
 						return fmt.Errorf("You have no permission to manage roles in the channel %s", channelID)
 					}
 
-					role, err := m.bot.State.Role(channel.GuildID, action.TargetID)
+					role, err := m.bot.State.Role(guildID, action.TargetID)
 					if err != nil {
 						if err == discordgo.ErrStateNotFound {
 							return fmt.Errorf("Role %s does not exist", action.TargetID)
@@ -149,7 +174,7 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 					break
 				case actions.ActionTypeSavedMessageResponse, actions.ActionTypeSavedMessageDM, actions.ActionTypeSavedMessageEdit:
 					msg, err := m.pg.Q.GetSavedMessageForGuild(context.TODO(), postgres.GetSavedMessageForGuildParams{
-						GuildID: sql.NullString{Valid: true, String: channel.GuildID},
+						GuildID: sql.NullString{Valid: true, String: guildID},
 						ID:      action.TargetID,
 					})
 					if err != nil {

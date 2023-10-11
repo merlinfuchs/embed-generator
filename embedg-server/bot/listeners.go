@@ -43,7 +43,7 @@ func (b *Bot) onInteractionCreate(s *discordgo.Session, i *discordgo.Interaction
 				Session: s,
 			}
 
-			err := b.ActionHandler.HandleActionInteraction(s, gi, data)
+			err := b.ActionHandler.HandleActionInteraction(s, gi)
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to handle action interaction")
 			}

@@ -236,7 +236,7 @@ export const actionRowSchema = z.object({
 
 export type MessageComponentActionRow = z.infer<typeof actionRowSchema>;
 
-export const messageAction = z
+export const messageActionSchema = z
   .object({
     type: z.literal(1).or(z.literal(6)).or(z.literal(8)), // text response
     id: uniqueIdSchema.default(() => getUniqueId()),
@@ -258,13 +258,13 @@ export const messageAction = z
     })
   );
 
-export type MessageAction = z.infer<typeof messageAction>;
+export type MessageAction = z.infer<typeof messageActionSchema>;
 
-export const messageActionSet = z.object({
-  actions: z.array(messageAction).max(5), //.min(1),
+export const messageActionSetSchema = z.object({
+  actions: z.array(messageActionSchema).max(5), //.min(1),
 });
 
-export type MessageActionSet = z.infer<typeof messageActionSet>;
+export type MessageActionSet = z.infer<typeof messageActionSetSchema>;
 
 export const messageContentSchema = z.string().max(2000);
 
@@ -321,7 +321,7 @@ export const messageSchema = z
     allowed_mentions: messageAllowedMentionsSchema,
     components: z.array(actionRowSchema).max(5).default([]),
     thread_name: messageThreadName,
-    actions: z.record(z.string(), messageActionSet).default({}),
+    actions: z.record(z.string(), messageActionSetSchema).default({}),
   })
   .superRefine((data, ctx) => {
     // this currently doesn't take attachments into account

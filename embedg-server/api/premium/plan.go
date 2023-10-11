@@ -13,6 +13,7 @@ type PlanFeatures struct {
 	AdvancedActionTypes    bool `mapstructure:"advanced_action_types"`
 	AIAssistant            bool `mapstructure:"ai_assistant"`
 	CustomBot              bool `mapstructure:"custom_bot"`
+	MaxCustomCommands      int  `mapstructure:"max_custom_commands"`
 	IsPremium              bool `mapstructure:"is_premium"`
 }
 
@@ -22,6 +23,9 @@ func (f *PlanFeatures) Merge(b PlanFeatures) {
 	}
 	if b.MaxActionsPerComponent > f.MaxActionsPerComponent {
 		f.MaxActionsPerComponent = b.MaxActionsPerComponent
+	}
+	if b.MaxCustomCommands > f.MaxCustomCommands {
+		f.MaxCustomCommands = b.MaxCustomCommands
 	}
 
 	f.AdvancedActionTypes = f.AdvancedActionTypes || b.AdvancedActionTypes

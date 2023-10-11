@@ -9,6 +9,7 @@ packages:
       uuid.UUID: "string /* uuid */"
       uuid.NullUUID: "null | string /* uuid */"
       time.Time: "string /* RFC3339 */"
+      null.Time: "null | string /* RFC3339 */"
       json.RawMessage: "Record<string, any> | null"
     exclude_files:
       - "base.go"

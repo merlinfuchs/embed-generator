@@ -5,6 +5,12 @@ import {
   CustomBotConfigureRequestWire,
   CustomBotConfigureResponseWire,
   CustomBotDisableResponseWire,
+  CustomCommandCreateRequestWire,
+  CustomCommandCreateResponseWire,
+  CustomCommandDeleteResponseWire,
+  CustomCommandUpdateRequestWire,
+  CustomCommandUpdateResponseWire,
+  CustomCommandsDeployResponseWire,
   MessageRestoreFromChannelRequestWire,
   MessageRestoreFromWebhookRequestWire,
   MessageRestoreResponseWire,
@@ -242,4 +248,84 @@ export function useCustomBotDisableMutation() {
       handleApiResponse<CustomBotDisableResponseWire>(res.json())
     );
   });
+}
+
+export function useCustomCommandCreateMutation() {
+  return useMutation(
+    ({
+      guildId,
+      req,
+    }: {
+      guildId: string;
+      req: CustomCommandCreateRequestWire;
+    }) => {
+      return fetch(`/api/custom-bot/commands?guild_id=${guildId}`, {
+        method: "POST",
+        body: JSON.stringify(req),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) =>
+        handleApiResponse<CustomCommandCreateResponseWire>(res.json())
+      );
+    }
+  );
+}
+
+export function useCustomCommandUpdateMutation() {
+  return useMutation(
+    ({
+      commandId,
+      guildId,
+      req,
+    }: {
+      commandId: string;
+      guildId: string;
+      req: CustomCommandUpdateRequestWire;
+    }) => {
+      return fetch(
+        `/api/custom-bot/commands/${commandId}?guild_id=${guildId}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(req),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      ).then((res) =>
+        handleApiResponse<CustomCommandUpdateResponseWire>(res.json())
+      );
+    }
+  );
+}
+
+export function useCustomCommandsDeployMutation() {
+  return useMutation(({ guildId }: { guildId: string }) => {
+    return fetch(`/api/custom-bot/commands/deploy?guild_id=${guildId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }).then((res) =>
+      handleApiResponse<CustomCommandsDeployResponseWire>(res.json())
+    );
+  });
+}
+
+export function useCustomCommandDeleteMutation() {
+  return useMutation(
+    ({ commandId, guildId }: { commandId: string; guildId: string }) => {
+      return fetch(
+        `/api/custom-bot/commands/${commandId}?guild_id=${guildId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      ).then((res) =>
+        handleApiResponse<CustomCommandDeleteResponseWire>(res.json())
+      );
+    }
+  );
 }

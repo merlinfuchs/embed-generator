@@ -11,10 +11,10 @@ type APIResponse[Data any] struct {
 }
 
 type Error struct {
-	Status  int             `json:"-"`
-	Code    string          `json:"code"`
-	Message string          `json:"message"`
-	Data    json.RawMessage `json:"data,omitempty"`
+	Status  int         `json:"-"`
+	Code    string      `json:"code"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data,omitempty"`
 }
 
 func (e *Error) Error() string {

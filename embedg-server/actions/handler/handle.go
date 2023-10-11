@@ -23,29 +23,62 @@ func New(pg *postgres.PostgresStore) *ActionHandler {
 	}
 }
 
-func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interaction, data discordgo.MessageComponentInteractionData) error {
-	actionSetID := data.CustomID[7:]
-
-	if strings.HasPrefix(actionSetID, "options:") {
-		actionSetID = data.Values[0][7:]
-	}
-
+func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interaction) error {
 	interaction := i.Interaction()
-	col, err := m.pg.Q.GetMessageActionSet(context.TODO(), postgres.GetMessageActionSetParams{
-		MessageID: interaction.Message.ID,
-		SetID:     actionSetID,
-	})
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil
+
+	var rawActions []byte
+	if interaction.Type == discordgo.InteractionMessageComponent {
+		data := interaction.MessageComponentData()
+
+		actionSetID := data.CustomID[7:]
+
+		if strings.HasPrefix(actionSetID, "options:") {
+			actionSetID = data.Values[0][7:]
 		}
 
-		log.Error().Err(err).Msg("Failed to get action set")
-		return err
+		col, err := m.pg.Q.GetMessageActionSet(context.TODO(), postgres.GetMessageActionSetParams{
+			MessageID: interaction.Message.ID,
+			SetID:     actionSetID,
+		})
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return nil
+			}
+
+			log.Error().Err(err).Msg("Failed to get message action set")
+			return err
+		}
+		rawActions = col.Actions
+	} else if interaction.Type == discordgo.InteractionApplicationCommand {
+		data := interaction.ApplicationCommandData()
+		fullName := data.Name
+		for _, opt := range data.Options {
+			if opt.Type == discordgo.ApplicationCommandOptionSubCommand {
+				fullName += " " + opt.Name
+			} else if opt.Type == discordgo.ApplicationCommandOptionSubCommandGroup {
+				fullName += " " + opt.Name + " " + opt.Options[0].Name
+			}
+		}
+
+		col, err := m.pg.Q.GetCustomCommandByName(context.TODO(), postgres.GetCustomCommandByNameParams{
+			Name:    fullName,
+			GuildID: interaction.GuildID,
+		})
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return nil
+			}
+
+			log.Error().Err(err).Msg("Failed to get custom command action set")
+			return err
+		}
+		rawActions = col.Actions
+	} else {
+		return fmt.Errorf("Invalid interaciont type")
 	}
 
 	actionSet := actions.ActionSet{}
-	err = json.Unmarshal(col.Actions, &actionSet)
+	err := json.Unmarshal(rawActions, &actionSet)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to unmarshal action set")
 		return err

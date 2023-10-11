@@ -1,11 +1,11 @@
 import { shallow } from "zustand/shallow";
-import { useCurrentMessageStore } from "../state/message";
+import { useCommandActionsStore } from "../state/actions";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { usePremiumGuildFeatures } from "../util/premium";
 import Action from "./Action";
 
 interface Props {
-  setId: string;
+  cmdId: string;
   actionIndex: number;
 }
 
@@ -33,21 +33,21 @@ const actionDescriptions = {
   9: "Edit the message with a saved message.",
 } as const;
 
-export default function EditorAction({ setId, actionIndex }: Props) {
+export default function EditorAction({ cmdId, actionIndex }: Props) {
   const features = usePremiumGuildFeatures();
   const maxActions = features?.max_actions_per_component || 0;
   const selectedGuildId = useSendSettingsStore((state) => state.guildId);
 
-  const action = useCurrentMessageStore(
-    (state) => state.actions[setId]?.actions[actionIndex],
+  const action = useCommandActionsStore(
+    (state) => state.actions[cmdId]?.actions[actionIndex],
     shallow
   );
 
-  const actionCount = useCurrentMessageStore(
-    (state) => state.actions[setId]?.actions?.length || 0
+  const actionCount = useCommandActionsStore(
+    (state) => state.actions[cmdId]?.actions?.length || 0
   );
 
-  const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
+  const [moveUp, moveDown, duplicate, remove] = useCommandActionsStore(
     (state) => [
       state.moveActionUp,
       state.moveActionDown,
@@ -57,7 +57,7 @@ export default function EditorAction({ setId, actionIndex }: Props) {
     shallow
   );
 
-  const [setType, setText, setTargetId, setPublic] = useCurrentMessageStore(
+  const [setType, setText, setTargetId, setPublic] = useCommandActionsStore(
     (state) => [
       state.setActionType,
       state.setActionText,
@@ -74,16 +74,15 @@ export default function EditorAction({ setId, actionIndex }: Props) {
       maxActions={maxActions}
       actionIndex={actionIndex}
       action={action}
-      collapsableId={`actions.${setId}.actions.${action.id}`}
-      valiationPathPrefix={`actions.${setId}.actions.${actionIndex}`}
-      moveUp={() => moveUp(setId, actionIndex)}
-      moveDown={() => moveDown(setId, actionIndex)}
-      duplicate={() => duplicate(setId, actionIndex)}
-      remove={() => remove(setId, actionIndex)}
-      setText={(text) => setText(setId, actionIndex, text)}
-      setType={(type) => setType(setId, actionIndex, type)}
-      setTargetId={(id) => setTargetId(setId, actionIndex, id)}
-      setPublic={(public_) => setPublic(setId, actionIndex, public_)}
+      collapsableId={`actions.${cmdId}.actions.${action.id}`}
+      moveUp={() => moveUp(cmdId, actionIndex)}
+      moveDown={() => moveDown(cmdId, actionIndex)}
+      duplicate={() => duplicate(cmdId, actionIndex)}
+      remove={() => remove(cmdId, actionIndex)}
+      setText={(text) => setText(cmdId, actionIndex, text)}
+      setType={(type) => setType(cmdId, actionIndex, type)}
+      setTargetId={(id) => setTargetId(cmdId, actionIndex, id)}
+      setPublic={(public_) => setPublic(cmdId, actionIndex, public_)}
     />
   );
 }

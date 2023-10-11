@@ -6,13 +6,10 @@ import {
   SparklesIcon,
   StarIcon,
 } from "@heroicons/react/20/solid";
-import {
-  usePremiumGuildEntitlementsQuery,
-  useUserQuery,
-} from "../../api/queries";
-import LogginSuggest from "../../components/LoginSuggest";
-import { useSendSettingsStore } from "../../state/sendSettings";
-import GuildSelect from "../../components/GuildSelect";
+import { usePremiumGuildEntitlementsQuery, useUserQuery } from "../api/queries";
+import LogginSuggest from "../components/LoginSuggest";
+import { useSendSettingsStore } from "../state/sendSettings";
+import GuildSelect from "../components/GuildSelect";
 import { shallow } from "zustand/shallow";
 
 export default function PremiumView() {

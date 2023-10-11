@@ -10,6 +10,7 @@ import {
   Bars3Icon,
   PlusCircleIcon,
   ArrowRightOnRectangleIcon,
+  CommandLineIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useEffect, useMemo, useState } from "react";
@@ -100,6 +101,13 @@ export default function SideNav() {
                 href="/messages"
                 label="Saved Messages"
                 icon={RectangleStackIcon}
+                collapsed={collapsed}
+                setHidden={setHidden}
+              />
+              <NavigationButton
+                href="/commands"
+                label="Commands"
+                icon={CommandLineIcon}
                 collapsed={collapsed}
                 setHidden={setHidden}
               />

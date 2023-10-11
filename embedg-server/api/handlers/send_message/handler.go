@@ -54,7 +54,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return err
 	}
 
-	err = h.actionParser.CheckPermissionsForActionSets(data.Actions, session.UserID, req.ChannelID)
+	err = h.actionParser.CheckPermissionsForActionSets(data.Actions, session.UserID, req.GuildID, req.ChannelID)
 	if err != nil {
 		return helpers.BadRequest("invalid_actions", err.Error())
 	}

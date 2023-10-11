@@ -1,11 +1,9 @@
 package helpers
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog/log"
 )
 
 func WithRequestBody[R any](handler func(c *fiber.Ctx, req R) error) fiber.Handler {
@@ -20,6 +18,11 @@ func WithRequestBody[R any](handler func(c *fiber.Ctx, req R) error) fiber.Handl
 
 type RequestBodyValidatable interface {
 	Validate() error
+}
+
+type RequestBodyNormalizeValidate interface {
+	Validate() error
+	Normalize()
 }
 
 func WithRequestBodyValidated[R RequestBodyValidatable](handler func(c *fiber.Ctx, req R) error) fiber.Handler {
@@ -39,12 +42,7 @@ func ValidateBody(c *fiber.Ctx, v RequestBodyValidatable) error {
 	err := v.Validate()
 
 	if err != nil {
-		b, err := json.Marshal(err)
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to marshal validation error")
-		}
-
-		return ValidationError(b)
+		return ValidationError(err)
 	}
 	return nil
 }
