@@ -1,10 +1,10 @@
 import { shallow } from "zustand/shallow";
-import { useCommandActionStore } from "../state/message";
 import CommandAction from "./CommandAction";
 import Collapsable from "./Collapsable";
 import { getUniqueId } from "../util";
 import { AutoAnimate } from "../util/autoAnimate";
 import { usePremiumGuildFeatures } from "../util/premium";
+import { useCommandActionsStore } from "../state/actions";
 
 interface Props {
   cmdId: string;
@@ -14,12 +14,12 @@ export default function ActionSet({ cmdId }: Props) {
   const features = usePremiumGuildFeatures();
   const maxActions = features?.max_actions_per_component || 0;
 
-  const actions = useCommandActionStore(
+  const actions = useCommandActionsStore(
     (state) => state.actions[cmdId]?.actions.map((a) => a.id) || [],
     shallow
   );
 
-  const [addAction, clearActions] = useCommandActionStore(
+  const [addAction, clearActions] = useCommandActionsStore(
     (state) => [state.addAction, state.clearActions],
     shallow
   );

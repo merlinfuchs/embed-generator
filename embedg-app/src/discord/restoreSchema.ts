@@ -272,7 +272,7 @@ export const actionRowSchema = z.object({
 
 export type MessageComponentActionRow = z.infer<typeof actionRowSchema>;
 
-export const messageAction = z
+export const messageActionSchema = z
   .object({
     type: z.literal(1).or(z.literal(6)), // text response
     id: uniqueIdSchema.default(() => getUniqueId()),
@@ -288,13 +288,13 @@ export const messageAction = z
     })
   );
 
-export type MessageAction = z.infer<typeof messageAction>;
+export type MessageAction = z.infer<typeof messageActionSchema>;
 
-export const messageActionSet = z.object({
-  actions: z.array(messageAction),
+export const messageActionSetSchema = z.object({
+  actions: z.array(messageActionSchema),
 });
 
-export type MessageActionSet = z.infer<typeof messageActionSet>;
+export type MessageActionSet = z.infer<typeof messageActionSetSchema>;
 
 export const messageContentSchema = z.preprocess(
   (d) => d ?? undefined,
@@ -357,7 +357,7 @@ export const messageSchema = z.object({
   thread_name: messageThreadName,
   actions: z.preprocess(
     (d) => d ?? undefined,
-    z.record(z.string(), messageActionSet).default({})
+    z.record(z.string(), messageActionSetSchema).default({})
   ),
 });
 

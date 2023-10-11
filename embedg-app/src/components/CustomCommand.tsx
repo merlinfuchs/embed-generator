@@ -6,7 +6,7 @@ import {
   PencilSquareIcon,
   TrashIcon,
 } from "@heroicons/react/20/solid";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AutoAnimate } from "../util/autoAnimate";
 import {
   useCustomCommandDeleteMutation,
@@ -17,7 +17,8 @@ import { useQueryClient } from "react-query";
 import { useToasts } from "../util/toasts";
 import EditorInput from "./EditorInput";
 import CommandActionSet from "./CommandActionSet";
-import { useCommandActionStore } from "../state/message";
+import { useCommandActionsStore } from "../state/actions";
+import { messageActionSetSchema } from "../discord/restoreSchema";
 
 export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
   const guildId = useSendSettingsStore((s) => s.guildId);
@@ -31,10 +32,17 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
   const queryClient = useQueryClient();
   const updateMutation = useCustomCommandUpdateMutation();
 
+  useEffect(() => {
+    const res = messageActionSetSchema.safeParse(cmd.actions);
+    if (res.success) {
+      useCommandActionsStore.getState().setActionSet(cmd.id, res.data);
+    }
+  }, [cmd.actions]);
+
   function save() {
     if (name.length == 0 || description.length == 0) return;
 
-    const actions = useCommandActionStore.getState().actions[cmd.id];
+    const actions = useCommandActionsStore.getState().actions[cmd.id];
 
     updateMutation.mutate(
       {

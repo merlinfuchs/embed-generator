@@ -5,7 +5,7 @@ import { useQueryClient } from "react-query";
 import { useToasts } from "../util/toasts";
 import EditorInput from "./EditorInput";
 import CommandActionSet from "./CommandActionSet";
-import { useCommandActionStore } from "../state/message";
+import { useCommandActionsStore } from "../state/actions";
 
 export default function CustomCommandCreate({
   setCreate,
@@ -24,7 +24,7 @@ export default function CustomCommandCreate({
   function create() {
     if (name.length == 0 || description.length == 0 || !guildId) return;
 
-    const actions = useCommandActionStore.getState().actions["new"];
+    const actions = useCommandActionsStore.getState().actions["new"];
 
     createMutation.mutate(
       {

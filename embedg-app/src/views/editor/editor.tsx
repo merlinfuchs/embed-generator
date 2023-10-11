@@ -12,11 +12,7 @@ import EditorAttachments from "../../components/EditorAttachments";
 import SendMenu from "../../components/SendMenu";
 import { Drawer } from "vaul";
 import { useState } from "react";
-import {
-  DocumentMagnifyingGlassIcon,
-  EyeDropperIcon,
-  EyeIcon,
-} from "@heroicons/react/24/outline";
+import { DocumentMagnifyingGlassIcon } from "@heroicons/react/24/outline";
 
 export default function EditorView() {
   const setValidationError = useValidationErrorStore((state) => state.setError);
@@ -30,6 +26,8 @@ export default function EditorView() {
     debouncedSetValidationError(state);
     return null;
   });
+
+  // TODO: also validate actions stores
 
   const [previewDrawerOpen, setPreviewDrawerOpen] = useState(false);
 

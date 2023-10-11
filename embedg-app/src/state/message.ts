@@ -165,7 +165,7 @@ export const emptyMessage: Message = {
   actions: {},
 };
 
-export const createMessageStore = () =>
+export const createMessageStore = (key: string) =>
   create<MessageStore>()(
     immer(
       persist(
@@ -1033,11 +1033,9 @@ export const createMessageStore = () =>
             return null;
           },
         }),
-        { name: "current-message", version: 0 }
+        { name: key, version: 0 }
       )
     )
   );
 
-export const useCurrentMessageStore = createMessageStore();
-
-export const useCommandActionStore = createMessageStore();
+export const useCurrentMessageStore = createMessageStore("current-message");

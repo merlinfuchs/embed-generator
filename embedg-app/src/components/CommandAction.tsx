@@ -1,5 +1,5 @@
 import { shallow } from "zustand/shallow";
-import { useCommandActionStore } from "../state/message";
+import { useCommandActionsStore } from "../state/actions";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { usePremiumGuildFeatures } from "../util/premium";
 import Action from "./Action";
@@ -38,16 +38,16 @@ export default function EditorAction({ cmdId, actionIndex }: Props) {
   const maxActions = features?.max_actions_per_component || 0;
   const selectedGuildId = useSendSettingsStore((state) => state.guildId);
 
-  const action = useCommandActionStore(
+  const action = useCommandActionsStore(
     (state) => state.actions[cmdId]?.actions[actionIndex],
     shallow
   );
 
-  const actionCount = useCommandActionStore(
+  const actionCount = useCommandActionsStore(
     (state) => state.actions[cmdId]?.actions?.length || 0
   );
 
-  const [moveUp, moveDown, duplicate, remove] = useCommandActionStore(
+  const [moveUp, moveDown, duplicate, remove] = useCommandActionsStore(
     (state) => [
       state.moveActionUp,
       state.moveActionDown,
@@ -57,7 +57,7 @@ export default function EditorAction({ cmdId, actionIndex }: Props) {
     shallow
   );
 
-  const [setType, setText, setTargetId, setPublic] = useCommandActionStore(
+  const [setType, setText, setTargetId, setPublic] = useCommandActionsStore(
     (state) => [
       state.setActionType,
       state.setActionText,
