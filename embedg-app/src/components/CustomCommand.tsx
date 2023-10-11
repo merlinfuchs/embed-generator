@@ -163,29 +163,16 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
               </Tooltip>
               <div className="hidden md:block ml-2">Delete</div>
             </div>
-            {manage ? (
-              <div
-                className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
-                role="button"
-                onClick={() => setManage(false)}
-              >
-                <Tooltip text="Manage Command">
-                  <PencilSquareIcon className="h-5 w-5" />
-                </Tooltip>
-                <div className="hidden md:block ml-2">Save</div>
-              </div>
-            ) : (
-              <div
-                className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
-                role="button"
-                onClick={() => setManage(true)}
-              >
-                <Tooltip text="Manage Command">
-                  <PencilSquareIcon className="h-5 w-5" />
-                </Tooltip>
-                <div className="hidden md:block ml-2">Manage</div>
-              </div>
-            )}
+            <div
+              className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
+              role="button"
+              onClick={() => setManage(true)}
+            >
+              <Tooltip text="Manage Command">
+                <PencilSquareIcon className="h-5 w-5" />
+              </Tooltip>
+              <div className="hidden md:block ml-2">Manage</div>
+            </div>
           </div>
         </div>
       )}

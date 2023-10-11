@@ -6,6 +6,8 @@ import { useToasts } from "../util/toasts";
 import EditorInput from "./EditorInput";
 import CommandActionSet from "./CommandActionSet";
 import { useCommandActionsStore } from "../state/actions";
+import Tooltip from "./Tooltip";
+import { ArrowUpTrayIcon, XMarkIcon } from "@heroicons/react/20/solid";
 
 export default function CustomCommandCreate({
   setCreate,
@@ -57,9 +59,33 @@ export default function CustomCommandCreate({
 
   return (
     <div className="bg-dark-3 p-5 rounded-lg">
-      <div className="flex items-center space-x-2 truncate text-lg mb-5 truncate">
+      <div className="flex items-center space-x-2 truncate text-lg mb-5 truncate justify-between">
         <div className="text-white truncate">
           <span className="font-bold text-gray-500 text-xl">/</span> {name}
+        </div>
+        <div className="flex flex-none items-center space-x-4 md:space-x-3">
+          <div
+            className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
+            role="button"
+            onClick={() => setCreate(false)}
+          >
+            <Tooltip text="Delete Command">
+              <XMarkIcon className="h-5 w-5" />
+            </Tooltip>
+            <div className="hidden md:block ml-2">Cancel</div>
+          </div>
+          <div
+            className="flex items-center text-white cursor-pointer bg-blurple hover:bg-blurple-dark rounded px-2 py-1"
+            role="button"
+            onClick={create}
+          >
+            <Tooltip text="Delete Command">
+              <ArrowUpTrayIcon className="h-5 w-5" />
+            </Tooltip>
+            <div className="ml-2">
+              Create <span className="hidden md:inline-block">Command</span>
+            </div>
+          </div>
         </div>
       </div>
       <div className="space-y-5 mb-5">
@@ -78,20 +104,6 @@ export default function CustomCommandCreate({
           onChange={setDescription}
         />
         <CommandActionSet cmdId={"new"} />
-      </div>
-      <div className="flex justify-end space-x-3">
-        <button
-          className="px-3 py-2 rounded border-2 border-dark-7 hover:bg-dark-6 cursor-pointer text-white"
-          onClick={() => setCreate(false)}
-        >
-          Cancel
-        </button>
-        <button
-          className="px-3 py-2 rounded bg-blurple hover:bg-blurple-dark text-white"
-          onClick={create}
-        >
-          Create Command
-        </button>
       </div>
     </div>
   );
