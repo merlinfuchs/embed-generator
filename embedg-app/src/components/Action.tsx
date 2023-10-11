@@ -193,7 +193,7 @@ export default function Action({
         }
       >
         <div className="space-y-4">
-          <div className="flex space-x-3">
+          <div className="flex flex-col space-y-3 lg:flex-row lg:space-x-3 lg:space-y-0">
             <div className="flex-none">
               <div className="mb-1.5 flex">
                 <div className="uppercase text-gray-300 text-sm font-medium">
@@ -271,7 +271,7 @@ export default function Action({
             />
           ) : null}
 
-          <div className="text-gray-500 text-sm">
+          <div className="text-gray-500 text-sm whitespace-normal">
             {actionDescriptions[action.type]}
           </div>
         </div>

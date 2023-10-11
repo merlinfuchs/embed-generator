@@ -69,60 +69,62 @@ export default function CommandsView() {
   }, [commandsQuery.data]);
 
   return (
-    <div className="flex flex-col max-w-5xl mx-auto px-4 w-full my-5 lg:my-20">
-      <div className="mb-10">
-        <div className="text-white font-medium mb-3 flex items-center space-x-3">
-          <SparklesIcon className="h-7 w-7 text-yellow" />
-          <div className="text-2xl">Custom Commands</div>
-          <div className="font-light italic text-gray-400">
-            {commandCount} / {maxCommands}
+    <div className="overflow-y-auto w-full">
+      <div className="flex flex-col max-w-5xl mx-auto px-4 w-full my-5 lg:my-20">
+        <div className="mb-10">
+          <div className="text-white font-medium mb-3 flex items-center space-x-3">
+            <SparklesIcon className="h-7 w-7 text-yellow" />
+            <div className="text-2xl">Custom Commands</div>
+            <div className="font-light italic text-gray-400 flex-none">
+              {commandCount} / {maxCommands}
+            </div>
+          </div>
+          <div className="text-gray-400 font-light text-sm">
+            You can create custom commands to add more functionality to your
+            custom bot. You need to configure a custom bot first which is
+            available to servers with premium in the settings.
           </div>
         </div>
-        <div className="text-gray-400 font-light text-sm">
-          You can create custom commands to add more functionality to your
-          custom bot. You need to configure a custom bot first which is
-          available to servers with premium in the settings.
-        </div>
+        {user?.success ? (
+          <div className="space-y-5 mb-8">
+            <AutoAnimate className="space-y-5 overlfow-y-auto">
+              {commands.map((cmd) => (
+                <CustomCommand cmd={cmd} key={cmd.id} />
+              ))}
+              {commands.length === 0 ||
+                (create && <CustomCommandCreate setCreate={setCreate} />)}
+            </AutoAnimate>
+            <div className="flex space-x-3 justify-end">
+              <button
+                className={clsx(
+                  "px-3 py-2 rounded text-white",
+                  hasUndeployedChanges
+                    ? "bg-blurple hover:bg-blurple-dark"
+                    : "bg-dark-2 cursor-not-allowed"
+                )}
+                onClick={deploy}
+              >
+                Deploy Commands
+              </button>
+              <button
+                className={clsx(
+                  "px-3 py-2 rounded border-2 text-white",
+                  commands.length < maxCommands
+                    ? "border-dark-7 hover:bg-dark-6 cursor-pointer"
+                    : "border-dark-6 text-gray-300 cursor-not-allowed"
+                )}
+                onClick={() => commands.length < maxCommands && setCreate(true)}
+              >
+                New Command
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="pb-10">
+            <LogginSuggest alwaysExpanded={true} />
+          </div>
+        )}
       </div>
-      {user?.success ? (
-        <div className="space-y-5 mb-8">
-          <AutoAnimate className="space-y-5 overlfow-y-auto">
-            {commands.map((cmd) => (
-              <CustomCommand cmd={cmd} key={cmd.id} />
-            ))}
-            {commands.length === 0 ||
-              (create && <CustomCommandCreate setCreate={setCreate} />)}
-          </AutoAnimate>
-          <div className="flex space-x-3 justify-end">
-            <button
-              className={clsx(
-                "px-3 py-2 rounded text-white",
-                hasUndeployedChanges
-                  ? "bg-blurple hover:bg-blurple-dark"
-                  : "bg-dark-2 cursor-not-allowed"
-              )}
-              onClick={deploy}
-            >
-              Deploy Commands
-            </button>
-            <button
-              className={clsx(
-                "px-3 py-2 rounded border-2 text-white",
-                commands.length < maxCommands
-                  ? "border-dark-7 hover:bg-dark-6 cursor-pointer"
-                  : "border-dark-6 text-gray-300 cursor-not-allowed"
-              )}
-              onClick={() => commands.length < maxCommands && setCreate(true)}
-            >
-              New Command
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="pb-10">
-          <LogginSuggest alwaysExpanded={true} />
-        </div>
-      )}
     </div>
   );
 }

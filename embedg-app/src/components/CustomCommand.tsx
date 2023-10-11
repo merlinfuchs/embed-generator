@@ -148,7 +148,7 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
                 {cmd.name}
               </div>
             </div>
-            <div className="text-gray-400 text-sm font-light">
+            <div className="text-gray-400 text-sm font-light whitespace-normal">
               {cmd.description}
             </div>
           </div>
