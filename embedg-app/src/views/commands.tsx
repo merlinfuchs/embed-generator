@@ -11,6 +11,7 @@ import { parseISO } from "date-fns";
 import clsx from "clsx";
 import { AutoAnimate } from "../util/autoAnimate";
 import { useToasts } from "../util/toasts";
+import PremiumSuggest from "../components/PremiumSuggest";
 
 export default function CommandsView() {
   const { data: user } = useUserQuery();
@@ -19,6 +20,7 @@ export default function CommandsView() {
   const [create, setCreate] = useState(false);
 
   const guildId = useSendSettingsStore((s) => s.guildId);
+  const features = usePremiumGuildFeatures();
 
   const commandsQuery = useCustomCmmandsQuery(guildId);
   const commandCount = commandsQuery.data?.success
@@ -86,43 +88,47 @@ export default function CommandsView() {
           </div>
         </div>
         {user?.success ? (
-          <div className="space-y-5 mb-8">
-            <AutoAnimate className="space-y-5 overlfow-y-auto">
-              {commands.map((cmd) => (
-                <CustomCommand cmd={cmd} key={cmd.id} />
-              ))}
-              {commands.length === 0 ||
-                (create && <CustomCommandCreate setCreate={setCreate} />)}
-            </AutoAnimate>
-            <div className="flex space-x-3 justify-end">
-              <button
-                className={clsx(
-                  "px-3 py-2 rounded text-white",
-                  hasUndeployedChanges
-                    ? "bg-blurple hover:bg-blurple-dark"
-                    : "bg-dark-2 cursor-not-allowed"
-                )}
-                onClick={deploy}
-              >
-                Deploy Commands
-              </button>
-              <button
-                className={clsx(
-                  "px-3 py-2 rounded border-2 text-white",
-                  commands.length < maxCommands
-                    ? "border-dark-7 hover:bg-dark-6 cursor-pointer"
-                    : "border-dark-6 text-gray-300 cursor-not-allowed"
-                )}
-                onClick={() => commands.length < maxCommands && setCreate(true)}
-              >
-                New Command
-              </button>
+          features?.max_custom_commands ? (
+            <div className="space-y-5 mb-8">
+              <AutoAnimate className="space-y-5 overlfow-y-auto">
+                {commands.map((cmd) => (
+                  <CustomCommand cmd={cmd} key={cmd.id} />
+                ))}
+                {commands.length === 0 ||
+                  (create && <CustomCommandCreate setCreate={setCreate} />)}
+              </AutoAnimate>
+              <div className="flex space-x-3 justify-end">
+                <button
+                  className={clsx(
+                    "px-3 py-2 rounded text-white",
+                    hasUndeployedChanges
+                      ? "bg-blurple hover:bg-blurple-dark"
+                      : "bg-dark-2 cursor-not-allowed"
+                  )}
+                  onClick={deploy}
+                >
+                  Deploy Commands
+                </button>
+                <button
+                  className={clsx(
+                    "px-3 py-2 rounded border-2 text-white",
+                    commands.length < maxCommands
+                      ? "border-dark-7 hover:bg-dark-6 cursor-pointer"
+                      : "border-dark-6 text-gray-300 cursor-not-allowed"
+                  )}
+                  onClick={() =>
+                    commands.length < maxCommands && setCreate(true)
+                  }
+                >
+                  New Command
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <PremiumSuggest alwaysExpanded={true} />
+          )
         ) : (
-          <div className="pb-10">
-            <LogginSuggest alwaysExpanded={true} />
-          </div>
+          <LogginSuggest alwaysExpanded={true} />
         )}
       </div>
     </div>

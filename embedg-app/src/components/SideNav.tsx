@@ -20,6 +20,7 @@ import { useGuildsQuery, useUserQuery } from "../api/queries";
 import { guildIconUrl } from "../discord/cdn";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { shallow } from "zustand/shallow";
+import { usePremiumGuildFeatures } from "../util/premium";
 
 export default function SideNav() {
   const [preCollapsed, setCollapsed] = useState(
@@ -30,6 +31,8 @@ export default function SideNav() {
   const { data: user } = useUserQuery();
 
   const collapsed = preCollapsed && hidden;
+
+  const features = usePremiumGuildFeatures();
 
   return (
     <>
@@ -104,13 +107,15 @@ export default function SideNav() {
                 collapsed={collapsed}
                 setHidden={setHidden}
               />
-              {/*<NavigationButton
-                href="/commands"
-                label="Commands"
-                icon={CommandLineIcon}
-                collapsed={collapsed}
-                setHidden={setHidden}
-              />*/}
+              {features?.max_custom_commands ? (
+                <NavigationButton
+                  href="/commands"
+                  label="Commands"
+                  icon={CommandLineIcon}
+                  collapsed={collapsed}
+                  setHidden={setHidden}
+                />
+              ) : null}
               {/*<NavigationButton
                 href="/premium"
                 label="Premium"
@@ -142,13 +147,15 @@ export default function SideNav() {
               </a>
             )}
 
-            <NavigationButton
-              href="/settings"
-              label="Settings"
-              icon={Cog6ToothIcon}
-              collapsed={collapsed}
-              setHidden={setHidden}
-            />
+            {features?.custom_bot && (
+              <NavigationButton
+                href="/settings"
+                label="Settings"
+                icon={Cog6ToothIcon}
+                collapsed={collapsed}
+                setHidden={setHidden}
+              />
+            )}
           </div>
         </div>
       </div>
