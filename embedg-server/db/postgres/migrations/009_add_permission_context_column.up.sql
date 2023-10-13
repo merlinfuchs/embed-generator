@@ -1,0 +1,3 @@
+ALTER TABLE message_action_sets ADD COLUMN permission_context JSONB, ADD COLUMN last_used_at TIMESTAMP NOT NULL DEFAULT NOW(), ADD COLUMN ephemeral BOOLEAN NOT NULL DEFAULT FALSE;
+
+ALTER TABLE custom_commands ADD COLUMN permission_context JSONB, ADD COLUMN last_used_at TIMESTAMP NOT NULL DEFAULT NOW();

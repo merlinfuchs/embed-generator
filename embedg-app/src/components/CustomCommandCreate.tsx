@@ -11,8 +11,10 @@ import { ArrowUpTrayIcon, XMarkIcon } from "@heroicons/react/20/solid";
 
 export default function CustomCommandCreate({
   setCreate,
+  cancelable,
 }: {
   setCreate: (b: boolean) => void;
+  cancelable: boolean;
 }) {
   const guildId = useSendSettingsStore((s) => s.guildId);
   const createToast = useToasts((s) => s.create);
@@ -64,16 +66,18 @@ export default function CustomCommandCreate({
           <span className="font-bold text-gray-500 text-xl">/</span> {name}
         </div>
         <div className="flex flex-none items-center space-x-4 md:space-x-3">
-          <div
-            className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
-            role="button"
-            onClick={() => setCreate(false)}
-          >
-            <Tooltip text="Delete Command">
-              <XMarkIcon className="h-5 w-5" />
-            </Tooltip>
-            <div className="hidden md:block ml-2">Cancel</div>
-          </div>
+          {cancelable && (
+            <div
+              className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
+              role="button"
+              onClick={() => setCreate(false)}
+            >
+              <Tooltip text="Delete Command">
+                <XMarkIcon className="h-5 w-5" />
+              </Tooltip>
+              <div className="hidden md:block ml-2">Cancel</div>
+            </div>
+          )}
           <div
             className="flex items-center text-white cursor-pointer bg-blurple hover:bg-blurple-dark rounded px-2 py-1"
             role="button"

@@ -1,6 +1,10 @@
 package actions
 
-import "github.com/merlinfuchs/discordgo"
+import (
+	"slices"
+
+	"github.com/merlinfuchs/discordgo"
+)
 
 type MessageWithActions struct {
 	Content         string                            `json:"content,omitempty"`
@@ -68,4 +72,28 @@ type Action struct {
 
 type ActionSet struct {
 	Actions []Action `json:"actions"`
+}
+
+type ActionPermissionContext struct {
+	UserID             string   `json:"user_id"`
+	GuildIsOwner       bool     `json:"guild_is_owner"`
+	GuildPermissions   int64    `json:"guild_permissions"`
+	ChannelPermissions int64    `json:"channel_permissions"`
+	AllowedRoleIDs     []string `json:"lower_role_ids"`
+}
+
+func (a *ActionPermissionContext) HasChannelPermission(permission int64) bool {
+	return a.GuildIsOwner || (a.ChannelPermissions&permission) != 0
+}
+
+func (a *ActionPermissionContext) HasGuildPermission(permission int64) bool {
+	return a.GuildIsOwner || (a.GuildPermissions&discordgo.PermissionAdministrator) != 0 || (a.GuildPermissions&permission) != 0
+}
+
+func (a *ActionPermissionContext) CanManageRole(guildID string) bool {
+	if a.GuildIsOwner {
+		return true
+	}
+
+	return a.HasGuildPermission(discordgo.PermissionManageRoles) && slices.Contains(a.AllowedRoleIDs, guildID)
 }

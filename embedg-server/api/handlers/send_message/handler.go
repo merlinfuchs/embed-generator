@@ -54,11 +54,6 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return err
 	}
 
-	err = h.actionParser.CheckPermissionsForActionSets(data.Actions, session.UserID, req.GuildID, req.ChannelID)
-	if err != nil {
-		return helpers.BadRequest("invalid_actions", err.Error())
-	}
-
 	params := &discordgo.WebhookParams{
 		Content:         data.Content,
 		Username:        data.Username,
@@ -126,7 +121,12 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return fmt.Errorf("Failed to send message: %w", err)
 	}
 
-	err = h.actionParser.CreateActionsForMessage(data.Actions, msg.ID)
+	permContext, err := h.actionParser.CreatePermissioNContextForActions(session.UserID, req.GuildID, req.ChannelID)
+	if err != nil {
+		return fmt.Errorf("Failed to create permission context: %w", err)
+	}
+
+	err = h.actionParser.CreateActionsForMessage(data.Actions, permContext, msg.ID, false)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create actions for message")
 		return err

@@ -11,6 +11,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
+	"github.com/sqlc-dev/pqtype"
 )
 
 type ActionHandler struct {
@@ -27,6 +28,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 	interaction := i.Interaction()
 
 	var rawActions []byte
+	var rawPermContext pqtype.NullRawMessage
 	if interaction.Type == discordgo.InteractionMessageComponent {
 		data := interaction.MessageComponentData()
 
@@ -49,6 +51,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			return err
 		}
 		rawActions = col.Actions
+		rawPermContext = col.PermissionContext
 	} else if interaction.Type == discordgo.InteractionApplicationCommand {
 		data := interaction.ApplicationCommandData()
 		fullName := data.Name
@@ -73,6 +76,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			return err
 		}
 		rawActions = col.Actions
+		rawPermContext = col.PermissionContext
 	} else {
 		return fmt.Errorf("Invalid interaciont type")
 	}
@@ -84,7 +88,22 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 		return err
 	}
 
+	// For messages created before the permission context was added we don't run permission checks here
+	legacyPermissions := true
+	permContext := actions.ActionPermissionContext{}
+	fmt.Println(string(rawPermContext.RawMessage))
+	if rawPermContext.Valid {
+		err = json.Unmarshal(rawPermContext.RawMessage, &permContext)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to unmarshal permission context")
+			return err
+		}
+		legacyPermissions = false
+	}
+
 	for _, action := range actionSet.Actions {
+		// TODO: run permission checks here
+
 		switch action.Type {
 		case actions.ActionTypeTextResponse:
 			var flags discordgo.MessageFlags
@@ -97,6 +116,14 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				Flags:   flags,
 			})
 		case actions.ActionTypeToggleRole:
+			if !legacyPermissions && !permContext.CanManageRole(action.TargetID) {
+				i.Respond(&discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("The user that has created this message doesn't have permissions to toggle the role <@&%s>.", action.TargetID),
+					Flags:   discordgo.MessageFlagsEphemeral,
+				})
+				return nil
+			}
+
 			hasRole := false
 			for _, roleID := range interaction.Member.Roles {
 				if roleID == action.TargetID {
@@ -130,6 +157,14 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				})
 			}
 		case actions.ActionTypeAddRole:
+			if !legacyPermissions && !permContext.CanManageRole(action.TargetID) {
+				i.Respond(&discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("The user that has created this message doesn't have permissions to assign the role <@&%s>.", action.TargetID),
+					Flags:   discordgo.MessageFlagsEphemeral,
+				})
+				return nil
+			}
+
 			err := s.GuildMemberRoleAdd(interaction.GuildID, interaction.Member.User.ID, action.TargetID)
 			if err == nil {
 				i.Respond(&discordgo.InteractionResponseData{
@@ -144,6 +179,14 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				})
 			}
 		case actions.ActionTypeRemoveRole:
+			if !legacyPermissions && !permContext.CanManageRole(action.TargetID) {
+				i.Respond(&discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("The user that has created this message doesn't have permissions to remove the role <@&%s>.", action.TargetID),
+					Flags:   discordgo.MessageFlagsEphemeral,
+				})
+				return nil
+			}
+
 			err := s.GuildMemberRoleRemove(interaction.GuildID, interaction.Member.User.ID, action.TargetID)
 			if err == nil {
 				i.Respond(&discordgo.InteractionResponseData{

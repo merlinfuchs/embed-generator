@@ -107,15 +107,13 @@ export default function SideNav() {
                 collapsed={collapsed}
                 setHidden={setHidden}
               />
-              {features?.max_custom_commands ? (
-                <NavigationButton
-                  href="/commands"
-                  label="Commands"
-                  icon={CommandLineIcon}
-                  collapsed={collapsed}
-                  setHidden={setHidden}
-                />
-              ) : null}
+              <NavigationButton
+                href="/commands"
+                label="Commands"
+                icon={CommandLineIcon}
+                collapsed={collapsed}
+                setHidden={setHidden}
+              />
               {/*<NavigationButton
                 href="/premium"
                 label="Premium"
@@ -147,15 +145,13 @@ export default function SideNav() {
               </a>
             )}
 
-            {features?.custom_bot && (
-              <NavigationButton
-                href="/settings"
-                label="Settings"
-                icon={Cog6ToothIcon}
-                collapsed={collapsed}
-                setHidden={setHidden}
-              />
-            )}
+            <NavigationButton
+              href="/settings"
+              label="Settings"
+              icon={Cog6ToothIcon}
+              collapsed={collapsed}
+              setHidden={setHidden}
+            />
           </div>
         </div>
       </div>
