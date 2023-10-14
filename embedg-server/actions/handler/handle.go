@@ -9,18 +9,22 @@ import (
 
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
 	"github.com/sqlc-dev/pqtype"
 )
 
 type ActionHandler struct {
-	pg *postgres.PostgresStore
+	pg     *postgres.PostgresStore
+	parser *parser.ActionParser
 }
 
-func New(pg *postgres.PostgresStore) *ActionHandler {
+func New(pg *postgres.PostgresStore, parser *parser.ActionParser) *ActionHandler {
 	return &ActionHandler{
-		pg: pg,
+		pg:     pg,
+		parser: parser,
 	}
 }
 
@@ -91,7 +95,6 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 	// For messages created before the permission context was added we don't run permission checks here
 	legacyPermissions := true
 	permContext := actions.ActionPermissionContext{}
-	fmt.Println(string(rawPermContext.RawMessage))
 	if rawPermContext.Valid {
 		err = json.Unmarshal(rawPermContext.RawMessage, &permContext)
 		if err != nil {
@@ -220,12 +223,31 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				flags = discordgo.MessageFlagsEphemeral
 			}
 
-			// TODO: components
-			i.Respond(&discordgo.InteractionResponseData{
-				Content: data.Content,
-				Embeds:  data.Embeds,
-				Flags:   flags,
+			components, err := m.parser.ParseMessageComponents(data.Components)
+			if err != nil {
+				return helpers.BadRequest("invalid_actions", err.Error())
+			}
+
+			// We need to get the message id of the response, so it has to be a followup response
+			if !i.HasResponded() {
+				i.Respond(&discordgo.InteractionResponseData{
+					Flags: flags,
+				}, discordgo.InteractionResponseDeferredChannelMessageWithSource)
+			}
+
+			newMsg := i.Respond(&discordgo.InteractionResponseData{
+				Content:    data.Content,
+				Embeds:     data.Embeds,
+				Components: components,
+				Flags:      flags,
 			})
+			if newMsg != nil {
+				err = m.parser.CreateActionsForMessage(data.Actions, permContext, newMsg.ID, !action.Public)
+				if err != nil {
+					log.Error().Err(err).Msg("failed to create actions for message")
+					return err
+				}
+			}
 		case actions.ActionTypeTextDM:
 			dmChannel, err := s.UserChannelCreate(interaction.Member.User.ID)
 			if err != nil {
@@ -273,7 +295,6 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				return nil
 			}
 
-			// TODO: components
 			_, err = s.ChannelMessageSendComplex(dmChannel.ID, &discordgo.MessageSend{
 				Content: data.Content,
 				Embeds:  data.Embeds,
@@ -297,6 +318,10 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			}, discordgo.InteractionResponseUpdateMessage)
 			break
 		case actions.ActionTypeSavedMessageEdit:
+			if interaction.Type != discordgo.InteractionMessageComponent {
+				continue
+			}
+
 			msg, err := m.pg.Q.GetSavedMessageForGuild(context.TODO(), postgres.GetSavedMessageForGuildParams{
 				GuildID: sql.NullString{Valid: true, String: interaction.GuildID},
 				ID:      action.TargetID,
@@ -311,11 +336,23 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				return err
 			}
 
-			// TODO: components
+			components, err := m.parser.ParseMessageComponents(data.Components)
+			if err != nil {
+				return helpers.BadRequest("invalid_actions", err.Error())
+			}
+
 			i.Respond(&discordgo.InteractionResponseData{
-				Content: data.Content,
-				Embeds:  data.Embeds,
+				Content:    data.Content,
+				Embeds:     data.Embeds,
+				Components: components,
 			}, discordgo.InteractionResponseUpdateMessage)
+
+			ephemeral := interaction.Message.Flags&discordgo.MessageFlagsEphemeral != 0
+			err = m.parser.CreateActionsForMessage(data.Actions, permContext, interaction.Message.ID, ephemeral)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to create actions for message")
+				return err
+			}
 		}
 	}
 

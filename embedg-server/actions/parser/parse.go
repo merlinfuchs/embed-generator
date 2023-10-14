@@ -9,7 +9,6 @@ import (
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
-	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
@@ -19,14 +18,14 @@ import (
 type ActionParser struct {
 	accessManager *access.AccessManager
 	pg            *postgres.PostgresStore
-	bot           *bot.Bot
+	state         *discordgo.State
 }
 
-func New(accessManager *access.AccessManager, pg *postgres.PostgresStore, bot *bot.Bot) *ActionParser {
+func New(accessManager *access.AccessManager, pg *postgres.PostgresStore, state *discordgo.State) *ActionParser {
 	return &ActionParser{
 		accessManager: accessManager,
 		pg:            pg,
-		bot:           bot,
+		state:         state,
 	}
 }
 
@@ -88,7 +87,7 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 	var channel *discordgo.Channel
 	if channelID != "" {
 		var err error
-		channel, err = m.bot.State.Channel(channelID)
+		channel, err = m.state.Channel(channelID)
 		if err != nil {
 			return err
 		}
@@ -98,7 +97,7 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 		}
 	}
 
-	guild, err := m.bot.State.Guild(guildID)
+	guild, err := m.state.Guild(guildID)
 	if err != nil {
 		return err
 	}
@@ -126,14 +125,14 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 	highestRolePosition := 0
 	var permissions int64
 
-	defaultRole, err := m.bot.State.Role(guildID, guildID)
+	defaultRole, err := m.state.Role(guildID, guildID)
 	if err == nil {
 		highestRolePosition = defaultRole.Position
 		permissions = defaultRole.Permissions
 	}
 
 	for _, roleID := range member.Roles {
-		role, err := m.bot.State.Role(guildID, roleID)
+		role, err := m.state.Role(guildID, roleID)
 		if err == nil && role.Position > highestRolePosition {
 			highestRolePosition = role.Position
 			permissions |= role.Permissions
@@ -161,7 +160,7 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 						return fmt.Errorf("You have no permission to manage roles in the channel %s", channelID)
 					}
 
-					role, err := m.bot.State.Role(guildID, action.TargetID)
+					role, err := m.state.Role(guildID, action.TargetID)
 					if err != nil {
 						if err == discordgo.ErrStateNotFound {
 							return fmt.Errorf("Role %s does not exist", action.TargetID)
@@ -210,7 +209,7 @@ func (m *ActionParser) CreatePermissioNContextForActions(userID string, guildID 
 	var channel *discordgo.Channel
 	if channelID != "" {
 		var err error
-		channel, err = m.bot.State.Channel(channelID)
+		channel, err = m.state.Channel(channelID)
 		if err != nil {
 			return res, err
 		}
@@ -220,7 +219,7 @@ func (m *ActionParser) CreatePermissioNContextForActions(userID string, guildID 
 		}
 	}
 
-	guild, err := m.bot.State.Guild(guildID)
+	guild, err := m.state.Guild(guildID)
 	if err != nil {
 		return res, err
 	}
@@ -242,14 +241,14 @@ func (m *ActionParser) CreatePermissioNContextForActions(userID string, guildID 
 
 	highestRolePosition := 0
 
-	defaultRole, err := m.bot.State.Role(guildID, guildID)
+	defaultRole, err := m.state.Role(guildID, guildID)
 	if err == nil {
 		highestRolePosition = defaultRole.Position
 		res.GuildPermissions = defaultRole.Permissions
 	}
 
 	for _, roleID := range member.Roles {
-		role, err := m.bot.State.Role(guildID, roleID)
+		role, err := m.state.Role(guildID, roleID)
 		if err == nil && role.Position > highestRolePosition {
 			highestRolePosition = role.Position
 			res.GuildPermissions |= role.Permissions
