@@ -223,9 +223,12 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				flags = discordgo.MessageFlagsEphemeral
 			}
 
-			components, err := m.parser.ParseMessageComponents(data.Components)
-			if err != nil {
-				return helpers.BadRequest("invalid_actions", err.Error())
+			var components []discordgo.MessageComponent
+			if !legacyPermissions {
+				components, err = m.parser.ParseMessageComponents(data.Components)
+				if err != nil {
+					return helpers.BadRequest("invalid_actions", err.Error())
+				}
 			}
 
 			// We need to get the message id of the response, so it has to be a followup response
@@ -241,7 +244,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				Components: components,
 				Flags:      flags,
 			})
-			if newMsg != nil {
+			if newMsg != nil && !legacyPermissions {
 				err = m.parser.CreateActionsForMessage(data.Actions, derivedPerms, newMsg.ID, !action.Public)
 				if err != nil {
 					log.Error().Err(err).Msg("failed to create actions for message")
@@ -336,9 +339,12 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				return err
 			}
 
-			components, err := m.parser.ParseMessageComponents(data.Components)
-			if err != nil {
-				return helpers.BadRequest("invalid_actions", err.Error())
+			var components []discordgo.MessageComponent
+			if !legacyPermissions {
+				components, err = m.parser.ParseMessageComponents(data.Components)
+				if err != nil {
+					return helpers.BadRequest("invalid_actions", err.Error())
+				}
 			}
 
 			i.Respond(&discordgo.InteractionResponseData{
@@ -347,11 +353,13 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				Components: components,
 			}, discordgo.InteractionResponseUpdateMessage)
 
-			ephemeral := interaction.Message.Flags&discordgo.MessageFlagsEphemeral != 0
-			err = m.parser.CreateActionsForMessage(data.Actions, derivedPerms, interaction.Message.ID, ephemeral)
-			if err != nil {
-				log.Error().Err(err).Msg("failed to create actions for message")
-				return err
+			if !legacyPermissions {
+				ephemeral := interaction.Message.Flags&discordgo.MessageFlagsEphemeral != 0
+				err = m.parser.CreateActionsForMessage(data.Actions, derivedPerms, interaction.Message.ID, ephemeral)
+				if err != nil {
+					log.Error().Err(err).Msg("failed to create actions for message")
+					return err
+				}
 			}
 		}
 	}
