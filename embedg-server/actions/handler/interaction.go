@@ -33,13 +33,14 @@ func (i *GatewayInteraction) Respond(data *discordgo.InteractionResponseData, t 
 		responseType = t[0]
 	}
 
+	var msg *discordgo.Message
+
 	if !i.Responded {
 		err = i.Session.InteractionRespond(i.Inner, &discordgo.InteractionResponse{
 			Type: responseType,
 			Data: data,
 		})
 	} else {
-		var msg *discordgo.Message
 		msg, err = i.Session.FollowupMessageCreate(i.Inner, true, &discordgo.WebhookParams{
 			Content:    data.Content,
 			Embeds:     data.Embeds,
@@ -47,7 +48,6 @@ func (i *GatewayInteraction) Respond(data *discordgo.InteractionResponseData, t 
 			Files:      data.Files,
 			Flags:      data.Flags,
 		})
-		return msg
 	}
 
 	if err != nil {
@@ -56,7 +56,7 @@ func (i *GatewayInteraction) Respond(data *discordgo.InteractionResponseData, t 
 		i.Responded = true
 	}
 
-	return nil
+	return msg
 }
 
 type RestInteraction struct {
@@ -82,21 +82,21 @@ func (i *RestInteraction) Respond(data *discordgo.InteractionResponseData, t ...
 		responseType = t[0]
 	}
 
+	var msg *discordgo.Message
+
 	if !i.Responded {
 		i.InitialResponse <- &discordgo.InteractionResponse{
 			Type: responseType,
 			Data: data,
 		}
 	} else {
-		var msg *discordgo.Message
-		_, err = i.Session.FollowupMessageCreate(i.Inner, true, &discordgo.WebhookParams{
+		msg, err = i.Session.FollowupMessageCreate(i.Inner, true, &discordgo.WebhookParams{
 			Content:    data.Content,
 			Embeds:     data.Embeds,
 			Components: data.Components,
 			Files:      data.Files,
 			Flags:      data.Flags,
 		})
-		return msg
 	}
 
 	if err != nil {
@@ -105,5 +105,5 @@ func (i *RestInteraction) Respond(data *discordgo.InteractionResponseData, t ...
 		i.Responded = true
 	}
 
-	return nil
+	return msg
 }
