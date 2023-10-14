@@ -10,6 +10,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"time"
+
+	"github.com/sqlc-dev/pqtype"
 )
 
 const countCustomCommands = `-- name: CountCustomCommands :one
@@ -151,18 +153,19 @@ func (q *Queries) GetCustomCommands(ctx context.Context, guildID string) ([]Cust
 }
 
 const insertCustomCommand = `-- name: InsertCustomCommand :one
-INSERT INTO custom_commands (id, guild_id, name, description, parameters, actions, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, guild_id, name, description, enabled, parameters, actions, created_at, updated_at, deployed_at, derived_permissions, last_used_at
+INSERT INTO custom_commands (id, guild_id, name, description, parameters, actions, derived_permissions, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id, guild_id, name, description, enabled, parameters, actions, created_at, updated_at, deployed_at, derived_permissions, last_used_at
 `
 
 type InsertCustomCommandParams struct {
-	ID          string
-	GuildID     string
-	Name        string
-	Description string
-	Parameters  json.RawMessage
-	Actions     json.RawMessage
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID                 string
+	GuildID            string
+	Name               string
+	Description        string
+	Parameters         json.RawMessage
+	Actions            json.RawMessage
+	DerivedPermissions pqtype.NullRawMessage
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
 }
 
 func (q *Queries) InsertCustomCommand(ctx context.Context, arg InsertCustomCommandParams) (CustomCommand, error) {
@@ -173,6 +176,7 @@ func (q *Queries) InsertCustomCommand(ctx context.Context, arg InsertCustomComma
 		arg.Description,
 		arg.Parameters,
 		arg.Actions,
+		arg.DerivedPermissions,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -224,18 +228,19 @@ func (q *Queries) SetCustomCommandsDeployedAt(ctx context.Context, arg SetCustom
 }
 
 const updateCustomCommand = `-- name: UpdateCustomCommand :one
-UPDATE custom_commands SET name = $3, description = $4, enabled = $5, actions = $6, parameters = $7, updated_at = $8 WHERE id = $1 AND guild_id = $2 RETURNING id, guild_id, name, description, enabled, parameters, actions, created_at, updated_at, deployed_at, derived_permissions, last_used_at
+UPDATE custom_commands SET name = $3, description = $4, enabled = $5, actions = $6, parameters = $7, derived_permissions = $8, updated_at = $9 WHERE id = $1 AND guild_id = $2 RETURNING id, guild_id, name, description, enabled, parameters, actions, created_at, updated_at, deployed_at, derived_permissions, last_used_at
 `
 
 type UpdateCustomCommandParams struct {
-	ID          string
-	GuildID     string
-	Name        string
-	Description string
-	Enabled     bool
-	Actions     json.RawMessage
-	Parameters  json.RawMessage
-	UpdatedAt   time.Time
+	ID                 string
+	GuildID            string
+	Name               string
+	Description        string
+	Enabled            bool
+	Actions            json.RawMessage
+	Parameters         json.RawMessage
+	DerivedPermissions pqtype.NullRawMessage
+	UpdatedAt          time.Time
 }
 
 func (q *Queries) UpdateCustomCommand(ctx context.Context, arg UpdateCustomCommandParams) (CustomCommand, error) {
@@ -247,6 +252,7 @@ func (q *Queries) UpdateCustomCommand(ctx context.Context, arg UpdateCustomComma
 		arg.Enabled,
 		arg.Actions,
 		arg.Parameters,
+		arg.DerivedPermissions,
 		arg.UpdatedAt,
 	)
 	var i CustomCommand
