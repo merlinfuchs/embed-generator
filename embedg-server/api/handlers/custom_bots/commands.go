@@ -15,6 +15,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
+	"github.com/sqlc-dev/pqtype"
 	"gopkg.in/guregu/null.v4"
 )
 
@@ -116,12 +117,14 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return err
 	}
 
-	actionSets := map[string]actions.ActionSet{
-		"root": actionSet,
-	}
-	err = h.actionParser.CheckPermissionsForActionSets(actionSets, session.UserID, guildID, "")
+	derivedPerms, err := h.actionParser.DerivePermissionsForActions(session.UserID, guildID, "")
 	if err != nil {
 		return helpers.BadRequest("invalid_actions", err.Error())
+	}
+
+	rawDerivedPerms, err := json.Marshal(derivedPerms)
+	if err != nil {
+		return err
 	}
 
 	command, err := h.pg.Q.InsertCustomCommand(c.Context(), postgres.InsertCustomCommandParams{
@@ -131,8 +134,12 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 		Description: req.Description,
 		Parameters:  req.Parameters,
 		Actions:     req.Actions,
-		CreatedAt:   time.Now().UTC(),
-		UpdatedAt:   time.Now().UTC(),
+		DerivedPermissions: pqtype.NullRawMessage{
+			Valid:      true,
+			RawMessage: rawDerivedPerms,
+		},
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
 	})
 	if err != nil {
 		return err
@@ -178,12 +185,14 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return err
 	}
 
-	actionSets := map[string]actions.ActionSet{
-		"root": actionSet,
-	}
-	err = h.actionParser.CheckPermissionsForActionSets(actionSets, session.UserID, guildID, "")
+	derivedPerms, err := h.actionParser.DerivePermissionsForActions(session.UserID, guildID, "")
 	if err != nil {
 		return helpers.BadRequest("invalid_actions", err.Error())
+	}
+
+	rawDerivedPerms, err := json.Marshal(derivedPerms)
+	if err != nil {
+		return err
 	}
 
 	command, err := h.pg.Q.UpdateCustomCommand(c.Context(), postgres.UpdateCustomCommandParams{
@@ -194,7 +203,11 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 		Enabled:     req.Enabled,
 		Parameters:  req.Parameters,
 		Actions:     req.Actions,
-		UpdatedAt:   time.Now().UTC(),
+		DerivedPermissions: pqtype.NullRawMessage{
+			Valid:      true,
+			RawMessage: rawDerivedPerms,
+		},
+		UpdatedAt: time.Now().UTC(),
 	})
 	if err != nil {
 		return err

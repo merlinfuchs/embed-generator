@@ -8,7 +8,7 @@ import (
 type Interaction interface {
 	Interaction() *discordgo.Interaction
 	HasResponded() bool
-	Respond(data *discordgo.InteractionResponseData, t ...discordgo.InteractionResponseType)
+	Respond(data *discordgo.InteractionResponseData, t ...discordgo.InteractionResponseType) *discordgo.Message
 }
 
 type GatewayInteraction struct {
@@ -25,22 +25,29 @@ func (i *GatewayInteraction) HasResponded() bool {
 	return i.Responded
 }
 
-func (i *GatewayInteraction) Respond(data *discordgo.InteractionResponseData, t ...discordgo.InteractionResponseType) {
+func (i *GatewayInteraction) Respond(data *discordgo.InteractionResponseData, t ...discordgo.InteractionResponseType) *discordgo.Message {
 	var err error
+
+	responseType := discordgo.InteractionResponseChannelMessageWithSource
+	if len(t) > 0 {
+		responseType = t[0]
+	}
 
 	if !i.Responded {
 		err = i.Session.InteractionRespond(i.Inner, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Type: responseType,
 			Data: data,
 		})
 	} else {
-		_, err = i.Session.FollowupMessageCreate(i.Inner, false, &discordgo.WebhookParams{
+		var msg *discordgo.Message
+		msg, err = i.Session.FollowupMessageCreate(i.Inner, true, &discordgo.WebhookParams{
 			Content:    data.Content,
 			Embeds:     data.Embeds,
 			Components: data.Components,
 			Files:      data.Files,
 			Flags:      data.Flags,
 		})
+		return msg
 	}
 
 	if err != nil {
@@ -48,6 +55,8 @@ func (i *GatewayInteraction) Respond(data *discordgo.InteractionResponseData, t 
 	} else {
 		i.Responded = true
 	}
+
+	return nil
 }
 
 type RestInteraction struct {
@@ -65,22 +74,29 @@ func (i *RestInteraction) HasResponded() bool {
 	return i.Responded
 }
 
-func (i *RestInteraction) Respond(data *discordgo.InteractionResponseData, t ...discordgo.InteractionResponseType) {
+func (i *RestInteraction) Respond(data *discordgo.InteractionResponseData, t ...discordgo.InteractionResponseType) *discordgo.Message {
 	var err error
+
+	responseType := discordgo.InteractionResponseChannelMessageWithSource
+	if len(t) > 0 {
+		responseType = t[0]
+	}
 
 	if !i.Responded {
 		i.InitialResponse <- &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Type: responseType,
 			Data: data,
 		}
 	} else {
-		_, err = i.Session.FollowupMessageCreate(i.Inner, false, &discordgo.WebhookParams{
+		var msg *discordgo.Message
+		_, err = i.Session.FollowupMessageCreate(i.Inner, true, &discordgo.WebhookParams{
 			Content:    data.Content,
 			Embeds:     data.Embeds,
 			Components: data.Components,
 			Files:      data.Files,
 			Flags:      data.Flags,
 		})
+		return msg
 	}
 
 	if err != nil {
@@ -88,4 +104,6 @@ func (i *RestInteraction) Respond(data *discordgo.InteractionResponseData, t ...
 	} else {
 		i.Responded = true
 	}
+
+	return nil
 }

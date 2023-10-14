@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/assistant"
@@ -31,7 +32,7 @@ type stores struct {
 
 func RegisterRoutes(app *fiber.App, stores *stores) {
 	sessionManager := session.New(stores.pg)
-	accessManager := access.New(stores.bot)
+	accessManager := access.New(stores.bot.State, stores.bot.Session)
 	premiumManager := premium.New(stores.pg, stores.bot)
 
 	authHandler := auth.New(stores.pg, stores.bot, sessionManager)
@@ -70,7 +71,11 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 	guildsGroup.Get("/:guildID/emojis", guildsHanlder.HandleListGuildEmojis)
 	guildsGroup.Get("/:guildID/stickers", guildsHanlder.HandleListGuildStickers)
 
-	actionParser := parser.New(accessManager, stores.pg, stores.bot)
+	actionParser := parser.New(accessManager, stores.pg, stores.bot.State)
+
+	// TODO: move this somewhere else, this is not the right place for this
+	stores.bot.ActionParser = actionParser
+	stores.bot.ActionHandler = handler.New(stores.pg, actionParser)
 
 	sendMessageHandler := send_message.New(stores.bot, accessManager, actionParser)
 	app.Post("/api/send-message/channel", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(sendMessageHandler.HandleSendMessageToChannel))

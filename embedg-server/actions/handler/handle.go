@@ -9,17 +9,22 @@ import (
 
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
+	"github.com/sqlc-dev/pqtype"
 )
 
 type ActionHandler struct {
-	pg *postgres.PostgresStore
+	pg     *postgres.PostgresStore
+	parser *parser.ActionParser
 }
 
-func New(pg *postgres.PostgresStore) *ActionHandler {
+func New(pg *postgres.PostgresStore, parser *parser.ActionParser) *ActionHandler {
 	return &ActionHandler{
-		pg: pg,
+		pg:     pg,
+		parser: parser,
 	}
 }
 
@@ -27,6 +32,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 	interaction := i.Interaction()
 
 	var rawActions []byte
+	var rawDerivedPerms pqtype.NullRawMessage
 	if interaction.Type == discordgo.InteractionMessageComponent {
 		data := interaction.MessageComponentData()
 
@@ -49,6 +55,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			return err
 		}
 		rawActions = col.Actions
+		rawDerivedPerms = col.DerivedPermissions
 	} else if interaction.Type == discordgo.InteractionApplicationCommand {
 		data := interaction.ApplicationCommandData()
 		fullName := data.Name
@@ -73,6 +80,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			return err
 		}
 		rawActions = col.Actions
+		rawDerivedPerms = col.DerivedPermissions
 	} else {
 		return fmt.Errorf("Invalid interaciont type")
 	}
@@ -84,7 +92,21 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 		return err
 	}
 
+	// For messages created before the permission context was added we don't run permission checks here
+	legacyPermissions := true
+	derivedPerms := actions.ActionDerivedPermissions{}
+	if rawDerivedPerms.Valid {
+		err = json.Unmarshal(rawDerivedPerms.RawMessage, &derivedPerms)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to unmarshal permission context")
+			return err
+		}
+		legacyPermissions = false
+	}
+
 	for _, action := range actionSet.Actions {
+		// TODO: run permission checks here
+
 		switch action.Type {
 		case actions.ActionTypeTextResponse:
 			var flags discordgo.MessageFlags
@@ -97,6 +119,14 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				Flags:   flags,
 			})
 		case actions.ActionTypeToggleRole:
+			if !legacyPermissions && !derivedPerms.CanManageRole(action.TargetID) {
+				i.Respond(&discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("The user that has created this message doesn't have permissions to toggle the role <@&%s>.", action.TargetID),
+					Flags:   discordgo.MessageFlagsEphemeral,
+				})
+				return nil
+			}
+
 			hasRole := false
 			for _, roleID := range interaction.Member.Roles {
 				if roleID == action.TargetID {
@@ -130,6 +160,14 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				})
 			}
 		case actions.ActionTypeAddRole:
+			if !legacyPermissions && !derivedPerms.CanManageRole(action.TargetID) {
+				i.Respond(&discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("The user that has created this message doesn't have permissions to assign the role <@&%s>.", action.TargetID),
+					Flags:   discordgo.MessageFlagsEphemeral,
+				})
+				return nil
+			}
+
 			err := s.GuildMemberRoleAdd(interaction.GuildID, interaction.Member.User.ID, action.TargetID)
 			if err == nil {
 				i.Respond(&discordgo.InteractionResponseData{
@@ -144,6 +182,14 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				})
 			}
 		case actions.ActionTypeRemoveRole:
+			if !legacyPermissions && !derivedPerms.CanManageRole(action.TargetID) {
+				i.Respond(&discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("The user that has created this message doesn't have permissions to remove the role <@&%s>.", action.TargetID),
+					Flags:   discordgo.MessageFlagsEphemeral,
+				})
+				return nil
+			}
+
 			err := s.GuildMemberRoleRemove(interaction.GuildID, interaction.Member.User.ID, action.TargetID)
 			if err == nil {
 				i.Respond(&discordgo.InteractionResponseData{
@@ -177,12 +223,31 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				flags = discordgo.MessageFlagsEphemeral
 			}
 
-			// TODO: components
-			i.Respond(&discordgo.InteractionResponseData{
-				Content: data.Content,
-				Embeds:  data.Embeds,
-				Flags:   flags,
+			components, err := m.parser.ParseMessageComponents(data.Components)
+			if err != nil {
+				return helpers.BadRequest("invalid_actions", err.Error())
+			}
+
+			// We need to get the message id of the response, so it has to be a followup response
+			if !i.HasResponded() {
+				i.Respond(&discordgo.InteractionResponseData{
+					Flags: flags,
+				}, discordgo.InteractionResponseDeferredChannelMessageWithSource)
+			}
+
+			newMsg := i.Respond(&discordgo.InteractionResponseData{
+				Content:    data.Content,
+				Embeds:     data.Embeds,
+				Components: components,
+				Flags:      flags,
 			})
+			if newMsg != nil {
+				err = m.parser.CreateActionsForMessage(data.Actions, derivedPerms, newMsg.ID, !action.Public)
+				if err != nil {
+					log.Error().Err(err).Msg("failed to create actions for message")
+					return err
+				}
+			}
 		case actions.ActionTypeTextDM:
 			dmChannel, err := s.UserChannelCreate(interaction.Member.User.ID)
 			if err != nil {
@@ -230,7 +295,6 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				return nil
 			}
 
-			// TODO: components
 			_, err = s.ChannelMessageSendComplex(dmChannel.ID, &discordgo.MessageSend{
 				Content: data.Content,
 				Embeds:  data.Embeds,
@@ -254,6 +318,10 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			}, discordgo.InteractionResponseUpdateMessage)
 			break
 		case actions.ActionTypeSavedMessageEdit:
+			if interaction.Type != discordgo.InteractionMessageComponent {
+				continue
+			}
+
 			msg, err := m.pg.Q.GetSavedMessageForGuild(context.TODO(), postgres.GetSavedMessageForGuildParams{
 				GuildID: sql.NullString{Valid: true, String: interaction.GuildID},
 				ID:      action.TargetID,
@@ -268,11 +336,23 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				return err
 			}
 
-			// TODO: components
+			components, err := m.parser.ParseMessageComponents(data.Components)
+			if err != nil {
+				return helpers.BadRequest("invalid_actions", err.Error())
+			}
+
 			i.Respond(&discordgo.InteractionResponseData{
-				Content: data.Content,
-				Embeds:  data.Embeds,
+				Content:    data.Content,
+				Embeds:     data.Embeds,
+				Components: components,
 			}, discordgo.InteractionResponseUpdateMessage)
+
+			ephemeral := interaction.Message.Flags&discordgo.MessageFlagsEphemeral != 0
+			err = m.parser.CreateActionsForMessage(data.Actions, derivedPerms, interaction.Message.ID, ephemeral)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to create actions for message")
+				return err
+			}
 		}
 	}
 

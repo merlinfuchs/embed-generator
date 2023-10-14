@@ -6,16 +6,16 @@ import (
 
 	"github.com/jellydator/ttlcache/v3"
 	"github.com/merlinfuchs/discordgo"
-	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/spf13/viper"
 )
 
 type AccessManager struct {
-	bot         *bot.Bot
+	state       *discordgo.State
+	session     *discordgo.Session
 	memberCache *ttlcache.Cache[string, *discordgo.Member]
 }
 
-func New(bot *bot.Bot) *AccessManager {
+func New(state *discordgo.State, session *discordgo.Session) *AccessManager {
 	memberCache := ttlcache.New(
 		ttlcache.WithTTL[string, *discordgo.Member](3*time.Minute),
 		ttlcache.WithDisableTouchOnHit[string, *discordgo.Member](),
@@ -23,7 +23,8 @@ func New(bot *bot.Bot) *AccessManager {
 	go memberCache.Start()
 
 	return &AccessManager{
-		bot:         bot,
+		state:       state,
+		session:     session,
 		memberCache: memberCache,
 	}
 }
@@ -50,7 +51,7 @@ func (m *AccessManager) GetGuildAccessForUser(userID string, guildID string) (Gu
 	res := GuildAccess{}
 	mu := &sync.Mutex{}
 
-	guild, err := m.bot.State.Guild(guildID)
+	guild, err := m.state.Guild(guildID)
 	if err != nil {
 		if err == discordgo.ErrStateNotFound {
 			return res, nil
@@ -103,7 +104,7 @@ func (m *AccessManager) GetChannelAccessForUser(userID string, channelID string)
 
 func (m *AccessManager) ComputeUserPermissionsForChannel(userID string, channelID string) (int64, error) {
 	// We need to make sure the member is in the state, otherwise the permissions will be wrong
-	channel, err := m.bot.State.Channel(channelID)
+	channel, err := m.state.Channel(channelID)
 	if err != nil {
 		if err == discordgo.ErrStateNotFound {
 			return 0, nil
@@ -111,7 +112,7 @@ func (m *AccessManager) ComputeUserPermissionsForChannel(userID string, channelI
 		return 0, err
 	}
 
-	guild, err := m.bot.State.Guild(channel.GuildID)
+	guild, err := m.state.Guild(channel.GuildID)
 	if err != nil {
 		if err == discordgo.ErrStateNotFound {
 			return 0, nil
@@ -125,20 +126,20 @@ func (m *AccessManager) ComputeUserPermissionsForChannel(userID string, channelI
 	}
 
 	// this is workaround to compute the permissions using discordgo, we remove it afterwards
-	m.bot.State.MemberAdd(member)
+	m.state.MemberAdd(member)
 
-	perms, err := m.bot.State.UserChannelPermissions(userID, channelID)
+	perms, err := m.state.UserChannelPermissions(userID, channelID)
 	if err == discordgo.ErrStateNotFound {
 		return 0, nil
 	}
 
-	m.bot.State.MemberRemove(member)
+	m.state.MemberRemove(member)
 
 	return perms, err
 }
 
 func (m *AccessManager) ComputeBotPermissionsForChannel(channelID string) (int64, error) {
-	perms, err := m.bot.State.UserChannelPermissions(viper.GetString("discord.client_id"), channelID)
+	perms, err := m.state.UserChannelPermissions(viper.GetString("discord.client_id"), channelID)
 	if err == discordgo.ErrStateNotFound {
 		return 0, nil
 	}
@@ -152,7 +153,7 @@ func (m *AccessManager) GetGuildMember(guildID string, userID string) (*discordg
 		return cacheItem.Value(), nil
 	}
 
-	member, err := m.bot.Session.GuildMember(guildID, userID)
+	member, err := m.session.GuildMember(guildID, userID)
 	if err != nil {
 		return nil, err
 	}

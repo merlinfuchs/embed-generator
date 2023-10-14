@@ -8,6 +8,7 @@ import (
 
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot/sharding"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
@@ -22,6 +23,7 @@ type Bot struct {
 	*sharding.ShardManager
 	pg            *postgres.PostgresStore
 	ActionHandler *handler.ActionHandler
+	ActionParser  *parser.ActionParser
 }
 
 func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
@@ -41,9 +43,8 @@ func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 	}
 
 	b := &Bot{
-		ShardManager:  manager,
-		pg:            pg,
-		ActionHandler: handler.New(pg),
+		ShardManager: manager,
+		pg:           pg,
 	}
 
 	b.AddHandler(onReady)

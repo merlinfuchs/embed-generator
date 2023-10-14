@@ -94,8 +94,12 @@ export default function CommandsView() {
                 {commands.map((cmd) => (
                   <CustomCommand cmd={cmd} key={cmd.id} />
                 ))}
-                {commands.length === 0 ||
-                  (create && <CustomCommandCreate setCreate={setCreate} />)}
+                {(commands.length === 0 || create) && (
+                  <CustomCommandCreate
+                    setCreate={setCreate}
+                    cancelable={commands.length !== 0}
+                  />
+                )}
               </AutoAnimate>
               <div className="flex space-x-3 justify-end">
                 <button

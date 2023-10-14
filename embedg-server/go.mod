@@ -19,6 +19,7 @@ require (
 	github.com/sashabaranov/go-openai v1.6.1
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
+	github.com/sqlc-dev/pqtype v0.3.0
 	github.com/vincent-petithory/dataurl v1.0.0
 	go.mongodb.org/mongo-driver v1.11.6
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783
