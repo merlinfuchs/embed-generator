@@ -24,7 +24,7 @@ func (q *Queries) CountCustomCommands(ctx context.Context, guildID string) (int6
 }
 
 const deleteCustomCommand = `-- name: DeleteCustomCommand :one
-DELETE FROM custom_commands WHERE id = $1 AND guild_id = $2 RETURNING id, guild_id, name, description, enabled, parameters, actions, created_at, updated_at, deployed_at, permission_context, last_used_at
+DELETE FROM custom_commands WHERE id = $1 AND guild_id = $2 RETURNING id, guild_id, name, description, enabled, parameters, actions, created_at, updated_at, deployed_at, derived_permissions, last_used_at
 `
 
 type DeleteCustomCommandParams struct {
@@ -46,14 +46,14 @@ func (q *Queries) DeleteCustomCommand(ctx context.Context, arg DeleteCustomComma
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeployedAt,
-		&i.PermissionContext,
+		&i.DerivedPermissions,
 		&i.LastUsedAt,
 	)
 	return i, err
 }
 
 const getCustomCommand = `-- name: GetCustomCommand :one
-SELECT id, guild_id, name, description, enabled, parameters, actions, created_at, updated_at, deployed_at, permission_context, last_used_at FROM custom_commands WHERE id = $1 AND guild_id = $2
+SELECT id, guild_id, name, description, enabled, parameters, actions, created_at, updated_at, deployed_at, derived_permissions, last_used_at FROM custom_commands WHERE id = $1 AND guild_id = $2
 `
 
 type GetCustomCommandParams struct {
@@ -75,14 +75,14 @@ func (q *Queries) GetCustomCommand(ctx context.Context, arg GetCustomCommandPara
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeployedAt,
-		&i.PermissionContext,
+		&i.DerivedPermissions,
 		&i.LastUsedAt,
 	)
 	return i, err
 }
 
 const getCustomCommandByName = `-- name: GetCustomCommandByName :one
-SELECT id, guild_id, name, description, enabled, parameters, actions, created_at, updated_at, deployed_at, permission_context, last_used_at FROM custom_commands WHERE name = $1 AND guild_id = $2
+SELECT id, guild_id, name, description, enabled, parameters, actions, created_at, updated_at, deployed_at, derived_permissions, last_used_at FROM custom_commands WHERE name = $1 AND guild_id = $2
 `
 
 type GetCustomCommandByNameParams struct {
@@ -104,14 +104,14 @@ func (q *Queries) GetCustomCommandByName(ctx context.Context, arg GetCustomComma
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeployedAt,
-		&i.PermissionContext,
+		&i.DerivedPermissions,
 		&i.LastUsedAt,
 	)
 	return i, err
 }
 
 const getCustomCommands = `-- name: GetCustomCommands :many
-SELECT id, guild_id, name, description, enabled, parameters, actions, created_at, updated_at, deployed_at, permission_context, last_used_at FROM custom_commands WHERE guild_id = $1
+SELECT id, guild_id, name, description, enabled, parameters, actions, created_at, updated_at, deployed_at, derived_permissions, last_used_at FROM custom_commands WHERE guild_id = $1
 `
 
 func (q *Queries) GetCustomCommands(ctx context.Context, guildID string) ([]CustomCommand, error) {
@@ -134,7 +134,7 @@ func (q *Queries) GetCustomCommands(ctx context.Context, guildID string) ([]Cust
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeployedAt,
-			&i.PermissionContext,
+			&i.DerivedPermissions,
 			&i.LastUsedAt,
 		); err != nil {
 			return nil, err
@@ -151,7 +151,7 @@ func (q *Queries) GetCustomCommands(ctx context.Context, guildID string) ([]Cust
 }
 
 const insertCustomCommand = `-- name: InsertCustomCommand :one
-INSERT INTO custom_commands (id, guild_id, name, description, parameters, actions, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, guild_id, name, description, enabled, parameters, actions, created_at, updated_at, deployed_at, permission_context, last_used_at
+INSERT INTO custom_commands (id, guild_id, name, description, parameters, actions, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, guild_id, name, description, enabled, parameters, actions, created_at, updated_at, deployed_at, derived_permissions, last_used_at
 `
 
 type InsertCustomCommandParams struct {
@@ -188,14 +188,14 @@ func (q *Queries) InsertCustomCommand(ctx context.Context, arg InsertCustomComma
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeployedAt,
-		&i.PermissionContext,
+		&i.DerivedPermissions,
 		&i.LastUsedAt,
 	)
 	return i, err
 }
 
 const setCustomCommandsDeployedAt = `-- name: SetCustomCommandsDeployedAt :one
-UPDATE custom_commands SET deployed_at = $2 WHERE guild_id = $1 RETURNING id, guild_id, name, description, enabled, parameters, actions, created_at, updated_at, deployed_at, permission_context, last_used_at
+UPDATE custom_commands SET deployed_at = $2 WHERE guild_id = $1 RETURNING id, guild_id, name, description, enabled, parameters, actions, created_at, updated_at, deployed_at, derived_permissions, last_used_at
 `
 
 type SetCustomCommandsDeployedAtParams struct {
@@ -217,14 +217,14 @@ func (q *Queries) SetCustomCommandsDeployedAt(ctx context.Context, arg SetCustom
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeployedAt,
-		&i.PermissionContext,
+		&i.DerivedPermissions,
 		&i.LastUsedAt,
 	)
 	return i, err
 }
 
 const updateCustomCommand = `-- name: UpdateCustomCommand :one
-UPDATE custom_commands SET name = $3, description = $4, enabled = $5, actions = $6, parameters = $7, updated_at = $8 WHERE id = $1 AND guild_id = $2 RETURNING id, guild_id, name, description, enabled, parameters, actions, created_at, updated_at, deployed_at, permission_context, last_used_at
+UPDATE custom_commands SET name = $3, description = $4, enabled = $5, actions = $6, parameters = $7, updated_at = $8 WHERE id = $1 AND guild_id = $2 RETURNING id, guild_id, name, description, enabled, parameters, actions, created_at, updated_at, deployed_at, derived_permissions, last_used_at
 `
 
 type UpdateCustomCommandParams struct {
@@ -261,7 +261,7 @@ func (q *Queries) UpdateCustomCommand(ctx context.Context, arg UpdateCustomComma
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeployedAt,
-		&i.PermissionContext,
+		&i.DerivedPermissions,
 		&i.LastUsedAt,
 	)
 	return i, err

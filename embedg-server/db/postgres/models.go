@@ -27,18 +27,18 @@ type CustomBot struct {
 }
 
 type CustomCommand struct {
-	ID                string
-	GuildID           string
-	Name              string
-	Description       string
-	Enabled           bool
-	Parameters        json.RawMessage
-	Actions           json.RawMessage
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
-	DeployedAt        sql.NullTime
-	PermissionContext pqtype.NullRawMessage
-	LastUsedAt        time.Time
+	ID                 string
+	GuildID            string
+	Name               string
+	Description        string
+	Enabled            bool
+	Parameters         json.RawMessage
+	Actions            json.RawMessage
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	DeployedAt         sql.NullTime
+	DerivedPermissions pqtype.NullRawMessage
+	LastUsedAt         time.Time
 }
 
 type Entitlement struct {
@@ -53,13 +53,13 @@ type Entitlement struct {
 }
 
 type MessageActionSet struct {
-	ID                string
-	MessageID         string
-	SetID             string
-	Actions           json.RawMessage
-	PermissionContext pqtype.NullRawMessage
-	LastUsedAt        time.Time
-	Ephemeral         bool
+	ID                 string
+	MessageID          string
+	SetID              string
+	Actions            json.RawMessage
+	DerivedPermissions pqtype.NullRawMessage
+	LastUsedAt         time.Time
+	Ephemeral          bool
 }
 
 type SavedMessage struct {

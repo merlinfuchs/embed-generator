@@ -74,7 +74,7 @@ type ActionSet struct {
 	Actions []Action `json:"actions"`
 }
 
-type ActionPermissionContext struct {
+type ActionDerivedPermissions struct {
 	UserID             string   `json:"user_id"`
 	GuildIsOwner       bool     `json:"guild_is_owner"`
 	GuildPermissions   int64    `json:"guild_permissions"`
@@ -82,15 +82,15 @@ type ActionPermissionContext struct {
 	AllowedRoleIDs     []string `json:"lower_role_ids"`
 }
 
-func (a *ActionPermissionContext) HasChannelPermission(permission int64) bool {
+func (a *ActionDerivedPermissions) HasChannelPermission(permission int64) bool {
 	return a.GuildIsOwner || (a.ChannelPermissions&permission) != 0
 }
 
-func (a *ActionPermissionContext) HasGuildPermission(permission int64) bool {
+func (a *ActionDerivedPermissions) HasGuildPermission(permission int64) bool {
 	return a.GuildIsOwner || (a.GuildPermissions&discordgo.PermissionAdministrator) != 0 || (a.GuildPermissions&permission) != 0
 }
 
-func (a *ActionPermissionContext) CanManageRole(guildID string) bool {
+func (a *ActionDerivedPermissions) CanManageRole(guildID string) bool {
 	if a.GuildIsOwner {
 		return true
 	}

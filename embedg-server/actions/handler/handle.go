@@ -32,7 +32,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 	interaction := i.Interaction()
 
 	var rawActions []byte
-	var rawPermContext pqtype.NullRawMessage
+	var rawDerivedPerms pqtype.NullRawMessage
 	if interaction.Type == discordgo.InteractionMessageComponent {
 		data := interaction.MessageComponentData()
 
@@ -55,7 +55,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			return err
 		}
 		rawActions = col.Actions
-		rawPermContext = col.PermissionContext
+		rawDerivedPerms = col.DerivedPermissions
 	} else if interaction.Type == discordgo.InteractionApplicationCommand {
 		data := interaction.ApplicationCommandData()
 		fullName := data.Name
@@ -80,7 +80,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			return err
 		}
 		rawActions = col.Actions
-		rawPermContext = col.PermissionContext
+		rawDerivedPerms = col.DerivedPermissions
 	} else {
 		return fmt.Errorf("Invalid interaciont type")
 	}
@@ -94,9 +94,9 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 
 	// For messages created before the permission context was added we don't run permission checks here
 	legacyPermissions := true
-	permContext := actions.ActionPermissionContext{}
-	if rawPermContext.Valid {
-		err = json.Unmarshal(rawPermContext.RawMessage, &permContext)
+	derivedPerms := actions.ActionDerivedPermissions{}
+	if rawDerivedPerms.Valid {
+		err = json.Unmarshal(rawDerivedPerms.RawMessage, &derivedPerms)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to unmarshal permission context")
 			return err
@@ -119,7 +119,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				Flags:   flags,
 			})
 		case actions.ActionTypeToggleRole:
-			if !legacyPermissions && !permContext.CanManageRole(action.TargetID) {
+			if !legacyPermissions && !derivedPerms.CanManageRole(action.TargetID) {
 				i.Respond(&discordgo.InteractionResponseData{
 					Content: fmt.Sprintf("The user that has created this message doesn't have permissions to toggle the role <@&%s>.", action.TargetID),
 					Flags:   discordgo.MessageFlagsEphemeral,
@@ -160,7 +160,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				})
 			}
 		case actions.ActionTypeAddRole:
-			if !legacyPermissions && !permContext.CanManageRole(action.TargetID) {
+			if !legacyPermissions && !derivedPerms.CanManageRole(action.TargetID) {
 				i.Respond(&discordgo.InteractionResponseData{
 					Content: fmt.Sprintf("The user that has created this message doesn't have permissions to assign the role <@&%s>.", action.TargetID),
 					Flags:   discordgo.MessageFlagsEphemeral,
@@ -182,7 +182,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				})
 			}
 		case actions.ActionTypeRemoveRole:
-			if !legacyPermissions && !permContext.CanManageRole(action.TargetID) {
+			if !legacyPermissions && !derivedPerms.CanManageRole(action.TargetID) {
 				i.Respond(&discordgo.InteractionResponseData{
 					Content: fmt.Sprintf("The user that has created this message doesn't have permissions to remove the role <@&%s>.", action.TargetID),
 					Flags:   discordgo.MessageFlagsEphemeral,
@@ -242,7 +242,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				Flags:      flags,
 			})
 			if newMsg != nil {
-				err = m.parser.CreateActionsForMessage(data.Actions, permContext, newMsg.ID, !action.Public)
+				err = m.parser.CreateActionsForMessage(data.Actions, derivedPerms, newMsg.ID, !action.Public)
 				if err != nil {
 					log.Error().Err(err).Msg("failed to create actions for message")
 					return err
@@ -348,7 +348,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			}, discordgo.InteractionResponseUpdateMessage)
 
 			ephemeral := interaction.Message.Flags&discordgo.MessageFlagsEphemeral != 0
-			err = m.parser.CreateActionsForMessage(data.Actions, permContext, interaction.Message.ID, ephemeral)
+			err = m.parser.CreateActionsForMessage(data.Actions, derivedPerms, interaction.Message.ID, ephemeral)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to create actions for message")
 				return err

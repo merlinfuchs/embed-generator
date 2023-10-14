@@ -22,7 +22,7 @@ func (q *Queries) DeleteMessageActionSetsForMessage(ctx context.Context, message
 }
 
 const getMessageActionSet = `-- name: GetMessageActionSet :one
-SELECT id, message_id, set_id, actions, permission_context, last_used_at, ephemeral FROM message_action_sets WHERE message_id = $1 AND set_id = $2
+SELECT id, message_id, set_id, actions, derived_permissions, last_used_at, ephemeral FROM message_action_sets WHERE message_id = $1 AND set_id = $2
 `
 
 type GetMessageActionSetParams struct {
@@ -38,7 +38,7 @@ func (q *Queries) GetMessageActionSet(ctx context.Context, arg GetMessageActionS
 		&i.MessageID,
 		&i.SetID,
 		&i.Actions,
-		&i.PermissionContext,
+		&i.DerivedPermissions,
 		&i.LastUsedAt,
 		&i.Ephemeral,
 	)
@@ -46,16 +46,16 @@ func (q *Queries) GetMessageActionSet(ctx context.Context, arg GetMessageActionS
 }
 
 const insertMessageActionSet = `-- name: InsertMessageActionSet :one
-INSERT INTO message_action_sets (id, message_id, set_id, actions, permission_context, ephemeral) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, message_id, set_id, actions, permission_context, last_used_at, ephemeral
+INSERT INTO message_action_sets (id, message_id, set_id, actions, derived_permissions, ephemeral) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, message_id, set_id, actions, derived_permissions, last_used_at, ephemeral
 `
 
 type InsertMessageActionSetParams struct {
-	ID                string
-	MessageID         string
-	SetID             string
-	Actions           json.RawMessage
-	PermissionContext pqtype.NullRawMessage
-	Ephemeral         bool
+	ID                 string
+	MessageID          string
+	SetID              string
+	Actions            json.RawMessage
+	DerivedPermissions pqtype.NullRawMessage
+	Ephemeral          bool
 }
 
 func (q *Queries) InsertMessageActionSet(ctx context.Context, arg InsertMessageActionSetParams) (MessageActionSet, error) {
@@ -64,7 +64,7 @@ func (q *Queries) InsertMessageActionSet(ctx context.Context, arg InsertMessageA
 		arg.MessageID,
 		arg.SetID,
 		arg.Actions,
-		arg.PermissionContext,
+		arg.DerivedPermissions,
 		arg.Ephemeral,
 	)
 	var i MessageActionSet
@@ -73,7 +73,7 @@ func (q *Queries) InsertMessageActionSet(ctx context.Context, arg InsertMessageA
 		&i.MessageID,
 		&i.SetID,
 		&i.Actions,
-		&i.PermissionContext,
+		&i.DerivedPermissions,
 		&i.LastUsedAt,
 		&i.Ephemeral,
 	)

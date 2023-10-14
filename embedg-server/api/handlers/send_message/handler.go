@@ -121,7 +121,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return fmt.Errorf("Failed to send message: %w", err)
 	}
 
-	permContext, err := h.actionParser.CreatePermissioNContextForActions(session.UserID, req.GuildID, req.ChannelID)
+	permContext, err := h.actionParser.DerivePermissionsForActions(session.UserID, req.GuildID, req.ChannelID)
 	if err != nil {
 		return fmt.Errorf("Failed to create permission context: %w", err)
 	}

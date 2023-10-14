@@ -201,8 +201,8 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 	return checkActions(actionSets, 0)
 }
 
-func (m *ActionParser) CreatePermissioNContextForActions(userID string, guildID string, channelID string) (actions.ActionPermissionContext, error) {
-	res := actions.ActionPermissionContext{
+func (m *ActionParser) DerivePermissionsForActions(userID string, guildID string, channelID string) (actions.ActionDerivedPermissions, error) {
+	res := actions.ActionDerivedPermissions{
 		UserID: userID,
 	}
 
@@ -264,13 +264,13 @@ func (m *ActionParser) CreatePermissioNContextForActions(userID string, guildID 
 	return res, nil
 }
 
-func (m *ActionParser) CreateActionsForMessage(actionSets map[string]actions.ActionSet, permContext actions.ActionPermissionContext, messageID string, ephemeral bool) error {
+func (m *ActionParser) CreateActionsForMessage(actionSets map[string]actions.ActionSet, derivedPerms actions.ActionDerivedPermissions, messageID string, ephemeral bool) error {
 	err := m.pg.Q.DeleteMessageActionSetsForMessage(context.TODO(), messageID)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to delete message action sets")
 	}
 
-	rawPermContext, err := json.Marshal(permContext)
+	rawDerivedPerms, err := json.Marshal(derivedPerms)
 	if err != nil {
 		return fmt.Errorf("Failed to marshal permission context: %w", err)
 	}
@@ -282,12 +282,12 @@ func (m *ActionParser) CreateActionsForMessage(actionSets map[string]actions.Act
 		}
 
 		_, err = m.pg.Q.InsertMessageActionSet(context.TODO(), postgres.InsertMessageActionSetParams{
-			ID:                util.UniqueID(),
-			MessageID:         messageID,
-			SetID:             actionSetID,
-			Actions:           raw,
-			PermissionContext: pqtype.NullRawMessage{Valid: true, RawMessage: rawPermContext},
-			Ephemeral:         ephemeral,
+			ID:                 util.UniqueID(),
+			MessageID:          messageID,
+			SetID:              actionSetID,
+			Actions:            raw,
+			DerivedPermissions: pqtype.NullRawMessage{Valid: true, RawMessage: rawDerivedPerms},
+			Ephemeral:          ephemeral,
 		})
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to insert message action set")
