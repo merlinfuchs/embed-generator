@@ -60,6 +60,7 @@ export default function MessagePreview({ msg }: { msg: Message }) {
                   />
                 </div>
               )}
+
               <div className="discord-message-compact-indent">
                 {msg.embeds &&
                   msg.embeds.map((embed) => {
@@ -249,6 +250,28 @@ export default function MessagePreview({ msg }: { msg: Message }) {
                                 <span>{comp.label}</span>
                               </div>
                             )
+                          ) : comp.type === 3 ? (
+                            <div
+                              className="discord-select-menu discord-select-menu-hoverable"
+                              key={comp.id}
+                            >
+                              <span className="discord-select-menu-placeholder">
+                                {comp.placeholder || "Make a selection"}
+                              </span>
+                              <svg
+                                className="discord-select-menu-icon"
+                                aria-hidden="true"
+                                role="img"
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  fill="currentColor"
+                                  d="M16.59 8.59003L12 13.17L7.41 8.59003L6 10L12 16L18 10L16.59 8.59003Z"
+                                ></path>
+                              </svg>
+                            </div>
                           ) : undefined
                         )}
                       </div>

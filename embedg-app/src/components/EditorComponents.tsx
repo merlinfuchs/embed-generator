@@ -57,7 +57,7 @@ export default function EditorComponents() {
             {components.length} / 5
           </div>
           <div className="bg-blurple px-1 rounded text-white text-xs items-center flex items-center font-bold">
-            EARLY ACCESS
+            ADVANCED
           </div>
         </div>
       }
