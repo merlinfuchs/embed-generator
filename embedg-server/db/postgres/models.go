@@ -52,6 +52,13 @@ type Entitlement struct {
 	EndsAt    sql.NullTime
 }
 
+type GuildValue struct {
+	GuildID   string
+	Key       string
+	Value     []byte
+	CreatedAt time.Time
+}
+
 type MessageActionSet struct {
 	ID                 string
 	MessageID          string

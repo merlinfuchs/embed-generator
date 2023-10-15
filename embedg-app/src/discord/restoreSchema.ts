@@ -281,10 +281,23 @@ export const messageActionSchema = z
   })
   .or(
     z.object({
-      type: z.literal(2).or(z.literal(3)).or(z.literal(4)).or(z.literal(7)), // toggle, add, remove role
+      type: z
+        .literal(2)
+        .or(z.literal(3))
+        .or(z.literal(4)) // toggle, add, remove role
+        .or(z.literal(5))
+        .or(z.literal(7))
+        .or(z.literal(9)), // saved messages responses
       id: uniqueIdSchema.default(() => getUniqueId()),
       target_id: z.string(),
       public: z.preprocess((d) => d ?? undefined, z.boolean().default(false)),
+    })
+  )
+  .or(
+    z.object({
+      type: z.literal(10), // script
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      body: z.string(),
     })
   );
 

@@ -9,6 +9,7 @@ import {
 import EditorInput from "./EditorInput";
 import { RoleSelect } from "./RoleSelect";
 import SavedMessageSelect from "./SavedMessageSelect";
+import ActionScriptEditor from "./ActionScriptEditor";
 import { useMemo } from "react";
 import { MessageAction } from "../discord/schema";
 
@@ -30,6 +31,7 @@ interface Props {
   setText(text: string): void;
   setTargetId(targetId: string): void;
   setPublic(p: boolean): void;
+  setBody(body: string): void;
 }
 
 const actionTypes = {
@@ -42,6 +44,7 @@ const actionTypes = {
   2: "Toggle Role",
   3: "Add Role",
   4: "Remove Role",
+  10: "Custom Script",
 } as const;
 
 const actionDescriptions = {
@@ -54,6 +57,7 @@ const actionDescriptions = {
   7: "Send a saved message to the user via DM.",
   8: "Edit the message with a new text message.",
   9: "Edit the message with a saved message.",
+  10: "Run a custom script.",
 } as const;
 
 export default function Action({
@@ -72,6 +76,7 @@ export default function Action({
   setText,
   setTargetId,
   setPublic,
+  setBody,
 }: Props) {
   const actionTypeGroup = useMemo(() => {
     switch (action.type) {
@@ -89,6 +94,8 @@ export default function Action({
         return "add_role";
       case 4:
         return "remove_role";
+      case 10:
+        return "custom_script";
     }
   }, [action.type]);
 
@@ -109,16 +116,23 @@ export default function Action({
       case "remove_role":
         setType(4);
         break;
+      case "custom_script":
+        setType(10);
+        break;
     }
   }
 
   const responseStyle = useMemo(() => {
+    console.log(action.type);
     switch (action.type) {
-      case 1 || 5:
+      case 1:
+      case 5:
         return "channel";
-      case 6 || 7:
+      case 6:
+      case 7:
         return "dm";
-      case 8 || 9:
+      case 8:
+      case 9:
         return "edit";
     }
   }, [action.type]);
@@ -212,6 +226,7 @@ export default function Action({
                 <option value="toggle_role">Toggle Role</option>
                 <option value="add_role">Add Role</option>
                 <option value="remove_role">Remove Role</option>
+                <option value="custom_script">Custom Script</option>
               </select>
             </div>
             {(actionTypeGroup === "text_response" ||
@@ -268,6 +283,11 @@ export default function Action({
               guildId={guildId}
               messageId={action.target_id || null}
               onChange={(v) => setTargetId(v || "")}
+            />
+          ) : action.type === 10 ? (
+            <ActionScriptEditor
+              value={action.body}
+              onChange={(v) => setBody(v)}
             />
           ) : null}
 

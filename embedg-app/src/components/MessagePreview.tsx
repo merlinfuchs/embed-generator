@@ -1,4 +1,5 @@
 import "./MessagePreview.css";
+import "../discord/highlight.css";
 import { format, parseISO } from "date-fns";
 import { useState } from "react";
 import { Message } from "../discord/schema";

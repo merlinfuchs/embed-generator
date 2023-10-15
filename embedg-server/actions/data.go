@@ -61,6 +61,7 @@ const (
 	ActionTypeSavedMessageDM       ActionType = 7
 	ActionTypeTextEdit             ActionType = 8
 	ActionTypeSavedMessageEdit     ActionType = 9
+	ActionTypeScript               ActionType = 10
 )
 
 type Action struct {
@@ -68,6 +69,7 @@ type Action struct {
 	TargetID string     `json:"target_id"`
 	Text     string     `json:"text"`
 	Public   bool       `json:"public"`
+	Body     string     `json:"body"`
 }
 
 type ActionSet struct {

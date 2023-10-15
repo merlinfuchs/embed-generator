@@ -101,6 +101,7 @@ export interface MessageStore extends Message {
   setActionText: (id: string, i: number, text: string) => void;
   setActionTargetId: (id: string, i: number, target: string) => void;
   setActionPublic: (id: string, i: number, val: boolean) => void;
+  setActionBody: (id: string, i: number, body: string) => void;
 
   getSelectMenu: (i: number, j: number) => MessageComponentSelectMenu | null;
   getButton: (i: number, j: number) => MessageComponentButton | null;
@@ -974,6 +975,12 @@ export const createMessageStore = (key: string) =>
                   target_id: "",
                   public: false,
                 };
+              } else if (type === 10) {
+                actionSet.actions[i] = {
+                  type,
+                  id: action.id,
+                  body: "",
+                };
               }
             }),
           setActionText: (id: string, i: number, text: string) =>
@@ -1003,7 +1010,17 @@ export const createMessageStore = (key: string) =>
             set((state) => {
               const actionSet = state.actions[id];
               const action = actionSet.actions[i];
-              action.public = val;
+              if (action.type !== 10) {
+                action.public = val;
+              }
+            }),
+          setActionBody: (id: string, i: number, body: string) =>
+            set((state) => {
+              const actionSet = state.actions[id];
+              const action = actionSet.actions[i];
+              if (action.type === 10) {
+                action.body = body;
+              }
             }),
 
           getSelectMenu: (i: number, j: number) => {

@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/scripts"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
@@ -361,7 +363,35 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 					return err
 				}
 			}
+		case actions.ActionTypeScript:
+			script := scripts.Script{
+				ID:   interaction.ID,
+				Body: action.Body,
+			}
+
+			ctx := &scripts.ScriptContext{
+				Respond: func(data *discordgo.InteractionResponse) (*discordgo.Message, error) {
+					// TODO: propagate error
+					return i.Respond(data.Data, data.Type), nil
+				},
+				Interaction:          interaction,
+				KVStore:              NewGuildValueStore(interaction.GuildID, m.pg),
+				MaxExecutionSteps:    99999999,
+				MaxExecutionDuration: 10 * time.Millisecond,
+			}
+
+			instance := scripts.NewInstance(&script, ctx)
+
+			err := instance.Run()
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to execute user script from action")
+				return err
+			}
+
+			fmt.Println("Script step count", ctx.TotalExecutionSteps)
+			fmt.Println("Script execution time:", ctx.ExecutionDuration())
 		}
+
 	}
 
 	if !i.HasResponded() {

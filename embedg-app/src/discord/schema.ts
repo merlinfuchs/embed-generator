@@ -256,6 +256,13 @@ export const messageActionSchema = z
       target_id: z.string().min(1),
       public: z.boolean().default(false),
     })
+  )
+  .or(
+    z.object({
+      type: z.literal(10), // script
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      body: z.string().min(1).max(4000),
+    })
   );
 
 export type MessageAction = z.infer<typeof messageActionSchema>;
