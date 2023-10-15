@@ -40,6 +40,10 @@ func NewInstance(scrip *Script, ctx *ScriptContext) *ScriptInstance {
 				t.Cancel("script exceeded max execution duration")
 			}
 
+			if ctx.TotalDuration() >= ctx.MaxTotalDuration {
+				t.Cancel("script exceeded max total duration")
+			}
+
 			if ctx.TotalExecutionSteps >= ctx.MaxExecutionSteps {
 				t.Cancel("script exceeded max execution steps")
 			}
@@ -58,7 +62,7 @@ func NewInstance(scrip *Script, ctx *ScriptContext) *ScriptInstance {
 
 func (s *ScriptInstance) Run() error {
 	s.ctx.TotalExecutionSteps = 0
-	s.ctx.ExecutionStartTime = time.Now()
+	s.ctx.StartTime = time.Now()
 	s.ctx.IdleTime = 0
 
 	predeclared := s.ctx.ToPredeclared()

@@ -39,6 +39,18 @@ export default function ActionScriptEditor({ value, onChange }: Props) {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onHeightChange={(height) => setHeight(height)}
+          onKeyDown={(e) => {
+            if (e.key === "Tab") {
+              e.preventDefault();
+              const start = e.currentTarget.selectionStart;
+              const end = e.currentTarget.selectionEnd;
+              e.currentTarget.value =
+                value.substring(0, start) + "\t" + value.substring(end);
+              onChange(e.currentTarget.value);
+              e.currentTarget.selectionStart = start + 1;
+              e.currentTarget.selectionEnd = start + 1;
+            }
+          }}
           maxLength={4000}
         ></TextareaAutosize>
 

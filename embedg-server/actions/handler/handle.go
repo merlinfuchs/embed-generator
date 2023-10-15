@@ -376,8 +376,9 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				},
 				Interaction:          interaction,
 				KVStore:              NewGuildValueStore(interaction.GuildID, m.pg),
-				MaxExecutionSteps:    99999999,
+				MaxExecutionSteps:    1000,
 				MaxExecutionDuration: 10 * time.Millisecond,
+				MaxTotalDuration:     10 * time.Second,
 			}
 
 			instance := scripts.NewInstance(&script, ctx)
@@ -389,6 +390,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			}
 
 			fmt.Println("Script step count", ctx.TotalExecutionSteps)
+			fmt.Println("Script time", ctx.TotalDuration())
 			fmt.Println("Script execution time:", ctx.ExecutionDuration())
 		}
 

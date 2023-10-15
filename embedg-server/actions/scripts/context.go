@@ -17,7 +17,8 @@ type ScriptContext struct {
 	TotalExecutionSteps uint64
 
 	MaxExecutionDuration time.Duration
-	ExecutionStartTime   time.Time
+	MaxTotalDuration     time.Duration
+	StartTime            time.Time
 	IdleStart            time.Time
 	IdleTime             time.Duration
 }
@@ -31,7 +32,11 @@ func (c *ScriptContext) Unidle() {
 }
 
 func (c *ScriptContext) ExecutionDuration() time.Duration {
-	return time.Since(c.ExecutionStartTime) - c.IdleTime
+	return time.Since(c.StartTime) - c.IdleTime
+}
+
+func (c *ScriptContext) TotalDuration() time.Duration {
+	return time.Since(c.StartTime)
 }
 
 func (c *ScriptContext) ToPredeclared() starlark.StringDict {
