@@ -132,6 +132,7 @@ export default function EditorEmbedField({
             onChange={(v) => setValue(embedIndex, fieldIndex, v)}
             maxLength={1024}
             validationPath={`embeds.${embedIndex}.fields.${fieldIndex}.value`}
+            controls={true}
           />
         </div>
       </Collapsable>

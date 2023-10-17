@@ -375,6 +375,14 @@ Sources from: https://github.com/skyra-project/skyra.pw/blob/main/src/config/dis
   vertical-align: bottom;
 }
 
+.discord-twemoji {
+  display: inline-block;
+  cursor: pointer;
+  width: 1.375rem;
+  height: 1.375rem;
+  vertical-align: bottom;
+}
+
 .discord-embed-custom-emoji {
   display: inline-block;
 }

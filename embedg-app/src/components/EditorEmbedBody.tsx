@@ -60,6 +60,7 @@ export default function EditorEmbedBody({ embedIndex, embedId }: Props) {
           onChange={(v) => setDescription(embedIndex, v || undefined)}
           maxLength={4096}
           validationPath={`embeds.${embedIndex}.description`}
+          controls={true}
         />
         <div className="flex space-x-3">
           <EditorInput

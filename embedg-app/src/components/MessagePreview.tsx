@@ -6,6 +6,7 @@ import { Message } from "../discord/schema";
 import { toHTML } from "../discord/markdown";
 import { colorIntToHex } from "../util/discord";
 import { useSendSettingsStore } from "../state/sendSettings";
+import Twemoji from "react-twemoji";
 
 const buttonColors = {
   1: "discord-button-primary",
@@ -26,7 +27,7 @@ export default function MessagePreview({ msg }: { msg: Message }) {
   const [responses, setResponses] = useState<ButtonResponse[]>([]);
 
   return (
-    <div>
+    <Twemoji options={{ className: "discord-twemoji" }}>
       <div
         className="discord-messages"
         style={{
@@ -368,6 +369,6 @@ export default function MessagePreview({ msg }: { msg: Message }) {
           </div>
         ))}
       </div>
-    </div>
+    </Twemoji>
   );
 }
