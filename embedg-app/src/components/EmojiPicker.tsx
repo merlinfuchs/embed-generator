@@ -44,10 +44,10 @@ export default function EmojiPicker({ guildId, onEmojiSelect }: Props) {
     >
       <div
         onClick={() => setOpen(!open)}
-        className="h-8 w-8 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
+        className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
         role="button"
       >
-        <FaceSmileIcon className="h-6 w-6" />
+        <FaceSmileIcon className="h-5 w-5" />
       </div>
       {open && (
         <div className="absolute top-10 right-0 z-20">
