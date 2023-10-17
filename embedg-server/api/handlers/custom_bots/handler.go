@@ -88,11 +88,13 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 	}
 
 	hasPermissions := false
-	for _, role := range guild.Roles {
-		if slices.Contains(member.Roles, role.ID) || role.ID == guildID {
-			if role.Permissions&discordgo.PermissionManageWebhooks != 0 {
-				hasPermissions = true
-				break
+	if isMember {
+		for _, role := range guild.Roles {
+			if slices.Contains(member.Roles, role.ID) || role.ID == guildID {
+				if role.Permissions&discordgo.PermissionManageWebhooks != 0 {
+					hasPermissions = true
+					break
+				}
 			}
 		}
 	}
