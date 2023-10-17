@@ -11,6 +11,7 @@ import {
   SharedMessageGetResponseWire,
   UserResponseWire,
   CustomCommandGetResponseWire,
+  ListEmojisResponseWire,
 } from "./wire";
 import { APIResponse } from "./base";
 
@@ -69,6 +70,18 @@ export function useGuildRolesQuery(guildId: string | null) {
     ["guild", guildId, "roles"],
     () => {
       return fetch(`/api/guilds/${guildId}/roles`).then((res) =>
+        handleApiResponse(res.json())
+      );
+    },
+    { enabled: !!guildId }
+  );
+}
+
+export function useGuildEmojisQuery(guildId: string | null) {
+  return useQuery<ListEmojisResponseWire>(
+    ["guild", guildId, "emojis"],
+    () => {
+      return fetch(`/api/guilds/${guildId}/emojis`).then((res) =>
         handleApiResponse(res.json())
       );
     },
