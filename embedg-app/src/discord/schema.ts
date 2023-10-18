@@ -222,7 +222,6 @@ export const buttonSchema = z
     })
   )
   .superRefine((data, ctx) => {
-    // this currently doesn't take attachments into account
     if (!data.emoji && !data.label) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -234,23 +233,12 @@ export const buttonSchema = z
 
 export type MessageComponentButton = z.infer<typeof buttonSchema>;
 
-export const selectMenuOptionSchema = z
-  .object({
-    id: uniqueIdSchema.default(() => getUniqueId()),
-    label: z.string().max(100),
-    emoji: z.optional(z.nullable(emojiSchema)),
-    action_set_id: z.string().default(() => getUniqueId().toString()),
-  })
-  .superRefine((data, ctx) => {
-    // this currently doesn't take attachments into account
-    if (!data.emoji && !data.label) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["label"],
-        message: "Label is required when no emoji is set",
-      });
-    }
-  });
+export const selectMenuOptionSchema = z.object({
+  id: uniqueIdSchema.default(() => getUniqueId()),
+  label: z.string().min(1).max(100),
+  emoji: z.optional(z.nullable(emojiSchema)),
+  action_set_id: z.string().default(() => getUniqueId().toString()),
+});
 
 export type MessageComponentSelectMenuOption = z.infer<
   typeof selectMenuOptionSchema

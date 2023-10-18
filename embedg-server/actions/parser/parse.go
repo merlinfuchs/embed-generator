@@ -64,6 +64,11 @@ func (m *ActionParser) ParseMessageComponents(data []actions.ActionRowWithAction
 			} else if component.Type == discordgo.SelectMenuComponent {
 				options := make([]discordgo.SelectMenuOption, len(component.Options))
 				for x, option := range component.Options {
+					var emoji discordgo.ComponentEmoji
+					if option.Emoji != nil {
+						emoji = *option.Emoji
+					}
+
 					options[x] = discordgo.SelectMenuOption{
 						Label:       option.Label,
 						Value:       "action:" + option.ActionSetID,
