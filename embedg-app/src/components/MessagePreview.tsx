@@ -223,6 +223,24 @@ export default function MessagePreview({ msg }: { msg: Message }) {
                                 href={comp.url}
                                 rel="noreferrer"
                               >
+                                {comp.emoji &&
+                                  (comp.emoji.id ? (
+                                    <img
+                                      src={`https://cdn.discordapp.com/emojis/${
+                                        comp.emoji.id
+                                      }.${comp.emoji.animated ? "gif" : "png"}`}
+                                      alt=""
+                                      className="discord-button-emoji"
+                                    />
+                                  ) : (
+                                    <Twemoji
+                                      options={{
+                                        className: "discord-button-emoji",
+                                      }}
+                                    >
+                                      {comp.emoji.name}
+                                    </Twemoji>
+                                  ))}
                                 <span>{comp.label}</span>
                                 <svg
                                   className="discord-button-launch"
@@ -248,6 +266,24 @@ export default function MessagePreview({ msg }: { msg: Message }) {
                                 }`}
                                 key={comp.id}
                               >
+                                {comp.emoji &&
+                                  (comp.emoji.id ? (
+                                    <img
+                                      src={`https://cdn.discordapp.com/emojis/${
+                                        comp.emoji.id
+                                      }.${comp.emoji.animated ? "gif" : "png"}`}
+                                      alt=""
+                                      className="discord-button-emoji"
+                                    />
+                                  ) : (
+                                    <Twemoji
+                                      options={{
+                                        className: "discord-button-emoji",
+                                      }}
+                                    >
+                                      {comp.emoji.name}
+                                    </Twemoji>
+                                  ))}
                                 <span>{comp.label}</span>
                               </div>
                             )

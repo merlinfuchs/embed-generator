@@ -9,6 +9,7 @@ import Collapsable from "./Collapsable";
 import { shallow } from "zustand/shallow";
 import EditorInput from "./EditorInput";
 import EditorActionSet from "./EditorActionSet";
+import EditorComponentEmojiSelect from "./EditorComponentEmojiSelect";
 
 interface Props {
   rowIndex: number;
@@ -39,6 +40,14 @@ export default function EditorComponentButton({
     (state) => [
       state.getButton(rowIndex, compIndex)?.label || "",
       state.setButtonLabel,
+    ],
+    shallow
+  );
+
+  const [emoji, setEmoji] = useCurrentMessageStore(
+    (state) => [
+      state.getButton(rowIndex, compIndex)?.emoji,
+      state.setButtonEmoji,
     ],
     shallow
   );
@@ -125,7 +134,7 @@ export default function EditorComponentButton({
         }
       >
         <div className="space-y-4">
-          <div className="flex space-x-3">
+          <div className="flex flex-col sm:flex-row sm:space-x-3 space-y-4 sm:space-y-0">
             <div className="flex-none">
               <div className="mb-1.5 flex">
                 <div className="uppercase text-gray-300 text-sm font-medium">
@@ -146,14 +155,20 @@ export default function EditorComponentButton({
                 <option value="5">Direct Link</option>
               </select>
             </div>
-            <EditorInput
-              label="Label"
-              maxLength={80}
-              value={label}
-              onChange={(v) => setLabel(rowIndex, compIndex, v)}
-              className="flex-auto"
-              validationPath={`components.${rowIndex}.components.${compIndex}.label`}
-            />
+            <div className="flex space-x-3 flex-auto">
+              <EditorComponentEmojiSelect
+                emoji={emoji ?? null}
+                onChange={(v) => setEmoji(rowIndex, compIndex, v)}
+              />
+              <EditorInput
+                label="Label"
+                maxLength={80}
+                value={label}
+                onChange={(v) => setLabel(rowIndex, compIndex, v)}
+                className="flex-auto"
+                validationPath={`components.${rowIndex}.components.${compIndex}.label`}
+              />
+            </div>
           </div>
           {style === 5 ? (
             <EditorInput

@@ -38,6 +38,11 @@ func (m *ActionParser) ParseMessageComponents(data []actions.ActionRowWithAction
 		}
 
 		for y, component := range row.Components {
+			var emoji discordgo.ComponentEmoji
+			if component.Emoji != nil {
+				emoji = *component.Emoji
+			}
+
 			if component.Type == discordgo.ButtonComponent {
 				if component.Style == discordgo.LinkButton {
 					ar.Components[y] = discordgo.Button{
@@ -45,6 +50,7 @@ func (m *ActionParser) ParseMessageComponents(data []actions.ActionRowWithAction
 						Style:    component.Style,
 						Disabled: component.Disabled,
 						URL:      component.URL,
+						Emoji:    emoji,
 					}
 				} else {
 					ar.Components[y] = discordgo.Button{
@@ -52,6 +58,7 @@ func (m *ActionParser) ParseMessageComponents(data []actions.ActionRowWithAction
 						Label:    component.Label,
 						Style:    component.Style,
 						Disabled: component.Disabled,
+						Emoji:    emoji,
 					}
 				}
 			} else if component.Type == discordgo.SelectMenuComponent {
@@ -62,6 +69,7 @@ func (m *ActionParser) ParseMessageComponents(data []actions.ActionRowWithAction
 						Value:       "action:" + option.ActionSetID,
 						Description: option.Description,
 						Default:     option.Default,
+						Emoji:       emoji,
 					}
 				}
 

@@ -41,7 +41,7 @@ export default function EditorInput({
             </div>
           )}
         </div>
-        <div className="flex-none">
+        <div className="flex-none hidden md:block">
           {controls && (
             <InputControlBar
               value={value}
