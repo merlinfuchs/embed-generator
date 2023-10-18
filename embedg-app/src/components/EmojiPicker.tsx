@@ -1,15 +1,23 @@
 import Picker from "@emoji-mart/react";
 import { FaceSmileIcon } from "@heroicons/react/24/outline";
-import { useMemo, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import ClickOutsideHandler from "./ClickOutsideHandler";
 import { useGuildEmojisQuery } from "../api/queries";
+import clsx from "clsx";
 
 interface Props {
   guildId?: string | null;
   onEmojiSelect: (emoji: any) => void;
+  children: ReactNode;
+  align: "left" | "right" | "center";
 }
 
-export default function EmojiPicker({ guildId, onEmojiSelect }: Props) {
+export default function EmojiPicker({
+  guildId,
+  onEmojiSelect,
+  children,
+  align,
+}: Props) {
   const [open, setOpen] = useState(false);
 
   const { data: emojis } = useGuildEmojisQuery(guildId ?? null);
@@ -20,7 +28,7 @@ export default function EmojiPicker({ guildId, onEmojiSelect }: Props) {
     return [
       {
         id: "custom",
-        name: "Custom",
+        name: "Custom Emojis",
         emojis: emojis.data.map((emoji) => ({
           id: emoji.id,
           name: emoji.name,
@@ -42,15 +50,14 @@ export default function EmojiPicker({ guildId, onEmojiSelect }: Props) {
       className="relative"
       onClickOutside={() => setOpen(false)}
     >
-      <div
-        onClick={() => setOpen(!open)}
-        className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
-        role="button"
-      >
-        <FaceSmileIcon className="h-5 w-5" />
-      </div>
+      <div onClick={() => setOpen(!open)}>{children}</div>
       {open && (
-        <div className="absolute top-10 right-0 z-20">
+        <div
+          className={clsx(
+            "absolute top-10 z-20",
+            align === "left" ? "left-0" : align === "right" ? "right-0" : ""
+          )}
+        >
           <Picker
             data={async () => {
               const response = await fetch(

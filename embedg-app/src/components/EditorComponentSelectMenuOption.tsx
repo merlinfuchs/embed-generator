@@ -9,6 +9,7 @@ import { shallow } from "zustand/shallow";
 import { useCurrentMessageStore } from "../state/message";
 import EditorInput from "./EditorInput";
 import EditorComponentActions from "./EditorActionSet";
+import EditorComponentEmojiSelect from "./EditorComponentEmojiSelect";
 
 interface Props {
   rowIndex: number;
@@ -43,6 +44,10 @@ export default function EditorComponentSelectMenuOption({
 
   const setLabel = useCurrentMessageStore(
     (state) => state.setSelectMenuOptionLabel
+  );
+
+  const setEmoji = useCurrentMessageStore(
+    (state) => state.setSelectMenuOptionEmoji
   );
 
   const option = useCurrentMessageStore(
@@ -99,13 +104,20 @@ export default function EditorComponentSelectMenuOption({
         }
       >
         <div className="space-y-4">
-          <EditorInput
-            label="Label"
-            maxLength={80}
-            value={option.label}
-            onChange={(v) => setLabel(rowIndex, compIndex, optionIndex, v)}
-            className="flex-auto"
-          />
+          <div className="flex space-x-3">
+            <EditorComponentEmojiSelect
+              emoji={option.emoji ?? null}
+              onChange={(v) => setEmoji(rowIndex, compIndex, optionIndex, v)}
+            />
+            <EditorInput
+              label="Label"
+              maxLength={80}
+              value={option.label}
+              onChange={(v) => setLabel(rowIndex, compIndex, optionIndex, v)}
+              className="flex-auto"
+              validationPath={`components.${rowIndex}.components.${compIndex}.options.${optionIndex}.label`}
+            />
+          </div>
           <EditorComponentActions setId={option.action_set_id} />
         </div>
       </Collapsable>

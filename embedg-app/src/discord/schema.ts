@@ -179,6 +179,19 @@ export const embedSchema = z
 
 export type MessageEmbed = z.infer<typeof embedSchema>;
 
+export const emojiSchema = z
+  .object({
+    id: z.optional(z.string()),
+    name: z.string(),
+    animated: z.boolean(),
+  })
+  .refine(
+    (val) => val.id || val.name,
+    "Emoji must have either an id or a name"
+  );
+
+export type Emoji = z.infer<typeof emojiSchema>;
+
 export const buttonStyleSchema = z
   .literal(1)
   .or(z.literal(2))
@@ -193,7 +206,8 @@ export const buttonSchema = z
     id: uniqueIdSchema.default(() => getUniqueId()),
     type: z.literal(2),
     style: z.literal(1).or(z.literal(2)).or(z.literal(3)).or(z.literal(4)),
-    label: z.string().min(1),
+    label: z.string(),
+    emoji: z.optional(z.nullable(emojiSchema)),
     action_set_id: z.string().default(() => getUniqueId().toString()),
   })
   .or(
@@ -201,17 +215,28 @@ export const buttonSchema = z
       id: uniqueIdSchema.default(() => getUniqueId()),
       type: z.literal(2),
       style: z.literal(5),
-      label: z.string().min(1),
+      label: z.string(),
+      emoji: z.optional(z.nullable(emojiSchema)),
       url: z.string().refine(...urlRefinement),
       action_set_id: z.string().default(() => getUniqueId().toString()),
     })
-  );
+  )
+  .superRefine((data, ctx) => {
+    if (!data.emoji && !data.label) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["label"],
+        message: "Label is required when no emoji is set",
+      });
+    }
+  });
 
 export type MessageComponentButton = z.infer<typeof buttonSchema>;
 
 export const selectMenuOptionSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
   label: z.string().min(1).max(100),
+  emoji: z.optional(z.nullable(emojiSchema)),
   action_set_id: z.string().default(() => getUniqueId().toString()),
 });
 

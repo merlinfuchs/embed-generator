@@ -191,6 +191,14 @@ export const embedSchema = z.object({
 
 export type MessageEmbed = z.infer<typeof embedSchema>;
 
+export const emojiSchema = z.object({
+  id: z.optional(z.string()),
+  name: z.string(),
+  animated: z.boolean(),
+});
+
+export type Emoji = z.infer<typeof emojiSchema>;
+
 export const buttonStyleSchema = z
   .literal(1)
   .or(z.literal(2))
@@ -209,6 +217,7 @@ export const buttonSchema = z
     type: z.literal(2),
     style: z.literal(1).or(z.literal(2)).or(z.literal(3)).or(z.literal(4)),
     label: z.preprocess((d) => d ?? undefined, z.string().default("")),
+    emoji: z.optional(z.nullable(emojiSchema)),
     action_set_id: z.preprocess(
       (d) => d ?? undefined,
       z.string().default(() => getUniqueId().toString())
@@ -220,6 +229,7 @@ export const buttonSchema = z
       type: z.literal(2),
       style: z.literal(5),
       label: z.preprocess((d) => d ?? undefined, z.string().default("")),
+      emoji: z.optional(z.nullable(emojiSchema)),
       url: z.preprocess((d) => d ?? undefined, z.string().default("")),
       action_set_id: z.string().default(() => getUniqueId().toString()),
     })
@@ -233,6 +243,7 @@ export const selectMenuOptionSchema = z.object({
     uniqueIdSchema.default(() => getUniqueId())
   ),
   label: z.preprocess((d) => d ?? undefined, z.string().default("")),
+  emoji: z.optional(z.nullable(emojiSchema)),
   action_set_id: z.preprocess(
     (d) => d ?? undefined,
     z.string().default(() => getUniqueId().toString())

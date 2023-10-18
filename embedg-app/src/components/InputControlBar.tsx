@@ -1,3 +1,4 @@
+import { FaceSmileIcon } from "@heroicons/react/24/outline";
 import { useSendSettingsStore } from "../state/sendSettings";
 import EmojiPicker from "./EmojiPicker";
 import { RefObject } from "react";
@@ -39,7 +40,18 @@ export default function InputControlBar({ value, onChange, inputRef }: Props) {
 
   return (
     <div className="flex">
-      <EmojiPicker guildId={guildId} onEmojiSelect={onEmojiSelect} />
+      <EmojiPicker
+        guildId={guildId}
+        onEmojiSelect={onEmojiSelect}
+        align="right"
+      >
+        <div
+          className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
+          role="button"
+        >
+          <FaceSmileIcon className="h-5 w-5" />
+        </div>
+      </EmojiPicker>
     </div>
   );
 }
