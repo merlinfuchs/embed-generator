@@ -12,6 +12,33 @@ interface Props {
 export default function InputControlBar({ value, onChange, inputRef }: Props) {
   const guildId = useSendSettingsStore((state) => state.guildId);
 
+  function surroundSelection(
+    prefix: string,
+    suffix: string,
+    placeholder: string
+  ) {
+    if (!inputRef.current) return;
+
+    const element = inputRef.current;
+
+    const startPos = element.selectionStart;
+    const endPos = element.selectionEnd;
+
+    if (startPos == endPos) {
+      insertAtCursor(prefix + placeholder + suffix);
+      return;
+    }
+
+    const newValue =
+      element.value.substring(0, startPos) +
+      prefix +
+      element.value.substring(startPos, endPos) +
+      suffix +
+      element.value.substring(endPos, element.value.length);
+
+    onChange(newValue);
+  }
+
   function insertAtCursor(value: string) {
     if (!inputRef.current) return;
 
@@ -26,8 +53,6 @@ export default function InputControlBar({ value, onChange, inputRef }: Props) {
       element.value.substring(endPos, element.value.length);
 
     onChange(newValue);
-    element.selectionStart = startPos + 1;
-    element.selectionEnd = endPos + 1;
   }
 
   function onEmojiSelect(emoji: any) {
@@ -39,7 +64,35 @@ export default function InputControlBar({ value, onChange, inputRef }: Props) {
   }
 
   return (
-    <div className="flex">
+    <div className="flex space-x-2">
+      <div
+        className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
+        role="button"
+        onClick={(e) => surroundSelection("**", "**", "bold text")}
+      >
+        <div className="font-bold">B</div>
+      </div>
+      <div
+        className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
+        role="button"
+        onClick={(e) => surroundSelection("*", "*", "cursive text")}
+      >
+        <div className="italic">I</div>
+      </div>
+      <div
+        className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
+        role="button"
+        onClick={(e) => surroundSelection("__", "__", "underlined text")}
+      >
+        <div className="underline">U</div>
+      </div>
+      <div
+        className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
+        role="button"
+        onClick={(e) => surroundSelection("~~", "~~", "strikethrough text")}
+      >
+        <div className="line-through">S</div>
+      </div>
       <EmojiPicker
         guildId={guildId}
         onEmojiSelect={onEmojiSelect}
