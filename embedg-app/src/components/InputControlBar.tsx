@@ -1,7 +1,7 @@
 import { FaceSmileIcon } from "@heroicons/react/24/outline";
 import { useSendSettingsStore } from "../state/sendSettings";
 import EmojiPicker from "./EmojiPicker";
-import { RefObject } from "react";
+import { RefObject, useEffect } from "react";
 
 interface Props {
   value: string;
@@ -63,33 +63,80 @@ export default function InputControlBar({ value, onChange, inputRef }: Props) {
     }
   }
 
+  function onBold() {
+    surroundSelection("**", "**", "bold text");
+  }
+
+  function onItalic() {
+    surroundSelection("*", "*", "cursive text");
+  }
+
+  function onUnderline() {
+    surroundSelection("__", "__", "underlined text");
+  }
+
+  function onStrikethrough() {
+    surroundSelection("~~", "~~", "strikethrough text");
+  }
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (!e.ctrlKey) return;
+
+      switch (e.key) {
+        case "b":
+          e.preventDefault();
+          onBold();
+          break;
+        case "i":
+          e.preventDefault();
+          onItalic();
+          break;
+        case "u":
+          e.preventDefault();
+          onUnderline();
+          break;
+        case "s":
+          e.preventDefault();
+          onStrikethrough();
+          break;
+      }
+    }
+
+    inputRef.current?.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      inputRef.current?.removeEventListener("keydown", onKeyDown);
+    };
+  }, [inputRef.current]);
+
   return (
     <div className="flex space-x-2">
       <div
         className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
         role="button"
-        onClick={(e) => surroundSelection("**", "**", "bold text")}
+        onClick={onBold}
       >
         <div className="font-bold">B</div>
       </div>
       <div
         className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
         role="button"
-        onClick={(e) => surroundSelection("*", "*", "cursive text")}
+        onClick={onItalic}
       >
         <div className="italic">I</div>
       </div>
       <div
         className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
         role="button"
-        onClick={(e) => surroundSelection("__", "__", "underlined text")}
+        onClick={onUnderline}
       >
         <div className="underline">U</div>
       </div>
       <div
         className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
         role="button"
-        onClick={(e) => surroundSelection("~~", "~~", "strikethrough text")}
+        onClick={onStrikethrough}
       >
         <div className="line-through">S</div>
       </div>
