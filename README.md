@@ -65,7 +65,7 @@ yarn build
 
 ### Build the server (backend)
 
-Install Go from [go.dev](https://go.dev/doc/install).
+Install Go `>=1.21` from [go.dev](https://go.dev/doc/install).
 
 ```sh
 # Switch to the backend directory

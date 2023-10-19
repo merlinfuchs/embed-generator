@@ -1,6 +1,20 @@
-FROM node:slim
+FROM golang:latest as builder
 WORKDIR /root/
 COPY . .
+
+# Install NodeJS (https://github.com/nodesource/distributions#installation-instructions)
+RUN apt-get update
+RUN apt-get install -y ca-certificates curl gnupg build-essential
+RUN mkdir -p /etc/apt/keyrings
+RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+
+RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_18.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
+
+RUN apt-get update
+RUN apt-get -y install nodejs
+
+# Install yarn
+RUN npm install -g yarn
 
 # Build site
 RUN cd embedg-site && yarn install && yarn build && cd ..
@@ -9,15 +23,14 @@ RUN cd embedg-site && yarn install && yarn build && cd ..
 RUN cd embedg-app && yarn install && yarn build && cd ..
 
 # Build backend
-RUN apt-get update
-RUN apt-get install -y build-essential curl
-RUN curl -OL https://golang.org/dl/go1.20.4.linux-amd64.tar.gz
-RUN tar -C /usr/local -xvf go1.20.4.linux-amd64.tar.gz
-ENV PATH=$PATH:/usr/local/go/bin
 RUN cd embedg-server && go build --tags "embedapp embedsite" && cd ..
 
-FROM debian:bullseye-slim
+FROM debian:stable-slim
 WORKDIR /root/
-COPY --from=0 /root/embedg-server/embedg-server ./
+COPY --from=builder /root/embedg-server/embedg-server .
+
+RUN apt-get update
+RUN apt-get install -y ca-certificates gnupg build-essential
+
 EXPOSE 8080
-CMD ["./embedg-server"]
+CMD ./embedg-server migrate postgres up; ./embedg-server server
