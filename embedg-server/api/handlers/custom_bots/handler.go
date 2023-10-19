@@ -182,12 +182,14 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 			if derr.Response.StatusCode == 401 {
 				tokenValid = false
 				isMember = false
-			}
-			if derr.Message.Code == discordgo.ErrCodeMissingAccess {
+			} else if derr.Response.StatusCode == 403 || derr.Response.StatusCode == 404 {
 				isMember = false
+			} else {
+				return err
 			}
+		} else {
+			return err
 		}
-		return err
 	}
 
 	guild, err := h.bot.State.Guild(guildID)
@@ -196,11 +198,13 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 	}
 
 	hasPermissions := false
-	for _, role := range guild.Roles {
-		if slices.Contains(member.Roles, role.ID) || role.ID == guildID {
-			if role.Permissions&discordgo.PermissionManageWebhooks != 0 {
-				hasPermissions = true
-				break
+	if member != nil {
+		for _, role := range guild.Roles {
+			if slices.Contains(member.Roles, role.ID) || role.ID == guildID {
+				if role.Permissions&discordgo.PermissionManageWebhooks != 0 {
+					hasPermissions = true
+					break
+				}
 			}
 		}
 	}
