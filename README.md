@@ -23,75 +23,6 @@ both the backend and frontend.
 
 You can find prebuilt binaries of the server with the frontend files included [here](https://github.com/merlinfuchs/embed-generator/releases/latest).
 
-### Build the app
-
-You can download NodeJS and NPM from [nodejs.org](https://nodejs.org/en/download/).
-
-```sh
-# Switch to the embedg-app directory
-cd embedg-app
-
-# Install yarn globally
-npm install -g yarn
-
-# Install dependencies
-yarn install
-
-# Start the development server (optional)
-yarn dev
-
-# Build for production use
-yarn build
-```
-
-### Build the site (home page & docs)
-
-```sh
-# Switch to the embedg-app directory
-cd embedg-site
-
-# Install yarn globally
-npm install -g yarn
-
-# Install dependencies
-yarn install
-
-# Start the development server (optional)
-yarn start
-
-# Build for production use
-yarn build
-```
-
-### Build the server (backend)
-
-Install Go `>=1.21` from [go.dev](https://go.dev/doc/install).
-
-```sh
-# Switch to the backend directory
-cd embedg-server
-# or if you are in the frontend directoy
-cd ../embedg-server
-
-# Configure the server (see steps below)
-
-# Run database migrations
-go run main.go migrate postgres up
-
-# Start the development server (optional)
-go run --tags "embedapp embedsite" main.go server
-
-# Build and include the frontend files in the backend binary (build app and site first)
-go build --tags  "embedapp embedsite"
-
-# Build without including the frontend files in the backend binary (you need to serve yourself)
-go build
-```
-
-### Install databases
-
-Install PostgresQL on your device and create a user and database. I'm sure you can find instructions online!
-
 ### Configure the server
 
 To configure the server you can create a file called `config.yaml` with the following fields:
@@ -155,7 +86,120 @@ premium:
 You can also set the config values using environment variables. For example `EMBEDG_DISCORD__TOKEN` will set the discord
 token.
 
-### Run the binary
+### Using Docker (docker-compose)
+
+Install Docker and docker-compose and create a `docker-compose.yaml` file with the following contents:
+
+```yaml
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres
+    restart: always
+    volumes:
+      - embedg-local-postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: embedg
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_HOST_AUTH_METHOD: trust
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
+  embedg:
+    image: merlintor/embed-generator:latest
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - EMBEDG_POSTGRES__HOST=postgres
+      - EMBEDG_POSTGRES__USER=postgres
+      - EMBEDG_POSTGRES__DB=embedg
+    volumes:
+      - ./config.yaml:/root/config.yaml
+
+volumes:
+  embedg-local-postgres:
+```
+
+Run the file using `docker-compose up`. It will automatically mount the `config.yaml` file into the container. You should not configure postgres in your config file as it's using the postgres instance from the container.
+
+### Build from source
+
+#### Build the app
+
+You can download NodeJS and NPM from [nodejs.org](https://nodejs.org/en/download/).
+
+```sh
+# Switch to the embedg-app directory
+cd embedg-app
+
+# Install yarn globally
+npm install -g yarn
+
+# Install dependencies
+yarn install
+
+# Start the development server (optional)
+yarn dev
+
+# Build for production use
+yarn build
+```
+
+#### Build the site (home page & docs)
+
+```sh
+# Switch to the embedg-app directory
+cd embedg-site
+
+# Install yarn globally
+npm install -g yarn
+
+# Install dependencies
+yarn install
+
+# Start the development server (optional)
+yarn start
+
+# Build for production use
+yarn build
+```
+
+#### Build the server (backend)
+
+Install Go `>=1.21` from [go.dev](https://go.dev/doc/install).
+
+```sh
+# Switch to the backend directory
+cd embedg-server
+# or if you are in the frontend directoy
+cd ../embedg-server
+
+# Configure the server (see steps below)
+
+# Run database migrations
+go run main.go migrate postgres up
+
+# Start the development server (optional)
+go run --tags "embedapp embedsite" main.go server
+
+# Build and include the frontend files in the backend binary (build app and site first)
+go build --tags  "embedapp embedsite"
+
+# Build without including the frontend files in the backend binary (you need to serve yourself)
+go build
+```
+
+#### Install databases
+
+If you are not using Docker you need to Install PostgreSQL on your device and create a user and database. I'm sure you can find instructions online!
+
+#### Run the binary
 
 You should now be able to run the binary and host your own instance of Embed Generator. You usually want to deploy this
 behind a reverse proxy like Nginx and terminate TLS there.
