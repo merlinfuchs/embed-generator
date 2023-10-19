@@ -46,7 +46,7 @@ export const useToasts = create<ToastStore>()((set) => ({
 export function ToastContainer() {
   const toasts = useToasts((state) => state.toasts);
   return (
-    <div className="fixed top-5 right-5 space-y-3 z-50 w-96">
+    <div className="fixed top-5 right-5 space-y-3 z-50 w-10/12 max-w-sm">
       {toasts.map((toast) => (
         <div
           key={toast.id}
