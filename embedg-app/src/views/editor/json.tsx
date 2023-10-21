@@ -1,6 +1,6 @@
 import ReactCodeMirror from "@uiw/react-codemirror";
 import { useEffect, useState } from "react";
-import EditorModal from "../../components/EditorModal";
+import Modal from "../../components/Modal";
 import { useCurrentMessageStore } from "../../state/message";
 import { json, jsonParseLinter } from "@codemirror/lang-json";
 import { githubDark } from "@uiw/codemirror-theme-github";
@@ -32,7 +32,7 @@ export default function JsonView() {
   }
 
   return (
-    <EditorModal height="full">
+    <Modal height="full" onClose={() => navigate("/editor")}>
       <div className="h-full flex flex-col p-1.5 md:p-3">
         <ReactCodeMirror
           className="flex-1 rounded overflow-hidden"
@@ -63,6 +63,6 @@ export default function JsonView() {
           </button>
         </div>
       </div>
-    </EditorModal>
+    </Modal>
   );
 }

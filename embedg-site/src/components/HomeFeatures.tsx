@@ -2,9 +2,13 @@ import React from "react";
 
 import {
   CloudIcon,
+  CommandLineIcon,
   CursorArrowRippleIcon,
+  EyeDropperIcon,
+  SparklesIcon,
   TagIcon,
 } from "@heroicons/react/24/solid";
+import clsx from "clsx";
 
 const features = [
   {
@@ -19,7 +23,7 @@ const features = [
     description:
       "Customize your embeds with your own branding. You can even change the username and avatar of the message to your liking!",
     href: "/docs/custom-branding",
-    icon: TagIcon,
+    icon: EyeDropperIcon,
   },
   {
     name: "Interactive Components",
@@ -28,6 +32,30 @@ const features = [
     href: "/docs/interactive-components",
     icon: CursorArrowRippleIcon,
   },
+  {
+    name: "White Label",
+    description:
+      "Integrate your own bot into Embed Generator to change the username and avatar of responses to buttons, and select menus!",
+    href: "/docs/white-label",
+    icon: TagIcon,
+    premium: true,
+  },
+  {
+    name: "Custom Commands",
+    description:
+      "Add your own commands with custom logic and responses to Embed Generator that your server members can use!",
+    href: "/docs/custom-commands",
+    icon: CommandLineIcon,
+    premium: true,
+  },
+  {
+    name: "AI Assistant",
+    description:
+      "Use our powerful AI assistant to quickly draft new messages and boost your creativity!",
+    href: "/docs/ai-assistant",
+    icon: SparklesIcon,
+    premium: true,
+  },
 ];
 
 export default function HomeFeatures(): JSX.Element {
@@ -35,11 +63,16 @@ export default function HomeFeatures(): JSX.Element {
     <div className="bg-dark-2 px-16">
       <div className="max-w-7xl mx-auto text-white py-20 lg:py-32">
         <div className="mx-auto max-w-2xl lg:max-w-none">
-          <div className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
+          <div className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-32 lg:max-w-none lg:grid-cols-3">
             {features.map((feature) => (
               <div key={feature.name} className="flex flex-col">
                 <div className="text-base font-semibold leading-7 text-white">
-                  <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-lg bg-blurple">
+                  <div
+                    className={clsx(
+                      "mb-6 flex h-10 w-10 items-center justify-center rounded-lg",
+                      feature.premium ? "bg-orange-400" : "bg-blurple"
+                    )}
+                  >
                     <feature.icon
                       className="h-6 w-6 text-white"
                       aria-hidden="true"

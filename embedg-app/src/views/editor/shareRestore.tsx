@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import EditorModal from "../../components/EditorModal";
+import Modal from "../../components/Modal";
 import { useCurrentMessageStore } from "../../state/message";
 import MessagePreview from "../../components/MessagePreview";
 import { useSharedMessageQuery } from "../../api/queries";
@@ -52,7 +52,7 @@ export default function ShareRestoreView() {
   }
 
   return (
-    <EditorModal width="md">
+    <Modal width="md" onClose={() => navigate("/editor")}>
       <div className="flex flex-col">
         <div className="rounded-r-xl bg-dark-4 overflow-y-auto">
           <div className="rounded text-white h-full px-5 py-3">
@@ -74,6 +74,6 @@ export default function ShareRestoreView() {
           </button>
         </div>
       </div>
-    </EditorModal>
+    </Modal>
   );
 }

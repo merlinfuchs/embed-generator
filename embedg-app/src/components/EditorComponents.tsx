@@ -57,7 +57,7 @@ export default function EditorComponents() {
             {components.length} / 5
           </div>
           <div className="bg-blurple px-1 rounded text-white text-xs items-center flex items-center font-bold">
-            EARLY ACCESS
+            ADVANCED
           </div>
         </div>
       }
@@ -75,7 +75,7 @@ export default function EditorComponents() {
           </div>
         ))}
       </AutoAnimate>
-      <div className="space-x-3">
+      <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 items-start">
         <button
           className={clsx(
             "px-3 py-2 rounded text-white",

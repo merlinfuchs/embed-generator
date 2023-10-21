@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import EditorModal from "../../components/EditorModal";
+import Modal from "../../components/Modal";
 import { useCurrentMessageStore } from "../../state/message";
 import { useSharedMessageCreateMutation } from "../../api/mutations";
 import { useEffect, useRef, useState } from "react";
@@ -51,7 +51,7 @@ export default function ShareView() {
   }
 
   return (
-    <EditorModal width="xs">
+    <Modal width="xs" onClose={() => navigate("/editor")}>
       <div className="p-4">
         <div className="text-lg mb-5 text-white">
           Copy the URL below to share your message
@@ -78,6 +78,6 @@ export default function ShareView() {
           </button>
         </div>
       </div>
-    </EditorModal>
+    </Modal>
   );
 }

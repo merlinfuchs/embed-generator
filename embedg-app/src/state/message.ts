@@ -11,6 +11,7 @@ import {
   MessageComponentSelectMenuOption,
   MessageComponentSelectMenu,
   MessageAction,
+  Emoji,
 } from "../discord/schema";
 import { getUniqueId } from "../util";
 
@@ -69,6 +70,7 @@ export interface MessageStore extends Message {
     style: MessageComponentButtonStyle
   ) => void;
   setButtonLabel: (i: number, j: number, label: string) => void;
+  setButtonEmoji: (i: number, j: number, emoji: Emoji | null) => void;
   setButtonUrl: (i: number, j: number, url: string) => void;
   setSelectMenuPlaceholder: (
     i: number,
@@ -90,6 +92,12 @@ export interface MessageStore extends Message {
     j: number,
     k: number,
     label: string
+  ) => void;
+  setSelectMenuOptionEmoji: (
+    i: number,
+    j: number,
+    k: number,
+    emoji: Emoji | null
   ) => void;
   addAction: (id: string, action: MessageAction) => void;
   clearActions: (id: string) => void;
@@ -726,6 +734,18 @@ export const createMessageStore = (key: string) =>
               }
               button.label = label;
             }),
+          setButtonEmoji: (i: number, j: number, emoji: Emoji | null) =>
+            set((state) => {
+              const row = state.components && state.components[i];
+              if (!row) {
+                return;
+              }
+              const button = row.components && row.components[j];
+              if (!button || button.type !== 2) {
+                return;
+              }
+              button.emoji = emoji;
+            }),
           setButtonUrl: (i: number, j: number, url: string) =>
             set((state) => {
               const row = state.components && state.components[i];
@@ -888,6 +908,27 @@ export const createMessageStore = (key: string) =>
                 return;
               }
               option.label = label;
+            }),
+          setSelectMenuOptionEmoji: (
+            i: number,
+            j: number,
+            k: number,
+            emoji: Emoji | null
+          ) =>
+            set((state) => {
+              const row = state.components && state.components[i];
+              if (!row) {
+                return;
+              }
+              const selectMenu = row.components && row.components[j];
+              if (!selectMenu || selectMenu.type !== 3) {
+                return;
+              }
+              const option = selectMenu.options && selectMenu.options[k];
+              if (!option) {
+                return;
+              }
+              option.emoji = emoji;
             }),
           addAction: (id: string, action: MessageAction) =>
             set((state) => {

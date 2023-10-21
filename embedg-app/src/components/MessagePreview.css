@@ -7,7 +7,9 @@ Sources from: https://github.com/skyra-project/skyra.pw/blob/main/src/config/dis
 .discord-action-row {
   display: flex;
   flex-wrap: wrap;
+  width: 100%;
 }
+
 .discord-attachment {
   color: #dcddde;
   display: flex;
@@ -116,6 +118,30 @@ Sources from: https://github.com/skyra-project/skyra.pw/blob/main/src/config/dis
   height: 1.375em;
   vertical-align: bottom;
 }
+
+.discord-select-menu {
+  background-color: rgb(30, 31, 34);
+  width: 90%;
+  max-width: 400px;
+  padding: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 16px;
+  text-decoration: none !important;
+}
+
+.discord-select-menu-placeholder {
+  color: rgb(148, 155, 164);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
 .discord-replied-message.discord-executed-command .discord-command-name {
   color: #00aff4;
   font-weight: 500;
@@ -344,6 +370,14 @@ Sources from: https://github.com/skyra-project/skyra.pw/blob/main/src/config/dis
 }
 .discord-custom-emoji .discord-custom-emoji-image {
   object-fit: contain;
+  width: 1.375rem;
+  height: 1.375rem;
+  vertical-align: bottom;
+}
+
+.discord-twemoji {
+  display: inline-block;
+  cursor: pointer;
   width: 1.375rem;
   height: 1.375rem;
   vertical-align: bottom;

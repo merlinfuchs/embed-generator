@@ -41,6 +41,7 @@ export default function EditorMessageContentFields() {
           onChange={(v) => setContent(v)}
           maxLength={2000}
           validationPath={`content`}
+          controls={true}
         />
       </div>
     </div>

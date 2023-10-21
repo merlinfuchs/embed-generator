@@ -72,6 +72,13 @@ func (m *AccessManager) GetGuildAccessForUser(userID string, guildID string) (Gu
 		if access.UserAccess() {
 			res.HasChannelWithUserAccess = true
 		}
+
+		// We can stop iterating if we already know that the user has access to both
+		if res.HasChannelWithBotAccess && res.HasChannelWithUserAccess {
+			mu.Unlock()
+			break
+		}
+
 		mu.Unlock()
 	}
 
@@ -127,13 +134,12 @@ func (m *AccessManager) ComputeUserPermissionsForChannel(userID string, channelI
 
 	// this is workaround to compute the permissions using discordgo, we remove it afterwards
 	m.state.MemberAdd(member)
+	defer m.state.MemberRemove(member)
 
 	perms, err := m.state.UserChannelPermissions(userID, channelID)
 	if err == discordgo.ErrStateNotFound {
 		return 0, nil
 	}
-
-	m.state.MemberRemove(member)
 
 	return perms, err
 }

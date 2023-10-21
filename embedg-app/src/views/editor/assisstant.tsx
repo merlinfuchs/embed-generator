@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAssistantGenerateMessageMutation } from "../../api/mutations";
-import EditorModal from "../../components/EditorModal";
+import Modal from "../../components/Modal";
 import MessagePreview from "../../components/MessagePreview";
 import { parseMessageWithAction } from "../../discord/restoreSchema";
 import { useCurrentMessageStore } from "../../state/message";
@@ -88,7 +88,7 @@ export default function AssistantView() {
   }
 
   return (
-    <EditorModal height="full">
+    <Modal height="full" onClose={() => navigate("/editor")}>
       <div className="flex h-full">
         <div className="w-1/2 p-5 overflow-y-hidden flex flex-col">
           <div className="text-2xl font-medium text-gray-200 mb-5 flex items-center space-x-3">
@@ -162,6 +162,6 @@ export default function AssistantView() {
           </div>
         </div>
       </div>
-    </EditorModal>
+    </Modal>
   );
 }

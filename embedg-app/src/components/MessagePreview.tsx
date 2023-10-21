@@ -7,6 +7,7 @@ import { Message } from "../discord/schema";
 import { toHTML } from "../discord/markdown";
 import { colorIntToHex } from "../util/discord";
 import { useSendSettingsStore } from "../state/sendSettings";
+import Twemoji from "react-twemoji";
 
 const buttonColors = {
   1: "discord-button-primary",
@@ -27,7 +28,7 @@ export default function MessagePreview({ msg }: { msg: Message }) {
   const [responses, setResponses] = useState<ButtonResponse[]>([]);
 
   return (
-    <div>
+    <Twemoji options={{ className: "discord-twemoji" }}>
       <div
         className="discord-messages"
         style={{
@@ -61,6 +62,7 @@ export default function MessagePreview({ msg }: { msg: Message }) {
                   />
                 </div>
               )}
+
               <div className="discord-message-compact-indent">
                 {msg.embeds &&
                   msg.embeds.map((embed) => {
@@ -222,6 +224,24 @@ export default function MessagePreview({ msg }: { msg: Message }) {
                                 href={comp.url}
                                 rel="noreferrer"
                               >
+                                {comp.emoji &&
+                                  (comp.emoji.id ? (
+                                    <img
+                                      src={`https://cdn.discordapp.com/emojis/${
+                                        comp.emoji.id
+                                      }.${comp.emoji.animated ? "gif" : "png"}`}
+                                      alt=""
+                                      className="discord-button-emoji"
+                                    />
+                                  ) : (
+                                    <Twemoji
+                                      options={{
+                                        className: "discord-button-emoji",
+                                      }}
+                                    >
+                                      {comp.emoji.name}
+                                    </Twemoji>
+                                  ))}
                                 <span>{comp.label}</span>
                                 <svg
                                   className="discord-button-launch"
@@ -247,9 +267,49 @@ export default function MessagePreview({ msg }: { msg: Message }) {
                                 }`}
                                 key={comp.id}
                               >
+                                {comp.emoji &&
+                                  (comp.emoji.id ? (
+                                    <img
+                                      src={`https://cdn.discordapp.com/emojis/${
+                                        comp.emoji.id
+                                      }.${comp.emoji.animated ? "gif" : "png"}`}
+                                      alt=""
+                                      className="discord-button-emoji"
+                                    />
+                                  ) : (
+                                    <Twemoji
+                                      options={{
+                                        className: "discord-button-emoji",
+                                      }}
+                                    >
+                                      {comp.emoji.name}
+                                    </Twemoji>
+                                  ))}
                                 <span>{comp.label}</span>
                               </div>
                             )
+                          ) : comp.type === 3 ? (
+                            <div
+                              className="discord-select-menu discord-select-menu-hoverable"
+                              key={comp.id}
+                            >
+                              <span className="discord-select-menu-placeholder">
+                                {comp.placeholder || "Make a selection"}
+                              </span>
+                              <svg
+                                className="discord-select-menu-icon"
+                                aria-hidden="true"
+                                role="img"
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  fill="currentColor"
+                                  d="M16.59 8.59003L12 13.17L7.41 8.59003L6 10L12 16L18 10L16.59 8.59003Z"
+                                ></path>
+                              </svg>
+                            </div>
                           ) : undefined
                         )}
                       </div>
@@ -346,6 +406,6 @@ export default function MessagePreview({ msg }: { msg: Message }) {
           </div>
         ))}
       </div>
-    </div>
+    </Twemoji>
   );
 }

@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres
+    restart: always
+    volumes:
+      - embedg-local-postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: embedg
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_HOST_AUTH_METHOD: trust
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
+  embedg:
+    image: merlintor/embed-generator:latest
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - EMBEDG_POSTGRES__HOST=postgres
+      - EMBEDG_POSTGRES__USER=postgres
+      - EMBEDG_POSTGRES__DB=embedg
+    volumes:
+      - ./config.yaml:/root/config.yaml
+
+volumes:
+  embedg-local-postgres:

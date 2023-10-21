@@ -270,6 +270,7 @@ export default function Action({
               type="textarea"
               value={action.text}
               onChange={(v) => setText(v)}
+              controls={true}
             />
           ) : action.type === 2 || action.type === 3 || action.type === 4 ? (
             <RoleSelect
