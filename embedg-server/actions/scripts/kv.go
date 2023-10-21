@@ -2,7 +2,6 @@ package scripts
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarkstruct"
@@ -131,21 +130,7 @@ type KVStore interface {
 func valueToJSON(value starlark.Value) ([]byte, error) {
 	res := SerializedValue{
 		Type: value.Type(),
-	}
-
-	switch value := value.(type) {
-	case starlark.NoneType:
-		res.Data = nil
-	case starlark.String:
-		res.Data = string(value)
-	case starlark.Bool:
-		res.Data = bool(value)
-	case starlark.Int:
-		res.Data, _ = value.Int64()
-	case starlark.Float:
-		res.Data = float64(value)
-	default:
-		return nil, fmt.Errorf("Unsupported data type of KV: %s", value.Type())
+		Data: valueToInterface(value),
 	}
 
 	raw, err := json.Marshal(res)
@@ -163,24 +148,7 @@ func jsonToValue(data []byte) (starlark.Value, error) {
 		return nil, err
 	}
 
-	switch value.Type {
-	case "NoneType":
-		return starlark.None, nil
-	case "string":
-		v, _ := value.Data.(string)
-		return starlark.String(v), nil
-	case "bool":
-		v, _ := value.Data.(bool)
-		return starlark.Bool(v), nil
-	case "int":
-		v, _ := value.Data.(float64)
-		return starlark.MakeInt(int(v)), nil
-	case "float":
-		v, _ := value.Data.(float64)
-		return starlark.Float(v), nil
-	}
-
-	return nil, nil
+	return interfaceToValue(value.Data), nil
 }
 
 type SerializedValue struct {

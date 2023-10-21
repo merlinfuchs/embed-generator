@@ -20,12 +20,14 @@ import (
 
 type ActionHandler struct {
 	pg     *postgres.PostgresStore
+	state  *discordgo.State
 	parser *parser.ActionParser
 }
 
-func New(pg *postgres.PostgresStore, parser *parser.ActionParser) *ActionHandler {
+func New(pg *postgres.PostgresStore, state *discordgo.State, parser *parser.ActionParser) *ActionHandler {
 	return &ActionHandler{
 		pg:     pg,
+		state:  state,
 		parser: parser,
 	}
 }
@@ -375,7 +377,11 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 					return i.Respond(data.Data, data.Type), nil
 				},
 				Interaction:          interaction,
+				Session:              s,
+				State:                m.state,
+				PG:                   m.pg,
 				KVStore:              NewGuildValueStore(interaction.GuildID, m.pg),
+				DervivedPermissions:  derivedPerms,
 				MaxExecutionSteps:    1000,
 				MaxExecutionDuration: 10 * time.Millisecond,
 				MaxTotalDuration:     10 * time.Second,
@@ -386,7 +392,10 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			err := instance.Run()
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to execute user script from action")
-				return err
+				i.Respond(&discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("Failed to execute custom script:\n\n```python\n%s```", err.Error()),
+					Flags:   discordgo.MessageFlagsEphemeral,
+				})
 			}
 
 			fmt.Println("Script step count", ctx.TotalExecutionSteps)

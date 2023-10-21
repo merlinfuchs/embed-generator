@@ -36,6 +36,7 @@ func (i *GatewayInteraction) Respond(data *discordgo.InteractionResponseData, t 
 	var msg *discordgo.Message
 
 	if !i.Responded {
+		// TODO: think about how to handle message updates
 		err = i.Session.InteractionRespond(i.Inner, &discordgo.InteractionResponse{
 			Type: responseType,
 			Data: data,

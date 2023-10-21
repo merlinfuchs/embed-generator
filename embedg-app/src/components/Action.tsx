@@ -123,7 +123,6 @@ export default function Action({
   }
 
   const responseStyle = useMemo(() => {
-    console.log(action.type);
     switch (action.type) {
       case 1:
       case 5:

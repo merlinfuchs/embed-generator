@@ -75,7 +75,7 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 
 	// TODO: move this somewhere else, this is not the right place for this
 	stores.bot.ActionParser = actionParser
-	stores.bot.ActionHandler = handler.New(stores.pg, actionParser)
+	stores.bot.ActionHandler = handler.New(stores.pg, stores.bot.State, actionParser)
 
 	sendMessageHandler := send_message.New(stores.bot, accessManager, actionParser)
 	app.Post("/api/send-message/channel", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(sendMessageHandler.HandleSendMessageToChannel))
