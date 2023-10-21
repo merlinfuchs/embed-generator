@@ -19,6 +19,7 @@ import EditorInput from "./EditorInput";
 import CommandActionSet from "./CommandActionSet";
 import { useCommandActionsStore } from "../state/actions";
 import { messageActionSetSchema } from "../discord/restoreSchema";
+import ConfirmModal from "./ConfirmModal";
 
 export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
   const guildId = useSendSettingsStore((s) => s.guildId);
@@ -74,8 +75,9 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
   }
 
   const deleteMutation = useCustomCommandDeleteMutation();
+  const [deleteModal, setDeleteModal] = useState(false);
 
-  function deleteCommand() {
+  function deleteCommandConfirm() {
     deleteMutation.mutate(
       {
         commandId: cmd.id,
@@ -98,85 +100,95 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
   }
 
   return (
-    <AutoAnimate className="bg-dark-3 rounded truncate">
-      {manage ? (
-        <div className="px-5 py-4" key="1">
-          <div className="flex justify-between items-start">
-            <div className="flex items-center space-x-2 truncate text-lg mb-5 truncate">
-              <div className="text-white truncate">
-                <span className="font-bold text-gray-500 text-xl">/</span>{" "}
-                {cmd.name}
+    <div>
+      <AutoAnimate className="bg-dark-3 rounded truncate">
+        {manage ? (
+          <div className="px-5 py-4" key="1">
+            <div className="flex justify-between items-start">
+              <div className="flex items-center space-x-2 truncate text-lg mb-5 truncate">
+                <div className="text-white truncate">
+                  <span className="font-bold text-gray-500 text-xl">/</span>{" "}
+                  {cmd.name}
+                </div>
+              </div>
+              <div
+                className="flex items-center text-white cursor-pointer bg-blurple hover:bg-blurple-dark rounded px-2 py-1"
+                role="button"
+                onClick={save}
+              >
+                <Tooltip text="Delete Command">
+                  <ClipboardIcon className="h-5 w-5" />
+                </Tooltip>
+                <div className="ml-2">
+                  Save <span className="hidden md:inline-block">Changes</span>
+                </div>
               </div>
             </div>
-            <div
-              className="flex items-center text-white cursor-pointer bg-blurple hover:bg-blurple-dark rounded px-2 py-1"
-              role="button"
-              onClick={save}
-            >
-              <Tooltip text="Delete Command">
-                <ClipboardIcon className="h-5 w-5" />
-              </Tooltip>
-              <div className="ml-2">
-                Save <span className="hidden md:inline-block">Changes</span>
+            <div className="space-y-5">
+              <EditorInput
+                label="Name"
+                type="text"
+                maxLength={32}
+                value={name}
+                onChange={setName}
+              />
+              <EditorInput
+                label="Description"
+                type="text"
+                maxLength={100}
+                value={description}
+                onChange={setDescription}
+              />
+              <CommandActionSet cmdId={cmd.id} />
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-between items-start py-4 px-5" key="2">
+            <div className="flex-auto truncate">
+              <div className="flex items-center space-x-2 truncate text-lg mb-1 truncate">
+                <div className="text-white truncate">
+                  <span className="font-bold text-gray-500 text-xl">/</span>{" "}
+                  {cmd.name}
+                </div>
+              </div>
+              <div className="text-gray-400 text-sm font-light whitespace-normal">
+                {cmd.description}
+              </div>
+            </div>
+            <div className="flex flex-none items-center space-x-4 md:space-x-3">
+              <div
+                className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
+                role="button"
+                onClick={() => setDeleteModal(true)}
+              >
+                <Tooltip text="Delete Command">
+                  <TrashIcon className="h-5 w-5" />
+                </Tooltip>
+                <div className="hidden md:block ml-2">Delete</div>
+              </div>
+              <div
+                className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
+                role="button"
+                onClick={() => setManage(true)}
+              >
+                <Tooltip text="Manage Command">
+                  <PencilSquareIcon className="h-5 w-5" />
+                </Tooltip>
+                <div className="hidden md:block ml-2">Manage</div>
               </div>
             </div>
           </div>
-          <div className="space-y-5">
-            <EditorInput
-              label="Name"
-              type="text"
-              maxLength={32}
-              value={name}
-              onChange={setName}
-            />
-            <EditorInput
-              label="Description"
-              type="text"
-              maxLength={100}
-              value={description}
-              onChange={setDescription}
-            />
-            <CommandActionSet cmdId={cmd.id} />
-          </div>
-        </div>
-      ) : (
-        <div className="flex justify-between items-start py-4 px-5" key="2">
-          <div className="flex-auto truncate">
-            <div className="flex items-center space-x-2 truncate text-lg mb-1 truncate">
-              <div className="text-white truncate">
-                <span className="font-bold text-gray-500 text-xl">/</span>{" "}
-                {cmd.name}
-              </div>
-            </div>
-            <div className="text-gray-400 text-sm font-light whitespace-normal">
-              {cmd.description}
-            </div>
-          </div>
-          <div className="flex flex-none items-center space-x-4 md:space-x-3">
-            <div
-              className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
-              role="button"
-              onClick={deleteCommand}
-            >
-              <Tooltip text="Delete Command">
-                <TrashIcon className="h-5 w-5" />
-              </Tooltip>
-              <div className="hidden md:block ml-2">Delete</div>
-            </div>
-            <div
-              className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
-              role="button"
-              onClick={() => setManage(true)}
-            >
-              <Tooltip text="Manage Command">
-                <PencilSquareIcon className="h-5 w-5" />
-              </Tooltip>
-              <div className="hidden md:block ml-2">Manage</div>
-            </div>
-          </div>
-        </div>
+        )}
+      </AutoAnimate>
+      {deleteModal && (
+        <ConfirmModal
+          title="Are you sure that you want to delete the command?"
+          subTitle="The command will be deleted permanently and can't be restored."
+          onClose={() => setDeleteModal(false)}
+          onConfirm={deleteCommandConfirm}
+        />
       )}
-    </AutoAnimate>
+    </div>
   );
 }
 

@@ -4,33 +4,16 @@ import { useSavedMessagesQuery, useUserQuery } from "../api/queries";
 import EditorInput from "../components/EditorInput";
 import clsx from "clsx";
 import LoginSuggest from "../components/LoginSuggest";
-import {
-  useCreatedSavedMessageMutation,
-  useDeleteSavedMessageMutation,
-  useUpdateSavedMessageMutation,
-} from "../api/mutations";
+import { useCreatedSavedMessageMutation } from "../api/mutations";
 import { useCurrentMessageStore } from "../state/message";
-import {
-  ArrowDownTrayIcon,
-  ArrowUpTrayIcon,
-  TrashIcon,
-} from "@heroicons/react/20/solid";
-import { SavedMessageWire } from "../api/wire";
-import { parseISO } from "date-fns";
-import { useNavigate } from "react-router-dom";
 import MessageExportImport from "../components/MessageExportImport";
 import { useToasts } from "../util/toasts";
-import { parseMessageWithAction } from "../discord/restoreSchema";
-import Tooltip from "../components/Tooltip";
 import {
   usePremiumGuildFeatures,
   usePremiumUserFeatures,
 } from "../util/premium";
 import { useSendSettingsStore } from "../state/sendSettings";
-
-function formatUpdatedAt(updatedAt: string): string {
-  return parseISO(updatedAt).toLocaleString();
-}
+import SavedMessage from "../components/SavedMessage";
 
 export default function MessagesView() {
   const selectedGuildId = useSendSettingsStore((s) => s.guildId);
@@ -103,75 +86,6 @@ export default function MessagesView() {
     );
   }
 
-  const updateMessageMutation = useUpdateSavedMessageMutation();
-
-  function updateMessage(message: SavedMessageWire) {
-    updateMessageMutation.mutate(
-      {
-        messageId: message.id,
-        guildId: guildId,
-        req: {
-          name: message.name,
-          description: message.description,
-          data: useCurrentMessageStore.getState(),
-        },
-      },
-      {
-        onSuccess: (resp) => {
-          if (resp.success) {
-            messagesQuery.refetch();
-          } else {
-            createToast({
-              title: "Failed to update message",
-              message: resp.error.message,
-              type: "error",
-            });
-          }
-        },
-      }
-    );
-  }
-
-  const navigate = useNavigate();
-
-  function restoreMessage(message: SavedMessageWire) {
-    try {
-      const data = parseMessageWithAction(message.data);
-      useCurrentMessageStore.setState(data);
-      navigate("/editor");
-    } catch (e) {
-      createToast({
-        title: "Failed to restore message",
-        message: `${e}`,
-        type: "error",
-      });
-    }
-  }
-
-  const deleteMessageMutation = useDeleteSavedMessageMutation();
-
-  function deleteMessage(message: SavedMessageWire) {
-    deleteMessageMutation.mutate(
-      {
-        messageId: message.id,
-        guildId: guildId,
-      },
-      {
-        onSuccess: (resp) => {
-          if (resp.success) {
-            messagesQuery.refetch();
-          } else {
-            createToast({
-              title: "Failed to delete message",
-              message: resp.error.message,
-              type: "error",
-            });
-          }
-        },
-      }
-    );
-  }
-
   return (
     <div className="overflow-y-auto w-full">
       <div className="flex flex-col max-w-5xl mx-auto px-4 w-full my-5 lg:my-20">
@@ -201,56 +115,7 @@ export default function MessagesView() {
             {messagesQuery.isSuccess && messagesQuery.data.success && (
               <div className="space-y-5 mb-8">
                 {messagesQuery.data.data.map((message) => (
-                  <div
-                    key={message.id}
-                    className="bg-dark-3 p-3 rounded flex justify-between truncate space-x-3"
-                  >
-                    <div className="flex-auto truncate">
-                      <div className="flex items-center space-x-1 truncate">
-                        <div className="text-white truncate">
-                          {message.name}
-                        </div>
-                        <div className="text-gray-500 text-xs hidden md:block">
-                          {message.id}
-                        </div>
-                      </div>
-                      <div className="text-gray-400 text-sm">
-                        {formatUpdatedAt(message.updated_at)}
-                      </div>
-                    </div>
-                    <div className="flex flex-none items-center space-x-4 md:space-x-3">
-                      <div
-                        className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
-                        role="button"
-                        onClick={() => restoreMessage(message)}
-                      >
-                        <Tooltip text="Restore Message">
-                          <ArrowDownTrayIcon className="h-5 w-5" />
-                        </Tooltip>
-                        <div className="hidden md:block ml-2">Restore</div>
-                      </div>
-                      <div
-                        className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
-                        role="button"
-                        onClick={() => updateMessage(message)}
-                      >
-                        <Tooltip text="Overwrite Message">
-                          <ArrowUpTrayIcon className="h-5 w-5" />
-                        </Tooltip>
-                        <div className="hidden md:block ml-2">Overwrite</div>
-                      </div>
-                      <div
-                        className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
-                        role="button"
-                        onClick={() => deleteMessage(message)}
-                      >
-                        <Tooltip text="Delete Message">
-                          <TrashIcon className="h-5 w-5" />
-                        </Tooltip>
-                        <div className="hidden md:block ml-2">Delete</div>
-                      </div>
-                    </div>
-                  </div>
+                  <SavedMessage message={message} guildId={guildId} />
                 ))}
                 {messagesQuery.data.data.length === 0 && (
                   <div className="text-gray-400 font-light">
