@@ -85,6 +85,7 @@ func (s *SessionManager) CreateSession(c *fiber.Ctx, userID string, guildIDs []s
 		HTTPOnly: true,
 		Secure:   true,
 		SameSite: "strict",
+		Expires:  time.Now().UTC().Add(30 * 24 * time.Hour),
 	})
 
 	return nil
