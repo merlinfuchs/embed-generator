@@ -158,7 +158,7 @@ export default function EditorComponentButton({
             <div className="flex space-x-3 flex-auto">
               <EditorComponentEmojiSelect
                 emoji={emoji ?? null}
-                onChange={(v) => setEmoji(rowIndex, compIndex, v)}
+                onChange={(v) => setEmoji(rowIndex, compIndex, v ?? undefined)}
               />
               <EditorInput
                 label="Label"
