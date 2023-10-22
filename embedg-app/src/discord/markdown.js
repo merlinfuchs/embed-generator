@@ -1,6 +1,9 @@
 import markdown from "simple-markdown";
 import highlight from "highlight.js/lib/common";
 
+// https://github.com/ItzDerock/discord-markdown-parser
+// https://github.com/brussell98/discord-markdown
+
 function htmlTag(tagName, content, attributes, isClosed = true, state = {}) {
   if (typeof isClosed === "object") {
     state = isClosed;
