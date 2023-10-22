@@ -115,7 +115,11 @@ export default function MessagesView() {
             {messagesQuery.isSuccess && messagesQuery.data.success && (
               <div className="space-y-5 mb-8">
                 {messagesQuery.data.data.map((message) => (
-                  <SavedMessage message={message} guildId={guildId} />
+                  <SavedMessage
+                    message={message}
+                    guildId={guildId}
+                    key={message.id}
+                  />
                 ))}
                 {messagesQuery.data.data.length === 0 && (
                   <div className="text-gray-400 font-light">
@@ -125,9 +129,9 @@ export default function MessagesView() {
                 )}
               </div>
             )}
-            <div className="flex space-x-3 items-end flex-none mb-5">
+            <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3 items-end flex-none mb-5">
               <EditorInput
-                label="Message Name"
+                label="New Message Name"
                 maxLength={25}
                 value={newMessageName}
                 onChange={setNewMessageName}
