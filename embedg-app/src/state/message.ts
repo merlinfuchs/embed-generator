@@ -103,7 +103,7 @@ export interface MessageStore extends Message {
     i: number,
     j: number,
     k: number,
-    emoji: Emoji | null
+    emoji: Emoji | undefined
   ) => void;
   addAction: (id: string, action: MessageAction) => void;
   clearActions: (id: string) => void;
@@ -939,7 +939,7 @@ export const createMessageStore = (key: string) =>
             i: number,
             j: number,
             k: number,
-            emoji: Emoji | null
+            emoji: Emoji | undefined
           ) =>
             set((state) => {
               const row = state.components && state.components[i];

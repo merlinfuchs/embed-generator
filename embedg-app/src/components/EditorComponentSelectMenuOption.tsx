@@ -110,7 +110,7 @@ export default function EditorComponentSelectMenuOption({
         <div className="space-y-4">
           <div className="flex space-x-3">
             <EditorComponentEmojiSelect
-              emoji={option.emoji ?? null}
+              emoji={option.emoji ?? undefined}
               onChange={(v) => setEmoji(rowIndex, compIndex, optionIndex, v)}
             />
             <EditorInput
