@@ -243,7 +243,8 @@ export const selectMenuOptionSchema = z.object({
     uniqueIdSchema.default(() => getUniqueId())
   ),
   label: z.preprocess((d) => d ?? undefined, z.string().default("")),
-  emoji: z.optional(z.nullable(emojiSchema)),
+  description: z.preprocess((d) => d ?? undefined, z.string().default("")),
+  emoji: z.preprocess((d) => d ?? undefined, z.optional(emojiSchema)),
   action_set_id: z.preprocess(
     (d) => d ?? undefined,
     z.string().default(() => getUniqueId().toString())

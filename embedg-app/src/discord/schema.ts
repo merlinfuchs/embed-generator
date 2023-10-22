@@ -236,6 +236,7 @@ export type MessageComponentButton = z.infer<typeof buttonSchema>;
 export const selectMenuOptionSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
   label: z.string().min(1).max(100),
+  description: z.optional(z.string().min(1).max(100)),
   emoji: z.optional(z.nullable(emojiSchema)),
   action_set_id: z.string().default(() => getUniqueId().toString()),
 });

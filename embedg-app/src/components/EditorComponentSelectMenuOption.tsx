@@ -46,6 +46,10 @@ export default function EditorComponentSelectMenuOption({
     (state) => state.setSelectMenuOptionLabel
   );
 
+  const setDescription = useCurrentMessageStore(
+    (state) => state.setSelectMenuOptionDescription
+  );
+
   const setEmoji = useCurrentMessageStore(
     (state) => state.setSelectMenuOptionEmoji
   );
@@ -118,6 +122,16 @@ export default function EditorComponentSelectMenuOption({
               validationPath={`components.${rowIndex}.components.${compIndex}.options.${optionIndex}.label`}
             />
           </div>
+          <EditorInput
+            label="Description"
+            maxLength={100}
+            value={option.description || ""}
+            onChange={(v) =>
+              setDescription(rowIndex, compIndex, optionIndex, v || undefined)
+            }
+            className="flex-auto"
+            validationPath={`components.${rowIndex}.components.${compIndex}.options.${optionIndex}.description`}
+          />
           <EditorComponentActions setId={option.action_set_id} />
         </div>
       </Collapsable>
