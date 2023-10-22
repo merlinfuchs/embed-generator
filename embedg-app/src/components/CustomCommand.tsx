@@ -17,6 +17,7 @@ import { useQueryClient } from "react-query";
 import { useToasts } from "../util/toasts";
 import EditorInput from "./EditorInput";
 import CommandActionSet from "./CommandActionSet";
+import CustomCommandParameters from "./CustomCommandParameters";
 import { useCommandActionsStore } from "../state/actions";
 import { messageActionSetSchema } from "../discord/restoreSchema";
 import ConfirmModal from "./ConfirmModal";
@@ -29,6 +30,7 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
 
   const [name, setName] = useState(cmd.name);
   const [description, setDescription] = useState(cmd.description);
+  const [parameters, setParameters] = useState(cmd.parameters);
 
   const queryClient = useQueryClient();
   const updateMutation = useCustomCommandUpdateMutation();
@@ -53,7 +55,7 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
           name,
           description,
           enabled: true,
-          parameters: null,
+          parameters: parameters,
           actions: actions || null,
         },
       },
@@ -138,6 +140,11 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
                 maxLength={100}
                 value={description}
                 onChange={setDescription}
+              />
+              <CustomCommandParameters
+                parameters={parameters || []}
+                setParameters={setParameters}
+                cmdId={cmd.id}
               />
               <CommandActionSet cmdId={cmd.id} />
             </div>

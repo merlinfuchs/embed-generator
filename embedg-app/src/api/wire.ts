@@ -43,18 +43,24 @@ export interface CustomCommandWire {
   name: string;
   description: string;
   enabled: boolean;
-  parameters: Record<string, any> | null;
+  parameters: CustomCommandParameterWire[];
   actions: Record<string, any> | null;
   created_at: string /* RFC3339 */;
   updated_at: string /* RFC3339 */;
   deployed_at: null | string /* RFC3339 */;
+}
+export interface CustomCommandParameterWire {
+  id: number /* int */;
+  name: string;
+  description: string;
+  type: number /* int */;
 }
 export type CustomCommandsListResponseWire = APIResponse<CustomCommandWire[]>;
 export type CustomCommandGetResponseWire = APIResponse<CustomCommandWire>;
 export interface CustomCommandCreateRequestWire {
   name: string;
   description: string;
-  parameters: Record<string, any> | null;
+  parameters: CustomCommandParameterWire[];
   actions: Record<string, any> | null;
 }
 export type CustomCommandCreateResponseWire = APIResponse<CustomCommandWire>;
@@ -62,7 +68,7 @@ export interface CustomCommandUpdateRequestWire {
   name: string;
   description: string;
   enabled: boolean;
-  parameters: Record<string, any> | null;
+  parameters: CustomCommandParameterWire[];
   actions: Record<string, any> | null;
 }
 export type CustomCommandUpdateResponseWire = APIResponse<CustomCommandWire>;
