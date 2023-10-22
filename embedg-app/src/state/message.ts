@@ -70,7 +70,7 @@ export interface MessageStore extends Message {
     style: MessageComponentButtonStyle
   ) => void;
   setButtonLabel: (i: number, j: number, label: string) => void;
-  setButtonEmoji: (i: number, j: number, emoji: Emoji | null) => void;
+  setButtonEmoji: (i: number, j: number, emoji: Emoji | undefined) => void;
   setButtonUrl: (i: number, j: number, url: string) => void;
   setSelectMenuPlaceholder: (
     i: number,
@@ -93,11 +93,17 @@ export interface MessageStore extends Message {
     k: number,
     label: string
   ) => void;
+  setSelectMenuOptionDescription: (
+    i: number,
+    j: number,
+    k: number,
+    description: string | undefined
+  ) => void;
   setSelectMenuOptionEmoji: (
     i: number,
     j: number,
     k: number,
-    emoji: Emoji | null
+    emoji: Emoji | undefined
   ) => void;
   addAction: (id: string, action: MessageAction) => void;
   clearActions: (id: string) => void;
@@ -733,7 +739,7 @@ export const createMessageStore = (key: string) =>
               }
               button.label = label;
             }),
-          setButtonEmoji: (i: number, j: number, emoji: Emoji | null) =>
+          setButtonEmoji: (i: number, j: number, emoji: Emoji | undefined) =>
             set((state) => {
               const row = state.components && state.components[i];
               if (!row) {
@@ -908,11 +914,32 @@ export const createMessageStore = (key: string) =>
               }
               option.label = label;
             }),
+          setSelectMenuOptionDescription: (
+            i: number,
+            j: number,
+            k: number,
+            description: string | undefined
+          ) =>
+            set((state) => {
+              const row = state.components && state.components[i];
+              if (!row) {
+                return;
+              }
+              const selectMenu = row.components && row.components[j];
+              if (!selectMenu || selectMenu.type !== 3) {
+                return;
+              }
+              const option = selectMenu.options && selectMenu.options[k];
+              if (!option) {
+                return;
+              }
+              option.description = description;
+            }),
           setSelectMenuOptionEmoji: (
             i: number,
             j: number,
             k: number,
-            emoji: Emoji | null
+            emoji: Emoji | undefined
           ) =>
             set((state) => {
               const row = state.components && state.components[i];
