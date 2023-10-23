@@ -43,15 +43,22 @@ type CustomBotDisableResponseDataWire struct{}
 type CustomBotDisableResponseWire APIResponse[CustomBotDisableResponseDataWire]
 
 type CustomCommandWire struct {
-	ID          string          `json:"id"`
-	Name        string          `json:"name"`
-	Description string          `json:"description"`
-	Enabled     bool            `json:"enabled"`
-	Parameters  json.RawMessage `json:"parameters"`
-	Actions     json.RawMessage `json:"actions"`
-	CreatedAt   time.Time       `json:"created_at"`
-	UpdatedAt   time.Time       `json:"updated_at"`
-	DeployedAt  null.Time       `json:"deployed_at"`
+	ID          string                       `json:"id"`
+	Name        string                       `json:"name"`
+	Description string                       `json:"description"`
+	Enabled     bool                         `json:"enabled"`
+	Parameters  []CustomCommandParameterWire `json:"parameters"`
+	Actions     json.RawMessage              `json:"actions"`
+	CreatedAt   time.Time                    `json:"created_at"`
+	UpdatedAt   time.Time                    `json:"updated_at"`
+	DeployedAt  null.Time                    `json:"deployed_at"`
+}
+
+type CustomCommandParameterWire struct {
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Type        int    `json:"type"`
 }
 
 type CustomCommandsListResponseWire APIResponse[[]CustomCommandWire]
@@ -59,19 +66,35 @@ type CustomCommandsListResponseWire APIResponse[[]CustomCommandWire]
 type CustomCommandGetResponseWire APIResponse[CustomCommandWire]
 
 type CustomCommandCreateRequestWire struct {
-	Name        string          `json:"name"`
-	Description string          `json:"description"`
-	Parameters  json.RawMessage `json:"parameters"`
-	Actions     json.RawMessage `json:"actions"`
+	Name        string                       `json:"name"`
+	Description string                       `json:"description"`
+	Parameters  []CustomCommandParameterWire `json:"parameters"`
+	Actions     json.RawMessage              `json:"actions"`
 }
 
 var commandNameRegex = regexp.MustCompile(`^([-_\p{L}\p{N}]+ ?){3}$`)
 
 func (r CustomCommandCreateRequestWire) Validate() error {
-	return validation.ValidateStruct(&r,
+	err := validation.ValidateStruct(&r,
 		validation.Field(&r.Name, validation.Required, validation.Length(1, 32), validation.Match(commandNameRegex)),
 		validation.Field(&r.Description, validation.Required, validation.Length(1, 100)),
 	)
+	if err != nil {
+		return err
+	}
+
+	for _, p := range r.Parameters {
+		err := validation.ValidateStruct(&p,
+			validation.Field(&p.Name, validation.Required, validation.Length(1, 32)),
+			validation.Field(&p.Description, validation.Required, validation.Length(1, 100)),
+			validation.Field(&p.Type, validation.Required, validation.In(3, 4, 5, 6, 7, 8, 10, 11)),
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (r *CustomCommandCreateRequestWire) Normalize() {
@@ -81,18 +104,34 @@ func (r *CustomCommandCreateRequestWire) Normalize() {
 type CustomCommandCreateResponseWire APIResponse[CustomCommandWire]
 
 type CustomCommandUpdateRequestWire struct {
-	Name        string          `json:"name"`
-	Description string          `json:"description"`
-	Enabled     bool            `json:"enabled"`
-	Parameters  json.RawMessage `json:"parameters"`
-	Actions     json.RawMessage `json:"actions"`
+	Name        string                       `json:"name"`
+	Description string                       `json:"description"`
+	Enabled     bool                         `json:"enabled"`
+	Parameters  []CustomCommandParameterWire `json:"parameters"`
+	Actions     json.RawMessage              `json:"actions"`
 }
 
 func (r CustomCommandUpdateRequestWire) Validate() error {
-	return validation.ValidateStruct(&r,
+	err := validation.ValidateStruct(&r,
 		validation.Field(&r.Name, validation.Required, validation.Length(1, 32), validation.Match(commandNameRegex)),
 		validation.Field(&r.Description, validation.Required, validation.Length(1, 100)),
 	)
+	if err != nil {
+		return err
+	}
+
+	for _, p := range r.Parameters {
+		err := validation.ValidateStruct(&p,
+			validation.Field(&p.Name, validation.Required, validation.Length(1, 32)),
+			validation.Field(&p.Description, validation.Required, validation.Length(1, 100)),
+			validation.Field(&p.Type, validation.Required, validation.In(3, 4, 5, 6, 7, 8, 10, 11)),
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (r *CustomCommandUpdateRequestWire) Normalize() {
