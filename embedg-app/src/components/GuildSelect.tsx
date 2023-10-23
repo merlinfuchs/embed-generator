@@ -84,13 +84,16 @@ export default function GuildSelect({ guildId, onChange }: Props) {
                   key={g.id}
                   className={clsx(
                     "py-2 flex space-x-2 items-center rounded px-3",
-                    g.has_channel_with_bot_access
+                    g.has_channel_with_bot_access &&
+                      g.has_channel_with_user_access
                       ? "hover:bg-dark-3 cursor-pointer"
                       : "opacity-60 cursor-not-allowed"
                   )}
                   role="button"
                   onClick={() =>
-                    g.has_channel_with_bot_access && selectGuild(g.id)
+                    g.has_channel_with_bot_access &&
+                    g.has_channel_with_user_access &&
+                    selectGuild(g.id)
                   }
                 >
                   <img
