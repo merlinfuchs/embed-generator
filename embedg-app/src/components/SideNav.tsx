@@ -114,13 +114,13 @@ export default function SideNav() {
                 collapsed={collapsed}
                 setHidden={setHidden}
               />
-              {/*<NavigationButton
+              <NavigationButton
                 href="/premium"
                 label="Premium"
                 icon={StarIcon}
                 collapsed={collapsed}
                 setHidden={setHidden}
-              />*/}
+              />
             </div>
           </div>
           <div className="flex flex-col items-center py-5 space-y-7">
