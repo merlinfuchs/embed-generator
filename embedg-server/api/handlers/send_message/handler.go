@@ -58,6 +58,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		Content:         data.Content,
 		Username:        data.Username,
 		AvatarURL:       data.AvatarURL,
+		ThreadName:      data.ThreadName,
 		TTS:             data.TTS,
 		Embeds:          data.Embeds,
 		AllowedMentions: data.AllowedMentions,

@@ -14,7 +14,7 @@ interface Props {
 }
 
 function canSelectChannelType(type: number) {
-  // text, announcement, announcement thread, text thread, stage
+  // text, announcement, announcement thread, text thread, (TODO: forum?)
   return type === 0 || type === 5 || type === 10 || type === 11;
 }
 

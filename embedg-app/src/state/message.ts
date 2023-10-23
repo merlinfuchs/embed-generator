@@ -21,6 +21,7 @@ export interface MessageStore extends Message {
   setContent: (content: string) => void;
   setUsername: (username: string | undefined) => void;
   setAvatarUrl: (avatar_url: string | undefined) => void;
+  setThreadName: (thread_name: string | undefined) => void;
   addEmbed: (embed: MessageEmbed) => void;
   clearEmbeds: () => void;
   moveEmbedDown: (i: number) => void;
@@ -191,6 +192,8 @@ export const createMessageStore = (key: string) =>
           setContent: (content: string) => set({ content }),
           setUsername: (username: string | undefined) => set({ username }),
           setAvatarUrl: (avatar_url: string | undefined) => set({ avatar_url }),
+          setThreadName: (thread_name: string | undefined) =>
+            set({ thread_name }),
           addEmbed: (embed: MessageEmbed) =>
             set((state) => {
               if (!state.embeds) {
