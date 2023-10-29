@@ -73,10 +73,20 @@ export interface MessageStore extends Message {
   setButtonLabel: (i: number, j: number, label: string) => void;
   setButtonEmoji: (i: number, j: number, emoji: Emoji | undefined) => void;
   setButtonUrl: (i: number, j: number, url: string) => void;
+  setButtonDisabled: (
+    i: number,
+    j: number,
+    disabled: boolean | undefined
+  ) => void;
   setSelectMenuPlaceholder: (
     i: number,
     j: number,
     placeholder: string | undefined
+  ) => void;
+  setSelectMenuDisabled: (
+    i: number,
+    j: number,
+    disabled: boolean | undefined
   ) => void;
   addSelectMenuOption: (
     i: number,
@@ -766,6 +776,22 @@ export const createMessageStore = (key: string) =>
               }
               button.url = url;
             }),
+          setButtonDisabled: (
+            i: number,
+            j: number,
+            disabled: boolean | undefined
+          ) =>
+            set((state) => {
+              const row = state.components && state.components[i];
+              if (!row) {
+                return;
+              }
+              const button = row.components && row.components[j];
+              if (!button) {
+                return;
+              }
+              button.disabled = disabled;
+            }),
           setSelectMenuPlaceholder: (
             i: number,
             j: number,
@@ -781,6 +807,22 @@ export const createMessageStore = (key: string) =>
                 return;
               }
               selectMenu.placeholder = placeholder;
+            }),
+          setSelectMenuDisabled: (
+            i: number,
+            j: number,
+            disabled: boolean | undefined
+          ) =>
+            set((state) => {
+              const row = state.components && state.components[i];
+              if (!row) {
+                return;
+              }
+              const selectMenu = row.components && row.components[j];
+              if (!selectMenu || selectMenu.type !== 3) {
+                return;
+              }
+              selectMenu.disabled = disabled;
             }),
           addSelectMenuOption: (
             i: number,
