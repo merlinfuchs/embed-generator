@@ -135,6 +135,11 @@ Sources from: https://github.com/skyra-project/skyra.pw/blob/main/src/config/dis
   text-decoration: none !important;
 }
 
+.discord-select-menu-disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .discord-select-menu-placeholder {
   color: rgb(148, 155, 164);
   text-overflow: ellipsis;
