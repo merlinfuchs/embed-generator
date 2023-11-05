@@ -9,18 +9,22 @@ import (
 
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/rs/zerolog/log"
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarkstruct"
 )
 
 type ScriptContext struct {
-	Respond     func(data *discordgo.InteractionResponse) (*discordgo.Message, error)
-	Interaction *discordgo.Interaction
-	Session     *discordgo.Session
-	State       *discordgo.State
-	PG          *postgres.PostgresStore
-	KVStore     KVStore
+	Respond      func(data *discordgo.InteractionResponse) (*discordgo.Message, error)
+	HasResponded func() bool
+	Interaction  *discordgo.Interaction
+	Session      *discordgo.Session
+	State        *discordgo.State
+	PG           *postgres.PostgresStore
+	ActionParser *parser.ActionParser
+	KVStore      KVStore
 
 	DervivedPermissions actions.ActionDerivedPermissions
 
@@ -135,7 +139,22 @@ func (c *ScriptContext) respond(t discordgo.InteractionResponseType, thread *sta
 	var content string
 	var ephemeral bool = true
 	var rawEmbeds starlark.Value
-	if err := starlark.UnpackArgs(b.Name(), args, kwargs, "content?", &content, "ephemeral?", &ephemeral, "embeds??", &rawEmbeds); err != nil {
+	var rawComponents starlark.Value
+	var rawActions starlark.Value
+	var ignored starlark.Value
+	if err := starlark.UnpackArgs(
+		b.Name(), args, kwargs,
+		"content?", &content,
+		"ephemeral?", &ephemeral,
+		"embeds??", &rawEmbeds,
+		"components??", &rawComponents,
+		"actions??", &rawActions,
+
+		// These arguments are ignored, but we parse them so users can pass a the whole message data without getting an error
+		"avatar_url??", &ignored,
+		"username??", &ignored,
+		"tts??", &ignored,
+	); err != nil {
 		return nil, err
 	}
 
@@ -149,16 +168,60 @@ func (c *ScriptContext) respond(t discordgo.InteractionResponseType, thread *sta
 		deserializeValue(rawEmbeds, &embeds)
 	}
 
+	var components []actions.ActionRowWithActions
+	if rawComponents != nil {
+		deserializeValue(rawComponents, &components)
+	}
+
+	var actions map[string]actions.ActionSet
+	if rawActions != nil {
+		deserializeValue(rawActions, &actions)
+	}
+
+	parsedComponents, err := c.ActionParser.ParseMessageComponents(components)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(actions) != 0 && !c.HasResponded() {
+		var err error
+		if c.Interaction.Type == discordgo.InteractionApplicationCommand {
+			_, err = c.Respond(&discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+			})
+		} else {
+			_, err = c.Respond(&discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseDeferredMessageUpdate,
+			})
+		}
+		if err != nil {
+			return starlark.None, err
+		}
+	}
+
 	msg, err := c.Respond(&discordgo.InteractionResponse{
 		Type: t,
 		Data: &discordgo.InteractionResponseData{
-			Content: content,
-			Embeds:  embeds,
-			Flags:   flags,
+			Content:    content,
+			Embeds:     embeds,
+			Flags:      flags,
+			Components: parsedComponents,
 		},
 	})
 	if err != nil {
 		return starlark.None, err
+	}
+
+	if len(actions) != 0 {
+		if msg == nil {
+			log.Error().Err(err).Msg("Failed to grab message for custom script response to create actions")
+		} else {
+			err = c.ActionParser.CreateActionsForMessage(actions, c.DervivedPermissions, msg.ID, ephemeral)
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to create message actions for custom script response")
+				return starlark.None, err
+			}
+		}
 	}
 
 	if msg == nil {
@@ -414,19 +477,39 @@ func (c *ScriptContext) SavedMessageStruct(msg postgres.SavedMessage) *starlarks
 		"id":          starlark.String(msg.ID),
 		"name":        starlark.String(msg.Name),
 		"description": description,
-		"format": starlark.NewBuiltin("format", func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-			// This is used to replace variables in the message with value from the context or values passed in by the user
-			return starlark.None, nil
-		}),
 		"get_data": starlark.NewBuiltin("get_data", func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-			// This is only for advanced use cases, usually you want to pass the saved message directly into the respond function
+			var rawVariables starlark.Value
+			if err := starlark.UnpackArgs(b.Name(), args, kwargs, "variables?", &rawVariables); err != nil {
+				return nil, err
+			}
 
-			data := make(map[string]interface{})
-			if err := json.Unmarshal(msg.Data, &data); err != nil {
+			variables := make(map[string]string)
+			if rawVariables != nil {
+				deserializeValue(rawVariables, &variables)
+			}
+
+			rawData := msg.Data
+			if len(variables) != 0 {
+				data := actions.MessageWithActions{}
+				err := json.Unmarshal(msg.Data, &data)
+				if err != nil {
+					return starlark.None, err
+				}
+
+				data.FillVariables(variables)
+
+				rawData, err = json.Marshal(data)
+				if err != nil {
+					return starlark.None, err
+				}
+			}
+
+			dataMap := make(map[string]interface{})
+			if err := json.Unmarshal(rawData, &dataMap); err != nil {
 				return starlark.None, err
 			}
 
-			return mapToDict(data), nil
+			return mapToDict(dataMap), nil
 		}),
 	})
 }

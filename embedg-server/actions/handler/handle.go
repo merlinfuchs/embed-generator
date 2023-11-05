@@ -387,10 +387,12 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 					// TODO: propagate error
 					return i.Respond(data.Data, data.Type), nil
 				},
+				HasResponded:         i.HasResponded,
 				Interaction:          interaction,
 				Session:              s,
 				State:                m.state,
 				PG:                   m.pg,
+				ActionParser:         m.parser,
 				KVStore:              NewGuildValueStore(interaction.GuildID, m.pg),
 				DervivedPermissions:  derivedPerms,
 				MaxExecutionSteps:    1000,
