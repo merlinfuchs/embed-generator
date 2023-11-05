@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	embedgapp "github.com/merlinfuchs/embed-generator/embedg-app"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
@@ -33,6 +34,11 @@ func Serve() {
 		},
 		BodyLimit: 1024 * 1024 * 32, // 23 MB
 	})
+
+	// We don't want the whole app to crash but panics are still very bad
+	app.Use(recover.New(recover.Config{
+		EnableStackTrace: true,
+	}))
 
 	pg := postgres.NewPostgresStore()
 	bot, err := bot.New(viper.GetString("discord.token"), pg)
