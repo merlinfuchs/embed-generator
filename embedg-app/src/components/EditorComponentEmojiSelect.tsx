@@ -5,8 +5,8 @@ import { Emoji } from "../discord/schema";
 import Twemoji from "react-twemoji";
 
 interface Props {
-  emoji: Emoji | null;
-  onChange: (emoji: Emoji | null) => void;
+  emoji: Emoji | undefined;
+  onChange: (emoji: Emoji | undefined) => void;
 }
 
 export default function EdiotrComponentEmojiSelect({ emoji, onChange }: Props) {
@@ -62,7 +62,7 @@ export default function EdiotrComponentEmojiSelect({ emoji, onChange }: Props) {
           {emoji && (
             <div
               className="flex items-center cursor-pointer pr-1 text-gray-400 hover:text-white"
-              onClick={() => onChange(null)}
+              onClick={() => onChange(undefined)}
             >
               <XMarkIcon className="h-5 w-5" />
             </div>

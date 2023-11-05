@@ -32,12 +32,18 @@ func (h *CustomBotsHandler) HandleListCustomCommands(c *fiber.Ctx) error {
 
 	res := make([]wire.CustomCommandWire, 0, len(commands))
 	for _, cmd := range commands {
+		var parameters []wire.CustomCommandParameterWire
+		err := json.Unmarshal(cmd.Parameters, &parameters)
+		if err != nil {
+			return fmt.Errorf("Failed to unmarshal command parameters: %w", err)
+		}
+
 		res = append(res, wire.CustomCommandWire{
 			ID:          cmd.ID,
 			Name:        cmd.Name,
 			Description: cmd.Description,
 			Enabled:     cmd.Enabled,
-			Parameters:  cmd.Parameters,
+			Parameters:  parameters,
 			Actions:     cmd.Actions,
 			CreatedAt:   cmd.CreatedAt,
 			UpdatedAt:   cmd.UpdatedAt,
@@ -68,6 +74,12 @@ func (h *CustomBotsHandler) HandleGetCustomCommand(c *fiber.Ctx) error {
 		return err
 	}
 
+	var parameters []wire.CustomCommandParameterWire
+	err = json.Unmarshal(command.Parameters, &parameters)
+	if err != nil {
+		return fmt.Errorf("Failed to unmarshal command parameters: %w", err)
+	}
+
 	return c.JSON(wire.CustomCommandGetResponseWire{
 		Success: true,
 		Data: wire.CustomCommandWire{
@@ -75,7 +87,7 @@ func (h *CustomBotsHandler) HandleGetCustomCommand(c *fiber.Ctx) error {
 			Name:        command.Name,
 			Description: command.Description,
 			Enabled:     command.Enabled,
-			Parameters:  command.Parameters,
+			Parameters:  parameters,
 			Actions:     command.Actions,
 			CreatedAt:   command.CreatedAt,
 			UpdatedAt:   command.UpdatedAt,
@@ -127,12 +139,17 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return err
 	}
 
+	rawParameters, err := json.Marshal(req.Parameters)
+	if err != nil {
+		return err
+	}
+
 	command, err := h.pg.Q.InsertCustomCommand(c.Context(), postgres.InsertCustomCommandParams{
 		ID:          util.UniqueID(),
 		GuildID:     guildID,
 		Name:        req.Name,
 		Description: req.Description,
-		Parameters:  req.Parameters,
+		Parameters:  rawParameters,
 		Actions:     req.Actions,
 		DerivedPermissions: pqtype.NullRawMessage{
 			Valid:      true,
@@ -152,7 +169,7 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 			Name:        command.Name,
 			Description: command.Description,
 			Enabled:     command.Enabled,
-			Parameters:  command.Parameters,
+			Parameters:  req.Parameters,
 			Actions:     command.Actions,
 			CreatedAt:   command.CreatedAt,
 			UpdatedAt:   command.UpdatedAt,
@@ -195,13 +212,18 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return err
 	}
 
+	rawParameters, err := json.Marshal(req.Parameters)
+	if err != nil {
+		return fmt.Errorf("Failed to marshal parameters: %w", err)
+	}
+
 	command, err := h.pg.Q.UpdateCustomCommand(c.Context(), postgres.UpdateCustomCommandParams{
 		ID:          c.Params("commandID"),
 		GuildID:     guildID,
 		Name:        req.Name,
 		Description: req.Description,
 		Enabled:     req.Enabled,
-		Parameters:  req.Parameters,
+		Parameters:  rawParameters,
 		Actions:     req.Actions,
 		DerivedPermissions: pqtype.NullRawMessage{
 			Valid:      true,
@@ -220,7 +242,7 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 			Name:        command.Name,
 			Description: command.Description,
 			Enabled:     command.Enabled,
-			Parameters:  command.Parameters,
+			Parameters:  req.Parameters,
 			Actions:     command.Actions,
 			CreatedAt:   command.CreatedAt,
 			UpdatedAt:   command.UpdatedAt,
@@ -319,6 +341,22 @@ func commandsToPayload(commands []postgres.CustomCommand) (error, []*discordgo.A
 	for _, cmd := range commands {
 		nameParts := strings.Split(cmd.Name, " ")
 
+		parameters := make([]wire.CustomCommandParameterWire, 0, len(cmd.Parameters))
+		err := json.Unmarshal(cmd.Parameters, &parameters)
+		if err != nil {
+			return fmt.Errorf("Failed to unmarshal command parameters: %w", err), nil
+		}
+
+		options := make([]*discordgo.ApplicationCommandOption, 0, len(cmd.Parameters))
+		for _, param := range parameters {
+			options = append(options, &discordgo.ApplicationCommandOption{
+				Type:        discordgo.ApplicationCommandOptionType(param.Type),
+				Name:        param.Name,
+				Description: param.Description,
+				Required:    true,
+			})
+		}
+
 		var rootCMD *discordgo.ApplicationCommand
 		for _, c := range res {
 			if c.Name == nameParts[0] {
@@ -339,7 +377,9 @@ func commandsToPayload(commands []postgres.CustomCommand) (error, []*discordgo.A
 				Type:        discordgo.ChatApplicationCommand,
 				Name:        nameParts[0],
 				Description: cmd.Description,
-				// TODO
+			}
+			if len(nameParts) == 1 {
+				rootCMD.Options = options
 			}
 			res = append(res, rootCMD)
 		}
@@ -365,7 +405,9 @@ func commandsToPayload(commands []postgres.CustomCommand) (error, []*discordgo.A
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        nameParts[1],
 					Description: cmd.Description,
-					// TODO
+				}
+				if len(nameParts) == 2 {
+					secondCMD.Options = options
 				}
 				rootCMD.Options = append(rootCMD.Options, secondCMD)
 			}
@@ -386,7 +428,7 @@ func commandsToPayload(commands []postgres.CustomCommand) (error, []*discordgo.A
 				Type:        discordgo.ApplicationCommandOptionSubCommand,
 				Name:        nameParts[2],
 				Description: cmd.Description,
-				// TODO
+				Options:     options,
 			})
 		}
 	}

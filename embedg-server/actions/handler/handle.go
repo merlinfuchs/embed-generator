@@ -108,9 +108,9 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 		legacyPermissions = false
 	}
 
-	for _, action := range actionSet.Actions {
-		// TODO: run permission checks here
+	variables := actions.VariablesForInteraction(interaction)
 
+	for _, action := range actionSet.Actions {
 		switch action.Type {
 		case actions.ActionTypeTextResponse:
 			var flags discordgo.MessageFlags
@@ -118,8 +118,10 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				flags = discordgo.MessageFlagsEphemeral
 			}
 
+			content := actions.FillVariables(action.Text, variables)
+
 			i.Respond(&discordgo.InteractionResponseData{
-				Content: action.Text,
+				Content: content,
 				Flags:   flags,
 			})
 		case actions.ActionTypeToggleRole:
@@ -222,6 +224,8 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				return err
 			}
 
+			data.FillVariables(variables)
+
 			var flags discordgo.MessageFlags
 			if !action.Public {
 				flags = discordgo.MessageFlagsEphemeral
@@ -264,7 +268,9 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				})
 				return nil
 			}
-			_, err = s.ChannelMessageSend(dmChannel.ID, action.Text)
+
+			content := actions.FillVariables(action.Text, variables)
+			_, err = s.ChannelMessageSend(dmChannel.ID, content)
 			if err != nil {
 				i.Respond(&discordgo.InteractionResponseData{
 					Content: "Failed to send DM",
@@ -293,6 +299,8 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				return err
 			}
 
+			data.FillVariables(variables)
+
 			dmChannel, err := s.UserChannelCreate(interaction.Member.User.ID)
 			if err != nil {
 				i.Respond(&discordgo.InteractionResponseData{
@@ -320,8 +328,9 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			})
 			break
 		case actions.ActionTypeTextEdit:
+			content := actions.FillVariables(action.Text, variables)
 			i.Respond(&discordgo.InteractionResponseData{
-				Content: action.Text,
+				Content: content,
 			}, discordgo.InteractionResponseUpdateMessage)
 			break
 		case actions.ActionTypeSavedMessageEdit:
@@ -342,6 +351,8 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			if err != nil {
 				return err
 			}
+
+			data.FillVariables(variables)
 
 			var components []discordgo.MessageComponent
 			if !legacyPermissions {

@@ -1,5 +1,4 @@
 import Picker from "@emoji-mart/react";
-import { FaceSmileIcon } from "@heroicons/react/24/outline";
 import { ReactNode, useMemo, useState } from "react";
 import ClickOutsideHandler from "./ClickOutsideHandler";
 import { useGuildEmojisQuery } from "../api/queries";

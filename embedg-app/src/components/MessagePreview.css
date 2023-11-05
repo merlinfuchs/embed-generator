@@ -135,6 +135,11 @@ Sources from: https://github.com/skyra-project/skyra.pw/blob/main/src/config/dis
   text-decoration: none !important;
 }
 
+.discord-select-menu-disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .discord-select-menu-placeholder {
   color: rgb(148, 155, 164);
   text-overflow: ellipsis;
@@ -587,17 +592,20 @@ Sources from: https://github.com/skyra-project/skyra.pw/blob/main/src/config/dis
   white-space: pre-line;
 }
 
-.discord-embed .discord-embed-description code {
+.discord-embed code {
   background-color: #202225;
   padding: 2.5px;
   border-radius: 3px;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.125rem;
 }
 
-.discord-light-theme .discord-embed-description code {
+.discord-light-theme .discord-embed code {
   background-color: #e3e5e8;
 }
 
-.discord-embed .discord-embed-description code.multiline {
+.discord-embed code.multiline {
   display: block;
   padding: 7px;
   border-radius: 4px;
@@ -1671,36 +1679,31 @@ Sources from: https://github.com/skyra-project/skyra.pw/blob/main/src/config/dis
   padding-right: 3px;
 }
 
-.discord-message .discord-message-body .discord-spoiler {
+.discord-message .discord-spoiler {
   background-color: #202225;
   color: transparent;
   cursor: pointer;
+  border-radius: 5px;
 }
 
 .discord-light-theme .discord-message .discord-message-body .discord-spoiler {
   background-color: #b9bbbe;
 }
 
-.discord-message .discord-message-body .discord-spoiler:hover {
+.discord-message .discord-spoiler:hover {
   background-color: rgba(32, 34, 37, 0.8);
 }
 
-.discord-light-theme
-  .discord-message
-  .discord-message-body
-  .discord-spoiler:hover {
+.discord-light-theme .discord-message .discord-spoiler:hover {
   background-color: rgba(185, 187, 190, 0.8);
 }
 
-.discord-message .discord-message-body .discord-spoiler:active {
+.discord-message .discord-spoiler:active {
   color: inherit;
   background-color: hsla(0, 0%, 100%, 0.1);
 }
 
-.discord-light-theme
-  .discord-message
-  .discord-message-body
-  .discord-spoiler:active {
+.discord-light-theme .discord-message .discord-spoiler:active {
   background-color: rgba(0, 0, 0, 0.1);
 }
 .discord-system-message {

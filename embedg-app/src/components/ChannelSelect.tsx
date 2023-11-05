@@ -14,7 +14,7 @@ interface Props {
 }
 
 function canSelectChannelType(type: number) {
-  // text, announcement, announcement thread, text thread, stage
+  // text, announcement, announcement thread, text thread, (TODO: forum?)
   return type === 0 || type === 5 || type === 10 || type === 11;
 }
 
@@ -53,7 +53,10 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
         res.push({
           ...rootChannel,
           level: 0,
-          canSelect: canSelectChannelType(rootChannel.type),
+          canSelect:
+            rootChannel.user_access &&
+            rootChannel.bot_access &&
+            canSelectChannelType(rootChannel.type),
         });
       }
 
@@ -72,7 +75,10 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
           res.push({
             ...childChannel,
             level: 1,
-            canSelect: canSelectChannelType(childChannel.type),
+            canSelect:
+              childChannel.user_access &&
+              childChannel.bot_access &&
+              canSelectChannelType(childChannel.type),
           });
         }
 
@@ -84,7 +90,10 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
             res.push({
               ...childThread,
               level: 2,
-              canSelect: canSelectChannelType(childThread.type),
+              canSelect:
+                childThread.user_access &&
+                childThread.bot_access &&
+                canSelectChannelType(childThread.type),
             });
           }
         }

@@ -79,8 +79,11 @@ export default function EditorComponentRow({ rowIndex, rowId }: Props) {
           </div>
         }
         extra={
-          <div className="text-sm italic font-light text-gray-400">
-            {components.length} / 5
+          <div className="text-gray-500 truncate flex space-x-2 pl-2">
+            <div>-</div>
+            <div className="truncate">
+              {isButtonRow ? "Button Row" : "Select Menu Row"}
+            </div>
           </div>
         }
       >

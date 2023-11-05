@@ -56,10 +56,13 @@ export default function InputControlBar({ value, onChange, inputRef }: Props) {
   }
 
   function onEmojiSelect(emoji: any) {
+    console.log(emoji);
     if (emoji.native) {
       insertAtCursor(emoji.native);
     } else {
-      insertAtCursor(`<:${emoji.name}:${emoji.id}>`);
+      insertAtCursor(
+        `<${emoji.src.endsWith(".gif") ? "a" : ""}:${emoji.name}:${emoji.id}>`
+      );
     }
   }
 

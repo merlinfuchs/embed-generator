@@ -21,6 +21,7 @@ export interface MessageStore extends Message {
   setContent: (content: string) => void;
   setUsername: (username: string | undefined) => void;
   setAvatarUrl: (avatar_url: string | undefined) => void;
+  setThreadName: (thread_name: string | undefined) => void;
   addEmbed: (embed: MessageEmbed) => void;
   clearEmbeds: () => void;
   moveEmbedDown: (i: number) => void;
@@ -70,12 +71,22 @@ export interface MessageStore extends Message {
     style: MessageComponentButtonStyle
   ) => void;
   setButtonLabel: (i: number, j: number, label: string) => void;
-  setButtonEmoji: (i: number, j: number, emoji: Emoji | null) => void;
+  setButtonEmoji: (i: number, j: number, emoji: Emoji | undefined) => void;
   setButtonUrl: (i: number, j: number, url: string) => void;
+  setButtonDisabled: (
+    i: number,
+    j: number,
+    disabled: boolean | undefined
+  ) => void;
   setSelectMenuPlaceholder: (
     i: number,
     j: number,
     placeholder: string | undefined
+  ) => void;
+  setSelectMenuDisabled: (
+    i: number,
+    j: number,
+    disabled: boolean | undefined
   ) => void;
   addSelectMenuOption: (
     i: number,
@@ -93,11 +104,17 @@ export interface MessageStore extends Message {
     k: number,
     label: string
   ) => void;
+  setSelectMenuOptionDescription: (
+    i: number,
+    j: number,
+    k: number,
+    description: string | undefined
+  ) => void;
   setSelectMenuOptionEmoji: (
     i: number,
     j: number,
     k: number,
-    emoji: Emoji | null
+    emoji: Emoji | undefined
   ) => void;
   addAction: (id: string, action: MessageAction) => void;
   clearActions: (id: string) => void;
@@ -186,6 +203,8 @@ export const createMessageStore = (key: string) =>
           setContent: (content: string) => set({ content }),
           setUsername: (username: string | undefined) => set({ username }),
           setAvatarUrl: (avatar_url: string | undefined) => set({ avatar_url }),
+          setThreadName: (thread_name: string | undefined) =>
+            set({ thread_name }),
           addEmbed: (embed: MessageEmbed) =>
             set((state) => {
               if (!state.embeds) {
@@ -734,7 +753,7 @@ export const createMessageStore = (key: string) =>
               }
               button.label = label;
             }),
-          setButtonEmoji: (i: number, j: number, emoji: Emoji | null) =>
+          setButtonEmoji: (i: number, j: number, emoji: Emoji | undefined) =>
             set((state) => {
               const row = state.components && state.components[i];
               if (!row) {
@@ -758,6 +777,22 @@ export const createMessageStore = (key: string) =>
               }
               button.url = url;
             }),
+          setButtonDisabled: (
+            i: number,
+            j: number,
+            disabled: boolean | undefined
+          ) =>
+            set((state) => {
+              const row = state.components && state.components[i];
+              if (!row) {
+                return;
+              }
+              const button = row.components && row.components[j];
+              if (!button) {
+                return;
+              }
+              button.disabled = disabled;
+            }),
           setSelectMenuPlaceholder: (
             i: number,
             j: number,
@@ -773,6 +808,22 @@ export const createMessageStore = (key: string) =>
                 return;
               }
               selectMenu.placeholder = placeholder;
+            }),
+          setSelectMenuDisabled: (
+            i: number,
+            j: number,
+            disabled: boolean | undefined
+          ) =>
+            set((state) => {
+              const row = state.components && state.components[i];
+              if (!row) {
+                return;
+              }
+              const selectMenu = row.components && row.components[j];
+              if (!selectMenu || selectMenu.type !== 3) {
+                return;
+              }
+              selectMenu.disabled = disabled;
             }),
           addSelectMenuOption: (
             i: number,
@@ -909,11 +960,32 @@ export const createMessageStore = (key: string) =>
               }
               option.label = label;
             }),
+          setSelectMenuOptionDescription: (
+            i: number,
+            j: number,
+            k: number,
+            description: string | undefined
+          ) =>
+            set((state) => {
+              const row = state.components && state.components[i];
+              if (!row) {
+                return;
+              }
+              const selectMenu = row.components && row.components[j];
+              if (!selectMenu || selectMenu.type !== 3) {
+                return;
+              }
+              const option = selectMenu.options && selectMenu.options[k];
+              if (!option) {
+                return;
+              }
+              option.description = description;
+            }),
           setSelectMenuOptionEmoji: (
             i: number,
             j: number,
             k: number,
-            emoji: Emoji | null
+            emoji: Emoji | undefined
           ) =>
             set((state) => {
               const row = state.components && state.components[i];

@@ -218,6 +218,7 @@ export const buttonSchema = z
     style: z.literal(1).or(z.literal(2)).or(z.literal(3)).or(z.literal(4)),
     label: z.preprocess((d) => d ?? undefined, z.string().default("")),
     emoji: z.optional(z.nullable(emojiSchema)),
+    disabled: z.preprocess((d) => d ?? undefined, z.optional(z.boolean())),
     action_set_id: z.preprocess(
       (d) => d ?? undefined,
       z.string().default(() => getUniqueId().toString())
@@ -231,6 +232,7 @@ export const buttonSchema = z
       label: z.preprocess((d) => d ?? undefined, z.string().default("")),
       emoji: z.optional(z.nullable(emojiSchema)),
       url: z.preprocess((d) => d ?? undefined, z.string().default("")),
+      disabled: z.preprocess((d) => d ?? undefined, z.optional(z.boolean())),
       action_set_id: z.string().default(() => getUniqueId().toString()),
     })
   );
@@ -243,7 +245,8 @@ export const selectMenuOptionSchema = z.object({
     uniqueIdSchema.default(() => getUniqueId())
   ),
   label: z.preprocess((d) => d ?? undefined, z.string().default("")),
-  emoji: z.optional(z.nullable(emojiSchema)),
+  description: z.preprocess((d) => d ?? undefined, z.string().default("")),
+  emoji: z.preprocess((d) => d ?? undefined, z.optional(emojiSchema)),
   action_set_id: z.preprocess(
     (d) => d ?? undefined,
     z.string().default(() => getUniqueId().toString())
@@ -261,6 +264,7 @@ export const selectMenuSchema = z.object({
   ),
   type: z.literal(3),
   placeholder: z.preprocess((d) => d ?? undefined, z.optional(z.string())),
+  disabled: z.preprocess((d) => d ?? undefined, z.optional(z.boolean())),
   options: z.preprocess(
     (d) => d ?? undefined,
     z.array(selectMenuOptionSchema).default([])

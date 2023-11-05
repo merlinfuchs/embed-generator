@@ -1,4 +1,5 @@
 import {
+  CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   DocumentDuplicateIcon,
@@ -64,6 +65,11 @@ export default function EditorComponentButton({
     ],
     shallow
   );
+
+  const [disabled, setDisabled] = useCurrentMessageStore((state) => [
+    state.getButton(rowIndex, compIndex)?.disabled,
+    state.setButtonDisabled,
+  ]);
 
   const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
     (state) => [
@@ -134,8 +140,8 @@ export default function EditorComponentButton({
         }
       >
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:space-x-3 space-y-4 sm:space-y-0">
-            <div className="flex-none">
+          <div className="flex space-x-3">
+            <div className="flex-auto">
               <div className="mb-1.5 flex">
                 <div className="uppercase text-gray-300 text-sm font-medium">
                   Style
@@ -155,20 +161,32 @@ export default function EditorComponentButton({
                 <option value="5">Direct Link</option>
               </select>
             </div>
-            <div className="flex space-x-3 flex-auto">
-              <EditorComponentEmojiSelect
-                emoji={emoji ?? null}
-                onChange={(v) => setEmoji(rowIndex, compIndex, v)}
-              />
-              <EditorInput
-                label="Label"
-                maxLength={80}
-                value={label}
-                onChange={(v) => setLabel(rowIndex, compIndex, v)}
-                className="flex-auto"
-                validationPath={`components.${rowIndex}.components.${compIndex}.label`}
-              />
+            <div className="flex-none">
+              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+                Disabled
+              </div>
+              <div
+                className="w-10 h-10 bg-dark-2 rounded cursor-pointer p-1.5 text-white"
+                role="button"
+                onClick={() => setDisabled(rowIndex, compIndex, !disabled)}
+              >
+                {disabled && <CheckIcon />}
+              </div>
             </div>
+          </div>
+          <div className="flex space-x-3">
+            <EditorComponentEmojiSelect
+              emoji={emoji ?? undefined}
+              onChange={(v) => setEmoji(rowIndex, compIndex, v)}
+            />
+            <EditorInput
+              label="Label"
+              maxLength={80}
+              value={label}
+              onChange={(v) => setLabel(rowIndex, compIndex, v)}
+              className="flex-auto"
+              validationPath={`components.${rowIndex}.components.${compIndex}.label`}
+            />
           </div>
           {style === 5 ? (
             <EditorInput

@@ -1,6 +1,9 @@
 import markdown from "simple-markdown";
 import highlight from "highlight.js/lib/common";
 
+// https://github.com/ItzDerock/discord-markdown-parser
+// https://github.com/brussell98/discord-markdown
+
 function htmlTag(tagName, content, attributes, isClosed = true, state = {}) {
   if (typeof isClosed === "object") {
     state = isClosed;
@@ -102,6 +105,41 @@ const titleRules = {
         "span",
         output(node.content, state),
         { class: "discord-spoiler" },
+        state
+      );
+    },
+  },
+
+  discordEmoji: {
+    order: markdown.defaultRules.strong.order,
+    match: (source) => /^<(a?):(\w+):(\d+)>/.exec(source),
+    parse: function (capture) {
+      return {
+        animated: capture[1] === "a",
+        name: capture[2],
+        id: capture[3],
+      };
+    },
+    html: function (node, output, state) {
+      return htmlTag(
+        "div",
+        htmlTag(
+          "img",
+          "",
+          {
+            class: "discord-custom-emoji-image",
+            src: `https://cdn.discordapp.com/emojis/${node.id}.${
+              node.animated ? "gif" : "png"
+            }`,
+            title: `:${node.name}:`,
+            alt: `:${node.name}:`,
+          },
+          false,
+          state
+        ),
+        {
+          class: "discord-custom-emoji",
+        },
         state
       );
     },
@@ -284,40 +322,6 @@ const bodyRules = {
         "span",
         state.discordCallback.role(node),
         { class: "discord-mention discord-role-mention" },
-        state
-      );
-    },
-  },
-  discordEmoji: {
-    order: markdown.defaultRules.strong.order,
-    match: (source) => /^<(a?):(\w+):(\d+)>/.exec(source),
-    parse: function (capture) {
-      return {
-        animated: capture[1] === "a",
-        name: capture[2],
-        id: capture[3],
-      };
-    },
-    html: function (node, output, state) {
-      return htmlTag(
-        "div",
-        htmlTag(
-          "img",
-          "",
-          {
-            class: "discord-custom-emoji-image",
-            src: `https://cdn.discordapp.com/emojis/${node.id}.${
-              node.animated ? "gif" : "png"
-            }`,
-            title: `:${node.name}:`,
-            alt: `:${node.name}:`,
-          },
-          false,
-          state
-        ),
-        {
-          class: "discord-custom-emoji",
-        },
         state
       );
     },

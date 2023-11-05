@@ -10,6 +10,7 @@ type MessageWithActions struct {
 	Content         string                            `json:"content,omitempty"`
 	Username        string                            `json:"username,omitempty"`
 	AvatarURL       string                            `json:"avatar_url,omitempty"`
+	ThreadName      string                            `json:"thread_name,omitempty"`
 	TTS             bool                              `json:"tts,omitempty"`
 	Embeds          []*discordgo.MessageEmbed         `json:"embeds,omitempty"`
 	AllowedMentions *discordgo.MessageAllowedMentions `json:"allowed_mentions,omitempty"`
@@ -85,17 +86,17 @@ type ActionDerivedPermissions struct {
 }
 
 func (a *ActionDerivedPermissions) HasChannelPermission(permission int64) bool {
-	return a.GuildIsOwner || (a.ChannelPermissions&permission) != 0
+	return a.GuildIsOwner || (a.GuildPermissions&discordgo.PermissionAdministrator) != 0 || (a.ChannelPermissions&permission) != 0
 }
 
 func (a *ActionDerivedPermissions) HasGuildPermission(permission int64) bool {
 	return a.GuildIsOwner || (a.GuildPermissions&discordgo.PermissionAdministrator) != 0 || (a.GuildPermissions&permission) != 0
 }
 
-func (a *ActionDerivedPermissions) CanManageRole(guildID string) bool {
+func (a *ActionDerivedPermissions) CanManageRole(roleID string) bool {
 	if a.GuildIsOwner {
 		return true
 	}
 
-	return a.HasGuildPermission(discordgo.PermissionManageRoles) && slices.Contains(a.AllowedRoleIDs, guildID)
+	return a.HasGuildPermission(discordgo.PermissionManageRoles) && slices.Contains(a.AllowedRoleIDs, roleID)
 }
