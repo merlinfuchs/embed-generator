@@ -129,7 +129,7 @@ func VariablesForInteraction(i *discordgo.Interaction) map[string]string {
 			case discordgo.ApplicationCommandOptionNumber:
 				variables[key] = fmt.Sprintf("%f", option.FloatValue())
 			case discordgo.ApplicationCommandOptionAttachment:
-				resolved := data.Resolved.Attachments[option.StringValue()]
+				resolved := data.Resolved.Attachments[option.Value.(string)]
 				if resolved != nil {
 					variables[key] = resolved.URL
 					variables[key+".id"] = resolved.ID

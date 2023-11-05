@@ -116,8 +116,13 @@ func (c *ScriptContext) ContextStruct() *starlarkstruct.Struct {
 			return c.ChannelStruct(channel), nil
 		}),
 	}
+
 	if c.Interaction.Message != nil {
 		values["message"] = c.MessageStruct(c.Interaction.Message)
+	}
+
+	if c.Interaction.Type == discordgo.InteractionApplicationCommand {
+		values["command"] = c.CommandStruct(c.Interaction.ApplicationCommandData())
 	}
 
 	return starlarkstruct.FromStringDict(starlarkstruct.Default, values)
@@ -130,7 +135,7 @@ func (c *ScriptContext) respond(t discordgo.InteractionResponseType, thread *sta
 	var content string
 	var ephemeral bool = true
 	var rawEmbeds starlark.Value
-	if err := starlark.UnpackArgs(b.Name(), args, kwargs, "content", &content, "ephemeral?", &ephemeral, "embeds??", &rawEmbeds); err != nil {
+	if err := starlark.UnpackArgs(b.Name(), args, kwargs, "content?", &content, "ephemeral?", &ephemeral, "embeds??", &rawEmbeds); err != nil {
 		return nil, err
 	}
 
@@ -258,6 +263,14 @@ func (c *ScriptContext) MessageStruct(msg *discordgo.Message) *starlarkstruct.St
 			err := c.Session.MessageReactionsRemoveAll(msg.ChannelID, msg.ID)
 			return starlark.None, err
 		}),
+	})
+}
+
+func (c *ScriptContext) MessageAttachmentStruct(msg *discordgo.MessageAttachment) *starlarkstruct.Struct {
+	return starlarkstruct.FromStringDict(starlarkstruct.Default, starlark.StringDict{
+		"id":       starlark.String(msg.ID),
+		"url":      starlark.String(msg.URL),
+		"filename": starlark.String(msg.Filename),
 	})
 }
 
@@ -414,6 +427,69 @@ func (c *ScriptContext) SavedMessageStruct(msg postgres.SavedMessage) *starlarks
 			}
 
 			return mapToDict(data), nil
+		}),
+	})
+}
+
+func (c *ScriptContext) CommandStruct(cmd discordgo.ApplicationCommandInteractionData) *starlarkstruct.Struct {
+	return starlarkstruct.FromStringDict(starlarkstruct.Default, starlark.StringDict{
+		"id":   starlark.String(cmd.ID),
+		"name": starlark.String(cmd.Name),
+
+		"get_arg": starlark.NewBuiltin("get_arg", func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+			var name string
+			if err := starlark.UnpackArgs(b.Name(), args, kwargs, "name", &name); err != nil {
+				return nil, err
+			}
+
+			var option *discordgo.ApplicationCommandInteractionDataOption
+			for _, o := range cmd.Options {
+				if o.Name == name {
+					option = o
+					break
+				}
+			}
+
+			if option == nil {
+				return starlark.None, nil
+			}
+
+			switch option.Type {
+			case discordgo.ApplicationCommandOptionString:
+				return starlark.String(option.StringValue()), nil
+			case discordgo.ApplicationCommandOptionInteger:
+				return starlark.MakeInt64(option.IntValue()), nil
+			case discordgo.ApplicationCommandOptionNumber:
+				return starlark.Float(option.FloatValue()), nil
+			case discordgo.ApplicationCommandOptionBoolean:
+				return starlark.Bool(option.BoolValue()), nil
+			case discordgo.ApplicationCommandOptionUser:
+				user := option.UserValue(nil)
+				resolved := cmd.Resolved.Users[user.ID]
+				if resolved != nil {
+					user = resolved
+				}
+				return c.UserStruct(user), nil
+			case discordgo.ApplicationCommandOptionChannel:
+				channel := option.ChannelValue(nil)
+				resolved := cmd.Resolved.Channels[channel.ID]
+				if resolved != nil {
+					channel = resolved
+				}
+				return c.ChannelStruct(channel), nil
+			case discordgo.ApplicationCommandOptionRole:
+				role := option.RoleValue(nil, c.Interaction.GuildID)
+				resolved := cmd.Resolved.Roles[role.ID]
+				if resolved != nil {
+					role = resolved
+				}
+				return c.RoleStruct(role), nil
+			case discordgo.ApplicationCommandOptionAttachment:
+				attachment := cmd.Resolved.Attachments[option.Value.(string)]
+				return c.MessageAttachmentStruct(attachment), nil
+			}
+
+			return starlark.None, nil
 		}),
 	})
 }
