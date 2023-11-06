@@ -16,13 +16,13 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:              "embedg",
-	Short:            "The Friendly Service is a binary that serves as the (non-cloudflare) backend of Friendly Captcha's offering.",
-	Long:             `The Friendly Service is a binary that serves as the (non-cloudflare) backend of Friendly Captcha's offering.`,
+	Short:            "The backend for Embed Generator.",
+	Long:             `The backend for Embed Generator.`,
 	PersistentPreRun: bindFlags,
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&config.CfgFile, "config", "", "Config file (default is $HOME/.friendly.yaml)")
+	rootCmd.PersistentFlags().StringVar(&config.CfgFile, "config", "", "Config file (default is $HOME/.embedg.yaml)")
 	rootCmd.Version = buildinfo.Version() + " " + buildinfo.Target() + " (" + buildinfo.CommitDate() + ") " + buildinfo.Commit()
 
 	rootCmd.PersistentFlags().BoolP("debug", "D", false, "Debug mode (prints debug messages and call traces)")
