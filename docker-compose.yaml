@@ -23,6 +23,7 @@ services:
     ports:
       - "8080:8080"
     environment:
+      - EMBEDG_API__HOST=0.0.0.0
       - EMBEDG_POSTGRES__HOST=postgres
       - EMBEDG_POSTGRES__USER=postgres
       - EMBEDG_POSTGRES__DB=embedg
