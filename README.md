@@ -53,6 +53,11 @@ api:
   host: "localhost"
   port: 8080
 
+# These links are used in help commands and for redirects
+links:
+  discord: https://discord.gg/CpHwbKQKHA
+  source: https://github.com/merlinfuchs/embed-generator
+
 log:
   use_json: false # Enable to this to have easily parsable JSON log messages (you usually don't want this)
 
