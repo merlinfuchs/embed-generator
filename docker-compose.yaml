@@ -27,6 +27,7 @@ services:
       - EMBEDG_POSTGRES__HOST=postgres
       - EMBEDG_POSTGRES__USER=postgres
       - EMBEDG_POSTGRES__DB=embedg
+      - BOT_ACTIVITY_NAME=Messages.Style # Set the default activity here
     volumes:
       - ./config.yaml:/root/config.yaml
 
