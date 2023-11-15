@@ -16,7 +16,7 @@ require (
 	github.com/ravener/discord-oauth2 v0.0.0-20220615092331-f6a9839c223e
 	github.com/redis/go-redis/v9 v9.0.4
 	github.com/rs/zerolog v1.29.0
-	github.com/sashabaranov/go-openai v1.6.1
+	github.com/sashabaranov/go-openai v1.17.6
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
 	github.com/sqlc-dev/pqtype v0.3.0

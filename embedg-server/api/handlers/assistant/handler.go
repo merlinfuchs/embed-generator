@@ -48,7 +48,7 @@ func (h *AssistantHandler) HandleAssistantGenerateMessage(c *fiber.Ctx, req wire
 	messages := []openai.ChatCompletionMessage{
 		{
 			Role:    openai.ChatMessageRoleSystem,
-			Content: "Only output minified JSON for a Discord webhook message.",
+			Content: "Output JSON code for a valid Discord webhook message. This can include a username, content, embeds, and components.",
 		},
 		{
 			Role:    openai.ChatMessageRoleUser,
@@ -69,11 +69,14 @@ func (h *AssistantHandler) HandleAssistantGenerateMessage(c *fiber.Ctx, req wire
 		openai.ChatCompletionRequest{
 			FrequencyPenalty: 0,
 			PresencePenalty:  0,
-			Temperature:      0.8,
+			Temperature:      1.0,
 			TopP:             1,
 			MaxTokens:        3072,
-			Model:            openai.GPT4,
+			Model:            openai.GPT4TurboPreview,
 			Messages:         messages,
+			ResponseFormat: &openai.ChatCompletionResponseFormat{
+				Type: openai.ChatCompletionResponseFormatTypeJSONObject,
+			},
 		},
 	)
 	if err != nil {
