@@ -27,8 +27,21 @@ services:
       - EMBEDG_POSTGRES__HOST=postgres
       - EMBEDG_POSTGRES__USER=postgres
       - EMBEDG_POSTGRES__DB=embedg
+      - EMBEDG_S3__ENDPOINT=minio:9000
     volumes:
       - ./config.yaml:/root/config.yaml
+
+  minio:
+    image: quay.io/minio/minio
+    command: server --console-address ":9001" /data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: embedg
+      MINIO_ROOT_PASSWORD: 1234567890
+    volumes:
+      - embedg-local-minio:/data
 
 volumes:
   embedg-local-postgres:

@@ -11,6 +11,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/auth"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/custom_bots"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/guilds"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/images"
 	premium_handler "github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/premium"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/saved_messages"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/send_message"
@@ -21,13 +22,15 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/s3"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/spf13/viper"
 )
 
 type stores struct {
-	pg  *postgres.PostgresStore
-	bot *bot.Bot
+	pg   *postgres.PostgresStore
+	blob *s3.BlobStore
+	bot  *bot.Bot
 }
 
 func RegisterRoutes(app *fiber.App, stores *stores) {
@@ -100,6 +103,12 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 	app.Delete("/api/custom-bot/commands/:commandID", sessionMiddleware.SessionRequired(), customBotHandler.HandleDeleteCustomCommand)
 	app.Post("/api/custom-bot/commands/deploy", sessionMiddleware.SessionRequired(), customBotHandler.HandleDeployCustomCommands)
 	app.Post("/api/gateway/:customBotID", customBotHandler.HandleCustomBotInteraction)
+
+	imagesHandler := images.New(stores.pg, accessManager, premiumManager, stores.blob)
+
+	app.Post("/api/images", sessionMiddleware.SessionRequired(), imagesHandler.HandleUploadImage)
+	app.Get("/api/images/:imageID", sessionMiddleware.SessionRequired(), imagesHandler.HandleGetImage)
+	app.Get("/cdn/images/:imageID", imagesHandler.HandleDownloadImage)
 
 	app.Get("/invite", func(c *fiber.Ctx) error {
 		return c.Redirect(util.BotInviteURL(), 302)
