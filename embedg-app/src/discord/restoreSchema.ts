@@ -1,7 +1,15 @@
 import { z } from "zod";
 import { getUniqueId } from "../util";
 
-export const uniqueIdSchema = z.number();
+export const uniqueIdSchema = z.preprocess(
+  (d) => {
+    if (d === null || typeof d !== "number") {
+      return undefined;
+    }
+    return d;
+  },
+  z.number().default(() => getUniqueId())
+);
 
 export type UniqueId = z.infer<typeof uniqueIdSchema>;
 
@@ -123,10 +131,7 @@ export const embedFieldInlineSchma = z.preprocess(
 export type EmbedFieldInline = z.infer<typeof embedFieldInlineSchma>;
 
 export const embedFieldSchema = z.object({
-  id: z.preprocess(
-    (d) => d ?? undefined,
-    uniqueIdSchema.default(() => getUniqueId())
-  ),
+  id: uniqueIdSchema,
   name: embedFieldNameSchema,
   value: embedFieldValueSchema,
   inline: embedFieldInlineSchma,
@@ -170,10 +175,7 @@ export const embedColor = z.preprocess(
 export type EmbedColor = z.infer<typeof embedColor>;
 
 export const embedSchema = z.object({
-  id: z.preprocess(
-    (d) => d ?? undefined,
-    uniqueIdSchema.default(() => getUniqueId())
-  ),
+  id: uniqueIdSchema,
   title: embedtitleSchema,
   description: embedDescriptionSchema,
   url: embedUrlSchema,
@@ -210,10 +212,7 @@ export type MessageComponentButtonStyle = z.infer<typeof buttonStyleSchema>;
 
 export const buttonSchema = z
   .object({
-    id: z.preprocess(
-      (d) => d ?? undefined,
-      uniqueIdSchema.default(() => getUniqueId())
-    ),
+    id: uniqueIdSchema,
     type: z.literal(2),
     style: z.literal(1).or(z.literal(2)).or(z.literal(3)).or(z.literal(4)),
     label: z.preprocess((d) => d ?? undefined, z.string().default("")),
@@ -226,7 +225,7 @@ export const buttonSchema = z
   })
   .or(
     z.object({
-      id: uniqueIdSchema.default(() => getUniqueId()),
+      id: uniqueIdSchema,
       type: z.literal(2),
       style: z.literal(5),
       label: z.preprocess((d) => d ?? undefined, z.string().default("")),
@@ -240,10 +239,7 @@ export const buttonSchema = z
 export type MessageComponentButton = z.infer<typeof buttonSchema>;
 
 export const selectMenuOptionSchema = z.object({
-  id: z.preprocess(
-    (d) => d ?? undefined,
-    uniqueIdSchema.default(() => getUniqueId())
-  ),
+  id: uniqueIdSchema,
   label: z.preprocess((d) => d ?? undefined, z.string().default("")),
   description: z.preprocess((d) => d ?? undefined, z.string().default("")),
   emoji: z.preprocess((d) => d ?? undefined, z.optional(emojiSchema)),
@@ -258,10 +254,7 @@ export type MessageComponentSelectMenuOption = z.infer<
 >;
 
 export const selectMenuSchema = z.object({
-  id: z.preprocess(
-    (d) => d ?? undefined,
-    uniqueIdSchema.default(() => getUniqueId())
-  ),
+  id: uniqueIdSchema,
   type: z.literal(3),
   placeholder: z.preprocess((d) => d ?? undefined, z.optional(z.string())),
   disabled: z.preprocess((d) => d ?? undefined, z.optional(z.boolean())),
@@ -274,10 +267,7 @@ export const selectMenuSchema = z.object({
 export type MessageComponentSelectMenu = z.infer<typeof selectMenuSchema>;
 
 export const actionRowSchema = z.object({
-  id: z.preprocess(
-    (d) => d ?? undefined,
-    uniqueIdSchema.default(() => getUniqueId())
-  ),
+  id: uniqueIdSchema,
   type: z.preprocess((d) => d ?? undefined, z.literal(1).default(1)),
   components: z.preprocess(
     (d) => d ?? undefined,
@@ -290,7 +280,7 @@ export type MessageComponentActionRow = z.infer<typeof actionRowSchema>;
 export const messageActionSchema = z
   .object({
     type: z.literal(1).or(z.literal(6)).or(z.literal(8)), // text response
-    id: uniqueIdSchema.default(() => getUniqueId()),
+    id: uniqueIdSchema,
     text: z.preprocess((d) => d ?? undefined, z.string().default("")),
     public: z.preprocess((d) => d ?? undefined, z.boolean().default(false)),
   })
@@ -303,7 +293,7 @@ export const messageActionSchema = z
         .or(z.literal(5))
         .or(z.literal(7))
         .or(z.literal(9)), // saved messages responses, // toggle, add, remove role
-      id: uniqueIdSchema.default(() => getUniqueId()),
+      id: uniqueIdSchema,
       target_id: z.string(),
       public: z.preprocess((d) => d ?? undefined, z.boolean().default(false)),
     })
