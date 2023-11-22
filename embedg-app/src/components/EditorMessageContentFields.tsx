@@ -23,13 +23,15 @@ export default function EditorMessageContentFields() {
             validationPath={`username`}
           />
         </div>
-        <div className="w-1/2">
+        <div className="w-1/2 flex space-x-2 items-end">
           <EditorInput
             type="url"
             label="Avatar URL"
             value={avatarUrl || ""}
             onChange={(v) => setAvatarUrl(v || undefined)}
             validationPath={`avatar_url`}
+            className="flex-auto"
+            imageUpload={true}
           />
         </div>
       </div>

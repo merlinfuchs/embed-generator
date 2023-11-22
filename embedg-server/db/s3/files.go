@@ -10,7 +10,7 @@ import (
 
 const imagesBucketName = "images"
 
-func (s *BlobStore) UploadImage(ctx context.Context, image *Image) error {
+func (s *BlobStore) UploadFile(ctx context.Context, image *Image) error {
 	reader := bytes.NewReader(image.Body)
 	_, err := s.client.PutObject(ctx, imagesBucketName, image.FileName, reader, int64(len(image.Body)), minio.PutObjectOptions{})
 	if err != nil {
@@ -20,7 +20,7 @@ func (s *BlobStore) UploadImage(ctx context.Context, image *Image) error {
 	return err
 }
 
-func (s *BlobStore) UploadImageIfNotExists(ctx context.Context, image *Image) error {
+func (s *BlobStore) UploadFileIfNotExists(ctx context.Context, image *Image) error {
 	reader := bytes.NewReader(image.Body)
 
 	exists, err := s.client.StatObject(ctx, imagesBucketName, image.FileName, minio.StatObjectOptions{})
@@ -39,7 +39,7 @@ func (s *BlobStore) UploadImageIfNotExists(ctx context.Context, image *Image) er
 	return err
 }
 
-func (s *BlobStore) DownloadImage(ctx context.Context, fileName string) (*Image, error) {
+func (s *BlobStore) DownloadFile(ctx context.Context, fileName string) (*Image, error) {
 	object, err := s.client.GetObject(ctx, imagesBucketName, fileName, minio.GetObjectOptions{})
 	if err != nil {
 		return nil, err

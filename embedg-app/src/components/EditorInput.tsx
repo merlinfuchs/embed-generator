@@ -2,6 +2,7 @@ import ValidationError from "./ValidationError";
 import TextareaAutosize from "react-textarea-autosize";
 import InputControlBar from "./InputControlBar";
 import { useRef } from "react";
+import ImageUploadButton from "./ImageUploadButton";
 
 interface Props {
   label: string;
@@ -13,6 +14,7 @@ interface Props {
   className?: string;
   validationPath?: string;
   controls?: boolean;
+  imageUpload?: boolean;
 }
 
 export default function EditorInput({
@@ -25,6 +27,7 @@ export default function EditorInput({
   className,
   validationPath,
   controls,
+  imageUpload,
 }: Props) {
   const inputRef = useRef<HTMLInputElement & HTMLTextAreaElement>(null);
 
@@ -52,28 +55,35 @@ export default function EditorInput({
         </div>
       </div>
 
-      {type === "textarea" ? (
-        <TextareaAutosize
-          className="bg-dark-2 px-3 py-2 rounded w-full text-white ring-0 border-transparent focus:outline-none"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          maxLength={maxLength}
-          minRows={3}
-          maxRows={15}
-          ref={inputRef}
-          {...props}
-        />
-      ) : (
-        <input
-          type={type || "text"}
-          className="bg-dark-2 px-3 py-2 rounded w-full text-white ring-0 border-transparent focus:outline-none"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          maxLength={maxLength}
-          ref={inputRef}
-          {...props}
-        />
-      )}
+      <div className="flex space-x-2">
+        {type === "textarea" ? (
+          <TextareaAutosize
+            className="bg-dark-2 px-3 py-2 rounded w-full text-white ring-0 border-transparent focus:outline-none"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            maxLength={maxLength}
+            minRows={3}
+            maxRows={15}
+            ref={inputRef}
+            {...props}
+          />
+        ) : (
+          <input
+            type={type || "text"}
+            className="bg-dark-2 px-3 py-2 rounded w-full text-white ring-0 border-transparent focus:outline-none"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            maxLength={maxLength}
+            ref={inputRef}
+            {...props}
+          />
+        )}
+        <div className="flex-none">
+          {imageUpload && (
+            <ImageUploadButton onChange={(url) => onChange(url || "")} />
+          )}
+        </div>
+      </div>
       {validationPath && <ValidationError path={validationPath} />}
     </div>
   );

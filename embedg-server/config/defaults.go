@@ -23,4 +23,7 @@ func setupDefaults() {
 	v.SetDefault("api.host", "localhost")
 	v.SetDefault("api.port", 8080)
 	v.SetDefault("api.public_url", "http://localhost:5173/api")
+
+	// CDN defaults
+	v.SetDefault("cdn.public_url", "http://localhost:8080/cdn")
 }

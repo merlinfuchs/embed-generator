@@ -38,6 +38,7 @@ export default function EditorEmbedImages({ embedIndex, embedId }: Props) {
           value={imageUrl || ""}
           onChange={(v) => setImageUrl(embedIndex, v || undefined)}
           validationPath={`embeds.${embedIndex}.image.url`}
+          imageUpload={true}
         />
         <EditorInput
           label="Thumbnail URL"
@@ -45,6 +46,7 @@ export default function EditorEmbedImages({ embedIndex, embedId }: Props) {
           value={thumbnailUrl || ""}
           onChange={(v) => setThumbnailUrl(embedIndex, v || undefined)}
           validationPath={`embeds.${embedIndex}.thumbnail.url`}
+          imageUpload={true}
         />
       </div>
     </Collapsable>

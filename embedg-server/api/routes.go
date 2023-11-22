@@ -108,7 +108,7 @@ func RegisterRoutes(app *fiber.App, stores *stores) {
 
 	app.Post("/api/images", sessionMiddleware.SessionRequired(), imagesHandler.HandleUploadImage)
 	app.Get("/api/images/:imageID", sessionMiddleware.SessionRequired(), imagesHandler.HandleGetImage)
-	app.Get("/cdn/images/:imageID", imagesHandler.HandleDownloadImage)
+	app.Get("/cdn/images/:imageKey", imagesHandler.HandleDownloadImage)
 
 	app.Get("/invite", func(c *fiber.Ctx) error {
 		return c.Redirect(util.BotInviteURL(), 302)

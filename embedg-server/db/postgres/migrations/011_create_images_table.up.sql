@@ -6,6 +6,5 @@ CREATE TABLE IF NOT EXISTS images (
     file_name TEXT NOT NULL,
     file_size INTEGER NOT NULL,
     file_content_type TEXT NOT NULL,
-    s3_key TEXT NOT NULL, 
-    UNIQUE NULLS NOT DISTINCT (user_id, guild_id, file_hash)
+    s3_key TEXT NOT NULL
 );

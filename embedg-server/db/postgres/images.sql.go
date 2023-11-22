@@ -10,6 +10,26 @@ import (
 	"database/sql"
 )
 
+const getImage = `-- name: GetImage :one
+SELECT id, user_id, guild_id, file_hash, file_name, file_size, file_content_type, s3_key FROM images WHERE id = $1
+`
+
+func (q *Queries) GetImage(ctx context.Context, id string) (Image, error) {
+	row := q.db.QueryRowContext(ctx, getImage, id)
+	var i Image
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.GuildID,
+		&i.FileHash,
+		&i.FileName,
+		&i.FileSize,
+		&i.FileContentType,
+		&i.S3Key,
+	)
+	return i, err
+}
+
 const insertImage = `-- name: InsertImage :one
 INSERT INTO images (id, guild_id, user_id, file_hash, file_name, file_content_type, file_size, s3_key) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, user_id, guild_id, file_hash, file_name, file_size, file_content_type, s3_key
 `

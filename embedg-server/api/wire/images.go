@@ -8,5 +8,9 @@ type ImageWire struct {
 	GuildID  null.String `json:"guild_id"`
 	FileName string      `json:"file_name"`
 	FileSize int32       `json:"file_size"`
-	CDNKey   string      `json:"cdn_key"`
+	CDNURL   string      `json:"cdn_url"`
 }
+
+type UploadImageResponseWire APIResponse[ImageWire]
+
+type GetImageResponseWire APIResponse[ImageWire]

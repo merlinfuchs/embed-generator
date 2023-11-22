@@ -62,6 +62,7 @@ export default function EditorEmbedAuthor({ embedIndex, embedId }: Props) {
             onChange={(v) => setAuthorIconUrl(embedIndex, v || undefined)}
             className="w-1/2"
             validationPath={`embeds.${embedIndex}.author.icon_url`}
+            imageUpload={true}
           />
         </div>
       </div>
