@@ -2,6 +2,7 @@ import { DocumentArrowUpIcon } from "@heroicons/react/24/outline";
 import { ChangeEvent, useRef } from "react";
 import { useUploadImageMutation } from "../api/mutations";
 import { useToasts } from "../util/toasts";
+import { useSendSettingsStore } from "../state/sendSettings";
 
 interface Props {
   onChange: (url: string | undefined) => void;
@@ -10,7 +11,9 @@ interface Props {
 export default function ImageUploadButton({ onChange }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const selectedGuildId = useSendSettingsStore((state) => state.guildId);
   const createToast = useToasts((s) => s.create);
+
   const uploadMutation = useUploadImageMutation();
 
   function onFileUpload(e: ChangeEvent<HTMLInputElement>) {
@@ -19,7 +22,7 @@ export default function ImageUploadButton({ onChange }: Props) {
 
     uploadMutation.mutate(
       {
-        guildId: null,
+        guildId: selectedGuildId,
         file,
       },
       {

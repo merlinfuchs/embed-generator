@@ -3,6 +3,7 @@ import TextareaAutosize from "react-textarea-autosize";
 import InputControlBar from "./InputControlBar";
 import { useRef } from "react";
 import ImageUploadButton from "./ImageUploadButton";
+import { usePremiumGuildFeatures } from "../util/premium";
 
 interface Props {
   label: string;
@@ -30,6 +31,7 @@ export default function EditorInput({
   imageUpload,
 }: Props) {
   const inputRef = useRef<HTMLInputElement & HTMLTextAreaElement>(null);
+  const features = usePremiumGuildFeatures();
 
   return (
     <div className={className}>
@@ -78,11 +80,11 @@ export default function EditorInput({
             {...props}
           />
         )}
-        <div className="flex-none">
-          {imageUpload && (
+        {imageUpload && !!features?.max_image_upload_size && (
+          <div className="flex-none">
             <ImageUploadButton onChange={(url) => onChange(url || "")} />
-          )}
-        </div>
+          </div>
+        )}
       </div>
       {validationPath && <ValidationError path={validationPath} />}
     </div>
