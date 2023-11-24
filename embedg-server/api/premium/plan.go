@@ -15,6 +15,7 @@ type PlanFeatures struct {
 	CustomBot              bool `mapstructure:"custom_bot"`
 	MaxCustomCommands      int  `mapstructure:"max_custom_commands"`
 	IsPremium              bool `mapstructure:"is_premium"`
+	MaxImageUploadSize     int  `mapstructure:"max_image_upload_size"`
 }
 
 func (f *PlanFeatures) Merge(b PlanFeatures) {
@@ -26,6 +27,9 @@ func (f *PlanFeatures) Merge(b PlanFeatures) {
 	}
 	if b.MaxCustomCommands > f.MaxCustomCommands {
 		f.MaxCustomCommands = b.MaxCustomCommands
+	}
+	if b.MaxImageUploadSize > f.MaxImageUploadSize {
+		f.MaxImageUploadSize = b.MaxImageUploadSize
 	}
 
 	f.AdvancedActionTypes = f.AdvancedActionTypes || b.AdvancedActionTypes
