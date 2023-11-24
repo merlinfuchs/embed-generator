@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
+	"net/url"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -18,6 +19,8 @@ import (
 	"github.com/spf13/viper"
 	"gopkg.in/guregu/null.v4"
 )
+
+var appPublicURL *url.URL
 
 type ImagesHandler struct {
 	pg   *postgres.PostgresStore
@@ -129,11 +132,23 @@ func (h *ImagesHandler) HandleGetImage(c *fiber.Ctx) error {
 }
 
 func (h *ImagesHandler) HandleDownloadImage(c *fiber.Ctx) error {
-	/* referer := c.Get("Referer")
-	fmt.Println(referer)
-	if referer != "" && !strings.HasPrefix(referer, viper.GetString("app.public_url")) {
-		return helpers.Forbidden("invalid_referer", "Invalid referer")
-	} */
+	referer := c.Get("Referer")
+	if referer != "" {
+		refererURL, err := url.Parse(referer)
+		if err != nil {
+			return fmt.Errorf("could not parse referer: %w", err)
+		}
+
+		appURL, err := url.Parse(viper.GetString("app.public_url"))
+		if err != nil {
+			return fmt.Errorf("could not parse app url: %w", err)
+		}
+
+		if refererURL.Host != appURL.Host {
+			return helpers.Forbidden("invalid_referer", "Invalid referer")
+		}
+	}
+
 	file, err := h.blob.DownloadFile(c.Context(), c.Params("imageKey"))
 	if err != nil {
 		return fmt.Errorf("could not download image: %w", err)
