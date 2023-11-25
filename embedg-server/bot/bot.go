@@ -14,7 +14,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"github.com/vincent-petithory/dataurl"
-	"os"
 )
 
 //go:embed logo-512.png
@@ -28,26 +27,20 @@ type Bot struct {
 }
 
 func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
-    manager, err := sharding.New("Bot " + token)
-    if err != nil {
-        return nil, err
-    }
+	manager, err := sharding.New("Bot " + token)
+	if err != nil {
+		return nil, err
+	}
 
-    // Get the activity name from the environment variable or use "message.style" as the default.
-    activityName := os.Getenv("BOT_ACTIVITY_NAME")
-    if activityName == "" {
-        activityName = "message.style"
-    }
-
-    manager.Intents = discordgo.IntentGuilds | discordgo.IntentGuildMessages | discordgo.IntentGuildEmojis
-    manager.State = discordgo.NewState()
-    manager.Presence = &discordgo.GatewayStatusUpdate{
-        Game: discordgo.Activity{
-            Name: activityName,
-            Type: discordgo.ActivityTypeWatching,
-        },
-        Status: string(discordgo.StatusOnline),
-    }
+	manager.Intents = discordgo.IntentGuilds | discordgo.IntentGuildMessages | discordgo.IntentGuildEmojis
+	manager.State = discordgo.NewState()
+	manager.Presence = &discordgo.GatewayStatusUpdate{
+		Game: discordgo.Activity{
+			Name: viper.GetString("discord.activity_name"),
+			Type: discordgo.ActivityTypeWatching,
+		},
+		Status: string(discordgo.StatusOnline),
+	}
 
 	b := &Bot{
 		ShardManager: manager,
