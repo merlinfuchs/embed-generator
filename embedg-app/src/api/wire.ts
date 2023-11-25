@@ -127,6 +127,20 @@ export interface GuildStickerWire {
 export type ListStickersResponseWire = APIResponse<GuildStickerWire[]>;
 
 //////////
+// source: images.go
+
+export interface ImageWire {
+  id: string;
+  user_id: string;
+  guild_id: null | string;
+  file_name: string;
+  file_size: number /* int32 */;
+  cdn_url: string;
+}
+export type UploadImageResponseWire = APIResponse<ImageWire>;
+export type GetImageResponseWire = APIResponse<ImageWire>;
+
+//////////
 // source: message.go
 
 export interface SavedMessageWire {
@@ -216,6 +230,7 @@ export interface GetPremiumPlanFeaturesResponseDataWire {
   custom_bot: boolean;
   max_custom_commands: number /* int */;
   is_premium: boolean;
+  max_image_upload_size: number /* int */;
 }
 export type GetPremiumPlanFeaturesResponseWire = APIResponse<GetPremiumPlanFeaturesResponseDataWire>;
 export interface PremiumEntitlementWire {

@@ -62,6 +62,7 @@ export default function EditorEmbedFooter({ embedIndex, embedId }: Props) {
             onChange={(v) => setFooterIconUrl(embedIndex, v || undefined)}
             className="md:w-1/2"
             validationPath={`embeds.${embedIndex}.footer.icon_url`}
+            imageUpload={true}
           />
           <div className="md:w-1/2">
             <div className="mb-1.5 flex">

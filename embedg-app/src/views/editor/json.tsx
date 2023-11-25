@@ -7,9 +7,11 @@ import { githubDark } from "@uiw/codemirror-theme-github";
 import { linter, lintGutter } from "@codemirror/lint";
 import { parseMessageWithAction } from "../../discord/restoreSchema";
 import { useNavigate } from "react-router-dom";
+import { useToasts } from "../../util/toasts";
 
 export default function JsonView() {
   const navigate = useNavigate();
+  const createToast = useToasts((s) => s.create);
 
   const msg = useCurrentMessageStore();
 
@@ -28,6 +30,12 @@ export default function JsonView() {
       navigate("/editor");
     } catch (e) {
       console.error(e);
+      createToast({
+        type: "error",
+        title: "Failed to parse message",
+        message:
+          "The message you entered is not a valid Discord webhook message. Please check for mistakes in your message and try again.",
+      });
     }
   }
 

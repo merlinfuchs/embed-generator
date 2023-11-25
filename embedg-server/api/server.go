@@ -12,6 +12,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/s3"
 	embedgsite "github.com/merlinfuchs/embed-generator/embedg-site"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -46,7 +47,16 @@ func Serve() {
 		log.Fatal().Err(err).Msg("Failed to initialize bot")
 	}
 
-	RegisterRoutes(app, &stores{pg, bot})
+	blob, err := s3.New()
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to initialize blob store")
+	}
+
+	RegisterRoutes(app, &stores{
+		pg:   pg,
+		blob: blob,
+		bot:  bot,
+	})
 
 	app.Use("/app/", filesystem.New(filesystem.Config{
 		Root:         http.FS(embedgapp.DistFS),

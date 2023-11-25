@@ -14,6 +14,7 @@ type GetPremiumPlanFeaturesResponseDataWire struct {
 	CustomBot              bool `json:"custom_bot"`
 	MaxCustomCommands      int  `json:"max_custom_commands"`
 	IsPremium              bool `json:"is_premium"`
+	MaxImageUploadSize     int  `json:"max_image_upload_size"`
 }
 
 type GetPremiumPlanFeaturesResponseWire APIResponse[GetPremiumPlanFeaturesResponseDataWire]

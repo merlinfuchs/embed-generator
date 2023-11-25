@@ -25,6 +25,7 @@ import {
   SavedMessagesImportResponseWire,
   SharedMessageCreateRequestWire,
   SharedMessageGetResponseWire,
+  UploadImageResponseWire,
 } from "./wire";
 import { handleApiResponse } from "./queries";
 
@@ -326,6 +327,25 @@ export function useCustomCommandDeleteMutation() {
       ).then((res) =>
         handleApiResponse<CustomCommandDeleteResponseWire>(res.json())
       );
+    }
+  );
+}
+
+export function useUploadImageMutation() {
+  return useMutation(
+    ({ guildId, file }: { guildId: string | null; file: File }) => {
+      let url = `/api/images`;
+      if (guildId) {
+        url += `?guild_id=${guildId}`;
+      }
+
+      const body = new FormData();
+      body.append("file", file);
+
+      return fetch(url, {
+        method: "POST",
+        body,
+      }).then((res) => handleApiResponse<UploadImageResponseWire>(res.json()));
     }
   );
 }
