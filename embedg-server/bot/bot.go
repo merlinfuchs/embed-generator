@@ -32,11 +32,11 @@ func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 		return nil, err
 	}
 
-	manager.Intents = discordgo.IntentGuilds | discordgo.IntentGuildMessages | discordgo.IntentGuildEmojis // discordgo.IntentGuildMembers
+	manager.Intents = discordgo.IntentGuilds | discordgo.IntentGuildMessages | discordgo.IntentGuildEmojis
 	manager.State = discordgo.NewState()
 	manager.Presence = &discordgo.GatewayStatusUpdate{
 		Game: discordgo.Activity{
-			Name: "message.style",
+			Name: viper.GetString("discord.activity_name"),
 			Type: discordgo.ActivityTypeWatching,
 		},
 		Status: string(discordgo.StatusOnline),

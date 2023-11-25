@@ -5,6 +5,8 @@ import "github.com/spf13/viper"
 func setupDefaults() {
 	v := viper.GetViper()
 
+	v.SetDefault("discord.activity_name", "message.style")
+
 	// Postgres defaults
 	v.SetDefault("postgres.host", "localhost")
 	v.SetDefault("postgres.port", 5432)
