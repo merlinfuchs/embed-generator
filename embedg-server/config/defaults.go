@@ -4,8 +4,8 @@ import "github.com/spf13/viper"
 
 func setupDefaults() {
 	v := viper.GetViper()
-  
-  v.SetDefault("discord.activity_name", "message.style")
+
+	v.SetDefault("discord.activity_name", "message.style")
 
 	// Postgres defaults
 	v.SetDefault("postgres.host", "localhost")
@@ -25,7 +25,7 @@ func setupDefaults() {
 	v.SetDefault("api.host", "localhost")
 	v.SetDefault("api.port", 8080)
 	v.SetDefault("api.public_url", "http://localhost:5173/api")
-  
+
 	// CDN defaults
 	v.SetDefault("cdn.public_url", "http://localhost:8080/cdn")
 }
