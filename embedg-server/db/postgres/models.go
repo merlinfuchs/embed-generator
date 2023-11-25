@@ -24,6 +24,11 @@ type CustomBot struct {
 	UserAvatar              sql.NullString
 	HandledFirstInteraction bool
 	CreatedAt               time.Time
+	GatewayStatus           string
+	GatewayActivityType     sql.NullInt16
+	GatewayActivityName     sql.NullString
+	GatewayActivityState    sql.NullString
+	GatewayActivityUrl      sql.NullString
 }
 
 type CustomCommand struct {

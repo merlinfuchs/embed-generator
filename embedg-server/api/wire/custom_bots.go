@@ -7,6 +7,7 @@ import (
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"gopkg.in/guregu/null.v4"
 )
 
@@ -24,6 +25,12 @@ type CustomBotInfoWire struct {
 	HandledFirstInteraction bool   `json:"handled_first_interaction"`
 	InviteURL               string `json:"invite_url"`
 	InteractionEndpointURL  string `json:"interaction_endpoint_url"`
+
+	GatewayStatus        string      `json:"gateway_status"`
+	GatewayActivityType  null.Int    `json:"gateway_activity_type"`
+	GatewayActivityName  null.String `json:"gateway_activity_name"`
+	GatewayActivityState null.String `json:"gateway_activity_state"`
+	GatewayActivityURL   null.String `json:"gateway_activity_url"`
 }
 
 type CustomBotConfigureRequestWire struct {
@@ -31,10 +38,39 @@ type CustomBotConfigureRequestWire struct {
 }
 
 func (req CustomBotConfigureRequestWire) Validate() error {
-	return nil
+	return validation.ValidateStruct(&req,
+		validation.Field(&req.Token, validation.Required),
+	)
 }
 
 type CustomBotConfigureResponseWire APIResponse[CustomBotInfoWire]
+
+type CustomBotPresenceWire struct {
+	GatewayStatus        string      `json:"gateway_status"`
+	GatewayActivityType  null.Int    `json:"gateway_activity_type"`
+	GatewayActivityName  null.String `json:"gateway_activity_name"`
+	GatewayActivityState null.String `json:"gateway_activity_state"`
+	GatewayActivityURL   null.String `json:"gateway_activity_url"`
+}
+
+type CustomBotUpdatePresenceRequestWire CustomBotPresenceWire
+
+func (req CustomBotUpdatePresenceRequestWire) Validate() error {
+	return validation.ValidateStruct(&req,
+		validation.Field(&req.GatewayStatus, validation.Required, validation.In("online", "dnd", "idle", "invisible")),
+		validation.Field(&req.GatewayActivityType, validation.In(0, 1, 2, 3, 4, 5)),
+		validation.Field(&req.GatewayActivityName, validation.When(
+			req.GatewayActivityType.Valid && req.GatewayActivityType.Int64 != 4,
+			validation.Required, validation.Length(1, 128)),
+		),
+		validation.Field(&req.GatewayActivityState, validation.When(
+			req.GatewayActivityType.Valid && req.GatewayActivityType.Int64 == 4,
+			validation.Required, validation.Length(1, 128),
+		)),
+		validation.Field(&req.GatewayActivityURL, is.URL))
+}
+
+type CustomBotUpdateStatusResponseWire APIResponse[CustomBotPresenceWire]
 
 type CustomBotGetResponseWire APIResponse[CustomBotInfoWire]
 
