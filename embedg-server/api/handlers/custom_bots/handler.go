@@ -160,12 +160,12 @@ func (h *CustomBotsHandler) HandleUpdateCustomBotPresence(c *fiber.Ctx, req wire
 		GuildID:       guildID,
 		GatewayStatus: req.GatewayStatus,
 		GatewayActivityType: sql.NullInt16{
-			Int16: int16(req.GatewayActivityType.Int64),
-			Valid: req.GatewayActivityType.Valid,
+			Int16: int16(req.GatewayActivityType),
+			Valid: true,
 		},
-		GatewayActivityName:  req.GatewayActivityName.NullString,
-		GatewayActivityState: req.GatewayActivityState.NullString,
-		GatewayActivityUrl:   req.GatewayActivityURL.NullString,
+		GatewayActivityName:  sql.NullString{String: req.GatewayActivityName, Valid: req.GatewayActivityName != ""},
+		GatewayActivityState: sql.NullString{String: req.GatewayActivityState, Valid: req.GatewayActivityState != ""},
+		GatewayActivityUrl:   sql.NullString{String: req.GatewayActivityURL, Valid: req.GatewayActivityURL != ""},
 	})
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -174,7 +174,7 @@ func (h *CustomBotsHandler) HandleUpdateCustomBotPresence(c *fiber.Ctx, req wire
 		return err
 	}
 
-	return c.JSON(wire.CustomBotUpdateStatusResponseWire{
+	return c.JSON(wire.CustomBotUpdatePresenceResponseWire{
 		Success: true,
 		Data:    wire.CustomBotPresenceWire(req),
 	})

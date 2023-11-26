@@ -1,6 +1,8 @@
 package custom_bots
 
 import (
+	"fmt"
+
 	"github.com/merlinfuchs/discordgo"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/guregu/null.v4"
@@ -14,7 +16,7 @@ type CustomBot struct {
 func NewCustomBot(token string, presence CustomBotPresence) (*CustomBot, error) {
 	session, err := discordgo.New("Bot " + token)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
 
 	session.StateEnabled = false
@@ -26,7 +28,7 @@ func NewCustomBot(token string, presence CustomBotPresence) (*CustomBot, error) 
 
 	err = session.Open()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open session: %w", err)
 	}
 
 	bot := &CustomBot{

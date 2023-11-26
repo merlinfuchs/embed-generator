@@ -5,6 +5,8 @@ import {
   CustomBotConfigureRequestWire,
   CustomBotConfigureResponseWire,
   CustomBotDisableResponseWire,
+  CustomBotUpdatePresenceRequestWire,
+  CustomBotUpdatePresenceResponseWire,
   CustomCommandCreateRequestWire,
   CustomCommandCreateResponseWire,
   CustomCommandDeleteResponseWire,
@@ -249,6 +251,28 @@ export function useCustomBotDisableMutation() {
       handleApiResponse<CustomBotDisableResponseWire>(res.json())
     );
   });
+}
+
+export function useCustomBotUpdatePresenceMutation() {
+  return useMutation(
+    ({
+      guildId,
+      req,
+    }: {
+      guildId: string;
+      req: CustomBotUpdatePresenceRequestWire;
+    }) => {
+      return fetch(`/api/custom-bot/presence?guild_id=${guildId}`, {
+        method: "PUT",
+        body: JSON.stringify(req),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) =>
+        handleApiResponse<CustomBotUpdatePresenceResponseWire>(res.json())
+      );
+    }
+  );
 }
 
 export function useCustomCommandCreateMutation() {

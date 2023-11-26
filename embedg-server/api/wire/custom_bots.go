@@ -46,11 +46,11 @@ func (req CustomBotConfigureRequestWire) Validate() error {
 type CustomBotConfigureResponseWire APIResponse[CustomBotInfoWire]
 
 type CustomBotPresenceWire struct {
-	GatewayStatus        string      `json:"gateway_status"`
-	GatewayActivityType  null.Int    `json:"gateway_activity_type"`
-	GatewayActivityName  null.String `json:"gateway_activity_name"`
-	GatewayActivityState null.String `json:"gateway_activity_state"`
-	GatewayActivityURL   null.String `json:"gateway_activity_url"`
+	GatewayStatus        string `json:"gateway_status"`
+	GatewayActivityType  int    `json:"gateway_activity_type,omitempty"`
+	GatewayActivityName  string `json:"gateway_activity_name,omitempty"`
+	GatewayActivityState string `json:"gateway_activity_state,omitempty"`
+	GatewayActivityURL   string `json:"gateway_activity_url,omitempty"`
 }
 
 type CustomBotUpdatePresenceRequestWire CustomBotPresenceWire
@@ -59,18 +59,18 @@ func (req CustomBotUpdatePresenceRequestWire) Validate() error {
 	return validation.ValidateStruct(&req,
 		validation.Field(&req.GatewayStatus, validation.Required, validation.In("online", "dnd", "idle", "invisible")),
 		validation.Field(&req.GatewayActivityType, validation.In(0, 1, 2, 3, 4, 5)),
-		validation.Field(&req.GatewayActivityName, validation.When(
-			req.GatewayActivityType.Valid && req.GatewayActivityType.Int64 != 4,
+		/* validation.Field(&req.GatewayActivityName, validation.When(
+			req.GatewayActivityType != 4,
 			validation.Required, validation.Length(1, 128)),
-		),
+		), */
 		validation.Field(&req.GatewayActivityState, validation.When(
-			req.GatewayActivityType.Valid && req.GatewayActivityType.Int64 == 4,
+			req.GatewayActivityType == 4,
 			validation.Required, validation.Length(1, 128),
 		)),
 		validation.Field(&req.GatewayActivityURL, is.URL))
 }
 
-type CustomBotUpdateStatusResponseWire APIResponse[CustomBotPresenceWire]
+type CustomBotUpdatePresenceResponseWire APIResponse[CustomBotPresenceWire]
 
 type CustomBotGetResponseWire APIResponse[CustomBotInfoWire]
 
