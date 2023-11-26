@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
@@ -78,7 +77,8 @@ func (m *CustomBotManager) lazyCustomBotGatewayTask() {
 				continue
 			}
 
-			bot.Session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			// TODO: think about using gateway for custom bot interactions instead of htp
+			/* bot.Session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				err := m.actionHandler.HandleActionInteraction(s, &handler.GatewayInteraction{
 					Session: s,
 					Inner:   i.Interaction,
@@ -86,7 +86,7 @@ func (m *CustomBotManager) lazyCustomBotGatewayTask() {
 				if err != nil {
 					log.Error().Err(err).Msg("Failed to handle action interaction from custom bot gateway")
 				}
-			})
+			}) */
 
 			m.bots[customBot.ID] = bot
 		}

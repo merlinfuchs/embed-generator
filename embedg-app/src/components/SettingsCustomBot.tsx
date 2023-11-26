@@ -280,6 +280,25 @@ export default function SettingsCustomBot() {
                 </>
               )}
             </div>
+            <div className="flex items-center space-x-2">
+              {customBot.data.handled_first_interaction ? (
+                <>
+                  <CheckCircleIcon className="h-6 w-6 text-green" />
+                  <div>
+                    The interaction endpoint has been configured correctly in
+                    the Discord Developer Portal
+                  </div>
+                </>
+              ) : (
+                <>
+                  <XCircleIcon className="h-6 w-6 text-red" />
+                  <div>
+                    The interaction endpoint hasn't been configured correctly in
+                    the Discord Developer Portal
+                  </div>
+                </>
+              )}
+            </div>
           </div>
           <div className="mb-10">
             <div className="text-lg font-medium text-gray-300 mb-1">
@@ -295,6 +314,28 @@ export default function SettingsCustomBot() {
               className="bg-blurple hover:bg-blurple-dark px-3 py-2 rounded text-white"
             >
               Invite Bot
+            </a>
+          </div>
+          <div className="mb-10">
+            <div className="text-lg font-medium text-gray-300 mb-1">
+              Interaction Endpoint
+            </div>
+            <div className="text-gray-400 font-light text-sm mb-5">
+              You need to open up your bot in the Discord Developer Portal and
+              set the Interaction Endpoint URL to this value:
+            </div>
+            <input
+              type="url"
+              readOnly
+              value={customBot.data.interaction_endpoint_url}
+              className="bg-dark-2 px-3 py-2 rounded w-full focus:outline-none text-white mb-5"
+            />
+            <a
+              href={`https://discord.com/developers/applications/${customBot.data.application_id}/information`}
+              target="_blank"
+              className="bg-blurple hover:bg-blurple-dark px-3 py-2 rounded text-white"
+            >
+              Open Developer Portal
             </a>
           </div>
 
