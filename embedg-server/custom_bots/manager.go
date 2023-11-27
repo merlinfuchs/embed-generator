@@ -93,7 +93,7 @@ func (m *CustomBotManager) lazyCustomBotGatewayTask() {
 			bot.Session.AddHandler(func(s *discordgo.Session, i *discordgo.Disconnect) {
 				// Normally DiscordGo would handle reconnection, but it doesn't have any logic to detect a token reset and will just keep trying to reconnect with the old token
 				// We only make a single reconnect attempt, if that fails we hand it off to the background task to spawn a new session
-				// The background task will detect if the token invalid and mark the custom bot accordingly
+				// The background task will detect if the token is invalid and mark the custom bot accordingly
 
 				err := s.Open()
 				if err != nil {

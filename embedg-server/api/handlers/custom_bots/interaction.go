@@ -3,6 +3,7 @@ package custom_bots
 import (
 	"bytes"
 	"crypto/ed25519"
+	"database/sql"
 	"encoding/hex"
 	"fmt"
 	"strings"
@@ -20,6 +21,9 @@ func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 
 	customBot, err := h.pg.Q.GetCustomBot(c.Context(), customBotID)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return helpers.NotFound("unknown_bot", "Custom bot not found")
+		}
 		return err
 	}
 
