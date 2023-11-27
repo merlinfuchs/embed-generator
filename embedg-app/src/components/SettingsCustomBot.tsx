@@ -93,17 +93,17 @@ export default function SettingsCustomBot() {
 
   const updatePresenceMutation = useCustomBotUpdatePresenceMutation();
 
-  function updateStatus(newStatus: string, newCustomStatus?: string | null) {
+  function updateStatus() {
     if (!guildId) return;
 
     updatePresenceMutation.mutate(
       {
         guildId,
         req: {
-          gateway_status: newStatus,
-          gateway_activity_type: !!newCustomStatus ? 4 : undefined,
-          gateway_activity_name: newCustomStatus || undefined,
-          gateway_activity_state: newCustomStatus || undefined,
+          gateway_status: status,
+          gateway_activity_type: !!customStatus ? 4 : undefined,
+          gateway_activity_name: customStatus || undefined,
+          gateway_activity_state: customStatus || undefined,
         },
       },
       {
@@ -127,23 +127,6 @@ export default function SettingsCustomBot() {
         },
       }
     );
-  }
-
-  function cycleStatus() {
-    let newStatus: string;
-    switch (status) {
-      case "online":
-        newStatus = "dnd";
-        break;
-      case "dnd":
-        newStatus = "invisible";
-        break;
-      case "invisible":
-        newStatus = "online";
-        break;
-    }
-
-    updateStatus(newStatus, customStatus);
   }
 
   return (
@@ -183,59 +166,41 @@ export default function SettingsCustomBot() {
       ) : (
         <div>
           <div className="mb-10">
-            <div className="flex items-center space-x-5">
-              <div className="relative flex-none">
-                <img
-                  src={userAvatarUrl({
-                    id: customBot.data.user_id,
-                    avatar: customBot.data.user_avatar,
-                    discriminator: customBot.data.user_discriminator,
-                  })}
-                  alt=""
-                  className="h-16 w-16 rounded-full shadow"
-                />
-                <div
-                  className="h-6 w-6 bg-dark-3 rounded-full absolute right-0 bottom-0 flex items-center justify-center cursor-pointer"
-                  title="Change Status"
-                  onClick={cycleStatus}
-                >
+            <div className="flex justify-between mb-10">
+              <div className="flex items-center space-x-3">
+                <div className="relative">
+                  <img
+                    src={userAvatarUrl({
+                      id: customBot.data.user_id,
+                      avatar: customBot.data.user_avatar,
+                      discriminator: customBot.data.user_discriminator,
+                    })}
+                    alt=""
+                    className="h-14 w-14 rounded-full shadow"
+                  />
                   <div
-                    className={clsx(
-                      "h-5 w-5 rounded-full flex items-center justify-center",
-                      status === "online"
-                        ? "bg-green"
-                        : status === "dnd"
-                        ? "bg-red"
-                        : "bg-gray-500"
-                    )}
+                    className="h-5 w-5 bg-dark-3 rounded-full absolute right-0 bottom-0 flex items-center justify-center"
+                    title="Change Status"
                   >
-                    <ArrowPathIcon className="h-4 w-4 text-white" />
+                    <div
+                      className={clsx(
+                        "h-3 w-3 rounded-full",
+                        status === "online"
+                          ? "bg-green"
+                          : status === "dnd"
+                          ? "bg-red"
+                          : "bg-gray-500"
+                      )}
+                    ></div>
                   </div>
                 </div>
-              </div>
-              <div>
-                <div className="flex items-center space-x-2">
-                  <div className="text-xl text-gray-300 mb-1">
+                <div>
+                  <div className="text-xl text-gray-300">
                     {customBot.data.user_name}
                   </div>
-                  <div className="text-sm text-gray-500 hidden sm:block">
+                  <div className="text-gray-500 text-sm">
                     {customBot.data.user_id}
                   </div>
-                </div>
-                <div className="flex">
-                  <input
-                    className="px-3 py-1 text-sm bg-dark-2 w-full rounded-l focus:outline-none text-gray-300 flex-auto"
-                    placeholder="Custom Status"
-                    value={customStatus || ""}
-                    onChange={(e) => setCustomStatus(e.target.value || null)}
-                    maxLength={128}
-                  />
-                  <button
-                    onClick={() => updateStatus(status, customStatus)}
-                    className="bg-blurple rounded-r px-2 py-1 text-white hover:bg-blurple-dark flex-none"
-                  >
-                    Set Status
-                  </button>
                 </div>
               </div>
             </div>
@@ -318,6 +283,39 @@ export default function SettingsCustomBot() {
           </div>
           <div className="mb-10">
             <div className="text-lg font-medium text-gray-300 mb-1">
+              Custom Status
+            </div>
+            <div className="text-gray-400 font-light text-sm mb-5">
+              You can set the online status and a custom status message for your
+              bot to give it your personal touch.
+            </div>
+            <div className="flex space-x-3">
+              <select
+                className="px-3 py-2 rounded bg-dark-2 text-gray-300"
+                value={status}
+                onChange={(e) => setStatus(e.target.value as any)}
+              >
+                <option value="online">Online</option>
+                <option value="dnd">Do Not Disturb</option>
+                <option value="invisible">Invisible</option>
+              </select>
+              <input
+                className="px-3 py-2 bg-dark-2 rounded focus:outline-none text-gray-300"
+                placeholder="Custom Status"
+                value={customStatus || ""}
+                onChange={(e) => setCustomStatus(e.target.value || null)}
+                maxLength={128}
+              />
+              <button
+                onClick={() => updateStatus()}
+                className="bg-dark-5 rounded px-3 py-2 text-white hover:bg-dark-6 flex-none"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+          <div className="mb-10">
+            <div className="text-lg font-medium text-gray-300 mb-1">
               Interaction Endpoint
             </div>
             <div className="text-gray-400 font-light text-sm mb-5">
@@ -338,7 +336,6 @@ export default function SettingsCustomBot() {
               Open Developer Portal
             </a>
           </div>
-
           <div className="flex justify-end space-x-3">
             <button
               className="px-3 py-2 rounded border-2 border-red hover:bg-red cursor-pointer text-white"

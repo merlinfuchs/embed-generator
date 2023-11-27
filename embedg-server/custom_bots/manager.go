@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
@@ -39,6 +40,7 @@ func (m *CustomBotManager) lazyCustomBotGatewayTask() {
 			continue
 		}
 
+		newBots := 0
 		for _, customBot := range customBots {
 			if customBot.TokenInvalid {
 				continue
@@ -77,7 +79,7 @@ func (m *CustomBotManager) lazyCustomBotGatewayTask() {
 				continue
 			}
 
-			// TODO: think about using gateway for custom bot interactions instead of htp
+			// TODO: think about using gateway for custom bot interactions instead of http
 			/* bot.Session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				err := m.actionHandler.HandleActionInteraction(s, &handler.GatewayInteraction{
 					Session: s,
@@ -88,7 +90,25 @@ func (m *CustomBotManager) lazyCustomBotGatewayTask() {
 				}
 			}) */
 
+			bot.Session.AddHandler(func(s *discordgo.Session, i *discordgo.Disconnect) {
+				// Normally DiscordGo would handle reconnection, but it doesn't have any logic to detect a token reset and will just keep trying to reconnect with the old token
+				// We only make a single reconnect attempt, if that fails we hand it off to the background task to spawn a new session
+				// The background task will detect if the token invalid and mark the custom bot accordingly
+
+				err := s.Open()
+				if err != nil {
+					log.Error().Err(err).Msg("Failed to reconnect custom bot")
+
+					delete(m.bots, customBot.ID)
+				}
+			})
+
 			m.bots[customBot.ID] = bot
+			newBots++
+		}
+
+		if newBots > 0 {
+			log.Info().Msgf("%d custom bots connected to the gateway", newBots)
 		}
 	}
 }

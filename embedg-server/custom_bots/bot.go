@@ -25,6 +25,8 @@ func NewCustomBot(token string, presence CustomBotPresence) (*CustomBot, error) 
 		Status: presence.Status,
 		Game:   presence.Activity(),
 	}
+	session.SyncEvents = true
+	session.ShouldReconnectOnError = false
 
 	err = session.Open()
 	if err != nil {
