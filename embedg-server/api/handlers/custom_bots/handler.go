@@ -131,7 +131,52 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 			HandledFirstInteraction: customBot.HandledFirstInteraction,
 			InviteURL:               botInvite(customBot.ApplicationID, guildID),
 			InteractionEndpointURL:  interactionEndpointURL(customBot.ID),
+
+			GatewayStatus:        customBot.GatewayStatus,
+			GatewayActivityType:  null.NewInt(int64(customBot.GatewayActivityType.Int16), customBot.GatewayActivityType.Valid),
+			GatewayActivityName:  null.String{NullString: customBot.GatewayActivityName},
+			GatewayActivityState: null.String{NullString: customBot.GatewayActivityState},
+			GatewayActivityURL:   null.String{NullString: customBot.GatewayActivityUrl},
 		},
+	})
+}
+
+func (h *CustomBotsHandler) HandleUpdateCustomBotPresence(c *fiber.Ctx, req wire.CustomBotUpdatePresenceRequestWire) error {
+	guildID := c.Query("guild_id")
+	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+		return err
+	}
+
+	features, err := h.pm.GetPlanFeaturesForGuild(c.Context(), guildID)
+	if err != nil {
+		return err
+	}
+
+	if !features.CustomBot {
+		return helpers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
+	}
+
+	_, err = h.pg.Q.UpdateCustomBotPresence(c.Context(), postgres.UpdateCustomBotPresenceParams{
+		GuildID:       guildID,
+		GatewayStatus: req.GatewayStatus,
+		GatewayActivityType: sql.NullInt16{
+			Int16: int16(req.GatewayActivityType),
+			Valid: true,
+		},
+		GatewayActivityName:  sql.NullString{String: req.GatewayActivityName, Valid: req.GatewayActivityName != ""},
+		GatewayActivityState: sql.NullString{String: req.GatewayActivityState, Valid: req.GatewayActivityState != ""},
+		GatewayActivityUrl:   sql.NullString{String: req.GatewayActivityURL, Valid: req.GatewayActivityURL != ""},
+	})
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return helpers.NotFound("not_configured", "There is no custom bot configured right now")
+		}
+		return err
+	}
+
+	return c.JSON(wire.CustomBotUpdatePresenceResponseWire{
+		Success: true,
+		Data:    wire.CustomBotPresenceWire(req),
 	})
 }
 
@@ -225,6 +270,12 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 			HandledFirstInteraction: customBot.HandledFirstInteraction,
 			InviteURL:               botInvite(customBot.ApplicationID, guildID),
 			InteractionEndpointURL:  interactionEndpointURL(customBot.ID),
+
+			GatewayStatus:        customBot.GatewayStatus,
+			GatewayActivityType:  null.NewInt(int64(customBot.GatewayActivityType.Int16), customBot.GatewayActivityType.Valid),
+			GatewayActivityName:  null.String{NullString: customBot.GatewayActivityName},
+			GatewayActivityState: null.String{NullString: customBot.GatewayActivityState},
+			GatewayActivityURL:   null.String{NullString: customBot.GatewayActivityUrl},
 		},
 	})
 }

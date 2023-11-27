@@ -29,11 +29,25 @@ export interface CustomBotInfoWire {
   handled_first_interaction: boolean;
   invite_url: string;
   interaction_endpoint_url: string;
+  gateway_status: string;
+  gateway_activity_type: null | number;
+  gateway_activity_name: null | string;
+  gateway_activity_state: null | string;
+  gateway_activity_url: null | string;
 }
 export interface CustomBotConfigureRequestWire {
   token: string;
 }
 export type CustomBotConfigureResponseWire = APIResponse<CustomBotInfoWire>;
+export interface CustomBotPresenceWire {
+  gateway_status: string;
+  gateway_activity_type?: number /* int */;
+  gateway_activity_name?: string;
+  gateway_activity_state?: string;
+  gateway_activity_url?: string;
+}
+export type CustomBotUpdatePresenceRequestWire = CustomBotPresenceWire;
+export type CustomBotUpdatePresenceResponseWire = APIResponse<CustomBotPresenceWire>;
 export type CustomBotGetResponseWire = APIResponse<CustomBotInfoWire>;
 export interface CustomBotDisableResponseDataWire {
 }

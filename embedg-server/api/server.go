@@ -3,17 +3,11 @@ package api
 import (
 	"errors"
 	"fmt"
-	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	embedgapp "github.com/merlinfuchs/embed-generator/embedg-app"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/s3"
-	embedgsite "github.com/merlinfuchs/embed-generator/embedg-site"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
@@ -41,36 +35,16 @@ func Serve() {
 		EnableStackTrace: true,
 	}))
 
-	pg := postgres.NewPostgresStore()
-	bot, err := bot.New(viper.GetString("discord.token"), pg)
+	stores := createStores()
+
+	bot, err := bot.New(viper.GetString("discord.token"), stores.pg)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize bot")
 	}
 
-	blob, err := s3.New()
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to initialize blob store")
-	}
+	managers := createManagers(stores, bot)
 
-	RegisterRoutes(app, &stores{
-		pg:   pg,
-		blob: blob,
-		bot:  bot,
-	})
-
-	app.Use("/app/", filesystem.New(filesystem.Config{
-		Root:         http.FS(embedgapp.DistFS),
-		Browse:       false,
-		NotFoundFile: "dist/index.html",
-		PathPrefix:   "/dist",
-	}))
-
-	app.Use("/", filesystem.New(filesystem.Config{
-		Root:         http.FS(embedgsite.DistFS),
-		Browse:       false,
-		NotFoundFile: "dist/index.html",
-		PathPrefix:   "/dist",
-	}))
+	registerRoutes(app, stores, bot, managers)
 
 	go bot.Start()
 

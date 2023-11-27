@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"mime"
 
+	"github.com/merlinfuchs/discordgo"
 	"github.com/spf13/viper"
 )
 
@@ -29,4 +30,19 @@ func GetFileExtensionFromMimeType(mimeType string) string {
 	}
 
 	return res[0]
+}
+
+func IsDiscordRestErrorCode(err error, codes ...int) bool {
+	if err, ok := err.(*discordgo.RESTError); ok {
+		if err.Message == nil {
+			return false
+		}
+
+		for _, code := range codes {
+			if err.Message.Code == code {
+				return true
+			}
+		}
+	}
+	return false
 }
