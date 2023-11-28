@@ -61,3 +61,10 @@ type GuildStickerWire struct {
 }
 
 type ListStickersResponseWire APIResponse[[]GuildStickerWire]
+
+type GuildBrandingWire struct {
+	DefaultUsername  null.String `json:"default_username"`
+	DefaultAvatarURL null.String `json:"default_avatar_url"`
+}
+
+type GetGuildBrandingResponseWire APIResponse[GuildBrandingWire]

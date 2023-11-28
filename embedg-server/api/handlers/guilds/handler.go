@@ -1,6 +1,7 @@
 package guilds
 
 import (
+	"database/sql"
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
@@ -12,6 +13,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/guregu/null.v4"
 )
@@ -253,6 +255,33 @@ func (h *GuildsHanlder) HandleListGuildStickers(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(wire.ListStickersResponseWire{
+		Success: true,
+		Data:    res,
+	})
+}
+
+func (h *GuildsHanlder) HandleGetGuildBranding(c *fiber.Ctx) error {
+	guildID := c.Params("guildID")
+	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+		return err
+	}
+
+	res := wire.GuildBrandingWire{}
+
+	customBot, err := h.pg.Q.GetCustomBotByGuildID(c.Context(), guildID)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return err
+		}
+	} else {
+		res.DefaultUsername = null.NewString(customBot.UserName, true)
+		res.DefaultAvatarURL = null.NewString(
+			util.DiscordAvatarURL(customBot.UserID, customBot.UserDiscriminator, customBot.UserAvatar.String),
+			true,
+		)
+	}
+
+	return c.JSON(wire.GetGuildBrandingResponseWire{
 		Success: true,
 		Data:    res,
 	})

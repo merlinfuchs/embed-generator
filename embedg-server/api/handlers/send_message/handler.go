@@ -2,6 +2,7 @@ package send_message
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 
@@ -14,19 +15,23 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
 	"github.com/vincent-petithory/dataurl"
 )
 
 type SendMessageHandler struct {
 	bot           *bot.Bot
+	pg            *postgres.PostgresStore
 	accessManager *access.AccessManager
 	actionParser  *parser.ActionParser
 }
 
-func New(bot *bot.Bot, accessManager *access.AccessManager, actionParser *parser.ActionParser) *SendMessageHandler {
+func New(bot *bot.Bot, pg *postgres.PostgresStore, accessManager *access.AccessManager, actionParser *parser.ActionParser) *SendMessageHandler {
 	return &SendMessageHandler{
 		bot:           bot,
+		pg:            pg,
 		accessManager: accessManager,
 		actionParser:  actionParser,
 	}
@@ -62,6 +67,16 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		TTS:             data.TTS,
 		Embeds:          data.Embeds,
 		AllowedMentions: data.AllowedMentions,
+	}
+
+	customBot, err := h.pg.Q.GetCustomBotByGuildID(c.Context(), req.GuildID)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			log.Error().Err(err).Msg("failed to get custom bot for message username and avatar")
+		}
+	} else {
+		params.Username = customBot.UserName
+		params.AvatarURL = util.DiscordAvatarURL(customBot.UserID, customBot.UserDiscriminator, customBot.UserAvatar.String)
 	}
 
 	attachments := make([]*discordgo.MessageAttachment, len(req.Attachments))

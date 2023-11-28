@@ -7,6 +7,7 @@ import { toHTML } from "../discord/markdown";
 import { colorIntToHex } from "../util/discord";
 import { useSendSettingsStore } from "../state/sendSettings";
 import Twemoji from "react-twemoji";
+import { useGuildBrandingQuery } from "../api/queries";
 
 const buttonColors = {
   1: "discord-button-primary",
@@ -26,6 +27,14 @@ export default function MessagePreview({ msg }: { msg: Message }) {
   const sendMode = useSendSettingsStore((state) => state.mode);
   const [responses, setResponses] = useState<ButtonResponse[]>([]);
 
+  const guildId = useSendSettingsStore((s) => s.guildId);
+  const { data: branding } = useGuildBrandingQuery(guildId);
+
+  const defaultUsername =
+    (branding?.success && branding.data.default_username) || "Embed Generator";
+  const defaultAvatarUrl =
+    (branding?.success && branding.data.default_avatar_url) || "/app/logo.svg";
+
   return (
     <Twemoji options={{ className: "discord-twemoji" }}>
       <div
@@ -39,12 +48,12 @@ export default function MessagePreview({ msg }: { msg: Message }) {
         <div className="discord-message">
           <div className="discord-message-inner">
             <div className="discord-author-avatar">
-              <img src={msg.avatar_url || "/app/logo.svg"} alt="" />
+              <img src={msg.avatar_url || defaultAvatarUrl} alt="" />
             </div>
             <div className="discord-message-content">
               <span className="discord-author-info">
                 <span className="discord-author-username">
-                  {msg.username || "Embed Generator"}
+                  {msg.username || defaultUsername}
                 </span>
                 <span className="discord-application-tag">Bot</span>
               </span>

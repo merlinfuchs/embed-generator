@@ -139,6 +139,11 @@ export interface GuildStickerWire {
   formant_type: number /* int */;
 }
 export type ListStickersResponseWire = APIResponse<GuildStickerWire[]>;
+export interface GuildBrandingWire {
+  default_username: null | string;
+  default_avatar_url: null | string;
+}
+export type GetGuildBrandingResponseWire = APIResponse<GuildBrandingWire>;
 
 //////////
 // source: images.go
