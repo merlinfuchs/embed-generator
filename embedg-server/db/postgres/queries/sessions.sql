@@ -6,3 +6,6 @@ SELECT * FROM sessions WHERE token_hash = $1;
 
 -- name: DeleteSession :exec
 DELETE FROM sessions WHERE token_hash = $1;
+
+-- name: GetSessionsForUser :many
+SELECT * FROM sessions WHERE user_id = $1;

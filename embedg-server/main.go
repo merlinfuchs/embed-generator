@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/merlinfuchs/embed-generator/embedg-server/admin"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api"
 	"github.com/merlinfuchs/embed-generator/embedg-server/buildinfo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/config"
@@ -40,6 +41,7 @@ func init() {
 		},
 	})
 	rootCmd.AddCommand(migrate.Setup())
+	rootCmd.AddCommand(admin.Setup())
 }
 
 func bindFlags(cmd *cobra.Command, args []string) {

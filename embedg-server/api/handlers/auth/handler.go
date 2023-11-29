@@ -119,7 +119,7 @@ func (h *AuthHandler) HandleAuthCallback(c *fiber.Ctx) error {
 		guildIDs[i] = guild.ID
 	}
 
-	err = h.sessionManager.CreateSession(c, user.ID, guildIDs, token.AccessToken)
+	err = h.sessionManager.CreateSessionCookie(c, user.ID, guildIDs, token.AccessToken)
 	if err != nil {
 		return err
 	}

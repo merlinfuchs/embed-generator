@@ -39,6 +39,40 @@ func (q *Queries) GetSession(ctx context.Context, tokenHash string) (Session, er
 	return i, err
 }
 
+const getSessionsForUser = `-- name: GetSessionsForUser :many
+SELECT token_hash, user_id, guild_ids, access_token, created_at, expires_at FROM sessions WHERE user_id = $1
+`
+
+func (q *Queries) GetSessionsForUser(ctx context.Context, userID string) ([]Session, error) {
+	rows, err := q.db.QueryContext(ctx, getSessionsForUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Session
+	for rows.Next() {
+		var i Session
+		if err := rows.Scan(
+			&i.TokenHash,
+			&i.UserID,
+			pq.Array(&i.GuildIds),
+			&i.AccessToken,
+			&i.CreatedAt,
+			&i.ExpiresAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const insertSession = `-- name: InsertSession :one
 INSERT INTO sessions (token_hash, user_id, guild_ids, access_token, created_at, expires_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING token_hash, user_id, guild_ids, access_token, created_at, expires_at
 `

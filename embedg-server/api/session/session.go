@@ -1,6 +1,7 @@
 package session
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"database/sql"
@@ -59,15 +60,15 @@ func (s *SessionManager) GetSession(c *fiber.Ctx) (*Session, error) {
 	}, nil
 }
 
-func (s *SessionManager) CreateSession(c *fiber.Ctx, userID string, guildIDs []string, accessToken string) error {
+func (s *SessionManager) CreateSession(ctx context.Context, userID string, guildIDs []string, accessToken string) (string, error) {
 	token := generateSessionToken()
 
 	tokenHash, err := hashSessionToken(token)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	_, err = s.pg.Q.InsertSession(c.Context(), postgres.InsertSessionParams{
+	_, err = s.pg.Q.InsertSession(ctx, postgres.InsertSessionParams{
 		TokenHash:   tokenHash,
 		UserID:      userID,
 		GuildIds:    guildIDs,
@@ -75,6 +76,15 @@ func (s *SessionManager) CreateSession(c *fiber.Ctx, userID string, guildIDs []s
 		CreatedAt:   time.Now().UTC(),
 		ExpiresAt:   time.Now().UTC().Add(30 * 24 * time.Hour),
 	})
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
+func (s *SessionManager) CreateSessionCookie(c *fiber.Ctx, userID string, guildIDs []string, accessToken string) error {
+	token, err := s.CreateSession(c.Context(), userID, guildIDs, accessToken)
 	if err != nil {
 		return err
 	}
