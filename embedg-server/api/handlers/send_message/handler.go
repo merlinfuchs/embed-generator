@@ -75,8 +75,12 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 			log.Error().Err(err).Msg("failed to get custom bot for message username and avatar")
 		}
 	} else {
-		params.Username = customBot.UserName
-		params.AvatarURL = util.DiscordAvatarURL(customBot.UserID, customBot.UserDiscriminator, customBot.UserAvatar.String)
+		if params.Username == "" {
+			params.Username = customBot.UserName
+		}
+		if params.AvatarURL == "" {
+			params.AvatarURL = util.DiscordAvatarURL(customBot.UserID, customBot.UserDiscriminator, customBot.UserAvatar.String)
+		}
 	}
 
 	attachments := make([]*discordgo.MessageAttachment, len(req.Attachments))
