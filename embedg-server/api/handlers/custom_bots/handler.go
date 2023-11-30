@@ -17,6 +17,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"gopkg.in/guregu/null.v4"
 )
@@ -235,6 +236,19 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 		} else {
 			return err
 		}
+	}
+
+	customBot, err = h.pg.Q.UpdateCustomBotUser(c.Context(), postgres.UpdateCustomBotUserParams{
+		GuildID:           guildID,
+		UserName:          member.User.Username,
+		UserDiscriminator: member.User.Discriminator,
+		UserAvatar: sql.NullString{
+			String: member.User.Avatar,
+			Valid:  member.User.Avatar != "",
+		},
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to update custom bot user info")
 	}
 
 	guild, err := h.bot.State.Guild(guildID)

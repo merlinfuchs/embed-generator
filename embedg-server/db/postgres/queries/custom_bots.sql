@@ -6,6 +6,9 @@ RETURNING *;
 -- name: UpdateCustomBotPresence :one
 UPDATE custom_bots SET gateway_status = $2, gateway_activity_type = $3, gateway_activity_name = $4, gateway_activity_state = $5, gateway_activity_url = $6 WHERE guild_id = $1 RETURNING *;
 
+-- name: UpdateCustomBotUser :one
+UPDATE custom_bots SET user_name = $2, user_discriminator = $3, user_avatar = $4 WHERE guild_id = $1 RETURNING *;
+
 -- name: UpdateCustomBotTokenInvalid :one
 UPDATE custom_bots SET token_invalid = $2 WHERE guild_id = $1 RETURNING *;
 
