@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jellydator/ttlcache/v3"
+	"github.com/maypok86/otter"
 	"github.com/merlinfuchs/discordgo"
 	"github.com/spf13/viper"
 )
@@ -12,15 +12,14 @@ import (
 type AccessManager struct {
 	state       *discordgo.State
 	session     *discordgo.Session
-	memberCache *ttlcache.Cache[string, *discordgo.Member]
+	memberCache *otter.Cache[string, *discordgo.Member]
 }
 
 func New(state *discordgo.State, session *discordgo.Session) *AccessManager {
-	memberCache := ttlcache.New(
-		ttlcache.WithTTL[string, *discordgo.Member](3*time.Minute),
-		ttlcache.WithDisableTouchOnHit[string, *discordgo.Member](),
-	)
-	go memberCache.Start()
+	memberCache, err := otter.MustBuilder[string, *discordgo.Member](10_000).Build()
+	if err != nil {
+		panic(err)
+	}
 
 	return &AccessManager{
 		state:       state,
@@ -157,9 +156,8 @@ func (m *AccessManager) ComputeBotPermissionsForChannel(channelID string) (int64
 
 func (m *AccessManager) GetGuildMember(guildID string, userID string) (*discordgo.Member, error) {
 	cacheKey := guildID + userID
-	cacheItem := m.memberCache.Get(cacheKey)
-	if cacheItem != nil {
-		return cacheItem.Value(), nil
+	if cacheItem, ok := m.memberCache.Get(cacheKey); ok {
+		return cacheItem, nil
 	}
 
 	member, err := m.session.GuildMember(guildID, userID)
@@ -167,6 +165,6 @@ func (m *AccessManager) GetGuildMember(guildID string, userID string) (*discordg
 		return nil, err
 	}
 
-	m.memberCache.Set(cacheKey, member, time.Minute*3)
+	m.memberCache.SetWithTTL(cacheKey, member, time.Minute*3)
 	return member, nil
 }
