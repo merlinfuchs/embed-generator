@@ -24,7 +24,7 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&config.CfgFile, "config", "", "Config file (default is $HOME/.embedg.yaml)")
-	rootCmd.Version = buildinfo.Version() + " " + buildinfo.Target() + " (" + buildinfo.CommitDate() + ") " + buildinfo.Commit()
+	rootCmd.Version = buildinfo.FullVersion()
 
 	rootCmd.PersistentFlags().BoolP("debug", "D", false, "Debug mode (prints debug messages and call traces)")
 
