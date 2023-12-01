@@ -21,8 +21,9 @@ type CustomBotManager struct {
 
 func NewCustomBotManager(pg *postgres.PostgresStore, actionHandler *handler.ActionHandler) *CustomBotManager {
 	m := &CustomBotManager{
-		pg:   pg,
-		bots: make(map[string]*CustomBot),
+		pg:            pg,
+		actionHandler: actionHandler,
+		bots:          make(map[string]*CustomBot),
 	}
 
 	go m.lazyCustomBotGatewayTask()
