@@ -36,14 +36,15 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 		return err
 	}
 
+	nextAt := req.StartAt
 	if req.CronExpression.Valid {
 		schedule, err := scheduled_messages.ParseCronExpression(req.CronExpression.String)
 		if err != nil {
 			return helpers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
 		}
 
-		nextTrigger := schedule.Next(time.Now().UTC())
-		if schedule.Next(nextTrigger).Sub(nextTrigger) < time.Minute {
+		nextAt = schedule.Next(req.StartAt)
+		if schedule.Next(nextAt).Sub(nextAt) < time.Minute {
 			return helpers.BadRequest("invalid_cron_expression", "The cron expression is too tight and will trigger too often.")
 		}
 	}
@@ -62,10 +63,15 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 			String: req.CronExpression.String,
 			Valid:  req.CronExpression.Valid,
 		},
-		TriggerAt:   req.TriggerAt,
-		TriggerOnce: req.TriggerOnce,
-		CreatedAt:   time.Now().UTC(),
-		UpdatedAt:   time.Now().UTC(),
+		StartAt: req.StartAt,
+		EndAt: sql.NullTime{
+			Time:  req.EndAt.Time,
+			Valid: req.EndAt.Valid,
+		},
+		NextAt:    nextAt,
+		OnlyOnce:  req.OnlyOnce,
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create scheduled message")
@@ -137,6 +143,19 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		return err
 	}
 
+	nextAt := req.StartAt
+	if req.CronExpression.Valid {
+		schedule, err := scheduled_messages.ParseCronExpression(req.CronExpression.String)
+		if err != nil {
+			return helpers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
+		}
+
+		nextAt = schedule.Next(req.StartAt)
+		if schedule.Next(nextAt).Sub(nextAt) < time.Minute {
+			return helpers.BadRequest("invalid_cron_expression", "The cron expression is too tight and will trigger too often.")
+		}
+	}
+
 	msg, err := h.pg.Q.UpdateScheduledMessage(c.Context(), postgres.UpdateScheduledMessageParams{
 		ID:        messageID,
 		GuildID:   guildID,
@@ -150,10 +169,15 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 			String: req.CronExpression.String,
 			Valid:  req.CronExpression.Valid,
 		},
-		TriggerAt:   req.TriggerAt,
-		TriggerOnce: req.TriggerOnce,
-		Enabled:     req.Enabled,
-		UpdatedAt:   time.Now().UTC(),
+		StartAt: req.StartAt,
+		EndAt: sql.NullTime{
+			Time:  req.EndAt.Time,
+			Valid: req.EndAt.Valid,
+		},
+		NextAt:    nextAt,
+		OnlyOnce:  req.OnlyOnce,
+		Enabled:   req.Enabled,
+		UpdatedAt: time.Now().UTC(),
 	})
 
 	if err != nil {
@@ -206,8 +230,10 @@ func scheduledMessageModelToWire(model postgres.ScheduledMessage) wire.Scheduled
 		MessageID:      null.NewString(model.MessageID.String, model.MessageID.Valid),
 		SavedMessageID: model.SavedMessageID,
 		CronExpression: null.NewString(model.CronExpression.String, model.CronExpression.Valid),
-		TriggerAt:      model.TriggerAt,
-		TriggerOnce:    model.TriggerOnce,
+		StartAt:        model.StartAt,
+		EndAt:          null.NewTime(model.EndAt.Time, model.EndAt.Valid),
+		NextAt:         model.NextAt,
+		OnlyOnce:       model.OnlyOnce,
 		Enabled:        model.Enabled,
 		CreatedAt:      model.CreatedAt,
 		UpdatedAt:      model.UpdatedAt,

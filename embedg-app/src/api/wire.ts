@@ -250,6 +250,8 @@ export interface GetPremiumPlanFeaturesResponseDataWire {
   max_custom_commands: number /* int */;
   is_premium: boolean;
   max_image_upload_size: number /* int */;
+  max_scheduled_messages: number /* int */;
+  periodic_scheduled_messages: boolean;
 }
 export type GetPremiumPlanFeaturesResponseWire = APIResponse<GetPremiumPlanFeaturesResponseDataWire>;
 export interface PremiumEntitlementWire {
@@ -266,6 +268,52 @@ export interface ListPremiumEntitlementsResponseDataWire {
   entitlements: PremiumEntitlementWire[];
 }
 export type ListPremiumEntitlementsResponseWire = APIResponse<ListPremiumEntitlementsResponseDataWire>;
+
+//////////
+// source: scheduled_message.go
+
+export interface ScheduledMessageWire {
+  id: string;
+  creator_id: string;
+  guild_id: string;
+  channel_id: string;
+  message_id: null | string;
+  saved_message_id: string;
+  cron_expression: null | string;
+  trigger_at: string /* RFC3339 */;
+  end_at: null | string /* RFC3339 */;
+  next_at: string /* RFC3339 */;
+  trigger_once: boolean;
+  enabled: boolean;
+  created_at: string /* RFC3339 */;
+  updated_at: string /* RFC3339 */;
+}
+export type ScheduledMessageListResponseWire = APIResponse<ScheduledMessageWire[]>;
+export type ScheduledMessageGetResponseWire = APIResponse<ScheduledMessageWire>;
+export interface ScheduledMessageCreateRequestWire {
+  channel_id: string;
+  message_id: null | string;
+  saved_message_id: string;
+  cron_expression: null | string;
+  start_at: string /* RFC3339 */;
+  end_at: null | string /* RFC3339 */;
+  trigger_once: boolean;
+  enabled: boolean;
+}
+export type ScheduledMessageCreateResponseWire = APIResponse<ScheduledMessageWire>;
+export interface ScheduledMessageUpdateRequestWire {
+  channel_id: string;
+  message_id: null | string;
+  saved_message_id: string;
+  cron_expression: null | string;
+  trigger_at: string /* RFC3339 */;
+  end_at: null | string /* RFC3339 */;
+  trigger_once: boolean;
+  enabled: boolean;
+}
+export type ScheduledMessageUpdateResponseWire = APIResponse<ScheduledMessageWire>;
+export type ScheduledMessageDeleteResponseWire = APIResponse<{
+  }>;
 
 //////////
 // source: shared_message.go

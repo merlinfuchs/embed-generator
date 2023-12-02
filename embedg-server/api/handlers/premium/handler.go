@@ -54,14 +54,16 @@ func (h *PremiumHandler) HandleGetFeatures(c *fiber.Ctx) error {
 	return c.JSON(wire.GetPremiumPlanFeaturesResponseWire{
 		Success: true,
 		Data: wire.GetPremiumPlanFeaturesResponseDataWire{
-			MaxSavedMessages:       features.MaxSavedMessages,
-			MaxActionsPerComponent: features.MaxActionsPerComponent,
-			AdvancedActionTypes:    features.AdvancedActionTypes,
-			AIAssistant:            features.AIAssistant,
-			CustomBot:              features.CustomBot,
-			MaxCustomCommands:      features.MaxCustomCommands,
-			IsPremium:              features.IsPremium,
-			MaxImageUploadSize:     features.MaxImageUploadSize,
+			MaxSavedMessages:          features.MaxSavedMessages,
+			MaxActionsPerComponent:    features.MaxActionsPerComponent,
+			AdvancedActionTypes:       features.AdvancedActionTypes,
+			AIAssistant:               features.AIAssistant,
+			CustomBot:                 features.CustomBot,
+			MaxCustomCommands:         features.MaxCustomCommands,
+			IsPremium:                 features.IsPremium,
+			MaxImageUploadSize:        features.MaxImageUploadSize,
+			MaxScheduledMessages:      features.MaxScheduledMessages,
+			PeriodicScheduledMessages: features.PeriodicScheduledMessages,
 		},
 	})
 }

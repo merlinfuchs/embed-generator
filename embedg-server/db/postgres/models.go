@@ -97,8 +97,10 @@ type ScheduledMessage struct {
 	MessageID      sql.NullString
 	SavedMessageID string
 	CronExpression sql.NullString
-	TriggerAt      time.Time
-	TriggerOnce    bool
+	OnlyOnce       bool
+	StartAt        time.Time
+	EndAt          sql.NullTime
+	NextAt         time.Time
 	Enabled        bool
 	CreatedAt      time.Time
 	UpdatedAt      time.Time

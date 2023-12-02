@@ -11,6 +11,7 @@ import {
   PlusCircleIcon,
   ArrowRightOnRectangleIcon,
   CommandLineIcon,
+  CalendarDaysIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useEffect, useMemo, useState } from "react";
@@ -39,7 +40,7 @@ export default function SideNav() {
       <div
         className={clsx(
           "h-full bg-dark-3 flex-none transition-all fixed z-30 shadow",
-          collapsed ? "w-16" : "w-56",
+          collapsed ? "w-16" : "w-64",
           hidden && "hidden xl:relative xl:block"
         )}
       >
@@ -104,6 +105,13 @@ export default function SideNav() {
                 href="/messages"
                 label="Saved Messages"
                 icon={RectangleStackIcon}
+                collapsed={collapsed}
+                setHidden={setHidden}
+              />
+              <NavigationButton
+                href="/scheduled"
+                label="Scheduled Messages"
+                icon={CalendarDaysIcon}
                 collapsed={collapsed}
                 setHidden={setHidden}
               />
@@ -207,6 +215,7 @@ function NavigationButton({
               isActive ? "text-blurple" : "text-gray-300 group-hover:text-white"
             )}
             aria-label={label}
+            title={label}
           />
           {!collapsed && (
             <div

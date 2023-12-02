@@ -26,11 +26,11 @@ func (q *Queries) DeleteScheduledMessage(ctx context.Context, arg DeleteSchedule
 }
 
 const getDueScheduledMessages = `-- name: GetDueScheduledMessages :many
-SELECT id, creator_id, guild_id, channel_id, message_id, saved_message_id, cron_expression, trigger_at, trigger_once, enabled, created_at, updated_at FROM scheduled_messages WHERE trigger_at <= $1
+SELECT id, creator_id, guild_id, channel_id, message_id, saved_message_id, cron_expression, only_once, start_at, end_at, next_at, enabled, created_at, updated_at FROM scheduled_messages WHERE next_at <= $1
 `
 
-func (q *Queries) GetDueScheduledMessages(ctx context.Context, triggerAt time.Time) ([]ScheduledMessage, error) {
-	rows, err := q.db.QueryContext(ctx, getDueScheduledMessages, triggerAt)
+func (q *Queries) GetDueScheduledMessages(ctx context.Context, nextAt time.Time) ([]ScheduledMessage, error) {
+	rows, err := q.db.QueryContext(ctx, getDueScheduledMessages, nextAt)
 	if err != nil {
 		return nil, err
 	}
@@ -46,8 +46,10 @@ func (q *Queries) GetDueScheduledMessages(ctx context.Context, triggerAt time.Ti
 			&i.MessageID,
 			&i.SavedMessageID,
 			&i.CronExpression,
-			&i.TriggerAt,
-			&i.TriggerOnce,
+			&i.OnlyOnce,
+			&i.StartAt,
+			&i.EndAt,
+			&i.NextAt,
 			&i.Enabled,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -66,7 +68,7 @@ func (q *Queries) GetDueScheduledMessages(ctx context.Context, triggerAt time.Ti
 }
 
 const getScheduledMessage = `-- name: GetScheduledMessage :one
-SELECT id, creator_id, guild_id, channel_id, message_id, saved_message_id, cron_expression, trigger_at, trigger_once, enabled, created_at, updated_at FROM scheduled_messages WHERE id = $1 AND guild_id = $2
+SELECT id, creator_id, guild_id, channel_id, message_id, saved_message_id, cron_expression, only_once, start_at, end_at, next_at, enabled, created_at, updated_at FROM scheduled_messages WHERE id = $1 AND guild_id = $2
 `
 
 type GetScheduledMessageParams struct {
@@ -85,8 +87,10 @@ func (q *Queries) GetScheduledMessage(ctx context.Context, arg GetScheduledMessa
 		&i.MessageID,
 		&i.SavedMessageID,
 		&i.CronExpression,
-		&i.TriggerAt,
-		&i.TriggerOnce,
+		&i.OnlyOnce,
+		&i.StartAt,
+		&i.EndAt,
+		&i.NextAt,
 		&i.Enabled,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -95,7 +99,7 @@ func (q *Queries) GetScheduledMessage(ctx context.Context, arg GetScheduledMessa
 }
 
 const getScheduledMessages = `-- name: GetScheduledMessages :many
-SELECT id, creator_id, guild_id, channel_id, message_id, saved_message_id, cron_expression, trigger_at, trigger_once, enabled, created_at, updated_at FROM scheduled_messages WHERE guild_id = $1 ORDER BY updated_at DESC
+SELECT id, creator_id, guild_id, channel_id, message_id, saved_message_id, cron_expression, only_once, start_at, end_at, next_at, enabled, created_at, updated_at FROM scheduled_messages WHERE guild_id = $1 ORDER BY updated_at DESC
 `
 
 func (q *Queries) GetScheduledMessages(ctx context.Context, guildID string) ([]ScheduledMessage, error) {
@@ -115,8 +119,10 @@ func (q *Queries) GetScheduledMessages(ctx context.Context, guildID string) ([]S
 			&i.MessageID,
 			&i.SavedMessageID,
 			&i.CronExpression,
-			&i.TriggerAt,
-			&i.TriggerOnce,
+			&i.OnlyOnce,
+			&i.StartAt,
+			&i.EndAt,
+			&i.NextAt,
 			&i.Enabled,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -135,7 +141,7 @@ func (q *Queries) GetScheduledMessages(ctx context.Context, guildID string) ([]S
 }
 
 const insertScheduledMessage = `-- name: InsertScheduledMessage :one
-INSERT INTO scheduled_messages (id, creator_id, guild_id, channel_id, message_id, saved_message_id, cron_expression, trigger_at, trigger_once, enabled, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id, creator_id, guild_id, channel_id, message_id, saved_message_id, cron_expression, trigger_at, trigger_once, enabled, created_at, updated_at
+INSERT INTO scheduled_messages (id, creator_id, guild_id, channel_id, message_id, saved_message_id, cron_expression, start_at, end_at, next_at, only_once, enabled, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id, creator_id, guild_id, channel_id, message_id, saved_message_id, cron_expression, only_once, start_at, end_at, next_at, enabled, created_at, updated_at
 `
 
 type InsertScheduledMessageParams struct {
@@ -146,8 +152,10 @@ type InsertScheduledMessageParams struct {
 	MessageID      sql.NullString
 	SavedMessageID string
 	CronExpression sql.NullString
-	TriggerAt      time.Time
-	TriggerOnce    bool
+	StartAt        time.Time
+	EndAt          sql.NullTime
+	NextAt         time.Time
+	OnlyOnce       bool
 	Enabled        bool
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
@@ -162,8 +170,10 @@ func (q *Queries) InsertScheduledMessage(ctx context.Context, arg InsertSchedule
 		arg.MessageID,
 		arg.SavedMessageID,
 		arg.CronExpression,
-		arg.TriggerAt,
-		arg.TriggerOnce,
+		arg.StartAt,
+		arg.EndAt,
+		arg.NextAt,
+		arg.OnlyOnce,
 		arg.Enabled,
 		arg.CreatedAt,
 		arg.UpdatedAt,
@@ -177,8 +187,10 @@ func (q *Queries) InsertScheduledMessage(ctx context.Context, arg InsertSchedule
 		&i.MessageID,
 		&i.SavedMessageID,
 		&i.CronExpression,
-		&i.TriggerAt,
-		&i.TriggerOnce,
+		&i.OnlyOnce,
+		&i.StartAt,
+		&i.EndAt,
+		&i.NextAt,
 		&i.Enabled,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -187,7 +199,7 @@ func (q *Queries) InsertScheduledMessage(ctx context.Context, arg InsertSchedule
 }
 
 const updateScheduledMessage = `-- name: UpdateScheduledMessage :one
-UPDATE scheduled_messages SET channel_id = $3, message_id = $4, saved_message_id = $5, cron_expression = $6, trigger_at = $7, trigger_once = $8, enabled = $9, updated_at = $10 WHERE id = $1 AND guild_id = $2 RETURNING id, creator_id, guild_id, channel_id, message_id, saved_message_id, cron_expression, trigger_at, trigger_once, enabled, created_at, updated_at
+UPDATE scheduled_messages SET channel_id = $3, message_id = $4, saved_message_id = $5, cron_expression = $6, next_at = $7, start_at = $8, end_at = $9, only_once = $10, enabled = $11, updated_at = $12 WHERE id = $1 AND guild_id = $2 RETURNING id, creator_id, guild_id, channel_id, message_id, saved_message_id, cron_expression, only_once, start_at, end_at, next_at, enabled, created_at, updated_at
 `
 
 type UpdateScheduledMessageParams struct {
@@ -197,8 +209,10 @@ type UpdateScheduledMessageParams struct {
 	MessageID      sql.NullString
 	SavedMessageID string
 	CronExpression sql.NullString
-	TriggerAt      time.Time
-	TriggerOnce    bool
+	NextAt         time.Time
+	StartAt        time.Time
+	EndAt          sql.NullTime
+	OnlyOnce       bool
 	Enabled        bool
 	UpdatedAt      time.Time
 }
@@ -211,8 +225,10 @@ func (q *Queries) UpdateScheduledMessage(ctx context.Context, arg UpdateSchedule
 		arg.MessageID,
 		arg.SavedMessageID,
 		arg.CronExpression,
-		arg.TriggerAt,
-		arg.TriggerOnce,
+		arg.NextAt,
+		arg.StartAt,
+		arg.EndAt,
+		arg.OnlyOnce,
 		arg.Enabled,
 		arg.UpdatedAt,
 	)
@@ -225,8 +241,10 @@ func (q *Queries) UpdateScheduledMessage(ctx context.Context, arg UpdateSchedule
 		&i.MessageID,
 		&i.SavedMessageID,
 		&i.CronExpression,
-		&i.TriggerAt,
-		&i.TriggerOnce,
+		&i.OnlyOnce,
+		&i.StartAt,
+		&i.EndAt,
+		&i.NextAt,
 		&i.Enabled,
 		&i.CreatedAt,
 		&i.UpdatedAt,

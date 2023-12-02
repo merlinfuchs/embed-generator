@@ -13,6 +13,7 @@ import {
   CustomCommandGetResponseWire,
   ListEmojisResponseWire,
   GetGuildBrandingResponseWire,
+  ScheduledMessageListResponseWire,
 } from "./wire";
 import { APIResponse } from "./base";
 
@@ -191,5 +192,16 @@ export function useCustomCmmandQuery(
         (res) => handleApiResponse(res.json())
       ),
     { enabled: !!guildId && !!commandId }
+  );
+}
+
+export function useScheduledMessagesQuery(guildId: string | null) {
+  return useQuery<ScheduledMessageListResponseWire>(
+    ["scheduled-messages", guildId],
+    () =>
+      fetch(`/api/scheduled_messages?guild_id=${guildId}`).then((res) =>
+        handleApiResponse(res.json())
+      ),
+    { enabled: !!guildId }
   );
 }

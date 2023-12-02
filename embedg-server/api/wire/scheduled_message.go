@@ -15,8 +15,10 @@ type ScheduledMessageWire struct {
 	MessageID      null.String `json:"message_id"`
 	SavedMessageID string      `json:"saved_message_id"`
 	CronExpression null.String `json:"cron_expression"`
-	TriggerAt      time.Time   `json:"trigger_at"`
-	TriggerOnce    bool        `json:"trigger_once"`
+	StartAt        time.Time   `json:"trigger_at"`
+	EndAt          null.Time   `json:"end_at"`
+	NextAt         time.Time   `json:"next_at"`
+	OnlyOnce       bool        `json:"trigger_once"`
 	Enabled        bool        `json:"enabled"`
 	CreatedAt      time.Time   `json:"created_at"`
 	UpdatedAt      time.Time   `json:"updated_at"`
@@ -31,8 +33,9 @@ type ScheduledMessageCreateRequestWire struct {
 	MessageID      null.String `json:"message_id"`
 	SavedMessageID string      `json:"saved_message_id"`
 	CronExpression null.String `json:"cron_expression"`
-	TriggerAt      time.Time   `json:"trigger_at"`
-	TriggerOnce    bool        `json:"trigger_once"`
+	StartAt        time.Time   `json:"start_at"`
+	EndAt          null.Time   `json:"end_at"`
+	OnlyOnce       bool        `json:"trigger_once"`
 	Enabled        bool        `json:"enabled"`
 }
 
@@ -41,10 +44,10 @@ func (req ScheduledMessageCreateRequestWire) Validate() error {
 		validation.Field(&req.ChannelID, validation.Required),
 		validation.Field(&req.SavedMessageID, validation.Required),
 		validation.Field(&req.CronExpression, validation.When(
-			!req.TriggerOnce,
+			!req.OnlyOnce,
 			validation.Required,
 		)),
-		validation.Field(&req.TriggerAt, validation.Required),
+		validation.Field(&req.StartAt, validation.Required),
 	)
 }
 
@@ -55,8 +58,9 @@ type ScheduledMessageUpdateRequestWire struct {
 	MessageID      null.String `json:"message_id"`
 	SavedMessageID string      `json:"saved_message_id"`
 	CronExpression null.String `json:"cron_expression"`
-	TriggerAt      time.Time   `json:"trigger_at"`
-	TriggerOnce    bool        `json:"trigger_once"`
+	StartAt        time.Time   `json:"trigger_at"`
+	EndAt          null.Time   `json:"end_at"`
+	OnlyOnce       bool        `json:"trigger_once"`
 	Enabled        bool        `json:"enabled"`
 }
 
@@ -65,10 +69,10 @@ func (req ScheduledMessageUpdateRequestWire) Validate() error {
 		validation.Field(&req.ChannelID, validation.Required),
 		validation.Field(&req.SavedMessageID, validation.Required),
 		validation.Field(&req.CronExpression, validation.When(
-			!req.TriggerOnce,
+			!req.OnlyOnce,
 			validation.Required,
 		)),
-		validation.Field(&req.TriggerAt, validation.Required),
+		validation.Field(&req.OnlyOnce, validation.Required),
 	)
 }
 
