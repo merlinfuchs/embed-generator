@@ -14,6 +14,8 @@ type ScheduledMessageWire struct {
 	ChannelID      string      `json:"channel_id"`
 	MessageID      null.String `json:"message_id"`
 	SavedMessageID string      `json:"saved_message_id"`
+	Name           string      `json:"name"`
+	Description    null.String `json:"description"`
 	CronExpression null.String `json:"cron_expression"`
 	StartAt        time.Time   `json:"trigger_at"`
 	EndAt          null.Time   `json:"end_at"`
@@ -32,6 +34,8 @@ type ScheduledMessageCreateRequestWire struct {
 	ChannelID      string      `json:"channel_id"`
 	MessageID      null.String `json:"message_id"`
 	SavedMessageID string      `json:"saved_message_id"`
+	Name           string      `json:"name"`
+	Description    null.String `json:"description"`
 	CronExpression null.String `json:"cron_expression"`
 	StartAt        time.Time   `json:"start_at"`
 	EndAt          null.Time   `json:"end_at"`
@@ -43,6 +47,7 @@ func (req ScheduledMessageCreateRequestWire) Validate() error {
 	return validation.ValidateStruct(&req,
 		validation.Field(&req.ChannelID, validation.Required),
 		validation.Field(&req.SavedMessageID, validation.Required),
+		validation.Field(&req.Name, validation.Required),
 		validation.Field(&req.CronExpression, validation.When(
 			!req.OnlyOnce,
 			validation.Required,
@@ -57,6 +62,8 @@ type ScheduledMessageUpdateRequestWire struct {
 	ChannelID      string      `json:"channel_id"`
 	MessageID      null.String `json:"message_id"`
 	SavedMessageID string      `json:"saved_message_id"`
+	Name           string      `json:"name"`
+	Description    null.String `json:"description"`
 	CronExpression null.String `json:"cron_expression"`
 	StartAt        time.Time   `json:"trigger_at"`
 	EndAt          null.Time   `json:"end_at"`
@@ -68,11 +75,12 @@ func (req ScheduledMessageUpdateRequestWire) Validate() error {
 	return validation.ValidateStruct(&req,
 		validation.Field(&req.ChannelID, validation.Required),
 		validation.Field(&req.SavedMessageID, validation.Required),
+		validation.Field(&req.Name, validation.Required, validation.Length(1, 64)),
 		validation.Field(&req.CronExpression, validation.When(
 			!req.OnlyOnce,
 			validation.Required,
 		)),
-		validation.Field(&req.OnlyOnce, validation.Required),
+		validation.Field(&req.StartAt, validation.Required),
 	)
 }
 

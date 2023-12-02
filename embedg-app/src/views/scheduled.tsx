@@ -1,13 +1,9 @@
-import {
-  useCustomCmmandsQuery,
-  useScheduledMessagesQuery,
-  useUserQuery,
-} from "../api/queries";
+import { useScheduledMessagesQuery, useUserQuery } from "../api/queries";
 import LogginSuggest from "../components/LoginSuggest";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { usePremiumGuildFeatures } from "../util/premium";
-import CustomCommand from "../components/CustomCommand";
-import CustomCommandCreate from "../components/CustomCommandCreate";
+import ScheduledMessage from "../components/ScheduledMessage";
+import ScheduledMessageCreate from "../components/ScheduledMessageCreate";
 import { useMemo, useState } from "react";
 import clsx from "clsx";
 import { AutoAnimate } from "../util/autoAnimate";
@@ -58,10 +54,10 @@ export default function ScheduledMessagesView() {
             <div className="space-y-5 mb-8">
               <AutoAnimate className="space-y-5 overlfow-y-auto">
                 {messages.map((cmd) => (
-                  <CustomCommand cmd={cmd} key={cmd.id} />
+                  <ScheduledMessage cmd={cmd} key={cmd.id} />
                 ))}
                 {(messageCount === 0 || create) && (
-                  <CustomCommandCreate
+                  <ScheduledMessageCreate
                     setCreate={setCreate}
                     cancelable={messageCount !== 0}
                   />

@@ -59,6 +59,11 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 			Valid:  req.MessageID.Valid,
 		},
 		SavedMessageID: req.SavedMessageID,
+		Name:           req.Name,
+		Description: sql.NullString{
+			String: req.Description.String,
+			Valid:  req.Description.Valid,
+		},
 		CronExpression: sql.NullString{
 			String: req.CronExpression.String,
 			Valid:  req.CronExpression.Valid,
@@ -165,6 +170,11 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 			Valid:  req.MessageID.Valid,
 		},
 		SavedMessageID: req.SavedMessageID,
+		Name:           req.Name,
+		Description: sql.NullString{
+			String: req.Description.String,
+			Valid:  req.Description.Valid,
+		},
 		CronExpression: sql.NullString{
 			String: req.CronExpression.String,
 			Valid:  req.CronExpression.Valid,
@@ -229,6 +239,8 @@ func scheduledMessageModelToWire(model postgres.ScheduledMessage) wire.Scheduled
 		ChannelID:      model.ChannelID,
 		MessageID:      null.NewString(model.MessageID.String, model.MessageID.Valid),
 		SavedMessageID: model.SavedMessageID,
+		Name:           model.Name,
+		Description:    null.NewString(model.Description.String, model.Description.Valid),
 		CronExpression: null.NewString(model.CronExpression.String, model.CronExpression.Valid),
 		StartAt:        model.StartAt,
 		EndAt:          null.NewTime(model.EndAt.Time, model.EndAt.Valid),

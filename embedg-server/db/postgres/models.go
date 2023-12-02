@@ -96,6 +96,8 @@ type ScheduledMessage struct {
 	ChannelID      string
 	MessageID      sql.NullString
 	SavedMessageID string
+	Name           string
+	Description    sql.NullString
 	CronExpression sql.NullString
 	OnlyOnce       bool
 	StartAt        time.Time

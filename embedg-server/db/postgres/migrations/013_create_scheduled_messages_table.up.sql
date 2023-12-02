@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS scheduled_messages (
     channel_id TEXT NOT NULL,
     message_id TEXT,
     saved_message_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
     cron_expression TEXT, -- This may be null if the message is scheduled to only be sent once
     only_once BOOLEAN NOT NULL DEFAULT false, -- Whether the message should be sent only once or repeatedly
     start_at TIMESTAMP NOT NULL, -- The first time the message was / will be sent
