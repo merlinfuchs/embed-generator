@@ -1,11 +1,15 @@
 package bot
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/merlinfuchs/discordgo"
+	"github.com/merlinfuchs/embed-generator/embedg-server/util"
+	"github.com/rs/zerolog/log"
 )
 
 func (b *Bot) handleComponentInteraction(s *discordgo.Session, i *discordgo.Interaction, data discordgo.MessageComponentInteractionData) error {
@@ -322,6 +326,20 @@ func (b *Bot) handleModalInteraction(s *discordgo.Session, i *discordgo.Interact
 				case "avatar_url":
 					avatarURL = input.Value
 				}
+			}
+		}
+
+		customBot, err := b.pg.Q.GetCustomBotByGuildID(context.Background(), i.GuildID)
+		if err != nil {
+			if err != sql.ErrNoRows {
+				log.Error().Err(err).Msg("failed to get custom bot for message username and avatar")
+			}
+		} else {
+			if username == "" {
+				username = customBot.UserName
+			}
+			if avatarURL == "" {
+				avatarURL = util.DiscordAvatarURL(customBot.UserID, customBot.UserDiscriminator, customBot.UserAvatar.String)
 			}
 		}
 
