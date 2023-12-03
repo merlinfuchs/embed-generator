@@ -47,7 +47,7 @@ func (req ScheduledMessageCreateRequestWire) Validate() error {
 	return validation.ValidateStruct(&req,
 		validation.Field(&req.ChannelID, validation.Required),
 		validation.Field(&req.SavedMessageID, validation.Required),
-		validation.Field(&req.Name, validation.Required),
+		validation.Field(&req.Name, validation.Required, validation.Length(1, 32)),
 		validation.Field(&req.CronExpression, validation.When(
 			!req.OnlyOnce,
 			validation.Required,
@@ -75,7 +75,7 @@ func (req ScheduledMessageUpdateRequestWire) Validate() error {
 	return validation.ValidateStruct(&req,
 		validation.Field(&req.ChannelID, validation.Required),
 		validation.Field(&req.SavedMessageID, validation.Required),
-		validation.Field(&req.Name, validation.Required, validation.Length(1, 64)),
+		validation.Field(&req.Name, validation.Required, validation.Length(1, 32)),
 		validation.Field(&req.CronExpression, validation.When(
 			!req.OnlyOnce,
 			validation.Required,

@@ -4,7 +4,6 @@ import { useSendSettingsStore } from "../state/sendSettings";
 import { useQueryClient } from "react-query";
 import { useToasts } from "../util/toasts";
 import EditorInput from "./EditorInput";
-import CommandActionSet from "./CommandActionSet";
 import { useCommandActionsStore } from "../state/actions";
 import Tooltip from "./Tooltip";
 import { ArrowUpTrayIcon, XMarkIcon } from "@heroicons/react/20/solid";
@@ -61,10 +60,8 @@ export default function ScheduledMessageCreate({
 
   return (
     <div className="bg-dark-3 p-5 rounded-lg">
-      <div className="flex items-center space-x-2 truncate text-lg mb-5 truncate justify-between">
-        <div className="text-white truncate">
-          <span className="font-bold text-gray-500 text-xl">/</span> {name}
-        </div>
+      <div className="flex items-center space-x-2 text-lg mb-5 truncate justify-between">
+        <div className="text-white truncate">New Scheduled Message</div>
         <div className="flex flex-none items-center space-x-4 md:space-x-3">
           {cancelable && (
             <div
@@ -87,7 +84,7 @@ export default function ScheduledMessageCreate({
               <ArrowUpTrayIcon className="h-5 w-5" />
             </Tooltip>
             <div className="ml-2">
-              Create <span className="hidden md:inline-block">Command</span>
+              Create <span className="hidden md:inline-block">Schedule</span>
             </div>
           </div>
         </div>
@@ -107,7 +104,6 @@ export default function ScheduledMessageCreate({
           value={description}
           onChange={setDescription}
         />
-        <CommandActionSet cmdId={"new"} />
       </div>
     </div>
   );

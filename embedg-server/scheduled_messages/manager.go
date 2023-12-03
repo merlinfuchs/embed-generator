@@ -45,14 +45,6 @@ func (m *ScheduledMessageManager) lazySendScheduledMessagesTask() {
 
 			nextTrigger := schedule.Next(time.Now().UTC())
 			fmt.Println(nextTrigger)
-
-			nextNextTrigger := schedule.Next(nextTrigger)
-			fmt.Println(nextNextTrigger)
-
-			if nextNextTrigger.Sub(nextTrigger) < time.Minute {
-				fmt.Println("cron schedule is too tight, skipping")
-				continue
-			}
 		}
 	}
 }

@@ -27,7 +27,7 @@ func Serve() {
 				})
 			}
 		},
-		BodyLimit: 1024 * 1024 * 32, // 23 MB
+		BodyLimit: 1024 * 1024 * 32, // 32 MB
 	})
 
 	// We don't want the whole app to crash but panics are still very bad
