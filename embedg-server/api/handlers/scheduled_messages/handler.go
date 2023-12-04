@@ -36,10 +36,6 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 		return err
 	}
 
-	if req.StartAt.Before(time.Now().UTC()) {
-		return helpers.BadRequest("invalid_start_at", "The start_at field must be in the future.")
-	}
-
 	if req.EndAt.Valid && req.EndAt.Time.Before(req.StartAt) {
 		return helpers.BadRequest("invalid_end_at", "The end_at field must be after the start_at field.")
 	}
@@ -154,10 +150,6 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
-	}
-
-	if req.StartAt.Before(time.Now().UTC()) {
-		return helpers.BadRequest("invalid_start_at", "The start_at field must be in the future.")
 	}
 
 	if req.EndAt.Valid && req.EndAt.Time.Before(req.StartAt) {

@@ -5,6 +5,7 @@ import {
   ArrowPathIcon,
   ArrowRightIcon,
   CalendarDaysIcon,
+  CheckIcon,
   ClipboardIcon,
   PencilSquareIcon,
   TrashIcon,
@@ -36,6 +37,7 @@ export default function ScheduledMessage({
 
   const [manage, setManage] = useState(false);
 
+  const [enabled, setEnabled] = useState(msg.enabled);
   const [name, setName] = useState(msg.name);
   const [onlyOnce, setOnlyOnce] = useState(msg.only_once);
   const [startAt, setStartAt] = useState<string | undefined>(msg.start_at);
@@ -76,7 +78,7 @@ export default function ScheduledMessage({
           start_at: startAt,
           end_at: endAt ?? null,
           only_once: onlyOnce,
-          enabled: true,
+          enabled: enabled,
         },
       },
       {
@@ -149,13 +151,28 @@ export default function ScheduledMessage({
               </div>
             </div>
             <div className="space-y-5">
-              <EditorInput
-                label="Name"
-                type="text"
-                maxLength={32}
-                value={name}
-                onChange={setName}
-              />
+              <div className="flex space-x-3">
+                <EditorInput
+                  label="Name"
+                  type="text"
+                  maxLength={32}
+                  value={name}
+                  onChange={setName}
+                  className="flex-auto"
+                />
+                <div>
+                  <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+                    Enabled
+                  </div>
+                  <div
+                    className="w-10 h-10 bg-dark-2 rounded cursor-pointer p-1.5 text-white"
+                    role="button"
+                    onClick={() => setEnabled((v) => !v)}
+                  >
+                    {enabled && <CheckIcon />}
+                  </div>
+                </div>
+              </div>
               <div className="flex space-x-3 pb-3 items-end">
                 <div className="flex-auto w-1/2">
                   <div className="mb-1.5 flex">
