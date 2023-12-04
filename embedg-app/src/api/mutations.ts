@@ -25,6 +25,11 @@ import {
   SavedMessageUpdateResponseWire,
   SavedMessagesImportRequestWire,
   SavedMessagesImportResponseWire,
+  ScheduledMessageCreateRequestWire,
+  ScheduledMessageCreateResponseWire,
+  ScheduledMessageDeleteResponseWire,
+  ScheduledMessageUpdateRequestWire,
+  ScheduledMessageUpdateResponseWire,
   SharedMessageCreateRequestWire,
   SharedMessageGetResponseWire,
   UploadImageResponseWire,
@@ -370,6 +375,67 @@ export function useUploadImageMutation() {
         method: "POST",
         body,
       }).then((res) => handleApiResponse<UploadImageResponseWire>(res.json()));
+    }
+  );
+}
+
+export function useScheduledMessageCreateMutation() {
+  return useMutation(
+    ({
+      guildId,
+      req,
+    }: {
+      guildId: string;
+      req: ScheduledMessageCreateRequestWire;
+    }) => {
+      return fetch(`/api/scheduled-messages?guild_id=${guildId}`, {
+        method: "POST",
+        body: JSON.stringify(req),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) =>
+        handleApiResponse<ScheduledMessageCreateResponseWire>(res.json())
+      );
+    }
+  );
+}
+
+export function useScheduledMessageUpdateMutation() {
+  return useMutation(
+    ({
+      messageId,
+      guildId,
+      req,
+    }: {
+      messageId: string;
+      guildId: string;
+      req: ScheduledMessageUpdateRequestWire;
+    }) => {
+      return fetch(`/api/scheduled-messages/${messageId}?guild_id=${guildId}`, {
+        method: "PUT",
+        body: JSON.stringify(req),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) =>
+        handleApiResponse<ScheduledMessageUpdateResponseWire>(res.json())
+      );
+    }
+  );
+}
+
+export function useScheduledMessageDeleteMutation() {
+  return useMutation(
+    ({ messageId, guildId }: { messageId: string; guildId: string }) => {
+      return fetch(`/api/scheduled-messages/${messageId}?guild_id=${guildId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) =>
+        handleApiResponse<ScheduledMessageDeleteResponseWire>(res.json())
+      );
     }
   );
 }

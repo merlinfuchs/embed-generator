@@ -103,11 +103,11 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
 
   return (
     <div>
-      <AutoAnimate className="bg-dark-3 rounded truncate">
+      <AutoAnimate className="bg-dark-3 rounded">
         {manage ? (
           <div className="px-5 py-4" key="1">
             <div className="flex justify-between items-start">
-              <div className="flex items-center space-x-2 truncate text-lg mb-5 truncate">
+              <div className="flex items-center space-x-2 truncate text-lg mb-5">
                 <div className="text-white truncate">
                   <span className="font-bold text-gray-500 text-xl">/</span>{" "}
                   {cmd.name}
@@ -118,7 +118,7 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
                 role="button"
                 onClick={save}
               >
-                <Tooltip text="Delete Command">
+                <Tooltip text="Save Command">
                   <ClipboardIcon className="h-5 w-5" />
                 </Tooltip>
                 <div className="ml-2">
@@ -152,7 +152,7 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
         ) : (
           <div className="flex justify-between items-start py-4 px-5" key="2">
             <div className="flex-auto truncate">
-              <div className="flex items-center space-x-2 truncate text-lg mb-1 truncate">
+              <div className="flex items-center space-x-2 truncate text-lg mb-1">
                 <div className="text-white truncate">
                   <span className="font-bold text-gray-500 text-xl">/</span>{" "}
                   {cmd.name}
@@ -197,8 +197,4 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
       )}
     </div>
   );
-}
-
-function formatUpdatedAt(updatedAt: string): string {
-  return parseISO(updatedAt).toLocaleString();
 }

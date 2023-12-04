@@ -20,6 +20,7 @@
     "@uiw/react-codemirror": "^4.19.11",
     "autoprefixer": "^10.4.14",
     "clsx": "^1.2.1",
+    "cronstrue": "^2.47.0",
     "date-fns": "^2.29.3",
     "debounce": "^1.2.1",
     "emoji-mart": "^5.5.2",

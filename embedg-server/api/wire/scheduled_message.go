@@ -17,10 +17,10 @@ type ScheduledMessageWire struct {
 	Name           string      `json:"name"`
 	Description    null.String `json:"description"`
 	CronExpression null.String `json:"cron_expression"`
-	StartAt        time.Time   `json:"trigger_at"`
+	StartAt        time.Time   `json:"start_at"`
 	EndAt          null.Time   `json:"end_at"`
 	NextAt         time.Time   `json:"next_at"`
-	OnlyOnce       bool        `json:"trigger_once"`
+	OnlyOnce       bool        `json:"only_once"`
 	Enabled        bool        `json:"enabled"`
 	CreatedAt      time.Time   `json:"created_at"`
 	UpdatedAt      time.Time   `json:"updated_at"`
@@ -39,7 +39,7 @@ type ScheduledMessageCreateRequestWire struct {
 	CronExpression null.String `json:"cron_expression"`
 	StartAt        time.Time   `json:"start_at"`
 	EndAt          null.Time   `json:"end_at"`
-	OnlyOnce       bool        `json:"trigger_once"`
+	OnlyOnce       bool        `json:"only_once"`
 	Enabled        bool        `json:"enabled"`
 }
 
@@ -65,9 +65,9 @@ type ScheduledMessageUpdateRequestWire struct {
 	Name           string      `json:"name"`
 	Description    null.String `json:"description"`
 	CronExpression null.String `json:"cron_expression"`
-	StartAt        time.Time   `json:"trigger_at"`
+	StartAt        time.Time   `json:"start_at"`
 	EndAt          null.Time   `json:"end_at"`
-	OnlyOnce       bool        `json:"trigger_once"`
+	OnlyOnce       bool        `json:"only_once"`
 	Enabled        bool        `json:"enabled"`
 }
 

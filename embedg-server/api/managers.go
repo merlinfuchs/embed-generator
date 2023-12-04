@@ -31,7 +31,7 @@ func createManagers(stores *stores, bot *bot.Bot) *managers {
 	actionHandler := handler.New(stores.pg, actionParser)
 
 	customBots := custom_bots.NewCustomBotManager(stores.pg, actionHandler)
-	scheduledMessages := scheduled_messages.NewScheduledMessageManager(stores.pg)
+	scheduledMessages := scheduled_messages.NewScheduledMessageManager(stores.pg, actionParser, bot)
 
 	bot.ActionHandler = actionHandler
 	bot.ActionParser = actionParser

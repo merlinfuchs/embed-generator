@@ -30,14 +30,22 @@ func New(pg *postgres.PostgresStore, am *access.AccessManager) *ScheduledMessage
 
 func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req wire.ScheduledMessageCreateRequestWire) error {
 	session := c.Locals("session").(*session.Session)
-	guildID := c.Params("guild_id")
+	guildID := c.Query("guild_id")
 
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
+	if req.StartAt.Before(time.Now().UTC()) {
+		return helpers.BadRequest("invalid_start_at", "The start_at field must be in the future.")
+	}
+
+	if req.EndAt.Valid && req.EndAt.Time.Before(req.StartAt) {
+		return helpers.BadRequest("invalid_end_at", "The end_at field must be after the start_at field.")
+	}
+
 	nextAt := req.StartAt
-	if req.CronExpression.Valid {
+	if !req.OnlyOnce {
 		schedule, err := scheduled_messages.ParseCronExpression(req.CronExpression.String)
 		if err != nil {
 			return helpers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
@@ -116,7 +124,7 @@ func (h *ScheduledMessageHandler) HandleListScheduledMessages(c *fiber.Ctx) erro
 
 func (h *ScheduledMessageHandler) HandleGetScheduledMessage(c *fiber.Ctx) error {
 	messageID := c.Params("messageID")
-	guildID := c.Params("guild_id")
+	guildID := c.Query("guild_id")
 
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
@@ -148,8 +156,16 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		return err
 	}
 
+	if req.StartAt.Before(time.Now().UTC()) {
+		return helpers.BadRequest("invalid_start_at", "The start_at field must be in the future.")
+	}
+
+	if req.EndAt.Valid && req.EndAt.Time.Before(req.StartAt) {
+		return helpers.BadRequest("invalid_end_at", "The end_at field must be after the start_at field.")
+	}
+
 	nextAt := req.StartAt
-	if req.CronExpression.Valid {
+	if !req.OnlyOnce {
 		schedule, err := scheduled_messages.ParseCronExpression(req.CronExpression.String)
 		if err != nil {
 			return helpers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")

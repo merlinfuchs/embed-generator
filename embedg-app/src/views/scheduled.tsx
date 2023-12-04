@@ -53,8 +53,8 @@ export default function ScheduledMessagesView() {
           features?.max_custom_commands ? (
             <div className="space-y-5 mb-8">
               <AutoAnimate className="space-y-5 overlfow-y-auto">
-                {messages.map((cmd) => (
-                  <ScheduledMessage cmd={cmd} key={cmd.id} />
+                {messages.map((msg) => (
+                  <ScheduledMessage msg={msg} key={msg.id} />
                 ))}
                 {(messageCount === 0 || create) && (
                   <ScheduledMessageCreate

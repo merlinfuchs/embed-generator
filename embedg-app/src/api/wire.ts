@@ -279,11 +279,13 @@ export interface ScheduledMessageWire {
   channel_id: string;
   message_id: null | string;
   saved_message_id: string;
+  name: string;
+  description: null | string;
   cron_expression: null | string;
-  trigger_at: string /* RFC3339 */;
+  start_at: string /* RFC3339 */;
   end_at: null | string /* RFC3339 */;
   next_at: string /* RFC3339 */;
-  trigger_once: boolean;
+  only_once: boolean;
   enabled: boolean;
   created_at: string /* RFC3339 */;
   updated_at: string /* RFC3339 */;
@@ -294,10 +296,12 @@ export interface ScheduledMessageCreateRequestWire {
   channel_id: string;
   message_id: null | string;
   saved_message_id: string;
+  name: string;
+  description: null | string;
   cron_expression: null | string;
   start_at: string /* RFC3339 */;
   end_at: null | string /* RFC3339 */;
-  trigger_once: boolean;
+  only_once: boolean;
   enabled: boolean;
 }
 export type ScheduledMessageCreateResponseWire = APIResponse<ScheduledMessageWire>;
@@ -305,10 +309,12 @@ export interface ScheduledMessageUpdateRequestWire {
   channel_id: string;
   message_id: null | string;
   saved_message_id: string;
+  name: string;
+  description: null | string;
   cron_expression: null | string;
-  trigger_at: string /* RFC3339 */;
+  start_at: string /* RFC3339 */;
   end_at: null | string /* RFC3339 */;
-  trigger_once: boolean;
+  only_once: boolean;
   enabled: boolean;
 }
 export type ScheduledMessageUpdateResponseWire = APIResponse<ScheduledMessageWire>;

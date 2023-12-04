@@ -2,11 +2,7 @@ import { shallow } from "zustand/shallow";
 import { useCurrentMessageStore } from "../state/message";
 import Collapsable from "./Collapsable";
 import EditorInput from "./EditorInput";
-import DateTimePicker from "react-datetime-picker";
-import "react-datetime-picker/dist/DateTimePicker.css";
-import "react-calendar/dist/Calendar.css";
-import "react-clock/dist/Clock.css";
-import "./DateTimePicker.css";
+import DateTimePicker from "./DateTimePicker";
 
 interface Props {
   embedIndex: number;
@@ -71,8 +67,9 @@ export default function EditorEmbedFooter({ embedIndex, embedId }: Props) {
               </div>
             </div>
             <DateTimePicker
-              onChange={(v) => setTimestamp(embedIndex, v?.toISOString())}
+              onChange={(v) => setTimestamp(embedIndex, v)}
               value={timestamp}
+              clearable={true}
             />
           </div>
         </div>

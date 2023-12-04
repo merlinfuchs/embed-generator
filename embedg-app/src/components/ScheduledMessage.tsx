@@ -1,72 +1,92 @@
 import { parseISO } from "date-fns";
-import { CustomCommandWire } from "../api/wire";
+import { ScheduledMessageWire } from "../api/wire";
 import Tooltip from "./Tooltip";
 import {
+  ArrowPathIcon,
+  ArrowRightIcon,
+  CalendarDaysIcon,
   ClipboardIcon,
   PencilSquareIcon,
   TrashIcon,
 } from "@heroicons/react/20/solid";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AutoAnimate } from "../util/autoAnimate";
 import {
-  useCustomCommandDeleteMutation,
-  useCustomCommandUpdateMutation,
+  useScheduledMessageDeleteMutation,
+  useScheduledMessageUpdateMutation,
 } from "../api/mutations";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { useQueryClient } from "react-query";
 import { useToasts } from "../util/toasts";
 import EditorInput from "./EditorInput";
-import CommandActionSet from "./CommandActionSet";
-import CustomCommandParameters from "./CustomCommandParameters";
-import { useCommandActionsStore } from "../state/actions";
-import { messageActionSetSchema } from "../discord/restoreSchema";
 import ConfirmModal from "./ConfirmModal";
+import SavedMessageSelect from "./SavedMessageSelect";
+import { ChannelSelect } from "./ChannelSelect";
+import DateTimePicker from "./DateTimePicker";
+import clsx from "clsx";
+import cronstrue from "cronstrue";
 
-export default function ScheduledMessage({ cmd }: { cmd: CustomCommandWire }) {
+export default function ScheduledMessage({
+  msg,
+}: {
+  msg: ScheduledMessageWire;
+}) {
   const guildId = useSendSettingsStore((s) => s.guildId);
   const createToast = useToasts((s) => s.create);
 
   const [manage, setManage] = useState(false);
 
-  const [name, setName] = useState(cmd.name);
-  const [description, setDescription] = useState(cmd.description);
-  const [parameters, setParameters] = useState(cmd.parameters);
+  const [name, setName] = useState(msg.name);
+  const [onlyOnce, setOnlyOnce] = useState(msg.only_once);
+  const [startAt, setStartAt] = useState<string | undefined>(msg.start_at);
+  const [endAt, setEndAt] = useState<string | undefined>(
+    msg.end_at || undefined
+  );
+  const [cronExpression, setCronExpression] = useState(msg.cron_expression);
+  const [messageId, setMessageId] = useState<string | null>(
+    msg.saved_message_id
+  );
+  const [channelId, setChannelId] = useState<string | null>(msg.channel_id);
 
   const queryClient = useQueryClient();
-  const updateMutation = useCustomCommandUpdateMutation();
-
-  useEffect(() => {
-    const res = messageActionSetSchema.safeParse(cmd.actions);
-    if (res.success) {
-      useCommandActionsStore.getState().setActionSet(cmd.id, res.data);
-    }
-  }, [cmd.actions]);
+  const updateMutation = useScheduledMessageUpdateMutation();
 
   function save() {
-    if (name.length == 0 || description.length == 0) return;
-
-    const actions = useCommandActionsStore.getState().actions[cmd.id];
+    if (name.length == 0 || !guildId || !channelId || !messageId || !startAt) {
+      createToast({
+        title: "Some required fields are missing",
+        message:
+          "Please fill all the required fields before updating the scheduled message",
+        type: "error",
+      });
+      return;
+    }
 
     updateMutation.mutate(
       {
         guildId: guildId!,
-        commandId: cmd.id,
+        messageId: msg.id,
         req: {
           name,
-          description,
+          description: null,
+          channel_id: channelId,
+          message_id: null,
+          saved_message_id: messageId,
+          cron_expression: cronExpression,
+          start_at: startAt,
+          end_at: endAt ?? null,
+          only_once: onlyOnce,
           enabled: true,
-          parameters: parameters,
-          actions: actions || null,
         },
       },
       {
         onSuccess(res) {
           if (res.success) {
             setManage(false);
-            queryClient.invalidateQueries(["custom-bot", guildId, "commands"]);
+            queryClient.invalidateQueries(["scheduled-messages", guildId]);
           } else {
             createToast({
-              title: "Failed to update command",
+              title: "Failed to update scheduled message",
               message: res.error.message,
               type: "error",
             });
@@ -76,22 +96,22 @@ export default function ScheduledMessage({ cmd }: { cmd: CustomCommandWire }) {
     );
   }
 
-  const deleteMutation = useCustomCommandDeleteMutation();
+  const deleteMutation = useScheduledMessageDeleteMutation();
   const [deleteModal, setDeleteModal] = useState(false);
 
-  function deleteCommandConfirm() {
+  function deleteScheduledMessageConfirm() {
     deleteMutation.mutate(
       {
-        commandId: cmd.id,
+        messageId: msg.id,
         guildId: guildId!,
       },
       {
         onSuccess: (resp) => {
           if (resp.success) {
-            queryClient.invalidateQueries(["custom-bot", guildId, "commands"]);
+            queryClient.invalidateQueries(["scheduled-messages", guildId]);
           } else {
             createToast({
-              title: "Failed to delete command",
+              title: "Failed to delete scheduled message",
               message: resp.error.message,
               type: "error",
             });
@@ -103,22 +123,24 @@ export default function ScheduledMessage({ cmd }: { cmd: CustomCommandWire }) {
 
   return (
     <div>
-      <AutoAnimate className="bg-dark-3 rounded truncate">
+      <AutoAnimate className="bg-dark-3 rounded">
         {manage ? (
           <div className="px-5 py-4" key="1">
             <div className="flex justify-between items-start">
-              <div className="flex items-center space-x-2 truncate text-lg mb-5 truncate">
-                <div className="text-white truncate">
-                  <span className="font-bold text-gray-500 text-xl">/</span>{" "}
-                  {cmd.name}
-                </div>
+              <div className="flex items-center space-x-2 truncate text-lg mb-5">
+                {onlyOnce ? (
+                  <CalendarDaysIcon className="text-gray-500 h-6 w-6" />
+                ) : (
+                  <ArrowPathIcon className="text-gray-500 h-6 w-6" />
+                )}
+                <div className="text-white truncate">{msg.name}</div>
               </div>
               <div
                 className="flex items-center text-white cursor-pointer bg-blurple hover:bg-blurple-dark rounded px-2 py-1"
                 role="button"
                 onClick={save}
               >
-                <Tooltip text="Delete Command">
+                <Tooltip text="Save Scheduled Message">
                   <ClipboardIcon className="h-5 w-5" />
                 </Tooltip>
                 <div className="ml-2">
@@ -134,32 +156,133 @@ export default function ScheduledMessage({ cmd }: { cmd: CustomCommandWire }) {
                 value={name}
                 onChange={setName}
               />
-              <EditorInput
-                label="Description"
-                type="text"
-                maxLength={100}
-                value={description}
-                onChange={setDescription}
-              />
-              <CustomCommandParameters
-                parameters={parameters || []}
-                setParameters={setParameters}
-                cmdId={cmd.id}
-              />
-              <CommandActionSet cmdId={cmd.id} />
+              <div className="flex space-x-3 pb-3 items-end">
+                <div className="flex-auto w-1/2">
+                  <div className="mb-1.5 flex">
+                    <div className="uppercase text-gray-300 text-sm font-medium">
+                      Message
+                    </div>
+                  </div>
+                  <SavedMessageSelect
+                    guildId={guildId}
+                    messageId={messageId}
+                    onChange={setMessageId}
+                  />
+                </div>
+                <div className="flex-none pb-2">
+                  <ArrowRightIcon className="h-5 w-5 text-gray-300" />
+                </div>
+                <div className="flex-auto w-1/2">
+                  <div className="mb-1.5 flex">
+                    <div className="uppercase text-gray-300 text-sm font-medium">
+                      Channel
+                    </div>
+                  </div>
+                  <ChannelSelect
+                    guildId={guildId}
+                    channelId={channelId}
+                    onChange={setChannelId}
+                  />
+                </div>
+              </div>
+              <div className="flex">
+                <button
+                  className="flex bg-dark-2 p-1 rounded text-white"
+                  onClick={() => setOnlyOnce((v) => !v)}
+                >
+                  <div
+                    className={clsx(
+                      "py-1 px-2 rounded transition-colors",
+                      onlyOnce && "bg-dark-3"
+                    )}
+                  >
+                    Send Once
+                  </div>
+                  <div
+                    className={clsx(
+                      "py-1 px-2 rounded transition-colors",
+                      !onlyOnce && "bg-dark-3"
+                    )}
+                  >
+                    Send Periodically
+                  </div>
+                </button>
+              </div>
+              {onlyOnce ? (
+                <div>
+                  <div>
+                    <div className="mb-1.5 flex">
+                      <div className="uppercase text-gray-300 text-sm font-medium">
+                        Send at
+                      </div>
+                    </div>
+                    <DateTimePicker
+                      value={startAt}
+                      onChange={setStartAt}
+                      clearable={false}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex space-x-3">
+                    <div className="flex-auto">
+                      <div className="mb-1.5 flex">
+                        <div className="uppercase text-gray-300 text-sm font-medium">
+                          Start at
+                        </div>
+                      </div>
+                      <DateTimePicker
+                        value={startAt}
+                        onChange={setStartAt}
+                        clearable={false}
+                      />
+                    </div>
+                    <div className="flex-auto">
+                      <div className="mb-1.5 flex">
+                        <div className="uppercase text-gray-300 text-sm font-medium">
+                          End at
+                        </div>
+                      </div>
+                      <DateTimePicker
+                        value={endAt}
+                        onChange={setEndAt}
+                        clearable={true}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <EditorInput
+                      label="CRON Expression"
+                      type="text"
+                      value={cronExpression || ""}
+                      onChange={(v) => setCronExpression(v || null)}
+                    />
+                    <div className="text-gray-400 text-sm mt-1">
+                      {cronToString(cronExpression)}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         ) : (
           <div className="flex justify-between items-start py-4 px-5" key="2">
             <div className="flex-auto truncate">
-              <div className="flex items-center space-x-2 truncate text-lg mb-1 truncate">
-                <div className="text-white truncate">
-                  <span className="font-bold text-gray-500 text-xl">/</span>{" "}
-                  {cmd.name}
+              <div className="flex items-center space-x-2 truncate text-lg mb-1">
+                <div className="text-white truncate flex space-x-2 items-center">
+                  {onlyOnce ? (
+                    <CalendarDaysIcon className="text-gray-500 h-6 w-6" />
+                  ) : (
+                    <ArrowPathIcon className="text-gray-500 h-6 w-6" />
+                  )}
+                  <div>{msg.name}</div>
                 </div>
               </div>
               <div className="text-gray-400 text-sm font-light whitespace-normal">
-                {cmd.description}
+                {!msg.only_once
+                  ? cronToString(msg.cron_expression)
+                  : formatDateTime(msg.start_at)}
               </div>
             </div>
             <div className="flex flex-none items-center space-x-4 md:space-x-3">
@@ -168,7 +291,7 @@ export default function ScheduledMessage({ cmd }: { cmd: CustomCommandWire }) {
                 role="button"
                 onClick={() => setDeleteModal(true)}
               >
-                <Tooltip text="Delete Command">
+                <Tooltip text="Delete Scheduled Message">
                   <TrashIcon className="h-5 w-5" />
                 </Tooltip>
                 <div className="hidden md:block ml-2">Delete</div>
@@ -178,7 +301,7 @@ export default function ScheduledMessage({ cmd }: { cmd: CustomCommandWire }) {
                 role="button"
                 onClick={() => setManage(true)}
               >
-                <Tooltip text="Manage Command">
+                <Tooltip text="Manage Scheduled message">
                   <PencilSquareIcon className="h-5 w-5" />
                 </Tooltip>
                 <div className="hidden md:block ml-2">Manage</div>
@@ -189,16 +312,25 @@ export default function ScheduledMessage({ cmd }: { cmd: CustomCommandWire }) {
       </AutoAnimate>
       {deleteModal && (
         <ConfirmModal
-          title="Are you sure that you want to delete the command?"
-          subTitle="The command will be deleted permanently and can't be restored."
+          title="Are you sure that you want to delete the scheduled message?"
+          subTitle="The scheduled message will be deleted permanently and can't be restored."
           onClose={() => setDeleteModal(false)}
-          onConfirm={deleteCommandConfirm}
+          onConfirm={deleteScheduledMessageConfirm}
         />
       )}
     </div>
   );
 }
 
-function formatUpdatedAt(updatedAt: string): string {
-  return parseISO(updatedAt).toLocaleString();
+function formatDateTime(v: string): string {
+  return parseISO(v).toLocaleString();
+}
+
+function cronToString(v: string | null): string {
+  if (!v) return "";
+  try {
+    return cronstrue.toString(v, { verbose: true });
+  } catch {
+    return "";
+  }
 }

@@ -26,7 +26,7 @@ func (q *Queries) DeleteScheduledMessage(ctx context.Context, arg DeleteSchedule
 }
 
 const getDueScheduledMessages = `-- name: GetDueScheduledMessages :many
-SELECT id, creator_id, guild_id, channel_id, message_id, saved_message_id, name, description, cron_expression, only_once, start_at, end_at, next_at, enabled, created_at, updated_at FROM scheduled_messages WHERE next_at <= $1
+SELECT id, creator_id, guild_id, channel_id, message_id, saved_message_id, name, description, cron_expression, only_once, start_at, end_at, next_at, enabled, created_at, updated_at FROM scheduled_messages WHERE next_at <= $1 AND enabled = true
 `
 
 func (q *Queries) GetDueScheduledMessages(ctx context.Context, nextAt time.Time) ([]ScheduledMessage, error) {
@@ -246,6 +246,86 @@ func (q *Queries) UpdateScheduledMessage(ctx context.Context, arg UpdateSchedule
 		arg.EndAt,
 		arg.OnlyOnce,
 		arg.Enabled,
+		arg.UpdatedAt,
+	)
+	var i ScheduledMessage
+	err := row.Scan(
+		&i.ID,
+		&i.CreatorID,
+		&i.GuildID,
+		&i.ChannelID,
+		&i.MessageID,
+		&i.SavedMessageID,
+		&i.Name,
+		&i.Description,
+		&i.CronExpression,
+		&i.OnlyOnce,
+		&i.StartAt,
+		&i.EndAt,
+		&i.NextAt,
+		&i.Enabled,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateScheduledMessageEnabled = `-- name: UpdateScheduledMessageEnabled :one
+UPDATE scheduled_messages SET enabled = $3, updated_at = $4 WHERE id = $1 AND guild_id = $2 RETURNING id, creator_id, guild_id, channel_id, message_id, saved_message_id, name, description, cron_expression, only_once, start_at, end_at, next_at, enabled, created_at, updated_at
+`
+
+type UpdateScheduledMessageEnabledParams struct {
+	ID        string
+	GuildID   string
+	Enabled   bool
+	UpdatedAt time.Time
+}
+
+func (q *Queries) UpdateScheduledMessageEnabled(ctx context.Context, arg UpdateScheduledMessageEnabledParams) (ScheduledMessage, error) {
+	row := q.db.QueryRowContext(ctx, updateScheduledMessageEnabled,
+		arg.ID,
+		arg.GuildID,
+		arg.Enabled,
+		arg.UpdatedAt,
+	)
+	var i ScheduledMessage
+	err := row.Scan(
+		&i.ID,
+		&i.CreatorID,
+		&i.GuildID,
+		&i.ChannelID,
+		&i.MessageID,
+		&i.SavedMessageID,
+		&i.Name,
+		&i.Description,
+		&i.CronExpression,
+		&i.OnlyOnce,
+		&i.StartAt,
+		&i.EndAt,
+		&i.NextAt,
+		&i.Enabled,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateScheduledMessageNextAt = `-- name: UpdateScheduledMessageNextAt :one
+UPDATE scheduled_messages SET next_at = $3, updated_at = $4 WHERE id = $1 AND guild_id = $2 RETURNING id, creator_id, guild_id, channel_id, message_id, saved_message_id, name, description, cron_expression, only_once, start_at, end_at, next_at, enabled, created_at, updated_at
+`
+
+type UpdateScheduledMessageNextAtParams struct {
+	ID        string
+	GuildID   string
+	NextAt    time.Time
+	UpdatedAt time.Time
+}
+
+func (q *Queries) UpdateScheduledMessageNextAt(ctx context.Context, arg UpdateScheduledMessageNextAtParams) (ScheduledMessage, error) {
+	row := q.db.QueryRowContext(ctx, updateScheduledMessageNextAt,
+		arg.ID,
+		arg.GuildID,
+		arg.NextAt,
 		arg.UpdatedAt,
 	)
 	var i ScheduledMessage
