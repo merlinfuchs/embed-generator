@@ -26,7 +26,7 @@ func (q *Queries) DeleteScheduledMessage(ctx context.Context, arg DeleteSchedule
 }
 
 const getDueScheduledMessages = `-- name: GetDueScheduledMessages :many
-SELECT id, creator_id, guild_id, channel_id, message_id, saved_message_id, name, description, cron_expression, only_once, start_at, end_at, next_at, enabled, created_at, updated_at FROM scheduled_messages WHERE next_at <= $1 AND enabled = true
+SELECT id, creator_id, guild_id, channel_id, message_id, saved_message_id, name, description, cron_expression, only_once, start_at, end_at, next_at, enabled, created_at, updated_at FROM scheduled_messages WHERE next_at <= $1 AND (end_at IS NULL OR end_at >= $1) AND enabled = true
 `
 
 func (q *Queries) GetDueScheduledMessages(ctx context.Context, nextAt time.Time) ([]ScheduledMessage, error) {

@@ -1,5 +1,5 @@
 -- name: GetDueScheduledMessages :many
-SELECT * FROM scheduled_messages WHERE next_at <= $1 AND enabled = true;
+SELECT * FROM scheduled_messages WHERE next_at <= $1 AND (end_at IS NULL OR end_at >= $1) AND enabled = true;
 
 -- name: GetScheduledMessages :many
 SELECT * FROM scheduled_messages WHERE guild_id = $1 ORDER BY updated_at DESC;

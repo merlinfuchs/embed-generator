@@ -15,7 +15,6 @@ import {
 } from "../api/mutations";
 import { useToasts } from "../util/toasts";
 import PremiumSuggest from "./PremiumSuggest";
-import { ArrowPathIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
 
 export default function SettingsCustomBot() {

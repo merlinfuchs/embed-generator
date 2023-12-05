@@ -92,7 +92,7 @@ func registerRoutes(app *fiber.App, stores *stores, bot *bot.Bot, managers *mana
 	app.Get("/api/images/:imageID", sessionMiddleware.SessionRequired(), imagesHandler.HandleGetImage)
 	app.Get("/cdn/images/:imageKey", imagesHandler.HandleDownloadImage)
 
-	scheduledMessagesHandler := scheduled_messages.New(stores.pg, managers.access)
+	scheduledMessagesHandler := scheduled_messages.New(stores.pg, managers.access, managers.premium)
 	scheduledMessagesGroup := app.Group("/api/scheduled-messages", sessionMiddleware.SessionRequired())
 	scheduledMessagesGroup.Get("/", scheduledMessagesHandler.HandleListScheduledMessages)
 	scheduledMessagesGroup.Post("/", helpers.WithRequestBodyValidated(scheduledMessagesHandler.HandleCreateScheduledMessage))

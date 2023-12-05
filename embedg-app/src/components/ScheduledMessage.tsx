@@ -2,11 +2,11 @@ import { parseISO } from "date-fns";
 import { ScheduledMessageWire } from "../api/wire";
 import Tooltip from "./Tooltip";
 import {
-  ArrowPathIcon,
   ArrowRightIcon,
   CalendarDaysIcon,
   CheckIcon,
   ClipboardIcon,
+  ClockIcon,
   PencilSquareIcon,
   TrashIcon,
 } from "@heroicons/react/20/solid";
@@ -26,6 +26,7 @@ import { ChannelSelect } from "./ChannelSelect";
 import DateTimePicker from "./DateTimePicker";
 import clsx from "clsx";
 import cronstrue from "cronstrue";
+import CronExpressionBuilder from "./CronExpressionBuilder";
 
 export default function ScheduledMessage({
   msg,
@@ -133,7 +134,7 @@ export default function ScheduledMessage({
                 {onlyOnce ? (
                   <CalendarDaysIcon className="text-gray-500 h-6 w-6" />
                 ) : (
-                  <ArrowPathIcon className="text-gray-500 h-6 w-6" />
+                  <ClockIcon className="text-gray-500 h-6 w-6" />
                 )}
                 <div className="text-white truncate">{msg.name}</div>
               </div>
@@ -269,15 +270,10 @@ export default function ScheduledMessage({
                     </div>
                   </div>
                   <div>
-                    <EditorInput
-                      label="CRON Expression"
-                      type="text"
-                      value={cronExpression || ""}
-                      onChange={(v) => setCronExpression(v || null)}
+                    <CronExpressionBuilder
+                      value={cronExpression}
+                      onChange={setCronExpression}
                     />
-                    <div className="text-gray-400 text-sm mt-1">
-                      {cronToString(cronExpression)}
-                    </div>
                   </div>
                 </>
               )}
@@ -291,7 +287,7 @@ export default function ScheduledMessage({
                   {onlyOnce ? (
                     <CalendarDaysIcon className="text-gray-500 h-6 w-6" />
                   ) : (
-                    <ArrowPathIcon className="text-gray-500 h-6 w-6" />
+                    <ClockIcon className="text-gray-500 h-6 w-6" />
                   )}
                   <div>{msg.name}</div>
                 </div>

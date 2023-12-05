@@ -7,6 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/premium"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
@@ -19,12 +20,14 @@ import (
 type ScheduledMessageHandler struct {
 	pg *postgres.PostgresStore
 	am *access.AccessManager
+	pm *premium.PremiumManager
 }
 
-func New(pg *postgres.PostgresStore, am *access.AccessManager) *ScheduledMessageHandler {
+func New(pg *postgres.PostgresStore, am *access.AccessManager, pm *premium.PremiumManager) *ScheduledMessageHandler {
 	return &ScheduledMessageHandler{
 		pg: pg,
 		am: am,
+		pm: pm,
 	}
 }
 
@@ -35,6 +38,21 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
+
+	if err := h.am.CheckChannelAccessForRequest(c, req.ChannelID); err != nil {
+		return err
+	}
+
+	features, err := h.pm.GetPlanFeaturesForGuild(c.Context(), guildID)
+	if err != nil {
+		return err
+	}
+
+	if !req.OnlyOnce && !features.PeriodicScheduledMessages {
+		return helpers.Forbidden("insufficient_plan", "Periodic scheduled messages are not available on your plan.")
+	}
+
+	// TODO: validate max scheduled messages
 
 	if req.EndAt.Valid && req.EndAt.Time.Before(req.StartAt) {
 		return helpers.BadRequest("invalid_end_at", "The end_at field must be after the start_at field.")
@@ -150,6 +168,19 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
+	}
+
+	if err := h.am.CheckChannelAccessForRequest(c, req.ChannelID); err != nil {
+		return err
+	}
+
+	features, err := h.pm.GetPlanFeaturesForGuild(c.Context(), guildID)
+	if err != nil {
+		return err
+	}
+
+	if !req.OnlyOnce && !features.PeriodicScheduledMessages {
+		return helpers.Forbidden("insufficient_plan", "Periodic scheduled messages are not available on your plan.")
 	}
 
 	if req.EndAt.Valid && req.EndAt.Time.Before(req.StartAt) {

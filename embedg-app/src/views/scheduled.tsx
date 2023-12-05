@@ -12,12 +12,10 @@ import PremiumSuggest from "../components/PremiumSuggest";
 
 export default function ScheduledMessagesView() {
   const { data: user } = useUserQuery();
-  const createToast = useToasts((s) => s.create);
 
   const [create, setCreate] = useState(false);
 
   const guildId = useSendSettingsStore((s) => s.guildId);
-  const features = usePremiumGuildFeatures();
 
   const messagesQuery = useScheduledMessagesQuery(guildId);
   const messageCount = messagesQuery.data?.success
@@ -50,36 +48,32 @@ export default function ScheduledMessagesView() {
           </div>
         </div>
         {user?.success ? (
-          features?.max_custom_commands ? (
-            <div className="space-y-5 mb-8">
-              <AutoAnimate className="space-y-5 overlfow-y-auto">
-                {messages.map((msg) => (
-                  <ScheduledMessage msg={msg} key={msg.id} />
-                ))}
-                {(messageCount === 0 || create) && (
-                  <ScheduledMessageCreate
-                    setCreate={setCreate}
-                    cancelable={messageCount !== 0}
-                  />
+          <div className="space-y-5 mb-8">
+            <AutoAnimate className="space-y-5 overlfow-y-auto">
+              {messages.map((msg) => (
+                <ScheduledMessage msg={msg} key={msg.id} />
+              ))}
+              {(messageCount === 0 || create) && (
+                <ScheduledMessageCreate
+                  setCreate={setCreate}
+                  cancelable={messageCount !== 0}
+                />
+              )}
+            </AutoAnimate>
+            <div className="flex space-x-3 justify-end">
+              <button
+                className={clsx(
+                  "px-3 py-2 rounded border-2 text-white",
+                  messageCount < maxMessages
+                    ? "border-dark-7 hover:bg-dark-6 cursor-pointer"
+                    : "border-dark-6 text-gray-300 cursor-not-allowed"
                 )}
-              </AutoAnimate>
-              <div className="flex space-x-3 justify-end">
-                <button
-                  className={clsx(
-                    "px-3 py-2 rounded border-2 text-white",
-                    messageCount < maxMessages
-                      ? "border-dark-7 hover:bg-dark-6 cursor-pointer"
-                      : "border-dark-6 text-gray-300 cursor-not-allowed"
-                  )}
-                  onClick={() => messageCount < maxMessages && setCreate(true)}
-                >
-                  New Command
-                </button>
-              </div>
+                onClick={() => messageCount < maxMessages && setCreate(true)}
+              >
+                New Command
+              </button>
             </div>
-          ) : (
-            <PremiumSuggest alwaysExpanded={true} />
-          )
+          </div>
         ) : (
           <LogginSuggest alwaysExpanded={true} />
         )}

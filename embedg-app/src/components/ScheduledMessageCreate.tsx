@@ -10,12 +10,15 @@ import {
   XMarkIcon,
   ArrowRightIcon,
   CalendarDaysIcon,
-  ArrowPathIcon,
+  ClockIcon,
 } from "@heroicons/react/20/solid";
 import clsx from "clsx";
 import DateTimePicker from "./DateTimePicker";
 import SavedMessageSelect from "./SavedMessageSelect";
 import { ChannelSelect } from "./ChannelSelect";
+import CronExpressionBuilder from "./CronExpressionBuilder";
+import { usePremiumGuildFeatures } from "../util/premium";
+import PremiumSuggest from "./PremiumSuggest";
 
 export default function ScheduledMessageCreate({
   setCreate,
@@ -25,13 +28,17 @@ export default function ScheduledMessageCreate({
   cancelable: boolean;
 }) {
   const guildId = useSendSettingsStore((s) => s.guildId);
+  const features = usePremiumGuildFeatures(guildId);
+
   const createToast = useToasts((s) => s.create);
 
   const [name, setName] = useState("");
   const [onlyOnce, setOnlyOnce] = useState(true);
   const [startAt, setStartAt] = useState<string | undefined>();
   const [endAt, setEndAt] = useState<string | undefined>();
-  const [cronExpression, setCronExpression] = useState("0 0 * * *");
+  const [cronExpression, setCronExpression] = useState<string | null>(
+    "0 0 * * *"
+  );
   const [messageId, setMessageId] = useState<string | null>(null);
   const [channelId, setChannelId] = useState<string | null>(null);
 
@@ -90,7 +97,7 @@ export default function ScheduledMessageCreate({
           {onlyOnce ? (
             <CalendarDaysIcon className="text-gray-500 h-6 w-6" />
           ) : (
-            <ArrowPathIcon className="text-gray-500 h-6 w-6" />
+            <ClockIcon className="text-gray-500 h-6 w-6" />
           )}
           <div>New Scheduled Message</div>
         </div>
@@ -196,7 +203,7 @@ export default function ScheduledMessageCreate({
               />
             </div>
           </div>
-        ) : (
+        ) : features?.periodic_scheduled_messages ? (
           <>
             <div className="flex space-x-3">
               <div className="flex-auto">
@@ -224,15 +231,13 @@ export default function ScheduledMessageCreate({
                 />
               </div>
             </div>
-            <div>
-              <EditorInput
-                label="CRON Expression"
-                type="text"
-                value={cronExpression}
-                onChange={setCronExpression}
-              />
-            </div>
+            <CronExpressionBuilder
+              value={cronExpression}
+              onChange={setCronExpression}
+            />
           </>
+        ) : (
+          <PremiumSuggest />
         )}
       </div>
     </div>
