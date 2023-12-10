@@ -108,13 +108,15 @@ export default function SideNav() {
                 collapsed={collapsed}
                 setHidden={setHidden}
               />
-              <NavigationButton
-                href="/scheduled"
-                label="Scheduled Messages"
-                icon={CalendarDaysIcon}
-                collapsed={collapsed}
-                setHidden={setHidden}
-              />
+              {features?.is_premium && (
+                <NavigationButton
+                  href="/scheduled"
+                  label="Scheduled Messages"
+                  icon={CalendarDaysIcon}
+                  collapsed={collapsed}
+                  setHidden={setHidden}
+                />
+              )}
               <NavigationButton
                 href="/commands"
                 label="Commands"
@@ -170,7 +172,7 @@ export default function SideNav() {
         ></div>
       )}
       <div
-        className="block xl:hidden fixed w-12 h-12 rounded-full bg-blurple bottom-3 left-3 flex items-center justify-center cursor-pointer z-10"
+        className="xl:hidden fixed w-12 h-12 rounded-full bg-blurple bottom-3 left-3 flex items-center justify-center cursor-pointer z-10"
         onClick={() => setHidden((h) => !h)}
         role="button"
       >
