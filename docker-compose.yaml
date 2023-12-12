@@ -45,3 +45,4 @@ services:
 
 volumes:
   embedg-local-postgres:
+  embedg-local-minio:
