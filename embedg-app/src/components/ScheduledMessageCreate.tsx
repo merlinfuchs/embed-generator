@@ -140,7 +140,7 @@ export default function ScheduledMessageCreate({
           <div className="flex-auto w-1/2">
             <div className="mb-1.5 flex">
               <div className="uppercase text-gray-300 text-sm font-medium">
-                Message
+                Saved Message
               </div>
             </div>
             <SavedMessageSelect
