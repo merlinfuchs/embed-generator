@@ -21,7 +21,6 @@ import { useGuildsQuery, useUserQuery } from "../api/queries";
 import { guildIconUrl } from "../discord/cdn";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { shallow } from "zustand/shallow";
-import { usePremiumGuildFeatures } from "../util/premium";
 
 export default function SideNav() {
   const [preCollapsed, setCollapsed] = useState(
@@ -32,8 +31,6 @@ export default function SideNav() {
   const { data: user } = useUserQuery();
 
   const collapsed = preCollapsed && hidden;
-
-  const features = usePremiumGuildFeatures();
 
   return (
     <>
@@ -108,15 +105,13 @@ export default function SideNav() {
                 collapsed={collapsed}
                 setHidden={setHidden}
               />
-              {features?.is_premium && (
-                <NavigationButton
-                  href="/scheduled"
-                  label="Scheduled Messages"
-                  icon={CalendarDaysIcon}
-                  collapsed={collapsed}
-                  setHidden={setHidden}
-                />
-              )}
+              <NavigationButton
+                href="/scheduled"
+                label="Scheduled Messages"
+                icon={CalendarDaysIcon}
+                collapsed={collapsed}
+                setHidden={setHidden}
+              />
               <NavigationButton
                 href="/commands"
                 label="Commands"

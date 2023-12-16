@@ -29,6 +29,7 @@
     "postcss": "^8.4.21",
     "react": "^18.2.0",
     "react-colorful": "^5.6.1",
+    "react-cron-generator": "^2.0.10",
     "react-datetime-picker": "^5.2.0",
     "react-dom": "^18.2.0",
     "react-query": "^3.39.3",

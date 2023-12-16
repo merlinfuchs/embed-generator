@@ -764,7 +764,7 @@ crelt@^1.0.5:
   resolved "https://registry.yarnpkg.com/crelt/-/crelt-1.0.5.tgz#57c0d52af8c859e354bace1883eb2e1eb182bb94"
   integrity sha512-+BO9wPPi+DWTDcNYhr/W90myha8ptzftZT+LwcmUbbok0rcP/fequmFYCw8NMoH7pkAZQzU78b3kYrlua5a9eA==
 
-cronstrue@^2.47.0:
+cronstrue@^2.12.0, cronstrue@^2.47.0:
   version "2.47.0"
   resolved "https://registry.yarnpkg.com/cronstrue/-/cronstrue-2.47.0.tgz#3cf447c2a3a070d5bad2cedd6383e7cc16f5a308"
   integrity sha512-fnFwJy7zslTEz6h7O7BkwgHNBvuuPmkhAYKqPDxK5mBQLz2nG08T9afbnjm+yrvcc/wxrd+otaVSnoXT9ulUOw==
@@ -1317,6 +1317,13 @@ react-colorful@^5.6.1:
   version "5.6.1"
   resolved "https://registry.yarnpkg.com/react-colorful/-/react-colorful-5.6.1.tgz#7dc2aed2d7c72fac89694e834d179e32f3da563b"
   integrity sha512-1exovf0uGTGyq5mXQT0zgQ80uvj2PCwvF8zY1RN9/vbJVSjSo3fsB/4L3ObbF7u70NduSiK4xu4Y6q1MHoUGEw==
+
+react-cron-generator@^2.0.10:
+  version "2.0.10"
+  resolved "https://registry.yarnpkg.com/react-cron-generator/-/react-cron-generator-2.0.10.tgz#001fd233ca85b705fce2f1d309acd21f0a593de7"
+  integrity sha512-N2KaRCcbWWJdgjP/3SkEEMPaAw9LRV8i3UHBL00WXi/uP3ePVU5StkhiCX91L2tJ47kBeTSX6J0HCL10aV1rlw==
+  dependencies:
+    cronstrue "^2.12.0"
 
 react-date-picker@^10.0.0:
   version "10.2.0"

@@ -205,7 +205,7 @@ export default function ScheduledMessageCreate({
           </div>
         ) : features?.periodic_scheduled_messages ? (
           <>
-            <div className="flex space-x-3">
+            <div className="flex flex-col md:flex-row md:space-x-3 space-y-5 md:space-y-0">
               <div className="flex-auto">
                 <div className="mb-1.5 flex">
                   <div className="uppercase text-gray-300 text-sm font-medium">

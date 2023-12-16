@@ -27,6 +27,8 @@ import DateTimePicker from "./DateTimePicker";
 import clsx from "clsx";
 import cronstrue from "cronstrue";
 import CronExpressionBuilder from "./CronExpressionBuilder";
+import { usePremiumGuildFeatures } from "../util/premium";
+import PremiumSuggest from "./PremiumSuggest";
 
 export default function ScheduledMessage({
   msg,
@@ -35,6 +37,8 @@ export default function ScheduledMessage({
 }) {
   const guildId = useSendSettingsStore((s) => s.guildId);
   const createToast = useToasts((s) => s.create);
+
+  const features = usePremiumGuildFeatures(guildId);
 
   const [manage, setManage] = useState(false);
 
@@ -241,9 +245,9 @@ export default function ScheduledMessage({
                     />
                   </div>
                 </div>
-              ) : (
+              ) : features?.periodic_scheduled_messages ? (
                 <>
-                  <div className="flex space-x-3">
+                  <div className="flex flex-col md:flex-row md:space-x-3 space-y-5 md:space-y-0">
                     <div className="flex-auto">
                       <div className="mb-1.5 flex">
                         <div className="uppercase text-gray-300 text-sm font-medium">
@@ -276,6 +280,8 @@ export default function ScheduledMessage({
                     />
                   </div>
                 </>
+              ) : (
+                <PremiumSuggest />
               )}
             </div>
           </div>
