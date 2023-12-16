@@ -75,6 +75,8 @@ premium:
         is_premium: false
         custom_bot: false
         max_custom_commands: 0
+        max_scheduled_messages: 5
+        periodic_scheduled_messages: false
     # An additional premium plan that will apply when the user or guild has the SKU
     - id: premium_server
       sku_id: "123"
@@ -86,6 +88,8 @@ premium:
         is_premium: true # This is used for handing out cosmetics like a role on the support server
         custom_bot: true
         max_custom_commands: 5
+        max_scheduled_messages: 10
+        periodic_scheduled_messages: true
 ```
 
 You can also set the config values using environment variables. For example `EMBEDG_DISCORD__TOKEN` will set the discord
