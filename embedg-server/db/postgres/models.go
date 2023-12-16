@@ -89,6 +89,25 @@ type SavedMessage struct {
 	Data        json.RawMessage
 }
 
+type ScheduledMessage struct {
+	ID             string
+	CreatorID      string
+	GuildID        string
+	ChannelID      string
+	MessageID      sql.NullString
+	SavedMessageID string
+	Name           string
+	Description    sql.NullString
+	CronExpression sql.NullString
+	OnlyOnce       bool
+	StartAt        time.Time
+	EndAt          sql.NullTime
+	NextAt         time.Time
+	Enabled        bool
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
 type Session struct {
 	TokenHash   string
 	UserID      string

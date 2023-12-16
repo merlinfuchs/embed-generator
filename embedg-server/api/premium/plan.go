@@ -8,14 +8,16 @@ type Plan struct {
 }
 
 type PlanFeatures struct {
-	MaxSavedMessages       int  `mapstructure:"max_saved_messages"`
-	MaxActionsPerComponent int  `mapstructure:"max_actions_per_component"`
-	AdvancedActionTypes    bool `mapstructure:"advanced_action_types"`
-	AIAssistant            bool `mapstructure:"ai_assistant"`
-	CustomBot              bool `mapstructure:"custom_bot"`
-	MaxCustomCommands      int  `mapstructure:"max_custom_commands"`
-	IsPremium              bool `mapstructure:"is_premium"`
-	MaxImageUploadSize     int  `mapstructure:"max_image_upload_size"`
+	MaxSavedMessages          int  `mapstructure:"max_saved_messages"`
+	MaxActionsPerComponent    int  `mapstructure:"max_actions_per_component"`
+	AdvancedActionTypes       bool `mapstructure:"advanced_action_types"`
+	AIAssistant               bool `mapstructure:"ai_assistant"`
+	CustomBot                 bool `mapstructure:"custom_bot"`
+	MaxCustomCommands         int  `mapstructure:"max_custom_commands"`
+	IsPremium                 bool `mapstructure:"is_premium"`
+	MaxImageUploadSize        int  `mapstructure:"max_image_upload_size"`
+	MaxScheduledMessages      int  `mapstructure:"max_scheduled_messages"`
+	PeriodicScheduledMessages bool `mapstructure:"periodic_scheduled_messages"`
 }
 
 func (f *PlanFeatures) Merge(b PlanFeatures) {
@@ -31,9 +33,13 @@ func (f *PlanFeatures) Merge(b PlanFeatures) {
 	if b.MaxImageUploadSize > f.MaxImageUploadSize {
 		f.MaxImageUploadSize = b.MaxImageUploadSize
 	}
+	if b.MaxScheduledMessages > f.MaxScheduledMessages {
+		f.MaxScheduledMessages = b.MaxScheduledMessages
+	}
 
 	f.AdvancedActionTypes = f.AdvancedActionTypes || b.AdvancedActionTypes
 	f.AIAssistant = f.AIAssistant || b.AIAssistant
 	f.IsPremium = f.IsPremium || b.IsPremium
 	f.CustomBot = f.CustomBot || b.CustomBot
+	f.PeriodicScheduledMessages = f.PeriodicScheduledMessages || b.PeriodicScheduledMessages
 }

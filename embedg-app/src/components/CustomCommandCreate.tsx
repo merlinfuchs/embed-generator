@@ -61,7 +61,7 @@ export default function CustomCommandCreate({
 
   return (
     <div className="bg-dark-3 p-5 rounded-lg">
-      <div className="flex items-center space-x-2 truncate text-lg mb-5 truncate justify-between">
+      <div className="flex items-center space-x-2 truncate text-lg mb-5 justify-between">
         <div className="text-white truncate">
           <span className="font-bold text-gray-500 text-xl">/</span> {name}
         </div>
@@ -72,7 +72,7 @@ export default function CustomCommandCreate({
               role="button"
               onClick={() => setCreate(false)}
             >
-              <Tooltip text="Delete Command">
+              <Tooltip text="Cancel">
                 <XMarkIcon className="h-5 w-5" />
               </Tooltip>
               <div className="hidden md:block ml-2">Cancel</div>
@@ -83,7 +83,7 @@ export default function CustomCommandCreate({
             role="button"
             onClick={create}
           >
-            <Tooltip text="Delete Command">
+            <Tooltip text="Create Scheduled Message">
               <ArrowUpTrayIcon className="h-5 w-5" />
             </Tooltip>
             <div className="ml-2">

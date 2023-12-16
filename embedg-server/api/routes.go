@@ -14,6 +14,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/images"
 	premium_handler "github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/premium"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/saved_messages"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/scheduled_messages"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/send_message"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/shared_messages"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/users"
@@ -70,12 +71,10 @@ func registerRoutes(app *fiber.App, stores *stores, bot *bot.Bot, managers *mana
 	app.Post("/api/restore-message/webhook", helpers.WithRequestBodyValidated(sendMessageHandler.HandleRestoreMessageFromWebhook))
 
 	premiumHandler := premium_handler.New(stores.pg, bot, managers.access, managers.premium)
-
 	app.Get("/api/premium/features", sessionMiddleware.SessionRequired(), premiumHandler.HandleGetFeatures)
 	app.Get("/api/premium/entitlements", sessionMiddleware.SessionRequired(), premiumHandler.HandleListEntitlements)
 
 	customBotHandler := custom_bots.New(stores.pg, bot, managers.access, managers.premium, managers.actionParser)
-
 	app.Post("/api/custom-bot", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(customBotHandler.HandleConfigureCustomBot))
 	app.Put("/api/custom-bot/presence", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(customBotHandler.HandleUpdateCustomBotPresence))
 	app.Get("/api/custom-bot", sessionMiddleware.SessionRequired(), customBotHandler.HandleGetCustomBot)
@@ -89,10 +88,17 @@ func registerRoutes(app *fiber.App, stores *stores, bot *bot.Bot, managers *mana
 	app.Post("/api/gateway/:customBotID", customBotHandler.HandleCustomBotInteraction)
 
 	imagesHandler := images.New(stores.pg, managers.access, managers.premium, stores.blob)
-
 	app.Post("/api/images", sessionMiddleware.SessionRequired(), imagesHandler.HandleUploadImage)
 	app.Get("/api/images/:imageID", sessionMiddleware.SessionRequired(), imagesHandler.HandleGetImage)
 	app.Get("/cdn/images/:imageKey", imagesHandler.HandleDownloadImage)
+
+	scheduledMessagesHandler := scheduled_messages.New(stores.pg, managers.access, managers.premium)
+	scheduledMessagesGroup := app.Group("/api/scheduled-messages", sessionMiddleware.SessionRequired())
+	scheduledMessagesGroup.Get("/", scheduledMessagesHandler.HandleListScheduledMessages)
+	scheduledMessagesGroup.Post("/", helpers.WithRequestBodyValidated(scheduledMessagesHandler.HandleCreateScheduledMessage))
+	scheduledMessagesGroup.Get("/:messageID", scheduledMessagesHandler.HandleGetScheduledMessage)
+	scheduledMessagesGroup.Put("/:messageID", helpers.WithRequestBodyValidated(scheduledMessagesHandler.HandleUpdateScheduledMessage))
+	scheduledMessagesGroup.Delete("/:messageID", scheduledMessagesHandler.HandleDeleteScheduledMessage)
 
 	app.Get("/invite", func(c *fiber.Ctx) error {
 		return c.Redirect(util.BotInviteURL(), 302)

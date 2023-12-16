@@ -67,7 +67,8 @@ func (req CustomBotUpdatePresenceRequestWire) Validate() error {
 			req.GatewayActivityType == 4,
 			validation.Required, validation.Length(1, 128),
 		)),
-		validation.Field(&req.GatewayActivityURL, is.URL))
+		validation.Field(&req.GatewayActivityURL, is.URL),
+	)
 }
 
 type CustomBotUpdatePresenceResponseWire APIResponse[CustomBotPresenceWire]

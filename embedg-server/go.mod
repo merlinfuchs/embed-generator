@@ -17,6 +17,7 @@ require (
 	github.com/minio/minio-go/v7 v7.0.63
 	github.com/ravener/discord-oauth2 v0.0.0-20220615092331-f6a9839c223e
 	github.com/redis/go-redis/v9 v9.0.4
+	github.com/robfig/cron/v3 v3.0.0
 	github.com/rs/zerolog v1.29.0
 	github.com/sashabaranov/go-openai v1.17.6
 	github.com/spf13/cobra v1.6.1

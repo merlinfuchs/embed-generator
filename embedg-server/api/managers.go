@@ -8,13 +8,15 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/custom_bots"
+	"github.com/merlinfuchs/embed-generator/embedg-server/scheduled_messages"
 )
 
 type managers struct {
-	session    *session.SessionManager
-	access     *access.AccessManager
-	premium    *premium.PremiumManager
-	customBots *custom_bots.CustomBotManager
+	session           *session.SessionManager
+	access            *access.AccessManager
+	premium           *premium.PremiumManager
+	customBots        *custom_bots.CustomBotManager
+	scheduledMessages *scheduled_messages.ScheduledMessageManager
 
 	actionParser  *parser.ActionParser
 	actionHandler *handler.ActionHandler
@@ -29,16 +31,18 @@ func createManagers(stores *stores, bot *bot.Bot) *managers {
 	actionHandler := handler.New(stores.pg, actionParser)
 
 	customBots := custom_bots.NewCustomBotManager(stores.pg, actionHandler)
+	scheduledMessages := scheduled_messages.NewScheduledMessageManager(stores.pg, actionParser, bot)
 
 	bot.ActionHandler = actionHandler
 	bot.ActionParser = actionParser
 
 	return &managers{
-		session:       sessionManager,
-		access:        accessManager,
-		premium:       premiumManager,
-		customBots:    customBots,
-		actionParser:  actionParser,
-		actionHandler: actionHandler,
+		session:           sessionManager,
+		access:            accessManager,
+		premium:           premiumManager,
+		customBots:        customBots,
+		scheduledMessages: scheduledMessages,
+		actionParser:      actionParser,
+		actionHandler:     actionHandler,
 	}
 }

@@ -14,6 +14,7 @@ const LazyPremiumView = lazy(() => import("./views/premium"));
 const LazyShareRestoreView = lazy(() => import("./views/editor/shareRestore"));
 const LazySettingsView = lazy(() => import("./views/settings"));
 const LazyCommandsView = lazy(() => import("./views/commands"));
+const LazyScheduledMessagesView = lazy(() => import("./views/scheduled"));
 
 function SuspendedView({ children }: { children: ReactNode }) {
   return <Suspense>{children}</Suspense>;
@@ -68,6 +69,14 @@ function App() {
             element={
               <SuspendedView>
                 <LazyCommandsView />
+              </SuspendedView>
+            }
+          />
+          <Route
+            path="/scheduled"
+            element={
+              <SuspendedView>
+                <LazyScheduledMessagesView />
               </SuspendedView>
             }
           />

@@ -11,6 +11,7 @@ import {
   PlusCircleIcon,
   ArrowRightOnRectangleIcon,
   CommandLineIcon,
+  CalendarDaysIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useEffect, useMemo, useState } from "react";
@@ -20,7 +21,6 @@ import { useGuildsQuery, useUserQuery } from "../api/queries";
 import { guildIconUrl } from "../discord/cdn";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { shallow } from "zustand/shallow";
-import { usePremiumGuildFeatures } from "../util/premium";
 
 export default function SideNav() {
   const [preCollapsed, setCollapsed] = useState(
@@ -32,14 +32,12 @@ export default function SideNav() {
 
   const collapsed = preCollapsed && hidden;
 
-  const features = usePremiumGuildFeatures();
-
   return (
     <>
       <div
         className={clsx(
           "h-full bg-dark-3 flex-none transition-all fixed z-30 shadow",
-          collapsed ? "w-16" : "w-56",
+          collapsed ? "w-16" : "w-64",
           hidden && "hidden xl:relative xl:block"
         )}
       >
@@ -108,6 +106,13 @@ export default function SideNav() {
                 setHidden={setHidden}
               />
               <NavigationButton
+                href="/scheduled"
+                label="Scheduled Messages"
+                icon={CalendarDaysIcon}
+                collapsed={collapsed}
+                setHidden={setHidden}
+              />
+              <NavigationButton
                 href="/commands"
                 label="Commands"
                 icon={CommandLineIcon}
@@ -162,7 +167,7 @@ export default function SideNav() {
         ></div>
       )}
       <div
-        className="block xl:hidden fixed w-12 h-12 rounded-full bg-blurple bottom-3 left-3 flex items-center justify-center cursor-pointer z-10"
+        className="xl:hidden fixed w-12 h-12 rounded-full bg-blurple bottom-3 left-3 flex items-center justify-center cursor-pointer z-10"
         onClick={() => setHidden((h) => !h)}
         role="button"
       >
@@ -207,6 +212,7 @@ function NavigationButton({
               isActive ? "text-blurple" : "text-gray-300 group-hover:text-white"
             )}
             aria-label={label}
+            title={label}
           />
           {!collapsed && (
             <div
