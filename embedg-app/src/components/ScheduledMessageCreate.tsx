@@ -37,7 +37,7 @@ export default function ScheduledMessageCreate({
   const [startAt, setStartAt] = useState<string | undefined>();
   const [endAt, setEndAt] = useState<string | undefined>();
   const [cronExpression, setCronExpression] = useState<string | null>(
-    "0 0 * * *"
+    "* * * * *"
   );
   const [messageId, setMessageId] = useState<string | null>(null);
   const [channelId, setChannelId] = useState<string | null>(null);

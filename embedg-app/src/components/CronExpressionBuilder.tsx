@@ -9,7 +9,7 @@ interface Props {
 
 export default function CronExpressionBuilder({ value, onChange }: Props) {
   const sevenFieldExpression = useMemo(
-    () => (value ? "* " + value + " *" : undefined),
+    () => (value ? "0 " + value + " *" : undefined),
     [value]
   );
 
@@ -20,10 +20,6 @@ export default function CronExpressionBuilder({ value, onChange }: Props) {
     }
 
     const parts = v.split(" ");
-    if (parts.length === 7) {
-      onChange(parts.slice(2, 6).join(" "));
-    }
-
     onChange(parts.slice(1, 6).join(" "));
   };
 
@@ -38,7 +34,7 @@ export default function CronExpressionBuilder({ value, onChange }: Props) {
         onChange={(v) => setSevenFieldExpression(v || null)}
         value={sevenFieldExpression}
         showResultText={true}
-        showResultCron={true}
+        showResultCron={false}
       />
     </div>
   );

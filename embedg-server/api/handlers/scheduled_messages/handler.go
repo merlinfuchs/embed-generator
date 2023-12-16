@@ -99,6 +99,7 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 		OnlyOnce:  req.OnlyOnce,
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
+		Enabled:   req.Enabled,
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create scheduled message")
