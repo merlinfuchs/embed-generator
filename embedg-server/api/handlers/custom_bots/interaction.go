@@ -72,7 +72,9 @@ func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 		}
 
 		go func() {
-			err := h.bot.ActionHandler.HandleActionInteraction(h.bot.Session, ri)
+			session, _ := discordgo.New("Bot " + customBot.Token)
+
+			err := h.bot.ActionHandler.HandleActionInteraction(session, ri)
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to handle action interaction")
 			}

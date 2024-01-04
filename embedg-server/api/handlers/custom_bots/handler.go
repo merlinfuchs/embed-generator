@@ -295,7 +295,7 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 }
 
 func botInvite(clientID, guildID string) string {
-	return fmt.Sprintf("https://discord.com/oauth2/authorize?client_id=%s&scope=bot&permissions=536870912&guild_id=%s", clientID, guildID)
+	return fmt.Sprintf("https://discord.com/oauth2/authorize?client_id=%s&scope=bot&permissions=805306368&guild_id=%s", clientID, guildID)
 }
 
 func interactionEndpointURL(id string) string {
