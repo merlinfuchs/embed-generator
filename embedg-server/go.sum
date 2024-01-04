@@ -853,6 +853,10 @@ github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182aff
 github.com/maxbrunsfeld/counterfeiter/v6 v6.2.2/go.mod h1:eD9eIE7cdwcMi9rYluz88Jz2VyhSmden33/aXg4oVIY=
 github.com/merlinfuchs/discordgo v0.0.0-20231008082327-8d202b79141a h1:87+bDyML+4VGLsjKdPXo7T/FknWuICX8CrYTD8aCz18=
 github.com/merlinfuchs/discordgo v0.0.0-20231008082327-8d202b79141a/go.mod h1:xAeB1tSUX3ilHSX7DKudmCAuIj5z/UZJDCbr8QKpMzI=
+github.com/merlinfuchs/discordgo v0.0.0-20240104092355-59e25c210200 h1:85KegQyhCjYlp+fd7H8eKFkbL0R1DXyI2RDhIJmqo0U=
+github.com/merlinfuchs/discordgo v0.0.0-20240104092355-59e25c210200/go.mod h1:xAeB1tSUX3ilHSX7DKudmCAuIj5z/UZJDCbr8QKpMzI=
+github.com/merlinfuchs/discordgo v0.0.0-20240104092729-b8cc2e0c165b h1:kDFUnynkS2q4ydT1BbUG1/jR0UQk92tnRLHhmFWJ9ac=
+github.com/merlinfuchs/discordgo v0.0.0-20240104092729-b8cc2e0c165b/go.mod h1:xAeB1tSUX3ilHSX7DKudmCAuIj5z/UZJDCbr8QKpMzI=
 github.com/merlinfuchs/embed-generator/embedg-site v0.0.0-20231008112155-6159480ecdbf h1:2gfrkGaSc94oc2XhTvXHzs43h3KozEKt/xqgShill5M=
 github.com/merlinfuchs/embed-generator/embedg-site v0.0.0-20231008112155-6159480ecdbf/go.mod h1:JcvikErltUsWRvLr2KcxeoKfwOSNkgxIaYk0oBBFVRQ=
 github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=

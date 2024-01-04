@@ -38,9 +38,9 @@ func (m *ActionParser) ParseMessageComponents(data []actions.ActionRowWithAction
 		}
 
 		for y, component := range row.Components {
-			var emoji discordgo.ComponentEmoji
+			var emoji *discordgo.ComponentEmoji
 			if component.Emoji != nil {
-				emoji = *component.Emoji
+				emoji = component.Emoji
 			}
 
 			if component.Type == discordgo.ButtonComponent {
