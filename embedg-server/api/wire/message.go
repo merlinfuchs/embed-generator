@@ -79,6 +79,7 @@ func (req MessageSendToWebhookRequestWire) Validate() error {
 type MessageSendToChannelRequestWire struct {
 	GuildID     string                   `json:"guild_id"`
 	ChannelID   string                   `json:"channel_id"`
+	ThreadName  null.String              `json:"thread_name"`
 	MessageID   null.String              `json:"message_id"`
 	Data        json.RawMessage          `json:"data"`
 	Attachments []*MessageAttachmentWire `json:"attachments"`
@@ -97,6 +98,7 @@ type MessageAttachmentWire struct {
 
 type MessageSendResponseDataWire struct {
 	MessageID string `json:"message_id"`
+	ChannelID string `json:"channel_id"`
 }
 
 type MessageSendResponseWire APIResponse[MessageSendResponseDataWire]

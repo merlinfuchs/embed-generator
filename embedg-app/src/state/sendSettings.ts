@@ -13,6 +13,7 @@ export interface SendSettingsStore {
   // channel
   guildId: string | null;
   channelId: string | null;
+  threadName: string | null;
 
   setMode: (mode: "webhook" | "channel") => void;
   setMessageId: (messageId: string | null) => void;
@@ -20,6 +21,7 @@ export interface SendSettingsStore {
   setThreadId: (threadId: string | null) => void;
   setGuildId: (guildId: string | null) => void;
   setChannelId: (channelId: string | null) => void;
+  setThreadName: (threadName: string | null) => void;
 }
 
 export const useSendSettingsStore = create<SendSettingsStore>()(
@@ -31,6 +33,7 @@ export const useSendSettingsStore = create<SendSettingsStore>()(
       threadId: null,
       guildId: null,
       channelId: null,
+      threadName: null,
 
       setMode: (mode: "webhook" | "channel") => set({ mode }),
       setMessageId: (messageId: string | null) => set({ messageId }),
@@ -38,6 +41,7 @@ export const useSendSettingsStore = create<SendSettingsStore>()(
       setThreadId: (threadId: string | null) => set({ threadId }),
       setGuildId: (guildId: string | null) => set({ guildId }),
       setChannelId: (channelId: string | null) => set({ channelId }),
+      setThreadName: (threadName: string | null) => set({ threadName }),
     }),
     { name: "send-settings", version: 0 }
   )

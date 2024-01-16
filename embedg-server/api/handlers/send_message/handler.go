@@ -63,7 +63,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		Content:         data.Content,
 		Username:        data.Username,
 		AvatarURL:       data.AvatarURL,
-		ThreadName:      data.ThreadName,
+		ThreadName:      req.ThreadName.String,
 		TTS:             data.TTS,
 		Embeds:          data.Embeds,
 		AllowedMentions: data.AllowedMentions,
@@ -156,6 +156,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		Success: true,
 		Data: wire.MessageSendResponseDataWire{
 			MessageID: msg.ID,
+			ChannelID: msg.ChannelID,
 		},
 	})
 }
@@ -231,6 +232,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		Success: true,
 		Data: wire.MessageSendResponseDataWire{
 			MessageID: msg.ID,
+			ChannelID: msg.ChannelID,
 		},
 	})
 }

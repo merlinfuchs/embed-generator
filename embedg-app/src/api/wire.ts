@@ -207,6 +207,7 @@ export interface MessageSendToWebhookRequestWire {
 export interface MessageSendToChannelRequestWire {
   guild_id: string;
   channel_id: string;
+  thread_name: null | string;
   message_id: null | string;
   data: Record<string, any> | null;
   attachments: (MessageAttachmentWire | undefined)[];
@@ -219,6 +220,7 @@ export interface MessageAttachmentWire {
 }
 export interface MessageSendResponseDataWire {
   message_id: string;
+  channel_id: string;
 }
 export type MessageSendResponseWire = APIResponse<MessageSendResponseDataWire>;
 export interface MessageRestoreFromWebhookRequestWire {

@@ -123,7 +123,6 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		Content:         data.Content,
 		Username:        data.Username,
 		AvatarURL:       data.AvatarURL,
-		ThreadName:      data.ThreadName,
 		TTS:             data.TTS,
 		Embeds:          data.Embeds,
 		AllowedMentions: data.AllowedMentions,

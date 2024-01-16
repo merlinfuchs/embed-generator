@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useSendMessageToChannelMutation } from "../api/mutations";
-import { useUserQuery } from "../api/queries";
+import { useGuildChannelsQuery, useUserQuery } from "../api/queries";
 import { useCurrentMessageStore } from "../state/message";
 import { ChannelSelect } from "./ChannelSelect";
 import GuildSelect from "./GuildSelect";
@@ -34,7 +34,17 @@ export default function SendMenuChannel() {
     shallow
   );
 
+  const [threadName, setThreadName] = useSendSettingsStore(
+    (state) => [state.threadName, state.setThreadName],
+    shallow
+  );
+
+  const { data: channels } = useGuildChannelsQuery(selectedGuildId);
   const { data: user } = useUserQuery();
+
+  const selectedChannel = channels?.success
+    ? channels.data.find((c) => c.id === selectedChannnelId)
+    : null;
 
   const sendToChannelMutation = useSendMessageToChannelMutation();
 
@@ -61,10 +71,15 @@ export default function SendMenuChannel() {
       return;
     }
 
+    if (edit && selectedChannel?.type === 15) {
+      return;
+    }
+
     sendToChannelMutation.mutate(
       {
         guild_id: selectedGuildId,
         channel_id: selectedChannnelId,
+        thread_name: selectedChannel?.type === 15 ? threadName : null,
         message_id: edit ? messageId : null,
         data: useCurrentMessageStore.getState(),
         attachments: useCurrentAttachmentsStore.getState().attachments,
@@ -126,6 +141,26 @@ export default function SendMenuChannel() {
           />
         </div>
       </div>
+      {selectedChannel?.type === 15 && (
+        <div className="flex">
+          <div className="flex-auto">
+            <div className="uppercase text-gray-300 text-sm font-medium mb-1">
+              Thread Name
+            </div>
+            <div className="mb-2 text-gray-400 text-sm font-light">
+              When sending to a Forum Channel you have to set a name for the
+              thread that is being created.
+            </div>
+            <input
+              type="text"
+              maxLength={100}
+              className="bg-dark-2 px-3 py-2 rounded w-full focus:outline-none text-white"
+              value={threadName ?? ""}
+              onChange={(e) => setThreadName(e.target.value || null)}
+            />
+          </div>
+        </div>
+      )}
       <div>
         {validationError && (
           <div className="flex items-center text-red space-x-1">
@@ -143,7 +178,9 @@ export default function SendMenuChannel() {
           {messageId && (
             <div
               className={`px-3 py-2 rounded text-white flex items-center space-x-3 ${
-                validationError || !selectedChannnelId
+                validationError ||
+                !selectedChannnelId ||
+                selectedChannel?.type === 15
                   ? "cursor-not-allowed bg-dark-2"
                   : "bg-blurple hover:bg-blurple-dark cursor-pointer"
               }`}
@@ -158,7 +195,9 @@ export default function SendMenuChannel() {
           )}
           <div
             className={`px-3 py-2 rounded text-white flex items-center space-x-3 ${
-              validationError || !selectedChannnelId
+              validationError ||
+              !selectedChannnelId ||
+              (selectedChannel?.type === 15 && !threadName)
                 ? "cursor-not-allowed bg-dark-2"
                 : "bg-blurple hover:bg-blurple-dark cursor-pointer"
             }`}

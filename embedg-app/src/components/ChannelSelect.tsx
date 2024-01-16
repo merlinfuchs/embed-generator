@@ -14,8 +14,15 @@ interface Props {
 }
 
 function canSelectChannelType(type: number) {
-  // text, announcement, announcement thread, text thread, (TODO: forum?)
-  return type === 0 || type === 5 || type === 10 || type === 11 || type === 12;
+  // text, announcement, announcement thread, text thread, forum
+  return (
+    type === 0 ||
+    type === 5 ||
+    type === 10 ||
+    type === 11 ||
+    type === 12 ||
+    type === 15
+  );
 }
 
 export function ChannelSelect({ guildId, channelId, onChange }: Props) {
@@ -123,7 +130,13 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
         >
           {channel ? (
             <div className="flex items-center space-x-2 cursor-pointer w-full">
-              <div className="text-xl italic text-gray-400 font-light">#</div>
+              {channel.type === 15 ? (
+                <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-300" />
+              ) : (
+                <div className="text-xl italic text-gray-400 font-light pl-1">
+                  #
+                </div>
+              )}
               <div className="text-gray-300 flex-auto truncate">
                 {channel.name}
               </div>
