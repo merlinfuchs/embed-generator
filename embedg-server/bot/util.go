@@ -18,7 +18,7 @@ func (b *Bot) GetWebhookForChannel(channelID string) (*discordgo.Webhook, error)
 		return nil, fmt.Errorf("Failed to get channel: %w", err)
 	}
 
-	if channel.Type == discordgo.ChannelTypeGuildNewsThread || channel.Type == discordgo.ChannelTypeGuildPublicThread {
+	if channel.Type == discordgo.ChannelTypeGuildNewsThread || channel.Type == discordgo.ChannelTypeGuildPublicThread || channel.Type == discordgo.ChannelTypeGuildPrivateThread {
 		channel, err = b.State.Channel(channel.ParentID)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get parent channel: %w", err)

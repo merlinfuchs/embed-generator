@@ -15,7 +15,7 @@ interface Props {
 
 function canSelectChannelType(type: number) {
   // text, announcement, announcement thread, text thread, (TODO: forum?)
-  return type === 0 || type === 5 || type === 10 || type === 11;
+  return type === 0 || type === 5 || type === 10 || type === 11 || type === 12;
 }
 
 export function ChannelSelect({ guildId, channelId, onChange }: Props) {
@@ -68,6 +68,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
           childChannel.type === 5 ||
           childChannel.type === 10 ||
           childChannel.type === 11 ||
+          childChannel.type === 12 ||
           childChannel.type === 13 ||
           childChannel.type === 15
         ) {
@@ -85,7 +86,11 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
         for (const childThread of rawChannels) {
           if (childThread.parent_id !== childChannel.id) continue;
 
-          if (childThread.type === 10 || childThread.type === 11) {
+          if (
+            childThread.type === 10 ||
+            childThread.type === 11 ||
+            childThread.type === 12
+          ) {
             // announcement thread, text thread
             res.push({
               ...childThread,
