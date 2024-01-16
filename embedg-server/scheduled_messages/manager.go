@@ -92,20 +92,20 @@ func (m *ScheduledMessageManager) lazySendScheduledMessagesTask() {
 	}
 }
 
-func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, msg postgres.ScheduledMessage) error {
-	webhook, err := m.bot.GetWebhookForChannel(msg.ChannelID)
+func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, scheduledMessage postgres.ScheduledMessage) error {
+	webhook, err := m.bot.GetWebhookForChannel(scheduledMessage.ChannelID)
 	if err != nil {
 		return fmt.Errorf("Failed to get webhook for channel: %w", err)
 	}
 	threadID := ""
-	if webhook.ChannelID != msg.ChannelID {
-		threadID = msg.ChannelID
+	if webhook.ChannelID != scheduledMessage.ChannelID {
+		threadID = scheduledMessage.ChannelID
 	}
 
 	savedMsg, err := m.pg.Q.GetSavedMessageForGuild(ctx, postgres.GetSavedMessageForGuildParams{
-		ID: msg.SavedMessageID,
+		ID: scheduledMessage.SavedMessageID,
 		GuildID: sql.NullString{
-			String: msg.GuildID,
+			String: scheduledMessage.GuildID,
 			Valid:  true,
 		},
 	})
@@ -129,7 +129,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, msg 
 		AllowedMentions: data.AllowedMentions,
 	}
 
-	customBot, err := m.pg.Q.GetCustomBotByGuildID(ctx, msg.GuildID)
+	customBot, err := m.pg.Q.GetCustomBotByGuildID(ctx, scheduledMessage.GuildID)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			log.Error().Err(err).Msg("failed to get custom bot for message username and avatar")
@@ -150,16 +150,17 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, msg 
 
 	params.Components = components
 
+	var msg *discordgo.Message
 	if threadID != "" {
-		_, err = m.bot.Session.WebhookThreadExecute(webhook.ID, webhook.Token, true, threadID, params)
+		msg, err = m.bot.Session.WebhookThreadExecute(webhook.ID, webhook.Token, true, threadID, params)
 	} else {
-		_, err = m.bot.Session.WebhookExecute(webhook.ID, webhook.Token, true, params)
+		msg, err = m.bot.Session.WebhookExecute(webhook.ID, webhook.Token, true, params)
 	}
 	if err != nil {
 		return fmt.Errorf("Failed to send message: %w", err)
 	}
 
-	permContext, err := m.actionParser.DerivePermissionsForActions(msg.CreatorID, msg.GuildID, msg.ChannelID)
+	permContext, err := m.actionParser.DerivePermissionsForActions(scheduledMessage.CreatorID, scheduledMessage.GuildID, scheduledMessage.ChannelID)
 	if err != nil {
 		return fmt.Errorf("Failed to create permission context: %w", err)
 	}
