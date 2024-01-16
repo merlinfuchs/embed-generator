@@ -13,6 +13,7 @@ type AccessManager struct {
 	state       *discordgo.State
 	session     *discordgo.Session
 	memberCache *ttlcache.Cache[string, *discordgo.Member]
+	memberLocks sync.Map
 }
 
 func New(state *discordgo.State, session *discordgo.Session) *AccessManager {
@@ -26,6 +27,7 @@ func New(state *discordgo.State, session *discordgo.Session) *AccessManager {
 		state:       state,
 		session:     session,
 		memberCache: memberCache,
+		memberLocks: sync.Map{},
 	}
 }
 
@@ -156,6 +158,16 @@ func (m *AccessManager) ComputeBotPermissionsForChannel(channelID string) (int64
 }
 
 func (m *AccessManager) GetGuildMember(guildID string, userID string) (*discordgo.Member, error) {
+	// We don't want multiple goroutines to fetch the same member at the same time
+	lockKey := memberLockKey{guildID: guildID, userID: userID}
+	lock, _ := m.memberLocks.LoadOrStore(lockKey, &sync.Mutex{})
+
+	lock.(*sync.Mutex).Lock()
+	defer lock.(*sync.Mutex).Unlock()
+
+	// Can this lead to a raise condigion? (it wouldn't be a big)
+	defer m.memberLocks.Delete(lockKey)
+
 	cacheKey := guildID + userID
 	cacheItem := m.memberCache.Get(cacheKey)
 	if cacheItem != nil {
@@ -169,4 +181,9 @@ func (m *AccessManager) GetGuildMember(guildID string, userID string) (*discordg
 
 	m.memberCache.Set(cacheKey, member, time.Minute*3)
 	return member, nil
+}
+
+type memberLockKey struct {
+	guildID string
+	userID  string
 }
