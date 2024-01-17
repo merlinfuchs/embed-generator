@@ -139,7 +139,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			var err error
 			if hasRole {
 				err = s.GuildMemberRoleRemove(interaction.GuildID, interaction.Member.User.ID, action.TargetID)
-				if err == nil {
+				if err == nil && !action.DisableDefaultResponse {
 					i.Respond(&discordgo.InteractionResponseData{
 						Content: fmt.Sprintf("Removed role <@&%s>", action.TargetID),
 						Flags:   discordgo.MessageFlagsEphemeral,
@@ -147,7 +147,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				}
 			} else {
 				err = s.GuildMemberRoleAdd(interaction.GuildID, interaction.Member.User.ID, action.TargetID)
-				if err == nil {
+				if err == nil && !action.DisableDefaultResponse {
 					i.Respond(&discordgo.InteractionResponseData{
 						Content: fmt.Sprintf("Added role <@&%s>", action.TargetID),
 						Flags:   discordgo.MessageFlagsEphemeral,
@@ -172,10 +172,12 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 
 			err := s.GuildMemberRoleAdd(interaction.GuildID, interaction.Member.User.ID, action.TargetID)
 			if err == nil {
-				i.Respond(&discordgo.InteractionResponseData{
-					Content: fmt.Sprintf("Added role <@&%s>", action.TargetID),
-					Flags:   discordgo.MessageFlagsEphemeral,
-				})
+				if !action.DisableDefaultResponse {
+					i.Respond(&discordgo.InteractionResponseData{
+						Content: fmt.Sprintf("Added role <@&%s>", action.TargetID),
+						Flags:   discordgo.MessageFlagsEphemeral,
+					})
+				}
 			} else {
 				log.Error().Err(err).Msg("Failed to add role")
 				i.Respond(&discordgo.InteractionResponseData{

@@ -57,15 +57,17 @@ export default function EditorAction({ setId, actionIndex }: Props) {
     shallow
   );
 
-  const [setType, setText, setTargetId, setPublic] = useCurrentMessageStore(
-    (state) => [
-      state.setActionType,
-      state.setActionText,
-      state.setActionTargetId,
-      state.setActionPublic,
-    ],
-    shallow
-  );
+  const [setType, setText, setTargetId, setPublic, setDisableDefaultResponse] =
+    useCurrentMessageStore(
+      (state) => [
+        state.setActionType,
+        state.setActionText,
+        state.setActionTargetId,
+        state.setActionPublic,
+        state.setActionDisableDefaultResponse,
+      ],
+      shallow
+    );
 
   return (
     <Action
@@ -84,6 +86,9 @@ export default function EditorAction({ setId, actionIndex }: Props) {
       setType={(type) => setType(setId, actionIndex, type)}
       setTargetId={(id) => setTargetId(setId, actionIndex, id)}
       setPublic={(public_) => setPublic(setId, actionIndex, public_)}
+      setDisableDefaultResponse={(disable) =>
+        setDisableDefaultResponse(setId, actionIndex, disable)
+      }
     />
   );
 }

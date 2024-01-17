@@ -64,10 +64,11 @@ const (
 )
 
 type Action struct {
-	Type     ActionType `json:"type"`
-	TargetID string     `json:"target_id"`
-	Text     string     `json:"text"`
-	Public   bool       `json:"public"`
+	Type                   ActionType `json:"type"`
+	TargetID               string     `json:"target_id"`
+	Text                   string     `json:"text"`
+	Public                 bool       `json:"public"`
+	DisableDefaultResponse bool       `json:"disable_default_response"`
 }
 
 type ActionSet struct {

@@ -17,6 +17,11 @@ export interface ActionsStore {
   setActionText: (id: string, i: number, text: string) => void;
   setActionTargetId: (id: string, i: number, target: string) => void;
   setActionPublic: (id: string, i: number, val: boolean) => void;
+  setActionDisableDefaultResponse: (
+    id: string,
+    i: number,
+    val: boolean
+  ) => void;
 
   actions: Record<string, MessageActionSet>;
 }
@@ -105,19 +110,20 @@ export const createMessageStore = (key: string) =>
                   text: "",
                   public: false,
                 };
-              } else if (
-                type === 2 ||
-                type === 3 ||
-                type === 4 ||
-                type === 5 ||
-                type === 7 ||
-                type === 9
-              ) {
+              } else if (type === 5 || type === 7 || type === 9) {
                 actionSet.actions[i] = {
                   type,
                   id: action.id,
                   target_id: "",
                   public: false,
+                };
+              } else if (type === 2 || type === 3 || type === 4) {
+                actionSet.actions[i] = {
+                  type,
+                  id: action.id,
+                  target_id: "",
+                  public: false,
+                  disable_default_response: false,
                 };
               }
             }),
@@ -149,6 +155,18 @@ export const createMessageStore = (key: string) =>
               const actionSet = state.actions[id];
               const action = actionSet.actions[i];
               action.public = val;
+            }),
+          setActionDisableDefaultResponse: (
+            id: string,
+            i: number,
+            val: boolean
+          ) =>
+            set((state) => {
+              const actionSet = state.actions[id];
+              const action = actionSet.actions[i];
+              if (action.type === 2 || action.type === 3 || action.type === 4) {
+                action.disable_default_response = val;
+              }
             }),
         }),
         { name: key, version: 0 }

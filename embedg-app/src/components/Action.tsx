@@ -30,6 +30,7 @@ interface Props {
   setText(text: string): void;
   setTargetId(targetId: string): void;
   setPublic(p: boolean): void;
+  setDisableDefaultResponse(p: boolean): void;
 }
 
 const actionTypes = {
@@ -72,6 +73,7 @@ export default function Action({
   setText,
   setTargetId,
   setPublic,
+  setDisableDefaultResponse,
 }: Props) {
   const actionTypeGroup = useMemo(() => {
     switch (action.type) {
@@ -246,6 +248,26 @@ export default function Action({
                   className="h-9 w-9 rounded bg-dark-2 p-1"
                 >
                   {action.public && <CheckIcon className="text-white" />}
+                </div>
+              </div>
+            )}
+            {(action.type === 2 || action.type === 3 || action.type === 4) && (
+              <div className="flex-none">
+                <div className="mb-1.5 flex">
+                  <div className="uppercase text-gray-300 text-sm font-medium">
+                    Default Response
+                  </div>
+                </div>
+                <div
+                  role="button"
+                  onClick={() =>
+                    setDisableDefaultResponse(!action.disable_default_response)
+                  }
+                  className="h-9 w-9 rounded bg-dark-2 p-1"
+                >
+                  {!action.disable_default_response && (
+                    <CheckIcon className="text-white" />
+                  )}
                 </div>
               </div>
             )}
