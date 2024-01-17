@@ -3,7 +3,7 @@ import {
   ChevronDownIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useGuildChannelsQuery } from "../api/queries";
 import ClickOutsideHandler from "./ClickOutsideHandler";
 
@@ -28,12 +28,25 @@ function canSelectChannelType(type: number) {
 export function ChannelSelect({ guildId, channelId, onChange }: Props) {
   const { data } = useGuildChannelsQuery(guildId);
 
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const [open, innerSetOpen] = useState(false);
+  const [query, setQuery] = useState("");
+
+  function setOpen(open: boolean) {
+    innerSetOpen(open);
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 0);
+    } else {
+      inputRef.current?.blur();
+      setQuery("");
+    }
+  }
+
   function selectChannel(channelId: string) {
     onChange(channelId);
     setOpen(false);
   }
-
-  const [open, setOpen] = useState(false);
 
   const channels = useMemo(() => {
     const rawChannels = data?.success ? data.data : [];
@@ -115,6 +128,15 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
     return res;
   }, [data]);
 
+  const filteredChannels = useMemo(() => {
+    if (!query) return channels;
+
+    const q = query.toLowerCase();
+    if (!q) return channels;
+
+    return channels.filter((c) => c.id === q || c.name.includes(q));
+  }, [channels, query]);
+
   const channel = useMemo(
     () => channels.find((c) => c.id === channelId),
     [channels, channelId]
@@ -123,38 +145,41 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
       <div className="px-3 h-10 flex items-center rounded bg-dark-2 relative select-none">
-        <div
-          role="button"
-          onClick={() => setOpen((prev) => !prev)}
-          className="flex-auto"
-        >
-          {channel ? (
-            <div className="flex items-center space-x-2 cursor-pointer w-full">
-              {channel.type === 15 ? (
-                <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-300" />
-              ) : (
-                <div className="text-xl italic text-gray-400 font-light pl-1">
-                  #
-                </div>
-              )}
-              <div className="text-gray-300 flex-auto truncate">
-                {channel.name}
-              </div>
-              <ChevronDownIcon
-                className={clsx(
-                  "text-white w-5 h-5 flex-none transition-transform",
-                  open && "rotate-180"
+        <div role="button" onClick={() => setOpen(!open)} className="flex-auto">
+          <input
+            type="text"
+            ref={inputRef}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className={clsx(
+              "text-gray-300 flex-auto bg-dark-2 focus:outline-none",
+              open ? "hidden md:block" : "hidden"
+            )}
+          />
+          <div className={open ? "md:hidden" : ""}>
+            {channel ? (
+              <div className="flex items-center space-x-2 cursor-pointer w-full">
+                {channel.type === 15 ? (
+                  <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-300" />
+                ) : (
+                  <div className="text-xl italic text-gray-400 font-light pl-1">
+                    #
+                  </div>
                 )}
-              />
-            </div>
-          ) : (
-            <div className="text-gray-300">Select channel</div>
-          )}
+                <div className="text-gray-300 flex-auto truncate">
+                  {channel.name}
+                </div>
+                <ChevronDownIcon className="text-white w-5 h-5 flex-none transition-transform" />
+              </div>
+            ) : (
+              <div className="text-gray-300">Select channel</div>
+            )}
+          </div>
         </div>
         {open && (
           <div className="absolute bg-dark-2 top-14 left-0 rounded shadow-lg w-full border-2 border-dark-2 z-10 max-h-48 overflow-y-auto overflow-x-none">
-            {channels.length ? (
-              channels.map((c) => (
+            {filteredChannels.length ? (
+              filteredChannels.map((c) => (
                 <div
                   key={c.id}
                   className={clsx(
