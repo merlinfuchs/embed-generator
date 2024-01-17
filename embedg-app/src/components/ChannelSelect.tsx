@@ -122,7 +122,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
 
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
-      <div className="px-3 h-10 flex items-center rounded bg-dark-2 relative">
+      <div className="px-3 h-10 flex items-center rounded bg-dark-2 relative select-none">
         <div
           role="button"
           onClick={() => setOpen((prev) => !prev)}

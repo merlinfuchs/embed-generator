@@ -50,7 +50,7 @@ export default function GuildSelect({ guildId, onChange }: Props) {
 
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
-      <div className="px-3 rounded bg-dark-2 relative flex items-center h-10">
+      <div className="px-3 rounded bg-dark-2 relative flex items-center h-10 select-none">
         <div
           onClick={() => setOpen((prev) => !prev)}
           role="button"
