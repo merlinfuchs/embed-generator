@@ -274,6 +274,21 @@ const bodyRules = {
       );
     },
   }),
+  heading: Object.assign({}, markdown.defaultRules.heading, {
+    match: function (source, state) {
+      if (state.prevCapture === null || state.prevCapture[0] === "\n") {
+        const re = /^(#{1,3}) +([^\n]+?)(\n|$)/;
+        return re.exec(source);
+      }
+      return null;
+    },
+  }),
+  list: Object.assign({}, markdown.defaultRules.list, {
+    match: function (source, state, prevCapture) {
+      state._list = true;
+      return markdown.defaultRules.list.match(source, state, prevCapture);
+    },
+  }),
 
   discordUser: {
     order: markdown.defaultRules.strong.order,

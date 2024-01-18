@@ -1123,8 +1123,46 @@ Sources from: https://github.com/skyra-project/skyra.pw/blob/main/src/config/dis
   position: relative;
 }
 
-.discord-message .discord-message-body strong {
+.discord-message .discord-message-body {
   font-weight: 700;
+}
+
+.discord-message h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 16px 0 8px;
+  color: rgb(242, 243, 245);
+}
+
+.discord-message h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 16px 0 8px;
+  color: rgb(242, 243, 245);
+}
+
+.discord-message h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 16px 0 8px;
+  color: rgb(242, 243, 245);
+}
+
+.discord-message ol {
+  list-style-type: decimal;
+  list-style-position: outside;
+  margin: 4px 0 0 16px;
+}
+
+.discord-message ul {
+  list-style-type: disc;
+  list-style-position: outside;
+  margin: 4px 0 0 16px;
+}
+
+.discord-message li {
+  white-space: break-spaces;
+  margin-bottom: 4px;
 }
 
 .discord-message .discord-message-body em {
