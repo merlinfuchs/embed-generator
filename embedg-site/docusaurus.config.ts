@@ -1,11 +1,8 @@
-// @ts-check
-// Note: type annotations allow type checking and IDEs autocompletion
+import { themes as prismThemes } from "prism-react-renderer";
+import type { Config } from "@docusaurus/types";
+import type * as Preset from "@docusaurus/preset-classic";
 
-const lightCodeTheme = require("prism-react-renderer/themes/github");
-const darkCodeTheme = require("prism-react-renderer/themes/dracula");
-
-/** @type {import('@docusaurus/types').Config} */
-const config = {
+const config: Config = {
   title: "Embed Generator",
   tagline: "Under construction...",
   favicon: "img/logo.svg",
@@ -36,7 +33,7 @@ const config = {
     [
       "classic",
       /** @type {import('@docusaurus/preset-classic').Options} */
-      ({
+      {
         docs: {
           sidebarPath: require.resolve("./sidebars.js"),
           // Please change this to your repo.
@@ -54,13 +51,13 @@ const config = {
         theme: {
           customCss: require.resolve("./src/css/global.css"),
         },
-      }),
+      } satisfies Preset.Options,
     ],
   ],
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
-    ({
+    {
       metadata: [
         {
           name: "description",
@@ -93,6 +90,11 @@ const config = {
             sidebarId: "tutorialSidebar",
             position: "left",
             label: "Tutorial",
+          },
+          {
+            to: "blog",
+            label: "Blog",
+            position: "left",
           },
           // { to: "/blog", label: "Blog", position: "left" },
           {
@@ -144,10 +146,10 @@ const config = {
         copyright: `Copyright © ${new Date().getFullYear()} Merlin Fuchs & Contributors | Not affiliated with or endorsed by Discord Inc.`,
       },
       prism: {
-        theme: lightCodeTheme,
-        darkTheme: darkCodeTheme,
+        theme: prismThemes.github,
+        darkTheme: prismThemes.dracula,
       },
-    }),
+    } satisfies Preset.ThemeConfig,
 
   plugins: [
     async function myPlugin(context, options) {
