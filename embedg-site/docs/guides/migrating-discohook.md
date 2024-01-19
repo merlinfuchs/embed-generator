@@ -1,5 +1,5 @@
 ---
-sidebar_position: 7
+sidebar_position: 1
 ---
 
 # Migrating from Discohook
@@ -23,6 +23,6 @@ The open up the [saved messages](https://message.style/app/messages) on Embed Ge
 
 To import your messages from Discohook click on "Import" and select the file that you got from Discohook.
 
-![Saved messaages](./save-messages-feature.png)
+![Saved messaages](../features/save-messages-feature.png)
 
 That's it, your messages should be there!
