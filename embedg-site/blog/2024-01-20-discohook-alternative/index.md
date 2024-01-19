@@ -1,6 +1,6 @@
 ---
 slug: discohook-alternative
-title: The best Discohook Alternative
+title: The Best Discohook Alternative
 authors: [merlin]
 tags: [disohook, alternative, embed, discord, webhook]
 ---
