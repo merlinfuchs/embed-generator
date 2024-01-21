@@ -78,7 +78,7 @@ export default function HomeFeatures(): JSX.Element {
                       aria-hidden="true"
                     />
                   </div>
-                  {feature.name}
+                  <h2 className="text-base mb-1">{feature.name}</h2>
                 </div>
                 <div className="mt-1 flex flex-auto flex-col text-base leading-7 text-gray-300">
                   <p className="flex-auto ml-0">{feature.description}</p>

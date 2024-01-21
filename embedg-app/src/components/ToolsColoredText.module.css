@@ -1,0 +1,92 @@
+.editor {
+  white-space: pre-wrap;
+  font-size: 0.875rem;
+  line-height: 1.125rem;
+  text-indent: 0;
+  font-family: monospace;
+  color: #b9bbbe;
+}
+
+.ansi1 {
+  font-weight: 700;
+  text-decoration: none;
+}
+.ansi4 {
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+.ansi30 {
+  color: #4f545c;
+}
+.ansi31 {
+  color: #dc322f;
+}
+.ansi32 {
+  color: #859900;
+}
+.ansi33 {
+  color: #b58900;
+}
+.ansi34 {
+  color: #268bd2;
+}
+.ansi35 {
+  color: #d33682;
+}
+.ansi36 {
+  color: #2aa198;
+}
+.ansi37 {
+  color: #ffffff;
+}
+
+.ansi30bg {
+  background-color: #4f545c;
+}
+.ansi31bg {
+  background-color: #dc322f;
+}
+.ansi32bg {
+  background-color: #859900;
+}
+.ansi33bg {
+  background-color: #b58900;
+}
+.ansi34bg {
+  background-color: #268bd2;
+}
+.ansi35bg {
+  background-color: #d33682;
+}
+.ansi36bg {
+  background-color: #2aa198;
+}
+.ansi37bg {
+  background-color: #ffffff;
+}
+
+.ansi40 {
+  background-color: #002b36;
+}
+.ansi41 {
+  background-color: #cb4b16;
+}
+.ansi42 {
+  background-color: #586e75;
+}
+.ansi43 {
+  background-color: #657b83;
+}
+.ansi44 {
+  background-color: #839496;
+}
+.ansi45 {
+  background-color: #6c71c4;
+}
+.ansi46 {
+  background-color: #93a1a1;
+}
+.ansi47 {
+  background-color: #fdf6e3;
+}

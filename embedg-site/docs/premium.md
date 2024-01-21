@@ -6,7 +6,7 @@ sidebar_position: 2
 
 You want to get the most out of Embed Generator? Then [Embed Generator Premium](https://message.style/premium) is the right thing for you!
 
-You pay $4.99 a month to **support the development Embed Generator** get the following perks for your server:
+You pay $4.99 a month to **support the development Embed Generator** and get the following perks for your server:
 
 - **Up to 100 saved messages**: Save up to 100 messages instead of only 25
 - **Up to 5 component actions**: Add up to 5 actions to each interactive component instead of only 2

@@ -6,6 +6,9 @@ import RequestLoadingIndicator from "./components/RequestLoadingIndicator";
 import ClearView from "./views/editor/clear";
 import ShareView from "./views/editor/share";
 import EditorSideNav from "./components/SideNav";
+import ColoredTextToolView from "./views/tools/coloredText";
+import ToolsView from "./views/tools";
+import WebhookInfoToolView from "./views/tools/webhookInfo";
 
 const LazyJsonView = lazy(() => import("./views/editor/json"));
 const LazyAssistantView = lazy(() => import("./views/editor/assisstant"));
@@ -15,6 +18,9 @@ const LazyShareRestoreView = lazy(() => import("./views/editor/shareRestore"));
 const LazySettingsView = lazy(() => import("./views/settings"));
 const LazyCommandsView = lazy(() => import("./views/commands"));
 const LazyScheduledMessagesView = lazy(() => import("./views/scheduled"));
+const LazyToolsView = lazy(() => import("./views/tools"));
+const LazyColoredTextToolView = lazy(() => import("./views/tools/coloredText"));
+const LazyWebhookInfoToolView = lazy(() => import("./views/tools/webhookInfo"));
 
 function SuspendedView({ children }: { children: ReactNode }) {
   return <Suspense>{children}</Suspense>;
@@ -77,6 +83,30 @@ function App() {
             element={
               <SuspendedView>
                 <LazyScheduledMessagesView />
+              </SuspendedView>
+            }
+          />
+          <Route
+            path="/tools"
+            element={
+              <SuspendedView>
+                <LazyToolsView />
+              </SuspendedView>
+            }
+          />
+          <Route
+            path="/tools/colored-text"
+            element={
+              <SuspendedView>
+                <LazyColoredTextToolView />
+              </SuspendedView>
+            }
+          />
+          <Route
+            path="/tools/webhook-info"
+            element={
+              <SuspendedView>
+                <LazyWebhookInfoToolView />
               </SuspendedView>
             }
           />

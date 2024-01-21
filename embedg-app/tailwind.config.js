@@ -31,6 +31,9 @@ export default {
         192: "48rem",
         256: "64rem",
       },
+      scale: {
+        101: "1.01",
+      },
     },
   },
   plugins: [],

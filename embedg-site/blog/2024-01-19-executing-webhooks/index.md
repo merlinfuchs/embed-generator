@@ -26,21 +26,9 @@ Click on the newly created Webhook to change it's name, set and avatar and copy 
 
 Sometimes you might have the URL for a Webhook but don't actually know where it comes from or which Webhook it belongs to. This is way it can be handy to know how to extract information from a Webhook URL.
 
-To get information about a Webhook you can simply paste its URL into your browser. You will get a JSON (JavaScript Object Notation) response which contains information about your Webhook. Most of the information aren't very helpful without some knowledge about the Discord API, but you will at least be able to see the name of your Webhook!
+To get information about a Webhook you can simply paste its URL into our free [Webhook Info tool](https://message.style/app/tools/webhook-info). It will show you the Webhook name, avatar and who created the Webhook!
 
-```js
-{
-  "application_id": null,
-  "avatar": null,
-  "channel_id": "1177278388516421783",
-  "guild_id": "730045476459642900",
-  "id": "1197983293228982302",
-  "name": "Spidey Bot",
-  "type": 1,
-  "token": "...",
-  "url": "https://discord.com/api/webhooks/..."
-}
-```
+![Webhook Info](./webhook-info.png)
 
 ## Sending a Webhok Message
 

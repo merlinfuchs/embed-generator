@@ -5,9 +5,12 @@ export function userAvatarUrl(
   if (user.avatar) {
     return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=${size}`;
   } else {
-    return `https://cdn.discordapp.com/embed/avatars/${
-      parseInt(user.discriminator) % 5
-    }.png?size=${size}`;
+    let defaultAvatar: number | BigInt = parseInt(user.discriminator) % 5;
+    if (!user.discriminator || user.discriminator === "0") {
+      defaultAvatar = (BigInt(user.id) >> 22n) % 6n;
+    }
+
+    return `https://cdn.discordapp.com/embed/avatars/${defaultAvatar}.png?size=${size}`;
   }
 }
 
