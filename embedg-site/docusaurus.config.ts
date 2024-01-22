@@ -3,8 +3,8 @@ import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
 
 const config: Config = {
-  title: "Embed Generator",
-  tagline: "Under construction...",
+  title: "Embed Generator | Discord embeds without the hassle",
+  tagline: "The best way to create Discord embeds!",
   favicon: "img/logo.svg",
 
   // Set the production url of your site here
@@ -62,12 +62,24 @@ const config: Config = {
         {
           name: "description",
           content:
-            "The best way to create rich embed messages for your Discord server.",
+            "Create embed messages for your Discord server with ease and give them your own branding using webhooks.",
         },
         {
           name: "og:description",
           content:
-            "The best way to create rich embed messages for your Discord server.",
+            "Create embed messages for your Discord server with ease and give them your own branding using webhooks.",
+        },
+        {
+          name: "og:site_name",
+          content: "message.style",
+        },
+        {
+          name: "twitter:card",
+          content: "summary",
+        },
+        {
+          name: "theme-color",
+          content: "#237feb",
         },
       ],
 
@@ -76,7 +88,7 @@ const config: Config = {
       },
 
       // Replace with your project's social card
-      image: "img/example.jpg",
+      image: "img/logo-256.png",
       navbar: {
         title: "Embed Generator",
         logo: {

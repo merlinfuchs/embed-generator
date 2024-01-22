@@ -51,7 +51,6 @@ func (c *ChannelAccess) BotAccess() bool {
 
 func (m *AccessManager) GetGuildAccessForUser(userID string, guildID string) (GuildAccess, error) {
 	res := GuildAccess{}
-	mu := &sync.Mutex{}
 
 	guild, err := m.state.Guild(guildID)
 	if err != nil {
@@ -67,7 +66,6 @@ func (m *AccessManager) GetGuildAccessForUser(userID string, guildID string) (Gu
 			return res, err
 		}
 
-		mu.Lock()
 		if access.BotAccess() {
 			res.HasChannelWithBotAccess = true
 		}
@@ -77,11 +75,8 @@ func (m *AccessManager) GetGuildAccessForUser(userID string, guildID string) (Gu
 
 		// We can stop iterating if we already know that the user has access to both
 		if res.HasChannelWithBotAccess && res.HasChannelWithUserAccess {
-			mu.Unlock()
 			break
 		}
-
-		mu.Unlock()
 	}
 
 	return res, nil
@@ -158,6 +153,12 @@ func (m *AccessManager) ComputeBotPermissionsForChannel(channelID string) (int64
 }
 
 func (m *AccessManager) GetGuildMember(guildID string, userID string) (*discordgo.Member, error) {
+	cacheKey := guildID + userID
+	cacheItem := m.memberCache.Get(cacheKey)
+	if cacheItem != nil {
+		return cacheItem.Value(), nil
+	}
+
 	// We don't want multiple goroutines to fetch the same member at the same time
 	lockKey := memberLockKey{guildID: guildID, userID: userID}
 	lock, _ := m.memberLocks.LoadOrStore(lockKey, &sync.Mutex{})
@@ -165,15 +166,13 @@ func (m *AccessManager) GetGuildMember(guildID string, userID string) (*discordg
 	lock.(*sync.Mutex).Lock()
 	defer lock.(*sync.Mutex).Unlock()
 
-	// Can this lead to a raise condigion? (it wouldn't be a big)
-	defer m.memberLocks.Delete(lockKey)
-
-	cacheKey := guildID + userID
-	cacheItem := m.memberCache.Get(cacheKey)
+	// We need to check the cache again in case another goroutine already fetched the member
+	cacheItem = m.memberCache.Get(cacheKey)
 	if cacheItem != nil {
 		return cacheItem.Value(), nil
 	}
 
+	defer m.memberLocks.Delete(lockKey)
 	member, err := m.session.GuildMember(guildID, userID)
 	if err != nil {
 		return nil, err

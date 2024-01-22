@@ -9,13 +9,13 @@ export default function HomeHero(): JSX.Element {
           <img src="/img/example.jpg" alt="" className="rounded-lg shadow-lg" />
         </div>
         <div className="lg:w-1/2 px-12">
-          <div className="text-gray-100 font-bold text-6xl leading-tight mb-6">
-            The best way to create embeds!
-          </div>
-          <h1 className="text-gray-300 font-light text-lg mb-8">
-            Create rich embed messages for your Discord server with ease and
-            give them your own personal touch.
+          <h1 className="text-gray-100 font-bold text-6xl leading-tight mb-6">
+            The best way to create Discord embeds!
           </h1>
+          <h2 className="text-gray-300 font-light text-lg mb-8">
+            Create embed messages for your Discord server with ease and give
+            them your own branding using webhooks.
+          </h2>
           <div className="flex items-center">
             <a
               className="px-5 py-3 text-xl rounded-md border-2 border-solid border-gray-300 flex items-center text-gray-200 space-x-3 hover:text-white hover:border-white hover:bg-white/20 transition-colors hover:no-underline flex-none"
