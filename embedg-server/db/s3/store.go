@@ -3,9 +3,11 @@ package s3
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
@@ -29,6 +31,10 @@ func New() (*BlobStore, error) {
 	for _, bucket := range requiredBuckets {
 		exists, err := client.BucketExists(context.Background(), bucket)
 		if err != nil {
+			if strings.Contains(err.Error(), "connection refused") {
+				log.Warn().Msgf("Failed to check if bucket %s exists, is S3 correctly configured?", bucket)
+				continue
+			}
 			return nil, fmt.Errorf("Failed to check if bucket %s exists: %w", bucket, err)
 		}
 

@@ -5,7 +5,7 @@ import {
   SparklesIcon,
   XCircleIcon,
 } from "@heroicons/react/24/solid";
-import { userAvatarUrl } from "../util/discord";
+import { userAvatarUrl } from "../discord/cdn";
 import { useEffect, useState } from "react";
 import { usePremiumGuildFeatures } from "../util/premium";
 import {

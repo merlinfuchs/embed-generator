@@ -165,6 +165,7 @@ func (m *AccessManager) GetGuildMember(guildID string, userID string) (*discordg
 
 	lock.(*sync.Mutex).Lock()
 	defer lock.(*sync.Mutex).Unlock()
+	defer m.memberLocks.Delete(lockKey)
 
 	// We need to check the cache again in case another goroutine already fetched the member
 	cacheItem = m.memberCache.Get(cacheKey)
@@ -172,7 +173,6 @@ func (m *AccessManager) GetGuildMember(guildID string, userID string) (*discordg
 		return cacheItem.Value(), nil
 	}
 
-	defer m.memberLocks.Delete(lockKey)
 	member, err := m.session.GuildMember(guildID, userID)
 	if err != nil {
 		return nil, err
