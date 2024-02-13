@@ -119,6 +119,18 @@ services:
       timeout: 30s
       retries: 3
 
+  minio:
+    image: quay.io/minio/minio
+    command: server --console-address ":9001" /data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: embedg
+      MINIO_ROOT_PASSWORD: 1234567890
+    volumes:
+      - embedg-local-minio:/data
+
   embedg:
     image: merlintor/embed-generator:latest
     restart: always
@@ -133,9 +145,12 @@ services:
 
 volumes:
   embedg-local-postgres:
+  embedg-local-minio:
 ```
 
 Run the file using `docker-compose up`. It will automatically mount the `config.yaml` file into the container. You should not configure postgres in your config file as it's using the postgres instance from the container.
+
+Embed Generator should now be accessible in your browser at [http://localhost:8080](http://localhost:8080).
 
 ### Build from source
 

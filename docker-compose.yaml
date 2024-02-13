@@ -17,6 +17,18 @@ services:
       timeout: 30s
       retries: 3
 
+  minio:
+    image: quay.io/minio/minio
+    command: server --console-address ":9001" /data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: embedg
+      MINIO_ROOT_PASSWORD: 1234567890
+    volumes:
+      - embedg-local-minio:/data
+
   embedg:
     image: merlintor/embed-generator:latest
     restart: always
@@ -30,18 +42,6 @@ services:
       - EMBEDG_S3__ENDPOINT=minio:9000
     volumes:
       - ./config.yaml:/root/config.yaml
-
-  minio:
-    image: quay.io/minio/minio
-    command: server --console-address ":9001" /data
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: embedg
-      MINIO_ROOT_PASSWORD: 1234567890
-    volumes:
-      - embedg-local-minio:/data
 
 volumes:
   embedg-local-postgres:
