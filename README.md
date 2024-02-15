@@ -137,9 +137,13 @@ services:
     ports:
       - "8080:8080"
     environment:
+      - EMBEDG_API__HOST=0.0.0.0
       - EMBEDG_POSTGRES__HOST=postgres
       - EMBEDG_POSTGRES__USER=postgres
       - EMBEDG_POSTGRES__DB=embedg
+      - EMBEDG_S3__ENDPOINT=minio:9000
+      - EMBEDG_API__PUBLIC_URL=http://localhost:8080/api
+      - EMBEDG_APP__PUBLIC_URL=http://localhost:8080/app
     volumes:
       - ./config.yaml:/root/config.yaml
 

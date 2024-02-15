@@ -40,6 +40,8 @@ services:
       - EMBEDG_POSTGRES__USER=postgres
       - EMBEDG_POSTGRES__DB=embedg
       - EMBEDG_S3__ENDPOINT=minio:9000
+      - EMBEDG_API__PUBLIC_URL=http://localhost:8080/api
+      - EMBEDG_APP__PUBLIC_URL=http://localhost:8080/app
     volumes:
       - ./config.yaml:/root/config.yaml
 
