@@ -180,7 +180,7 @@ export default function ToolsColoredText() {
             className="bg-dark-6 hover:bg-dark-7 px-2 py-1 rounded"
             onClick={() => handleStyleChange(4)}
           >
-            Unterline
+            Underline
           </button>
         </div>
       </div>
