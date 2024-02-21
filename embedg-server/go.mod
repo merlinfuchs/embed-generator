@@ -11,7 +11,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/lib/pq v1.10.7
 	github.com/matoous/go-nanoid v1.5.0
-	github.com/merlinfuchs/discordgo v0.0.0-20240104092729-b8cc2e0c165b
+	github.com/merlinfuchs/discordgo v0.0.0-20240221125351-790f911def01
 	github.com/merlinfuchs/embed-generator/embedg-app v0.0.0
 	github.com/merlinfuchs/embed-generator/embedg-site v0.0.0-20231008112155-6159480ecdbf
 	github.com/minio/minio-go/v7 v7.0.63
