@@ -16,6 +16,9 @@ import (
 	"github.com/sqlc-dev/pqtype"
 )
 
+const roleErrorMessage = "Failed to add or remove role.\n\n" +
+	"Please make sure the role is below the 'Embed Generator' role and that the bot has the manage roles permission."
+
 type ActionHandler struct {
 	pg     *postgres.PostgresStore
 	parser *parser.ActionParser
@@ -157,7 +160,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to toggle role")
 				i.Respond(&discordgo.InteractionResponseData{
-					Content: "Failed to toggle role",
+					Content: roleErrorMessage,
 					Flags:   discordgo.MessageFlagsEphemeral,
 				})
 			}
@@ -181,7 +184,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			} else {
 				log.Error().Err(err).Msg("Failed to add role")
 				i.Respond(&discordgo.InteractionResponseData{
-					Content: "Failed to add role",
+					Content: roleErrorMessage,
 					Flags:   discordgo.MessageFlagsEphemeral,
 				})
 			}
@@ -203,7 +206,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			} else {
 				log.Error().Err(err).Msg("Failed to remove role")
 				i.Respond(&discordgo.InteractionResponseData{
-					Content: "Failed to remove role",
+					Content: roleErrorMessage,
 					Flags:   discordgo.MessageFlagsEphemeral,
 				})
 			}
