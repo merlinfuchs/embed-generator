@@ -144,7 +144,7 @@ func (b *Bot) RegisterCommand() error {
 					Description: "Get the image URL for a custom or standard emoji",
 					Options: []*discordgo.ApplicationCommandOption{
 						{
-							Type:        discordgo.ApplicationCommandOptionUser,
+							Type:        discordgo.ApplicationCommandOptionString,
 							Name:        "emoji",
 							Description: "The custom emoji you want the image URL for",
 							Required:    true,
