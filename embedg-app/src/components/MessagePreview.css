@@ -2,7 +2,10 @@
 Credits to the Contributors of https://github.com/skyra-project/discord-components
 Sources from: https://github.com/skyra-project/skyra.pw/blob/main/src/config/discord-components.css
 */
-@import url("https://fonts.googleapis.com/css?family=Roboto:400,500,700");
+/*
+I don't think this is used anywhere, but I'm keeping it here just in case. 
+@import url("https://fonts.googleapis.com/css?family=Roboto:400,500,700"); 
+*/
 
 .discord-action-row {
   display: flex;
