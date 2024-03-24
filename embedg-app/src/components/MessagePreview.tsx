@@ -8,6 +8,7 @@ import { colorIntToHex } from "../util/discord";
 import { useSendSettingsStore } from "../state/sendSettings";
 import Twemoji from "react-twemoji";
 import { useGuildBrandingQuery } from "../api/queries";
+import { getRelativeUrl } from "../util/url";
 
 const buttonColors = {
   1: "discord-button-primary",
@@ -33,7 +34,8 @@ export default function MessagePreview({ msg }: { msg: Message }) {
   const defaultUsername =
     (branding?.success && branding.data.default_username) || "Embed Generator";
   const defaultAvatarUrl =
-    (branding?.success && branding.data.default_avatar_url) || "/app/logo.svg";
+    (branding?.success && branding.data.default_avatar_url) ||
+    getRelativeUrl("/logo.svg");
 
   return (
     <Twemoji options={{ className: "discord-twemoji" }}>
@@ -340,7 +342,7 @@ export default function MessagePreview({ msg }: { msg: Message }) {
           >
             <div className="discord-replied-message">
               <img
-                src={msg.avatar_url || "/app/logo.svg"}
+                src={msg.avatar_url || getRelativeUrl("/logo.svg")}
                 alt=""
                 className="discord-replied-message-avatar"
               />
@@ -356,7 +358,7 @@ export default function MessagePreview({ msg }: { msg: Message }) {
             </div>
             <div className="discord-message-inner">
               <div className="discord-author-avatar">
-                <img src="/app/logo.svg" alt="" />
+                <img src={getRelativeUrl("/logo.svg")} alt="" />
               </div>
               <div className="discord-message-content">
                 <span className="discord-author-info">
