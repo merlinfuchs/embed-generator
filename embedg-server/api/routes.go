@@ -30,6 +30,7 @@ func registerRoutes(app *fiber.App, stores *stores, bot *bot.Bot, managers *mana
 	authHandler := auth.New(stores.pg, bot, managers.session)
 	app.Get("/api/auth/login", authHandler.HandleAuthRedirect)
 	app.Get("/api/auth/callback", authHandler.HandleAuthCallback)
+	app.Post("/api/auth/exchange", helpers.WithRequestBody(authHandler.HandleAuthExchange))
 	app.Get("/api/auth/logout", authHandler.HandleAuthLogout)
 
 	sessionMiddleware := session.NewSessionMiddleware(managers.session)

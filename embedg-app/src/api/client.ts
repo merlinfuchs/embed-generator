@@ -37,3 +37,26 @@ const queryClient = new QueryClient({
 });
 
 export default queryClient;
+
+// This is only used in Discord Activities to work around the lack of cookies
+// We don't need to persist the token at all because we re-authenticate for every Activity session
+let localSessionToken: string;
+
+export function setLocalSessionToken(token: string) {
+  localSessionToken = token;
+}
+
+export function fetchApi(
+  input: RequestInfo,
+  init?: RequestInit
+): Promise<Response> {
+  const headers = (init?.headers || {}) as Record<string, string>;
+  if (localSessionToken) {
+    headers.Authorization = localSessionToken;
+  }
+
+  return fetch(input, {
+    ...init,
+    headers,
+  });
+}

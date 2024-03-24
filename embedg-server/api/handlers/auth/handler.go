@@ -10,6 +10,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/ravener/discord-oauth2"
@@ -56,19 +57,51 @@ func (h *AuthHandler) HandleAuthCallback(c *fiber.Ctx) error {
 		return h.HandleAuthRedirect(c)
 	}
 
-	token, err := h.oauth2Config.Exchange(c.Context(), c.Query("code"))
+	_, _, err := h.authenticateWithCode(c, c.Query("code"))
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to exchange token")
+		log.Error().Err(err).Msg("Failed to authenticate with code")
 		// TODO: redirect to error page
 		return h.HandleAuthRedirect(c)
 	}
 
-	client := h.oauth2Config.Client(c.Context(), token)
+	return c.Redirect(viper.GetString("app.public_url"), http.StatusTemporaryRedirect)
+}
+
+func (h *AuthHandler) HandleAuthExchange(c *fiber.Ctx, req wire.AuthExchangeRequestWire) error {
+	tokenData, token, err := h.authenticateWithCode(c, req.Code)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to authenticate with code")
+		return err
+	}
+
+	return c.JSON(wire.AuthExchangeResponseWire{
+		Success: true,
+		Data: wire.AuthExchangeResponseDataWire{
+			AccessToken:  tokenData.AccessToken,
+			SessionToken: token,
+		},
+	})
+}
+
+func (h *AuthHandler) HandleAuthLogout(c *fiber.Ctx) error {
+	err := h.sessionManager.DeleteSession(c)
+	if err != nil {
+		return err
+	}
+
+	return c.Redirect(viper.GetString("app.public_url"), http.StatusTemporaryRedirect)
+}
+
+func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.Token, string, error) {
+	tokenData, err := h.oauth2Config.Exchange(c.Context(), code)
+	if err != nil {
+		return nil, "", fmt.Errorf("Failed to exchange token: %w", err)
+	}
+
+	client := h.oauth2Config.Client(c.Context(), tokenData)
 	resp, err := client.Get("https://discord.com/api/users/@me")
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to get user info")
-		// TODO: redirect to error page
-		return h.HandleAuthRedirect(c)
+		return nil, "", h.HandleAuthRedirect(c)
 	}
 
 	user := struct {
@@ -79,9 +112,7 @@ func (h *AuthHandler) HandleAuthCallback(c *fiber.Ctx) error {
 	}{}
 	err = json.NewDecoder(resp.Body).Decode(&user)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to decode user info")
-		// TODO: redirect to error page
-		return h.HandleAuthRedirect(c)
+		return nil, "", fmt.Errorf("Failed to decode user info: %w", err)
 	}
 	resp.Body.Close()
 
@@ -93,14 +124,13 @@ func (h *AuthHandler) HandleAuthCallback(c *fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to upsert user")
-		return err
+		return nil, "", err
 	}
 
 	resp, err = client.Get("https://discord.com/api/users/@me/guilds")
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get guilds")
-		// TODO: redirect to error page
-		return h.HandleAuthRedirect(c)
+		return nil, "", fmt.Errorf("Failed to get guilds: %w", err)
 	}
 
 	guilds := []struct {
@@ -108,9 +138,7 @@ func (h *AuthHandler) HandleAuthCallback(c *fiber.Ctx) error {
 	}{}
 	err = json.NewDecoder(resp.Body).Decode(&guilds)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to decode guilds")
-		// TODO: redirect to error page
-		return h.HandleAuthRedirect(c)
+		return nil, "", fmt.Errorf("Failed to decode guilds: %w", err)
 	}
 	resp.Body.Close()
 
@@ -119,21 +147,13 @@ func (h *AuthHandler) HandleAuthCallback(c *fiber.Ctx) error {
 		guildIDs[i] = guild.ID
 	}
 
-	err = h.sessionManager.CreateSessionCookie(c, user.ID, guildIDs, token.AccessToken)
+	token, err := h.sessionManager.CreateSession(c.Context(), user.ID, guildIDs, tokenData.AccessToken)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
-	return c.Redirect(viper.GetString("app.public_url"), http.StatusTemporaryRedirect)
-}
-
-func (h *AuthHandler) HandleAuthLogout(c *fiber.Ctx) error {
-	err := h.sessionManager.DeleteSession(c)
-	if err != nil {
-		return err
-	}
-
-	return c.Redirect(viper.GetString("app.public_url"), http.StatusTemporaryRedirect)
+	h.sessionManager.CreateSessionCookie(c, token)
+	return tokenData, token, nil
 }
 
 func getOauthStateCookie(c *fiber.Ctx) string {

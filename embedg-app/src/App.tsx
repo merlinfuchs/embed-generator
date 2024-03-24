@@ -6,9 +6,8 @@ import RequestLoadingIndicator from "./components/RequestLoadingIndicator";
 import ClearView from "./views/editor/clear";
 import ShareView from "./views/editor/share";
 import EditorSideNav from "./components/SideNav";
-import ColoredTextToolView from "./views/tools/coloredText";
-import ToolsView from "./views/tools";
-import WebhookInfoToolView from "./views/tools/webhookInfo";
+import ActivityLoadingScreen from "./components/ActivityLoadingScreen";
+import "./util/activity";
 
 const LazyJsonView = lazy(() => import("./views/editor/json"));
 const LazyAssistantView = lazy(() => import("./views/editor/assisstant"));
@@ -30,6 +29,7 @@ function App() {
   return (
     <div className="h-[100dvh] w-[100dvw] overflow-y-auto">
       <RequestLoadingIndicator />
+      <ActivityLoadingScreen />
       <div className="flex h-full">
         <EditorSideNav />
         <Routes>
@@ -127,7 +127,18 @@ function App() {
             }
           />
 
-          <Route path="*" element={<Navigate replace to="/editor" />} />
+          <Route
+            path="*"
+            element={
+              <Navigate
+                replace
+                to={{
+                  pathname: "/editor",
+                  search: location.search,
+                }}
+              />
+            }
+          />
         </Routes>
       </div>
       <ToastContainer />

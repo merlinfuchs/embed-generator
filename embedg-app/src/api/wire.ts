@@ -14,6 +14,18 @@ export interface AssistantGenerateMessageResponseDataWire {
 export type AssistantGenerateMessageResponseWire = APIResponse<AssistantGenerateMessageResponseDataWire>;
 
 //////////
+// source: auth.go
+
+export interface AuthExchangeRequestWire {
+  code: string;
+}
+export interface AuthExchangeResponseDataWire {
+  access_token: string;
+  session_token: string;
+}
+export type AuthExchangeResponseWire = APIResponse<AuthExchangeResponseDataWire>;
+
+//////////
 // source: custom_bots.go
 
 export interface CustomBotInfoWire {

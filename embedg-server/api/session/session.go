@@ -33,7 +33,7 @@ func New(pg *postgres.PostgresStore) *SessionManager {
 }
 
 func (s *SessionManager) GetSession(c *fiber.Ctx) (*Session, error) {
-	token := c.Cookies("session_token")
+	token := c.Cookies("session_token", c.Get("Authorization"))
 	if token == "" {
 		return nil, nil
 	}
@@ -83,12 +83,7 @@ func (s *SessionManager) CreateSession(ctx context.Context, userID string, guild
 	return token, nil
 }
 
-func (s *SessionManager) CreateSessionCookie(c *fiber.Ctx, userID string, guildIDs []string, accessToken string) error {
-	token, err := s.CreateSession(c.Context(), userID, guildIDs, accessToken)
-	if err != nil {
-		return err
-	}
-
+func (s *SessionManager) CreateSessionCookie(c *fiber.Ctx, token string) {
 	c.Cookie(&fiber.Cookie{
 		Name:     "session_token",
 		Value:    token,
@@ -97,8 +92,6 @@ func (s *SessionManager) CreateSessionCookie(c *fiber.Ctx, userID string, guildI
 		SameSite: "strict",
 		Expires:  time.Now().UTC().Add(30 * 24 * time.Hour),
 	})
-
-	return nil
 }
 
 func (s *SessionManager) DeleteSession(c *fiber.Ctx) error {

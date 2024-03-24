@@ -7,7 +7,7 @@ export default ({ mode }) => {
 
   return defineConfig({
     plugins: [react()],
-    base: env.VITE_DISCORD_ACTIVITY === "true" ? undefined : "/app/",
+    base: env.VITE_DISCORD_ACTIVITY === "true" ? undefined : "/app",
     server: {
       proxy: {
         "/api": {
