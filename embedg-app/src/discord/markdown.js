@@ -276,7 +276,10 @@ const bodyRules = {
   }),
   heading: Object.assign({}, markdown.defaultRules.heading, {
     match: function (source, state) {
-      if (state.prevCapture === null || state.prevCapture[0] === "\n") {
+      if (
+        state.prevCapture === null ||
+        state.prevCapture[state.prevCapture.length - 1] === "\n"
+      ) {
         const re = /^(#{1,3}) +([^\n]+?)(\n|$)/;
         return re.exec(source);
       }
