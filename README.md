@@ -50,6 +50,9 @@ api:
   # Make sure to add {public_url}/auth/callback to the OAuth2 Redirect URLs of your application in the Discord dev portal
   public_url: "http://localhost:5173/api"
 
+  # Make sure to enable this when you don't have an SSL (HTTPS) certificate
+  insecure_cookies: true
+
   host: "localhost"
   port: 8080
 
@@ -138,6 +141,7 @@ services:
       - "8080:8080"
     environment:
       - EMBEDG_API__HOST=0.0.0.0
+      - EMBEDG_API__INSECURE_COOKIES=true
       - EMBEDG_POSTGRES__HOST=postgres
       - EMBEDG_POSTGRES__USER=postgres
       - EMBEDG_POSTGRES__DB=embedg

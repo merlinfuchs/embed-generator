@@ -12,6 +12,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 )
 
 type Session struct {
@@ -88,7 +89,7 @@ func (s *SessionManager) CreateSessionCookie(c *fiber.Ctx, token string) {
 		Name:     "session_token",
 		Value:    token,
 		HTTPOnly: true,
-		Secure:   true,
+		Secure:   !viper.GetBool("api.insecure_cookies"),
 		SameSite: "strict",
 		Expires:  time.Now().UTC().Add(30 * 24 * time.Hour),
 	})

@@ -170,7 +170,7 @@ func setOauthStateCookie(c *fiber.Ctx) string {
 		Name:     "oauth_state",
 		Value:    state,
 		HTTPOnly: true,
-		Secure:   true,
+		Secure:   !viper.GetBool("api.insecure_cookies"),
 	})
 	return state
 }
