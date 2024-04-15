@@ -8,6 +8,7 @@ import ShareView from "./views/editor/share";
 import EditorSideNav from "./components/SideNav";
 import ActivityLoadingScreen from "./components/ActivityLoadingScreen";
 import "./util/activity";
+import UpsellPopup from "./components/UpsellPopup";
 
 const LazyJsonView = lazy(() => import("./views/editor/json"));
 const LazyAssistantView = lazy(() => import("./views/editor/assisstant"));
@@ -30,6 +31,7 @@ function App() {
     <div className="h-[100dvh] w-[100dvw] overflow-y-auto">
       <RequestLoadingIndicator />
       <ActivityLoadingScreen />
+      <UpsellPopup />
       <div className="flex h-full">
         <EditorSideNav />
         <Routes>
