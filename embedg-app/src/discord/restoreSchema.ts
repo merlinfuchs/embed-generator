@@ -241,7 +241,7 @@ export type MessageComponentButton = z.infer<typeof buttonSchema>;
 export const selectMenuOptionSchema = z.object({
   id: uniqueIdSchema,
   label: z.preprocess((d) => d ?? undefined, z.string().default("")),
-  description: z.preprocess((d) => d ?? undefined, z.string().default("")),
+  description: z.preprocess((d) => d || undefined, z.optional(z.string())),
   emoji: z.preprocess((d) => d ?? undefined, z.optional(emojiSchema)),
   action_set_id: z.preprocess(
     (d) => d ?? undefined,
