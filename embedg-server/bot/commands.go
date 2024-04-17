@@ -356,17 +356,20 @@ func (b *Bot) handleMessageCommand(s *discordgo.Session, i *discordgo.Interactio
 		if rerr, ok := err.(*discordgo.RESTError); ok && rerr.Message.Code == discordgo.ErrCodeUnknownMessage {
 			return textResponse(s, i, "Message not found.")
 		}
-		return err
+		log.Error().Err(err).Msg("Failed to get message")
+		return textResponse(s, i, "Failed to get message.")
 	}
 
 	components, err := b.ActionParser.UnparseMessageComponents(message.Components)
 	if err != nil {
-		return fmt.Errorf("Failed to unparse message components: %w", err)
+		log.Error().Err(err).Msg("Failed to unparse message components")
+		return textResponse(s, i, "Failed to unparse message components.")
 	}
 
 	actionSets, err := b.ActionParser.RetrieveActionsForMessage(context.TODO(), messageID)
 	if err != nil {
-		return fmt.Errorf("Failed to retrieve actions for message: %w", err)
+		log.Error().Err(err).Msg("Failed to retrieve actions for message")
+		return textResponse(s, i, "Failed to retrieve actions for message.")
 	}
 
 	messageDump, err := json.MarshalIndent(actions.MessageWithActions{
