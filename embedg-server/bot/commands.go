@@ -359,12 +359,23 @@ func (b *Bot) handleMessageCommand(s *discordgo.Session, i *discordgo.Interactio
 		return err
 	}
 
+	components, err := b.ActionParser.UnparseMessageComponents(message.Components)
+	if err != nil {
+		return fmt.Errorf("Failed to unparse message components: %w", err)
+	}
+
+	actionSets, err := b.ActionParser.RetrieveActionsForMessage(context.TODO(), messageID)
+	if err != nil {
+		return fmt.Errorf("Failed to retrieve actions for message: %w", err)
+	}
+
 	messageDump, err := json.MarshalIndent(actions.MessageWithActions{
-		Username:  message.Author.Username,
-		AvatarURL: message.Author.AvatarURL("1024"),
-		Content:   message.Content,
-		Embeds:    message.Embeds,
-		// TODO: Components: message.Components,
+		Username:   message.Author.Username,
+		AvatarURL:  message.Author.AvatarURL("1024"),
+		Content:    message.Content,
+		Embeds:     message.Embeds,
+		Components: components,
+		Actions:    actionSets,
 	}, "", "  ")
 	if err != nil {
 		return err
@@ -402,12 +413,23 @@ func (b *Bot) handleRestoreContextCommand(s *discordgo.Session, i *discordgo.Int
 	messageID := data.TargetID
 	message := data.Resolved.Messages[messageID]
 
+	components, err := b.ActionParser.UnparseMessageComponents(message.Components)
+	if err != nil {
+		return fmt.Errorf("Failed to unparse message components: %w", err)
+	}
+
+	actionSets, err := b.ActionParser.RetrieveActionsForMessage(context.TODO(), messageID)
+	if err != nil {
+		return fmt.Errorf("Failed to retrieve actions for message: %w", err)
+	}
+
 	messageDump, err := json.MarshalIndent(actions.MessageWithActions{
-		Username:  message.Author.Username,
-		AvatarURL: message.Author.AvatarURL("1024"),
-		Content:   message.Content,
-		Embeds:    message.Embeds,
-		// TODO: Components: message.Components,
+		Username:   message.Author.Username,
+		AvatarURL:  message.Author.AvatarURL("1024"),
+		Content:    message.Content,
+		Embeds:     message.Embeds,
+		Components: components,
+		Actions:    actionSets,
 	}, "", "  ")
 	if err != nil {
 		return err
