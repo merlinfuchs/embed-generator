@@ -457,12 +457,25 @@ func (b *Bot) handleJSONContextCommand(s *discordgo.Session, i *discordgo.Intera
 	messageID := data.TargetID
 	message := data.Resolved.Messages[messageID]
 
+	components, err := b.ActionParser.UnparseMessageComponents(message.Components)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to unparse message components")
+		return textResponse(s, i, "Failed to unparse message components.")
+	}
+
+	actionSets, err := b.ActionParser.RetrieveActionsForMessage(context.TODO(), messageID)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to retrieve actions for message")
+		return textResponse(s, i, "Failed to retrieve actions for message.")
+	}
+
 	messageDump, err := json.MarshalIndent(actions.MessageWithActions{
-		Username:  message.Author.Username,
-		AvatarURL: message.Author.AvatarURL("1024"),
-		Content:   message.Content,
-		Embeds:    message.Embeds,
-		// TODO: Components: message.Components,
+		Username:   message.Author.Username,
+		AvatarURL:  message.Author.AvatarURL("1024"),
+		Content:    message.Content,
+		Embeds:     message.Embeds,
+		Components: components,
+		Actions:    actionSets,
 	}, "", "  ")
 	if err != nil {
 		return err

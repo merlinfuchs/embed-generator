@@ -195,8 +195,8 @@ export type MessageEmbed = z.infer<typeof embedSchema>;
 
 export const emojiSchema = z.object({
   id: z.optional(z.string()),
-  name: z.string(),
-  animated: z.boolean(),
+  name: z.preprocess((d) => d ?? undefined, z.string().default("")),
+  animated: z.preprocess((d) => d ?? undefined, z.boolean().default(false)),
 });
 
 export type Emoji = z.infer<typeof emojiSchema>;
