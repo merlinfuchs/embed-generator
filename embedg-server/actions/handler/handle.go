@@ -254,7 +254,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				Flags:      flags,
 			})
 			if newMsg != nil && !legacyPermissions {
-				err = m.parser.CreateActionsForMessage(data.Actions, derivedPerms, newMsg.ID, !action.Public)
+				err = m.parser.CreateActionsForMessage(context.TODO(), data.Actions, derivedPerms, newMsg.ID, !action.Public)
 				if err != nil {
 					log.Error().Err(err).Msg("failed to create actions for message")
 					return err
@@ -371,7 +371,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 
 			if !legacyPermissions {
 				ephemeral := interaction.Message.Flags&discordgo.MessageFlagsEphemeral != 0
-				err = m.parser.CreateActionsForMessage(data.Actions, derivedPerms, interaction.Message.ID, ephemeral)
+				err = m.parser.CreateActionsForMessage(context.TODO(), data.Actions, derivedPerms, interaction.Message.ID, ephemeral)
 				if err != nil {
 					log.Error().Err(err).Msg("failed to create actions for message")
 					return err

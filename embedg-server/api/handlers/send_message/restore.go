@@ -2,6 +2,7 @@ package send_message
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -22,23 +23,33 @@ func (h *SendMessageHandler) HandleRestoreMessageFromChannel(c *fiber.Ctx, req w
 	// We don't use a webhook here because we don't need to, but this means that some restored messages can't actually be edited
 	msg, err := h.bot.Session.ChannelMessage(req.ChannelID, req.MessageID)
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to get message: %w", err)
+	}
+
+	components, err := h.actionParser.UnparseMessageComponents(msg.Components)
+	if err != nil {
+		return fmt.Errorf("Failed to unparse message components: %w", err)
+	}
+
+	actionSets, err := h.actionParser.RetrieveActionsForMessage(c.Context(), req.MessageID)
+	if err != nil {
+		return fmt.Errorf("Failed to retrieve actions for message: %w", err)
 	}
 
 	data := &actions.MessageWithActions{
-		Content:   msg.Content,
-		Username:  msg.Author.Username,
-		AvatarURL: msg.Author.AvatarURL(""),
-		Embeds:    msg.Embeds,
+		Content:    msg.Content,
+		Username:   msg.Author.Username,
+		AvatarURL:  msg.Author.AvatarURL(""),
+		Embeds:     msg.Embeds,
+		Components: components,
+		Actions:    actionSets,
 	}
-
-	// TODO: components and actions
 
 	attachments := downloadMessageAttachments(msg.Attachments)
 
 	rawData, err := json.Marshal(data)
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to marshal message data: %w", err)
 	}
 
 	return c.JSON(wire.MessageRestoreResponseWire{

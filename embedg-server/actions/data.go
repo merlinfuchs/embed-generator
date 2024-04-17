@@ -18,14 +18,12 @@ type MessageWithActions struct {
 }
 
 type ActionRowWithActions struct {
-	Components []ComponentWithActions
+	Components []ComponentWithActions `json:"components"`
 }
 
 type ComponentWithActions struct {
 	Type     discordgo.ComponentType `json:"type"`
 	Disabled bool                    `json:"disabled"`
-
-	Actions []Action
 
 	// Button
 	Style       discordgo.ButtonStyle     `json:"style"`

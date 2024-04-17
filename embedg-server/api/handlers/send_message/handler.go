@@ -146,7 +146,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return fmt.Errorf("Failed to create permission context: %w", err)
 	}
 
-	err = h.actionParser.CreateActionsForMessage(data.Actions, permContext, msg.ID, false)
+	err = h.actionParser.CreateActionsForMessage(c.Context(), data.Actions, permContext, msg.ID, false)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create actions for message")
 		return err

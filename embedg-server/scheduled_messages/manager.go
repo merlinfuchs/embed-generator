@@ -164,7 +164,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		return fmt.Errorf("Failed to create permission context: %w", err)
 	}
 
-	err = m.actionParser.CreateActionsForMessage(data.Actions, permContext, msg.ID, false)
+	err = m.actionParser.CreateActionsForMessage(ctx, data.Actions, permContext, msg.ID, false)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create actions for message")
 		return err
