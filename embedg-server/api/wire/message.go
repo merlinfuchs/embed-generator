@@ -64,6 +64,7 @@ func (req SavedMessagesImportRequestWire) Validate() error {
 }
 
 type MessageSendToWebhookRequestWire struct {
+	WebhookType  string                   `json:"webhook_type"`
 	WebhookID    string                   `json:"webhook_id"`
 	WebhookToken string                   `json:"webhook_token"`
 	ThreadID     null.String              `json:"thread_id"`

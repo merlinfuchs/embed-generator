@@ -5,13 +5,13 @@ import {
   useRestoreMessageFromChannelMutation,
   useRestoreMessageFromWebhookMutation,
 } from "../api/mutations";
-import { webhookUrlRegex } from "../discord/util";
 import { MessageRestoreResponseDataWire } from "../api/wire";
 import { parseMessageWithAction } from "../discord/restoreSchema";
 import { useCurrentMessageStore } from "../state/message";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import { getUniqueId } from "../util";
 import { useToasts } from "../util/toasts";
+import { parseWebhookUrl } from "../discord/util";
 
 export default function MessageRestoreButton() {
   const [mode, webhookUrl, messageId, threadId, guildId, channelId] =
@@ -27,13 +27,9 @@ export default function MessageRestoreButton() {
       shallow
     );
 
-  const [webhookId, webhookToken] = useMemo(() => {
-    if (!webhookUrl) return [null, null];
-    const match = webhookUrl.match(webhookUrlRegex);
-    if (match) {
-      return [match[2], match[3]];
-    }
-    return [null, null];
+  const webhookInfo = useMemo(() => {
+    if (!webhookUrl) return null;
+    return parseWebhookUrl(webhookUrl);
   }, [webhookUrl]);
 
   const restoreFromWebhookMutation = useRestoreMessageFromWebhookMutation();
@@ -90,12 +86,12 @@ export default function MessageRestoreButton() {
         }
       );
     } else {
-      if (!webhookId || !webhookToken || !messageId) return;
+      if (!webhookInfo || !messageId) return;
 
       restoreFromWebhookMutation.mutate(
         {
-          webhook_id: webhookId,
-          webhook_token: webhookToken,
+          webhook_id: webhookInfo.id,
+          webhook_token: webhookInfo.token,
           message_id: messageId,
           thread_id: threadId,
         },
@@ -120,7 +116,7 @@ export default function MessageRestoreButton() {
     !!messageId &&
     (mode === "channel"
       ? !!guildId && !!channelId
-      : !!webhookId && !!webhookToken);
+      : !!webhookInfo && webhookInfo.type === "discord");
 
   return (
     <div

@@ -218,6 +218,18 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		}
 	}
 
+	if req.WebhookType == "guilded" {
+		err := util.ExecuteGuildedWebhook(req.WebhookID, req.WebhookToken, params)
+		if err != nil {
+			return err
+		}
+
+		return c.JSON(wire.MessageSendResponseWire{
+			Success: true,
+			Data:    wire.MessageSendResponseDataWire{},
+		})
+	}
+
 	var msg *discordgo.Message
 	if req.ThreadID.Valid {
 		if req.MessageID.Valid {

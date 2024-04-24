@@ -9,7 +9,7 @@ import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { shallow } from "zustand/shallow";
-import { messageUrlRegex, webhookUrlRegex } from "../discord/util";
+import { messageUrlRegex, parseWebhookUrl } from "../discord/util";
 import MessageRestoreButton from "./MessageRestoreButton";
 import { useToasts } from "../util/toasts";
 
@@ -22,13 +22,9 @@ export default function SendMenuWebhook() {
     (state) => [state.webhookUrl, state.setWebhookUrl],
     shallow
   );
-  const [webhookId, webhookToken] = useMemo(() => {
-    if (!webhookUrl) return [null, null];
-    const match = webhookUrl.match(webhookUrlRegex);
-    if (match) {
-      return [match[2], match[3]];
-    }
-    return [null, null];
+  const webhookInfo = useMemo(() => {
+    if (!webhookUrl) return null;
+    return parseWebhookUrl(webhookUrl);
   }, [webhookUrl]);
 
   const [messageId, setMessageId] = useSendSettingsStore(
@@ -59,12 +55,13 @@ export default function SendMenuWebhook() {
   const createToast = useToasts((state) => state.create);
 
   function send(edit: boolean) {
-    if (validationError || !webhookId || !webhookToken) return;
+    if (validationError || !webhookInfo) return;
 
     sendToWebhookMutation.mutate(
       {
-        webhook_id: webhookId,
-        webhook_token: webhookToken,
+        webhook_type: webhookInfo.type,
+        webhook_id: webhookInfo.id,
+        webhook_token: webhookInfo.token,
         message_id: edit ? messageId : null,
         thread_id: threadId,
         data: useCurrentMessageStore.getState(),
@@ -151,7 +148,7 @@ export default function SendMenuWebhook() {
           {messageId && (
             <div
               className={`px-3 py-2 rounded text-white flex items-center space-x-3 ${
-                validationError || !webhookId || !webhookToken
+                validationError || !webhookInfo || webhookInfo.type != "discord"
                   ? "cursor-not-allowed bg-dark-2"
                   : "bg-blurple hover:bg-blurple-dark cursor-pointer"
               }`}
@@ -166,7 +163,7 @@ export default function SendMenuWebhook() {
           )}
           <div
             className={`px-3 py-2 rounded text-white flex items-center space-x-3 ${
-              validationError || !webhookId || !webhookToken
+              validationError || !webhookInfo
                 ? "cursor-not-allowed bg-dark-2"
                 : "bg-blurple hover:bg-blurple-dark cursor-pointer"
             }`}
