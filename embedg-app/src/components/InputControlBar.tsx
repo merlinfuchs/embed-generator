@@ -1,7 +1,8 @@
-import { FaceSmileIcon } from "@heroicons/react/24/outline";
+import { AtSymbolIcon, FaceSmileIcon } from "@heroicons/react/24/outline";
 import { useSendSettingsStore } from "../state/sendSettings";
 import EmojiPicker from "./EmojiPicker";
 import { RefObject, useEffect } from "react";
+import EditorMentionPicker from "./EditorMentionPicker";
 
 interface Props {
   value: string;
@@ -56,7 +57,6 @@ export default function InputControlBar({ value, onChange, inputRef }: Props) {
   }
 
   function onEmojiSelect(emoji: any) {
-    console.log(emoji);
     if (emoji.native) {
       insertAtCursor(emoji.native);
     } else {
@@ -64,6 +64,10 @@ export default function InputControlBar({ value, onChange, inputRef }: Props) {
         `<${emoji.src.endsWith(".gif") ? "a" : ""}:${emoji.name}:${emoji.id}>`
       );
     }
+  }
+
+  function onMentionInsert(mention: string) {
+    insertAtCursor(mention);
   }
 
   function onBold() {
@@ -143,6 +147,14 @@ export default function InputControlBar({ value, onChange, inputRef }: Props) {
       >
         <div className="line-through">S</div>
       </div>
+      <EditorMentionPicker onMentionInsert={onMentionInsert} guildId={guildId}>
+        <div
+          className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
+          role="button"
+        >
+          <AtSymbolIcon className="h-5 w-5" />
+        </div>
+      </EditorMentionPicker>
       <EmojiPicker
         guildId={guildId}
         onEmojiSelect={onEmojiSelect}

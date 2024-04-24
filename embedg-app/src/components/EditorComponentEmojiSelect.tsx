@@ -2,7 +2,7 @@ import { FaceSmileIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useSendSettingsStore } from "../state/sendSettings";
 import EmojiPicker from "./EmojiPicker";
 import { Emoji } from "../discord/schema";
-import Twemoji from "react-twemoji";
+import Twemoji from "./Twemoji";
 
 interface Props {
   emoji: Emoji | undefined;
@@ -50,7 +50,11 @@ export default function EdiotrComponentEmojiSelect({ emoji, onChange }: Props) {
                     className="h-6 w-6"
                   />
                 ) : (
-                  <Twemoji options={{ className: "h-6 w-6" }}>
+                  <Twemoji
+                    options={{
+                      className: "h-6 w-6",
+                    }}
+                  >
                     {emoji.name}
                   </Twemoji>
                 )

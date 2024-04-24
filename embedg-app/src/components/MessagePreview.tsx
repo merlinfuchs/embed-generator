@@ -6,7 +6,7 @@ import { Message } from "../discord/schema";
 import { toHTML } from "../discord/markdown";
 import { colorIntToHex } from "../util/discord";
 import { useSendSettingsStore } from "../state/sendSettings";
-import Twemoji from "react-twemoji";
+import Twemoji from "./Twemoji";
 import { useGuildBrandingQuery } from "../api/queries";
 import { getRelativeUrl } from "../util/url";
 
@@ -38,7 +38,11 @@ export default function MessagePreview({ msg }: { msg: Message }) {
     getRelativeUrl("/logo.svg");
 
   return (
-    <Twemoji options={{ className: "discord-twemoji" }}>
+    <Twemoji
+      options={{
+        className: "discord-twemoji",
+      }}
+    >
       <div
         className="discord-messages"
         style={{

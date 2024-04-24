@@ -8,6 +8,7 @@ interface Props {
   width?: "xs" | "sm" | "md" | "lg" | "xl" | "full";
   height?: "auto" | "full";
   closeButton?: boolean;
+  allowOverflow?: boolean;
   onClose: () => void;
 }
 
@@ -16,16 +17,21 @@ export default function Modal({
   width = "xl",
   height = "auto",
   closeButton,
+  allowOverflow,
   onClose,
 }: Props) {
   return (
     <div
-      className="fixed h-[100dvh] w-[100vw] bg-black bg-opacity-70 flex flex-col items-center justify-center px-2 py-20 sm:px-5 md:px-10 lg:px-20 xl:px-32 z-30 overflow-hidden top-0 left-0"
+      className={clsx(
+        "fixed h-[100dvh] w-[100vw] bg-black bg-opacity-70 flex flex-col items-center justify-center px-2 py-20 sm:px-5 md:px-10 lg:px-20 xl:px-32 z-30 top-0 left-0",
+        !allowOverflow && "overflow-hidden"
+      )}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
         className={clsx(
-          "bg-dark-3 w-full rounded-xl flex-shrink overflow-x-hidden overflow-y-auto",
+          "bg-dark-3 w-full rounded-xl flex-shrink",
+          allowOverflow && "overflow-x-hidden overflow-y-auto",
           width === "xl"
             ? "max-w-7xl"
             : width == "lg"
