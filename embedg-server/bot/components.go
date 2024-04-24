@@ -343,7 +343,7 @@ func (b *Bot) handleModalInteraction(s *discordgo.Session, i *discordgo.Interact
 			}
 		}
 
-		webhook, err := b.GetWebhookForChannel(i.ChannelID)
+		webhook, err := b.FindWebhookForChannel(i.ChannelID)
 		if err != nil {
 			return textResponse(s, i, fmt.Sprintf("Failed to get webhook for channel: `%e`", err))
 		}

@@ -44,17 +44,39 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return err
 	}
 
-	webhook, err := h.bot.GetWebhookForChannel(req.ChannelID)
-	if err != nil {
-		return fmt.Errorf("Failed to get webhook for channel: %w", err)
+	var webhook *discordgo.Webhook
+	if req.MessageID.Valid {
+		msg, err := h.bot.Session.ChannelMessage(req.ChannelID, req.MessageID.String)
+		if err != nil {
+			if util.IsDiscordRestErrorCode(err, 10008) {
+				return helpers.NotFound("unknown_message", "The message you are trying to edit doesn't exist.")
+			}
+			return fmt.Errorf("Failed to get message from channel: %w", err)
+		}
+
+		if msg.WebhookID == "" {
+			return helpers.BadRequest("author_no_webhook", "Message wasn't sent by a webhook and can therefore not be edited.")
+		}
+
+		webhook, err = h.bot.GetWebhookForChannel(req.ChannelID, msg.WebhookID)
+		if err != nil {
+			return helpers.BadRequest("webhook_failed", err.Error())
+		}
+	} else {
+		var err error
+		webhook, err = h.bot.FindWebhookForChannel(req.ChannelID)
+		if err != nil {
+			return fmt.Errorf("Failed to get webhook for channel: %w", err)
+		}
 	}
+
 	threadID := ""
 	if webhook.ChannelID != req.ChannelID {
 		threadID = req.ChannelID
 	}
 
 	data := &actions.MessageWithActions{}
-	err = json.Unmarshal([]byte(req.Data), data)
+	err := json.Unmarshal([]byte(req.Data), data)
 	if err != nil {
 		return err
 	}

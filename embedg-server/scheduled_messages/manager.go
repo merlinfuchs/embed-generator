@@ -93,7 +93,7 @@ func (m *ScheduledMessageManager) lazySendScheduledMessagesTask() {
 }
 
 func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, scheduledMessage postgres.ScheduledMessage) error {
-	webhook, err := m.bot.GetWebhookForChannel(scheduledMessage.ChannelID)
+	webhook, err := m.bot.FindWebhookForChannel(scheduledMessage.ChannelID)
 	if err != nil {
 		return fmt.Errorf("Failed to get webhook for channel: %w", err)
 	}
