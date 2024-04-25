@@ -14,7 +14,6 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
-	"github.com/robfig/cron/v3"
 	"github.com/rs/zerolog/log"
 )
 
@@ -46,8 +45,6 @@ func (m *ScheduledMessageManager) lazySendScheduledMessagesTask() {
 			continue
 		}
 
-		cronParser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
-
 		for _, scheduledMessage := range scheduledMessages {
 			if scheduledMessage.OnlyOnce {
 				err = m.SendScheduledMessage(context.Background(), scheduledMessage)
@@ -66,7 +63,11 @@ func (m *ScheduledMessageManager) lazySendScheduledMessagesTask() {
 					continue
 				}
 			} else {
-				schedule, err := cronParser.Parse(scheduledMessage.CronExpression.String)
+				nextAt, err := GetNextCronTick(
+					scheduledMessage.CronExpression.String,
+					time.Now().UTC(),
+					scheduledMessage.CronTimezone.String,
+				)
 				if err != nil {
 					log.Error().Err(err).Str("cron", scheduledMessage.CronExpression.String).Msg("Failed to parse cron expression from scheduled message")
 					continue
@@ -80,7 +81,7 @@ func (m *ScheduledMessageManager) lazySendScheduledMessagesTask() {
 				_, err = m.pg.Q.UpdateScheduledMessageNextAt(context.Background(), postgres.UpdateScheduledMessageNextAtParams{
 					ID:        scheduledMessage.ID,
 					GuildID:   scheduledMessage.GuildID,
-					NextAt:    schedule.Next(time.Now().UTC()),
+					NextAt:    nextAt,
 					UpdatedAt: time.Now().UTC(),
 				})
 				if err != nil {

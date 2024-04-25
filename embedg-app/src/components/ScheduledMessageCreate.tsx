@@ -19,6 +19,7 @@ import { ChannelSelect } from "./ChannelSelect";
 import CronExpressionBuilder from "./CronExpressionBuilder";
 import { usePremiumGuildFeatures } from "../util/premium";
 import PremiumSuggest from "./PremiumSuggest";
+import { getCurrentTimezone } from "../util/time";
 
 export default function ScheduledMessageCreate({
   setCreate,
@@ -66,6 +67,7 @@ export default function ScheduledMessageCreate({
           message_id: null,
           saved_message_id: messageId,
           cron_expression: cronExpression,
+          cron_timezone: getCurrentTimezone(),
           start_at: startAt,
           end_at: endAt ?? null,
           only_once: onlyOnce,

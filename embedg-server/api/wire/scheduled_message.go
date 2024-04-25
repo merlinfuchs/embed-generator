@@ -17,6 +17,7 @@ type ScheduledMessageWire struct {
 	Name           string      `json:"name"`
 	Description    null.String `json:"description"`
 	CronExpression null.String `json:"cron_expression"`
+	CronTimezone   null.String `json:"cron_timezone"`
 	StartAt        time.Time   `json:"start_at"`
 	EndAt          null.Time   `json:"end_at"`
 	NextAt         time.Time   `json:"next_at"`
@@ -37,6 +38,7 @@ type ScheduledMessageCreateRequestWire struct {
 	Name           string      `json:"name"`
 	Description    null.String `json:"description"`
 	CronExpression null.String `json:"cron_expression"`
+	CronTimezone   null.String `json:"cron_timezone"`
 	StartAt        time.Time   `json:"start_at"`
 	EndAt          null.Time   `json:"end_at"`
 	OnlyOnce       bool        `json:"only_once"`
@@ -65,6 +67,7 @@ type ScheduledMessageUpdateRequestWire struct {
 	Name           string      `json:"name"`
 	Description    null.String `json:"description"`
 	CronExpression null.String `json:"cron_expression"`
+	CronTimezone   null.String `json:"cron_timezone"`
 	StartAt        time.Time   `json:"start_at"`
 	EndAt          null.Time   `json:"end_at"`
 	OnlyOnce       bool        `json:"only_once"`

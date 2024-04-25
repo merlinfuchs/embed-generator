@@ -2,6 +2,7 @@ package scheduled_messages
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -58,15 +59,24 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 		return helpers.BadRequest("invalid_end_at", "The end_at field must be after the start_at field.")
 	}
 
+	if req.StartAt.Before(time.Now().UTC()) {
+		req.StartAt = time.Now().UTC()
+	}
+
 	nextAt := req.StartAt
 	if !req.OnlyOnce {
-		schedule, err := scheduled_messages.ParseCronExpression(req.CronExpression.String)
+		var err error
+		nextAt, err = scheduled_messages.GetFirstCronTick(req.CronExpression.String, req.StartAt, req.CronTimezone.String)
 		if err != nil {
 			return helpers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
 		}
 
-		nextAt = schedule.Next(req.StartAt)
-		if schedule.Next(nextAt).Sub(nextAt) < time.Minute {
+		nextNextAt, err := scheduled_messages.GetNextCronTick(req.CronExpression.String, nextAt, req.CronTimezone.String)
+		if err != nil {
+			return helpers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
+		}
+
+		if nextNextAt.Sub(nextAt) < time.Minute {
 			return helpers.BadRequest("invalid_cron_expression", "The cron expression is too tight and will trigger too often.")
 		}
 	}
@@ -89,6 +99,10 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 		CronExpression: sql.NullString{
 			String: req.CronExpression.String,
 			Valid:  req.CronExpression.Valid,
+		},
+		CronTimezone: sql.NullString{
+			String: req.CronTimezone.String,
+			Valid:  req.CronTimezone.Valid,
 		},
 		StartAt: req.StartAt,
 		EndAt: sql.NullTime{
@@ -188,15 +202,26 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		return helpers.BadRequest("invalid_end_at", "The end_at field must be after the start_at field.")
 	}
 
+	if req.StartAt.Before(time.Now().UTC()) {
+		req.StartAt = time.Now().UTC()
+	}
+
 	nextAt := req.StartAt
 	if !req.OnlyOnce {
-		schedule, err := scheduled_messages.ParseCronExpression(req.CronExpression.String)
+		fmt.Println("start", nextAt)
+
+		var err error
+		nextAt, err = scheduled_messages.GetFirstCronTick(req.CronExpression.String, req.StartAt, req.CronTimezone.String)
 		if err != nil {
 			return helpers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
 		}
 
-		nextAt = schedule.Next(req.StartAt)
-		if schedule.Next(nextAt).Sub(nextAt) < time.Minute {
+		nextNextAt, err := scheduled_messages.GetNextCronTick(req.CronExpression.String, nextAt, req.CronTimezone.String)
+		if err != nil {
+			return helpers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
+		}
+
+		if nextNextAt.Sub(nextAt) < time.Minute {
 			return helpers.BadRequest("invalid_cron_expression", "The cron expression is too tight and will trigger too often.")
 		}
 	}
@@ -218,6 +243,10 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		CronExpression: sql.NullString{
 			String: req.CronExpression.String,
 			Valid:  req.CronExpression.Valid,
+		},
+		CronTimezone: sql.NullString{
+			String: req.CronTimezone.String,
+			Valid:  req.CronTimezone.Valid,
 		},
 		StartAt: req.StartAt,
 		EndAt: sql.NullTime{
@@ -282,6 +311,7 @@ func scheduledMessageModelToWire(model postgres.ScheduledMessage) wire.Scheduled
 		Name:           model.Name,
 		Description:    null.NewString(model.Description.String, model.Description.Valid),
 		CronExpression: null.NewString(model.CronExpression.String, model.CronExpression.Valid),
+		CronTimezone:   null.NewString(model.CronTimezone.String, model.CronTimezone.Valid),
 		StartAt:        model.StartAt,
 		EndAt:          null.NewTime(model.EndAt.Time, model.EndAt.Valid),
 		NextAt:         model.NextAt,

@@ -90,8 +90,9 @@ premium:
         ai_assistant: true
         is_premium: true # This is used for handing out cosmetics like a role on the support server
         custom_bot: true
-        max_custom_commands: 5
-        max_scheduled_messages: 10
+        max_custom_commands: 25
+        max_image_upload_size: 8000000
+        max_scheduled_messages: 25
         periodic_scheduled_messages: true
 ```
 

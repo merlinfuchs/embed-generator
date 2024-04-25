@@ -297,6 +297,7 @@ export interface ScheduledMessageWire {
   name: string;
   description: null | string;
   cron_expression: null | string;
+  cron_timezone: null | string;
   start_at: string /* RFC3339 */;
   end_at: null | string /* RFC3339 */;
   next_at: string /* RFC3339 */;
@@ -314,6 +315,7 @@ export interface ScheduledMessageCreateRequestWire {
   name: string;
   description: null | string;
   cron_expression: null | string;
+  cron_timezone: null | string;
   start_at: string /* RFC3339 */;
   end_at: null | string /* RFC3339 */;
   only_once: boolean;
@@ -327,6 +329,7 @@ export interface ScheduledMessageUpdateRequestWire {
   name: string;
   description: null | string;
   cron_expression: null | string;
+  cron_timezone: null | string;
   start_at: string /* RFC3339 */;
   end_at: null | string /* RFC3339 */;
   only_once: boolean;
