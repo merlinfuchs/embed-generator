@@ -27,6 +27,7 @@
     "emoji-mart": "^5.5.2",
     "highlight.js": "^11.7.0",
     "immer": "^9.0.21",
+    "just-debounce-it": "^3.2.0",
     "postcss": "^8.4.21",
     "react": "^18.2.0",
     "react-colorful": "^5.6.1",
@@ -41,6 +42,7 @@
     "tailwindcss": "^3.3.1",
     "vaul": "^0.7.0",
     "zod": "^3.21.4",
+    "zundo": "^2.1.0",
     "zustand": "^4.3.7"
   },
   "devDependencies": {

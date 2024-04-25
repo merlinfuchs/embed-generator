@@ -26,7 +26,7 @@ export interface ActionsStore {
   actions: Record<string, MessageActionSet>;
 }
 
-export const createMessageStore = (key: string) =>
+export const createActionStore = (key: string) =>
   create<ActionsStore>()(
     immer(
       persist(
@@ -175,10 +175,10 @@ export const createMessageStore = (key: string) =>
   );
 
 // TODO: move message actions into this store instead of current message store
-export const useCurrentMessageActionsStore = createMessageStore(
+export const useCurrentMessageActionsStore = createActionStore(
   "current-message-actions"
 );
 
-export const useCommandActionsStore = createMessageStore(
+export const useCommandActionsStore = createActionStore(
   "custom-commands-actions"
 );
