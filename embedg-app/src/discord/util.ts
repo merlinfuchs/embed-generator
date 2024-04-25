@@ -18,8 +18,8 @@ export function parseWebhookUrl(webhookUrl: string): WebhookInfo | null {
   if (match) {
     return {
       type: "discord",
-      id: match[1],
-      token: match[2],
+      id: match[2],
+      token: match[3],
     };
   }
 
