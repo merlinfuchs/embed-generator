@@ -36,7 +36,7 @@ func renderEmbedLinkHTML(c *fiber.Ctx, el postgres.EmbedLink) error {
 	})
 
 	if el.ID != "" {
-		oEmbedURL := fmt.Sprintf("%s/api/embed-links/%s/oembed", c.BaseURL(), el.ID)
+		oEmbedURL := fmt.Sprintf("%s/embed-links/%s/oembed", viper.GetString("api.public_url"), el.ID)
 		metaTags += fmt.Sprintf(`<link type="application/json+oembed" href="%s" />`, oEmbedURL)
 	}
 

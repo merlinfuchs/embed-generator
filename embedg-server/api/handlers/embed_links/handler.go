@@ -3,6 +3,7 @@ package embed_links
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -10,6 +11,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
+	"github.com/spf13/viper"
 )
 
 type EmbedLinksHandler struct {
@@ -43,11 +45,13 @@ func (h *EmbedLinksHandler) HandleCreateEmbedLink(c *fiber.Ctx, req wire.EmbedLi
 		return err
 	}
 
+	publicURL := strings.TrimSuffix(viper.GetString("api.public_url"), "/api")
+
 	return c.JSON(wire.EmbedLinkCreateResponseWire{
 		Success: true,
 		Data: wire.EmbedLinkCreateResponseDataWire{
 			ID:  row.ID,
-			URL: fmt.Sprintf("%s/e/%s", c.BaseURL(), row.ID),
+			URL: fmt.Sprintf("%s/e/%s", publicURL, row.ID),
 		},
 	})
 }
