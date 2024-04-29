@@ -104,6 +104,25 @@ export const embedAuthorSchema = z.optional(
 
 export type EmbedAuthor = z.infer<typeof embedAuthorSchema>;
 
+export const embedProviderNameSchema = z.string().min(1).max(256);
+
+export type EmbedProviderName = z.infer<typeof embedProviderNameSchema>;
+
+export const embedProviderUrlSchema = z.optional(
+  z.string().refine(...urlRefinement)
+);
+
+export type EmbedProviderUrl = z.infer<typeof embedProviderUrlSchema>;
+
+export const embedProviderSchema = z.optional(
+  z.object({
+    name: embedProviderNameSchema,
+    url: embedProviderUrlSchema,
+  })
+);
+
+export type EmbedProvider = z.infer<typeof embedProviderSchema>;
+
 export const embedFieldNameSchema = z.string().min(1).max(256);
 
 export type EmbedFieldName = z.infer<typeof embedFieldNameSchema>;
@@ -155,6 +174,7 @@ export const embedSchema = z
     color: embedColor,
     footer: embedFooterSchema,
     author: embedAuthorSchema,
+    provider: embedProviderSchema,
     image: embedImageSchema,
     thumbnail: embedThumbnailSchema,
     fields: z.array(embedFieldSchema).max(25).default([]),
@@ -164,6 +184,7 @@ export const embedSchema = z
       !data.description &&
       !data.title &&
       !data.author &&
+      !data.provider &&
       !data.footer &&
       !data.fields.length &&
       !data.image &&

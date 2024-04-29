@@ -13,6 +13,8 @@ import {
   CustomCommandUpdateRequestWire,
   CustomCommandUpdateResponseWire,
   CustomCommandsDeployResponseWire,
+  EmbedLinkCreateRequestWire,
+  EmbedLinkCreateResponseWire,
   MessageRestoreFromChannelRequestWire,
   MessageRestoreFromWebhookRequestWire,
   MessageRestoreResponseWire,
@@ -445,4 +447,18 @@ export function useScheduledMessageDeleteMutation() {
       );
     }
   );
+}
+
+export function useEmbedLinkCreateMutation() {
+  return useMutation((req: EmbedLinkCreateRequestWire) => {
+    return fetchApi(`/api/embed-links`, {
+      method: "POST",
+      body: JSON.stringify(req),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }).then((res) =>
+      handleApiResponse<EmbedLinkCreateResponseWire>(res.json())
+    );
+  });
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/assistant"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/auth"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/custom_bots"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/embed_links"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/guilds"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/images"
 	premium_handler "github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/premium"
@@ -100,6 +101,11 @@ func registerRoutes(app *fiber.App, stores *stores, bot *bot.Bot, managers *mana
 	scheduledMessagesGroup.Get("/:messageID", scheduledMessagesHandler.HandleGetScheduledMessage)
 	scheduledMessagesGroup.Put("/:messageID", helpers.WithRequestBodyValidated(scheduledMessagesHandler.HandleUpdateScheduledMessage))
 	scheduledMessagesGroup.Delete("/:messageID", scheduledMessagesHandler.HandleDeleteScheduledMessage)
+
+	embedLinksHandler := embed_links.New(stores.pg)
+	app.Post("/api/embed-links", helpers.WithRequestBodyValidated(embedLinksHandler.HandleCreateEmbedLink))
+	app.Get("/api/embed-links/:linkID/oembed", embedLinksHandler.HandleRenderEmbedLinkJSON)
+	app.Get("/e/:linkID", embedLinksHandler.HandleRenderEmbedLinkHTML)
 
 	app.Get("/invite", func(c *fiber.Ctx) error {
 		return c.Redirect(util.BotInviteURL(), 302)

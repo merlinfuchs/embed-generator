@@ -109,6 +109,32 @@ export const embedAuthorSchema = z.preprocess(
 
 export type EmbedAuthor = z.infer<typeof embedAuthorSchema>;
 
+export const embedProviderNameSchema = z.preprocess(
+  (d) => d ?? undefined,
+  z.string().default("")
+);
+
+export type EmbedProviderName = z.infer<typeof embedProviderNameSchema>;
+
+export const embedProviderUrlSchema = z.preprocess(
+  (d) => d ?? undefined,
+  z.optional(z.string())
+);
+
+export type EmbedProviderUrl = z.infer<typeof embedProviderUrlSchema>;
+
+export const embedProviderSchema = z.preprocess(
+  (d) => d ?? undefined,
+  z.optional(
+    z.object({
+      name: embedProviderNameSchema,
+      url: embedProviderUrlSchema,
+    })
+  )
+);
+
+export type EmbedProvider = z.infer<typeof embedProviderSchema>;
+
 export const embedFieldNameSchema = z.preprocess(
   (d) => d ?? undefined,
   z.string().default("")
@@ -183,6 +209,7 @@ export const embedSchema = z.object({
   color: embedColor,
   footer: embedFooterSchema,
   author: embedAuthorSchema,
+  provider: embedProviderSchema,
   image: embedImageSchema,
   thumbnail: embedThumbnailSchema,
   fields: z.preprocess(

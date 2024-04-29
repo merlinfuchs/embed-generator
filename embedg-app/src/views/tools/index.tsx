@@ -1,6 +1,7 @@
 import {
   ClockIcon,
   CodeBracketSquareIcon,
+  PhotoIcon,
   SwatchIcon,
 } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
@@ -36,6 +37,24 @@ export default function ToolsView() {
                 Discord supports colored text via ANSI color codes in code
                 blocks. This tool makes it very simple to generate colored text
                 that you can then use in your Discord message.
+              </div>
+            </div>
+          </Link>
+          <Link
+            className="p-5 bg-dark-3 rounded-md flex cursor-pointer space-x-5 transform hover:scale-101"
+            to="/tools/embed-links"
+          >
+            <div className="flex-none h-12 w-12 md:h-20 md:w-20 flex items-center justify-center bg-dark-2 rounded-full">
+              <PhotoIcon className="h-8 w-8 md:h-12 md:w-12 text-blurple" />
+            </div>
+            <div>
+              <div className="text-white font-medium mb-3 text-xl transition-transform">
+                Embed Links
+              </div>
+              <div className="text-gray-400 font-light text-sm">
+                Embed links are a way to share rich embeds with others without
+                needing to send the actual embed. This tool lets you easily
+                generate embed links for your embeds.
               </div>
             </div>
           </Link>

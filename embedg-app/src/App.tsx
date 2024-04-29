@@ -21,6 +21,7 @@ const LazyScheduledMessagesView = lazy(() => import("./views/scheduled"));
 const LazyToolsView = lazy(() => import("./views/tools"));
 const LazyColoredTextToolView = lazy(() => import("./views/tools/coloredText"));
 const LazyWebhookInfoToolView = lazy(() => import("./views/tools/webhookInfo"));
+const LazyEmbedLinksToolView = lazy(() => import("./views/tools/embedLinks"));
 
 function SuspendedView({ children }: { children: ReactNode }) {
   return <Suspense>{children}</Suspense>;
@@ -109,6 +110,14 @@ function App() {
             element={
               <SuspendedView>
                 <LazyWebhookInfoToolView />
+              </SuspendedView>
+            }
+          />
+          <Route
+            path="/tools/embed-links"
+            element={
+              <SuspendedView>
+                <LazyEmbedLinksToolView />
               </SuspendedView>
             }
           />

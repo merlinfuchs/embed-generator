@@ -104,6 +104,37 @@ export type CustomCommandsDeployResponseWire = APIResponse<{
   }>;
 
 //////////
+// source: embeds_links.go
+
+export interface EmbedLinkCreateRequestWire {
+  url: string;
+  theme_color: null | string;
+  og_title: null | string;
+  og_site_name: null | string;
+  og_description: null | string;
+  og_image: null | string;
+  oe_type: null | string;
+  oe_author_name: null | string;
+  oe_author_url: null | string;
+  oe_provider_name: null | string;
+  oe_provider_url: null | string;
+  tw_card: null | string;
+}
+export interface EmbedLinkCreateResponseDataWire {
+  id: string;
+  url: string;
+}
+export type EmbedLinkCreateResponseWire = APIResponse<EmbedLinkCreateResponseDataWire>;
+export interface EmbedLinkOEmbedResponseWire {
+  type?: string;
+  title?: string;
+  author_name?: string;
+  author_url?: string;
+  provider_name?: string;
+  provider_url?: string;
+}
+
+//////////
 // source: guild.go
 
 export interface GuildWire {

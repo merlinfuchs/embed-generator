@@ -4,10 +4,12 @@ import InputControlBar from "./InputControlBar";
 import { useRef } from "react";
 import ImageUploadButton from "./ImageUploadButton";
 import { usePremiumGuildFeatures } from "../util/premium";
+import clsx from "clsx";
 
 interface Props {
   label: string;
   value: string;
+  description?: string;
   onChange: (value: string) => void;
   maxLength?: number;
   type?: "text" | "url" | "textarea";
@@ -20,6 +22,7 @@ interface Props {
 
 export default function EditorInput({
   label,
+  description,
   value,
   onChange,
   maxLength,
@@ -35,7 +38,12 @@ export default function EditorInput({
 
   return (
     <div className={className}>
-      <div className="mb-1.5 flex justify-between items-end">
+      <div
+        className={clsx(
+          "flex justify-between items-end",
+          !description && "mb-1.5"
+        )}
+      >
         <div className="flex">
           <div className="uppercase text-gray-300 text-sm font-medium">
             {label}
@@ -56,6 +64,12 @@ export default function EditorInput({
           )}
         </div>
       </div>
+
+      {description && (
+        <div className="mb-1.5 text-gray-400 text-sm font-light">
+          {description}
+        </div>
+      )}
 
       <div className="flex space-x-2">
         {type === "textarea" ? (

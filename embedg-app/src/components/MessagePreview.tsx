@@ -103,6 +103,17 @@ export default function MessagePreview({ msg }: { msg: Message }) {
                         <div className="discord-embed-root">
                           <div className="discord-embed-wrapper">
                             <div className="discord-embed-grid">
+                              {!!embed.provider?.name && (
+                                <div className="discord-embed-provider overflow-hidden break-all">
+                                  {embed.provider.url ? (
+                                    <a href={embed.provider.url}>
+                                      {embed.provider.name}
+                                    </a>
+                                  ) : (
+                                    embed.provider.name
+                                  )}
+                                </div>
+                              )}
                               {!!embed.author?.name && (
                                 <div className="discord-embed-author overflow-hidden break-all">
                                   {!!embed.author.icon_url && (

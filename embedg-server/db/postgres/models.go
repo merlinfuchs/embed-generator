@@ -47,6 +47,24 @@ type CustomCommand struct {
 	LastUsedAt         time.Time
 }
 
+type EmbedLink struct {
+	ID             string
+	Url            string
+	ThemeColor     sql.NullString
+	OgTitle        sql.NullString
+	OgSiteName     sql.NullString
+	OgDescription  sql.NullString
+	OgImage        sql.NullString
+	OeType         sql.NullString
+	OeAuthorName   sql.NullString
+	OeAuthorUrl    sql.NullString
+	OeProviderName sql.NullString
+	OeProviderUrl  sql.NullString
+	TwCard         sql.NullString
+	ExpiresAt      sql.NullTime
+	CreatedAt      time.Time
+}
+
 type Entitlement struct {
 	ID        string
 	UserID    sql.NullString

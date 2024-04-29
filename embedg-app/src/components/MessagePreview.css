@@ -514,6 +514,10 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   text-align: left;
 }
 
+.discord-embed .discord-embed-provider a {
+  color: inherit;
+}
+
 .discord-light-theme .discord-embed .discord-embed-provider {
   color: #4f545c;
 }
