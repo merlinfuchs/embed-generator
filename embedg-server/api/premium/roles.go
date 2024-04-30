@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/merlinfuchs/discordgo"
+	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
@@ -41,7 +42,7 @@ func (m *PremiumManager) assignPremiumRoles() error {
 
 		member, err := m.bot.Session.GuildMember(guildID, userID)
 		if err != nil {
-			if derr, ok := err.(*discordgo.RESTError); ok && derr.Message.Code == discordgo.ErrCodeUnknownMember {
+			if util.IsDiscordRestErrorCode(err, discordgo.ErrCodeUnknownMember) {
 				continue
 			}
 

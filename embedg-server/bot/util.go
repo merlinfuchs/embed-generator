@@ -122,6 +122,10 @@ func (b *Bot) GetWebhookForChannel(channelID string, webhookID string) (*discord
 		}
 	}
 
+	if webhook == nil {
+		return nil, fmt.Errorf("The webhook doesn't exist.")
+	}
+
 	if webhook.Token == "" {
 		return nil, fmt.Errorf("The webhook belongs to another application and can't be used by Embed Generator.")
 	}

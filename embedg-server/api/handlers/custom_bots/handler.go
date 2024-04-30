@@ -76,7 +76,7 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 	isMember := true
 	member, err := session.GuildMember(guildID, user.ID)
 	if err != nil {
-		if derr, ok := err.(*discordgo.RESTError); ok && (derr.Message.Code == discordgo.ErrCodeMissingAccess || derr.Message.Code == discordgo.ErrCodeUnknownGuild) {
+		if util.IsDiscordRestErrorCode(err, discordgo.ErrCodeMissingAccess, discordgo.ErrCodeUnknownGuild) {
 			isMember = false
 		} else {
 			return fmt.Errorf("Failed to check if custom bot is member of guild: %w", err)

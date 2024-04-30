@@ -6,6 +6,7 @@ import (
 
 	"github.com/jellydator/ttlcache/v3"
 	"github.com/merlinfuchs/discordgo"
+	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/spf13/viper"
 )
 
@@ -97,11 +98,9 @@ func (m *AccessManager) GetChannelAccessForUser(userID string, channelID string)
 
 	res.UserPermissions, err = m.ComputeUserPermissionsForChannel(userID, channelID)
 	if err != nil {
-		if derr, ok := err.(*discordgo.RESTError); ok {
-			if derr.Message.Code == discordgo.ErrCodeUnknownMember {
-				// The user is not in the server, so we can't compute the permissions
-				return res, nil
-			}
+		if util.IsDiscordRestErrorCode(err, discordgo.ErrCodeUnknownMember) {
+			// The user is not in the server, so we can't compute the permissions
+			return res, nil
 		}
 		return res, err
 	}
