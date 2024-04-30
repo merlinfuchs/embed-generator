@@ -107,7 +107,8 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 		legacyPermissions = false
 	}
 
-	variables := actions.VariablesForInteraction(interaction)
+	variables := map[string]string{}
+	actions.VariablesForInteraction(variables, interaction)
 
 	for _, action := range actionSet.Actions {
 		switch action.Type {

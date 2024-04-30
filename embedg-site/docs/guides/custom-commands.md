@@ -37,7 +37,7 @@ You can create sub command groups & sub commands by adding a space to your comma
 
 ### Command Arguments
 
-While you can add arguments to your Custom Commands right now which your members must fill out when they are running the command, these arguments can't be used in actions and responses yet.
+You can add arguments to your Custom Commands which your members must fill out when they are running the command. These arguments can be used as [message variables](./variables) in your response messages.
 
 ### Command Actions
 

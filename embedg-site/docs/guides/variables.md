@@ -1,0 +1,30 @@
+---
+sidebar_position: 6
+---
+
+# Message Variables
+
+Message variables are a way to dynamically adjust the content of your message based on the context. This is especially useful in responses to custom commands and interactive components.
+
+To use a variable in your message just put `{variable_name}` where you want the value to appear. For example put `{user.mention}` in your message content to ping the user that has used a command.
+
+![Variables in Button](./variables-button.png)
+![Variables in response](./variables-response.png)
+
+## List of Variables
+
+| Variable           | Type                                      | Description                                                                                                                                                                                                            |
+| ------------------ | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| user               | text                                      | Mention the user that has used the command or interactive component.                                                                                                                                                   |
+| user.id            | text                                      | The ID of the user that has used the command or interactive component.                                                                                                                                                 |
+| user.name          | text                                      | The display name or username of the user that has used the command or interactive component.                                                                                                                           |
+| user.username      | text                                      | The username of the user that has used the command or interactive component.                                                                                                                                           |
+| user.discriminator | text                                      | The discriminator of the user that has used the command or interactive component.                                                                                                                                      |
+| user.avatar        | text                                      | The avatar hash of the user that has used the command or interactive component.                                                                                                                                        |
+| user.avatar_url    | text                                      | The avatar URL of the user that has used the command or interactive component.                                                                                                                                         |
+| user.global_name   | text                                      | The display name of the user that has used the command or interactive component.                                                                                                                                       |
+| user.mention       | text                                      | Mention the user that has used the command or interactive component.                                                                                                                                                   |
+| cmd                | text                                      | Mention the command that was used.                                                                                                                                                                                     |
+| cmd.id             | text                                      | The ID of the command that was used.                                                                                                                                                                                   |
+| cmd.name           | text                                      | The name of the command that was used.                                                                                                                                                                                 |
+| cmd.args.my_arg    | text / user / channel / role / attachment | The value of one of the command arguments. Replace `my_arg` with the name of the argument. Depending on the type of the command argument this might have sub variables like `cmd.args.my_arg.id` for the id of a user. |

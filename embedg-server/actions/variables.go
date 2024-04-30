@@ -60,84 +60,71 @@ func FillVariables(value string, variables map[string]string) string {
 	return r.Replace(value)
 }
 
-func VariablesForInteraction(i *discordgo.Interaction) map[string]string {
+func VariablesForInteraction(v map[string]string, i *discordgo.Interaction) {
 	user := i.Member.User
 
-	variables := map[string]string{
-		"user":               user.Mention(),
-		"user.id":            user.ID,
-		"user.name":          user.Username,
-		"user.username":      user.Username,
-		"user.discriminator": user.Discriminator,
-		"user.avatar":        user.Avatar,
-		"user.global_name":   user.GlobalName,
-		"user.mention":       user.Mention(),
-	}
+	VariablesForUser(v, user, "user")
 
 	if i.Type == discordgo.InteractionApplicationCommand {
 		data := i.ApplicationCommandData()
 
-		variables["cmd"] = fmt.Sprintf("</%s:%s>", data.Name, data.ID)
-		variables["cmd.id"] = data.ID
-		variables["cmd.name"] = data.Name
+		v["cmd"] = fmt.Sprintf("</%s:%s>", data.Name, data.ID)
+		v["cmd.id"] = data.ID
+		v["cmd.name"] = data.Name
 
 		addOption := func(option *discordgo.ApplicationCommandInteractionDataOption) {
 			key := "cmd.args." + option.Name
 
 			switch option.Type {
 			case discordgo.ApplicationCommandOptionString:
-				variables[key] = option.StringValue()
+				v[key] = option.StringValue()
 			case discordgo.ApplicationCommandOptionInteger:
-				variables[key] = fmt.Sprintf("%d", option.IntValue())
+				v[key] = fmt.Sprintf("%d", option.IntValue())
 			case discordgo.ApplicationCommandOptionBoolean:
-				variables[key] = fmt.Sprintf("%t", option.BoolValue())
+				v[key] = fmt.Sprintf("%t", option.BoolValue())
 			case discordgo.ApplicationCommandOptionUser:
 				user := option.UserValue(nil)
-				variables[key] = user.Mention()
-				variables[key+".id"] = user.ID
-				variables[key+".mention"] = user.Mention()
+				v[key] = user.Mention()
+				v[key+".id"] = user.ID
+				v[key+".mention"] = user.Mention()
 
 				resolved := data.Resolved.Users[user.ID]
 				if resolved != nil {
-					variables[key+".name"] = resolved.Username
-					variables[key+".username"] = resolved.Username
-					variables[key+".discriminator"] = resolved.Discriminator
-					variables[key+".avatar"] = resolved.Avatar
-					variables[key+".global_name"] = resolved.GlobalName
+					VariablesForUser(v, resolved, key)
 				}
 			case discordgo.ApplicationCommandOptionChannel:
 				channel := option.ChannelValue(nil)
-				variables[key] = channel.Mention()
-				variables[key+".id"] = channel.ID
-				variables[key+".mention"] = channel.Mention()
+				v[key] = channel.Mention()
+				v[key+".id"] = channel.ID
+				v[key+".mention"] = channel.Mention()
 
 				resolved := data.Resolved.Channels[channel.ID]
 				if resolved != nil {
-					variables[key+".name"] = resolved.Name
-					variables[key+".topic"] = resolved.Topic
+					v[key+".name"] = resolved.Name
+					v[key+".topic"] = resolved.Topic
 				}
 			case discordgo.ApplicationCommandOptionRole:
 				role := option.RoleValue(nil, "")
-				variables[key] = role.Mention()
-				variables[key+".id"] = role.ID
-				variables[key+".mention"] = role.Mention()
+				v[key] = role.Mention()
+				v[key+".id"] = role.ID
+				v[key+".mention"] = role.Mention()
 
 				resolved := data.Resolved.Roles[role.ID]
 				if resolved != nil {
-					variables[key+".name"] = resolved.Name
+					v[key+".name"] = resolved.Name
 				}
 			case discordgo.ApplicationCommandOptionNumber:
-				variables[key] = fmt.Sprintf("%f", option.FloatValue())
+				v[key] = fmt.Sprintf("%f", option.FloatValue())
 			case discordgo.ApplicationCommandOptionAttachment:
 				resolved := data.Resolved.Attachments[option.StringValue()]
 				if resolved != nil {
-					variables[key] = resolved.URL
-					variables[key+".id"] = resolved.ID
-					variables[key+".url"] = resolved.URL
-					variables[key+".filename"] = resolved.Filename
-					variables[key+".size"] = fmt.Sprintf("%d", resolved.Size)
-					variables[key+".height"] = fmt.Sprintf("%d", resolved.Height)
-					variables[key+".width"] = fmt.Sprintf("%d", resolved.Width)
+					v[key] = resolved.URL
+					v[key+".id"] = resolved.ID
+					v[key+".url"] = resolved.URL
+					v[key+".filename"] = resolved.Filename
+					v[key+".size"] = fmt.Sprintf("%d", resolved.Size)
+					v[key+".height"] = fmt.Sprintf("%d", resolved.Height)
+					v[key+".width"] = fmt.Sprintf("%d", resolved.Width)
 				}
 			}
 		}
@@ -158,6 +145,23 @@ func VariablesForInteraction(i *discordgo.Interaction) map[string]string {
 			}
 		}
 	}
+}
 
-	return variables
+func VariablesForUser(v map[string]string, u *discordgo.User, keyPrefix ...string) {
+	key := strings.Join(keyPrefix, ".")
+
+	name := u.GlobalName
+	if name == "" {
+		name = u.Username
+	}
+
+	v[key] = u.Mention()
+	v[key+".id"] = u.ID
+	v[key+".name"] = name
+	v[key+".username"] = u.Username
+	v[key+".discriminator"] = u.Discriminator
+	v[key+".avatar"] = u.Avatar
+	v[key+".avatar_url"] = u.AvatarURL("512")
+	v[key+".global_name"] = u.GlobalName
+	v[key+".mention"] = u.Mention()
 }
