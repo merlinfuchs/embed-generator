@@ -116,11 +116,14 @@ export default function Action({
 
   const responseStyle = useMemo(() => {
     switch (action.type) {
-      case 1 || 5:
+      case 1:
+      case 5:
         return "channel";
-      case 6 || 7:
+      case 6:
+      case 7:
         return "dm";
-      case 8 || 9:
+      case 8:
+      case 9:
         return "edit";
     }
   }, [action.type]);

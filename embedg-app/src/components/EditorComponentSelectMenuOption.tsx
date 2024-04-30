@@ -67,7 +67,7 @@ export default function EditorComponentSelectMenuOption({
       <Collapsable
         id={`components.${rowId}.select.${compId}.options.${optionId}`}
         valiationPathPrefix={`components.${rowIndex}.components.${compIndex}.options.${optionIndex}`}
-        title={`Option ${compIndex + 1}`}
+        title={`Option ${optionIndex + 1}`}
         extra={
           option.label && (
             <div className="text-gray-500 truncate flex space-x-2 pl-2">
