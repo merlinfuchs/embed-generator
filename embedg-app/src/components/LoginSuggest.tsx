@@ -8,6 +8,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { AutoAnimate } from "../util/autoAnimate";
+import LoginLink from "./LoginLink";
 
 interface Props {
   alwaysExpanded?: boolean;
@@ -63,12 +64,9 @@ export default function LogginSuggest({ alwaysExpanded }: Props) {
             </div>
           </div>
           <div className="flex justify-end pt-2">
-            <a
-              className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white"
-              href="/api/auth/login"
-            >
+            <LoginLink className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white">
               <div>Login Now</div>
-            </a>
+            </LoginLink>
           </div>
         </div>
       )}

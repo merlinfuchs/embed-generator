@@ -22,6 +22,8 @@ import { useGuildsQuery, useUserQuery } from "../api/queries";
 import { guildIconUrl } from "../discord/cdn";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { shallow } from "zustand/shallow";
+import LoginLink from "./LoginLink";
+import LogoutLink from "./LogoutLink";
 
 export default function SideNav() {
   const [preCollapsed, setCollapsed] = useState(
@@ -63,12 +65,11 @@ export default function SideNav() {
               {user && user.success ? (
                 <NavigationGuildSelect collapsed={collapsed} />
               ) : (
-                <a
+                <LoginLink
                   className={clsx(
                     "bg-dark-2 flex items-center mx-3 group",
                     collapsed ? "rounded-full p-2" : "rounded p-2"
                   )}
-                  href="/api/auth/login"
                 >
                   <ArrowRightOnRectangleIcon className="h-8 w-8 flex-none text-gray-300 group-hover:text-white" />
                   {!collapsed && (
@@ -82,7 +83,7 @@ export default function SideNav() {
                       </div>
                     </div>
                   )}
-                </a>
+                </LoginLink>
               )}
             </div>
             <div
@@ -138,12 +139,11 @@ export default function SideNav() {
           </div>
           <div className="flex flex-col items-center py-5 space-y-7">
             {user && user.success && (
-              <a
+              <LogoutLink
                 className={clsx(
                   "flex w-full items-center group",
                   collapsed ? "px-4" : "px-5"
                 )}
-                href="/api/auth/logout"
               >
                 <ArrowLeftOnRectangleIcon className="h-8 w-8 flex-none text-gray-300 group-hover:text-white" />
                 {!collapsed && (
@@ -155,7 +155,7 @@ export default function SideNav() {
                     Logout
                   </div>
                 )}
-              </a>
+              </LogoutLink>
             )}
 
             <NavigationButton

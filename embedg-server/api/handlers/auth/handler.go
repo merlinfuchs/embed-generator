@@ -46,6 +46,7 @@ func New(pg *postgres.PostgresStore, bot *bot.Bot, sessionManager *session.Sessi
 
 func (h *AuthHandler) HandleAuthRedirect(c *fiber.Ctx) error {
 	state := setOauthStateCookie(c)
+	setOauthRedirectCookie(c)
 	return c.Redirect(h.oauth2Config.AuthCodeURL(state), http.StatusTemporaryRedirect)
 }
 
@@ -64,7 +65,8 @@ func (h *AuthHandler) HandleAuthCallback(c *fiber.Ctx) error {
 		return h.HandleAuthRedirect(c)
 	}
 
-	return c.Redirect(viper.GetString("app.public_url"), http.StatusTemporaryRedirect)
+	redirectURL := getOauthRedirectURL(c)
+	return c.Redirect(redirectURL, http.StatusTemporaryRedirect)
 }
 
 func (h *AuthHandler) HandleAuthExchange(c *fiber.Ctx, req wire.AuthExchangeRequestWire) error {
@@ -89,7 +91,14 @@ func (h *AuthHandler) HandleAuthLogout(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.Redirect(viper.GetString("app.public_url"), http.StatusTemporaryRedirect)
+	redirectURL := viper.GetString("app.public_url")
+
+	path := c.Query("redirect")
+	if path != "" {
+		redirectURL += path
+	}
+
+	return c.Redirect(redirectURL, http.StatusTemporaryRedirect)
 }
 
 func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.Token, string, error) {
@@ -173,4 +182,30 @@ func setOauthStateCookie(c *fiber.Ctx) string {
 		Secure:   !viper.GetBool("api.insecure_cookies"),
 	})
 	return state
+}
+
+func getOauthRedirectURL(c *fiber.Ctx) string {
+	redirectURL := viper.GetString("app.public_url")
+
+	path := c.Cookies("oauth_redirect")
+	if path != "" {
+		redirectURL += path
+	}
+
+	c.ClearCookie("oauth_redirect")
+	return redirectURL
+}
+
+func setOauthRedirectCookie(c *fiber.Ctx) {
+	redirectURL := c.Query("redirect")
+	if redirectURL != "" {
+		c.Cookie(&fiber.Cookie{
+			Name:     "oauth_redirect",
+			Value:    redirectURL,
+			HTTPOnly: true,
+			Secure:   !viper.GetBool("api.insecure_cookies"),
+		})
+	} else {
+		c.ClearCookie("oauth_redirect")
+	}
 }
