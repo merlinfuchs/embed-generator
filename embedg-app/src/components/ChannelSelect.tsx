@@ -134,7 +134,9 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
     const q = query.toLowerCase();
     if (!q) return channels;
 
-    return channels.filter((c) => c.id === q || c.name.includes(q));
+    return channels.filter(
+      (c) => c.id === q || c.name.toLowerCase().includes(q)
+    );
   }, [channels, query]);
 
   const channel = useMemo(
