@@ -13,7 +13,7 @@ services:
       POSTGRES_HOST_AUTH_METHOD: trust
     healthcheck:
       test: ["CMD", "pg_isready"]
-      interval: 30s
+      interval: 3s
       timeout: 30s
       retries: 3
 
@@ -45,6 +45,9 @@ services:
       - EMBEDG_APP__PUBLIC_URL=http://localhost:8080/app
     volumes:
       - ./config.yaml:/root/config.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   embedg-local-postgres:
