@@ -1,9 +1,13 @@
 import { z } from "zod";
 import { getUniqueId } from "../util";
 
+const VARIABLE_RE = new RegExp("\\{[a-zA-Z0-9_\\.]+\\}");
+
 const HOSTNAME_RE = new RegExp("\\.[a-zA-Z]{2,}$");
 const urlRefinement: [(v: string) => boolean, string] = [
   (v) => {
+    if (v.match(VARIABLE_RE)) return true;
+
     try {
       const url = new URL(v);
       return !!url.hostname.match(HOSTNAME_RE);
@@ -17,6 +21,8 @@ const urlRefinement: [(v: string) => boolean, string] = [
 const IMAGE_PATH_RE = new RegExp("\\.(png|jpg|jpeg|webp|gif)$");
 const imageUrlRefinement: [(v: string) => boolean, string] = [
   (v) => {
+    if (v.match(VARIABLE_RE)) return true;
+
     try {
       const url = new URL(v);
       return !!url.hostname.match(HOSTNAME_RE); // && !!url.pathname.match(IMAGE_PATH_RE) TODO: make better image url regex
