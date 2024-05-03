@@ -115,6 +115,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_DB: embedg
+      PGUSER: postgres
       PGDATA: /var/lib/postgresql/data/pgdata
       POSTGRES_HOST_AUTH_METHOD: trust
     healthcheck:
