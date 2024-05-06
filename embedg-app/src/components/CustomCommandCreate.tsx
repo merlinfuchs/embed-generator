@@ -83,7 +83,7 @@ export default function CustomCommandCreate({
             role="button"
             onClick={create}
           >
-            <Tooltip text="Create Scheduled Message">
+            <Tooltip text="Create Custom Command">
               <ArrowUpTrayIcon className="h-5 w-5" />
             </Tooltip>
             <div className="ml-2">
