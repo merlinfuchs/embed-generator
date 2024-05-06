@@ -1,5 +1,4 @@
 import {
-  CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   DocumentDuplicateIcon,
@@ -9,6 +8,7 @@ import { shallow } from "zustand/shallow";
 import { useCurrentMessageStore } from "../state/message";
 import Collapsable from "./Collapsable";
 import EditorInput from "./EditorInput";
+import CheckBox from "./CheckBox";
 
 interface Props {
   embedIndex: number;
@@ -116,13 +116,11 @@ export default function EditorEmbedField({
               <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
                 Inline
               </div>
-              <div
-                className="w-10 h-10 bg-dark-2 rounded cursor-pointer p-1.5 text-white"
-                role="button"
-                onClick={() => setInline(embedIndex, fieldIndex, !inline)}
-              >
-                {inline && <CheckIcon />}
-              </div>
+              <CheckBox
+                checked={inline ?? false}
+                height={10}
+                onChange={(v) => setInline(embedIndex, fieldIndex, v)}
+              />
             </div>
           </div>
           <EditorInput

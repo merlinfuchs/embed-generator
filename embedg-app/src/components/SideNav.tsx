@@ -24,16 +24,31 @@ import { useSendSettingsStore } from "../state/sendSettings";
 import { shallow } from "zustand/shallow";
 import LoginLink from "./LoginLink";
 import LogoutLink from "./LogoutLink";
+import { useSettingsStore } from "../state/settings";
+
+const collapsedBreakpoint = 1680;
 
 export default function SideNav() {
+  const alwaysCollapseSidebar = useSettingsStore(
+    (s) => s.alwaysCollapseSidebar
+  );
+
   const [preCollapsed, setCollapsed] = useState(
-    document.body.clientWidth < 1680
+    document.body.clientWidth < collapsedBreakpoint
   );
   const [hidden, setHidden] = useState(true);
 
   const { data: user } = useUserQuery();
 
   const collapsed = preCollapsed && hidden;
+
+  useEffect(() => {
+    if (alwaysCollapseSidebar) {
+      setCollapsed(true);
+    } else {
+      setCollapsed(document.body.clientWidth < collapsedBreakpoint);
+    }
+  }, [alwaysCollapseSidebar]);
 
   return (
     <>

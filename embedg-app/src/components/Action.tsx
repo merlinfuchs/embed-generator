@@ -1,6 +1,5 @@
 import Collapsable from "./Collapsable";
 import {
-  CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   DocumentDuplicateIcon,
@@ -11,6 +10,7 @@ import { RoleSelect } from "./RoleSelect";
 import SavedMessageSelect from "./SavedMessageSelect";
 import { useMemo } from "react";
 import { MessageAction } from "../discord/schema";
+import CheckBox from "./CheckBox";
 
 interface Props {
   guildId: string | null;
@@ -245,13 +245,7 @@ export default function Action({
                     Public
                   </div>
                 </div>
-                <div
-                  role="button"
-                  onClick={() => setPublic(!action.public)}
-                  className="h-9 w-9 rounded bg-dark-2 p-1"
-                >
-                  {action.public && <CheckIcon className="text-white" />}
-                </div>
+                <CheckBox checked={action.public} onChange={setPublic} />
               </div>
             )}
             {(action.type === 2 || action.type === 3 || action.type === 4) && (
@@ -261,17 +255,10 @@ export default function Action({
                     Default Response
                   </div>
                 </div>
-                <div
-                  role="button"
-                  onClick={() =>
-                    setDisableDefaultResponse(!action.disable_default_response)
-                  }
-                  className="h-9 w-9 rounded bg-dark-2 p-1"
-                >
-                  {!action.disable_default_response && (
-                    <CheckIcon className="text-white" />
-                  )}
-                </div>
+                <CheckBox
+                  checked={!action.disable_default_response}
+                  onChange={(v) => setDisableDefaultResponse(!v)}
+                />
               </div>
             )}
           </div>

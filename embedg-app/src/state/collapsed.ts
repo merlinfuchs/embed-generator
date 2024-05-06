@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 
 interface CollapsedStatesStore {
   states: { [key: string]: boolean };

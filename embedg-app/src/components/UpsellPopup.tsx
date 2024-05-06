@@ -24,7 +24,7 @@ export default function UpsellPopup() {
   }
 
   return (
-    <div className="fixed bottom-5 right-5 w-80 bg-dark-2 shadow-xl rounded-lg hidden lg:block px-5 py-4">
+    <div className="fixed bottom-5 right-5 w-80 bg-dark-2 shadow-xl rounded-lg hidden lg:block px-5 py-4 z-10">
       <div className="flex justify-between">
         <div className="text-base text-gray-100 font-bold mb-1.5">
           Embed Generator ♥️

@@ -4,7 +4,6 @@ import Tooltip from "./Tooltip";
 import {
   ArrowRightIcon,
   CalendarDaysIcon,
-  CheckIcon,
   ClipboardIcon,
   ClockIcon,
   PencilSquareIcon,
@@ -30,6 +29,7 @@ import CronExpressionBuilder from "./CronExpressionBuilder";
 import { usePremiumGuildFeatures } from "../util/premium";
 import PremiumSuggest from "./PremiumSuggest";
 import { getCurrentTimezone } from "../util/time";
+import CheckBox from "./CheckBox";
 
 export default function ScheduledMessage({
   msg,
@@ -171,13 +171,11 @@ export default function ScheduledMessage({
                   <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
                     Enabled
                   </div>
-                  <div
-                    className="w-10 h-10 bg-dark-2 rounded cursor-pointer p-1.5 text-white"
-                    role="button"
-                    onClick={() => setEnabled((v) => !v)}
-                  >
-                    {enabled && <CheckIcon />}
-                  </div>
+                  <CheckBox
+                    checked={enabled}
+                    onChange={setEnabled}
+                    height={10}
+                  />
                 </div>
               </div>
               <div className="flex space-x-3 pb-3 items-end">

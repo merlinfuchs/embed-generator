@@ -7,7 +7,7 @@ import ColorPicker from "./ColorPicker";
 import { useEmbedLinkCreateMutation } from "../api/mutations";
 import { useToasts } from "../util/toasts";
 import { colorIntToHex } from "../util/discord";
-import { CheckIcon } from "@heroicons/react/20/solid";
+import CheckBox from "./CheckBox";
 
 export default function ToolsEmbedLinks() {
   const [title, setTitle] = useState("");
@@ -230,13 +230,11 @@ export default function ToolsEmbedLinks() {
               <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
                 Large
               </div>
-              <div
-                className="w-10 h-10 bg-dark-2 rounded cursor-pointer p-1.5 text-white"
-                role="button"
-                onClick={() => setTwitterCard(!twitterCard)}
-              >
-                {twitterCard && <CheckIcon />}
-              </div>
+              <CheckBox
+                checked={!twitterCard}
+                onChange={setTwitterCard}
+                height={10}
+              />
             </div>
             <EditorInput
               label="Image URL"

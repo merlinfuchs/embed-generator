@@ -5,7 +5,7 @@ import EditorInput from "./EditorInput";
 import { AutoAnimate } from "../util/autoAnimate";
 import { getUniqueId } from "../util";
 import EditorComponentSelectMenuOption from "./EditorComponentSelectMenuOption";
-import { CheckIcon } from "@heroicons/react/20/solid";
+import CheckBox from "./CheckBox";
 
 interface Props {
   rowIndex: number;
@@ -69,15 +69,10 @@ export default function EditorComponentSelectMenu({
           <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
             Disabled
           </div>
-          <div
-            className="w-10 h-10 bg-dark-2 rounded cursor-pointer p-1.5 text-white"
-            role="button"
-            onClick={() =>
-              setDisabled(rowIndex, compIndex, !selectMenu.disabled)
-            }
-          >
-            {selectMenu.disabled && <CheckIcon />}
-          </div>
+          <CheckBox
+            checked={selectMenu.disabled ?? false}
+            onChange={(v) => setDisabled(rowIndex, compIndex, v)}
+          />
         </div>
       </div>
       <Collapsable

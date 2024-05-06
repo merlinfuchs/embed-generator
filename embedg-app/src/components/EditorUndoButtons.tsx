@@ -7,11 +7,11 @@ import {
   useCurrentMessageUndoStore,
 } from "../state/message";
 import EditorIconButton from "./EditorIconButton";
-import { usePremiumGuildFeatures } from "../util/premium";
 import { useEffect } from "react";
+import { useSettingsStore } from "../state/settings";
 
 export default function EditorUndoButtons() {
-  const isPremium = usePremiumGuildFeatures()?.is_premium;
+  const historyEnabled = useSettingsStore((s) => s.editHistoryEnabled);
 
   const { undo, redo, pause, resume } =
     useCurrentMessageStore.temporal.getState();
@@ -37,7 +37,7 @@ export default function EditorUndoButtons() {
       }
     }
 
-    if (isPremium) {
+    if (historyEnabled) {
       resume();
       document.addEventListener("keydown", onKeyDown);
     } else {
@@ -47,7 +47,7 @@ export default function EditorUndoButtons() {
     return () => {
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [isPremium, pause, resume]);
+  }, [historyEnabled, pause, resume, undo, redo]);
 
   if (!isTracking) {
     return null;

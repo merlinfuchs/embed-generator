@@ -1,5 +1,4 @@
 import {
-  CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   DocumentDuplicateIcon,
@@ -11,6 +10,7 @@ import { shallow } from "zustand/shallow";
 import EditorInput from "./EditorInput";
 import EditorActionSet from "./EditorActionSet";
 import EditorComponentEmojiSelect from "./EditorComponentEmojiSelect";
+import CheckBox from "./CheckBox";
 
 interface Props {
   rowIndex: number;
@@ -165,13 +165,10 @@ export default function EditorComponentButton({
               <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
                 Disabled
               </div>
-              <div
-                className="w-10 h-10 bg-dark-2 rounded cursor-pointer p-1.5 text-white"
-                role="button"
-                onClick={() => setDisabled(rowIndex, compIndex, !disabled)}
-              >
-                {disabled && <CheckIcon />}
-              </div>
+              <CheckBox
+                checked={disabled ?? false}
+                onChange={(v) => setDisabled(rowIndex, compIndex, v)}
+              />
             </div>
           </div>
           <div className="flex space-x-3">
