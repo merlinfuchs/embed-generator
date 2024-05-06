@@ -10,6 +10,7 @@ import (
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/variables"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
@@ -107,8 +108,10 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 		legacyPermissions = false
 	}
 
-	variables := map[string]string{}
-	actions.VariablesForInteraction(variables, interaction)
+	variables := variables.NewContext(
+		variables.NewInteractionVariables(interaction),
+		variables.NewGuildVariables(interaction.GuildID, s.State, nil),
+	)
 
 	for _, action := range actionSet.Actions {
 		switch action.Type {
@@ -118,7 +121,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				flags = discordgo.MessageFlagsEphemeral
 			}
 
-			content := actions.FillVariables(action.Text, variables)
+			content := variables.FillString(action.Text)
 
 			i.Respond(&discordgo.InteractionResponseData{
 				Content: content,
@@ -226,7 +229,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				return err
 			}
 
-			data.FillVariables(variables)
+			variables.FillMessage(data)
 
 			var flags discordgo.MessageFlags
 			if !action.Public {
@@ -271,7 +274,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				return nil
 			}
 
-			content := actions.FillVariables(action.Text, variables)
+			content := variables.FillString(action.Text)
 			_, err = s.ChannelMessageSend(dmChannel.ID, content)
 			if err != nil {
 				i.Respond(&discordgo.InteractionResponseData{
@@ -301,7 +304,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				return err
 			}
 
-			data.FillVariables(variables)
+			variables.FillMessage(data)
 
 			dmChannel, err := s.UserChannelCreate(interaction.Member.User.ID)
 			if err != nil {
@@ -330,7 +333,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			})
 			break
 		case actions.ActionTypeTextEdit:
-			content := actions.FillVariables(action.Text, variables)
+			content := variables.FillString(action.Text)
 			i.Respond(&discordgo.InteractionResponseData{
 				Content: content,
 			}, discordgo.InteractionResponseUpdateMessage)
@@ -354,7 +357,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				return err
 			}
 
-			data.FillVariables(variables)
+			variables.FillMessage(data)
 
 			var components []discordgo.MessageComponent
 			if !legacyPermissions {
