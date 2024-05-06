@@ -111,6 +111,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 	variables := variables.NewContext(
 		variables.NewInteractionVariables(interaction),
 		variables.NewGuildVariables(interaction.GuildID, s.State, nil),
+		variables.NewChannelVariables(interaction.ChannelID, s.State, nil),
 	)
 
 	for _, action := range actionSet.Actions {
