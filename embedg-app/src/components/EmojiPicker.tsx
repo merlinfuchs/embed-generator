@@ -82,7 +82,6 @@ export default function EmojiPicker({
               "flags",
             ]}
             theme="dark"
-            set="twitter"
           />
         </div>
       )}
