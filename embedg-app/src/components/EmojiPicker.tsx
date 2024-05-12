@@ -60,7 +60,7 @@ export default function EmojiPicker({
           <Picker
             data={async () => {
               const response = await fetch(
-                "https://cdn.jsdelivr.net/npm/@emoji-mart/data/sets/14/twitter.json"
+                "https://cdn.jsdelivr.net/npm/@emoji-mart/data/sets/15/twitter.json"
               );
               return response.json();
             }}
@@ -83,6 +83,9 @@ export default function EmojiPicker({
             ]}
             theme="dark"
             set="twitter"
+            getSpritesheetURL={() => {
+              return "https://cdn.jsdelivr.net/npm/emoji-datasource-twitter@15.0.0/img/twitter/sheets-256/64.png";
+            }}
           />
         </div>
       )}
