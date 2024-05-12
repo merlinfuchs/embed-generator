@@ -34,7 +34,7 @@ export default function SideNav() {
   );
 
   const [preCollapsed, setCollapsed] = useState(
-    document.body.clientWidth < collapsedBreakpoint
+    alwaysCollapseSidebar || document.body.clientWidth < collapsedBreakpoint
   );
   const [hidden, setHidden] = useState(true);
 
