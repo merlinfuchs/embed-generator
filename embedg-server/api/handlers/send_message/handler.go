@@ -10,6 +10,7 @@ import (
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/template"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
@@ -75,10 +76,22 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		threadID = req.ChannelID
 	}
 
+	guildData := template.NewGuildData(h.bot.State, webhook.GuildID, nil)
+	templates := template.NewContext("SEND_MESSAGE", map[string]interface{}{
+		"Server":  guildData,
+		"Guild":   guildData,
+		"Channel": template.NewChannelData(h.bot.State, req.ChannelID, nil),
+	})
+
 	data := &actions.MessageWithActions{}
 	err := json.Unmarshal([]byte(req.Data), data)
 	if err != nil {
 		return err
+	}
+
+	err = templates.ParseAndExecuteMessage(data)
+	if err != nil {
+		return fmt.Errorf("Failed to parse and execute message template: %w", err)
 	}
 
 	params := &discordgo.WebhookParams{

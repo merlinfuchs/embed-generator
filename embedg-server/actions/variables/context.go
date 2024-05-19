@@ -20,7 +20,7 @@ func NewContext(providers ...VariableProvider) *VariableContext {
 }
 
 func (v *VariableContext) FillString(s string) string {
-	return variableRegex.ReplaceAllStringFunc(s, func(match string) string {
+	res := variableRegex.ReplaceAllStringFunc(s, func(match string) string {
 		key := match[1 : len(match)-1]
 		keys := strings.Split(key, ".")
 
@@ -33,6 +33,8 @@ func (v *VariableContext) FillString(s string) string {
 
 		return match
 	})
+
+	return res
 }
 
 func (v *VariableContext) FillMessage(m *actions.MessageWithActions) {

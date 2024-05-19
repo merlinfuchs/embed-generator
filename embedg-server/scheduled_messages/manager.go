@@ -10,6 +10,7 @@ import (
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/template"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
@@ -114,10 +115,21 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		return fmt.Errorf("Failed to get saved message from scheduled message: %w", err)
 	}
 
+	guildData := template.NewGuildData(m.bot.State, scheduledMessage.GuildID, nil)
+	templates := template.NewContext("SCHEDULED_MESSAGE", map[string]interface{}{
+		"Server":  guildData,
+		"Guild":   guildData,
+		"Channel": template.NewChannelData(m.bot.State, scheduledMessage.ChannelID, nil),
+	})
+
 	data := &actions.MessageWithActions{}
 	err = json.Unmarshal([]byte(savedMsg.Data), data)
 	if err != nil {
 		return err
+	}
+
+	if err := templates.ParseAndExecuteMessage(data); err != nil {
+		return fmt.Errorf("Failed to parse and execute message template: %w", err)
 	}
 
 	params := &discordgo.WebhookParams{
