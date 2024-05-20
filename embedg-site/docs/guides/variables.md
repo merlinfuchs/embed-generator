@@ -64,9 +64,9 @@ List the roles of the user that has used the custom command or interactive compo
 
 Notice the dot (`.`, also known as cursor) encompasses all active data available for use in the templating system, in other words it always refers to current context. In the loop it refers to the current item, in this case one of the roles.
 
-Also notice the dash (`-`) inside each of the blocks which is used to strip all whitespaces from that side.
+Also notice the dash (`-`) inside each of the actions which is used to strip all whitespaces from that side.
 
-### If Example
+### If-Else Example
 
 Check if the server has more than 5 boosts and respond based on it.
 
@@ -78,4 +78,4 @@ Check if the server has more than 5 boosts and respond based on it.
 {{- end }}
 ```
 
-Also notice the dash (`-`) inside each of the blocks which is used to strip all whitespaces from that side.
+Notice the dash (`-`) inside each of the actions which is used to strip all whitespaces from that side.
