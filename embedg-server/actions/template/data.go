@@ -94,12 +94,12 @@ func (d *UserData) Mention() string {
 	return d.u.Mention()
 }
 
-func (d *UserData) AvatarURL(size string) string {
-	return d.u.AvatarURL(size)
+func (d *UserData) AvatarURL() string {
+	return d.u.AvatarURL("512")
 }
 
-func (d *UserData) BannerURL(size string) string {
-	return d.u.BannerURL(size)
+func (d *UserData) BannerURL() string {
+	return d.u.BannerURL("1024")
 }
 
 type MemberData struct {
@@ -151,12 +151,12 @@ func (d *MemberData) Avatar() string {
 	return d.UserData.Avatar()
 }
 
-func (d *MemberData) AvatarURL(size string) string {
+func (d *MemberData) AvatarURL() string {
 	if d.m.Avatar != "" {
-		return d.m.AvatarURL(size)
+		return d.m.AvatarURL("512")
 	}
 
-	return d.UserData.AvatarURL(size)
+	return d.UserData.AvatarURL()
 }
 
 type CommandData struct {
@@ -327,12 +327,12 @@ func (d *GuildData) Icon() (string, error) {
 	return d.guild.Icon, nil
 }
 
-func (d *GuildData) IconURL(size string) (string, error) {
+func (d *GuildData) IconURL() (string, error) {
 	if err := d.ensureGuild(); err != nil {
 		return "", err
 	}
 
-	return d.guild.IconURL(size), nil
+	return d.guild.IconURL("512"), nil
 }
 
 func (d *GuildData) Banner() (string, error) {
@@ -343,16 +343,15 @@ func (d *GuildData) Banner() (string, error) {
 	return d.guild.Banner, nil
 }
 
-func (d *GuildData) BannerURL(size string) (string, error) {
+func (d *GuildData) BannerURL() (string, error) {
 	if err := d.ensureGuild(); err != nil {
 		return "", err
 	}
 
-	return d.guild.BannerURL(size), nil
+	return d.guild.BannerURL("1024"), nil
 }
 
 func (d *GuildData) MemberCount() (int, error) {
-	fmt.Println("GuildData.MemberCount")
 	if err := d.ensureGuild(); err != nil {
 		fmt.Println(err)
 		return 0, err
