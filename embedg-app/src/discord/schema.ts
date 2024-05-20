@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { getUniqueId } from "../util";
 
-const VARIABLE_RE = new RegExp("\\{\\{.+\\}\\}");
+const VARIABLE_RE = new RegExp("\\{\\{[^}]+\\}\\}");
 
 const HOSTNAME_RE = new RegExp("\\.[a-zA-Z]{2,}$");
 const urlRefinement: [(v: string) => boolean, string] = [
