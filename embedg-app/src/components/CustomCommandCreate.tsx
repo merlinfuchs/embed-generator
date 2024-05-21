@@ -8,6 +8,8 @@ import CommandActionSet from "./CommandActionSet";
 import { useCommandActionsStore } from "../state/actions";
 import Tooltip from "./Tooltip";
 import { ArrowUpTrayIcon, XMarkIcon } from "@heroicons/react/20/solid";
+import CustomCommandParameters from "./CustomCommandParameters";
+import { CustomCommandParameterWire } from "../api/wire";
 
 export default function CustomCommandCreate({
   setCreate,
@@ -21,6 +23,9 @@ export default function CustomCommandCreate({
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [parameters, setParameters] = useState<CustomCommandParameterWire[]>(
+    []
+  );
 
   const queryClient = useQueryClient();
   const createMutation = useCustomCommandCreateMutation();
@@ -36,7 +41,7 @@ export default function CustomCommandCreate({
         req: {
           name,
           description,
-          parameters: [],
+          parameters: parameters,
           actions: actions || null,
         },
       },
@@ -107,7 +112,12 @@ export default function CustomCommandCreate({
           value={description}
           onChange={setDescription}
         />
-        <CommandActionSet cmdId={"new"} />
+        <CustomCommandParameters
+          parameters={parameters || []}
+          setParameters={setParameters}
+          cmdId="new"
+        />
+        <CommandActionSet cmdId="new" />
       </div>
     </div>
   );
