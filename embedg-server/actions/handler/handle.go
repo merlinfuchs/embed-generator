@@ -10,8 +10,8 @@ import (
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/template"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/variables"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
 	"github.com/sqlc-dev/pqtype"
@@ -108,11 +108,20 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 		legacyPermissions = false
 	}
 
+	// DEPRECATED: This has been replaced by templates, it's only here for backwards compatibility
 	variables := variables.NewContext(
 		variables.NewInteractionVariables(interaction),
 		variables.NewGuildVariables(interaction.GuildID, s.State, nil),
 		variables.NewChannelVariables(interaction.ChannelID, s.State, nil),
 	)
+
+	guildData := template.NewGuildData(s.State, interaction.GuildID, nil)
+	templates := template.NewContext(interaction.ID, map[string]interface{}{
+		"Interaction": template.NewInteractionData(interaction),
+		"Server":      guildData,
+		"Guild":       guildData,
+		"Channel":     template.NewChannelData(s.State, interaction.ChannelID, nil),
+	})
 
 	for _, action := range actionSet.Actions {
 		switch action.Type {
@@ -122,7 +131,10 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				flags = discordgo.MessageFlagsEphemeral
 			}
 
-			content := variables.FillString(action.Text)
+			content, ok := executeTemplate(i, templates, variables.FillString(action.Text))
+			if !ok {
+				return nil
+			}
 
 			i.Respond(&discordgo.InteractionResponseData{
 				Content: content,
@@ -147,19 +159,23 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			var err error
 			if hasRole {
 				err = s.GuildMemberRoleRemove(interaction.GuildID, interaction.Member.User.ID, action.TargetID)
-				if err == nil && !action.DisableDefaultResponse {
-					i.Respond(&discordgo.InteractionResponseData{
-						Content: fmt.Sprintf("Removed role <@&%s>", action.TargetID),
-						Flags:   discordgo.MessageFlagsEphemeral,
-					})
+				if err == nil {
+					if !action.DisableDefaultResponse {
+						i.Respond(&discordgo.InteractionResponseData{
+							Content: fmt.Sprintf("Removed role <@&%s>", action.TargetID),
+							Flags:   discordgo.MessageFlagsEphemeral,
+						})
+					}
 				}
 			} else {
 				err = s.GuildMemberRoleAdd(interaction.GuildID, interaction.Member.User.ID, action.TargetID)
-				if err == nil && !action.DisableDefaultResponse {
-					i.Respond(&discordgo.InteractionResponseData{
-						Content: fmt.Sprintf("Added role <@&%s>", action.TargetID),
-						Flags:   discordgo.MessageFlagsEphemeral,
-					})
+				if err == nil {
+					if !action.DisableDefaultResponse {
+						i.Respond(&discordgo.InteractionResponseData{
+							Content: fmt.Sprintf("Added role <@&%s>", action.TargetID),
+							Flags:   discordgo.MessageFlagsEphemeral,
+						})
+					}
 				}
 			}
 			if err != nil {
@@ -204,10 +220,12 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 
 			err := s.GuildMemberRoleRemove(interaction.GuildID, interaction.Member.User.ID, action.TargetID)
 			if err == nil {
-				i.Respond(&discordgo.InteractionResponseData{
-					Content: fmt.Sprintf("Removed role <@&%s>", action.TargetID),
-					Flags:   discordgo.MessageFlagsEphemeral,
-				})
+				if !action.DisableDefaultResponse {
+					i.Respond(&discordgo.InteractionResponseData{
+						Content: fmt.Sprintf("Removed role <@&%s>", action.TargetID),
+						Flags:   discordgo.MessageFlagsEphemeral,
+					})
+				}
 			} else {
 				log.Error().Err(err).Msg("Failed to remove role")
 				i.Respond(&discordgo.InteractionResponseData{
@@ -231,6 +249,9 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			}
 
 			variables.FillMessage(data)
+			if !executeTemplateMessage(i, templates, data) {
+				return nil
+			}
 
 			var flags discordgo.MessageFlags
 			if !action.Public {
@@ -241,7 +262,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			if !legacyPermissions {
 				components, err = m.parser.ParseMessageComponents(data.Components)
 				if err != nil {
-					return helpers.BadRequest("invalid_actions", err.Error())
+					return fmt.Errorf("Invalid actions: %w", err)
 				}
 			}
 
@@ -275,7 +296,11 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				return nil
 			}
 
-			content := variables.FillString(action.Text)
+			content, ok := executeTemplate(i, templates, variables.FillString(action.Text))
+			if !ok {
+				return nil
+			}
+
 			_, err = s.ChannelMessageSend(dmChannel.ID, content)
 			if err != nil {
 				i.Respond(&discordgo.InteractionResponseData{
@@ -289,7 +314,6 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				Content: "You have received a DM!",
 				Flags:   discordgo.MessageFlagsEphemeral,
 			})
-			break
 		case actions.ActionTypeSavedMessageDM:
 			msg, err := m.pg.Q.GetSavedMessageForGuild(context.TODO(), postgres.GetSavedMessageForGuildParams{
 				GuildID: sql.NullString{Valid: true, String: interaction.GuildID},
@@ -306,6 +330,9 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			}
 
 			variables.FillMessage(data)
+			if !executeTemplateMessage(i, templates, data) {
+				return nil
+			}
 
 			dmChannel, err := s.UserChannelCreate(interaction.Member.User.ID)
 			if err != nil {
@@ -332,13 +359,15 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				Content: "You have received a DM!",
 				Flags:   discordgo.MessageFlagsEphemeral,
 			})
-			break
 		case actions.ActionTypeTextEdit:
-			content := variables.FillString(action.Text)
+			content, ok := executeTemplate(i, templates, variables.FillString(action.Text))
+			if !ok {
+				return nil
+			}
+
 			i.Respond(&discordgo.InteractionResponseData{
 				Content: content,
 			}, discordgo.InteractionResponseUpdateMessage)
-			break
 		case actions.ActionTypeSavedMessageEdit:
 			if interaction.Type != discordgo.InteractionMessageComponent {
 				continue
@@ -359,12 +388,15 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			}
 
 			variables.FillMessage(data)
+			if !executeTemplateMessage(i, templates, data) {
+				return nil
+			}
 
 			var components []discordgo.MessageComponent
 			if !legacyPermissions {
 				components, err = m.parser.ParseMessageComponents(data.Components)
 				if err != nil {
-					return helpers.BadRequest("invalid_actions", err.Error())
+					return fmt.Errorf("Invalid actions: %w", err)
 				}
 			}
 
@@ -393,4 +425,30 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 	}
 
 	return nil
+}
+
+func executeTemplate(i Interaction, templates *template.TemplateContext, text string) (string, bool) {
+	res, err := templates.ParseAndExecute(text)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to execute template")
+		i.Respond(&discordgo.InteractionResponseData{
+			Content: "Failed to execute template variables",
+			Flags:   discordgo.MessageFlagsEphemeral,
+		})
+		return "", false
+	}
+	return res, true
+}
+
+func executeTemplateMessage(i Interaction, templates *template.TemplateContext, m *actions.MessageWithActions) bool {
+	if err := templates.ParseAndExecuteMessage(m); err != nil {
+		log.Error().Err(err).Msg("Failed to execute template")
+		i.Respond(&discordgo.InteractionResponseData{
+			Content: "Failed to execute template variables",
+			Flags:   discordgo.MessageFlagsEphemeral,
+		})
+		return false
+	}
+
+	return true
 }

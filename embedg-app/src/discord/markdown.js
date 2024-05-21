@@ -144,6 +144,24 @@ const titleRules = {
       );
     },
   },
+
+  messageVariable: {
+    order: markdown.defaultRules.strong.order,
+    match: (source) => /^\{\{([^}]+)\}\}/.exec(source),
+    parse: function (capture, parse, state) {
+      return {
+        content: parse(capture[1], state),
+      };
+    },
+    html: function (node, output, state) {
+      return htmlTag(
+        "span",
+        output(node.content, state),
+        { class: "message-variable" },
+        state
+      );
+    },
+  },
 };
 
 const bodyRules = {

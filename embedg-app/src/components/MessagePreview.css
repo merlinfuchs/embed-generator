@@ -2223,3 +2223,16 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
 .hljs-strong {
   font-weight: 700;
 }
+
+.discord-message .message-variable {
+  color: #e3e7f8;
+  background-color: hsla(285, 85%, 64%, 0.4);
+  font-weight: 500;
+  padding: 0 2px;
+  border-radius: 3px;
+  unicode-bidi: -moz-plaintext;
+  unicode-bidi: plaintext;
+  -webkit-transition: background-color 50ms ease-out, color 50ms ease-out;
+  transition: background-color 50ms ease-out, color 50ms ease-out;
+  cursor: pointer;
+}
