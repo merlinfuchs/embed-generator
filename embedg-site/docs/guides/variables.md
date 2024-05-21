@@ -72,7 +72,7 @@ Check if the server has more than 5 boosts and respond based on it.
 
 ```go
 {{ if gt .Server.BoostCount 5 -}}
-   Your server has a log of boosts!
+   Your server has a lot of boosts!
 {{- else -}}
    Your server doesn't have a lot of boosts yet :(
 {{- end }}
