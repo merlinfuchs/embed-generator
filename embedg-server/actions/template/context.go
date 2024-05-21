@@ -10,7 +10,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 )
 
-const DefaultMaxOps = 1000000
+const DefaultMaxOps = 10000
 const DefaultMaxOutput = 25000
 
 const DelimLeft = "{{"
