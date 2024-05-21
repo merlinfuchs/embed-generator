@@ -115,13 +115,10 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 		variables.NewChannelVariables(interaction.ChannelID, s.State, nil),
 	)
 
-	guildData := template.NewGuildData(s.State, interaction.GuildID, nil)
-	templates := template.NewContext(interaction.ID, map[string]interface{}{
-		"Interaction": template.NewInteractionData(interaction),
-		"Server":      guildData,
-		"Guild":       guildData,
-		"Channel":     template.NewChannelData(s.State, interaction.ChannelID, nil),
-	})
+	templates := template.NewContext("HANDLE_ACTION",
+		template.NewInteractionProvider(s.State, interaction),
+		template.NewKVProvider(interaction.GuildID, m.pg),
+	)
 
 	for _, action := range actionSet.Actions {
 		switch action.Type {
@@ -432,7 +429,7 @@ func executeTemplate(i Interaction, templates *template.TemplateContext, text st
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to execute template")
 		i.Respond(&discordgo.InteractionResponseData{
-			Content: "Failed to execute template variables",
+			Content: fmt.Sprintf("Failed to execute template variables:\n```%s```", err.Error()),
 			Flags:   discordgo.MessageFlagsEphemeral,
 		})
 		return "", false
@@ -444,7 +441,7 @@ func executeTemplateMessage(i Interaction, templates *template.TemplateContext, 
 	if err := templates.ParseAndExecuteMessage(m); err != nil {
 		log.Error().Err(err).Msg("Failed to execute template")
 		i.Respond(&discordgo.InteractionResponseData{
-			Content: "Failed to execute template variables",
+			Content: fmt.Sprintf("Failed to execute template variables:\n```%s```", err.Error()),
 			Flags:   discordgo.MessageFlagsEphemeral,
 		})
 		return false

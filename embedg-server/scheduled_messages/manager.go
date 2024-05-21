@@ -115,12 +115,11 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		return fmt.Errorf("Failed to get saved message from scheduled message: %w", err)
 	}
 
-	guildData := template.NewGuildData(m.bot.State, scheduledMessage.GuildID, nil)
-	templates := template.NewContext("SCHEDULED_MESSAGE", map[string]interface{}{
-		"Server":  guildData,
-		"Guild":   guildData,
-		"Channel": template.NewChannelData(m.bot.State, scheduledMessage.ChannelID, nil),
-	})
+	templates := template.NewContext("SCHEDULED_MESSAGE",
+		template.NewGuildProvider(m.bot.State, scheduledMessage.GuildID, nil),
+		template.NewChannelProvider(m.bot.State, scheduledMessage.ChannelID, nil),
+		template.NewKVProvider(scheduledMessage.GuildID, m.pg),
+	)
 
 	data := &actions.MessageWithActions{}
 	err = json.Unmarshal([]byte(savedMsg.Data), data)

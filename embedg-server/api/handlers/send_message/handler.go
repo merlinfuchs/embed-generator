@@ -76,12 +76,11 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		threadID = req.ChannelID
 	}
 
-	guildData := template.NewGuildData(h.bot.State, webhook.GuildID, nil)
-	templates := template.NewContext("SEND_MESSAGE", map[string]interface{}{
-		"Server":  guildData,
-		"Guild":   guildData,
-		"Channel": template.NewChannelData(h.bot.State, req.ChannelID, nil),
-	})
+	templates := template.NewContext("SEND_MESSAGE",
+		template.NewGuildProvider(h.bot.State, webhook.GuildID, nil),
+		template.NewChannelProvider(h.bot.State, req.ChannelID, nil),
+		template.NewKVProvider(webhook.GuildID, h.pg),
+	)
 
 	data := &actions.MessageWithActions{}
 	err := json.Unmarshal([]byte(req.Data), data)
