@@ -130,6 +130,10 @@ func (kv *KVProvider) setKey(key string, value string) error {
 		return fmt.Errorf("value exceeds maximum length of %d", MaxKVValueLength)
 	}
 
+	if err := kv.checkKeyCountLimit(); err != nil {
+		return err
+	}
+
 	err := kv.pg.Q.SetKVKey(context.TODO(), postgres.SetKVKeyParams{
 		GuildID:   kv.guildID,
 		Key:       key,
@@ -146,6 +150,10 @@ func (kv *KVProvider) setKey(key string, value string) error {
 func (kv *KVProvider) increaseKey(key string, delta int) (string, error) {
 	if len(key) > MaxKVKeyLength {
 		return "", fmt.Errorf("key exceeds maximum length of %d", MaxKVKeyLength)
+	}
+
+	if err := kv.checkKeyCountLimit(); err != nil {
+		return "", err
 	}
 
 	val, err := kv.pg.Q.IncreaseKVKey(context.TODO(), postgres.IncreaseKVKeyParams{
@@ -193,4 +201,17 @@ func (kv *KVProvider) searchKeys(pattern string) (map[string]string, error) {
 	}
 
 	return result, nil
+}
+
+func (kv *KVProvider) checkKeyCountLimit() error {
+	keyCount, err := kv.pg.Q.CountKVKeys(context.TODO(), kv.guildID)
+	if err != nil {
+		return fmt.Errorf("failed to count KV keys: %w", err)
+	}
+
+	if int(keyCount) >= kv.maxGuildKeys {
+		return fmt.Errorf("maximum number of keys reached: %d", kv.maxGuildKeys)
+	}
+
+	return nil
 }

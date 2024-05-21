@@ -49,3 +49,6 @@ DELETE FROM kv_store WHERE key = $1 AND guild_id = $2 RETURNING *;
 
 -- name: SearchKVKeys :many
 SELECT * FROM kv_store WHERE key LIKE $1 AND guild_id = $2;
+
+-- name: CountKVKeys :one
+SELECT COUNT(*) FROM kv_store WHERE guild_id = $1;

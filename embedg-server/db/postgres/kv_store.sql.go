@@ -11,6 +11,17 @@ import (
 	"time"
 )
 
+const countKVKeys = `-- name: CountKVKeys :one
+SELECT COUNT(*) FROM kv_store WHERE guild_id = $1
+`
+
+func (q *Queries) CountKVKeys(ctx context.Context, guildID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countKVKeys, guildID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const deleteKVKey = `-- name: DeleteKVKey :one
 DELETE FROM kv_store WHERE key = $1 AND guild_id = $2 RETURNING key, guild_id, value, expires_at, created_at, updated_at
 `
