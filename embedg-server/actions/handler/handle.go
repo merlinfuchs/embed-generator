@@ -13,6 +13,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/template"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/variables"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	"github.com/rs/zerolog/log"
 	"github.com/sqlc-dev/pqtype"
 )
@@ -21,14 +22,16 @@ const roleErrorMessage = "Failed to add or remove role.\n\n" +
 	"Please make sure the role is below the 'Embed Generator' role and that the bot has the manage roles permission."
 
 type ActionHandler struct {
-	pg     *postgres.PostgresStore
-	parser *parser.ActionParser
+	pg        *postgres.PostgresStore
+	parser    *parser.ActionParser
+	planStore store.PlanStore
 }
 
-func New(pg *postgres.PostgresStore, parser *parser.ActionParser) *ActionHandler {
+func New(pg *postgres.PostgresStore, parser *parser.ActionParser, planStore store.PlanStore) *ActionHandler {
 	return &ActionHandler{
-		pg:     pg,
-		parser: parser,
+		pg:        pg,
+		parser:    parser,
+		planStore: planStore,
 	}
 }
 
@@ -115,9 +118,15 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 		variables.NewChannelVariables(interaction.ChannelID, s.State, nil),
 	)
 
-	templates := template.NewContext("HANDLE_ACTION",
+	features, err := m.planStore.GetPlanFeaturesForGuild(context.TODO(), interaction.GuildID)
+	if err != nil {
+		return fmt.Errorf("could not get plan features: %w", err)
+	}
+
+	templates := template.NewContext(
+		"HANDLE_ACTION", features.MaxTemplateOps,
 		template.NewInteractionProvider(s.State, interaction),
-		template.NewKVProvider(interaction.GuildID, m.pg),
+		template.NewKVProvider(interaction.GuildID, m.pg, features.MaxKVKeys),
 	)
 
 	for _, action := range actionSet.Actions {

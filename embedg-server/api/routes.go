@@ -66,7 +66,7 @@ func registerRoutes(app *fiber.App, stores *stores, bot *bot.Bot, managers *mana
 	guildsGroup.Get("/:guildID/stickers", guildsHanlder.HandleListGuildStickers)
 	guildsGroup.Get("/:guildID/branding", guildsHanlder.HandleGetGuildBranding)
 
-	sendMessageHandler := send_message.New(bot, stores.pg, managers.access, managers.actionParser)
+	sendMessageHandler := send_message.New(bot, stores.pg, managers.access, managers.actionParser, managers.premium)
 	app.Post("/api/send-message/channel", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(sendMessageHandler.HandleSendMessageToChannel))
 	app.Post("/api/send-message/webhook", helpers.WithRequestBodyValidated(sendMessageHandler.HandleSendMessageToWebhook))
 	app.Post("/api/restore-message/channel", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(sendMessageHandler.HandleRestoreMessageFromChannel))

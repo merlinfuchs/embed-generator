@@ -5,23 +5,23 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/premium"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/guregu/null.v4"
 )
 
 type UsersHandler struct {
-	pg   *postgres.PostgresStore
-	prem *premium.PremiumManager
+	pg        *postgres.PostgresStore
+	planStore store.PlanStore
 }
 
-func New(pg *postgres.PostgresStore, prem *premium.PremiumManager) *UsersHandler {
+func New(pg *postgres.PostgresStore, planStore store.PlanStore) *UsersHandler {
 	return &UsersHandler{
-		pg:   pg,
-		prem: prem,
+		pg:        pg,
+		planStore: planStore,
 	}
 }
 

@@ -17,6 +17,8 @@ type GetPremiumPlanFeaturesResponseDataWire struct {
 	MaxImageUploadSize        int  `json:"max_image_upload_size"`
 	MaxScheduledMessages      int  `json:"max_scheduled_messages"`
 	PeriodicScheduledMessages bool `json:"periodic_scheduled_messages"`
+	MaxTemplateOps            int  `json:"max_template_ops"`
+	MaxKVKeys                 int  `json:"max_kv_keys"`
 }
 
 type GetPremiumPlanFeaturesResponseWire APIResponse[GetPremiumPlanFeaturesResponseDataWire]

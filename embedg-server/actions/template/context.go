@@ -12,7 +12,7 @@ import (
 )
 
 const DefaultMaxOps = 10000
-const DefaultMaxOutput = 25000
+const DefaultMaxOutput = 4000
 
 const DelimLeft = "{{"
 const DelimRight = "}}"
@@ -26,7 +26,7 @@ type TemplateContext struct {
 	MaxOutput int64
 }
 
-func NewContext(name string, providers ...ContextProvider) *TemplateContext {
+func NewContext(name string, maxOps int, providers ...ContextProvider) *TemplateContext {
 	data := make(map[string]interface{}, len(standardDataMap))
 	maps.Copy(data, standardDataMap)
 
@@ -38,12 +38,16 @@ func NewContext(name string, providers ...ContextProvider) *TemplateContext {
 		provider.ProvideFuncs(funcs)
 	}
 
+	if maxOps == 0 {
+		maxOps = DefaultMaxOps
+	}
+
 	return &TemplateContext{
 		name:  name,
 		data:  data,
 		funcs: funcs,
 
-		MaxOps:    DefaultMaxOps,
+		MaxOps:    maxOps,
 		MaxOutput: DefaultMaxOutput,
 	}
 }

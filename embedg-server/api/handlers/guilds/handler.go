@@ -8,29 +8,29 @@ import (
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/premium"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/guregu/null.v4"
 )
 
 type GuildsHanlder struct {
-	pg   *postgres.PostgresStore
-	bot  *bot.Bot
-	am   *access.AccessManager
-	prem *premium.PremiumManager
+	pg        *postgres.PostgresStore
+	bot       *bot.Bot
+	am        *access.AccessManager
+	planStore store.PlanStore
 }
 
-func New(pg *postgres.PostgresStore, bot *bot.Bot, am *access.AccessManager, prem *premium.PremiumManager) *GuildsHanlder {
+func New(pg *postgres.PostgresStore, bot *bot.Bot, am *access.AccessManager, planStore store.PlanStore) *GuildsHanlder {
 	return &GuildsHanlder{
-		pg:   pg,
-		bot:  bot,
-		am:   am,
-		prem: prem,
+		pg:        pg,
+		bot:       bot,
+		am:        am,
+		planStore: planStore,
 	}
 }
 

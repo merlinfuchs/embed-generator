@@ -80,6 +80,8 @@ premium:
         max_custom_commands: 0
         max_scheduled_messages: 5
         periodic_scheduled_messages: false
+        max_template_ops: 1000
+        max_kv_keys: 10
     # An additional premium plan that will apply when the user or guild has the SKU
     - id: premium_server
       sku_id: "123"
@@ -94,6 +96,8 @@ premium:
         max_image_upload_size: 8000000
         max_scheduled_messages: 25
         periodic_scheduled_messages: true
+        max_template_ops: 10000
+        max_kv_keys: 1000
 ```
 
 You can also set the config values using environment variables. For example `EMBEDG_DISCORD__TOKEN` will set the discord

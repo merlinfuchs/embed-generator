@@ -10,11 +10,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/premium"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/s3"
+	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/spf13/viper"
 	"gopkg.in/guregu/null.v4"
@@ -23,18 +23,18 @@ import (
 var appPublicURL *url.URL
 
 type ImagesHandler struct {
-	pg   *postgres.PostgresStore
-	am   *access.AccessManager
-	prem *premium.PremiumManager
-	blob *s3.BlobStore
+	pg        *postgres.PostgresStore
+	am        *access.AccessManager
+	planStore store.PlanStore
+	blob      *s3.BlobStore
 }
 
-func New(pg *postgres.PostgresStore, am *access.AccessManager, prem *premium.PremiumManager, blob *s3.BlobStore) *ImagesHandler {
+func New(pg *postgres.PostgresStore, am *access.AccessManager, planStore store.PlanStore, blob *s3.BlobStore) *ImagesHandler {
 	return &ImagesHandler{
-		pg:   pg,
-		am:   am,
-		prem: prem,
-		blob: blob,
+		pg:        pg,
+		am:        am,
+		planStore: planStore,
+		blob:      blob,
 	}
 }
 
@@ -53,7 +53,7 @@ func (h *ImagesHandler) HandleUploadImage(c *fiber.Ctx) error {
 	}
 
 	// If guildID is empty, this will be the default max upload size
-	features, err := h.prem.GetPlanFeaturesForGuild(c.Context(), guildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
 	if err != nil {
 		return fmt.Errorf("could not get plan features: %w", err)
 	}

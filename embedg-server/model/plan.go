@@ -1,4 +1,4 @@
-package premium
+package model
 
 type Plan struct {
 	ID       string       `mapstructure:"id"`
@@ -18,6 +18,8 @@ type PlanFeatures struct {
 	MaxImageUploadSize        int  `mapstructure:"max_image_upload_size"`
 	MaxScheduledMessages      int  `mapstructure:"max_scheduled_messages"`
 	PeriodicScheduledMessages bool `mapstructure:"periodic_scheduled_messages"`
+	MaxTemplateOps            int  `mapstructure:"max_template_ops"`
+	MaxKVKeys                 int  `mapstructure:"max_kv_keys"`
 }
 
 func (f *PlanFeatures) Merge(b PlanFeatures) {
@@ -35,6 +37,12 @@ func (f *PlanFeatures) Merge(b PlanFeatures) {
 	}
 	if b.MaxScheduledMessages > f.MaxScheduledMessages {
 		f.MaxScheduledMessages = b.MaxScheduledMessages
+	}
+	if b.MaxTemplateOps > f.MaxTemplateOps {
+		f.MaxTemplateOps = b.MaxTemplateOps
+	}
+	if b.MaxKVKeys > f.MaxKVKeys {
+		f.MaxKVKeys = b.MaxKVKeys
 	}
 
 	f.AdvancedActionTypes = f.AdvancedActionTypes || b.AdvancedActionTypes

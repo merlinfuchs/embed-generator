@@ -10,6 +10,9 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 )
 
+const MaxKVValueLength = 16 * 1024
+const MaxKVKeyLength = 256
+
 type ContextProvider interface {
 	ProvideFuncs(funcs map[string]interface{})
 	ProvideData(data map[string]interface{})
@@ -82,14 +85,16 @@ func (p *ChannelProvider) ProvideData(data map[string]interface{}) {
 }
 
 type KVProvider struct {
-	guildID string
-	pg      *postgres.PostgresStore
+	guildID      string
+	pg           *postgres.PostgresStore
+	maxGuildKeys int
 }
 
-func NewKVProvider(guildID string, pg *postgres.PostgresStore) *KVProvider {
+func NewKVProvider(guildID string, pg *postgres.PostgresStore, maxGuildKeys int) *KVProvider {
 	return &KVProvider{
-		guildID: guildID,
-		pg:      pg,
+		guildID:      guildID,
+		pg:           pg,
+		maxGuildKeys: maxGuildKeys,
 	}
 }
 
@@ -118,6 +123,13 @@ func (kv *KVProvider) getKey(key string) (string, error) {
 }
 
 func (kv *KVProvider) setKey(key string, value string) error {
+	if len(key) > MaxKVKeyLength {
+		return fmt.Errorf("key exceeds maximum length of %d", MaxKVKeyLength)
+	}
+	if len(value) > MaxKVValueLength {
+		return fmt.Errorf("value exceeds maximum length of %d", MaxKVValueLength)
+	}
+
 	err := kv.pg.Q.SetKVKey(context.TODO(), postgres.SetKVKeyParams{
 		GuildID:   kv.guildID,
 		Key:       key,
@@ -132,6 +144,10 @@ func (kv *KVProvider) setKey(key string, value string) error {
 }
 
 func (kv *KVProvider) increaseKey(key string, delta int) (string, error) {
+	if len(key) > MaxKVKeyLength {
+		return "", fmt.Errorf("key exceeds maximum length of %d", MaxKVKeyLength)
+	}
+
 	val, err := kv.pg.Q.IncreaseKVKey(context.TODO(), postgres.IncreaseKVKeyParams{
 		GuildID:   kv.guildID,
 		Key:       key,
