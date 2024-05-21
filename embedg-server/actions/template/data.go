@@ -189,8 +189,8 @@ func (d *CommandData) Mention() string {
 	return fmt.Sprintf("</%s:%s>", d.c.Name, d.c.ID)
 }
 
-func (d *CommandData) Options() map[string]*CommandOptionData {
-	res := make(map[string]*CommandOptionData)
+func (d *CommandData) Options() map[string]interface{} {
+	res := make(map[string]interface{})
 	for _, opt := range d.c.Options {
 		res[opt.Name] = NewCommandOptionData(d.state, d.guildID, d.c, opt)
 	}
@@ -198,63 +198,43 @@ func (d *CommandData) Options() map[string]*CommandOptionData {
 	return res
 }
 
-func (d *CommandData) Args() map[string]*CommandOptionData {
+func (d *CommandData) Args() map[string]interface{} {
 	return d.Options()
 }
 
-type CommandOptionData struct {
-	state   *discordgo.State
-	guildID string
-	c       *discordgo.ApplicationCommandInteractionData
-	o       *discordgo.ApplicationCommandInteractionDataOption
-}
-
-func NewCommandOptionData(state *discordgo.State, guildID string, c *discordgo.ApplicationCommandInteractionData, o *discordgo.ApplicationCommandInteractionDataOption) *CommandOptionData {
-	return &CommandOptionData{
-		state:   state,
-		guildID: guildID,
-		c:       c,
-		o:       o,
-	}
-}
-
-func (d *CommandOptionData) String() string {
-	return fmt.Sprintf("%v", d.Value())
-}
-
-func (d *CommandOptionData) Value() interface{} {
-	switch d.o.Type {
+func NewCommandOptionData(state *discordgo.State, guildID string, c *discordgo.ApplicationCommandInteractionData, o *discordgo.ApplicationCommandInteractionDataOption) interface{} {
+	switch o.Type {
 	case discordgo.ApplicationCommandOptionString:
-		return d.o.StringValue()
+		return o.StringValue()
 	case discordgo.ApplicationCommandOptionInteger:
-		return fmt.Sprintf("%d", d.o.IntValue())
+		return o.IntValue()
 	case discordgo.ApplicationCommandOptionBoolean:
-		return fmt.Sprintf("%t", d.o.BoolValue())
+		return o.BoolValue()
 	case discordgo.ApplicationCommandOptionUser:
-		user := d.o.UserValue(nil)
-		resolved := d.c.Resolved.Users[user.ID]
+		user := o.UserValue(nil)
+		resolved := c.Resolved.Users[user.ID]
 		if resolved != nil {
 			return UserData{resolved}
 		}
 		return UserData{user}
 	case discordgo.ApplicationCommandOptionChannel:
-		channel := d.o.ChannelValue(nil)
-		resolved := d.c.Resolved.Channels[channel.ID]
+		channel := o.ChannelValue(nil)
+		resolved := c.Resolved.Channels[channel.ID]
 		if resolved != nil {
-			return NewChannelData(d.state, channel.ID, resolved)
+			return NewChannelData(state, channel.ID, resolved)
 		}
-		return NewChannelData(d.state, channel.ID, nil)
+		return NewChannelData(state, channel.ID, nil)
 	case discordgo.ApplicationCommandOptionRole:
-		role := d.o.RoleValue(nil, "")
-		resolved := d.c.Resolved.Roles[role.ID]
+		role := o.RoleValue(nil, "")
+		resolved := c.Resolved.Roles[role.ID]
 		if resolved != nil {
-			return NewRoleData(d.state, d.guildID, role.ID, resolved)
+			return NewRoleData(state, guildID, role.ID, resolved)
 		}
-		return NewRoleData(d.state, d.guildID, role.ID, nil)
+		return NewRoleData(state, guildID, role.ID, nil)
 	case discordgo.ApplicationCommandOptionNumber:
-		return fmt.Sprintf("%f", d.o.FloatValue())
+		return fmt.Sprintf("%f", o.FloatValue())
 	case discordgo.ApplicationCommandOptionAttachment:
-		attachment := d.c.Resolved.Attachments[d.o.Value.(string)]
+		attachment := c.Resolved.Attachments[o.Value.(string)]
 		if attachment != nil {
 			return NewAttachmentData(attachment)
 		}
