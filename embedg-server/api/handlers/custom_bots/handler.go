@@ -12,10 +12,10 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/premium"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -26,16 +26,16 @@ type CustomBotsHandler struct {
 	pg           *postgres.PostgresStore
 	bot          *bot.Bot
 	am           *access.AccessManager
-	pm           *premium.PremiumManager
+	planStore    store.PlanStore
 	actionParser *parser.ActionParser
 }
 
-func New(pg *postgres.PostgresStore, bot *bot.Bot, am *access.AccessManager, pm *premium.PremiumManager, actionParser *parser.ActionParser) *CustomBotsHandler {
+func New(pg *postgres.PostgresStore, bot *bot.Bot, am *access.AccessManager, planStore store.PlanStore, actionParser *parser.ActionParser) *CustomBotsHandler {
 	return &CustomBotsHandler{
 		pg:           pg,
 		bot:          bot,
 		am:           am,
-		pm:           pm,
+		planStore:    planStore,
 		actionParser: actionParser,
 	}
 }
@@ -46,7 +46,7 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 		return err
 	}
 
-	features, err := h.pm.GetPlanFeaturesForGuild(c.Context(), guildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
 	if err != nil {
 		return err
 	}
@@ -148,7 +148,7 @@ func (h *CustomBotsHandler) HandleUpdateCustomBotPresence(c *fiber.Ctx, req wire
 		return err
 	}
 
-	features, err := h.pm.GetPlanFeaturesForGuild(c.Context(), guildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
 	if err != nil {
 		return err
 	}

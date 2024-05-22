@@ -7,6 +7,7 @@ import (
 
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
@@ -14,11 +15,11 @@ import (
 type PremiumManager struct {
 	pg                  *postgres.PostgresStore
 	bot                 *bot.Bot
-	plans               []*Plan
-	defaultPlanFeatures PlanFeatures
+	plans               []*model.Plan
+	defaultPlanFeatures model.PlanFeatures
 }
 
-func (m *PremiumManager) GetPlanByID(id string) *Plan {
+func (m *PremiumManager) GetPlanByID(id string) *model.Plan {
 	for _, plan := range m.plans {
 		if plan.ID == id {
 			return plan
@@ -28,7 +29,7 @@ func (m *PremiumManager) GetPlanByID(id string) *Plan {
 	return nil
 }
 
-func (m *PremiumManager) GetPlanBySKUID(skuID string) *Plan {
+func (m *PremiumManager) GetPlanBySKUID(skuID string) *model.Plan {
 	for _, plan := range m.plans {
 		if plan.SKUID == skuID {
 			return plan
@@ -38,7 +39,7 @@ func (m *PremiumManager) GetPlanBySKUID(skuID string) *Plan {
 	return nil
 }
 
-func (m *PremiumManager) GetPlanFeaturesForGuild(ctx context.Context, guildID string) (PlanFeatures, error) {
+func (m *PremiumManager) GetPlanFeaturesForGuild(ctx context.Context, guildID string) (model.PlanFeatures, error) {
 	planFeatures := m.defaultPlanFeatures
 
 	entitlements, err := m.pg.Q.GetActiveEntitlementsForGuild(ctx, sql.NullString{String: guildID, Valid: true})
@@ -56,7 +57,7 @@ func (m *PremiumManager) GetPlanFeaturesForGuild(ctx context.Context, guildID st
 	return planFeatures, nil
 }
 
-func (m *PremiumManager) GetPlanFeaturesForUser(ctx context.Context, userID string) (PlanFeatures, error) {
+func (m *PremiumManager) GetPlanFeaturesForUser(ctx context.Context, userID string) (model.PlanFeatures, error) {
 	planFeatures := m.defaultPlanFeatures
 
 	entitlements, err := m.pg.Q.GetActiveEntitlementsForUser(ctx, sql.NullString{String: userID, Valid: true})
@@ -96,13 +97,13 @@ func (m *PremiumManager) GetEntitledUserIDs(ctx context.Context) ([]string, erro
 }
 
 func New(pg *postgres.PostgresStore, bot *bot.Bot) *PremiumManager {
-	plans := make([]*Plan, 0)
+	plans := make([]*model.Plan, 0)
 	err := viper.UnmarshalKey("premium.plans", &plans)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to unmarshal plans")
 	}
 
-	defaultPlanFeatures := PlanFeatures{
+	defaultPlanFeatures := model.PlanFeatures{
 		MaxSavedMessages:       25,
 		MaxActionsPerComponent: 2,
 	}

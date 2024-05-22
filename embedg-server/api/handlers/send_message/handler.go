@@ -17,6 +17,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
 	"github.com/vincent-petithory/dataurl"
@@ -27,14 +28,22 @@ type SendMessageHandler struct {
 	pg            *postgres.PostgresStore
 	accessManager *access.AccessManager
 	actionParser  *parser.ActionParser
+	planStore     store.PlanStore
 }
 
-func New(bot *bot.Bot, pg *postgres.PostgresStore, accessManager *access.AccessManager, actionParser *parser.ActionParser) *SendMessageHandler {
+func New(
+	bot *bot.Bot,
+	pg *postgres.PostgresStore,
+	accessManager *access.AccessManager,
+	actionParser *parser.ActionParser,
+	planStore store.PlanStore,
+) *SendMessageHandler {
 	return &SendMessageHandler{
 		bot:           bot,
 		pg:            pg,
 		accessManager: accessManager,
 		actionParser:  actionParser,
+		planStore:     planStore,
 	}
 }
 
@@ -76,15 +85,20 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		threadID = req.ChannelID
 	}
 
-	guildData := template.NewGuildData(h.bot.State, webhook.GuildID, nil)
-	templates := template.NewContext("SEND_MESSAGE", map[string]interface{}{
-		"Server":  guildData,
-		"Guild":   guildData,
-		"Channel": template.NewChannelData(h.bot.State, req.ChannelID, nil),
-	})
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), webhook.GuildID)
+	if err != nil {
+		return fmt.Errorf("could not get plan features: %w", err)
+	}
+
+	templates := template.NewContext(
+		"SEND_MESSAGE", features.MaxTemplateOps,
+		template.NewGuildProvider(h.bot.State, webhook.GuildID, nil),
+		template.NewChannelProvider(h.bot.State, req.ChannelID, nil),
+		template.NewKVProvider(webhook.GuildID, h.pg, features.MaxKVKeys),
+	)
 
 	data := &actions.MessageWithActions{}
-	err := json.Unmarshal([]byte(req.Data), data)
+	err = json.Unmarshal([]byte(req.Data), data)
 	if err != nil {
 		return err
 	}

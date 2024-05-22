@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"maps"
 	"strings"
 
 	"github.com/botlabs-gg/yagpdb/v2/lib/template"
@@ -11,29 +12,42 @@ import (
 )
 
 const DefaultMaxOps = 10000
-const DefaultMaxOutput = 25000
+const DefaultMaxOutput = 4000
 
 const DelimLeft = "{{"
 const DelimRight = "}}"
 
 type TemplateContext struct {
-	name string
-	data map[string]interface{}
+	name  string
+	data  map[string]interface{}
+	funcs map[string]interface{}
 
 	MaxOps    int
 	MaxOutput int64
 }
 
-func NewContext(name string, data map[string]interface{}) *TemplateContext {
-	for k, v := range standardData() {
-		data[k] = v
+func NewContext(name string, maxOps int, providers ...ContextProvider) *TemplateContext {
+	data := make(map[string]interface{}, len(standardDataMap))
+	maps.Copy(data, standardDataMap)
+
+	funcs := make(map[string]interface{}, len(standardFuncMap))
+	maps.Copy(funcs, standardFuncMap)
+
+	for _, provider := range providers {
+		provider.ProvideData(data)
+		provider.ProvideFuncs(funcs)
+	}
+
+	if maxOps == 0 {
+		maxOps = DefaultMaxOps
 	}
 
 	return &TemplateContext{
-		name: name,
-		data: data,
+		name:  name,
+		data:  data,
+		funcs: funcs,
 
-		MaxOps:    DefaultMaxOps,
+		MaxOps:    maxOps,
 		MaxOutput: DefaultMaxOutput,
 	}
 }
@@ -139,7 +153,7 @@ func (c *TemplateContext) ParseAndExecute(text string) (string, error) {
 func (c *TemplateContext) Parse(text string) (*template.Template, error) {
 	return template.New(c.name).
 		Delims(DelimLeft, DelimRight).
-		Funcs(standardFuncMap).
+		Funcs(c.funcs).
 		Parse(text)
 }
 

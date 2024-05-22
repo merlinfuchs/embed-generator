@@ -16,8 +16,7 @@ import (
 
 var standardFuncMap = map[string]interface{}{
 	// conversion functions
-	"str":      ToString,
-	"toString": ToString, // don't ask why we have 2 of these
+	"toString": ToString,
 	"toInt":    tmplToInt,
 	"toInt64":  ToInt64,
 	"toFloat":  ToFloat64,

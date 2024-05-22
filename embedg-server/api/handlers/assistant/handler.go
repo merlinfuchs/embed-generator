@@ -6,9 +6,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/premium"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	openai "github.com/sashabaranov/go-openai"
 	"github.com/spf13/viper"
 )
@@ -16,16 +16,16 @@ import (
 // TODO: investigate https://github.com/1rgs/jsonformer
 
 type AssistantHandler struct {
-	pg *postgres.PostgresStore
-	am *access.AccessManager
-	pm *premium.PremiumManager
+	pg        *postgres.PostgresStore
+	am        *access.AccessManager
+	planStore store.PlanStore
 }
 
-func New(pg *postgres.PostgresStore, am *access.AccessManager, pm *premium.PremiumManager) *AssistantHandler {
+func New(pg *postgres.PostgresStore, am *access.AccessManager, planStore store.PlanStore) *AssistantHandler {
 	return &AssistantHandler{
-		pg: pg,
-		am: am,
-		pm: pm,
+		pg:        pg,
+		am:        am,
+		planStore: planStore,
 	}
 }
 
@@ -36,7 +36,7 @@ func (h *AssistantHandler) HandleAssistantGenerateMessage(c *fiber.Ctx, req wire
 		return err
 	}
 
-	features, err := h.pm.GetPlanFeaturesForGuild(c.Context(), guildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
 	if err != nil {
 		return err
 	}

@@ -14,6 +14,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
 )
@@ -22,13 +23,20 @@ type ScheduledMessageManager struct {
 	pg           *postgres.PostgresStore
 	bot          *bot.Bot
 	actionParser *parser.ActionParser
+	planStore    store.PlanStore
 }
 
-func NewScheduledMessageManager(pg *postgres.PostgresStore, actionParser *parser.ActionParser, bot *bot.Bot) *ScheduledMessageManager {
+func NewScheduledMessageManager(
+	pg *postgres.PostgresStore,
+	actionParser *parser.ActionParser,
+	bot *bot.Bot,
+	planStore store.PlanStore,
+) *ScheduledMessageManager {
 	m := &ScheduledMessageManager{
 		pg:           pg,
 		bot:          bot,
 		actionParser: actionParser,
+		planStore:    planStore,
 	}
 
 	go m.lazySendScheduledMessagesTask()
@@ -115,12 +123,17 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		return fmt.Errorf("Failed to get saved message from scheduled message: %w", err)
 	}
 
-	guildData := template.NewGuildData(m.bot.State, scheduledMessage.GuildID, nil)
-	templates := template.NewContext("SCHEDULED_MESSAGE", map[string]interface{}{
-		"Server":  guildData,
-		"Guild":   guildData,
-		"Channel": template.NewChannelData(m.bot.State, scheduledMessage.ChannelID, nil),
-	})
+	features, err := m.planStore.GetPlanFeaturesForGuild(ctx, scheduledMessage.GuildID)
+	if err != nil {
+		return fmt.Errorf("could not get plan features: %w", err)
+	}
+
+	templates := template.NewContext(
+		"SCHEDULED_MESSAGE", features.MaxTemplateOps,
+		template.NewGuildProvider(m.bot.State, scheduledMessage.GuildID, nil),
+		template.NewChannelProvider(m.bot.State, scheduledMessage.ChannelID, nil),
+		template.NewKVProvider(scheduledMessage.GuildID, m.pg, features.MaxKVKeys),
+	)
 
 	data := &actions.MessageWithActions{}
 	err = json.Unmarshal([]byte(savedMsg.Data), data)

@@ -87,6 +87,15 @@ type Image struct {
 	S3Key           string
 }
 
+type KvEntry struct {
+	Key       string
+	GuildID   string
+	Value     string
+	ExpiresAt sql.NullTime
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
 type MessageActionSet struct {
 	ID                 string
 	MessageID          string

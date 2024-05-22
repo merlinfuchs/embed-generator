@@ -7,17 +7,18 @@ import (
 	"github.com/merlinfuchs/discordgo"
 )
 
-func standardData() map[string]interface{} {
-	return map[string]interface{}{}
-}
+var standardDataMap = map[string]interface{}{}
 
 type InteractionData struct {
 	state *discordgo.State
 	i     *discordgo.Interaction
 }
 
-func NewInteractionData(i *discordgo.Interaction) *InteractionData {
-	return &InteractionData{i: i}
+func NewInteractionData(state *discordgo.State, i *discordgo.Interaction) *InteractionData {
+	return &InteractionData{
+		state: state,
+		i:     i,
+	}
 }
 
 func (d *InteractionData) User() interface{} {

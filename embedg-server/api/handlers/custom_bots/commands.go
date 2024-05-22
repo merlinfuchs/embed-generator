@@ -105,7 +105,7 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return err
 	}
 
-	features, err := h.pm.GetPlanFeaturesForGuild(c.Context(), guildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
 	if err != nil {
 		return err
 	}
@@ -187,7 +187,7 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return err
 	}
 
-	features, err := h.pm.GetPlanFeaturesForGuild(c.Context(), guildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
 	if err != nil {
 		return err
 	}
@@ -278,7 +278,7 @@ func (h *CustomBotsHandler) HandleDeployCustomCommands(c *fiber.Ctx) error {
 		return err
 	}
 
-	features, err := h.pm.GetPlanFeaturesForGuild(c.Context(), guildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
 	if err != nil {
 		return err
 	}
