@@ -3,7 +3,7 @@
 //   sqlc v1.25.0
 // source: embed_links.sql
 
-package postgres
+package pgmodel
 
 import (
 	"context"

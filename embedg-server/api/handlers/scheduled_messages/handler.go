@@ -11,6 +11,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-server/scheduled_messages"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
@@ -81,7 +82,7 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 		}
 	}
 
-	msg, err := h.pg.Q.InsertScheduledMessage(c.Context(), postgres.InsertScheduledMessageParams{
+	msg, err := h.pg.Q.InsertScheduledMessage(c.Context(), pgmodel.InsertScheduledMessageParams{
 		ID:        util.UniqueID(),
 		CreatorID: session.UserID,
 		GuildID:   guildID,
@@ -159,7 +160,7 @@ func (h *ScheduledMessageHandler) HandleGetScheduledMessage(c *fiber.Ctx) error 
 		return err
 	}
 
-	msg, err := h.pg.Q.GetScheduledMessage(c.Context(), postgres.GetScheduledMessageParams{
+	msg, err := h.pg.Q.GetScheduledMessage(c.Context(), pgmodel.GetScheduledMessageParams{
 		ID:      messageID,
 		GuildID: guildID,
 	})
@@ -226,7 +227,7 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		}
 	}
 
-	msg, err := h.pg.Q.UpdateScheduledMessage(c.Context(), postgres.UpdateScheduledMessageParams{
+	msg, err := h.pg.Q.UpdateScheduledMessage(c.Context(), pgmodel.UpdateScheduledMessageParams{
 		ID:        messageID,
 		GuildID:   guildID,
 		ChannelID: req.ChannelID,
@@ -281,7 +282,7 @@ func (h *ScheduledMessageHandler) HandleDeleteScheduledMessage(c *fiber.Ctx) err
 		return err
 	}
 
-	err := h.pg.Q.DeleteScheduledMessage(c.Context(), postgres.DeleteScheduledMessageParams{
+	err := h.pg.Q.DeleteScheduledMessage(c.Context(), pgmodel.DeleteScheduledMessageParams{
 		ID:      messageID,
 		GuildID: guildID,
 	})
@@ -300,7 +301,7 @@ func (h *ScheduledMessageHandler) HandleDeleteScheduledMessage(c *fiber.Ctx) err
 	})
 }
 
-func scheduledMessageModelToWire(model postgres.ScheduledMessage) wire.ScheduledMessageWire {
+func scheduledMessageModelToWire(model pgmodel.ScheduledMessage) wire.ScheduledMessageWire {
 	return wire.ScheduledMessageWire{
 		ID:             model.ID,
 		CreatorID:      model.CreatorID,

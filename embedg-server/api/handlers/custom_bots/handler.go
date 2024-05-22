@@ -15,6 +15,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
@@ -100,7 +101,7 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 		}
 	}
 
-	customBot, err := h.pg.Q.UpsertCustomBot(c.Context(), postgres.UpsertCustomBotParams{
+	customBot, err := h.pg.Q.UpsertCustomBot(c.Context(), pgmodel.UpsertCustomBotParams{
 		ID:                util.UniqueID(),
 		GuildID:           guildID,
 		ApplicationID:     app.ID,
@@ -157,7 +158,7 @@ func (h *CustomBotsHandler) HandleUpdateCustomBotPresence(c *fiber.Ctx, req wire
 		return helpers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
 	}
 
-	_, err = h.pg.Q.UpdateCustomBotPresence(c.Context(), postgres.UpdateCustomBotPresenceParams{
+	_, err = h.pg.Q.UpdateCustomBotPresence(c.Context(), pgmodel.UpdateCustomBotPresenceParams{
 		GuildID:       guildID,
 		GatewayStatus: req.GatewayStatus,
 		GatewayActivityType: sql.NullInt16{
@@ -239,7 +240,7 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 	}
 
 	if member != nil {
-		customBot, err = h.pg.Q.UpdateCustomBotUser(c.Context(), postgres.UpdateCustomBotUserParams{
+		customBot, err = h.pg.Q.UpdateCustomBotUser(c.Context(), pgmodel.UpdateCustomBotUserParams{
 			GuildID:           guildID,
 			UserName:          member.User.Username,
 			UserDiscriminator: member.User.Discriminator,

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"gopkg.in/guregu/null.v4"
@@ -24,7 +24,7 @@ type Entitlement struct {
 }
 
 func (b *Bot) HandleEntitlementEvent(e *Entitlement) {
-	_, err := b.pg.Q.UpsertEntitlement(context.Background(), postgres.UpsertEntitlementParams{
+	_, err := b.pg.Q.UpsertEntitlement(context.Background(), pgmodel.UpsertEntitlementParams{
 		ID: e.ID,
 		UserID: sql.NullString{
 			String: e.UserID,
@@ -81,7 +81,7 @@ func (b *Bot) retrieveDiscordTiers(ctx context.Context) error {
 		for _, e := range entitlements {
 			after = e.ID
 
-			_, err := b.pg.Q.UpsertEntitlement(context.Background(), postgres.UpsertEntitlementParams{
+			_, err := b.pg.Q.UpsertEntitlement(context.Background(), pgmodel.UpsertEntitlementParams{
 				ID: e.ID,
 				UserID: sql.NullString{
 					String: e.UserID,

@@ -13,6 +13,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/template"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/variables"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	"github.com/rs/zerolog/log"
 	"github.com/sqlc-dev/pqtype"
@@ -49,7 +50,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			actionSetID = data.Values[0][7:]
 		}
 
-		col, err := m.pg.Q.GetMessageActionSet(context.TODO(), postgres.GetMessageActionSetParams{
+		col, err := m.pg.Q.GetMessageActionSet(context.TODO(), pgmodel.GetMessageActionSetParams{
 			MessageID: interaction.Message.ID,
 			SetID:     actionSetID,
 		})
@@ -74,7 +75,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			}
 		}
 
-		col, err := m.pg.Q.GetCustomCommandByName(context.TODO(), postgres.GetCustomCommandByNameParams{
+		col, err := m.pg.Q.GetCustomCommandByName(context.TODO(), pgmodel.GetCustomCommandByNameParams{
 			Name:    fullName,
 			GuildID: interaction.GuildID,
 		})
@@ -240,7 +241,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				})
 			}
 		case actions.ActionTypeSavedMessageResponse:
-			msg, err := m.pg.Q.GetSavedMessageForGuild(context.TODO(), postgres.GetSavedMessageForGuildParams{
+			msg, err := m.pg.Q.GetSavedMessageForGuild(context.TODO(), pgmodel.GetSavedMessageForGuildParams{
 				GuildID: sql.NullString{Valid: true, String: interaction.GuildID},
 				ID:      action.TargetID,
 			})
@@ -321,7 +322,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				Flags:   discordgo.MessageFlagsEphemeral,
 			})
 		case actions.ActionTypeSavedMessageDM:
-			msg, err := m.pg.Q.GetSavedMessageForGuild(context.TODO(), postgres.GetSavedMessageForGuildParams{
+			msg, err := m.pg.Q.GetSavedMessageForGuild(context.TODO(), pgmodel.GetSavedMessageForGuildParams{
 				GuildID: sql.NullString{Valid: true, String: interaction.GuildID},
 				ID:      action.TargetID,
 			})
@@ -379,7 +380,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				continue
 			}
 
-			msg, err := m.pg.Q.GetSavedMessageForGuild(context.TODO(), postgres.GetSavedMessageForGuildParams{
+			msg, err := m.pg.Q.GetSavedMessageForGuild(context.TODO(), pgmodel.GetSavedMessageForGuildParams{
 				GuildID: sql.NullString{Valid: true, String: interaction.GuildID},
 				ID:      action.TargetID,
 			})

@@ -3,7 +3,7 @@
 //   sqlc v1.25.0
 // source: images.sql
 
-package postgres
+package pgmodel
 
 import (
 	"context"

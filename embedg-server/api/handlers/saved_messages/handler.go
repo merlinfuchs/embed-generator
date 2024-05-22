@@ -10,6 +10,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/guregu/null.v4"
@@ -32,7 +33,7 @@ func (h *SavedMessagesHandler) HandleListSavedMessages(c *fiber.Ctx) error {
 
 	guildID := c.Query("guild_id")
 
-	var messages []postgres.SavedMessage
+	var messages []pgmodel.SavedMessage
 	var err error
 
 	if guildID != "" {
@@ -70,7 +71,7 @@ func (h *SavedMessagesHandler) HandleCreateSavedMessage(c *fiber.Ctx, req wire.S
 		}
 	}
 
-	message, err := h.pg.Q.InsertSavedMessage(c.Context(), postgres.InsertSavedMessageParams{
+	message, err := h.pg.Q.InsertSavedMessage(c.Context(), pgmodel.InsertSavedMessageParams{
 		ID:          util.UniqueID(),
 		CreatorID:   session.UserID,
 		GuildID:     sql.NullString{String: guildID, Valid: guildID != ""},
@@ -101,10 +102,10 @@ func (h *SavedMessagesHandler) HandleUpdateSavedMessage(c *fiber.Ctx, req wire.S
 		}
 	}
 
-	var message postgres.SavedMessage
+	var message pgmodel.SavedMessage
 	var err error
 	if guildID != "" {
-		message, err = h.pg.Q.UpdateSavedMessageForGuild(c.Context(), postgres.UpdateSavedMessageForGuildParams{
+		message, err = h.pg.Q.UpdateSavedMessageForGuild(c.Context(), pgmodel.UpdateSavedMessageForGuildParams{
 			ID:          messageID,
 			GuildID:     sql.NullString{String: guildID, Valid: true},
 			UpdatedAt:   time.Now().UTC(),
@@ -113,7 +114,7 @@ func (h *SavedMessagesHandler) HandleUpdateSavedMessage(c *fiber.Ctx, req wire.S
 			Data:        req.Data,
 		})
 	} else {
-		message, err = h.pg.Q.UpdateSavedMessageForCreator(c.Context(), postgres.UpdateSavedMessageForCreatorParams{
+		message, err = h.pg.Q.UpdateSavedMessageForCreator(c.Context(), pgmodel.UpdateSavedMessageForCreatorParams{
 			ID:          messageID,
 			CreatorID:   session.UserID,
 			UpdatedAt:   time.Now().UTC(),
@@ -150,12 +151,12 @@ func (h *SavedMessagesHandler) HandleDeleteSavedMessage(c *fiber.Ctx) error {
 
 	var err error
 	if guildID != "" {
-		err = h.pg.Q.DeleteSavedMessageForGuild(c.Context(), postgres.DeleteSavedMessageForGuildParams{
+		err = h.pg.Q.DeleteSavedMessageForGuild(c.Context(), pgmodel.DeleteSavedMessageForGuildParams{
 			ID:      messageID,
 			GuildID: sql.NullString{String: guildID, Valid: true},
 		})
 	} else {
-		err = h.pg.Q.DeleteSavedMessageForCreator(c.Context(), postgres.DeleteSavedMessageForCreatorParams{
+		err = h.pg.Q.DeleteSavedMessageForCreator(c.Context(), pgmodel.DeleteSavedMessageForCreatorParams{
 			ID:        messageID,
 			CreatorID: session.UserID,
 		})
@@ -188,7 +189,7 @@ func (h *SavedMessagesHandler) HandleImportSavedMessages(c *fiber.Ctx, req wire.
 	res := make([]wire.SavedMessageWire, len(req.Messages))
 
 	for i, msg := range req.Messages {
-		message, err := h.pg.Q.InsertSavedMessage(c.Context(), postgres.InsertSavedMessageParams{
+		message, err := h.pg.Q.InsertSavedMessage(c.Context(), pgmodel.InsertSavedMessageParams{
 			ID:          util.UniqueID(),
 			CreatorID:   session.UserID,
 			GuildID:     sql.NullString{String: guildID, Valid: guildID != ""},
@@ -210,7 +211,7 @@ func (h *SavedMessagesHandler) HandleImportSavedMessages(c *fiber.Ctx, req wire.
 	})
 }
 
-func savedMessageModelToWire(model postgres.SavedMessage) wire.SavedMessageWire {
+func savedMessageModelToWire(model pgmodel.SavedMessage) wire.SavedMessageWire {
 	return wire.SavedMessageWire{
 		ID:          model.ID,
 		CreatorID:   model.CreatorID,

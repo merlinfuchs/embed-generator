@@ -10,7 +10,7 @@ import (
 
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -386,7 +386,7 @@ func (b *Bot) handleMessageCommand(s *discordgo.Session, i *discordgo.Interactio
 
 	switch subCMD.Name {
 	case "restore":
-		msg, err := b.pg.Q.InsertSharedMessage(context.TODO(), postgres.InsertSharedMessageParams{
+		msg, err := b.pg.Q.InsertSharedMessage(context.TODO(), pgmodel.InsertSharedMessageParams{
 			ID:        util.UniqueID(),
 			CreatedAt: time.Now().UTC(),
 			ExpiresAt: time.Now().UTC().Add(time.Hour * 24),
@@ -438,7 +438,7 @@ func (b *Bot) handleRestoreContextCommand(s *discordgo.Session, i *discordgo.Int
 		return err
 	}
 
-	msg, err := b.pg.Q.InsertSharedMessage(context.TODO(), postgres.InsertSharedMessageParams{
+	msg, err := b.pg.Q.InsertSharedMessage(context.TODO(), pgmodel.InsertSharedMessageParams{
 		ID:        util.UniqueID(),
 		CreatedAt: time.Now().UTC(),
 		ExpiresAt: time.Now().UTC().Add(time.Hour * 24),

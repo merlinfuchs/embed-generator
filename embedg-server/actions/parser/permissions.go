@@ -9,7 +9,7 @@ import (
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 )
 
 func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actions.ActionSet, userID string, guildID string, channelID string) error {
@@ -102,7 +102,7 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 					}
 					break
 				case actions.ActionTypeSavedMessageResponse, actions.ActionTypeSavedMessageDM, actions.ActionTypeSavedMessageEdit:
-					msg, err := m.pg.Q.GetSavedMessageForGuild(context.TODO(), postgres.GetSavedMessageForGuildParams{
+					msg, err := m.pg.Q.GetSavedMessageForGuild(context.TODO(), pgmodel.GetSavedMessageForGuildParams{
 						GuildID: sql.NullString{Valid: true, String: guildID},
 						ID:      action.TargetID,
 					})

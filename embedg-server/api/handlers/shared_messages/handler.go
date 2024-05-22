@@ -10,6 +10,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -28,7 +29,7 @@ func New(bot *bot.Bot, pg *postgres.PostgresStore) *SharedMessageHandler {
 }
 
 func (h *SharedMessageHandler) HandleCreateSharedMessage(c *fiber.Ctx, req wire.SharedMessageCreateRequestWire) error {
-	msg, err := h.pg.Q.InsertSharedMessage(c.Context(), postgres.InsertSharedMessageParams{
+	msg, err := h.pg.Q.InsertSharedMessage(c.Context(), pgmodel.InsertSharedMessageParams{
 		ID:        util.UniqueID(),
 		CreatedAt: time.Now().UTC(),
 		ExpiresAt: time.Now().UTC().Add(time.Hour * 24 * 7),

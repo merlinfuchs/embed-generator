@@ -10,6 +10,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/spf13/viper"
 )
@@ -25,7 +26,7 @@ func New(pg *postgres.PostgresStore) *EmbedLinksHandler {
 }
 
 func (h *EmbedLinksHandler) HandleCreateEmbedLink(c *fiber.Ctx, req wire.EmbedLinkCreateRequestWire) error {
-	row, err := h.pg.Q.InsertEmbedLink(c.Context(), postgres.InsertEmbedLinkParams{
+	row, err := h.pg.Q.InsertEmbedLink(c.Context(), pgmodel.InsertEmbedLinkParams{
 		ID:             util.UniqueID(),
 		OgTitle:        req.OgTitle.NullString,
 		Url:            req.Url,

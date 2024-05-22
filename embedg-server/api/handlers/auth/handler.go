@@ -13,6 +13,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/ravener/discord-oauth2"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -125,7 +126,7 @@ func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.T
 	}
 	resp.Body.Close()
 
-	_, err = h.pg.Q.UpsertUser(c.Context(), postgres.UpsertUserParams{
+	_, err = h.pg.Q.UpsertUser(c.Context(), pgmodel.UpsertUserParams{
 		ID:            user.ID,
 		Name:          user.Username,
 		Discriminator: user.Discriminator,

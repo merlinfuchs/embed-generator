@@ -14,6 +14,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
@@ -61,7 +62,7 @@ func (m *ScheduledMessageManager) lazySendScheduledMessagesTask() {
 					log.Error().Err(err).Msg("Failed to send scheduled message")
 				}
 
-				_, err := m.pg.Q.UpdateScheduledMessageEnabled(context.Background(), postgres.UpdateScheduledMessageEnabledParams{
+				_, err := m.pg.Q.UpdateScheduledMessageEnabled(context.Background(), pgmodel.UpdateScheduledMessageEnabledParams{
 					ID:        scheduledMessage.ID,
 					GuildID:   scheduledMessage.GuildID,
 					Enabled:   false,
@@ -87,7 +88,7 @@ func (m *ScheduledMessageManager) lazySendScheduledMessagesTask() {
 					log.Error().Err(err).Msg("Failed to send scheduled message")
 				}
 
-				_, err = m.pg.Q.UpdateScheduledMessageNextAt(context.Background(), postgres.UpdateScheduledMessageNextAtParams{
+				_, err = m.pg.Q.UpdateScheduledMessageNextAt(context.Background(), pgmodel.UpdateScheduledMessageNextAtParams{
 					ID:        scheduledMessage.ID,
 					GuildID:   scheduledMessage.GuildID,
 					NextAt:    nextAt,
@@ -102,7 +103,7 @@ func (m *ScheduledMessageManager) lazySendScheduledMessagesTask() {
 	}
 }
 
-func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, scheduledMessage postgres.ScheduledMessage) error {
+func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, scheduledMessage pgmodel.ScheduledMessage) error {
 	webhook, err := m.bot.FindWebhookForChannel(scheduledMessage.ChannelID)
 	if err != nil {
 		return fmt.Errorf("Failed to get webhook for channel: %w", err)
@@ -112,7 +113,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		threadID = scheduledMessage.ChannelID
 	}
 
-	savedMsg, err := m.pg.Q.GetSavedMessageForGuild(ctx, postgres.GetSavedMessageForGuildParams{
+	savedMsg, err := m.pg.Q.GetSavedMessageForGuild(ctx, pgmodel.GetSavedMessageForGuildParams{
 		ID: scheduledMessage.SavedMessageID,
 		GuildID: sql.NullString{
 			String: scheduledMessage.GuildID,

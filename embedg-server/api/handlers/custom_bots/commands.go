@@ -13,7 +13,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/sqlc-dev/pqtype"
 	"gopkg.in/guregu/null.v4"
@@ -63,7 +63,7 @@ func (h *CustomBotsHandler) HandleGetCustomCommand(c *fiber.Ctx) error {
 		return err
 	}
 
-	command, err := h.pg.Q.GetCustomCommand(c.Context(), postgres.GetCustomCommandParams{
+	command, err := h.pg.Q.GetCustomCommand(c.Context(), pgmodel.GetCustomCommandParams{
 		GuildID: guildID,
 		ID:      c.Params("commandID"),
 	})
@@ -144,7 +144,7 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return err
 	}
 
-	command, err := h.pg.Q.InsertCustomCommand(c.Context(), postgres.InsertCustomCommandParams{
+	command, err := h.pg.Q.InsertCustomCommand(c.Context(), pgmodel.InsertCustomCommandParams{
 		ID:          util.UniqueID(),
 		GuildID:     guildID,
 		Name:        req.Name,
@@ -217,7 +217,7 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return fmt.Errorf("Failed to marshal parameters: %w", err)
 	}
 
-	command, err := h.pg.Q.UpdateCustomCommand(c.Context(), postgres.UpdateCustomCommandParams{
+	command, err := h.pg.Q.UpdateCustomCommand(c.Context(), pgmodel.UpdateCustomCommandParams{
 		ID:          c.Params("commandID"),
 		GuildID:     guildID,
 		Name:        req.Name,
@@ -256,7 +256,7 @@ func (h *CustomBotsHandler) HandleDeleteCustomCommand(c *fiber.Ctx) error {
 		return err
 	}
 
-	_, err := h.pg.Q.DeleteCustomCommand(c.Context(), postgres.DeleteCustomCommandParams{
+	_, err := h.pg.Q.DeleteCustomCommand(c.Context(), pgmodel.DeleteCustomCommandParams{
 		GuildID: guildID,
 		ID:      c.Params("commandID"),
 	})
@@ -319,7 +319,7 @@ func (h *CustomBotsHandler) HandleDeployCustomCommands(c *fiber.Ctx) error {
 		return fmt.Errorf("Failed to deploy commands: %w", err)
 	}
 
-	_, err = h.pg.Q.SetCustomCommandsDeployedAt(c.Context(), postgres.SetCustomCommandsDeployedAtParams{
+	_, err = h.pg.Q.SetCustomCommandsDeployedAt(c.Context(), pgmodel.SetCustomCommandsDeployedAtParams{
 		GuildID: guildID,
 		DeployedAt: sql.NullTime{
 			Time:  time.Now().UTC(),
@@ -335,7 +335,7 @@ func (h *CustomBotsHandler) HandleDeployCustomCommands(c *fiber.Ctx) error {
 	})
 }
 
-func commandsToPayload(commands []postgres.CustomCommand) (error, []*discordgo.ApplicationCommand) {
+func commandsToPayload(commands []pgmodel.CustomCommand) (error, []*discordgo.ApplicationCommand) {
 	res := make([]*discordgo.ApplicationCommand, 0, len(commands))
 
 	for _, cmd := range commands {

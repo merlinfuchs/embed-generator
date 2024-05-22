@@ -13,6 +13,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/s3"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
@@ -93,7 +94,7 @@ func (h *ImagesHandler) HandleUploadImage(c *fiber.Ctx) error {
 		return fmt.Errorf("could not upload image: %w", err)
 	}
 
-	image, err := h.pg.Q.InsertImage(c.Context(), postgres.InsertImageParams{
+	image, err := h.pg.Q.InsertImage(c.Context(), pgmodel.InsertImageParams{
 		ID:     util.UniqueID(),
 		UserID: session.UserID,
 		GuildID: sql.NullString{
@@ -160,7 +161,7 @@ func (h *ImagesHandler) HandleDownloadImage(c *fiber.Ctx) error {
 	return c.Send(file.Body)
 }
 
-func imageToWire(image postgres.Image) wire.ImageWire {
+func imageToWire(image pgmodel.Image) wire.ImageWire {
 	return wire.ImageWire{
 		ID:       image.ID,
 		UserID:   image.UserID,

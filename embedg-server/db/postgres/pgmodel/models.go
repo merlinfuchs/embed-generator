@@ -2,7 +2,7 @@
 // versions:
 //   sqlc v1.25.0
 
-package postgres
+package pgmodel
 
 import (
 	"database/sql"

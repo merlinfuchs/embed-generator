@@ -3,7 +3,7 @@
 //   sqlc v1.25.0
 // source: message_action_sets.sql
 
-package postgres
+package pgmodel
 
 import (
 	"context"

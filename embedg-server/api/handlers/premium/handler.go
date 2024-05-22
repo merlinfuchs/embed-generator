@@ -9,6 +9,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	"github.com/rs/zerolog/log"
@@ -73,7 +74,7 @@ func (h *PremiumHandler) HandleListEntitlements(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
 	guildID := c.Query("guild_id")
 
-	var entitlements []postgres.Entitlement
+	var entitlements []pgmodel.Entitlement
 	var err error
 
 	if guildID != "" {

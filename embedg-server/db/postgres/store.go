@@ -7,6 +7,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/spf13/viper"
 )
 
@@ -26,7 +27,7 @@ func BuildConnectionDSN() string {
 
 type PostgresStore struct {
 	db *sqlx.DB
-	Q  *Queries
+	Q  *pgmodel.Queries
 }
 
 func NewPostgresStore() *PostgresStore {
@@ -41,6 +42,6 @@ func NewPostgresStore() *PostgresStore {
 
 	return &PostgresStore{
 		db: db,
-		Q:  New(db),
+		Q:  pgmodel.New(db),
 	}
 }

@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
 	"github.com/sqlc-dev/pqtype"
@@ -29,7 +29,7 @@ func (m *ActionParser) CreateActionsForMessage(ctx context.Context, actionSets m
 			return err
 		}
 
-		_, err = m.pg.Q.InsertMessageActionSet(ctx, postgres.InsertMessageActionSetParams{
+		_, err = m.pg.Q.InsertMessageActionSet(ctx, pgmodel.InsertMessageActionSetParams{
 			ID:                 util.UniqueID(),
 			MessageID:          messageID,
 			SetID:              actionSetID,

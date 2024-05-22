@@ -6,7 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/spf13/viper"
 )
 
@@ -25,7 +25,7 @@ const embedLinkHTML = `
 </html> 
 `
 
-func renderEmbedLinkHTML(c *fiber.Ctx, el postgres.EmbedLink) error {
+func renderEmbedLinkHTML(c *fiber.Ctx, el pgmodel.EmbedLink) error {
 	metaTags := metaTagsToHTML(map[string]string{
 		"og:title":       el.OgTitle.String,
 		"og:site_name":   el.OgSiteName.String,
@@ -49,7 +49,7 @@ func renderEmbedLinkHTML(c *fiber.Ctx, el postgres.EmbedLink) error {
 func renderUnknownEmbedLinkHTML(c *fiber.Ctx) error {
 	appURL := viper.GetString("app.public_url")
 
-	return renderEmbedLinkHTML(c, postgres.EmbedLink{
+	return renderEmbedLinkHTML(c, pgmodel.EmbedLink{
 		Url: appURL + "/tools/links",
 		OgTitle: sql.NullString{
 			String: "Unknwon Embed Link",
@@ -82,7 +82,7 @@ func metaTagsToHTML(metaTags map[string]string) string {
 	return res
 }
 
-func renderEmbedLinkJSON(c *fiber.Ctx, el postgres.EmbedLink) error {
+func renderEmbedLinkJSON(c *fiber.Ctx, el pgmodel.EmbedLink) error {
 	return c.JSON(wire.EmbedLinkOEmbedResponseWire{
 		Type:         el.OeType.String,
 		Title:        el.OgTitle.String,

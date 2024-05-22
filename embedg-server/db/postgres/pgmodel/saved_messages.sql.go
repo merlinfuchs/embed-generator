@@ -3,7 +3,7 @@
 //   sqlc v1.25.0
 // source: saved_messages.sql
 
-package postgres
+package pgmodel
 
 import (
 	"context"

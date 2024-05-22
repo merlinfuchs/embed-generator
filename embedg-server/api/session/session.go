@@ -11,6 +11,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
@@ -69,7 +70,7 @@ func (s *SessionManager) CreateSession(ctx context.Context, userID string, guild
 		return "", err
 	}
 
-	_, err = s.pg.Q.InsertSession(ctx, postgres.InsertSessionParams{
+	_, err = s.pg.Q.InsertSession(ctx, pgmodel.InsertSessionParams{
 		TokenHash:   tokenHash,
 		UserID:      userID,
 		GuildIds:    guildIDs,

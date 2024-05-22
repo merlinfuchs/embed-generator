@@ -9,6 +9,7 @@ import (
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/guregu/null.v4"
 )
@@ -66,7 +67,7 @@ func (m *CustomBotManager) lazyCustomBotGatewayTask() {
 			if err != nil {
 				var wsErr *websocket.CloseError
 				if errors.As(err, &wsErr) && wsErr.Code == 4004 {
-					_, err := m.pg.Q.UpdateCustomBotTokenInvalid(context.Background(), postgres.UpdateCustomBotTokenInvalidParams{
+					_, err := m.pg.Q.UpdateCustomBotTokenInvalid(context.Background(), pgmodel.UpdateCustomBotTokenInvalidParams{
 						GuildID:      customBot.GuildID,
 						TokenInvalid: true,
 					})

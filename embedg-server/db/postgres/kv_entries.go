@@ -5,13 +5,14 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	"gopkg.in/guregu/null.v4"
 )
 
 func (s *PostgresStore) GetKVEntry(ctx context.Context, guildID string, key string) (model.KVEntry, error) {
-	row, err := s.Q.GetKVEntry(ctx, GetKVEntryParams{
+	row, err := s.Q.GetKVEntry(ctx, pgmodel.GetKVEntryParams{
 		GuildID: guildID,
 		Key:     key,
 	})
@@ -26,7 +27,7 @@ func (s *PostgresStore) GetKVEntry(ctx context.Context, guildID string, key stri
 }
 
 func (s *PostgresStore) SetKVEntry(ctx context.Context, entry model.KVEntry) error {
-	err := s.Q.SetKVEntry(ctx, SetKVEntryParams{
+	err := s.Q.SetKVEntry(ctx, pgmodel.SetKVEntryParams{
 		Key:     entry.Key,
 		GuildID: entry.GuildID,
 		Value:   entry.Value,
@@ -41,7 +42,7 @@ func (s *PostgresStore) SetKVEntry(ctx context.Context, entry model.KVEntry) err
 }
 
 func (s *PostgresStore) IncreaseKVEntry(ctx context.Context, params model.KVEntryIncreaseParams) (model.KVEntry, error) {
-	row, err := s.Q.IncreaseKVEntry(ctx, IncreaseKVEntryParams{
+	row, err := s.Q.IncreaseKVEntry(ctx, pgmodel.IncreaseKVEntryParams{
 		Key:     params.Key,
 		GuildID: params.GuildID,
 		Value:   fmt.Sprintf("%d", params.Delta),
@@ -61,7 +62,7 @@ func (s *PostgresStore) IncreaseKVEntry(ctx context.Context, params model.KVEntr
 }
 
 func (s *PostgresStore) DeleteKVEntry(ctx context.Context, guildID string, key string) (model.KVEntry, error) {
-	row, err := s.Q.DeleteKVEntry(ctx, DeleteKVEntryParams{
+	row, err := s.Q.DeleteKVEntry(ctx, pgmodel.DeleteKVEntryParams{
 		GuildID: guildID,
 		Key:     key,
 	})
@@ -76,7 +77,7 @@ func (s *PostgresStore) DeleteKVEntry(ctx context.Context, guildID string, key s
 }
 
 func (s *PostgresStore) SearchKVEntries(ctx context.Context, guildID string, pattern string) ([]model.KVEntry, error) {
-	rows, err := s.Q.SearchKVEntries(ctx, SearchKVEntriesParams{
+	rows, err := s.Q.SearchKVEntries(ctx, pgmodel.SearchKVEntriesParams{
 		GuildID: guildID,
 		Key:     pattern,
 	})
@@ -100,7 +101,7 @@ func (s *PostgresStore) CountKVEntries(ctx context.Context, guildID string) (int
 	return int(count), nil
 }
 
-func rowToKVEntry(row KvEntry) model.KVEntry {
+func rowToKVEntry(row pgmodel.KvEntry) model.KVEntry {
 	return model.KVEntry{
 		Key:       row.Key,
 		GuildID:   row.GuildID,
