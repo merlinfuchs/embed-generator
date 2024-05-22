@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS kv_store (
+CREATE TABLE IF NOT EXISTS kv_entries (
     key TEXT NOT NULL,
     guild_id TEXT NOT NULL,
     value TEXT NOT NULL,

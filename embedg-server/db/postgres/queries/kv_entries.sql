@@ -1,8 +1,8 @@
--- name: GetKVKey :one
-SELECT * FROM kv_store WHERE key = $1 AND guild_id = $2;
+-- name: GetKVEntry :one
+SELECT * FROM kv_entries WHERE key = $1 AND guild_id = $2;
 
--- name: SetKVKey :exec
-INSERT INTO kv_store (
+-- name: SetKVEntry :exec
+INSERT INTO kv_entries (
     key, 
     guild_id, 
     value, 
@@ -22,8 +22,8 @@ DO UPDATE SET
     expires_at = EXCLUDED.expires_at, 
     updated_at = EXCLUDED.updated_at;
 
--- name: IncreaseKVKey :one
-INSERT INTO kv_store (
+-- name: IncreaseKVEntry :one
+INSERT INTO kv_entries (
     key, 
     guild_id, 
     value, 
@@ -39,16 +39,16 @@ INSERT INTO kv_store (
     $6
 ) ON CONFLICT (key, guild_id)
 DO UPDATE SET 
-    value = kv_store.value::int + EXCLUDED.value::int, 
+    value = kv_entries.value::int + EXCLUDED.value::int, 
     expires_at = EXCLUDED.expires_at, 
     updated_at = EXCLUDED.updated_at
 RETURNING *;
 
--- name: DeleteKVKey :one
-DELETE FROM kv_store WHERE key = $1 AND guild_id = $2 RETURNING *;
+-- name: DeleteKVEntry :one
+DELETE FROM kv_entries WHERE key = $1 AND guild_id = $2 RETURNING *;
 
--- name: SearchKVKeys :many
-SELECT * FROM kv_store WHERE key LIKE $1 AND guild_id = $2;
+-- name: SearchKVEntries :many
+SELECT * FROM kv_entries WHERE key LIKE $1 AND guild_id = $2;
 
--- name: CountKVKeys :one
-SELECT COUNT(*) FROM kv_store WHERE guild_id = $1;
+-- name: CountKVEntries :one
+SELECT COUNT(*) FROM kv_entries WHERE guild_id = $1;

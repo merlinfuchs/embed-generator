@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"github.com/merlinfuchs/discordgo"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/model"
+	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 )
 
 const MaxKVValueLength = 16 * 1024
@@ -86,14 +87,14 @@ func (p *ChannelProvider) ProvideData(data map[string]interface{}) {
 
 type KVProvider struct {
 	guildID      string
-	pg           *postgres.PostgresStore
+	kvStore      store.KVEntryStore
 	maxGuildKeys int
 }
 
-func NewKVProvider(guildID string, pg *postgres.PostgresStore, maxGuildKeys int) *KVProvider {
+func NewKVProvider(guildID string, kvStore store.KVEntryStore, maxGuildKeys int) *KVProvider {
 	return &KVProvider{
 		guildID:      guildID,
-		pg:           pg,
+		kvStore:      kvStore,
 		maxGuildKeys: maxGuildKeys,
 	}
 }
@@ -109,17 +110,14 @@ func (p *KVProvider) ProvideFuncs(funcs map[string]interface{}) {
 func (p *KVProvider) ProvideData(data map[string]interface{}) {}
 
 func (kv *KVProvider) getKey(key string) (string, error) {
-	val, err := kv.pg.Q.GetKVKey(context.TODO(), postgres.GetKVKeyParams{
-		GuildID: kv.guildID,
-		Key:     key,
-	})
+	entry, err := kv.kvStore.GetKVEntry(context.TODO(), kv.guildID, key)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == store.ErrNotFound {
 			return "", nil
 		}
 		return "", err
 	}
-	return val.Value, nil
+	return entry.Value, nil
 }
 
 func (kv *KVProvider) setKey(key string, value string) error {
@@ -134,7 +132,7 @@ func (kv *KVProvider) setKey(key string, value string) error {
 		return err
 	}
 
-	err := kv.pg.Q.SetKVKey(context.TODO(), postgres.SetKVKeyParams{
+	err := kv.kvStore.SetKVEntry(context.TODO(), model.KVEntry{
 		GuildID:   kv.guildID,
 		Key:       key,
 		Value:     value,
@@ -156,10 +154,10 @@ func (kv *KVProvider) increaseKey(key string, delta int) (string, error) {
 		return "", err
 	}
 
-	val, err := kv.pg.Q.IncreaseKVKey(context.TODO(), postgres.IncreaseKVKeyParams{
+	entry, err := kv.kvStore.IncreaseKVEntry(context.TODO(), model.KVEntryIncreaseParams{
 		GuildID:   kv.guildID,
 		Key:       key,
-		Value:     fmt.Sprintf("%d", delta),
+		Delta:     delta,
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
 	})
@@ -169,47 +167,41 @@ func (kv *KVProvider) increaseKey(key string, delta int) (string, error) {
 		}
 		return "", err
 	}
-	return val.Value, nil
+	return entry.Value, nil
 }
 
 func (kv *KVProvider) deleteKey(key string) (string, error) {
-	val, err := kv.pg.Q.DeleteKVKey(context.TODO(), postgres.DeleteKVKeyParams{
-		GuildID: kv.guildID,
-		Key:     key,
-	})
+	entry, err := kv.kvStore.DeleteKVEntry(context.TODO(), kv.guildID, key)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return "", nil
 		}
 		return "", err
 	}
-	return val.Value, nil
+	return entry.Value, nil
 }
 
 func (kv *KVProvider) searchKeys(pattern string) (map[string]string, error) {
-	keys, err := kv.pg.Q.SearchKVKeys(context.TODO(), postgres.SearchKVKeysParams{
-		GuildID: kv.guildID,
-		Key:     pattern,
-	})
+	entries, err := kv.kvStore.SearchKVEntries(context.TODO(), kv.guildID, pattern)
 	if err != nil {
 		return nil, err
 	}
 
-	result := make(map[string]string, len(keys))
-	for _, key := range keys {
-		result[key.Key] = key.Value
+	result := make(map[string]string, len(entries))
+	for _, entry := range entries {
+		result[entry.Key] = entry.Value
 	}
 
 	return result, nil
 }
 
 func (kv *KVProvider) checkKeyCountLimit() error {
-	keyCount, err := kv.pg.Q.CountKVKeys(context.TODO(), kv.guildID)
+	entryCount, err := kv.kvStore.CountKVEntries(context.TODO(), kv.guildID)
 	if err != nil {
 		return fmt.Errorf("failed to count KV keys: %w", err)
 	}
 
-	if int(keyCount) >= kv.maxGuildKeys {
+	if int(entryCount) >= kv.maxGuildKeys {
 		return fmt.Errorf("maximum number of keys reached: %d", kv.maxGuildKeys)
 	}
 
