@@ -22,6 +22,9 @@ export interface ActionsStore {
     i: number,
     val: boolean
   ) => void;
+  setActionPermissions: (id: string, i: number, val: string) => void;
+  setActionRoleIds: (id: string, i: number, val: string[]) => void;
+  setActionRequireAll: (id: string, i: number, val: boolean) => void;
 
   actions: Record<string, MessageActionSet>;
 }
@@ -125,13 +128,27 @@ export const createActionStore = (key: string) =>
                   public: false,
                   disable_default_response: false,
                 };
+              } else if (type === 10) {
+                actionSet.actions[i] = {
+                  type,
+                  id: action.id,
+                  permissions: "0",
+                  role_ids: [],
+                  require_all: false,
+                  disable_default_response: false,
+                };
               }
             }),
           setActionText: (id: string, i: number, text: string) =>
             set((state) => {
               const actionSet = state.actions[id];
               const action = actionSet.actions[i];
-              if (action.type === 1 || action.type === 6 || action.type === 8) {
+              if (
+                action.type === 1 ||
+                action.type === 6 ||
+                action.type === 8 ||
+                action.type === 10
+              ) {
                 action.text = text;
               }
             }),
@@ -154,7 +171,9 @@ export const createActionStore = (key: string) =>
             set((state) => {
               const actionSet = state.actions[id];
               const action = actionSet.actions[i];
-              action.public = val;
+              if (action.type !== 10) {
+                action.public = val;
+              }
             }),
           setActionDisableDefaultResponse: (
             id: string,
@@ -164,8 +183,37 @@ export const createActionStore = (key: string) =>
             set((state) => {
               const actionSet = state.actions[id];
               const action = actionSet.actions[i];
-              if (action.type === 2 || action.type === 3 || action.type === 4) {
+              if (
+                action.type === 2 ||
+                action.type === 3 ||
+                action.type === 4 ||
+                action.type === 10
+              ) {
                 action.disable_default_response = val;
+              }
+            }),
+          setActionPermissions: (id: string, i: number, val: string) =>
+            set((state) => {
+              const actionSet = state.actions[id];
+              const action = actionSet.actions[i];
+              if (action.type === 10) {
+                action.permissions = val;
+              }
+            }),
+          setActionRoleIds: (id: string, i: number, val: string[]) =>
+            set((state) => {
+              const actionSet = state.actions[id];
+              const action = actionSet.actions[i];
+              if (action.type === 10) {
+                action.role_ids = val;
+              }
+            }),
+          setActionRequireAll: (id: string, i: number, val: boolean) =>
+            set((state) => {
+              const actionSet = state.actions[id];
+              const action = actionSet.actions[i];
+              if (action.type === 10) {
+                action.require_all = val;
               }
             }),
         }),

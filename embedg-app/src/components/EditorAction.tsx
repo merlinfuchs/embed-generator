@@ -57,17 +57,26 @@ export default function EditorAction({ setId, actionIndex }: Props) {
     shallow
   );
 
-  const [setType, setText, setTargetId, setPublic, setDisableDefaultResponse] =
-    useCurrentMessageStore(
-      (state) => [
-        state.setActionType,
-        state.setActionText,
-        state.setActionTargetId,
-        state.setActionPublic,
-        state.setActionDisableDefaultResponse,
-      ],
-      shallow
-    );
+  const [
+    setType,
+    setText,
+    setTargetId,
+    setPublic,
+    setDisableDefaultResponse,
+    setRoleIds,
+    setPermissions,
+  ] = useCurrentMessageStore(
+    (state) => [
+      state.setActionType,
+      state.setActionText,
+      state.setActionTargetId,
+      state.setActionPublic,
+      state.setActionDisableDefaultResponse,
+      state.setActionRoleIds,
+      state.setActionPermissions,
+    ],
+    shallow
+  );
 
   return (
     <Action
@@ -89,6 +98,8 @@ export default function EditorAction({ setId, actionIndex }: Props) {
       setDisableDefaultResponse={(disable) =>
         setDisableDefaultResponse(setId, actionIndex, disable)
       }
+      setRoleIds={(ids) => setRoleIds(setId, actionIndex, ids)}
+      setPermissions={(perms) => setPermissions(setId, actionIndex, perms)}
     />
   );
 }
