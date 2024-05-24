@@ -24,7 +24,6 @@ export interface ActionsStore {
   ) => void;
   setActionPermissions: (id: string, i: number, val: string) => void;
   setActionRoleIds: (id: string, i: number, val: string[]) => void;
-  setActionRequireAll: (id: string, i: number, val: boolean) => void;
 
   actions: Record<string, MessageActionSet>;
 }
@@ -134,7 +133,6 @@ export const createActionStore = (key: string) =>
                   id: action.id,
                   permissions: "0",
                   role_ids: [],
-                  require_all: false,
                   disable_default_response: false,
                 };
               }
@@ -206,14 +204,6 @@ export const createActionStore = (key: string) =>
               const action = actionSet.actions[i];
               if (action.type === 10) {
                 action.role_ids = val;
-              }
-            }),
-          setActionRequireAll: (id: string, i: number, val: boolean) =>
-            set((state) => {
-              const actionSet = state.actions[id];
-              const action = actionSet.actions[i];
-              if (action.type === 10) {
-                action.require_all = val;
               }
             }),
         }),

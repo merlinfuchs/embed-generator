@@ -445,25 +445,14 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			}
 
 			if len(action.RoleIDs) != 0 {
-				hasOneRole := false
 				for _, roleID := range action.RoleIDs {
-					if slices.Contains(interaction.Member.Roles, roleID) {
-						hasOneRole = true
-					} else if action.RequireAll {
+					if !slices.Contains(interaction.Member.Roles, roleID) {
 						i.Respond(&discordgo.InteractionResponseData{
 							Content: responseText,
 							Flags:   discordgo.MessageFlagsEphemeral,
 						})
 						return nil
 					}
-				}
-
-				if !hasOneRole {
-					i.Respond(&discordgo.InteractionResponseData{
-						Content: responseText,
-						Flags:   discordgo.MessageFlagsEphemeral,
-					})
-					return nil
 				}
 			}
 		}

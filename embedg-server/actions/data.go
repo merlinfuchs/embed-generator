@@ -70,7 +70,6 @@ type Action struct {
 	DisableDefaultResponse bool       `json:"disable_default_response"`
 	Permissions            string     `json:"permissions"`
 	RoleIDs                []string   `json:"role_ids"`
-	RequireAll             bool       `json:"require_all"`
 }
 
 type ActionSet struct {

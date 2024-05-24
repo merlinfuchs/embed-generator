@@ -322,7 +322,6 @@ export const messageActionSchema = z
       id: uniqueIdSchema.default(() => getUniqueId()),
       permissions: z.string().default("0"),
       role_ids: z.array(z.string()),
-      require_all: z.boolean().default(false), // require all roles
       disable_default_response: z.boolean().default(false),
       text: z.optional(z.string().min(1).max(2000)),
     })

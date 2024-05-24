@@ -340,10 +340,6 @@ export const messageActionSchema = z
         (d) => d ?? undefined,
         z.array(z.string()).default([])
       ),
-      require_all: z.preprocess(
-        (d) => d ?? undefined,
-        z.boolean().default(false)
-      ), // require all roles
       disable_default_response: z.preprocess(
         (d) => d ?? undefined,
         z.boolean().default(false)
