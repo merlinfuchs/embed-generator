@@ -60,7 +60,7 @@ const actionDescriptions = {
   7: "Send a saved message to the user via DM.",
   8: "Edit the message with a new text message.",
   9: "Edit the message with a saved message.",
-  10: "Check if the user has the required permissions or roles.",
+  10: "Check if the user has the required permissions and roles.",
 } as const;
 
 export default function Action({

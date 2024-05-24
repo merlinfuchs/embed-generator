@@ -1,7 +1,10 @@
 import { useMemo, useState } from "react";
 import ClickOutsideHandler from "./ClickOutsideHandler";
-import { colorIntToHex } from "../util/discord";
-import { CheckIcon, ChevronDownIcon } from "@heroicons/react/20/solid";
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  ShieldExclamationIcon,
+} from "@heroicons/react/20/solid";
 import clsx from "clsx";
 
 interface Props {
@@ -93,10 +96,7 @@ export default function PermissionsSelect({ permissions, onChange }: Props) {
           {activeFlags.length ? (
             <div className="flex items-center space-x-2 cursor-pointer w-full">
               <div className="flex-auto flex space-x-2 items-center">
-                <div
-                  className="h-4 w-4 rounded-full"
-                  style={{ backgroundColor: colorIntToHex(200) }}
-                ></div>
+                <ShieldExclamationIcon className="h-5 w-5 text-gray-500" />
                 <div className="text-gray-300 truncate">
                   {activeFlags[0].replaceAll("_", " ")}
                 </div>
@@ -129,10 +129,7 @@ export default function PermissionsSelect({ permissions, onChange }: Props) {
                 role="button"
                 onClick={() => togglePermission(f)}
               >
-                <div
-                  className="h-4 w-4 rounded-full"
-                  style={{ backgroundColor: colorIntToHex(200) }}
-                ></div>
+                <ShieldExclamationIcon className="h-5 w-5 text-gray-500" />
                 <div className="text-gray-300 truncate flex-auto">
                   {f.replaceAll("_", " ")}
                 </div>
