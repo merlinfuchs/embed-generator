@@ -427,7 +427,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			perms, _ := strconv.ParseInt(action.Permissions, 10, 64)
 
 			if interaction.Member.Permissions&perms != perms {
-				responseText := "You don't have the required permissions to use this command."
+				responseText := "You don't have the required permissions to use this component or command."
 				if action.DisableDefaultResponse {
 					responseText = action.Text
 				}
@@ -439,7 +439,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				return nil
 			}
 
-			responseText := "You don't have the required roles to use this command."
+			responseText := "You don't have the required roles to use this component or command."
 			if action.DisableDefaultResponse {
 				responseText = action.Text
 			}
