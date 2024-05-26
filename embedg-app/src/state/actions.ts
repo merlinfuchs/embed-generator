@@ -141,11 +141,11 @@ export const createActionStore = (key: string) =>
             set((state) => {
               const actionSet = state.actions[id];
               const action = actionSet.actions[i];
-              if (
-                action.type === 1 ||
-                action.type === 6 ||
-                action.type === 8 ||
-                action.type === 10
+              if (action.type === 1 || action.type === 6 || action.type === 8) {
+                action.text = text;
+              } else if (
+                action.type === 10 &&
+                action.disable_default_response
               ) {
                 action.text = text;
               }

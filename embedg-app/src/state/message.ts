@@ -1125,8 +1125,12 @@ export const createMessageStore = (key: string) =>
                 if (
                   action.type === 1 ||
                   action.type === 6 ||
-                  action.type === 8 ||
-                  action.type === 10
+                  action.type === 8
+                ) {
+                  action.text = text;
+                } else if (
+                  action.type === 10 &&
+                  action.disable_default_response
                 ) {
                   action.text = text;
                 }
