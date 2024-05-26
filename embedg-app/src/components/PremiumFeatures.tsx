@@ -36,8 +36,8 @@ export default function PremiumFeatures() {
       <div className="p-4 bg-dark-3 rounded flex space-x-3 items-center">
         <FireIcon className="w-5 h-5 text-green flex-none" />
         <div className="text-gray-400 font-light text-sm">
-          Add up to <span className="font-medium text-white">5 actions</span> to
-          each interactive component and save up to{" "}
+          Add up to <span className="font-medium text-white">10 actions</span>{" "}
+          to each interactive component and save up to{" "}
           <span className="font-medium text-white">100 messages</span>
         </div>
       </div>

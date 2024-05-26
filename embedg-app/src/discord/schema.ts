@@ -315,6 +315,25 @@ export const messageActionSchema = z
       public: z.boolean().default(false),
       disable_default_response: z.boolean().default(false),
     })
+  )
+  .or(
+    z.object({
+      type: z.literal(10), // permission check with default response
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      permissions: z.string().default("0"),
+      role_ids: z.array(z.string()),
+      disable_default_response: z.literal(false),
+    })
+  )
+  .or(
+    z.object({
+      type: z.literal(10), // permission check with custom response
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      permissions: z.string().default("0"),
+      role_ids: z.array(z.string()),
+      disable_default_response: z.literal(true),
+      text: z.string().min(1).max(2000),
+    })
   );
 
 export type MessageAction = z.infer<typeof messageActionSchema>;

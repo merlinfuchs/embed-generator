@@ -11,6 +11,8 @@ import SavedMessageSelect from "./SavedMessageSelect";
 import { useMemo } from "react";
 import { MessageAction } from "../discord/schema";
 import CheckBox from "./CheckBox";
+import { RolesSelect } from "./RolesSelect";
+import PermissionsSelect from "./PermissionsSelect";
 
 interface Props {
   guildId: string | null;
@@ -31,6 +33,8 @@ interface Props {
   setTargetId(targetId: string): void;
   setPublic(p: boolean): void;
   setDisableDefaultResponse(p: boolean): void;
+  setRoleIds(roleIds: string[]): void;
+  setPermissions(permissions: string): void;
 }
 
 const actionTypes = {
@@ -43,6 +47,7 @@ const actionTypes = {
   2: "Toggle Role",
   3: "Add Role",
   4: "Remove Role",
+  10: "Check Permissions",
 } as const;
 
 const actionDescriptions = {
@@ -55,6 +60,7 @@ const actionDescriptions = {
   7: "Send a saved message to the user via DM.",
   8: "Edit the message with a new text message.",
   9: "Edit the message with a saved message.",
+  10: "Check if the user has the required permissions and roles.",
 } as const;
 
 export default function Action({
@@ -74,6 +80,8 @@ export default function Action({
   setTargetId,
   setPublic,
   setDisableDefaultResponse,
+  setRoleIds,
+  setPermissions,
 }: Props) {
   const actionTypeGroup = useMemo(() => {
     switch (action.type) {
@@ -91,6 +99,8 @@ export default function Action({
         return "add_role";
       case 4:
         return "remove_role";
+      case 10:
+        return "check_permissions";
     }
   }, [action.type]);
 
@@ -110,6 +120,9 @@ export default function Action({
         break;
       case "remove_role":
         setType(4);
+        break;
+      case "check_permissions":
+        setType(10);
         break;
     }
   }
@@ -217,6 +230,7 @@ export default function Action({
                 <option value="toggle_role">Toggle Role</option>
                 <option value="add_role">Add Role</option>
                 <option value="remove_role">Remove Role</option>
+                <option value="check_permissions">Check Permissions</option>
               </select>
             </div>
             {(actionTypeGroup === "text_response" ||
@@ -248,7 +262,10 @@ export default function Action({
                 <CheckBox checked={action.public} onChange={setPublic} />
               </div>
             )}
-            {(action.type === 2 || action.type === 3 || action.type === 4) && (
+            {(action.type === 2 ||
+              action.type === 3 ||
+              action.type === 4 ||
+              action.type === 10) && (
               <div className="flex-none">
                 <div className="mb-1.5 flex">
                   <div className="uppercase text-gray-300 text-sm font-medium">
@@ -282,6 +299,41 @@ export default function Action({
               messageId={action.target_id || null}
               onChange={(v) => setTargetId(v || "")}
             />
+          ) : action.type === 10 ? (
+            <>
+              <div className="flex-none">
+                <div className="mb-1.5 flex">
+                  <div className="uppercase text-gray-300 text-sm font-medium">
+                    Required Permissions
+                  </div>
+                </div>
+                <PermissionsSelect
+                  permissions={action.permissions}
+                  onChange={setPermissions}
+                />
+              </div>
+              <div className="flex-none">
+                <div className="mb-1.5 flex">
+                  <div className="uppercase text-gray-300 text-sm font-medium">
+                    Required Roles
+                  </div>
+                </div>
+                <RolesSelect
+                  guildId={guildId}
+                  roleIds={action.role_ids}
+                  onChange={setRoleIds}
+                />
+              </div>
+              {action.disable_default_response && (
+                <EditorInput
+                  label="Error Response"
+                  type="textarea"
+                  value={action.text || ""}
+                  onChange={(v) => setText(v)}
+                  controls={true}
+                />
+              )}
+            </>
           ) : null}
 
           <div className="text-gray-500 text-sm whitespace-normal">

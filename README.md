@@ -72,7 +72,7 @@ premium:
       default: true
       features:
         max_saved_messages: 25
-        max_actions_per_component: 2
+        max_actions_per_component: 3
         advanced_action_types: false
         ai_assistant: false
         is_premium: false
@@ -87,7 +87,7 @@ premium:
       sku_id: "123"
       features:
         max_saved_messages: 100
-        max_actions_per_component: 5
+        max_actions_per_component: 10
         advanced_action_types: true
         ai_assistant: true
         is_premium: true # This is used for handing out cosmetics like a role on the support server

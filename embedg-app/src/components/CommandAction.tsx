@@ -57,17 +57,26 @@ export default function EditorAction({ cmdId, actionIndex }: Props) {
     shallow
   );
 
-  const [setType, setText, setTargetId, setPublic, setDisableDefaultResponse] =
-    useCommandActionsStore(
-      (state) => [
-        state.setActionType,
-        state.setActionText,
-        state.setActionTargetId,
-        state.setActionPublic,
-        state.setActionDisableDefaultResponse,
-      ],
-      shallow
-    );
+  const [
+    setType,
+    setText,
+    setTargetId,
+    setPublic,
+    setDisableDefaultResponse,
+    setRoleIds,
+    setPermissions,
+  ] = useCommandActionsStore(
+    (state) => [
+      state.setActionType,
+      state.setActionText,
+      state.setActionTargetId,
+      state.setActionPublic,
+      state.setActionDisableDefaultResponse,
+      state.setActionRoleIds,
+      state.setActionPermissions,
+    ],
+    shallow
+  );
 
   return (
     <Action
@@ -87,6 +96,10 @@ export default function EditorAction({ cmdId, actionIndex }: Props) {
       setPublic={(public_) => setPublic(cmdId, actionIndex, public_)}
       setDisableDefaultResponse={(disable) =>
         setDisableDefaultResponse(cmdId, actionIndex, disable)
+      }
+      setRoleIds={(roleIds) => setRoleIds(cmdId, actionIndex, roleIds)}
+      setPermissions={(permissions) =>
+        setPermissions(cmdId, actionIndex, permissions)
       }
     />
   );

@@ -59,6 +59,7 @@ const (
 	ActionTypeSavedMessageDM       ActionType = 7
 	ActionTypeTextEdit             ActionType = 8
 	ActionTypeSavedMessageEdit     ActionType = 9
+	ActionTypePermissionCheck      ActionType = 10
 )
 
 type Action struct {
@@ -67,6 +68,8 @@ type Action struct {
 	Text                   string     `json:"text"`
 	Public                 bool       `json:"public"`
 	DisableDefaultResponse bool       `json:"disable_default_response"`
+	Permissions            string     `json:"permissions"`
+	RoleIDs                []string   `json:"role_ids"`
 }
 
 type ActionSet struct {

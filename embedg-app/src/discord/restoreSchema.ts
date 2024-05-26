@@ -330,6 +330,22 @@ export const messageActionSchema = z
         z.boolean().default(false)
       ),
     })
+  )
+  .or(
+    z.object({
+      type: z.literal(10), // permission check
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      permissions: z.preprocess((d) => d ?? undefined, z.string().default("0")),
+      role_ids: z.preprocess(
+        (d) => d ?? undefined,
+        z.array(z.string()).default([])
+      ),
+      disable_default_response: z.preprocess(
+        (d) => d ?? undefined,
+        z.boolean().default(false)
+      ),
+      text: z.preprocess((d) => d ?? undefined, z.string().default("")),
+    })
   );
 
 export type MessageAction = z.infer<typeof messageActionSchema>;

@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/merlinfuchs/discordgo"
@@ -419,6 +421,38 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				if err != nil {
 					log.Error().Err(err).Msg("failed to create actions for message")
 					return err
+				}
+			}
+		case actions.ActionTypePermissionCheck:
+			perms, _ := strconv.ParseInt(action.Permissions, 10, 64)
+
+			if interaction.Member.Permissions&perms != perms {
+				responseText := "You don't have the required permissions to use this component or command."
+				if action.DisableDefaultResponse {
+					responseText = action.Text
+				}
+
+				i.Respond(&discordgo.InteractionResponseData{
+					Content: responseText,
+					Flags:   discordgo.MessageFlagsEphemeral,
+				})
+				return nil
+			}
+
+			responseText := "You don't have the required roles to use this component or command."
+			if action.DisableDefaultResponse {
+				responseText = action.Text
+			}
+
+			if len(action.RoleIDs) != 0 {
+				for _, roleID := range action.RoleIDs {
+					if !slices.Contains(interaction.Member.Roles, roleID) {
+						i.Respond(&discordgo.InteractionResponseData{
+							Content: responseText,
+							Flags:   discordgo.MessageFlagsEphemeral,
+						})
+						return nil
+					}
 				}
 			}
 		}
