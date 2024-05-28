@@ -1257,8 +1257,8 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
 }
 
 /* .discord-message:hover {
-  background-color: rgba(4, 4, 5, 0.07);
-} */
+    background-color: rgba(4, 4, 5, 0.07);
+  } */
 
 .discord-light-theme .discord-message:hover {
   background-color: rgba(6, 6, 7, 0.02);
