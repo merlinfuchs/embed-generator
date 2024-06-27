@@ -1,5 +1,5 @@
 import { useValidationErrorStore } from "@/lib/state/validationError";
-import BaseInput, { BaseInputProps } from "../BaseInput";
+import BaseInput, { BaseInputProps } from "../common/BaseInput";
 
 type Props = BaseInputProps & {
   validationPath?: string;

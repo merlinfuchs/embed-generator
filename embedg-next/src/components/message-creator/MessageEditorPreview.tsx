@@ -12,8 +12,9 @@ export default function MessageEditorPreview() {
   // We debounce the message preview to prevent it from updating too often.
   useCurrentMessageStore((state) => debouncedSetMessage(state));
 
+  // bg-[#FFFFFF] dark:
   return (
-    <div className="bg-[#FFFFFF] dark:bg-[#313338] h-full rounded-lg overflow-x-hidden no-scrollbar px-3 scrollbar-none border">
+    <div className="bg-[#313338] h-full rounded-lg overflow-x-hidden no-scrollbar px-3 scrollbar-none border">
       {msg && <MessagePreview msg={msg} />}
     </div>
   );

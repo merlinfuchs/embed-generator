@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { HexColorPicker } from "react-colorful";
-import { Popover, PopoverTrigger } from "./ui/popover";
-import { Input } from "./ui/input";
+import { Popover, PopoverTrigger } from "../ui/popover";
+import { Input } from "../ui/input";
 import { PopoverContent } from "@radix-ui/react-popover";
 
 interface Props {

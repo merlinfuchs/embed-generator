@@ -3,7 +3,7 @@ import { format, parseISO } from "date-fns";
 import { toHTML } from "@/lib/utils/discordMarkdown";
 import { Message } from "@/lib/schema/message";
 import { colorIntToHex } from "@/lib/utils/color";
-import Twemoji from "../Twemoji";
+import Twemoji from "../common/Twemoji";
 
 const buttonColors = {
   1: "discord-button-primary",
@@ -43,7 +43,7 @@ export default function MessagePreview({ msg }: { msg: Message }) {
                 <span className="discord-author-username">
                   {msg.username || defaultUsername}
                 </span>
-                <span className="discord-application-tag">Bot</span>
+                <span className="discord-application-tag">App</span>
               </span>
               <span className="discord-message-timestamp pl-1">
                 Today at {currentTime}

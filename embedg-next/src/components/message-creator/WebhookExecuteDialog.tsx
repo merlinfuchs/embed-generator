@@ -1,5 +1,5 @@
 import { useCurrentWebhookStore } from "@/lib/state/webhook";
-import BaseInput from "../BaseInput";
+import BaseInput from "../common/BaseInput";
 import { Button } from "../ui/button";
 import {
   DialogContent,
@@ -72,7 +72,9 @@ export default function WebhookExecuteDialog() {
     <DialogContent>
       <DialogHeader>
         <DialogTitle>Send Message</DialogTitle>
-        <DialogDescription>Send your message to a webhook.</DialogDescription>
+        <DialogDescription>
+          Send your message to a Discord or Guilded webhook.
+        </DialogDescription>
       </DialogHeader>
       <div className="space-y-3 my-3">
         <BaseInput

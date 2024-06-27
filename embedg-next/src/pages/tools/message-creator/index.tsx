@@ -1,4 +1,4 @@
-import ToolLayout from "@/components/ToolLayout";
+import ToolLayout from "@/components/common/ToolLayout";
 import MessageEditor from "@/components/message-creator/MessageEditor";
 import { Button } from "@/components/ui/button";
 import { SendIcon } from "lucide-react";

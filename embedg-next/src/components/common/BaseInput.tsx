@@ -1,6 +1,6 @@
 import ColorPicker from "./ColorPicker";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 import {
   Select,
   SelectContent,
@@ -9,9 +9,9 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
-import { Switch } from "./ui/switch";
-import { Textarea } from "./ui/textarea";
+} from "../ui/select";
+import { Switch } from "../ui/switch";
+import { Textarea } from "../ui/textarea";
 import { DatePicker } from "./DatePicker";
 import { CircleAlertIcon } from "lucide-react";
 

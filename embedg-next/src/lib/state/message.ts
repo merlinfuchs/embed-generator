@@ -18,6 +18,7 @@ import debounce from "just-debounce-it";
 
 export interface MessageStore extends Message {
   clear(): void;
+  reset(): void;
   replace(message: Message): void;
   setContent: (content: string) => void;
   setUsername: (username: string | undefined) => void;
@@ -123,6 +124,8 @@ export interface MessageStore extends Message {
 }
 
 export const defaultMessage: Message = {
+  username: undefined,
+  avatar_url: undefined,
   content:
     'Welcome to **Embed Generator**! 🎉 Create stunning embed messages for your Discord server with ease!\n\nIf you\'re ready to start, simply click on the "Clear" button at the top of the editor and create your own message.\n\nShould you need any assistance or have questions, feel free to join our [support server](/discord) where you can connect with our helpful community members and get the support you need.\n\nWe also have a [complementary bot](/invite) that enhances the experience with Embed Generator. Check out our [Discord bot](/invite) which offers features like formatting for mentions, channels, and emoji, creating reaction roles, interactive components, and more.\n\nLet your creativity shine and make your server stand out with Embed Generator! ✨',
   tts: false,
@@ -173,6 +176,8 @@ export const defaultMessage: Message = {
 };
 
 export const emptyMessage: Message = {
+  username: undefined,
+  avatar_url: undefined,
   content: "",
   tts: false,
   embeds: [],
@@ -187,7 +192,8 @@ export const createMessageStore = (key: string) =>
           (set, get) => ({
             ...defaultMessage,
 
-            clear: () => set(defaultMessage),
+            clear: () => set(emptyMessage),
+            reset: () => set(defaultMessage),
             replace: (message: Message) => set(message),
             setContent: (content: string) => set({ content }),
             setUsername: (username: string | undefined) => set({ username }),

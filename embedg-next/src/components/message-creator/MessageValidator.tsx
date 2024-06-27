@@ -8,7 +8,6 @@ export default function MessageValidator() {
 
   const debouncedSetValidationError = debounce((msg: Message) => {
     const res = messageSchema.safeParse(msg);
-    console.log(res);
     setValidationError(res.success ? null : res.error);
   }, 250);
 
