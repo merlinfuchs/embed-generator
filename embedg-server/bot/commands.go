@@ -353,7 +353,7 @@ func (b *Bot) handleMessageCommand(s *discordgo.Session, i *discordgo.Interactio
 
 	message, err := s.ChannelMessage(i.ChannelID, messageID)
 	if err != nil {
-		if rerr, ok := err.(*discordgo.RESTError); ok && rerr.Message.Code == discordgo.ErrCodeUnknownMessage {
+		if util.IsDiscordRestErrorCode(err, discordgo.ErrCodeUnknownMessage) {
 			return textResponse(s, i, "Message not found.")
 		}
 		log.Error().Err(err).Msg("Failed to get message")
