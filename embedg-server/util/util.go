@@ -15,7 +15,7 @@ func Ptr[T any](val T) *T {
 }
 
 func BotInviteURL() string {
-	return fmt.Sprintf("https://discord.com/oauth2/authorize?client_id=%s&scope=bot%%20applications.commands&permissions=536871936", viper.GetString("discord.client_id"))
+	return fmt.Sprintf("https://discord.com/oauth2/authorize?client_id=%s&scope=bot%%20applications.commands&permissions=536945664", viper.GetString("discord.client_id"))
 }
 
 func HashBytes(b []byte) string {
