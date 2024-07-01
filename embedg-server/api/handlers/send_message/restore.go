@@ -3,7 +3,7 @@ package send_message
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -114,7 +114,11 @@ func downloadMessageAttachments(attachments []*discordgo.MessageAttachment) (fil
 				return
 			}
 
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				filesC <- nil
+				return
+			}
 
 			parts := strings.Split(attachment.ContentType, "/")
 			if len(parts) != 2 {

@@ -134,6 +134,37 @@ func (c *TemplateContext) ParseAndExecuteMessage(m *actions.MessageWithActions) 
 		}
 	}
 
+	for _, row := range m.Components {
+		for _, component := range row.Components {
+			component.Label, err = c.ParseAndExecute(component.Label)
+			if err != nil {
+				return err
+			}
+
+			component.URL, err = c.ParseAndExecute(component.URL)
+			if err != nil {
+				return err
+			}
+
+			component.Placeholder, err = c.ParseAndExecute(component.Placeholder)
+			if err != nil {
+				return err
+			}
+
+			for _, option := range component.Options {
+				option.Label, err = c.ParseAndExecute(option.Label)
+				if err != nil {
+					return err
+				}
+
+				option.Description, err = c.ParseAndExecute(option.Description)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
