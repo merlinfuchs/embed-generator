@@ -304,6 +304,18 @@ const bodyRules = {
       return null;
     },
   }),
+  subtext: {
+    order: markdown.defaultRules.heading.order,
+    match: (source, state, prevCapture) => {
+      return prevCapture == null || prevCapture === "" || prevCapture.match(/\n$/) != null ? markdown.anyScopeRegex(/^ *-# +((?!(-#)+)[^\n]+?) *(?:\n|$)/)(source, state, prevCapture) : null  
+    },
+    parse: function(capture, parse, state) {
+      return markdown.parseInline(parse, capture[1].trim(), state)
+    },
+    html: function(node) {
+      return htmlTag("small", node)
+    },
+  },
   list: Object.assign({}, markdown.defaultRules.list, {
     match: function (source, state, prevCapture) {
       state._list = true;
