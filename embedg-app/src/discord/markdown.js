@@ -306,14 +306,14 @@ const bodyRules = {
   }),
   subtext: {
     order: markdown.defaultRules.heading.order,
-    match: (source, state, prevCapture) => {
-      return prevCapture == null || prevCapture === "" || prevCapture.match(/\n$/) != null ? markdown.anyScopeRegex(/^ *-# +((?!(-#)+)[^\n]+?) *(?:\n|$)/)(source, state, prevCapture) : null  
+    match: (source) => /^ *-# +((?!(-#)+)[^\n]+?) *(?:\n|$)/.exec(source),
+    parse: function(capture) {
+      return {
+        content: capture[1].trim(),
+      };
     },
-    parse: function(capture, parse, state) {
-      return markdown.parseInline(parse, capture[1].trim(), state)
-    },
-    html: function(node) {
-      return htmlTag("small", node)
+    html: function(node, output, state) {
+      return htmlTag("small", node.content, null, state);
     },
   },
   list: Object.assign({}, markdown.defaultRules.list, {
