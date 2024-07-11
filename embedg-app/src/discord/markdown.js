@@ -306,14 +306,15 @@ const bodyRules = {
   }),
   subtext: {
     order: markdown.defaultRules.heading.order,
-    match: (source) => /^ *-# +((?!(-#)+)[^\n]+?) *(?:\n|$)/.exec(source),
+    match: (source, state) => state.prevCapture === null ||
+      state.prevCapture[state.prevCapture.length - 1] === "\n" ? /^ *-# +((?!(-#)+)[^\n]+?) *(\n|$)/.exec(source) : null,
     parse: function(capture) {
       return {
         content: capture[1].trim(),
       };
     },
-    html: function(node, output, state) {
-      return htmlTag("small", node.content, null, state);
+    html: function(node) {
+      return htmlTag("small", node.content);
     },
   },
   list: Object.assign({}, markdown.defaultRules.list, {
