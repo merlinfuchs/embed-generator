@@ -1155,6 +1155,14 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   color: rgb(242, 243, 245);
 }
 
+.discord-message small {
+  display: block;
+  font-size: .8125rem;
+  font-weight: 400;
+  line-height: 1.11719rem;
+  color: rgb(148, 155, 164);
+}
+
 .discord-message ol {
   list-style-type: decimal;
   list-style-position: outside;

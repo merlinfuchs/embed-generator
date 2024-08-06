@@ -304,6 +304,19 @@ const bodyRules = {
       return null;
     },
   }),
+  subtext: {
+    order: markdown.defaultRules.heading.order,
+    match: (source, state) => state.prevCapture === null ||
+      state.prevCapture[state.prevCapture.length - 1] === "\n" ? /^ *-# +((?!(-#)+)[^\n]+?) *(\n|$)/.exec(source) : null,
+    parse: function(capture) {
+      return {
+        content: capture[1].trim(),
+      };
+    },
+    html: function(node) {
+      return htmlTag("small", node.content);
+    },
+  },
   list: Object.assign({}, markdown.defaultRules.list, {
     match: function (source, state, prevCapture) {
       state._list = true;
