@@ -2,7 +2,6 @@ package scheduled_messages
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -209,8 +208,6 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 
 	nextAt := req.StartAt
 	if !req.OnlyOnce {
-		fmt.Println("start", nextAt)
-
 		var err error
 		nextAt, err = scheduled_messages.GetFirstCronTick(req.CronExpression.String, req.StartAt, req.CronTimezone.String)
 		if err != nil {

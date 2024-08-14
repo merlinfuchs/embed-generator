@@ -2,14 +2,11 @@ package bot
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/merlinfuchs/discordgo"
-	"github.com/merlinfuchs/embed-generator/embedg-server/util"
-	"github.com/rs/zerolog/log"
 )
 
 func (b *Bot) handleComponentInteraction(s *discordgo.Session, i *discordgo.Interaction, data discordgo.MessageComponentInteractionData) error {
@@ -329,39 +326,11 @@ func (b *Bot) handleModalInteraction(s *discordgo.Session, i *discordgo.Interact
 			}
 		}
 
-		customBot, err := b.pg.Q.GetCustomBotByGuildID(context.Background(), i.GuildID)
-		if err != nil {
-			if err != sql.ErrNoRows {
-				log.Error().Err(err).Msg("failed to get custom bot for message username and avatar")
-			}
-		} else {
-			if username == "" {
-				username = customBot.UserName
-			}
-			if avatarURL == "" {
-				avatarURL = util.DiscordAvatarURL(customBot.UserID, customBot.UserDiscriminator, customBot.UserAvatar.String)
-			}
-		}
-
-		webhook, err := b.FindWebhookForChannel(i.ChannelID)
-		if err != nil {
-			return textResponse(s, i, fmt.Sprintf("Failed to get webhook for channel: `%e`", err))
-		}
-
-		if webhook.ChannelID != i.ChannelID {
-			_, err = b.Session.WebhookThreadExecute(webhook.ID, webhook.Token, false, i.ChannelID, &discordgo.WebhookParams{
-				Username:  username,
-				AvatarURL: avatarURL,
-				Embeds:    []*discordgo.MessageEmbed{&currentEmbed},
-			})
-		} else {
-			_, err = b.Session.WebhookExecute(webhook.ID, webhook.Token, false, &discordgo.WebhookParams{
-				Username:  username,
-				AvatarURL: avatarURL,
-				Embeds:    []*discordgo.MessageEmbed{&currentEmbed},
-			})
-		}
-
+		_, err := b.SendMessageToChannel(context.Background(), i.ChannelID, &discordgo.WebhookParams{
+			Username:  username,
+			AvatarURL: avatarURL,
+			Embeds:    []*discordgo.MessageEmbed{&currentEmbed},
+		})
 		if err != nil {
 			return textResponse(s, i, fmt.Sprintf("Failed to send message: `%e`", err))
 		}
