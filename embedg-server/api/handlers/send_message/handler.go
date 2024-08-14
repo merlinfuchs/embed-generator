@@ -2,7 +2,6 @@ package send_message
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 
@@ -54,47 +53,21 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return err
 	}
 
-	var webhook *discordgo.Webhook
-	if req.MessageID.Valid {
-		msg, err := h.bot.Session.ChannelMessage(req.ChannelID, req.MessageID.String)
-		if err != nil {
-			if util.IsDiscordRestErrorCode(err, 10008) {
-				return helpers.NotFound("unknown_message", "The message you are trying to edit doesn't exist.")
-			}
-			return fmt.Errorf("Failed to get message from channel: %w", err)
-		}
-
-		if msg.WebhookID == "" {
-			return helpers.BadRequest("author_no_webhook", "Message wasn't sent by a webhook and can therefore not be edited.")
-		}
-
-		webhook, err = h.bot.GetWebhookForChannel(req.ChannelID, msg.WebhookID)
-		if err != nil {
-			return helpers.BadRequest("webhook_failed", err.Error())
-		}
-	} else {
-		var err error
-		webhook, err = h.bot.FindWebhookForChannel(req.ChannelID)
-		if err != nil {
-			return fmt.Errorf("Failed to get webhook for channel: %w", err)
-		}
+	channel, err := h.bot.State.Channel(req.ChannelID)
+	if err != nil {
+		return fmt.Errorf("Failed to get channel: %w", err)
 	}
 
-	threadID := ""
-	if webhook.ChannelID != req.ChannelID {
-		threadID = req.ChannelID
-	}
-
-	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), webhook.GuildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), channel.GuildID)
 	if err != nil {
 		return fmt.Errorf("could not get plan features: %w", err)
 	}
 
 	templates := template.NewContext(
 		"SEND_MESSAGE", features.MaxTemplateOps,
-		template.NewGuildProvider(h.bot.State, webhook.GuildID, nil),
+		template.NewGuildProvider(h.bot.State, channel.GuildID, nil),
 		template.NewChannelProvider(h.bot.State, req.ChannelID, nil),
-		template.NewKVProvider(webhook.GuildID, h.pg, features.MaxKVKeys),
+		template.NewKVProvider(channel.GuildID, h.pg, features.MaxKVKeys),
 	)
 
 	data := &actions.MessageWithActions{}
@@ -118,20 +91,6 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		AllowedMentions: data.AllowedMentions,
 	}
 
-	customBot, err := h.pg.Q.GetCustomBotByGuildID(c.Context(), req.GuildID)
-	if err != nil {
-		if err != sql.ErrNoRows {
-			log.Error().Err(err).Msg("failed to get custom bot for message username and avatar")
-		}
-	} else {
-		if params.Username == "" {
-			params.Username = customBot.UserName
-		}
-		if params.AvatarURL == "" {
-			params.AvatarURL = util.DiscordAvatarURL(customBot.UserID, customBot.UserDiscriminator, customBot.UserAvatar.String)
-		}
-	}
-
 	attachments := make([]*discordgo.MessageAttachment, len(req.Attachments))
 
 	for i, attachment := range req.Attachments {
@@ -151,40 +110,23 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		}
 	}
 
-	components, err := h.actionParser.ParseMessageComponents(data.Components)
+	params.Components, err = h.actionParser.ParseMessageComponents(data.Components)
 	if err != nil {
 		return helpers.BadRequest("invalid_actions", err.Error())
 	}
 
-	params.Components = components
-
 	var msg *discordgo.Message
-	if threadID != "" {
-		if req.MessageID.Valid {
-			msg, err = h.bot.Session.WebhookThreadMessageEdit(webhook.ID, webhook.Token, threadID, req.MessageID.String, &discordgo.WebhookEdit{
-				Content:         &params.Content,
-				Embeds:          &params.Embeds,
-				Components:      &params.Components,
-				AllowedMentions: params.AllowedMentions,
-				Files:           params.Files,
-				Attachments:     &attachments,
-			})
-		} else {
-			msg, err = h.bot.Session.WebhookThreadExecute(webhook.ID, webhook.Token, true, threadID, params)
-		}
+	if req.MessageID.Valid {
+		msg, err = h.bot.EditMessageInChannel(c.Context(), req.ChannelID, req.MessageID.String, &discordgo.WebhookEdit{
+			Content:         &params.Content,
+			Embeds:          &params.Embeds,
+			Components:      &params.Components,
+			AllowedMentions: params.AllowedMentions,
+			Files:           params.Files,
+			Attachments:     &attachments,
+		})
 	} else {
-		if req.MessageID.Valid {
-			msg, err = h.bot.Session.WebhookMessageEdit(webhook.ID, webhook.Token, req.MessageID.String, &discordgo.WebhookEdit{
-				Content:         &params.Content,
-				Embeds:          &params.Embeds,
-				Components:      &params.Components,
-				AllowedMentions: params.AllowedMentions,
-				Files:           params.Files,
-				Attachments:     &attachments,
-			})
-		} else {
-			msg, err = h.bot.Session.WebhookExecute(webhook.ID, webhook.Token, true, params)
-		}
+		msg, err = h.bot.SendMessageToChannel(c.Context(), req.ChannelID, params)
 	}
 	if err != nil {
 		return fmt.Errorf("Failed to send message: %w", err)

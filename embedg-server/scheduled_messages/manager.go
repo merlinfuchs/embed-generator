@@ -16,7 +16,6 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
-	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
 )
 
@@ -104,15 +103,6 @@ func (m *ScheduledMessageManager) lazySendScheduledMessagesTask() {
 }
 
 func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, scheduledMessage pgmodel.ScheduledMessage) error {
-	webhook, err := m.bot.FindWebhookForChannel(scheduledMessage.ChannelID)
-	if err != nil {
-		return fmt.Errorf("Failed to get webhook for channel: %w", err)
-	}
-	threadID := ""
-	if webhook.ChannelID != scheduledMessage.ChannelID {
-		threadID = scheduledMessage.ChannelID
-	}
-
 	savedMsg, err := m.pg.Q.GetSavedMessageForGuild(ctx, pgmodel.GetSavedMessageForGuildParams{
 		ID: scheduledMessage.SavedMessageID,
 		GuildID: sql.NullString{
@@ -155,33 +145,12 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		AllowedMentions: data.AllowedMentions,
 	}
 
-	customBot, err := m.pg.Q.GetCustomBotByGuildID(ctx, scheduledMessage.GuildID)
-	if err != nil {
-		if err != sql.ErrNoRows {
-			log.Error().Err(err).Msg("failed to get custom bot for message username and avatar")
-		}
-	} else {
-		if params.Username == "" {
-			params.Username = customBot.UserName
-		}
-		if params.AvatarURL == "" {
-			params.AvatarURL = util.DiscordAvatarURL(customBot.UserID, customBot.UserDiscriminator, customBot.UserAvatar.String)
-		}
-	}
-
-	components, err := m.actionParser.ParseMessageComponents(data.Components)
+	params.Components, err = m.actionParser.ParseMessageComponents(data.Components)
 	if err != nil {
 		return helpers.BadRequest("invalid_actions", err.Error())
 	}
 
-	params.Components = components
-
-	var msg *discordgo.Message
-	if threadID != "" {
-		msg, err = m.bot.Session.WebhookThreadExecute(webhook.ID, webhook.Token, true, threadID, params)
-	} else {
-		msg, err = m.bot.Session.WebhookExecute(webhook.ID, webhook.Token, true, params)
-	}
+	msg, err := m.bot.SendMessageToChannel(ctx, scheduledMessage.ChannelID, params)
 	if err != nil {
 		return fmt.Errorf("Failed to send message: %w", err)
 	}
