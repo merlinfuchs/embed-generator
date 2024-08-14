@@ -249,16 +249,14 @@ export default function SettingsCustomBot() {
                 <>
                   <CheckCircleIcon className="h-6 w-6 text-green" />
                   <div>
-                    The interaction endpoint has been configured correctly in
-                    the Discord Developer Portal
+                    The bot has handled its first interaction and is ready to go
                   </div>
                 </>
               ) : (
                 <>
                   <XCircleIcon className="h-6 w-6 text-red" />
                   <div>
-                    The interaction endpoint hasn't been configured correctly in
-                    the Discord Developer Portal
+                    The bot has handled its first interaction and is ready to go
                   </div>
                 </>
               )}
@@ -318,8 +316,8 @@ export default function SettingsCustomBot() {
               Interaction Endpoint
             </div>
             <div className="text-gray-400 font-light text-sm mb-5">
-              You need to open up your bot in the Discord Developer Portal and
-              set the Interaction Endpoint URL to this value:
+              To increase the speed and reliability of your bot, you can set the
+              Interaction Endpoint URL in the Discord Developer Portal:
             </div>
             <input
               type="url"

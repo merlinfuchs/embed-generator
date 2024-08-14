@@ -81,8 +81,12 @@ func (m *CustomBotManager) lazyCustomBotGatewayTask() {
 				continue
 			}
 
-			// TODO: think about using gateway for custom bot interactions instead of http
-			/* bot.Session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			bot.Session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+				err = m.pg.Q.SetCustomBotHandledFirstInteraction(context.Background(), customBot.ID)
+				if err != nil {
+					log.Error().Err(err).Msg("Failed to set custom bot handled first interaction")
+				}
+
 				err := m.actionHandler.HandleActionInteraction(s, &handler.GatewayInteraction{
 					Session: s,
 					Inner:   i.Interaction,
@@ -90,7 +94,7 @@ func (m *CustomBotManager) lazyCustomBotGatewayTask() {
 				if err != nil {
 					log.Error().Err(err).Msg("Failed to handle action interaction from custom bot gateway")
 				}
-			}) */
+			})
 
 			bot.Session.AddHandler(func(s *discordgo.Session, i *discordgo.Disconnect) {
 				// Normally DiscordGo would handle reconnection, but it doesn't have any logic to detect a token reset and will just keep trying to reconnect with the old token
