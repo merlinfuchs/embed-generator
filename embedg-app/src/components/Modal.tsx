@@ -31,7 +31,9 @@ export default function Modal({
       <div
         className={clsx(
           "bg-dark-3 w-full rounded-xl flex-shrink",
-          allowOverflow && "overflow-x-hidden overflow-y-auto",
+          allowOverflow
+            ? "overflow-x-hidden overflow-y-auto"
+            : "overflow-y-hidden",
           width === "xl"
             ? "max-w-7xl"
             : width == "lg"
