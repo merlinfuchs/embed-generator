@@ -12,7 +12,9 @@ const imagesBucketName = "images"
 
 func (s *BlobStore) UploadFile(ctx context.Context, image *Image) error {
 	reader := bytes.NewReader(image.Body)
-	_, err := s.client.PutObject(ctx, imagesBucketName, image.FileName, reader, int64(len(image.Body)), minio.PutObjectOptions{})
+	_, err := s.client.PutObject(ctx, imagesBucketName, image.FileName, reader, int64(len(image.Body)), minio.PutObjectOptions{
+		ContentType: image.ContentType,
+	})
 	if err != nil {
 		return err
 	}

@@ -101,6 +101,8 @@ func (h *SendMessageHandler) HandleRestoreMessageFromWebhook(c *fiber.Ctx, req w
 func downloadMessageAttachments(attachments []*discordgo.MessageAttachment) (files []*wire.MessageAttachmentWire) {
 	filesC := make(chan *wire.MessageAttachmentWire)
 
+	// TODO: can this block forever?
+
 	for _, attachment := range attachments {
 		go func(attachment *discordgo.MessageAttachment) {
 			if attachment.Size > 8*1024*1024 {

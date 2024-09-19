@@ -28,6 +28,10 @@ import (
 )
 
 func registerRoutes(app *fiber.App, stores *stores, bot *bot.Bot, managers *managers) {
+	app.Get("/api/health", func(c *fiber.Ctx) error {
+		return c.SendStatus(fiber.StatusOK)
+	})
+
 	authHandler := auth.New(stores.pg, bot, managers.session)
 	app.Get("/api/auth/login", authHandler.HandleAuthRedirect)
 	app.Get("/api/auth/callback", authHandler.HandleAuthCallback)
