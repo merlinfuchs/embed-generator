@@ -5,6 +5,7 @@
 
 [![Release](https://img.shields.io/github/v/release/merlinfuchs/embed-generator)](https://github.com/merlinfuchs/embed-generator/releases/latest)
 [![MIT License](https://img.shields.io/github/license/merlinfuchs/embed-generator)](LICENSE)
+[![Uptime](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmerlinfuchs%2Fembedg-uptime%2Fmaster%2Fapi%2Fembed-generator-api%2Fuptime.json)](https://status.kite.onl/)
 [![Discord Server](https://img.shields.io/discord/730045476459642900)](https://message.style/discord)
 
 A powerful tool for creating rich-embed Discord messages using webhooks.
