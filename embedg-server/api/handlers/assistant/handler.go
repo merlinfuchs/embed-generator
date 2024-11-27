@@ -72,7 +72,7 @@ func (h *AssistantHandler) HandleAssistantGenerateMessage(c *fiber.Ctx, req wire
 			Temperature:      1.0,
 			TopP:             1,
 			MaxTokens:        3072,
-			Model:            openai.GPT4TurboPreview,
+			Model:            openai.GPT4o,
 			Messages:         messages,
 			ResponseFormat: &openai.ChatCompletionResponseFormat{
 				Type: openai.ChatCompletionResponseFormatTypeJSONObject,
