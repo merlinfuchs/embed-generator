@@ -92,7 +92,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 		rawActions = col.Actions
 		rawDerivedPerms = col.DerivedPermissions
 	} else {
-		return fmt.Errorf("Invalid interaciont type")
+		return fmt.Errorf("invalid interaciont type")
 	}
 
 	actionSet := actions.ActionSet{}
@@ -459,10 +459,14 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 	}
 
 	if !i.HasResponded() {
-		i.Respond(&discordgo.InteractionResponseData{
-			Content: "No response",
-			Flags:   discordgo.MessageFlagsEphemeral,
-		})
+		if interaction.Type == discordgo.InteractionMessageComponent {
+			i.Respond(nil, discordgo.InteractionResponseDeferredMessageUpdate)
+		} else {
+			i.Respond(&discordgo.InteractionResponseData{
+				Content: "No response",
+				Flags:   discordgo.MessageFlagsEphemeral,
+			})
+		}
 	}
 
 	return nil
