@@ -21,6 +21,7 @@ type Entitlement struct {
 	Deleted  bool      `json:"deleted"`
 	StartsAt null.Time `json:"starts_at"`
 	EndsAt   null.Time `json:"ends_at"`
+	Consumed bool      `json:"consumed"`
 }
 
 func (b *Bot) HandleEntitlementEvent(e *Entitlement) {
@@ -39,6 +40,7 @@ func (b *Bot) HandleEntitlementEvent(e *Entitlement) {
 		SkuID:     e.SKUID,
 		StartsAt:  e.StartsAt.NullTime,
 		EndsAt:    e.EndsAt.NullTime,
+		Consumed:  e.Consumed,
 	})
 	if err != nil {
 		log.Error().Err(err).Str("guild_id", e.GuildID).Str("user_id", e.UserID).Msg("Failed to create entitlement")
@@ -65,13 +67,13 @@ func (b *Bot) retrieveDiscordTiers(ctx context.Context) error {
 
 		resp, err := b.Session.Request("GET", url, nil)
 		if err != nil {
-			return fmt.Errorf("Failed to do request: %w", err)
+			return fmt.Errorf("failed to do request: %w", err)
 		}
 
 		entitlements := []Entitlement{}
 		err = json.Unmarshal(resp, &entitlements)
 		if err != nil {
-			return fmt.Errorf("Failed to decode response body: %w", err)
+			return fmt.Errorf("failed to decode response body: %w", err)
 		}
 
 		if len(entitlements) == 0 {
@@ -96,6 +98,7 @@ func (b *Bot) retrieveDiscordTiers(ctx context.Context) error {
 				SkuID:     e.SKUID,
 				StartsAt:  e.StartsAt.NullTime,
 				EndsAt:    e.EndsAt.NullTime,
+				Consumed:  e.Consumed,
 			})
 			if err != nil {
 				log.Error().Err(err).Str("guild_id", e.GuildID).Str("user_id", e.UserID).Msg("Failed to create entitlement")

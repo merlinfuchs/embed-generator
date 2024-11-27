@@ -74,6 +74,7 @@ type Entitlement struct {
 	SkuID     string
 	StartsAt  sql.NullTime
 	EndsAt    sql.NullTime
+	Consumed  bool
 }
 
 type Image struct {

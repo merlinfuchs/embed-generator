@@ -79,6 +79,7 @@ func registerRoutes(app *fiber.App, stores *stores, bot *bot.Bot, managers *mana
 	premiumHandler := premium_handler.New(stores.pg, bot, managers.access, managers.premium)
 	app.Get("/api/premium/features", sessionMiddleware.SessionRequired(), premiumHandler.HandleGetFeatures)
 	app.Get("/api/premium/entitlements", sessionMiddleware.SessionRequired(), premiumHandler.HandleListEntitlements)
+	app.Post("/api/premium/entitlements/:entitlementID/consume", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(premiumHandler.HandleConsumeEntitlement))
 
 	customBotHandler := custom_bots.New(stores.pg, bot, managers.access, managers.premium, managers.actionParser)
 	app.Post("/api/custom-bot", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(customBotHandler.HandleConfigureCustomBot))

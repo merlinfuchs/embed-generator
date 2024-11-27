@@ -12,7 +12,7 @@ import (
 )
 
 const getActiveEntitlementsForGuild = `-- name: GetActiveEntitlementsForGuild :many
-SELECT id, user_id, guild_id, updated_at, deleted, sku_id, starts_at, ends_at FROM entitlements WHERE deleted = false AND (starts_at IS NULL OR starts_at < NOW()) AND (ends_at IS NULL OR ends_at > NOW()) AND guild_id = $1
+SELECT id, user_id, guild_id, updated_at, deleted, sku_id, starts_at, ends_at, consumed FROM entitlements WHERE deleted = false AND (starts_at IS NULL OR starts_at < NOW()) AND (ends_at IS NULL OR ends_at > NOW()) AND guild_id = $1
 `
 
 func (q *Queries) GetActiveEntitlementsForGuild(ctx context.Context, guildID sql.NullString) ([]Entitlement, error) {
@@ -33,6 +33,7 @@ func (q *Queries) GetActiveEntitlementsForGuild(ctx context.Context, guildID sql
 			&i.SkuID,
 			&i.StartsAt,
 			&i.EndsAt,
+			&i.Consumed,
 		); err != nil {
 			return nil, err
 		}
@@ -48,7 +49,7 @@ func (q *Queries) GetActiveEntitlementsForGuild(ctx context.Context, guildID sql
 }
 
 const getActiveEntitlementsForUser = `-- name: GetActiveEntitlementsForUser :many
-SELECT id, user_id, guild_id, updated_at, deleted, sku_id, starts_at, ends_at FROM entitlements WHERE deleted = false AND (starts_at IS NULL OR starts_at < NOW()) AND (ends_at IS NULL OR ends_at > NOW()) AND user_id = $1
+SELECT id, user_id, guild_id, updated_at, deleted, sku_id, starts_at, ends_at, consumed FROM entitlements WHERE deleted = false AND (starts_at IS NULL OR starts_at < NOW()) AND (ends_at IS NULL OR ends_at > NOW()) AND user_id = $1
 `
 
 func (q *Queries) GetActiveEntitlementsForUser(ctx context.Context, userID sql.NullString) ([]Entitlement, error) {
@@ -69,6 +70,7 @@ func (q *Queries) GetActiveEntitlementsForUser(ctx context.Context, userID sql.N
 			&i.SkuID,
 			&i.StartsAt,
 			&i.EndsAt,
+			&i.Consumed,
 		); err != nil {
 			return nil, err
 		}
@@ -83,8 +85,34 @@ func (q *Queries) GetActiveEntitlementsForUser(ctx context.Context, userID sql.N
 	return items, nil
 }
 
+const getEntitlement = `-- name: GetEntitlement :one
+SELECT id, user_id, guild_id, updated_at, deleted, sku_id, starts_at, ends_at, consumed FROM entitlements WHERE id = $1 AND user_id = $2
+`
+
+type GetEntitlementParams struct {
+	ID     string
+	UserID sql.NullString
+}
+
+func (q *Queries) GetEntitlement(ctx context.Context, arg GetEntitlementParams) (Entitlement, error) {
+	row := q.db.QueryRowContext(ctx, getEntitlement, arg.ID, arg.UserID)
+	var i Entitlement
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.GuildID,
+		&i.UpdatedAt,
+		&i.Deleted,
+		&i.SkuID,
+		&i.StartsAt,
+		&i.EndsAt,
+		&i.Consumed,
+	)
+	return i, err
+}
+
 const getEntitlements = `-- name: GetEntitlements :many
-SELECT id, user_id, guild_id, updated_at, deleted, sku_id, starts_at, ends_at FROM entitlements
+SELECT id, user_id, guild_id, updated_at, deleted, sku_id, starts_at, ends_at, consumed FROM entitlements
 `
 
 func (q *Queries) GetEntitlements(ctx context.Context) ([]Entitlement, error) {
@@ -105,6 +133,7 @@ func (q *Queries) GetEntitlements(ctx context.Context) ([]Entitlement, error) {
 			&i.SkuID,
 			&i.StartsAt,
 			&i.EndsAt,
+			&i.Consumed,
 		); err != nil {
 			return nil, err
 		}
@@ -119,22 +148,62 @@ func (q *Queries) GetEntitlements(ctx context.Context) ([]Entitlement, error) {
 	return items, nil
 }
 
-const upsertEntitlement = `-- name: UpsertEntitlement :one
-/*
-id TEXT PRIMARY KEY,
-  user_id TEXT REFERENCES users(id),
-  guild_id TEXT,
-  updated_at TIMESTAMP NOT NULL,
-  deleted BOOLEAN NOT NULL,
-  sku_id TEXT NOT NULL,
-  starts_at TIMESTAMP NOT NULL,
-  ends_at TIMESTAMP NOT NULL,
-  */
+const updateEntitlementConsumed = `-- name: UpdateEntitlementConsumed :one
+UPDATE entitlements SET consumed = $2 WHERE id = $1 RETURNING id, user_id, guild_id, updated_at, deleted, sku_id, starts_at, ends_at, consumed
+`
 
-INSERT INTO entitlements (id, user_id, guild_id, updated_at, deleted, sku_id, starts_at, ends_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+type UpdateEntitlementConsumedParams struct {
+	ID       string
+	Consumed bool
+}
+
+func (q *Queries) UpdateEntitlementConsumed(ctx context.Context, arg UpdateEntitlementConsumedParams) (Entitlement, error) {
+	row := q.db.QueryRowContext(ctx, updateEntitlementConsumed, arg.ID, arg.Consumed)
+	var i Entitlement
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.GuildID,
+		&i.UpdatedAt,
+		&i.Deleted,
+		&i.SkuID,
+		&i.StartsAt,
+		&i.EndsAt,
+		&i.Consumed,
+	)
+	return i, err
+}
+
+const upsertEntitlement = `-- name: UpsertEntitlement :one
+INSERT INTO entitlements (
+  id,
+  user_id,
+  guild_id,
+  updated_at,
+  deleted,
+  sku_id,
+  starts_at,
+  ends_at,
+  consumed
+) VALUES (
+  $1,
+  $2,
+  $3,
+  $4,
+  $5,
+  $6,
+  $7,
+  $8,
+  $9
+) 
 ON CONFLICT (id) 
-DO UPDATE SET deleted = $5, starts_at = $7, ends_at = $8, updated_at = $4
-RETURNING id, user_id, guild_id, updated_at, deleted, sku_id, starts_at, ends_at
+DO UPDATE SET 
+  deleted = $5, 
+  starts_at = $7, 
+  ends_at = $8, 
+  updated_at = $4, 
+  consumed = $9
+RETURNING id, user_id, guild_id, updated_at, deleted, sku_id, starts_at, ends_at, consumed
 `
 
 type UpsertEntitlementParams struct {
@@ -146,6 +215,7 @@ type UpsertEntitlementParams struct {
 	SkuID     string
 	StartsAt  sql.NullTime
 	EndsAt    sql.NullTime
+	Consumed  bool
 }
 
 func (q *Queries) UpsertEntitlement(ctx context.Context, arg UpsertEntitlementParams) (Entitlement, error) {
@@ -158,6 +228,7 @@ func (q *Queries) UpsertEntitlement(ctx context.Context, arg UpsertEntitlementPa
 		arg.SkuID,
 		arg.StartsAt,
 		arg.EndsAt,
+		arg.Consumed,
 	)
 	var i Entitlement
 	err := row.Scan(
@@ -169,6 +240,7 @@ func (q *Queries) UpsertEntitlement(ctx context.Context, arg UpsertEntitlementPa
 		&i.SkuID,
 		&i.StartsAt,
 		&i.EndsAt,
+		&i.Consumed,
 	)
 	return i, err
 }

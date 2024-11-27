@@ -298,6 +298,8 @@ export interface GetPremiumPlanFeaturesResponseDataWire {
   max_image_upload_size: number /* int */;
   max_scheduled_messages: number /* int */;
   periodic_scheduled_messages: boolean;
+  max_template_ops: number /* int */;
+  max_kv_keys: number /* int */;
 }
 export type GetPremiumPlanFeaturesResponseWire = APIResponse<GetPremiumPlanFeaturesResponseDataWire>;
 export interface PremiumEntitlementWire {
@@ -309,6 +311,7 @@ export interface PremiumEntitlementWire {
   deleted: boolean;
   starts_at: null | string /* RFC3339 */;
   ends_at: null | string /* RFC3339 */;
+  consumed: boolean;
 }
 export interface ListPremiumEntitlementsResponseDataWire {
   entitlements: PremiumEntitlementWire[];

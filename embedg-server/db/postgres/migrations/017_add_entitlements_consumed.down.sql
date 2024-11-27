@@ -1,0 +1,1 @@
+ALTER TABLE entitlements DROP COLUMN consumed;

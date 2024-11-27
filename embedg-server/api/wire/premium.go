@@ -3,6 +3,7 @@ package wire
 import (
 	"time"
 
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"gopkg.in/guregu/null.v4"
 )
 
@@ -32,6 +33,7 @@ type PremiumEntitlementWire struct {
 	Deleted   bool        `json:"deleted"`
 	StartsAt  null.Time   `json:"starts_at"`
 	EndsAt    null.Time   `json:"ends_at"`
+	Consumed  bool        `json:"consumed"`
 }
 
 type ListPremiumEntitlementsResponseDataWire struct {
@@ -39,3 +41,15 @@ type ListPremiumEntitlementsResponseDataWire struct {
 }
 
 type ListPremiumEntitlementsResponseWire APIResponse[ListPremiumEntitlementsResponseDataWire]
+
+type ConsumeEntitlementRequestWire struct {
+	GuildID string `json:"guild_id"`
+}
+
+func (req ConsumeEntitlementRequestWire) Validate() error {
+	return validation.ValidateStruct(&req,
+		validation.Field(&req.GuildID, validation.Required),
+	)
+}
+
+type ConsumeEntitlementResponseWire APIResponse[struct{}]

@@ -1,17 +1,10 @@
-import {
-  ArrowUpTrayIcon,
-  ChatBubbleLeftIcon,
-  CursorArrowRippleIcon,
-  PhotoIcon,
-  SparklesIcon,
-  StarIcon,
-} from "@heroicons/react/20/solid";
+import { StarIcon } from "@heroicons/react/20/solid";
 import { usePremiumGuildEntitlementsQuery, useUserQuery } from "../api/queries";
 import LogginSuggest from "../components/LoginSuggest";
+import PremiumFeatures from "../components/PremiumFeatures";
+import PremiumSuggest from "../components/PremiumSuggest";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { usePremiumGuildFeatures } from "../util/premium";
-import PremiumSuggest from "../components/PremiumSuggest";
-import PremiumFeatures from "../components/PremiumFeatures";
 
 export default function PremiumView() {
   const { data: user } = useUserQuery();
@@ -21,7 +14,8 @@ export default function PremiumView() {
 
   const { data } = usePremiumGuildEntitlementsQuery(guildId);
 
-  const hasEntitlement = data?.success && data.data.entitlements.length !== 0;
+  const hasConsumable =
+    data?.success && data.data.entitlements.some((e) => !e.consumed);
 
   return (
     <div className="px-4 max-w-5xl mx-auto mb-20 mt-5 lg:mt-20 w-full">

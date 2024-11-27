@@ -2,9 +2,13 @@ package premium
 
 import (
 	"database/sql"
+	"errors"
+	"fmt"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
@@ -104,11 +108,58 @@ func (h *PremiumHandler) HandleListEntitlements(c *fiber.Ctx) error {
 			Deleted:   e.Deleted,
 			StartsAt:  null.Time{NullTime: e.StartsAt},
 			EndsAt:    null.Time{NullTime: e.EndsAt},
+			Consumed:  e.Consumed,
 		}
 	}
 
 	return c.JSON(wire.ListPremiumEntitlementsResponseWire{
 		Success: true,
 		Data:    resp,
+	})
+}
+
+func (h *PremiumHandler) HandleConsumeEntitlement(c *fiber.Ctx, req wire.ConsumeEntitlementRequestWire) error {
+	session := c.Locals("session").(*session.Session)
+	entitlementID := c.Params("entitlementID")
+
+	entitlement, err := h.pg.Q.GetEntitlement(c.Context(), pgmodel.GetEntitlementParams{
+		ID: entitlementID,
+		UserID: sql.NullString{
+			String: session.UserID,
+			Valid:  true,
+		},
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return helpers.NotFound("entitlement_not_found", "Entitlement not found")
+		}
+		return err
+	}
+
+	if entitlement.Consumed {
+		return helpers.BadRequest("entitlement_already_consumed", "Entitlement already consumed")
+	}
+
+	_, err = h.pg.Q.UpsertEntitlement(c.Context(), pgmodel.UpsertEntitlementParams{
+		ID:        entitlementID + "_consumed",
+		SkuID:     entitlement.SkuID,
+		UpdatedAt: time.Now().UTC(),
+		UserID: sql.NullString{
+			String: session.UserID,
+			Valid:  true,
+		},
+		GuildID: sql.NullString{
+			String: entitlement.GuildID.String,
+			Valid:  entitlement.GuildID.Valid,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to consume entitlement: %w", err)
+	}
+
+	// TODO: consume the entitlement through the discord api
+
+	return c.JSON(wire.ConsumeEntitlementResponseWire{
+		Success: true,
 	})
 }
