@@ -56,7 +56,7 @@ export default function EditorComponents() {
           <div className="text-sm italic font-light text-gray-400">
             {components.length} / 5
           </div>
-          <div className="bg-blurple px-1 rounded text-white text-xs items-center flex items-center font-bold">
+          <div className="bg-blurple px-1 rounded text-white text-xs items-center flex font-bold">
             ADVANCED
           </div>
         </div>

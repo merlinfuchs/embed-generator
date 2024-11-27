@@ -1,0 +1,2 @@
+ALTER TABLE sessions DROP COLUMN guilds;
+ALTER TABLE sessions ADD COLUMN guild_ids TEXT[] NOT NULL DEFAULT '{}';

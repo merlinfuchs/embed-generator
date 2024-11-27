@@ -38,8 +38,8 @@ func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
 
 	res := make([]wire.GuildWire, 0)
-	for _, guildID := range session.GuildIDs {
-		guild, err := h.bot.State.Guild(guildID)
+	for _, g := range session.Guilds {
+		guild, err := h.bot.State.Guild(g.ID)
 		if err != nil {
 			if err == discordgo.ErrStateNotFound {
 				continue

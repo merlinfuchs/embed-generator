@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/base32"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -18,10 +19,15 @@ import (
 
 type Session struct {
 	UserID      string
-	GuildIDs    []string
+	Guilds      []SessionGuild
 	AccessToken string
 	CreatedAt   time.Time
 	ExpiresAt   time.Time
+}
+
+type SessionGuild struct {
+	ID          string   `json:"id"`
+	UserRoleIDs []string `json:"user_role_ids"`
 }
 
 type SessionManager struct {
@@ -53,16 +59,22 @@ func (s *SessionManager) GetSession(c *fiber.Ctx) (*Session, error) {
 		return nil, err
 	}
 
+	var guilds []SessionGuild
+	err = json.Unmarshal(model.Guilds, &guilds)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal guilds: %w", err)
+	}
+
 	return &Session{
 		UserID:      model.UserID,
-		GuildIDs:    model.GuildIds,
+		Guilds:      guilds,
 		AccessToken: model.AccessToken,
 		CreatedAt:   model.CreatedAt,
 		ExpiresAt:   model.ExpiresAt,
 	}, nil
 }
 
-func (s *SessionManager) CreateSession(ctx context.Context, userID string, guildIDs []string, accessToken string) (string, error) {
+func (s *SessionManager) CreateSession(ctx context.Context, session *Session) (string, error) {
 	token := generateSessionToken()
 
 	tokenHash, err := hashSessionToken(token)
@@ -70,13 +82,22 @@ func (s *SessionManager) CreateSession(ctx context.Context, userID string, guild
 		return "", err
 	}
 
+	rawGuilds, err := json.Marshal(session.Guilds)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal guilds: %w", err)
+	}
+
+	if session.ExpiresAt.IsZero() {
+		session.ExpiresAt = session.CreatedAt.Add(30 * 24 * time.Hour)
+	}
+
 	_, err = s.pg.Q.InsertSession(ctx, pgmodel.InsertSessionParams{
 		TokenHash:   tokenHash,
-		UserID:      userID,
-		GuildIds:    guildIDs,
-		AccessToken: accessToken,
-		CreatedAt:   time.Now().UTC(),
-		ExpiresAt:   time.Now().UTC().Add(30 * 24 * time.Hour),
+		UserID:      session.UserID,
+		Guilds:      rawGuilds,
+		AccessToken: session.AccessToken,
+		CreatedAt:   session.CreatedAt,
+		ExpiresAt:   session.ExpiresAt,
 	})
 	if err != nil {
 		return "", err

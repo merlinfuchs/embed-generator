@@ -1,12 +1,15 @@
 package auth
 
 import (
+	"context"
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
@@ -33,7 +36,7 @@ func New(pg *postgres.PostgresStore, bot *bot.Bot, sessionManager *session.Sessi
 		RedirectURL:  fmt.Sprintf("%s/auth/callback", viper.GetString("api.public_url")),
 		ClientID:     viper.GetString("discord.client_id"),
 		ClientSecret: viper.GetString("discord.client_secret"),
-		Scopes:       []string{discord.ScopeIdentify, discord.ScopeGuilds},
+		Scopes:       []string{discord.ScopeIdentify, discord.ScopeGuilds, "guilds.members.read"},
 		Endpoint:     discord.Endpoint,
 	}
 
@@ -105,7 +108,7 @@ func (h *AuthHandler) HandleAuthLogout(c *fiber.Ctx) error {
 func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.Token, string, error) {
 	tokenData, err := h.oauth2Config.Exchange(c.Context(), code)
 	if err != nil {
-		return nil, "", fmt.Errorf("Failed to exchange token: %w", err)
+		return nil, "", fmt.Errorf("failed to exchange token: %w", err)
 	}
 
 	client := h.oauth2Config.Client(c.Context(), tokenData)
@@ -122,7 +125,7 @@ func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.T
 	}{}
 	err = json.NewDecoder(resp.Body).Decode(&user)
 	if err != nil {
-		return nil, "", fmt.Errorf("Failed to decode user info: %w", err)
+		return nil, "", fmt.Errorf("failed to decode user info: %w", err)
 	}
 	resp.Body.Close()
 
@@ -133,31 +136,33 @@ func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.T
 		Avatar:        sql.NullString{String: user.Avatar.String, Valid: user.Avatar.Valid},
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to upsert user")
+		log.Error().Err(err).
+			Str("user_id", user.ID).
+			Msg("Failed to upsert user")
 		return nil, "", err
 	}
 
-	resp, err = client.Get("https://discord.com/api/users/@me/guilds")
+	guilds, err := getOauthGuilds(c.Context(), client)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to get guilds")
-		return nil, "", fmt.Errorf("Failed to get guilds: %w", err)
+		log.Error().Err(err).
+			Str("user_id", user.ID).
+			Msg("Failed to get guilds")
+		return nil, "", fmt.Errorf("failed to get guilds: %w", err)
 	}
 
-	guilds := []struct {
-		ID string `json:"id"`
-	}{}
-	err = json.NewDecoder(resp.Body).Decode(&guilds)
-	if err != nil {
-		return nil, "", fmt.Errorf("Failed to decode guilds: %w", err)
-	}
-	resp.Body.Close()
-
-	guildIDs := make([]string, len(guilds))
-	for i, guild := range guilds {
-		guildIDs[i] = guild.ID
+	if err := populateOauthGuildRoleIDs(c.Context(), client, guilds); err != nil {
+		log.Error().Err(err).
+			Str("user_id", user.ID).
+			Msg("Failed to populate guild role IDs")
+		return nil, "", err
 	}
 
-	token, err := h.sessionManager.CreateSession(c.Context(), user.ID, guildIDs, tokenData.AccessToken)
+	token, err := h.sessionManager.CreateSession(c.Context(), &session.Session{
+		UserID:      user.ID,
+		Guilds:      guilds,
+		AccessToken: tokenData.AccessToken,
+		CreatedAt:   time.Now().UTC(),
+	})
 	if err != nil {
 		return nil, "", err
 	}
@@ -209,4 +214,94 @@ func setOauthRedirectCookie(c *fiber.Ctx) {
 	} else {
 		c.ClearCookie("oauth_redirect")
 	}
+}
+
+func getOauthGuilds(ctx context.Context, client *http.Client) ([]session.SessionGuild, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", "https://discord.com/api/users/@me/guilds", nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get guilds: %w", err)
+	}
+	defer resp.Body.Close()
+
+	guildIDs := []struct {
+		ID string `json:"id"`
+	}{}
+	err = json.NewDecoder(resp.Body).Decode(&guildIDs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode guilds: %w", err)
+	}
+
+	guilds := make([]session.SessionGuild, len(guildIDs))
+	for i, g := range guildIDs {
+		guilds[i] = session.SessionGuild{
+			ID: g.ID,
+		}
+	}
+
+	return guilds, nil
+}
+
+func populateOauthGuildRoleIDs(ctx context.Context, client *http.Client, guilds []session.SessionGuild) error {
+	var wg sync.WaitGroup
+	errChan := make(chan error, len(guilds))
+
+	for i, guild := range guilds {
+		wg.Add(1)
+
+		go func(i int, guild session.SessionGuild) {
+			defer wg.Done()
+
+			req, err := http.NewRequestWithContext(
+				ctx,
+				"GET",
+				fmt.Sprintf("https://discord.com/api/users/@me/guilds/%s/member", guild.ID),
+				nil,
+			)
+			if err != nil {
+				log.Error().Err(err).
+					Str("guild_id", guild.ID).
+					Msg("Failed to create request")
+				errChan <- fmt.Errorf("failed to create request: %w", err)
+				return
+			}
+
+			resp, err := client.Do(req)
+			if err != nil {
+				log.Error().Err(err).
+					Str("guild_id", guild.ID).
+					Msg("Failed to get guild member")
+				errChan <- fmt.Errorf("failed to get guild member: %w", err)
+				return
+			}
+			defer resp.Body.Close()
+
+			member := struct {
+				Roles []string `json:"roles"`
+			}{}
+			err = json.NewDecoder(resp.Body).Decode(&member)
+			if err != nil {
+				log.Error().Err(err).
+					Str("guild_id", guild.ID).
+					Msg("Failed to decode guild member")
+				errChan <- fmt.Errorf("failed to decode guild member: %w", err)
+				return
+			}
+
+			guilds[i].UserRoleIDs = member.Roles
+		}(i, guild)
+	}
+
+	wg.Wait()
+	close(errChan)
+
+	if err := <-errChan; err != nil {
+		return err
+	}
+
+	return nil
 }

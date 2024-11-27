@@ -1,0 +1,4 @@
+DELETE FROM sessions;
+
+ALTER TABLE sessions ADD COLUMN guilds JSONB NOT NULL DEFAULT '[]';
+ALTER TABLE sessions DROP COLUMN guild_ids;

@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
@@ -39,17 +40,27 @@ func CreateSessionForUser(userID string) (string, error) {
 	}
 
 	if len(sessions) == 0 {
-		return "", fmt.Errorf("User has no sessions that we can derive a new session from")
+		return "", fmt.Errorf("user has no sessions that we can derive a new session from")
 	}
 
-	session := sessions[0]
+	s := sessions[0]
 	for _, s := range sessions {
-		if s.CreatedAt.After(session.CreatedAt) {
-			session = s
+		if s.CreatedAt.After(s.CreatedAt) {
+			s = s
 		}
 	}
 
-	sessionToken, err := sessionManager.CreateSession(context.Background(), userID, session.GuildIds, session.AccessToken)
+	var guilds []session.SessionGuild
+	err = json.Unmarshal(s.Guilds, &guilds)
+	if err != nil {
+		return "", fmt.Errorf("failed to unmarshal guilds: %w", err)
+	}
+
+	sessionToken, err := sessionManager.CreateSession(context.Background(), &session.Session{
+		UserID:      userID,
+		Guilds:      guilds,
+		AccessToken: s.AccessToken,
+	})
 	if err != nil {
 		return "", err
 	}
