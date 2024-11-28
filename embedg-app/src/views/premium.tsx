@@ -27,8 +27,8 @@ export default function PremiumView() {
           </div>
           <div className="text-light text-sm text-gray-400">
             {features?.is_premium
-              ? "You are subscribed to Embed Generator Premium and have access to all features!"
-              : "Subscribe to Embed Generator Premium to unlock all features!"}
+              ? "This server is subscribed to Embed Generator Premium and has access to all features!"
+              : "Subscribe to Embed Generator Premium to unlock all features on this server!"}
           </div>
         </div>
       </div>

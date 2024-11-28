@@ -311,12 +311,19 @@ export interface PremiumEntitlementWire {
   deleted: boolean;
   starts_at: null | string /* RFC3339 */;
   ends_at: null | string /* RFC3339 */;
+  consumable: boolean;
   consumed: boolean;
+  consumed_guild_id: null | string;
 }
 export interface ListPremiumEntitlementsResponseDataWire {
   entitlements: PremiumEntitlementWire[];
 }
 export type ListPremiumEntitlementsResponseWire = APIResponse<ListPremiumEntitlementsResponseDataWire>;
+export interface ConsumeEntitlementRequestWire {
+  guild_id: string;
+}
+export type ConsumeEntitlementResponseWire = APIResponse<{
+  }>;
 
 //////////
 // source: scheduled_message.go

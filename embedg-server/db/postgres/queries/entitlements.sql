@@ -1,8 +1,16 @@
 -- name: GetActiveEntitlementsForGuild :many
-SELECT * FROM entitlements WHERE deleted = false AND (starts_at IS NULL OR starts_at < NOW()) AND (ends_at IS NULL OR ends_at > NOW()) AND guild_id = $1;
+SELECT * FROM entitlements 
+WHERE deleted = false 
+  AND (starts_at IS NULL OR starts_at < NOW()) 
+  AND (ends_at IS NULL OR ends_at > NOW()) 
+  AND (guild_id = $1 OR consumed_guild_id = $1);
 
 -- name: GetActiveEntitlementsForUser :many
-SELECT * FROM entitlements WHERE deleted = false AND (starts_at IS NULL OR starts_at < NOW()) AND (ends_at IS NULL OR ends_at > NOW()) AND user_id = $1;
+SELECT * FROM entitlements 
+WHERE deleted = false 
+  AND (starts_at IS NULL OR starts_at < NOW()) 
+  AND (ends_at IS NULL OR ends_at > NOW()) 
+  AND user_id = $1;
 
 -- name: GetEntitlements :many
 SELECT * FROM entitlements;
@@ -10,8 +18,8 @@ SELECT * FROM entitlements;
 -- name: GetEntitlement :one
 SELECT * FROM entitlements WHERE id = $1 AND user_id = $2;
 
--- name: UpdateEntitlementConsumed :one
-UPDATE entitlements SET consumed = $2 WHERE id = $1 RETURNING *;
+-- name: UpdateEntitlementConsumedGuildID :one
+UPDATE entitlements SET consumed = true, consumed_guild_id = $2 WHERE id = $1 RETURNING *;
 
 -- name: UpsertEntitlement :one
 INSERT INTO entitlements (

@@ -25,15 +25,17 @@ type GetPremiumPlanFeaturesResponseDataWire struct {
 type GetPremiumPlanFeaturesResponseWire APIResponse[GetPremiumPlanFeaturesResponseDataWire]
 
 type PremiumEntitlementWire struct {
-	ID        string      `json:"id"`
-	SkuID     string      `json:"sku_id"`
-	UserID    null.String `json:"user_id"`
-	GuildID   null.String `json:"guild_id"`
-	UpdatedAt time.Time   `json:"updated_at"`
-	Deleted   bool        `json:"deleted"`
-	StartsAt  null.Time   `json:"starts_at"`
-	EndsAt    null.Time   `json:"ends_at"`
-	Consumed  bool        `json:"consumed"`
+	ID              string      `json:"id"`
+	SkuID           string      `json:"sku_id"`
+	UserID          null.String `json:"user_id"`
+	GuildID         null.String `json:"guild_id"`
+	UpdatedAt       time.Time   `json:"updated_at"`
+	Deleted         bool        `json:"deleted"`
+	StartsAt        null.Time   `json:"starts_at"`
+	EndsAt          null.Time   `json:"ends_at"`
+	Consumable      bool        `json:"consumable"`
+	Consumed        bool        `json:"consumed"`
+	ConsumedGuildID null.String `json:"consumed_guild_id"`
 }
 
 type ListPremiumEntitlementsResponseDataWire struct {

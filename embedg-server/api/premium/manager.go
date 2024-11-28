@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
 
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
@@ -49,16 +48,7 @@ func (m *PremiumManager) GetPlanFeaturesForGuild(ctx context.Context, guildID st
 	}
 
 	for _, entitlement := range entitlements {
-		if entitlement.Consumed {
-			continue
-		}
-
-		skuID := entitlement.SkuID
-		if strings.HasSuffix(entitlement.SkuID, "_consumed") {
-			skuID = strings.TrimSuffix(entitlement.SkuID, "_consumed")
-		}
-
-		plan := m.GetPlanBySKUID(skuID)
+		plan := m.GetPlanBySKUID(entitlement.SkuID)
 		if plan != nil {
 			planFeatures.Merge(plan.Features)
 		}

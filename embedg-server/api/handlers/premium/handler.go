@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
@@ -17,6 +16,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 	"gopkg.in/guregu/null.v4"
 )
 
@@ -99,16 +99,23 @@ func (h *PremiumHandler) HandleListEntitlements(c *fiber.Ctx) error {
 		Entitlements: make([]wire.PremiumEntitlementWire, len(entitlements)),
 	}
 	for i, e := range entitlements {
+		consumable := false
+		if plan := h.planStore.GetPlanBySKUID(e.SkuID); plan != nil {
+			consumable = plan.Consumable
+		}
+
 		resp.Entitlements[i] = wire.PremiumEntitlementWire{
-			ID:        e.ID,
-			SkuID:     e.ID,
-			UserID:    null.NewString(e.UserID.String, e.UserID.Valid),
-			GuildID:   null.NewString(e.GuildID.String, e.GuildID.Valid),
-			UpdatedAt: e.UpdatedAt,
-			Deleted:   e.Deleted,
-			StartsAt:  null.Time{NullTime: e.StartsAt},
-			EndsAt:    null.Time{NullTime: e.EndsAt},
-			Consumed:  e.Consumed,
+			ID:              e.ID,
+			SkuID:           e.ID,
+			UserID:          null.NewString(e.UserID.String, e.UserID.Valid),
+			GuildID:         null.NewString(e.GuildID.String, e.GuildID.Valid),
+			UpdatedAt:       e.UpdatedAt,
+			Deleted:         e.Deleted,
+			StartsAt:        null.Time{NullTime: e.StartsAt},
+			EndsAt:          null.Time{NullTime: e.EndsAt},
+			Consumable:      consumable,
+			Consumed:        e.Consumed,
+			ConsumedGuildID: null.NewString(e.ConsumedGuildID.String, e.ConsumedGuildID.Valid),
 		}
 	}
 
@@ -136,28 +143,30 @@ func (h *PremiumHandler) HandleConsumeEntitlement(c *fiber.Ctx, req wire.Consume
 		return err
 	}
 
-	if entitlement.Consumed {
+	if entitlement.ConsumedGuildID.Valid {
 		return helpers.BadRequest("entitlement_already_consumed", "Entitlement already consumed")
 	}
 
-	_, err = h.pg.Q.UpsertEntitlement(c.Context(), pgmodel.UpsertEntitlementParams{
-		ID:        entitlementID + "_consumed",
-		SkuID:     entitlement.SkuID,
-		UpdatedAt: time.Now().UTC(),
-		UserID: sql.NullString{
-			String: session.UserID,
+	_, err = h.pg.Q.UpdateEntitlementConsumedGuildID(c.Context(), pgmodel.UpdateEntitlementConsumedGuildIDParams{
+		ID: entitlementID,
+		ConsumedGuildID: sql.NullString{
+			String: req.GuildID,
 			Valid:  true,
-		},
-		GuildID: sql.NullString{
-			String: entitlement.GuildID.String,
-			Valid:  entitlement.GuildID.Valid,
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("failed to consume entitlement: %w", err)
+		return fmt.Errorf("failed to update entitlement: %w", err)
 	}
 
-	// TODO: consume the entitlement through the discord api
+	if !entitlement.Consumed {
+		clientID := viper.GetString("discord.client_id")
+		url := fmt.Sprintf("https://discord.com/api/v10/applications/%s/entitlements/%s/consume", clientID, entitlement.ID)
+
+		_, err := h.bot.Session.Request("POST", url, nil)
+		if err != nil {
+			return fmt.Errorf("failed to do request: %w", err)
+		}
+	}
 
 	return c.JSON(wire.ConsumeEntitlementResponseWire{
 		Success: true,
