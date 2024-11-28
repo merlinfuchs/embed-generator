@@ -1,7 +1,9 @@
-import { useMutation } from "react-query";
+import { useMutation, useQueryClient } from "react-query";
 import {
   AssistantGenerateMessageRequestWire,
   AssistantGenerateMessageResponseWire,
+  ConsumeEntitlementRequestWire,
+  ConsumeEntitlementResponseWire,
   CustomBotConfigureRequestWire,
   CustomBotConfigureResponseWire,
   CustomBotDisableResponseWire,
@@ -461,4 +463,33 @@ export function useEmbedLinkCreateMutation() {
       handleApiResponse<EmbedLinkCreateResponseWire>(res.json())
     );
   });
+}
+
+export function usePremiumEntitlementConsumeMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    ({
+      entitlementId,
+      req,
+    }: {
+      entitlementId: string;
+      req: ConsumeEntitlementRequestWire;
+    }) => {
+      return fetchApi(`/api/premium/entitlements/${entitlementId}/consume`, {
+        method: "POST",
+        body: JSON.stringify(req),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) =>
+        handleApiResponse<ConsumeEntitlementResponseWire>(res.json())
+      );
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["premium"]);
+      },
+    }
+  );
 }
