@@ -1,8 +1,12 @@
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { SparklesIcon } from "@heroicons/react/24/solid";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { AutoAnimate } from "../util/autoAnimate";
 import PremiumFeatures from "./PremiumFeatures";
+import { usePremiumUserEntitlementsQuery } from "../api/queries";
+import { usePremiumEntitlementConsumeMutation } from "../api/mutations";
+import { useSendSettingsStore } from "../state/sendSettings";
+import { useToasts } from "../util/toasts";
 
 interface Props {
   alwaysExpanded?: boolean;
@@ -10,6 +14,53 @@ interface Props {
 
 export default function PremiumSuggest({ alwaysExpanded }: Props) {
   const [collapsed, setCollapsed] = useState(!alwaysExpanded);
+
+  const { data } = usePremiumUserEntitlementsQuery();
+
+  const consumableEntitlementId = useMemo(() => {
+    if (!data?.success) return null;
+    return data.data.entitlements.find(
+      (e) => e.consumable && !e.consumed_guild_id
+    )?.id;
+  }, [data]);
+
+  const guildId = useSendSettingsStore((s) => s.guildId);
+  const consumeMutation = usePremiumEntitlementConsumeMutation();
+
+  const createToast = useToasts((s) => s.create);
+
+  const activatePremium = useCallback(() => {
+    if (!consumableEntitlementId || !guildId) return;
+
+    const confirmed = confirm(
+      `You are about to activate Premium for the server with the id '${guildId}'. Once activated, you can't activate it for another server.`
+    );
+    if (!confirmed) return;
+
+    consumeMutation.mutate(
+      {
+        entitlementId: consumableEntitlementId,
+        req: { guild_id: guildId },
+      },
+      {
+        onSuccess: (res) => {
+          if (res.success) {
+            createToast({
+              title: "Premium activated",
+              message: "This server now has access to all features!",
+              type: "success",
+            });
+          } else {
+            createToast({
+              title: "Failed to update command",
+              message: res.error.message,
+              type: "error",
+            });
+          }
+        },
+      }
+    );
+  }, [consumableEntitlementId]);
 
   return (
     <AutoAnimate className="p-3 bg-dark-2 rounded select-none">
@@ -35,13 +86,22 @@ export default function PremiumSuggest({ alwaysExpanded }: Props) {
         <div className="mt-8">
           <PremiumFeatures />
           <div className="flex justify-end pt-5">
-            <a
-              className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white w-full text-center"
-              href="/premium"
-              target="_blank"
-            >
-              <div>Get Premium</div>
-            </a>
+            {consumableEntitlementId ? (
+              <button
+                className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white w-full text-center"
+                onClick={activatePremium}
+              >
+                <div>Activate Premium</div>
+              </button>
+            ) : (
+              <a
+                className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white w-full text-center"
+                href="/premium"
+                target="_blank"
+              >
+                <div>Get Premium</div>
+              </a>
+            )}
           </div>
         </div>
       )}

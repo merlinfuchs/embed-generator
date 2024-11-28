@@ -1,27 +1,14 @@
-import {
-  ArrowUpTrayIcon,
-  ChatBubbleLeftIcon,
-  CursorArrowRippleIcon,
-  PhotoIcon,
-  SparklesIcon,
-  StarIcon,
-} from "@heroicons/react/20/solid";
-import { usePremiumGuildEntitlementsQuery, useUserQuery } from "../api/queries";
+import { StarIcon } from "@heroicons/react/20/solid";
+import { useUserQuery } from "../api/queries";
 import LogginSuggest from "../components/LoginSuggest";
-import { useSendSettingsStore } from "../state/sendSettings";
-import { usePremiumGuildFeatures } from "../util/premium";
-import PremiumSuggest from "../components/PremiumSuggest";
 import PremiumFeatures from "../components/PremiumFeatures";
+import PremiumSuggest from "../components/PremiumSuggest";
+import { usePremiumGuildFeatures } from "../util/premium";
 
 export default function PremiumView() {
   const { data: user } = useUserQuery();
-  const guildId = useSendSettingsStore((s) => s.guildId);
 
   const features = usePremiumGuildFeatures();
-
-  const { data } = usePremiumGuildEntitlementsQuery(guildId);
-
-  const hasEntitlement = data?.success && data.data.entitlements.length !== 0;
 
   return (
     <div className="px-4 max-w-5xl mx-auto mb-20 mt-5 lg:mt-20 w-full">
@@ -33,8 +20,8 @@ export default function PremiumView() {
           </div>
           <div className="text-light text-sm text-gray-400">
             {features?.is_premium
-              ? "You are subscribed to Embed Generator Premium and have access to all features!"
-              : "Subscribe to Embed Generator Premium to unlock all features!"}
+              ? "This server is subscribed to Embed Generator Premium and has access to all features!"
+              : "Subscribe to Embed Generator Premium to unlock all features on this server!"}
           </div>
         </div>
       </div>

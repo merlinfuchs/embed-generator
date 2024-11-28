@@ -66,14 +66,16 @@ type EmbedLink struct {
 }
 
 type Entitlement struct {
-	ID        string
-	UserID    sql.NullString
-	GuildID   sql.NullString
-	UpdatedAt time.Time
-	Deleted   bool
-	SkuID     string
-	StartsAt  sql.NullTime
-	EndsAt    sql.NullTime
+	ID              string
+	UserID          sql.NullString
+	GuildID         sql.NullString
+	UpdatedAt       time.Time
+	Deleted         bool
+	SkuID           string
+	StartsAt        sql.NullTime
+	EndsAt          sql.NullTime
+	Consumed        bool
+	ConsumedGuildID sql.NullString
 }
 
 type Image struct {

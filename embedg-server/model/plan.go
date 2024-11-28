@@ -1,10 +1,11 @@
 package model
 
 type Plan struct {
-	ID       string       `mapstructure:"id"`
-	SKUID    string       `mapstructure:"sku_id"`
-	Default  bool         `mapstructure:"default"`
-	Features PlanFeatures `mapstructure:"features"`
+	ID         string       `mapstructure:"id"`
+	SKUID      string       `mapstructure:"sku_id"`
+	Default    bool         `mapstructure:"default"`
+	Features   PlanFeatures `mapstructure:"features"`
+	Consumable bool         `mapstructure:"consumable"`
 }
 
 type PlanFeatures struct {

@@ -150,6 +150,16 @@ export function usePremiumGuildEntitlementsQuery(guildId?: string | null) {
   );
 }
 
+export function usePremiumUserEntitlementsQuery() {
+  return useQuery<ListPremiumEntitlementsResponseWire>(
+    ["premium", "entitlements", "user"],
+    () =>
+      fetchApi(`/api/premium/entitlements`).then((res) =>
+        handleApiResponse(res.json())
+      )
+  );
+}
+
 export function usePremiumUserFeaturesQuery() {
   return useQuery<GetPremiumPlanFeaturesResponseWire>(
     ["premium", "features", "user"],

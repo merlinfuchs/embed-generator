@@ -44,7 +44,7 @@ func (m *PremiumManager) GetPlanFeaturesForGuild(ctx context.Context, guildID st
 
 	entitlements, err := m.pg.Q.GetActiveEntitlementsForGuild(ctx, sql.NullString{String: guildID, Valid: true})
 	if err != nil {
-		return planFeatures, fmt.Errorf("Failed to retrieve entitlments for guild: %w", err)
+		return planFeatures, fmt.Errorf("failed to retrieve entitlments for guild: %w", err)
 	}
 
 	for _, entitlement := range entitlements {
@@ -62,7 +62,7 @@ func (m *PremiumManager) GetPlanFeaturesForUser(ctx context.Context, userID stri
 
 	entitlements, err := m.pg.Q.GetActiveEntitlementsForUser(ctx, sql.NullString{String: userID, Valid: true})
 	if err != nil {
-		return planFeatures, fmt.Errorf("Failed to retrieve entitlments for user: %w", err)
+		return planFeatures, fmt.Errorf("failed to retrieve entitlments for user: %w", err)
 	}
 
 	for _, entitlement := range entitlements {
@@ -78,7 +78,7 @@ func (m *PremiumManager) GetPlanFeaturesForUser(ctx context.Context, userID stri
 func (m *PremiumManager) GetEntitledUserIDs(ctx context.Context) ([]string, error) {
 	entitlements, err := m.pg.Q.GetEntitlements(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to retrieve entitlments: %w", err)
+		return nil, fmt.Errorf("failed to retrieve entitlments: %w", err)
 	}
 
 	userIDs := make(map[string]struct{}, len(entitlements))
@@ -100,7 +100,7 @@ func New(pg *postgres.PostgresStore, bot *bot.Bot) *PremiumManager {
 	plans := make([]*model.Plan, 0)
 	err := viper.UnmarshalKey("premium.plans", &plans)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to unmarshal plans")
+		log.Fatal().Err(err).Msg("failed to unmarshal plans")
 	}
 
 	defaultPlanFeatures := model.PlanFeatures{
