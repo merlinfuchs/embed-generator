@@ -143,6 +143,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		TTS:             data.TTS,
 		Embeds:          data.Embeds,
 		AllowedMentions: data.AllowedMentions,
+		ThreadName:      scheduledMessage.ThreadName.String,
 	}
 
 	params.Components, err = m.actionParser.ParseMessageComponents(data.Components)

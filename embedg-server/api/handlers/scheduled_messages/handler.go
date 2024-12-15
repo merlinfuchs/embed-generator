@@ -90,6 +90,10 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 			String: req.MessageID.String,
 			Valid:  req.MessageID.Valid,
 		},
+		ThreadName: sql.NullString{
+			String: req.ThreadName.String,
+			Valid:  req.ThreadName.Valid,
+		},
 		SavedMessageID: req.SavedMessageID,
 		Name:           req.Name,
 		Description: sql.NullString{
@@ -232,6 +236,10 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 			String: req.MessageID.String,
 			Valid:  req.MessageID.Valid,
 		},
+		ThreadName: sql.NullString{
+			String: req.ThreadName.String,
+			Valid:  req.ThreadName.Valid,
+		},
 		SavedMessageID: req.SavedMessageID,
 		Name:           req.Name,
 		Description: sql.NullString{
@@ -305,6 +313,7 @@ func scheduledMessageModelToWire(model pgmodel.ScheduledMessage) wire.ScheduledM
 		GuildID:        model.GuildID,
 		ChannelID:      model.ChannelID,
 		MessageID:      null.NewString(model.MessageID.String, model.MessageID.Valid),
+		ThreadName:     null.NewString(model.ThreadName.String, model.ThreadName.Valid),
 		SavedMessageID: model.SavedMessageID,
 		Name:           model.Name,
 		Description:    null.NewString(model.Description.String, model.Description.Valid),

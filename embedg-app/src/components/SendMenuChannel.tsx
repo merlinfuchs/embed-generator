@@ -129,38 +129,40 @@ export default function SendMenuChannel() {
             onChange={setSelectedChannelId}
           />
         </div>
-        <div className="flex-auto sm:w-1/2">
-          <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-            Message ID or URL
-          </div>
-          <input
-            type="text"
-            className="bg-dark-2 px-3 py-2 rounded w-full focus:outline-none text-white"
-            value={messageId ?? ""}
-            onChange={(e) => handleMessageId(e.target.value)}
-          />
-        </div>
-      </div>
-      {selectedChannel?.type === 15 && (
-        <div className="flex">
-          <div className="flex-auto">
-            <div className="uppercase text-gray-300 text-sm font-medium mb-1">
-              Thread Name
+
+        {selectedChannel?.type === 15 ? (
+          <div className="flex-auto sm:w-1/2">
+            <div className="flex-auto">
+              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+                Thread Name
+              </div>
+              <input
+                type="text"
+                maxLength={100}
+                className="bg-dark-2 px-3 py-2 rounded w-full focus:outline-none text-white"
+                value={threadName ?? ""}
+                onChange={(e) => setThreadName(e.target.value || null)}
+              />
+              <div className="mt-2 text-gray-400 text-sm font-light">
+                When sending to a Forum Channel you have to set a name for the
+                thread that is being created.
+              </div>
             </div>
-            <div className="mb-2 text-gray-400 text-sm font-light">
-              When sending to a Forum Channel you have to set a name for the
-              thread that is being created.
+          </div>
+        ) : (
+          <div className="flex-auto sm:w-1/2">
+            <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+              Message ID or URL
             </div>
             <input
               type="text"
-              maxLength={100}
               className="bg-dark-2 px-3 py-2 rounded w-full focus:outline-none text-white"
-              value={threadName ?? ""}
-              onChange={(e) => setThreadName(e.target.value || null)}
+              value={messageId ?? ""}
+              onChange={(e) => handleMessageId(e.target.value)}
             />
           </div>
-        </div>
-      )}
+        )}
+      </div>
       <div>
         {validationError && (
           <div className="flex items-center text-red space-x-1">
