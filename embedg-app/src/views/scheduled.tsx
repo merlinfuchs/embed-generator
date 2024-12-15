@@ -35,9 +35,6 @@ export default function ScheduledMessagesView() {
         <div className="mb-10">
           <div className="text-white font-medium mb-3 flex items-center space-x-3">
             <div className="text-2xl">Scheduled Messages</div>
-            <div className="text-sm px-2 py-0.5 bg-blurple rounded font-medium">
-              EARLY ACCESS
-            </div>
             <div className="font-light italic text-gray-400 flex-none">
               {messageCount} / {maxMessages}
             </div>

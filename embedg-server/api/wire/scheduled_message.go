@@ -13,6 +13,7 @@ type ScheduledMessageWire struct {
 	GuildID        string      `json:"guild_id"`
 	ChannelID      string      `json:"channel_id"`
 	MessageID      null.String `json:"message_id"`
+	ThreadName     null.String `json:"thread_name"`
 	SavedMessageID string      `json:"saved_message_id"`
 	Name           string      `json:"name"`
 	Description    null.String `json:"description"`
@@ -34,6 +35,7 @@ type ScheduledMessageGetResponseWire APIResponse[ScheduledMessageWire]
 type ScheduledMessageCreateRequestWire struct {
 	ChannelID      string      `json:"channel_id"`
 	MessageID      null.String `json:"message_id"`
+	ThreadName     null.String `json:"thread_name"`
 	SavedMessageID string      `json:"saved_message_id"`
 	Name           string      `json:"name"`
 	Description    null.String `json:"description"`
@@ -63,6 +65,7 @@ type ScheduledMessageCreateResponseWire APIResponse[ScheduledMessageWire]
 type ScheduledMessageUpdateRequestWire struct {
 	ChannelID      string      `json:"channel_id"`
 	MessageID      null.String `json:"message_id"`
+	ThreadName     null.String `json:"thread_name"`
 	SavedMessageID string      `json:"saved_message_id"`
 	Name           string      `json:"name"`
 	Description    null.String `json:"description"`

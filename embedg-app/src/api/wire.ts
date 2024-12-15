@@ -334,6 +334,7 @@ export interface ScheduledMessageWire {
   guild_id: string;
   channel_id: string;
   message_id: null | string;
+  thread_name: null | string;
   saved_message_id: string;
   name: string;
   description: null | string;
@@ -352,6 +353,7 @@ export type ScheduledMessageGetResponseWire = APIResponse<ScheduledMessageWire>;
 export interface ScheduledMessageCreateRequestWire {
   channel_id: string;
   message_id: null | string;
+  thread_name: null | string;
   saved_message_id: string;
   name: string;
   description: null | string;
@@ -366,6 +368,7 @@ export type ScheduledMessageCreateResponseWire = APIResponse<ScheduledMessageWir
 export interface ScheduledMessageUpdateRequestWire {
   channel_id: string;
   message_id: null | string;
+  thread_name: null | string;
   saved_message_id: string;
   name: string;
   description: null | string;

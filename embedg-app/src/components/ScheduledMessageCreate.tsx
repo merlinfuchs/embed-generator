@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useScheduledMessageCreateMutation } from "../api/mutations";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { useQueryClient } from "react-query";
@@ -20,6 +20,7 @@ import CronExpressionBuilder from "./CronExpressionBuilder";
 import { usePremiumGuildFeatures } from "../util/premium";
 import PremiumSuggest from "./PremiumSuggest";
 import { getCurrentTimezone } from "../util/time";
+import { useGuildChannelsQuery } from "../api/queries";
 
 export default function ScheduledMessageCreate({
   setCreate,
@@ -30,6 +31,7 @@ export default function ScheduledMessageCreate({
 }) {
   const guildId = useSendSettingsStore((s) => s.guildId);
   const features = usePremiumGuildFeatures(guildId);
+  const { data: channels } = useGuildChannelsQuery(guildId);
 
   const createToast = useToasts((s) => s.create);
 
@@ -40,14 +42,31 @@ export default function ScheduledMessageCreate({
   const [cronExpression, setCronExpression] = useState<string | null>(
     "* * * * *"
   );
-  const [messageId, setMessageId] = useState<string | null>(null);
+  const [savedMessageId, setSavedMessageId] = useState<string | null>(null);
   const [channelId, setChannelId] = useState<string | null>(null);
+  const [threadName, setThreadName] = useState<string | null>(null);
+
+  useEffect(() => {
+    setThreadName(null);
+  }, [channelId, setThreadName]);
+
+  const selectedChannel = useMemo(
+    () =>
+      channels?.success ? channels.data.find((c) => c.id === channelId) : null,
+    [channels, channelId]
+  );
 
   const queryClient = useQueryClient();
   const createMutation = useScheduledMessageCreateMutation();
 
   function create() {
-    if (name.length == 0 || !guildId || !channelId || !messageId || !startAt) {
+    if (
+      name.length == 0 ||
+      !guildId ||
+      !channelId ||
+      !savedMessageId ||
+      !startAt
+    ) {
       createToast({
         title: "Some required fields are missing",
         message:
@@ -65,7 +84,8 @@ export default function ScheduledMessageCreate({
           description: null,
           channel_id: channelId,
           message_id: null,
-          saved_message_id: messageId,
+          thread_name: threadName,
+          saved_message_id: savedMessageId,
           cron_expression: cronExpression,
           cron_timezone: getCurrentTimezone(),
           start_at: startAt,
@@ -147,8 +167,8 @@ export default function ScheduledMessageCreate({
             </div>
             <SavedMessageSelect
               guildId={guildId}
-              messageId={messageId}
-              onChange={setMessageId}
+              messageId={savedMessageId}
+              onChange={setSavedMessageId}
             />
           </div>
           <div className="flex-none pb-2">
@@ -167,6 +187,20 @@ export default function ScheduledMessageCreate({
             />
           </div>
         </div>
+        {selectedChannel?.type === 15 && (
+          <div>
+            <EditorInput
+              label="Thread Name"
+              type="text"
+              value={threadName ?? ""}
+              onChange={(v) => setThreadName(v || null)}
+            />
+            <div className="mt-2 text-gray-400 text-sm font-light">
+              When sending to a Forum Channel you have to set a name for the
+              thread that is being created.
+            </div>
+          </div>
+        )}
         <div className="flex">
           <button
             className="flex bg-dark-2 p-1 rounded text-white"

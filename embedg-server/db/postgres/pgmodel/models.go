@@ -136,6 +136,7 @@ type ScheduledMessage struct {
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	CronTimezone   sql.NullString
+	ThreadName     sql.NullString
 }
 
 type Session struct {
