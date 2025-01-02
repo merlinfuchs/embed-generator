@@ -46,6 +46,10 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 	if interaction.Type == discordgo.InteractionMessageComponent {
 		data := interaction.MessageComponentData()
 
+		if !strings.HasPrefix(data.CustomID, "action:") {
+			return nil
+		}
+
 		actionSetID := data.CustomID[7:]
 
 		if strings.HasPrefix(actionSetID, "options:") {

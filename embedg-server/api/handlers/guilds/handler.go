@@ -120,16 +120,16 @@ func (h *GuildsHanlder) HandleListGuildChannels(c *fiber.Ctx) error {
 		return err
 	}
 
-	res := make([]wire.GuildChannelWire, len(guild.Channels)+len(guild.Threads))
+	res := make([]wire.GuildChannelWire, 0, len(guild.Channels)+len(guild.Threads))
 
-	for i, channel := range guild.Channels {
+	for _, channel := range guild.Channels {
 		access, err := h.am.GetChannelAccessForUser(session.UserID, channel.ID)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to check channel access")
 			return err
 		}
 
-		res[i] = wire.GuildChannelWire{
+		res = append(res, wire.GuildChannelWire{
 			ID:              channel.ID,
 			Name:            channel.Name,
 			Position:        channel.Position,
@@ -139,17 +139,17 @@ func (h *GuildsHanlder) HandleListGuildChannels(c *fiber.Ctx) error {
 			UserPermissions: fmt.Sprintf("%d", access.UserPermissions),
 			BotAccess:       access.BotAccess(),
 			BotPermissions:  fmt.Sprintf("%d", access.BotPermissions),
-		}
+		})
 	}
 
-	for i, channel := range guild.Threads {
+	for _, channel := range guild.Threads {
 		access, err := h.am.GetChannelAccessForUser(session.UserID, channel.ID)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to check channel access")
 			return err
 		}
 
-		res[i+len(guild.Channels)] = wire.GuildChannelWire{
+		res = append(res, wire.GuildChannelWire{
 			ID:              channel.ID,
 			Name:            channel.Name,
 			Position:        channel.Position,
@@ -159,7 +159,7 @@ func (h *GuildsHanlder) HandleListGuildChannels(c *fiber.Ctx) error {
 			UserPermissions: fmt.Sprintf("%d", access.UserPermissions),
 			BotAccess:       access.BotAccess(),
 			BotPermissions:  fmt.Sprintf("%d", access.BotPermissions),
-		}
+		})
 	}
 
 	return c.JSON(wire.ListChannelsResponseWire{
@@ -182,15 +182,15 @@ func (h *GuildsHanlder) HandleListGuildRoles(c *fiber.Ctx) error {
 		return err
 	}
 
-	res := make([]wire.GuildRoleWire, len(guild.Roles))
-	for i, role := range guild.Roles {
-		res[i] = wire.GuildRoleWire{
+	res := make([]wire.GuildRoleWire, 0, len(guild.Roles))
+	for _, role := range guild.Roles {
+		res = append(res, wire.GuildRoleWire{
 			ID:       role.ID,
 			Name:     role.Name,
 			Managed:  role.Managed,
 			Color:    role.Color,
 			Position: role.Position,
-		}
+		})
 	}
 
 	return c.JSON(wire.ListRolesResponseWire{
@@ -213,15 +213,15 @@ func (h *GuildsHanlder) HandleListGuildEmojis(c *fiber.Ctx) error {
 		return err
 	}
 
-	res := make([]wire.GuildEmojiWire, len(guild.Emojis))
-	for i, emoji := range guild.Emojis {
-		res[i] = wire.GuildEmojiWire{
+	res := make([]wire.GuildEmojiWire, 0, len(guild.Emojis))
+	for _, emoji := range guild.Emojis {
+		res = append(res, wire.GuildEmojiWire{
 			ID:        emoji.ID,
 			Name:      emoji.Name,
 			Managed:   emoji.Managed,
 			Available: emoji.Available,
 			Animated:  emoji.Animated,
-		}
+		})
 	}
 
 	return c.JSON(wire.ListEmojisResponseWire{
@@ -244,14 +244,14 @@ func (h *GuildsHanlder) HandleListGuildStickers(c *fiber.Ctx) error {
 		return err
 	}
 
-	res := make([]wire.GuildStickerWire, len(guild.Stickers))
-	for i, sticker := range guild.Stickers {
-		res[i] = wire.GuildStickerWire{
+	res := make([]wire.GuildStickerWire, 0, len(guild.Stickers))
+	for _, sticker := range guild.Stickers {
+		res = append(res, wire.GuildStickerWire{
 			ID:          sticker.ID,
 			Name:        sticker.Name,
 			Available:   sticker.Available,
 			Description: sticker.Description,
-		}
+		})
 	}
 
 	return c.JSON(wire.ListStickersResponseWire{
