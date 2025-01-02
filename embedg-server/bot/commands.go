@@ -23,14 +23,25 @@ func (b *Bot) RegisterCommand() error {
 		{
 			Name:        "help",
 			Description: "Show help",
+			IntegrationTypes: &[]discordgo.ApplicationIntegrationType{
+				discordgo.ApplicationIntegrationGuildInstall,
+				discordgo.ApplicationIntegrationUserInstall,
+			},
 		},
 		{
 			Name:        "invite",
 			Description: "Invite the Embed Generator bot to your server",
+			IntegrationTypes: &[]discordgo.ApplicationIntegrationType{
+				discordgo.ApplicationIntegrationGuildInstall,
+			},
 		},
 		{
 			Name:        "website",
 			Description: "Open the Embed Generator website",
+			IntegrationTypes: &[]discordgo.ApplicationIntegrationType{
+				discordgo.ApplicationIntegrationGuildInstall,
+				discordgo.ApplicationIntegrationUserInstall,
+			},
 		},
 		{
 			Name:        "format",
@@ -102,6 +113,10 @@ func (b *Bot) RegisterCommand() error {
 					},
 				},
 			},
+			IntegrationTypes: &[]discordgo.ApplicationIntegrationType{
+				discordgo.ApplicationIntegrationGuildInstall,
+				discordgo.ApplicationIntegrationUserInstall,
+			},
 		},
 		{
 			Name:         "image",
@@ -157,6 +172,9 @@ func (b *Bot) RegisterCommand() error {
 					},
 				},
 			},
+			IntegrationTypes: &[]discordgo.ApplicationIntegrationType{
+				discordgo.ApplicationIntegrationGuildInstall,
+			},
 		},
 		{
 
@@ -190,24 +208,42 @@ func (b *Bot) RegisterCommand() error {
 					},
 				},
 			},
+			IntegrationTypes: &[]discordgo.ApplicationIntegrationType{
+				discordgo.ApplicationIntegrationGuildInstall,
+			},
 		},
 		{
 			Type: discordgo.MessageApplicationCommand,
 			Name: "Restore Message",
+			IntegrationTypes: &[]discordgo.ApplicationIntegrationType{
+				discordgo.ApplicationIntegrationGuildInstall,
+				discordgo.ApplicationIntegrationUserInstall,
+			},
 		},
 		{
 			Type: discordgo.MessageApplicationCommand,
 			Name: "Dump Message",
+			IntegrationTypes: &[]discordgo.ApplicationIntegrationType{
+				discordgo.ApplicationIntegrationGuildInstall,
+				discordgo.ApplicationIntegrationUserInstall,
+			},
 		},
 		{
 			Type: discordgo.UserApplicationCommand,
 			Name: "Avatar Url",
+			IntegrationTypes: &[]discordgo.ApplicationIntegrationType{
+				discordgo.ApplicationIntegrationGuildInstall,
+				discordgo.ApplicationIntegrationUserInstall,
+			},
 		},
 		{
 			Name:                     "embed",
 			Description:              "Create an embed message",
 			DMPermission:             util.Ptr(false),
 			DefaultMemberPermissions: util.Ptr(int64(discordgo.PermissionManageWebhooks)),
+			IntegrationTypes: &[]discordgo.ApplicationIntegrationType{
+				discordgo.ApplicationIntegrationGuildInstall,
+			},
 		},
 	})
 	return err
