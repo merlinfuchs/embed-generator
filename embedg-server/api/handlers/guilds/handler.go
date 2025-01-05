@@ -37,7 +37,7 @@ func New(pg *postgres.PostgresStore, bot *bot.Bot, am *access.AccessManager, pla
 func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
 
-	res := make([]wire.GuildWire, 0)
+	res := make([]wire.GuildWire, 0, len(session.GuildIDs))
 	for _, guildID := range session.GuildIDs {
 		guild, err := h.bot.State.Guild(guildID)
 		if err != nil {

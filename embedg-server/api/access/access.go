@@ -61,17 +61,33 @@ func (m *AccessManager) GetGuildAccessForUser(userID string, guildID string) (Gu
 		return res, err
 	}
 
+	if guild.OwnerID == userID {
+		res.HasChannelWithUserAccess = true
+	}
+
 	for _, channel := range guild.Channels {
-		access, err := m.GetChannelAccessForUser(userID, channel.ID)
-		if err != nil {
-			return res, err
+		if !res.HasChannelWithUserAccess {
+			access := ChannelAccess{}
+			err := m.SetChannelAccessUserPermissions(&access, userID, channel.ID)
+			if err != nil {
+				return res, err
+			}
+
+			if access.UserAccess() {
+				res.HasChannelWithUserAccess = true
+			}
 		}
 
-		if access.BotAccess() {
-			res.HasChannelWithBotAccess = true
-		}
-		if access.UserAccess() {
-			res.HasChannelWithUserAccess = true
+		if !res.HasChannelWithBotAccess {
+			access := ChannelAccess{}
+			err = m.SetChannelAccessBotPermissions(&access, channel.ID)
+			if err != nil {
+				return res, err
+			}
+
+			if access.BotAccess() {
+				res.HasChannelWithBotAccess = true
+			}
 		}
 
 		// We can stop iterating if we already know that the user has access to both
@@ -86,26 +102,44 @@ func (m *AccessManager) GetGuildAccessForUser(userID string, guildID string) (Gu
 func (m *AccessManager) GetChannelAccessForUser(userID string, channelID string) (ChannelAccess, error) {
 	res := ChannelAccess{}
 
-	botPerms, err := m.ComputeBotPermissionsForChannel(channelID)
+	err := m.SetChannelAccessUserPermissions(&res, userID, channelID)
 	if err != nil {
 		return res, err
 	}
-	if botPerms == 0 {
-		// The bot doesn't have access to the server so there is no point in checking access for the user
-		return res, nil
-	}
-	res.BotPermissions = botPerms
 
-	res.UserPermissions, err = m.ComputeUserPermissionsForChannel(userID, channelID)
+	err = m.SetChannelAccessBotPermissions(&res, channelID)
 	if err != nil {
-		if util.IsDiscordRestErrorCode(err, discordgo.ErrCodeUnknownMember) {
-			// The user is not in the server, so we can't compute the permissions
-			return res, nil
-		}
 		return res, err
 	}
 
 	return res, nil
+}
+
+func (m *AccessManager) SetChannelAccessUserPermissions(res *ChannelAccess, userID string, channelID string) (err error) {
+	res.UserPermissions, err = m.ComputeUserPermissionsForChannel(userID, channelID)
+	if err != nil {
+		if util.IsDiscordRestErrorCode(err, discordgo.ErrCodeUnknownMember) {
+			// The user is not in the server, so we can't compute the permissions
+			return nil
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *AccessManager) SetChannelAccessBotPermissions(res *ChannelAccess, channelID string) error {
+	botPerms, err := m.ComputeBotPermissionsForChannel(channelID)
+	if err != nil {
+		return err
+	}
+	if botPerms == 0 {
+		// The bot doesn't have access to the server so there is no point in checking access for the user
+		return nil
+	}
+	res.BotPermissions = botPerms
+
+	return nil
 }
 
 func (m *AccessManager) ComputeUserPermissionsForChannel(userID string, channelID string) (int64, error) {
@@ -124,6 +158,11 @@ func (m *AccessManager) ComputeUserPermissionsForChannel(userID string, channelI
 			return 0, nil
 		}
 		return 0, err
+	}
+
+	if guild.OwnerID == userID {
+		// Owner has access to all channels
+		return discordgo.PermissionAll, nil
 	}
 
 	member, err := m.GetGuildMember(guild.ID, userID)
