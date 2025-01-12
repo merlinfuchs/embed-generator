@@ -60,7 +60,7 @@ export default function PremiumSuggest({ alwaysExpanded }: Props) {
         },
       }
     );
-  }, [consumableEntitlementId]);
+  }, [consumableEntitlementId, guildId]);
 
   return (
     <AutoAnimate className="p-3 bg-dark-2 rounded select-none">
