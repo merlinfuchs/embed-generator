@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
@@ -33,8 +34,12 @@ func New(pg *postgres.PostgresStore, bot *bot.Bot, sessionManager *session.Sessi
 		RedirectURL:  fmt.Sprintf("%s/auth/callback", viper.GetString("api.public_url")),
 		ClientID:     viper.GetString("discord.client_id"),
 		ClientSecret: viper.GetString("discord.client_secret"),
-		Scopes:       []string{discord.ScopeIdentify, discord.ScopeGuilds},
-		Endpoint:     discord.Endpoint,
+		Scopes: []string{
+			discord.ScopeIdentify,
+			discord.ScopeGuilds,
+			"guilds.members.read",
+		},
+		Endpoint: discord.Endpoint,
 	}
 
 	return &AuthHandler{
@@ -157,12 +162,24 @@ func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.T
 		guildIDs[i] = guild.ID
 	}
 
-	token, err := h.sessionManager.CreateSession(c.Context(), user.ID, guildIDs, tokenData.AccessToken)
+	expiresAt := tokenData.Expiry
+	if expiresAt.IsZero() {
+		expiresAt = time.Now().UTC().Add(14 * 24 * time.Hour)
+	}
+
+	token, err := h.sessionManager.CreateSession(
+		c.Context(),
+		user.ID,
+		guildIDs,
+		tokenData.AccessToken,
+		tokenData.RefreshToken,
+		expiresAt,
+	)
 	if err != nil {
 		return nil, "", err
 	}
 
-	h.sessionManager.CreateSessionCookie(c, token)
+	h.sessionManager.CreateSessionCookie(c, token, expiresAt)
 	return tokenData, token, nil
 }
 

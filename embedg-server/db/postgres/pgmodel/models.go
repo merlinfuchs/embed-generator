@@ -140,12 +140,13 @@ type ScheduledMessage struct {
 }
 
 type Session struct {
-	TokenHash   string
-	UserID      string
-	GuildIds    []string
-	AccessToken string
-	CreatedAt   time.Time
-	ExpiresAt   time.Time
+	TokenHash    string
+	UserID       string
+	GuildIds     []string
+	AccessToken  string
+	CreatedAt    time.Time
+	ExpiresAt    time.Time
+	RefreshToken sql.NullString
 }
 
 type SharedMessage struct {

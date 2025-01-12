@@ -62,7 +62,14 @@ func (s *SessionManager) GetSession(c *fiber.Ctx) (*Session, error) {
 	}, nil
 }
 
-func (s *SessionManager) CreateSession(ctx context.Context, userID string, guildIDs []string, accessToken string) (string, error) {
+func (s *SessionManager) CreateSession(
+	ctx context.Context,
+	userID string,
+	guildIDs []string,
+	accessToken string,
+	refreshToken string,
+	expiresAt time.Time,
+) (string, error) {
 	token := generateSessionToken()
 
 	tokenHash, err := hashSessionToken(token)
@@ -75,8 +82,12 @@ func (s *SessionManager) CreateSession(ctx context.Context, userID string, guild
 		UserID:      userID,
 		GuildIds:    guildIDs,
 		AccessToken: accessToken,
-		CreatedAt:   time.Now().UTC(),
-		ExpiresAt:   time.Now().UTC().Add(30 * 24 * time.Hour),
+		RefreshToken: sql.NullString{
+			String: refreshToken,
+			Valid:  refreshToken != "",
+		},
+		CreatedAt: time.Now().UTC(),
+		ExpiresAt: expiresAt,
 	})
 	if err != nil {
 		return "", err
@@ -85,14 +96,14 @@ func (s *SessionManager) CreateSession(ctx context.Context, userID string, guild
 	return token, nil
 }
 
-func (s *SessionManager) CreateSessionCookie(c *fiber.Ctx, token string) {
+func (s *SessionManager) CreateSessionCookie(c *fiber.Ctx, token string, expiresAt time.Time) {
 	c.Cookie(&fiber.Cookie{
 		Name:     "session_token",
 		Value:    token,
 		HTTPOnly: true,
 		Secure:   !viper.GetBool("api.insecure_cookies"),
 		SameSite: "strict",
-		Expires:  time.Now().UTC().Add(30 * 24 * time.Hour),
+		Expires:  expiresAt,
 	})
 }
 

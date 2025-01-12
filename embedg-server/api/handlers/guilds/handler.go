@@ -3,6 +3,7 @@ package guilds
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/discordgo"
@@ -37,21 +38,32 @@ func New(pg *postgres.PostgresStore, bot *bot.Bot, am *access.AccessManager, pla
 func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
 
-	res := make([]wire.GuildWire, 0, len(session.GuildIDs))
-	for _, guildID := range session.GuildIDs {
-		guild, err := h.bot.State.Guild(guildID)
-		if err != nil {
-			if err == discordgo.ErrStateNotFound {
-				continue
-			}
-			return err
-		}
+	client, err := discordgo.New("Bearer " + session.AccessToken)
+	if err != nil {
+		return err
+	}
 
+	guilds, err := client.UserGuilds(200, "", "", false, discordgo.WithContext(c.Context()))
+	if err != nil {
+		return err
+	}
+
+	res := make([]wire.GuildWire, 0, len(guilds))
+	for _, guild := range guilds {
 		access, err := h.am.GetGuildAccessForUser(session.UserID, guild.ID)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to check guild access")
 			return err
 		}
+
+		start := time.Now()
+		member, err := client.UserGuildMember(guild.ID, discordgo.WithContext(c.Context()))
+		if err != nil {
+			return err
+		}
+		fmt.Println(time.Since(start))
+
+		fmt.Println(member)
 
 		res = append(res, wire.GuildWire{
 			ID:                       guild.ID,

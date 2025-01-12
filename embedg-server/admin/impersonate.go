@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
@@ -49,7 +50,18 @@ func CreateSessionForUser(userID string) (string, error) {
 		}
 	}
 
-	sessionToken, err := sessionManager.CreateSession(context.Background(), userID, session.GuildIds, session.AccessToken)
+	if session.ExpiresAt.Before(time.Now().UTC()) {
+		return "", fmt.Errorf("Latest session has already expired")
+	}
+
+	sessionToken, err := sessionManager.CreateSession(
+		context.Background(),
+		userID,
+		session.GuildIds,
+		session.AccessToken,
+		session.RefreshToken.String,
+		session.ExpiresAt,
+	)
 	if err != nil {
 		return "", err
 	}

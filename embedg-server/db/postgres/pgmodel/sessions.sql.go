@@ -7,6 +7,7 @@ package pgmodel
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/lib/pq"
@@ -22,7 +23,7 @@ func (q *Queries) DeleteSession(ctx context.Context, tokenHash string) error {
 }
 
 const getSession = `-- name: GetSession :one
-SELECT token_hash, user_id, guild_ids, access_token, created_at, expires_at FROM sessions WHERE token_hash = $1
+SELECT token_hash, user_id, guild_ids, access_token, created_at, expires_at, refresh_token FROM sessions WHERE token_hash = $1
 `
 
 func (q *Queries) GetSession(ctx context.Context, tokenHash string) (Session, error) {
@@ -35,12 +36,13 @@ func (q *Queries) GetSession(ctx context.Context, tokenHash string) (Session, er
 		&i.AccessToken,
 		&i.CreatedAt,
 		&i.ExpiresAt,
+		&i.RefreshToken,
 	)
 	return i, err
 }
 
 const getSessionsForUser = `-- name: GetSessionsForUser :many
-SELECT token_hash, user_id, guild_ids, access_token, created_at, expires_at FROM sessions WHERE user_id = $1
+SELECT token_hash, user_id, guild_ids, access_token, created_at, expires_at, refresh_token FROM sessions WHERE user_id = $1
 `
 
 func (q *Queries) GetSessionsForUser(ctx context.Context, userID string) ([]Session, error) {
@@ -59,6 +61,7 @@ func (q *Queries) GetSessionsForUser(ctx context.Context, userID string) ([]Sess
 			&i.AccessToken,
 			&i.CreatedAt,
 			&i.ExpiresAt,
+			&i.RefreshToken,
 		); err != nil {
 			return nil, err
 		}
@@ -74,16 +77,17 @@ func (q *Queries) GetSessionsForUser(ctx context.Context, userID string) ([]Sess
 }
 
 const insertSession = `-- name: InsertSession :one
-INSERT INTO sessions (token_hash, user_id, guild_ids, access_token, created_at, expires_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING token_hash, user_id, guild_ids, access_token, created_at, expires_at
+INSERT INTO sessions (token_hash, user_id, guild_ids, access_token, refresh_token, created_at, expires_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING token_hash, user_id, guild_ids, access_token, created_at, expires_at, refresh_token
 `
 
 type InsertSessionParams struct {
-	TokenHash   string
-	UserID      string
-	GuildIds    []string
-	AccessToken string
-	CreatedAt   time.Time
-	ExpiresAt   time.Time
+	TokenHash    string
+	UserID       string
+	GuildIds     []string
+	AccessToken  string
+	RefreshToken sql.NullString
+	CreatedAt    time.Time
+	ExpiresAt    time.Time
 }
 
 func (q *Queries) InsertSession(ctx context.Context, arg InsertSessionParams) (Session, error) {
@@ -92,6 +96,7 @@ func (q *Queries) InsertSession(ctx context.Context, arg InsertSessionParams) (S
 		arg.UserID,
 		pq.Array(arg.GuildIds),
 		arg.AccessToken,
+		arg.RefreshToken,
 		arg.CreatedAt,
 		arg.ExpiresAt,
 	)
@@ -103,6 +108,7 @@ func (q *Queries) InsertSession(ctx context.Context, arg InsertSessionParams) (S
 		&i.AccessToken,
 		&i.CreatedAt,
 		&i.ExpiresAt,
+		&i.RefreshToken,
 	)
 	return i, err
 }

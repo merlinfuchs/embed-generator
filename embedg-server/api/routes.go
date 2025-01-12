@@ -62,9 +62,9 @@ func registerRoutes(app *fiber.App, stores *stores, bot *bot.Bot, managers *mana
 
 	guildsHanlder := guilds.New(stores.pg, bot, managers.access, managers.premium)
 	guildsGroup := app.Group("/api/guilds", sessionMiddleware.SessionRequired())
-	guildsGroup.Get("/", guildsHanlder.HandleListGuilds)
+	guildsGroup.Get("/", guildsHanlder.HandleListGuilds) // TODO: cache this?
 	guildsGroup.Get("/:guildID", guildsHanlder.HandleGetGuild)
-	guildsGroup.Get("/:guildID/channels", guildsHanlder.HandleListGuildChannels)
+	guildsGroup.Get("/:guildID/channels", guildsHanlder.HandleListGuildChannels) // TODO: cache this?
 	guildsGroup.Get("/:guildID/roles", guildsHanlder.HandleListGuildRoles)
 	guildsGroup.Get("/:guildID/emojis", guildsHanlder.HandleListGuildEmojis)
 	guildsGroup.Get("/:guildID/stickers", guildsHanlder.HandleListGuildStickers)
