@@ -1,5 +1,6 @@
 import markdown from "simple-markdown";
 import highlight from "highlight.js/lib/common";
+import { formatDistanceToNow } from "date-fns";
 
 // https://github.com/ItzDerock/discord-markdown-parser
 // https://github.com/brussell98/discord-markdown
@@ -401,6 +402,35 @@ const bodyRules = {
         "span",
         state.discordCallback.here(node),
         { class: "discord-mention discord-role-mention" },
+        state
+      );
+    },
+  },
+  discordTimestamp: {
+    order: markdown.defaultRules.strong.order,
+    match: (source) => /^<t:(\d+)(?::([a-zA-Z]))?>/.exec(source),
+    parse: function (capture) {
+      return {
+        timestamp: parseInt(capture[1], 10),
+        format: capture[2] || "f",
+      };
+    },
+    html: function (node, output, state) {
+      const date = new Date(node.timestamp * 1000);
+      const options = {
+        t: date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        T: date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+        d: date.toLocaleDateString([], { year: "numeric", month: "2-digit", day: "2-digit" }),
+        D: date.toLocaleDateString([], { weekday: "long", year: "numeric", month: "long", day: "numeric" }),
+        f: date.toLocaleString([], { weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }),
+        F: date.toLocaleString([], { weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+        R: formatDistanceToNow(date, { addSuffix: true }),
+      };
+      const formattedDate = options[node.format] || options.f;
+      return htmlTag(
+        "span",
+        formattedDate,
+        { class: "discord-timestamp" },
         state
       );
     },
