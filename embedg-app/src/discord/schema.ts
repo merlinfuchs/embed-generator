@@ -219,16 +219,24 @@ export const emojiSchema = z
 
 export type Emoji = z.infer<typeof emojiSchema>;
 
-export const buttonStyleSchema = z
+export const unfurledMediaItemSchema = z.object({
+  url: z.string().refine(...urlRefinement), // TODO: validate unfurled media url
+});
+
+export type UnfurledMediaItem = z.infer<typeof unfurledMediaItemSchema>;
+
+export const componentButtonStyleSchema = z
   .literal(1)
   .or(z.literal(2))
   .or(z.literal(3))
   .or(z.literal(4))
   .or(z.literal(5));
 
-export type MessageComponentButtonStyle = z.infer<typeof buttonStyleSchema>;
+export type MessageComponentButtonStyle = z.infer<
+  typeof componentButtonStyleSchema
+>;
 
-export const buttonSchema = z
+export const componentButtonSchema = z
   .object({
     id: uniqueIdSchema.default(() => getUniqueId()),
     type: z.literal(2),
@@ -260,9 +268,9 @@ export const buttonSchema = z
     }
   });
 
-export type MessageComponentButton = z.infer<typeof buttonSchema>;
+export type MessageComponentButton = z.infer<typeof componentButtonSchema>;
 
-export const selectMenuOptionSchema = z.object({
+export const componentSelectMenuOptionSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
   label: z.string().min(1).max(100),
   description: z.optional(z.string().min(1).max(100)),
@@ -271,35 +279,132 @@ export const selectMenuOptionSchema = z.object({
 });
 
 export type MessageComponentSelectMenuOption = z.infer<
-  typeof selectMenuOptionSchema
+  typeof componentSelectMenuOptionSchema
 >;
 
-export const selectMenuSchema = z.object({
+export const componentSelectMenuSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
   type: z.literal(3),
   placeholder: z.optional(z.string().max(150)),
   disabled: z.optional(z.boolean()),
-  options: z.array(selectMenuOptionSchema).min(1).max(25),
+  options: z.array(componentSelectMenuOptionSchema).min(1).max(25),
 });
 
-export type MessageComponentSelectMenu = z.infer<typeof selectMenuSchema>;
+export type MessageComponentSelectMenu = z.infer<
+  typeof componentSelectMenuSchema
+>;
 
-export const actionRowSchema = z.object({
+export const componentActionRowSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
   type: z.literal(1),
   components: z
-    .array(z.union([buttonSchema, selectMenuSchema]))
+    .array(z.union([componentButtonSchema, componentSelectMenuSchema]))
     .min(1)
     .max(5),
 });
 
-export type MessageComponentActionRow = z.infer<typeof actionRowSchema>;
+export type MessageComponentActionRow = z.infer<
+  typeof componentActionRowSchema
+>;
+
+export const componentTextDisplaySchema = z.object({
+  id: uniqueIdSchema.default(() => getUniqueId()),
+  type: z.literal(10),
+  content: z.string().min(1),
+});
+
+export type ComponentTextDisplay = z.infer<typeof componentTextDisplaySchema>;
+
+export const componentThumbnailSchema = z.object({
+  id: uniqueIdSchema.default(() => getUniqueId()),
+  type: z.literal(11),
+  media: unfurledMediaItemSchema,
+  description: z.optional(z.string()),
+  spoiler: z.optional(z.boolean()),
+});
+
+export type ComponentThumbnail = z.infer<typeof componentThumbnailSchema>;
+
+export const componentSectionSchema = z.object({
+  id: uniqueIdSchema.default(() => getUniqueId()),
+  type: z.literal(9),
+  components: z.array(componentTextDisplaySchema).min(1).max(5),
+  accessory: z.optional(
+    z.union([componentThumbnailSchema, componentButtonSchema])
+  ),
+});
+
+export type ComponentSection = z.infer<typeof componentSectionSchema>;
+
+export const componentMediaGalleryItemSchema = z.object({
+  id: uniqueIdSchema.default(() => getUniqueId()),
+  media: unfurledMediaItemSchema,
+  description: z.optional(z.string()),
+  spoiler: z.optional(z.boolean()),
+});
+
+export const componentMediaGallerySchema = z.object({
+  id: uniqueIdSchema.default(() => getUniqueId()),
+  type: z.literal(12),
+  items: z.array(componentMediaGalleryItemSchema).min(1).max(10),
+});
+
+export type ComponentMediaGallery = z.infer<typeof componentMediaGallerySchema>;
+
+export const componentFileSchema = z.object({
+  id: uniqueIdSchema.default(() => getUniqueId()),
+  type: z.literal(13),
+  file: unfurledMediaItemSchema,
+  spoiler: z.optional(z.boolean()),
+});
+
+export type ComponentFile = z.infer<typeof componentFileSchema>;
+
+export const componentSeparatorSchema = z.object({
+  id: uniqueIdSchema.default(() => getUniqueId()),
+  type: z.literal(14),
+  divider: z.boolean().default(true),
+  spacing: z.union([z.literal(1), z.literal(2)]).default(1),
+});
+
+export type ComponentSeparator = z.infer<typeof componentSeparatorSchema>;
+
+export const componentContainerSchema = z.object({
+  id: uniqueIdSchema.default(() => getUniqueId()),
+  type: z.literal(17),
+  components: z
+    .array(
+      z.union([
+        componentActionRowSchema,
+        componentTextDisplaySchema,
+        componentSectionSchema,
+        componentMediaGallerySchema,
+        componentSeparatorSchema,
+        componentFileSchema,
+      ])
+    )
+    .min(1)
+    .max(10),
+  accent_color: z.optional(z.number()),
+  spoiler: z.optional(z.boolean()),
+});
+
+export type ComponentContainer = z.infer<typeof componentContainerSchema>;
 
 export const componentSchema = z.union([
-  actionRowSchema,
-  buttonSchema,
-  selectMenuSchema,
+  componentActionRowSchema,
+  componentButtonSchema,
+  componentSelectMenuSchema,
+  componentSectionSchema,
+  componentTextDisplaySchema,
+  componentThumbnailSchema,
+  componentMediaGallerySchema,
+  componentFileSchema,
+  componentSeparatorSchema,
+  componentContainerSchema,
 ]);
+
+export type Component = z.infer<typeof componentSchema>;
 
 export const messageActionSchema = z
   .object({
