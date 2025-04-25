@@ -235,116 +235,126 @@ export default function MessagePreview({ msg }: { msg: Message }) {
 
                 <div className="discord-attachments">
                   {sendMode === "channel" &&
-                    msg.components.map((row) => (
-                      <div className="discord-action-row" key={row.id}>
-                        {row.components.map((comp) =>
-                          comp.type === 2 ? (
-                            comp.style === 5 ? (
-                              <a
-                                className={`discord-button discord-button-hoverable discord-button-secondary ${
-                                  comp.disabled ? "discord-button-disabled" : ""
+                    msg.components
+                      .filter((row) => row.type === 1)
+                      .map((row) => (
+                        <div className="discord-action-row" key={row.id}>
+                          {row.components.map((comp) =>
+                            comp.type === 2 ? (
+                              comp.style === 5 ? (
+                                <a
+                                  className={`discord-button discord-button-hoverable discord-button-secondary ${
+                                    comp.disabled
+                                      ? "discord-button-disabled"
+                                      : ""
+                                  }`}
+                                  key={comp.id}
+                                  target="_blank"
+                                  href={comp.url}
+                                  rel="noreferrer"
+                                >
+                                  {comp.emoji &&
+                                    (comp.emoji.id ? (
+                                      <img
+                                        src={`https://cdn.discordapp.com/emojis/${
+                                          comp.emoji.id
+                                        }.${
+                                          comp.emoji.animated ? "gif" : "png"
+                                        }`}
+                                        alt=""
+                                        className="discord-button-emoji"
+                                      />
+                                    ) : (
+                                      <Twemoji
+                                        options={{
+                                          className: "discord-button-emoji",
+                                        }}
+                                      >
+                                        {comp.emoji.name}
+                                      </Twemoji>
+                                    ))}
+                                  <span>{comp.label}</span>
+                                  <svg
+                                    className="discord-button-launch"
+                                    aria-hidden="false"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      fill="currentColor"
+                                      d="M10 5V3H5.375C4.06519 3 3 4.06519 3 5.375V18.625C3 19.936 4.06519 21 5.375 21H18.625C19.936 21 21 19.936 21 18.625V14H19V19H5V5H10Z"
+                                    ></path>
+                                    <path
+                                      fill="currentColor"
+                                      d="M21 2.99902H14V4.99902H17.586L9.29297 13.292L10.707 14.706L19 6.41302V9.99902H21V2.99902Z"
+                                    ></path>
+                                  </svg>
+                                </a>
+                              ) : (
+                                <div
+                                  className={`discord-button discord-button-hoverable ${
+                                    buttonColors[comp.style]
+                                  } ${
+                                    comp.disabled
+                                      ? "discord-button-disabled"
+                                      : ""
+                                  }`}
+                                  key={comp.id}
+                                >
+                                  {comp.emoji &&
+                                    (comp.emoji.id ? (
+                                      <img
+                                        src={`https://cdn.discordapp.com/emojis/${
+                                          comp.emoji.id
+                                        }.${
+                                          comp.emoji.animated ? "gif" : "png"
+                                        }`}
+                                        alt=""
+                                        className="discord-button-emoji"
+                                      />
+                                    ) : (
+                                      <Twemoji
+                                        options={{
+                                          className: "discord-button-emoji",
+                                        }}
+                                      >
+                                        {comp.emoji.name}
+                                      </Twemoji>
+                                    ))}
+                                  <span>{comp.label}</span>
+                                </div>
+                              )
+                            ) : comp.type === 3 ? (
+                              <div
+                                className={`discord-select-menu discord-select-menu-hoverable ${
+                                  comp.disabled
+                                    ? "discord-select-menu-disabled"
+                                    : ""
                                 }`}
                                 key={comp.id}
-                                target="_blank"
-                                href={comp.url}
-                                rel="noreferrer"
                               >
-                                {comp.emoji &&
-                                  (comp.emoji.id ? (
-                                    <img
-                                      src={`https://cdn.discordapp.com/emojis/${
-                                        comp.emoji.id
-                                      }.${comp.emoji.animated ? "gif" : "png"}`}
-                                      alt=""
-                                      className="discord-button-emoji"
-                                    />
-                                  ) : (
-                                    <Twemoji
-                                      options={{
-                                        className: "discord-button-emoji",
-                                      }}
-                                    >
-                                      {comp.emoji.name}
-                                    </Twemoji>
-                                  ))}
-                                <span>{comp.label}</span>
+                                <span className="discord-select-menu-placeholder">
+                                  {comp.placeholder || "Make a selection"}
+                                </span>
                                 <svg
-                                  className="discord-button-launch"
-                                  aria-hidden="false"
-                                  width="16"
-                                  height="16"
+                                  className="discord-select-menu-icon"
+                                  aria-hidden="true"
+                                  role="img"
+                                  width="24"
+                                  height="24"
                                   viewBox="0 0 24 24"
                                 >
                                   <path
                                     fill="currentColor"
-                                    d="M10 5V3H5.375C4.06519 3 3 4.06519 3 5.375V18.625C3 19.936 4.06519 21 5.375 21H18.625C19.936 21 21 19.936 21 18.625V14H19V19H5V5H10Z"
-                                  ></path>
-                                  <path
-                                    fill="currentColor"
-                                    d="M21 2.99902H14V4.99902H17.586L9.29297 13.292L10.707 14.706L19 6.41302V9.99902H21V2.99902Z"
+                                    d="M16.59 8.59003L12 13.17L7.41 8.59003L6 10L12 16L18 10L16.59 8.59003Z"
                                   ></path>
                                 </svg>
-                              </a>
-                            ) : (
-                              <div
-                                className={`discord-button discord-button-hoverable ${
-                                  buttonColors[comp.style]
-                                } ${
-                                  comp.disabled ? "discord-button-disabled" : ""
-                                }`}
-                                key={comp.id}
-                              >
-                                {comp.emoji &&
-                                  (comp.emoji.id ? (
-                                    <img
-                                      src={`https://cdn.discordapp.com/emojis/${
-                                        comp.emoji.id
-                                      }.${comp.emoji.animated ? "gif" : "png"}`}
-                                      alt=""
-                                      className="discord-button-emoji"
-                                    />
-                                  ) : (
-                                    <Twemoji
-                                      options={{
-                                        className: "discord-button-emoji",
-                                      }}
-                                    >
-                                      {comp.emoji.name}
-                                    </Twemoji>
-                                  ))}
-                                <span>{comp.label}</span>
                               </div>
-                            )
-                          ) : comp.type === 3 ? (
-                            <div
-                              className={`discord-select-menu discord-select-menu-hoverable ${
-                                comp.disabled
-                                  ? "discord-select-menu-disabled"
-                                  : ""
-                              }`}
-                              key={comp.id}
-                            >
-                              <span className="discord-select-menu-placeholder">
-                                {comp.placeholder || "Make a selection"}
-                              </span>
-                              <svg
-                                className="discord-select-menu-icon"
-                                aria-hidden="true"
-                                role="img"
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  fill="currentColor"
-                                  d="M16.59 8.59003L12 13.17L7.41 8.59003L6 10L12 16L18 10L16.59 8.59003Z"
-                                ></path>
-                              </svg>
-                            </div>
-                          ) : undefined
-                        )}
-                      </div>
-                    ))}
+                            ) : undefined
+                          )}
+                        </div>
+                      ))}
                 </div>
               </div>
             </div>

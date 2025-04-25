@@ -20,11 +20,11 @@ interface Props {
 export default function EditorComponentRow({ rowIndex, rowId }: Props) {
   const rowCount = useCurrentMessageStore((state) => state.components.length);
   const components = useCurrentMessageStore(
-    (state) => state.components[rowIndex].components.map((c) => c.id),
+    (state) => state.getActionRow(rowIndex)?.components.map((c) => c.id) || [],
     shallow
   );
   const isButtonRow = useCurrentMessageStore((state) =>
-    state.components[rowIndex].components.every((c) => c.type === 2)
+    state.getActionRow(rowIndex)?.components.every((c) => c.type === 2)
   );
   const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
     (state) => [

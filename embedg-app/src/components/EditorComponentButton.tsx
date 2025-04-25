@@ -34,7 +34,7 @@ export default function EditorComponentButton({
   compId,
 }: Props) {
   const buttonCount = useCurrentMessageStore(
-    (state) => state.components[rowIndex].components.length
+    (state) => state.getActionRow(rowIndex)?.components.length || 0
   );
 
   const [label, setLabel] = useCurrentMessageStore(

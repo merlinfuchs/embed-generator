@@ -5,7 +5,7 @@ import {
   LinkIcon,
 } from "@heroicons/react/20/solid";
 import { usePremiumGuildFeatures } from "../util/premium";
-import EditorUndoButtons from "./EditorUndoButtons";
+import EditorControlButtons from "./EditorControlButtons";
 import EditorIconButton from "./EditorIconButton";
 
 export default function EditorMenuBar() {
@@ -14,7 +14,7 @@ export default function EditorMenuBar() {
   return (
     <div className="flex justify-between items-center mb-5 mt-5">
       <div className="space-x-3.5 flex items-center">
-        <EditorUndoButtons />
+        <EditorControlButtons />
       </div>
       <div className="space-x-3.5 flex items-center">
         {aiAssistantAllowed && (

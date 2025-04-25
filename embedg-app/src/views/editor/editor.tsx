@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import EditorMessageContentFields from "../../components/EditorMessageContentFields";
+import EditorMessageContentField from "../../components/EditorMessageContentField";
 import EditorEmbeds from "../../components/EditorEmbeds";
 import EditorMenuBar from "../../components/EditorMenuBar";
 import EditorMessagePreview from "../../components/EditorMessagePreview";
@@ -13,6 +13,7 @@ import SendMenu from "../../components/SendMenu";
 import { Drawer } from "vaul";
 import { useState } from "react";
 import { DocumentMagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import EditorWebhookFields from "../../components/EditorWebhookFields";
 
 export default function EditorView() {
   const setValidationError = useValidationErrorStore((state) => state.setError);
@@ -27,6 +28,10 @@ export default function EditorView() {
     return null;
   });
 
+  const componentsV2Enabled = useCurrentMessageStore((s) =>
+    s.getComponentsV2Enabled()
+  );
+
   // TODO: also validate actions stores
 
   const [previewDrawerOpen, setPreviewDrawerOpen] = useState(false);
@@ -39,10 +44,11 @@ export default function EditorView() {
             <SendMenu />
             <div className="border border-dark-6"></div>
             <EditorMenuBar />
-            <EditorMessageContentFields />
+            <EditorWebhookFields />
+            {!componentsV2Enabled && <EditorMessageContentField />}
             <EditorAttachments />
-            <EditorEmbeds />
-            <EditorComponents />
+            {!componentsV2Enabled && <EditorEmbeds />}
+            <EditorComponents defaultCollapsed={!componentsV2Enabled} />
           </div>
         </div>
         <div className="hidden lg:block w-1/2 h-full bg-dark-4 lg:border-l-2 border-dark-3 px-5 py-2 overflow-y-auto no-scrollbar">

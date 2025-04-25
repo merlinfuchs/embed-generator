@@ -21,10 +21,10 @@ export default function EditorComponentSelectMenu({
   compId,
 }: Props) {
   const selectMenu = useCurrentMessageStore(
-    (state) => state.components[rowIndex].components[compIndex],
+    (state) => state.getSelectMenu(rowIndex, compIndex),
     shallow
   );
-  if (selectMenu.type !== 3) {
+  if (selectMenu?.type !== 3) {
     return <div></div>;
   }
 

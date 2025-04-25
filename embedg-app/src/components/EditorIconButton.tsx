@@ -9,6 +9,7 @@ interface Props {
   onClick?: () => void;
   highlight?: boolean;
   disabled?: boolean;
+  className?: string;
 }
 
 export default function EditorIconButton({
@@ -18,6 +19,7 @@ export default function EditorIconButton({
   onClick,
   highlight,
   disabled,
+  className,
 }: Props) {
   return (
     <Tooltip text={label}>
@@ -28,7 +30,8 @@ export default function EditorIconButton({
             highlight ? "text-yellow" : "text-white",
             disabled
               ? "bg-dark-3 cursor-default"
-              : "bg-dark-2 cursor-pointer hover:bg-dark-1"
+              : "bg-dark-2 cursor-pointer hover:bg-dark-1",
+            className
           )}
           to={href}
         >
@@ -41,7 +44,8 @@ export default function EditorIconButton({
             highlight ? "text-yellow" : "text-white",
             disabled
               ? "bg-dark-3 cursor-default"
-              : "bg-dark-2 cursor-pointer hover:bg-dark-1"
+              : "bg-dark-2 cursor-pointer hover:bg-dark-1",
+            className
           )}
           onClick={() => !disabled && onClick?.()}
         >

@@ -137,7 +137,11 @@ export interface MessageStore extends Message {
   setActionRoleIds: (id: string, i: number, val: string[]) => void;
 
   getSelectMenu: (i: number, j: number) => MessageComponentSelectMenu | null;
+  getActionRow: (i: number) => MessageComponentActionRow | null;
   getButton: (i: number, j: number) => MessageComponentButton | null;
+
+  getComponentsV2Enabled: () => boolean;
+  setComponentsV2Enabled: (enabled: boolean) => void;
 }
 
 export const defaultMessage: Message = {
@@ -567,6 +571,10 @@ export const createMessageStore = (key: string) =>
             clearComponentRows: () =>
               set((state) => {
                 for (const row of state.components) {
+                  if (row.type !== 1) {
+                    continue;
+                  }
+
                   for (const comp of row.components) {
                     if (comp.type === 2) {
                       delete state.actions[comp.action_set_id];
@@ -583,7 +591,7 @@ export const createMessageStore = (key: string) =>
             moveComponentRowUp: (i: number) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 state.components.splice(i, 1);
@@ -592,7 +600,7 @@ export const createMessageStore = (key: string) =>
             moveComponentRowDown: (i: number) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 state.components.splice(i, 1);
@@ -601,7 +609,7 @@ export const createMessageStore = (key: string) =>
             duplicateComponentRow: (i: number) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
 
@@ -638,6 +646,10 @@ export const createMessageStore = (key: string) =>
                 const removed = state.components.splice(i, 1);
 
                 for (const row of removed) {
+                  if (row.type !== 1) {
+                    continue;
+                  }
+
                   for (const comp of row.components) {
                     if (comp.type === 2) {
                       delete state.actions[comp.action_set_id];
@@ -652,7 +664,7 @@ export const createMessageStore = (key: string) =>
             addButton: (i: number, button: MessageComponentButton) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
 
@@ -667,7 +679,7 @@ export const createMessageStore = (key: string) =>
             clearButtons: (i: number) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
 
@@ -682,7 +694,7 @@ export const createMessageStore = (key: string) =>
             deleteButton: (i: number, j: number) =>
               set((state) => {
                 const row = state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
 
@@ -696,7 +708,7 @@ export const createMessageStore = (key: string) =>
             moveButtonUp: (i: number, j: number) =>
               set((state) => {
                 const row = state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 const button = row.components[j];
@@ -709,7 +721,7 @@ export const createMessageStore = (key: string) =>
             moveButtonDown: (i: number, j: number) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 const button = row.components[j];
@@ -722,7 +734,7 @@ export const createMessageStore = (key: string) =>
             duplicateButton: (i: number, j: number) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 const button = row.components && row.components[j];
@@ -746,7 +758,7 @@ export const createMessageStore = (key: string) =>
             ) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 const button = row.components && row.components[j];
@@ -763,7 +775,7 @@ export const createMessageStore = (key: string) =>
             setButtonLabel: (i: number, j: number, label: string) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 const button = row.components && row.components[j];
@@ -775,7 +787,7 @@ export const createMessageStore = (key: string) =>
             setButtonEmoji: (i: number, j: number, emoji: Emoji | undefined) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 const button = row.components && row.components[j];
@@ -787,7 +799,7 @@ export const createMessageStore = (key: string) =>
             setButtonUrl: (i: number, j: number, url: string) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 const button = row.components && row.components[j];
@@ -803,7 +815,7 @@ export const createMessageStore = (key: string) =>
             ) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 const button = row.components && row.components[j];
@@ -819,7 +831,7 @@ export const createMessageStore = (key: string) =>
             ) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 const selectMenu = row.components && row.components[j];
@@ -835,7 +847,7 @@ export const createMessageStore = (key: string) =>
             ) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 const selectMenu = row.components && row.components[j];
@@ -851,7 +863,7 @@ export const createMessageStore = (key: string) =>
             ) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 const selectMenu = row.components && row.components[j];
@@ -870,7 +882,7 @@ export const createMessageStore = (key: string) =>
             clearSelectMenuOptions: (i: number, j: number) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 const selectMenu = row.components && row.components[j];
@@ -887,7 +899,7 @@ export const createMessageStore = (key: string) =>
             moveSelectMenuOptionDown: (i: number, j: number, k: number) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 const selectMenu = row.components && row.components[j];
@@ -904,7 +916,7 @@ export const createMessageStore = (key: string) =>
             moveSelectMenuOptionUp: (i: number, j: number, k: number) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 const selectMenu = row.components && row.components[j];
@@ -921,7 +933,7 @@ export const createMessageStore = (key: string) =>
             duplicateSelectMenuOption: (i: number, j: number, k: number) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 const selectMenu = row.components && row.components[j];
@@ -945,7 +957,7 @@ export const createMessageStore = (key: string) =>
             deleteSelectMenuOption: (i: number, j: number, k: number) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 const selectMenu = row.components && row.components[j];
@@ -966,7 +978,7 @@ export const createMessageStore = (key: string) =>
             ) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 const selectMenu = row.components && row.components[j];
@@ -987,7 +999,7 @@ export const createMessageStore = (key: string) =>
             ) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 const selectMenu = row.components && row.components[j];
@@ -1008,7 +1020,7 @@ export const createMessageStore = (key: string) =>
             ) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 const selectMenu = row.components && row.components[j];
@@ -1195,7 +1207,7 @@ export const createMessageStore = (key: string) =>
             getSelectMenu: (i: number, j: number) => {
               const state = get();
               const row = state.components && state.components[i];
-              if (!row) {
+              if (!row || row.type !== 1) {
                 return null;
               }
 
@@ -1205,10 +1217,20 @@ export const createMessageStore = (key: string) =>
               }
               return null;
             },
+
+            getActionRow: (i: number) => {
+              const state = get();
+              const row = state.components && state.components[i];
+              if (!row || row.type !== 1) {
+                return null;
+              }
+              return row;
+            },
+
             getButton: (i: number, j: number) => {
               const state = get();
               const row = state.components && state.components[i];
-              if (!row) {
+              if (!row || row.type !== 1) {
                 return null;
               }
 
@@ -1217,6 +1239,22 @@ export const createMessageStore = (key: string) =>
                 return button;
               }
               return null;
+            },
+
+            getComponentsV2Enabled: () => {
+              const state = get();
+              const flags = state.flags ?? 0;
+              return (flags & (1 << 15)) !== 0;
+            },
+            setComponentsV2Enabled: (enabled: boolean) => {
+              set((state) => {
+                const currentFlags = state.flags ?? 0;
+                if (enabled) {
+                  state.flags = currentFlags | (1 << 15);
+                } else {
+                  state.flags = currentFlags & ~(1 << 15) || undefined;
+                }
+              });
             },
           }),
           {

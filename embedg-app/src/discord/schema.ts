@@ -287,10 +287,19 @@ export type MessageComponentSelectMenu = z.infer<typeof selectMenuSchema>;
 export const actionRowSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
   type: z.literal(1),
-  components: z.array(buttonSchema.or(selectMenuSchema)).min(1).max(5),
+  components: z
+    .array(z.union([buttonSchema, selectMenuSchema]))
+    .min(1)
+    .max(5),
 });
 
 export type MessageComponentActionRow = z.infer<typeof actionRowSchema>;
+
+export const componentSchema = z.union([
+  actionRowSchema,
+  buttonSchema,
+  selectMenuSchema,
+]);
 
 export const messageActionSchema = z
   .object({
@@ -397,18 +406,30 @@ export const messageSchema = z
     tts: messageTtsSchema.default(false),
     embeds: z.array(embedSchema).max(10).default([]),
     allowed_mentions: messageAllowedMentionsSchema,
-    components: z.array(actionRowSchema).max(5).default([]),
+    components: z.array(componentSchema).max(5).default([]),
     thread_name: messageThreadName,
     actions: z.record(z.string(), messageActionSetSchema).default({}),
+    flags: z.number().optional(),
   })
   .superRefine((data, ctx) => {
-    // this currently doesn't take attachments into account
-    if (!data.content && !data.embeds.length && !data.components.length) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["content"],
-        message: "Content is required when no other fields are set",
-      });
+    const flags = data.flags ?? 0;
+    if (flags & (1 << 15)) {
+      if (data.components.length == 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["components"],
+          message: "Components are required when components v2 is enabled",
+        });
+      }
+    } else {
+      // this currently doesn't take attachments into account
+      if (!data.content && !data.embeds.length && !data.components.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["content"],
+          message: "Content is required when no other fields are set",
+        });
+      }
     }
   });
 

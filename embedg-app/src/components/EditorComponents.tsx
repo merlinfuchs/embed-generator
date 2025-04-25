@@ -8,7 +8,11 @@ import EditorComponentRow from "./EditorComponentRow";
 import Collapsable from "./Collapsable";
 import { useSendSettingsStore } from "../state/sendSettings";
 
-export default function EditorComponents() {
+export default function EditorComponents({
+  defaultCollapsed = true,
+}: {
+  defaultCollapsed?: boolean;
+}) {
   const components = useCurrentMessageStore(
     (state) => state.components.map((e) => e.id),
     shallow
@@ -49,7 +53,7 @@ export default function EditorComponents() {
       id="components"
       title="Components"
       size="large"
-      defaultCollapsed={true}
+      defaultCollapsed={defaultCollapsed}
       valiationPathPrefix="components"
       extra={
         <div className="flex space-x-2">

@@ -1,6 +1,8 @@
 import {
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon,
+  Squares2X2Icon,
+  SquaresPlusIcon,
 } from "@heroicons/react/20/solid";
 import {
   useCurrentMessageStore,
@@ -10,7 +12,7 @@ import EditorIconButton from "./EditorIconButton";
 import { useEffect } from "react";
 import { useSettingsStore } from "../state/settings";
 
-export default function EditorUndoButtons() {
+export default function EditorControlButtons() {
   const historyEnabled = useSettingsStore((s) => s.editHistoryEnabled);
 
   const { undo, redo, pause, resume } =
@@ -22,6 +24,13 @@ export default function EditorUndoButtons() {
   );
   const hasFutureStates = useCurrentMessageUndoStore(
     (s) => s.futureStates.length != 0
+  );
+
+  const componentV2Enabled = useCurrentMessageStore((s) =>
+    s.getComponentsV2Enabled()
+  );
+  const setComponentV2Enabled = useCurrentMessageStore(
+    (s) => s.setComponentsV2Enabled
   );
 
   useEffect(() => {
@@ -68,6 +77,15 @@ export default function EditorUndoButtons() {
         disabled={!hasFutureStates}
       >
         <ArrowUturnRightIcon />
+      </EditorIconButton>
+      <EditorIconButton
+        onClick={() => setComponentV2Enabled(!componentV2Enabled)}
+        label="Component V2"
+        className={
+          componentV2Enabled ? "bg-yellow text-black hover:bg-yellow/90" : ""
+        }
+      >
+        <SquaresPlusIcon />
       </EditorIconButton>
     </>
   );

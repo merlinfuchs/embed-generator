@@ -304,6 +304,12 @@ export const actionRowSchema = z.object({
 
 export type MessageComponentActionRow = z.infer<typeof actionRowSchema>;
 
+export const componentSchema = z.union([
+  actionRowSchema,
+  buttonSchema,
+  selectMenuSchema,
+]);
+
 export const messageActionSchema = z
   .object({
     type: z.literal(1).or(z.literal(6)).or(z.literal(8)), // text response
@@ -412,13 +418,14 @@ export const messageSchema = z.object({
   allowed_mentions: messageAllowedMentionsSchema,
   components: z.preprocess(
     (d) => d ?? undefined,
-    z.array(actionRowSchema).default([])
+    z.array(componentSchema).default([])
   ),
   thread_name: messageThreadName,
   actions: z.preprocess(
     (d) => d ?? undefined,
     z.record(z.string(), messageActionSetSchema).default({})
   ),
+  flags: z.preprocess((d) => d ?? undefined, z.number().optional()),
 });
 
 export type Message = z.infer<typeof messageSchema>;
@@ -428,6 +435,10 @@ export function parseMessageWithAction(raw: any) {
 
   // create messing action sets
   for (const row of parsedData.components) {
+    if (row.type !== 1) {
+      continue;
+    }
+
     for (const comp of row.components) {
       if (comp.type === 2) {
         if (!parsedData.actions[comp.action_set_id]) {
