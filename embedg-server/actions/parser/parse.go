@@ -24,65 +24,73 @@ func New(accessManager *access.AccessManager, pg *postgres.PostgresStore, state 
 	}
 }
 
-func (m *ActionParser) ParseMessageComponents(data []actions.ActionRowWithActions) ([]discordgo.MessageComponent, error) {
-	components := make([]discordgo.MessageComponent, len(data))
+func (m *ActionParser) ParseMessageComponents(data []actions.ComponentWithActions) ([]discordgo.MessageComponent, error) {
+	components := make([]discordgo.MessageComponent, 0, len(data))
 
-	for i, row := range data {
-		ar := discordgo.ActionsRow{
-			Components: make([]discordgo.MessageComponent, len(row.Components)),
-		}
+	for _, row := range data {
+		if row.Type == discordgo.ActionsRowComponent {
+			ar := discordgo.ActionsRow{
+				ID:         row.ID,
+				Components: make([]discordgo.MessageComponent, 0, len(row.Components)),
+			}
 
-		for y, component := range row.Components {
-			if component.Type == discordgo.ButtonComponent {
-				if component.Style == discordgo.LinkButton {
-					ar.Components[y] = discordgo.Button{
-						Label:    component.Label,
-						Style:    component.Style,
-						Disabled: component.Disabled,
-						URL:      component.URL,
-						Emoji:    component.Emoji,
+			for _, component := range row.Components {
+				if component.Type == discordgo.ButtonComponent {
+					if component.Style == discordgo.LinkButton {
+						ar.Components = append(ar.Components, discordgo.Button{
+							ID:       component.ID,
+							Label:    component.Label,
+							Style:    component.Style,
+							Disabled: component.Disabled,
+							URL:      component.URL,
+							Emoji:    component.Emoji,
+						})
+					} else {
+						ar.Components = append(ar.Components, discordgo.Button{
+							ID:       component.ID,
+							CustomID: "action:" + component.ActionSetID,
+							Label:    component.Label,
+							Style:    component.Style,
+							Disabled: component.Disabled,
+							Emoji:    component.Emoji,
+						})
 					}
-				} else {
-					ar.Components[y] = discordgo.Button{
-						CustomID: "action:" + component.ActionSetID,
-						Label:    component.Label,
-						Style:    component.Style,
-						Disabled: component.Disabled,
-						Emoji:    component.Emoji,
+				} else if component.Type == discordgo.SelectMenuComponent {
+					options := make([]discordgo.SelectMenuOption, len(component.Options))
+					for x, option := range component.Options {
+						options[x] = discordgo.SelectMenuOption{
+							Label:       option.Label,
+							Value:       "action:" + option.ActionSetID,
+							Description: option.Description,
+							Default:     option.Default,
+							Emoji:       option.Emoji,
+						}
 					}
-				}
-			} else if component.Type == discordgo.SelectMenuComponent {
-				options := make([]discordgo.SelectMenuOption, len(component.Options))
-				for x, option := range component.Options {
-					options[x] = discordgo.SelectMenuOption{
-						Label:       option.Label,
-						Value:       "action:" + option.ActionSetID,
-						Description: option.Description,
-						Default:     option.Default,
-						Emoji:       option.Emoji,
-					}
-				}
 
-				ar.Components[y] = discordgo.SelectMenu{
-					MenuType:    discordgo.StringSelectMenu,
-					CustomID:    "action:options:" + util.UniqueID(),
-					Placeholder: component.Placeholder,
-					MinValues:   component.MinValues,
-					MaxValues:   component.MaxValues,
-					Options:     options,
-					Disabled:    component.Disabled,
+					ar.Components = append(ar.Components, discordgo.SelectMenu{
+						ID:          component.ID,
+						MenuType:    discordgo.StringSelectMenu,
+						CustomID:    "action:options:" + util.UniqueID(),
+						Placeholder: component.Placeholder,
+						MinValues:   component.MinValues,
+						MaxValues:   component.MaxValues,
+						Options:     options,
+						Disabled:    component.Disabled,
+					})
 				}
 			}
+
+			components = append(components, ar)
 		}
 
-		components[i] = ar
+		// TODO: Handle v2 components
 	}
 
 	return components, nil
 }
 
-func (m *ActionParser) UnparseMessageComponents(data []discordgo.MessageComponent) ([]actions.ActionRowWithActions, error) {
-	res := make([]actions.ActionRowWithActions, 0, len(data))
+func (m *ActionParser) UnparseMessageComponents(data []discordgo.MessageComponent) ([]actions.ComponentWithActions, error) {
+	res := make([]actions.ComponentWithActions, 0, len(data))
 
 	for _, comp := range data {
 		row, ok := comp.(*discordgo.ActionsRow)
@@ -90,7 +98,7 @@ func (m *ActionParser) UnparseMessageComponents(data []discordgo.MessageComponen
 			continue
 		}
 
-		ar := actions.ActionRowWithActions{
+		ar := actions.ComponentWithActions{
 			Components: make([]actions.ComponentWithActions, 0, len(row.Components)),
 		}
 
