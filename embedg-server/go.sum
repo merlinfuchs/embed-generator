@@ -868,6 +868,8 @@ github.com/merlinfuchs/discordgo v0.0.0-20240701142250-055d68ea4d9f h1:kR9GANYcF
 github.com/merlinfuchs/discordgo v0.0.0-20240701142250-055d68ea4d9f/go.mod h1:xAeB1tSUX3ilHSX7DKudmCAuIj5z/UZJDCbr8QKpMzI=
 github.com/merlinfuchs/discordgo v0.0.0-20240803123221-0fbc79bc87ef h1:JiM3Qa1f4EgZWO3pLVR/lHvS+ywByqaFkfhJhpmokLQ=
 github.com/merlinfuchs/discordgo v0.0.0-20240803123221-0fbc79bc87ef/go.mod h1:xAeB1tSUX3ilHSX7DKudmCAuIj5z/UZJDCbr8QKpMzI=
+github.com/merlinfuchs/discordgo v0.0.0-20250425232203-ae6a51278028 h1:6qf8pjv5qLCd/xbUiA77fEHJzOjpocQkZvbgnqkGBJY=
+github.com/merlinfuchs/discordgo v0.0.0-20250425232203-ae6a51278028/go.mod h1:xAeB1tSUX3ilHSX7DKudmCAuIj5z/UZJDCbr8QKpMzI=
 github.com/merlinfuchs/embed-generator/embedg-site v0.0.0-20231008112155-6159480ecdbf h1:2gfrkGaSc94oc2XhTvXHzs43h3KozEKt/xqgShill5M=
 github.com/merlinfuchs/embed-generator/embedg-site v0.0.0-20231008112155-6159480ecdbf/go.mod h1:JcvikErltUsWRvLr2KcxeoKfwOSNkgxIaYk0oBBFVRQ=
 github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
