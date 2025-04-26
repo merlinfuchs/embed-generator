@@ -4,24 +4,24 @@ import Collapsable from "./Collapsable";
 import EditorInput from "./EditorInput";
 import { AutoAnimate } from "../util/autoAnimate";
 import { getUniqueId } from "../util";
-import EditorComponentSelectMenuOption from "./EditorComponentSelectMenuOption";
+import EditorComponentChildSelectMenuOption from "./EditorComponentChildSelectMenuOption";
 import CheckBox from "./CheckBox";
 
 interface Props {
-  rowIndex: number;
-  rowId: number;
-  compIndex: number;
-  compId: number;
+  rootIndex: number;
+  rootId: number;
+  childIndex: number;
+  childId: number;
 }
 
-export default function EditorComponentSelectMenu({
-  rowIndex,
-  rowId,
-  compIndex,
-  compId,
+export default function EditorComponentChildSelectMenu({
+  rootIndex,
+  rootId,
+  childIndex,
+  childId,
 }: Props) {
   const selectMenu = useCurrentMessageStore(
-    (state) => state.getSelectMenu(rowIndex, compIndex),
+    (state) => state.getSelectMenu(rootIndex, childIndex),
     shallow
   );
   if (selectMenu?.type !== 3) {
@@ -30,17 +30,18 @@ export default function EditorComponentSelectMenu({
 
   const options = useCurrentMessageStore(
     (state) =>
-      state.getSelectMenu(rowIndex, compIndex)?.options?.map((o) => o.id) || [],
+      state.getSelectMenu(rootIndex, childIndex)?.options?.map((o) => o.id) ||
+      [],
     shallow
   );
 
   const [add, clearOptions] = useCurrentMessageStore(
-    (state) => [state.addSelectMenuOption, state.clearSelectMenuOptions],
+    (state) => [state.addSubComponentOption, state.clearSubComponentOptions],
     shallow
   );
 
   function addOption() {
-    add(rowIndex, compIndex, {
+    add(rootIndex, childIndex, {
       id: getUniqueId(),
       label: "",
       action_set_id: getUniqueId().toString(),
@@ -48,11 +49,11 @@ export default function EditorComponentSelectMenu({
   }
 
   const setPlaceholder = useCurrentMessageStore(
-    (state) => state.setSelectMenuPlaceholder
+    (state) => state.setSubComponentPlaceholder
   );
 
   const setDisabled = useCurrentMessageStore(
-    (state) => state.setSelectMenuDisabled
+    (state) => state.setSubComponentDisabled
   );
 
   return (
@@ -62,7 +63,9 @@ export default function EditorComponentSelectMenu({
           label="Placeholder"
           maxLength={150}
           value={selectMenu.placeholder || ""}
-          onChange={(v) => setPlaceholder(rowIndex, compIndex, v || undefined)}
+          onChange={(v) =>
+            setPlaceholder(rootIndex, childIndex, v || undefined)
+          }
           className="flex-auto"
         />
         <div className="flex-none">
@@ -71,23 +74,23 @@ export default function EditorComponentSelectMenu({
           </div>
           <CheckBox
             checked={selectMenu.disabled ?? false}
-            onChange={(v) => setDisabled(rowIndex, compIndex, v)}
+            onChange={(v) => setDisabled(rootIndex, childIndex, v)}
           />
         </div>
       </div>
       <Collapsable
-        id={`components.${rowId}.select.${compId}.options`}
-        valiationPathPrefix={`components.${rowIndex}.components.${compIndex}.options`}
+        id={`components.${rootId}.select.${childId}.options`}
+        valiationPathPrefix={`components.${rootIndex}.components.${childIndex}.options`}
         title="Options"
       >
         <AutoAnimate className="space-y-2">
           {options.map((id, i) => (
             <div key={id}>
-              <EditorComponentSelectMenuOption
-                rowIndex={rowIndex}
-                rowId={rowId}
-                compIndex={compIndex}
-                compId={compId}
+              <EditorComponentChildSelectMenuOption
+                rootIndex={rootIndex}
+                rootId={rootId}
+                childIndex={childIndex}
+                childId={childId}
                 optionIndex={i}
                 optionId={id}
               />
@@ -112,7 +115,7 @@ export default function EditorComponentSelectMenu({
           )}
           <button
             className="px-3 py-2 rounded border-2 border-red hover:bg-red transition-colors text-white"
-            onClick={() => clearOptions(rowIndex, compIndex)}
+            onClick={() => clearOptions(rootIndex, childIndex)}
           >
             Clear Options
           </button>

@@ -13,10 +13,10 @@ import EditorComponentEmojiSelect from "./EditorComponentEmojiSelect";
 import CheckBox from "./CheckBox";
 
 interface Props {
-  rowIndex: number;
-  rowId: number;
-  compIndex: number;
-  compId: number;
+  rootIndex: number;
+  rootId: number;
+  childIndex: number;
+  childId: number;
 }
 
 const buttonBorderColors = {
@@ -27,62 +27,62 @@ const buttonBorderColors = {
   5: "border-dark-7",
 };
 
-export default function EditorComponentButton({
-  rowIndex,
-  rowId,
-  compIndex,
-  compId,
+export default function EditorComponentChildButton({
+  rootIndex,
+  rootId,
+  childIndex,
+  childId,
 }: Props) {
   const buttonCount = useCurrentMessageStore(
-    (state) => state.getActionRow(rowIndex)?.components.length || 0
+    (state) => state.getSubComponents(rootIndex).length || 0
   );
 
   const [label, setLabel] = useCurrentMessageStore(
     (state) => [
-      state.getButton(rowIndex, compIndex)?.label || "",
-      state.setButtonLabel,
+      state.getButton(rootIndex, childIndex)?.label || "",
+      state.setSubComponentLabel,
     ],
     shallow
   );
 
   const [emoji, setEmoji] = useCurrentMessageStore(
     (state) => [
-      state.getButton(rowIndex, compIndex)?.emoji,
-      state.setButtonEmoji,
+      state.getButton(rootIndex, childIndex)?.emoji,
+      state.setSubComponentEmoji,
     ],
     shallow
   );
 
   const [url, setUrl] = useCurrentMessageStore((state) => {
-    const button = state.getButton(rowIndex, compIndex);
-    return [button?.style === 5 ? button.url : "", state.setButtonUrl];
+    const button = state.getButton(rootIndex, childIndex);
+    return [button?.style === 5 ? button.url : "", state.setSubComponentUrl];
   }, shallow);
 
   const [style, setStyle] = useCurrentMessageStore(
     (state) => [
-      state.getButton(rowIndex, compIndex)?.style,
-      state.setButtonStyle,
+      state.getButton(rootIndex, childIndex)?.style,
+      state.setSubComponentStyle,
     ],
     shallow
   );
 
   const [disabled, setDisabled] = useCurrentMessageStore((state) => [
-    state.getButton(rowIndex, compIndex)?.disabled,
-    state.setButtonDisabled,
+    state.getButton(rootIndex, childIndex)?.disabled,
+    state.setSubComponentDisabled,
   ]);
 
   const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
     (state) => [
-      state.moveButtonUp,
-      state.moveButtonDown,
-      state.duplicateButton,
-      state.deleteButton,
+      state.moveSubComponentUp,
+      state.moveSubComponentDown,
+      state.duplicateSubComponent,
+      state.deleteSubComponent,
     ],
     shallow
   );
 
   const actionSetId = useCurrentMessageStore(
-    (state) => state.getButton(rowIndex, compIndex)?.action_set_id || ""
+    (state) => state.getButton(rootIndex, childIndex)?.action_set_id || ""
   );
 
   if (!style) {
@@ -97,12 +97,12 @@ export default function EditorComponentButton({
       className={`bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow border-2 ${borderColor}`}
     >
       <Collapsable
-        id={`components.${rowId}.buttons.${compId}`}
-        valiationPathPrefix={`components.${rowIndex}.components.${compIndex}`}
-        title={`Button ${compIndex + 1}`}
+        id={`components.${rootId}.buttons.${childId}`}
+        valiationPathPrefix={`components.${rootIndex}.components.${childIndex}`}
+        title={`Button ${childIndex + 1}`}
         extra={
           label && (
-            <div className="text-gray-500 truncate flex space-x-2 pl-2">
+            <div className="text-gray-500 truncate flex space-x-2 pl-1">
               <div>-</div>
               <div className="truncate">{label}</div>
             </div>
@@ -110,31 +110,31 @@ export default function EditorComponentButton({
         }
         buttons={
           <div className="flex-none text-gray-300 flex items-center space-x-2">
-            {compIndex > 0 && (
+            {childIndex > 0 && (
               <ChevronUpIcon
                 className="h-6 w-6 flex-none"
                 role="button"
-                onClick={() => moveUp(rowIndex, compIndex)}
+                onClick={() => moveUp(rootIndex, childIndex)}
               />
             )}
-            {compIndex < buttonCount - 1 && (
+            {childIndex < buttonCount - 1 && (
               <ChevronDownIcon
                 className="h-6 w-6 flex-none"
                 role="button"
-                onClick={() => moveDown(rowIndex, compIndex)}
+                onClick={() => moveDown(rootIndex, childIndex)}
               />
             )}
             {buttonCount < 5 && (
               <DocumentDuplicateIcon
                 className="h-5 w-5 flex-none"
                 role="button"
-                onClick={() => duplicate(rowIndex, compIndex)}
+                onClick={() => duplicate(rootIndex, childIndex)}
               />
             )}
             <TrashIcon
               className="h-5 w-5 flex-none"
               role="button"
-              onClick={() => remove(rowIndex, compIndex)}
+              onClick={() => remove(rootIndex, childIndex)}
             />
           </div>
         }
@@ -151,7 +151,11 @@ export default function EditorComponentButton({
                 className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
                 value={style.toString()}
                 onChange={(v) =>
-                  setStyle(rowIndex, compIndex, parseInt(v.target.value) as any)
+                  setStyle(
+                    rootIndex,
+                    childIndex,
+                    parseInt(v.target.value) as any
+                  )
                 }
               >
                 <option value="1">Blurple</option>
@@ -167,22 +171,22 @@ export default function EditorComponentButton({
               </div>
               <CheckBox
                 checked={disabled ?? false}
-                onChange={(v) => setDisabled(rowIndex, compIndex, v)}
+                onChange={(v) => setDisabled(rootIndex, childIndex, v)}
               />
             </div>
           </div>
           <div className="flex space-x-3">
             <EditorComponentEmojiSelect
               emoji={emoji ?? undefined}
-              onChange={(v) => setEmoji(rowIndex, compIndex, v)}
+              onChange={(v) => setEmoji(rootIndex, childIndex, v)}
             />
             <EditorInput
               label="Label"
               maxLength={80}
               value={label}
-              onChange={(v) => setLabel(rowIndex, compIndex, v)}
+              onChange={(v) => setLabel(rootIndex, childIndex, v)}
               className="flex-auto"
-              validationPath={`components.${rowIndex}.components.${compIndex}.label`}
+              validationPath={`components.${rootIndex}.components.${childIndex}.label`}
             />
           </div>
           {style === 5 ? (
@@ -190,8 +194,8 @@ export default function EditorComponentButton({
               label="URL"
               type="url"
               value={url}
-              onChange={(v) => setUrl(rowIndex, compIndex, v)}
-              validationPath={`components.${rowIndex}.components.${compIndex}.url`}
+              onChange={(v) => setUrl(rootIndex, childIndex, v)}
+              validationPath={`components.${rootIndex}.components.${childIndex}.url`}
             />
           ) : (
             <EditorActionSet setId={actionSetId} />

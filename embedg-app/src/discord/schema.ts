@@ -329,9 +329,7 @@ export const componentSectionSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
   type: z.literal(9),
   components: z.array(componentTextDisplaySchema).min(1).max(5),
-  accessory: z.optional(
-    z.union([componentThumbnailSchema, componentButtonSchema])
-  ),
+  accessory: z.union([componentThumbnailSchema, componentButtonSchema]),
 });
 
 export type ComponentSection = z.infer<typeof componentSectionSchema>;
@@ -526,6 +524,7 @@ export const messageSchema = z
           message: "Components are required when components v2 is enabled",
         });
       }
+      // TODO: check total text display length <= 4000
     } else {
       // this currently doesn't take attachments into account
       if (!data.content && !data.embeds.length && !data.components.length) {

@@ -4,11 +4,12 @@ import { useCollapsedStatesStore } from "../state/collapsed";
 import clsx from "clsx";
 import { getUniqueId } from "../util";
 import { AutoAnimate } from "../util/autoAnimate";
-import EditorComponentRow from "./EditorComponentRow";
+import EditorComponentRow from "./EditorComponentRootActionRow";
 import Collapsable from "./Collapsable";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import EditorComponentAddDropdown from "./EditorComponentAddDropdown";
+import EditorComponentRoot from "./EditorComponentRoot";
 
 export default function EditorComponents({
   defaultCollapsed = true,
@@ -52,7 +53,7 @@ export default function EditorComponents({
       <AutoAnimate className="space-y-3 mb-3">
         {components.map((id, i) => (
           <div key={id}>
-            <EditorComponentRow rowIndex={i} rowId={id} />
+            <EditorComponentRoot rootIndex={i} rootId={id} />
           </div>
         ))}
       </AutoAnimate>
@@ -63,7 +64,7 @@ export default function EditorComponents({
           className="px-3 py-2 rounded text-white border-red border-2 hover:bg-red"
           onClick={clearRootComponents}
         >
-          Clear Rows
+          Clear Components
         </button>
       </div>
     </Collapsable>

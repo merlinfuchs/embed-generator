@@ -62,63 +62,64 @@ export interface MessageStore extends Message {
   moveRootComponentDown: (i: number) => void;
   duplicateRootComponent: (i: number) => void;
   deleteRootComponent: (i: number) => void;
-  addButton: (i: number, button: MessageComponentButton) => void;
-  clearButtons: (i: number) => void;
-  moveButtonDown: (i: number, j: number) => void;
-  moveButtonUp: (i: number, j: number) => void;
-  duplicateButton: (i: number, j: number) => void;
-  deleteButton: (i: number, j: number) => void;
-  setButtonStyle: (
+  setRootComponentContent: (i: number, content: string) => void;
+  addSubComponent: (i: number, component: Component) => void;
+  clearSubComponents: (i: number) => void;
+  moveSubComponentDown: (i: number, j: number) => void;
+  moveSubComponentUp: (i: number, j: number) => void;
+  duplicateSubComponent: (i: number, j: number) => void;
+  deleteSubComponent: (i: number, j: number) => void;
+  setSubComponentStyle: (
     i: number,
     j: number,
     style: MessageComponentButtonStyle
   ) => void;
-  setButtonLabel: (i: number, j: number, label: string) => void;
-  setButtonEmoji: (i: number, j: number, emoji: Emoji | undefined) => void;
-  setButtonUrl: (i: number, j: number, url: string) => void;
-  setButtonDisabled: (
+  setSubComponentLabel: (i: number, j: number, label: string) => void;
+  setSubComponentEmoji: (
+    i: number,
+    j: number,
+    emoji: Emoji | undefined
+  ) => void;
+  setSubComponentUrl: (i: number, j: number, url: string) => void;
+  setSubComponentDisabled: (
     i: number,
     j: number,
     disabled: boolean | undefined
   ) => void;
-  setSelectMenuPlaceholder: (
+  setSubComponentPlaceholder: (
     i: number,
     j: number,
     placeholder: string | undefined
   ) => void;
-  setSelectMenuDisabled: (
-    i: number,
-    j: number,
-    disabled: boolean | undefined
-  ) => void;
-  addSelectMenuOption: (
+  addSubComponentOption: (
     i: number,
     j: number,
     option: MessageComponentSelectMenuOption
   ) => void;
-  clearSelectMenuOptions: (i: number, j: number) => void;
-  moveSelectMenuOptionDown: (i: number, j: number, k: number) => void;
-  moveSelectMenuOptionUp: (i: number, j: number, k: number) => void;
-  duplicateSelectMenuOption: (i: number, j: number, k: number) => void;
-  deleteSelectMenuOption: (i: number, j: number, k: number) => void;
-  setSelectMenuOptionLabel: (
+  clearSubComponentOptions: (i: number, j: number) => void;
+  moveSubComponentOptionDown: (i: number, j: number, k: number) => void;
+  moveSubComponentOptionUp: (i: number, j: number, k: number) => void;
+  duplicateSubComponentOption: (i: number, j: number, k: number) => void;
+  deleteSubComponentOption: (i: number, j: number, k: number) => void;
+  setSubComponentOptionLabel: (
     i: number,
     j: number,
     k: number,
     label: string
   ) => void;
-  setSelectMenuOptionDescription: (
+  setSubComponentOptionDescription: (
     i: number,
     j: number,
     k: number,
     description: string | undefined
   ) => void;
-  setSelectMenuOptionEmoji: (
+  setSubComponentOptionEmoji: (
     i: number,
     j: number,
     k: number,
     emoji: Emoji | undefined
   ) => void;
+  setSubComponentContent: (i: number, j: number, content: string) => void;
   addAction: (id: string, action: MessageAction) => void;
   clearActions: (id: string) => void;
   deleteAction: (id: string, i: number) => void;
@@ -138,7 +139,8 @@ export interface MessageStore extends Message {
   setActionRoleIds: (id: string, i: number, val: string[]) => void;
 
   getSelectMenu: (i: number, j: number) => MessageComponentSelectMenu | null;
-  getActionRow: (i: number) => MessageComponentActionRow | null;
+  getSubComponents: (i: number) => Component[];
+  getSubComponent: (i: number, j: number) => Component | null;
   getButton: (i: number, j: number) => MessageComponentButton | null;
 
   getComponentsV2Enabled: () => boolean;
@@ -668,107 +670,128 @@ export const createMessageStore = (key: string) =>
                   }
                 }
               }),
-            addButton: (i: number, button: MessageComponentButton) =>
+            setRootComponentContent: (i: number, content: string) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const root = state.components && state.components[i];
+                if (!root) {
                   return;
                 }
 
-                state.actions[button.action_set_id] = { actions: [] };
-
-                if (!row.components) {
-                  row.components = [button];
-                } else {
-                  row.components.push(button);
+                if (root.type === 10) {
+                  root.content = content;
                 }
               }),
-            clearButtons: (i: number) =>
+            addSubComponent: (i: number, component: Component) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const root = state.components && state.components[i];
+                if (!root) {
                   return;
                 }
 
-                for (const button of row.components) {
-                  if (button.type === 2) {
-                    delete state.actions[button.action_set_id];
+                if (component.type === 2 && root.type === 1) {
+                  state.actions[component.action_set_id] = { actions: [] };
+
+                  if (!root.components) {
+                    root.components = [component];
+                  } else {
+                    root.components.push(component);
                   }
                 }
 
-                row.components = [];
-              }),
-            deleteButton: (i: number, j: number) =>
-              set((state) => {
-                const row = state.components[i];
-                if (!row || row.type !== 1) {
-                  return;
-                }
-
-                const removed = row.components.splice(j, 1);
-                for (const button of removed) {
-                  if (button.type === 2) {
-                    delete state.actions[button.action_set_id];
+                if (component.type === 10 && root.type === 9) {
+                  if (!root.components) {
+                    root.components = [component];
+                  } else {
+                    root.components.push(component);
                   }
                 }
               }),
-            moveButtonUp: (i: number, j: number) =>
+            clearSubComponents: (i: number) =>
               set((state) => {
-                const row = state.components[i];
-                if (!row || row.type !== 1) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const button = row.components[j];
-                if (!button) {
-                  return;
+
+                for (const child of root.components) {
+                  if (child.type === 2) {
+                    delete state.actions[child.action_set_id];
+                  }
                 }
-                row.components.splice(j, 1);
-                row.components.splice(j - 1, 0, button);
+
+                root.components = [];
               }),
-            moveButtonDown: (i: number, j: number) =>
+            deleteSubComponent: (i: number, j: number) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const root = state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const button = row.components[j];
-                if (!button) {
-                  return;
+
+                const removed = root.components.splice(j, 1);
+                for (const child of removed) {
+                  if (child.type === 2) {
+                    delete state.actions[child.action_set_id];
+                  }
                 }
-                row.components.splice(j, 1);
-                row.components.splice(j + 1, 0, button);
               }),
-            duplicateButton: (i: number, j: number) =>
+            moveSubComponentUp: (i: number, j: number) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const root = state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const button = row.components && row.components[j];
-                if (!button || button.type !== 2) {
+                const child = root.components[j];
+                if (!child) {
+                  return;
+                }
+                root.components.splice(j, 1);
+                root.components.splice(j - 1, 0, child);
+              }),
+            moveSubComponentDown: (i: number, j: number) =>
+              set((state) => {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
+                  return;
+                }
+                const child = root.components[j];
+                if (!child) {
+                  return;
+                }
+                root.components.splice(j, 1);
+                root.components.splice(j + 1, 0, child);
+              }),
+            duplicateSubComponent: (i: number, j: number) =>
+              set((state) => {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
+                  return;
+                }
+                const child = root.components && root.components[j];
+                if (!child) {
                   return;
                 }
 
                 const actionId = getUniqueId().toString();
-                state.actions[actionId] = state.actions[button.action_set_id];
+                state.actions[actionId] = state.actions[child.action_set_id];
 
-                row.components.splice(j + 1, 0, {
-                  ...button,
+                root.components.splice(j + 1, 0, {
+                  ...child,
                   id: getUniqueId(),
                   action_set_id: actionId,
                 });
               }),
-            setButtonStyle: (
+            setSubComponentStyle: (
               i: number,
               j: number,
               style: MessageComponentButtonStyle
             ) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const button = row.components && row.components[j];
+                const button = root.components && root.components[j];
                 if (!button || button.type !== 2) {
                   return;
                 }
@@ -779,101 +802,89 @@ export const createMessageStore = (key: string) =>
                   state.actions[button.action_set_id] = { actions: [] };
                 }
               }),
-            setButtonLabel: (i: number, j: number, label: string) =>
+            setSubComponentLabel: (i: number, j: number, label: string) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const button = row.components && row.components[j];
+                const button = root.components && root.components[j];
                 if (!button || button.type !== 2) {
                   return;
                 }
                 button.label = label;
               }),
-            setButtonEmoji: (i: number, j: number, emoji: Emoji | undefined) =>
+            setSubComponentEmoji: (
+              i: number,
+              j: number,
+              emoji: Emoji | undefined
+            ) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const button = row.components && row.components[j];
+                const button = root.components && root.components[j];
                 if (!button || button.type !== 2) {
                   return;
                 }
                 button.emoji = emoji;
               }),
-            setButtonUrl: (i: number, j: number, url: string) =>
+            setSubComponentUrl: (i: number, j: number, url: string) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const button = row.components && row.components[j];
+                const button = root.components && root.components[j];
                 if (!button || button.type !== 2 || button.style !== 5) {
                   return;
                 }
                 button.url = url;
               }),
-            setButtonDisabled: (
+            setSubComponentDisabled: (
               i: number,
               j: number,
               disabled: boolean | undefined
             ) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const button = row.components && row.components[j];
-                if (!button) {
+                const child = root.components && root.components[j];
+                if (!child || (child.type !== 2 && child.type !== 3)) {
                   return;
                 }
-                button.disabled = disabled;
+                child.disabled = disabled;
               }),
-            setSelectMenuPlaceholder: (
+            setSubComponentPlaceholder: (
               i: number,
               j: number,
               placeholder: string | undefined
             ) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const selectMenu = row.components && row.components[j];
+                const selectMenu = root.components && root.components[j];
                 if (!selectMenu || selectMenu.type !== 3) {
                   return;
                 }
                 selectMenu.placeholder = placeholder;
               }),
-            setSelectMenuDisabled: (
-              i: number,
-              j: number,
-              disabled: boolean | undefined
-            ) =>
-              set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
-                  return;
-                }
-                const selectMenu = row.components && row.components[j];
-                if (!selectMenu || selectMenu.type !== 3) {
-                  return;
-                }
-                selectMenu.disabled = disabled;
-              }),
-            addSelectMenuOption: (
+            addSubComponentOption: (
               i: number,
               j: number,
               option: MessageComponentSelectMenuOption
             ) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const selectMenu = row.components && row.components[j];
+                const selectMenu = root.components && root.components[j];
                 if (!selectMenu || selectMenu.type !== 3) {
                   return;
                 }
@@ -886,13 +897,13 @@ export const createMessageStore = (key: string) =>
                   selectMenu.options.push(option);
                 }
               }),
-            clearSelectMenuOptions: (i: number, j: number) =>
+            clearSubComponentOptions: (i: number, j: number) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const selectMenu = row.components && row.components[j];
+                const selectMenu = root.components && root.components[j];
                 if (!selectMenu || selectMenu.type !== 3) {
                   return;
                 }
@@ -903,13 +914,13 @@ export const createMessageStore = (key: string) =>
 
                 selectMenu.options = [];
               }),
-            moveSelectMenuOptionDown: (i: number, j: number, k: number) =>
+            moveSubComponentOptionDown: (i: number, j: number, k: number) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const selectMenu = row.components && row.components[j];
+                const selectMenu = root.components && root.components[j];
                 if (!selectMenu || selectMenu.type !== 3) {
                   return;
                 }
@@ -920,13 +931,13 @@ export const createMessageStore = (key: string) =>
                 selectMenu.options.splice(k, 1);
                 selectMenu.options.splice(k + 1, 0, option);
               }),
-            moveSelectMenuOptionUp: (i: number, j: number, k: number) =>
+            moveSubComponentOptionUp: (i: number, j: number, k: number) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const selectMenu = row.components && row.components[j];
+                const selectMenu = root.components && root.components[j];
                 if (!selectMenu || selectMenu.type !== 3) {
                   return;
                 }
@@ -937,13 +948,13 @@ export const createMessageStore = (key: string) =>
                 selectMenu.options.splice(k, 1);
                 selectMenu.options.splice(k - 1, 0, option);
               }),
-            duplicateSelectMenuOption: (i: number, j: number, k: number) =>
+            duplicateSubComponentOption: (i: number, j: number, k: number) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const selectMenu = row.components && row.components[j];
+                const selectMenu = root.components && root.components[j];
                 if (!selectMenu || selectMenu.type !== 3) {
                   return;
                 }
@@ -961,13 +972,13 @@ export const createMessageStore = (key: string) =>
                   action_set_id: actionId,
                 });
               }),
-            deleteSelectMenuOption: (i: number, j: number, k: number) =>
+            deleteSubComponentOption: (i: number, j: number, k: number) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const selectMenu = row.components && row.components[j];
+                const selectMenu = root.components && root.components[j];
                 if (!selectMenu || selectMenu.type !== 3) {
                   return;
                 }
@@ -977,18 +988,18 @@ export const createMessageStore = (key: string) =>
                   delete state.actions[option.action_set_id];
                 }
               }),
-            setSelectMenuOptionLabel: (
+            setSubComponentOptionLabel: (
               i: number,
               j: number,
               k: number,
               label: string
             ) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const selectMenu = row.components && row.components[j];
+                const selectMenu = root.components && root.components[j];
                 if (!selectMenu || selectMenu.type !== 3) {
                   return;
                 }
@@ -998,18 +1009,18 @@ export const createMessageStore = (key: string) =>
                 }
                 option.label = label;
               }),
-            setSelectMenuOptionDescription: (
+            setSubComponentOptionDescription: (
               i: number,
               j: number,
               k: number,
               description: string | undefined
             ) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const selectMenu = row.components && row.components[j];
+                const selectMenu = root.components && root.components[j];
                 if (!selectMenu || selectMenu.type !== 3) {
                   return;
                 }
@@ -1019,18 +1030,18 @@ export const createMessageStore = (key: string) =>
                 }
                 option.description = description;
               }),
-            setSelectMenuOptionEmoji: (
+            setSubComponentOptionEmoji: (
               i: number,
               j: number,
               k: number,
               emoji: Emoji | undefined
             ) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const selectMenu = row.components && row.components[j];
+                const selectMenu = root.components && root.components[j];
                 if (!selectMenu || selectMenu.type !== 3) {
                   return;
                 }
@@ -1039,6 +1050,21 @@ export const createMessageStore = (key: string) =>
                   return;
                 }
                 option.emoji = emoji;
+              }),
+            setSubComponentContent: (i: number, j: number, content: string) =>
+              set((state) => {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
+                  return;
+                }
+                const child = root.components && root.components[j];
+                if (!child) {
+                  return;
+                }
+                if (child.type !== 10) {
+                  return;
+                }
+                child.content = content;
               }),
             addAction: (id: string, action: MessageAction) =>
               set((state) => {
@@ -1225,13 +1251,22 @@ export const createMessageStore = (key: string) =>
               return null;
             },
 
-            getActionRow: (i: number) => {
+            getSubComponents: (i: number) => {
               const state = get();
               const row = state.components && state.components[i];
-              if (!row || row.type !== 1) {
+              if (!row || (row.type !== 1 && row.type !== 9)) {
+                return [];
+              }
+              return row.components || [];
+            },
+
+            getSubComponent: (i: number, j: number) => {
+              const state = get();
+              const row = state.components && state.components[i];
+              if (!row || (row.type !== 1 && row.type !== 9)) {
                 return null;
               }
-              return row;
+              return row.components && row.components[j];
             },
 
             getButton: (i: number, j: number) => {

@@ -41,7 +41,7 @@ export default function Collapsable({
         >
           <ChevronRightIcon
             className={clsx(
-              "transition-transform duration-300",
+              "transition-transform duration-300 flex-none",
               !collapsed && "rotate-90",
               size === "large" && "w-7 h-7",
               size === "medium" && "w-6 h-6"

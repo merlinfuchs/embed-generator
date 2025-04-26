@@ -12,50 +12,51 @@ import EditorComponentActions from "./EditorActionSet";
 import EditorComponentEmojiSelect from "./EditorComponentEmojiSelect";
 
 interface Props {
-  rowIndex: number;
-  rowId: number;
-  compIndex: number;
-  compId: number;
+  rootIndex: number;
+  rootId: number;
+  childIndex: number;
+  childId: number;
   optionIndex: number;
   optionId: number;
 }
 
-export default function EditorComponentSelectMenuOption({
-  rowIndex,
-  rowId,
-  compIndex,
-  compId,
+export default function EditorComponentChildSelectMenuOption({
+  rootIndex,
+  rootId,
+  childIndex,
+  childId,
   optionIndex,
   optionId,
 }: Props) {
   const optionCount = useCurrentMessageStore(
-    (state) => state.getSelectMenu(rowIndex, compIndex)?.options?.length || 0
+    (state) => state.getSelectMenu(rootIndex, childIndex)?.options?.length || 0
   );
 
   const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
     (state) => [
-      state.moveSelectMenuOptionUp,
-      state.moveSelectMenuOptionDown,
-      state.duplicateSelectMenuOption,
-      state.deleteSelectMenuOption,
+      state.moveSubComponentOptionUp,
+      state.moveSubComponentOptionDown,
+      state.duplicateSubComponentOption,
+      state.deleteSubComponentOption,
     ],
     shallow
   );
 
   const setLabel = useCurrentMessageStore(
-    (state) => state.setSelectMenuOptionLabel
+    (state) => state.setSubComponentOptionLabel
   );
 
   const setDescription = useCurrentMessageStore(
-    (state) => state.setSelectMenuOptionDescription
+    (state) => state.setSubComponentOptionDescription
   );
 
   const setEmoji = useCurrentMessageStore(
-    (state) => state.setSelectMenuOptionEmoji
+    (state) => state.setSubComponentOptionEmoji
   );
 
   const option = useCurrentMessageStore(
-    (state) => state.getSelectMenu(rowIndex, compIndex)?.options?.[optionIndex],
+    (state) =>
+      state.getSelectMenu(rootIndex, childIndex)?.options?.[optionIndex],
     shallow
   );
   if (!option) {
@@ -65,8 +66,8 @@ export default function EditorComponentSelectMenuOption({
   return (
     <div className="p-3 border-2 border-dark-6 rounded-md">
       <Collapsable
-        id={`components.${rowId}.select.${compId}.options.${optionId}`}
-        valiationPathPrefix={`components.${rowIndex}.components.${compIndex}.options.${optionIndex}`}
+        id={`components.${rootId}.select.${childId}.options.${optionId}`}
+        valiationPathPrefix={`components.${rootIndex}.components.${childIndex}.options.${optionIndex}`}
         title={`Option ${optionIndex + 1}`}
         extra={
           option.label && (
@@ -82,27 +83,27 @@ export default function EditorComponentSelectMenuOption({
               <ChevronUpIcon
                 className="h-6 w-6 flex-none"
                 role="button"
-                onClick={() => moveUp(rowIndex, compIndex, optionIndex)}
+                onClick={() => moveUp(rootIndex, childIndex, optionIndex)}
               />
             )}
             {optionIndex < optionCount - 1 && (
               <ChevronDownIcon
                 className="h-6 w-6 flex-none"
                 role="button"
-                onClick={() => moveDown(rowIndex, compIndex, optionIndex)}
+                onClick={() => moveDown(rootIndex, childIndex, optionIndex)}
               />
             )}
             {optionCount < 25 && (
               <DocumentDuplicateIcon
                 className="h-5 w-5 flex-none"
                 role="button"
-                onClick={() => duplicate(rowIndex, compIndex, optionIndex)}
+                onClick={() => duplicate(rootIndex, childIndex, optionIndex)}
               />
             )}
             <TrashIcon
               className="h-5 w-5 flex-none"
               role="button"
-              onClick={() => remove(rowIndex, compIndex, optionIndex)}
+              onClick={() => remove(rootIndex, childIndex, optionIndex)}
             />
           </div>
         }
@@ -111,15 +112,15 @@ export default function EditorComponentSelectMenuOption({
           <div className="flex space-x-3">
             <EditorComponentEmojiSelect
               emoji={option.emoji ?? undefined}
-              onChange={(v) => setEmoji(rowIndex, compIndex, optionIndex, v)}
+              onChange={(v) => setEmoji(rootIndex, childIndex, optionIndex, v)}
             />
             <EditorInput
               label="Label"
               maxLength={80}
               value={option.label}
-              onChange={(v) => setLabel(rowIndex, compIndex, optionIndex, v)}
+              onChange={(v) => setLabel(rootIndex, childIndex, optionIndex, v)}
               className="flex-auto"
-              validationPath={`components.${rowIndex}.components.${compIndex}.options.${optionIndex}.label`}
+              validationPath={`components.${rootIndex}.components.${childIndex}.options.${optionIndex}.label`}
             />
           </div>
           <EditorInput
@@ -127,10 +128,10 @@ export default function EditorComponentSelectMenuOption({
             maxLength={100}
             value={option.description || ""}
             onChange={(v) =>
-              setDescription(rowIndex, compIndex, optionIndex, v || undefined)
+              setDescription(rootIndex, childIndex, optionIndex, v || undefined)
             }
             className="flex-auto"
-            validationPath={`components.${rowIndex}.components.${compIndex}.options.${optionIndex}.description`}
+            validationPath={`components.${rootIndex}.components.${childIndex}.options.${optionIndex}.description`}
           />
           <EditorComponentActions setId={option.action_set_id} />
         </div>

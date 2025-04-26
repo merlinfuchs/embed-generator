@@ -41,7 +41,7 @@ type ComponentWithActions struct {
 	Options     []ComponentSelectOptionWithActions `json:"options,omitempty"`
 
 	// Section
-	Accessory *ComponentWithActions `json:"accessory,omitempty"`
+	Accessory *ComponentWithActions `json:"accessory"`
 
 	// Text Display
 	Content string `json:"content,omitempty"`

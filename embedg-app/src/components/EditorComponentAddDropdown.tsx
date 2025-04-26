@@ -15,7 +15,6 @@ export default function EditorComponentAddDropdown() {
 
   function addButtonRow() {
     setOpen(false);
-    if (components.length >= 5) return;
     addRootComponent({
       id: getUniqueId(),
       type: 1,
@@ -25,7 +24,6 @@ export default function EditorComponentAddDropdown() {
 
   function addSelectMenuRow() {
     setOpen(false);
-    if (components.length >= 5) return;
     addRootComponent({
       id: getUniqueId(),
       type: 1,
@@ -39,13 +37,39 @@ export default function EditorComponentAddDropdown() {
     });
   }
 
+  function addSection() {
+    setOpen(false);
+    addRootComponent({
+      id: getUniqueId(),
+      type: 9,
+      components: [],
+      accessory: {
+        id: getUniqueId(),
+        type: 2,
+        label: "test",
+        action_set_id: getUniqueId().toString(),
+        disabled: false,
+        style: 1,
+        emoji: null,
+      },
+    });
+  }
+
   function addTextDisplay() {
     setOpen(false);
-    if (components.length >= 5) return;
     addRootComponent({
       id: getUniqueId(),
       type: 10,
-      content: "test",
+      content: "",
+    });
+  }
+
+  function addMediaGallery() {
+    setOpen(false);
+    addRootComponent({
+      id: getUniqueId(),
+      type: 12,
+      items: [],
     });
   }
 
@@ -59,7 +83,10 @@ export default function EditorComponentAddDropdown() {
               ? "bg-blurple hover:bg-blurple-dark"
               : "bg-dark-3 cursor-not-allowed"
           )}
-          onClick={() => setOpen(!open)}
+          onClick={() => {
+            if (components.length >= 5) return;
+            setOpen(!open);
+          }}
         >
           <div>Add Component</div>
           <ChevronDownIcon className="w-5 h-5" />
@@ -80,9 +107,21 @@ export default function EditorComponentAddDropdown() {
             </button>
             <button
               className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left"
+              onClick={addSection}
+            >
+              Add Section
+            </button>
+            <button
+              className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left"
               onClick={addTextDisplay}
             >
               Add Text Display
+            </button>
+            <button
+              className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left"
+              onClick={addMediaGallery}
+            >
+              Add Media Gallery
             </button>
           </div>
         )}

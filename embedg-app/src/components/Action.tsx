@@ -204,7 +204,7 @@ export default function Action({
           </div>
         }
         extra={
-          <div className="text-gray-500 truncate flex space-x-2 pl-2">
+          <div className="text-gray-500 truncate flex space-x-2 pl-1">
             <div>-</div>
             <div className="truncate">{actionTypes[action.type]}</div>
           </div>

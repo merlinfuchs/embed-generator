@@ -1,30 +1,32 @@
-import { shallow } from "zustand/shallow";
-import { useCurrentMessageStore } from "../state/message";
-import { AutoAnimate } from "../util/autoAnimate";
 import {
   ChevronDownIcon,
   ChevronUpIcon,
   DocumentDuplicateIcon,
   TrashIcon,
 } from "@heroicons/react/20/solid";
-import EditorComponentButton from "./EditorComponentButton";
-import EditorComponentSelectMenu from "./EditorComponentSelectMenu";
-import Collapsable from "./Collapsable";
+import { shallow } from "zustand/shallow";
+import { useCurrentMessageStore } from "../state/message";
 import { getUniqueId } from "../util";
+import { AutoAnimate } from "../util/autoAnimate";
+import Collapsable from "./Collapsable";
+import EditorComponentChild from "./EditorComponentChild";
 
 interface Props {
-  rowIndex: number;
-  rowId: number;
+  rootIndex: number;
+  rootId: number;
 }
 
-export default function EditorComponentRow({ rowIndex, rowId }: Props) {
-  const rowCount = useCurrentMessageStore((state) => state.components.length);
-  const components = useCurrentMessageStore(
-    (state) => state.getActionRow(rowIndex)?.components.map((c) => c.id) || [],
+export default function EditorComponentRootActionRow({
+  rootIndex,
+  rootId,
+}: Props) {
+  const rootCount = useCurrentMessageStore((state) => state.components.length);
+  const children = useCurrentMessageStore(
+    (state) => state.getSubComponents(rootIndex).map((c) => c.id) || [],
     shallow
   );
   const isButtonRow = useCurrentMessageStore((state) =>
-    state.getActionRow(rowIndex)?.components.every((c) => c.type === 2)
+    state.getSubComponents(rootIndex).every((c) => c.type === 2)
   );
   const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
     (state) => [
@@ -36,50 +38,50 @@ export default function EditorComponentRow({ rowIndex, rowId }: Props) {
     shallow
   );
 
-  const [addButton, clearButtons] = useCurrentMessageStore(
-    (state) => [state.addButton, state.clearButtons],
+  const [addSubComponent, clearSubComponents] = useCurrentMessageStore(
+    (state) => [state.addSubComponent, state.clearSubComponents],
     shallow
   );
 
   return (
     <div className="bg-dark-3 p-3 rounded-md">
       <Collapsable
-        id={`components.${rowId}`}
-        valiationPathPrefix={`components.${rowIndex}.components`}
-        title={`Row ${rowIndex + 1}`}
+        id={`components.${rootId}`}
+        valiationPathPrefix={`components.${rootIndex}.components`}
+        title="Row"
         size="large"
         buttons={
           <div className="flex-none text-gray-300 flex items-center space-x-2">
-            {rowIndex > 0 && (
+            {rootIndex > 0 && (
               <ChevronUpIcon
                 className="h-6 w-6 flex-none"
                 role="button"
-                onClick={() => moveUp(rowIndex)}
+                onClick={() => moveUp(rootIndex)}
               />
             )}
-            {rowIndex < rowCount - 1 && (
+            {rootIndex < rootCount - 1 && (
               <ChevronDownIcon
                 className="h-6 w-6 flex-none"
                 role="button"
-                onClick={() => moveDown(rowIndex)}
+                onClick={() => moveDown(rootIndex)}
               />
             )}
-            {rowCount < 10 && (
+            {rootCount < 10 && (
               <DocumentDuplicateIcon
                 className="h-5 w-5 flex-none"
                 role="button"
-                onClick={() => duplicate(rowIndex)}
+                onClick={() => duplicate(rootIndex)}
               />
             )}
             <TrashIcon
               className="h-5 w-5 flex-none"
               role="button"
-              onClick={() => remove(rowIndex)}
+              onClick={() => remove(rootIndex)}
             />
           </div>
         }
         extra={
-          <div className="text-gray-500 truncate flex space-x-2 pl-2">
+          <div className="text-gray-500 truncate flex space-x-2 pl-1">
             <div>-</div>
             <div className="truncate">
               {isButtonRow ? "Button Row" : "Select Menu Row"}
@@ -88,33 +90,23 @@ export default function EditorComponentRow({ rowIndex, rowId }: Props) {
         }
       >
         <AutoAnimate>
-          {components.map((id, i) =>
-            isButtonRow ? (
-              <EditorComponentButton
-                key={id}
-                rowIndex={rowIndex}
-                rowId={rowId}
-                compIndex={i}
-                compId={id}
-              ></EditorComponentButton>
-            ) : (
-              <EditorComponentSelectMenu
-                key={id}
-                rowIndex={rowIndex}
-                rowId={rowId}
-                compIndex={i}
-                compId={id}
-              ></EditorComponentSelectMenu>
-            )
-          )}
+          {children.map((id, i) => (
+            <EditorComponentChild
+              key={id}
+              rootIndex={rootIndex}
+              rootId={rootId}
+              childIndex={i}
+              childId={id}
+            />
+          ))}
           {isButtonRow && (
             <div>
               <div className="space-x-3 mt-3">
-                {components.length < 5 ? (
+                {children.length < 5 ? (
                   <button
                     className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white"
                     onClick={() =>
-                      addButton(rowIndex, {
+                      addSubComponent(rootIndex, {
                         id: getUniqueId(),
                         type: 2,
                         style: 2,
@@ -135,7 +127,7 @@ export default function EditorComponentRow({ rowIndex, rowId }: Props) {
                 )}
                 <button
                   className="px-3 py-2 rounded border-2 border-red hover:bg-red transition-colors text-white"
-                  onClick={() => clearButtons(rowIndex)}
+                  onClick={() => clearSubComponents(rootIndex)}
                 >
                   Clear Buttons
                 </button>
