@@ -40,7 +40,7 @@ type ComponentWithActions struct {
 	Options     []ComponentSelectOptionWithActions `json:"options,omitempty"`
 
 	// Section
-	Accessory *discordgo.MessageComponent `json:"accessory,omitempty"`
+	Accessory *ComponentWithActions `json:"accessory,omitempty"`
 
 	// Text Display
 	Content string `json:"content,omitempty"`
@@ -53,7 +53,7 @@ type ComponentWithActions struct {
 	Items []ComponentMediaGalleryItem `json:"items,omitempty"`
 
 	// File
-	File *discordgo.File `json:"file,omitempty"`
+	File *UnfurledMediaItem `json:"file,omitempty"`
 
 	// Separator
 	Divider bool `json:"divider,omitempty"`
