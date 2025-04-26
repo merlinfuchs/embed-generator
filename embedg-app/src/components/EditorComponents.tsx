@@ -7,6 +7,8 @@ import { AutoAnimate } from "../util/autoAnimate";
 import EditorComponentRow from "./EditorComponentRow";
 import Collapsable from "./Collapsable";
 import { useSendSettingsStore } from "../state/sendSettings";
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
+import EditorComponentAddDropdown from "./EditorComponentAddDropdown";
 
 export default function EditorComponents({
   defaultCollapsed = true,
@@ -17,34 +19,9 @@ export default function EditorComponents({
     (state) => state.components.map((e) => e.id),
     shallow
   );
-  const addRow = useCurrentMessageStore((state) => state.addComponentRow);
-  const clearComponents = useCurrentMessageStore(
-    (state) => state.clearComponentRows
+  const clearRootComponents = useCurrentMessageStore(
+    (state) => state.clearRootComponents
   );
-
-  function addButtonRow() {
-    if (components.length >= 5) return;
-    addRow({
-      id: getUniqueId(),
-      type: 1,
-      components: [],
-    });
-  }
-
-  function addSelectMenuRow() {
-    if (components.length >= 5) return;
-    addRow({
-      id: getUniqueId(),
-      type: 1,
-      components: [
-        {
-          id: getUniqueId(),
-          type: 3,
-          options: [],
-        },
-      ],
-    });
-  }
 
   const sendMode = useSendSettingsStore((state) => state.mode);
 
@@ -60,7 +37,7 @@ export default function EditorComponents({
           <div className="text-sm italic font-light text-gray-400">
             {components.length} / 5
           </div>
-          <div className="bg-blurple px-1 rounded text-white text-xs items-center flex items-center font-bold">
+          <div className="bg-blurple px-1 rounded text-white text-xs items-center flex font-bold">
             ADVANCED
           </div>
         </div>
@@ -80,31 +57,11 @@ export default function EditorComponents({
         ))}
       </AutoAnimate>
       <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 items-start">
-        <button
-          className={clsx(
-            "px-3 py-2 rounded text-white",
-            components.length < 5
-              ? "bg-blurple hover:bg-blurple-dark"
-              : "bg-dark-3 cursor-not-allowed"
-          )}
-          onClick={addButtonRow}
-        >
-          Add Button Row
-        </button>
-        <button
-          className={clsx(
-            "px-3 py-2 rounded text-white",
-            components.length < 5
-              ? "bg-blurple hover:bg-blurple-dark"
-              : "bg-dark-3 cursor-not-allowed"
-          )}
-          onClick={addSelectMenuRow}
-        >
-          Add Select Menu
-        </button>
+        <EditorComponentAddDropdown />
+
         <button
           className="px-3 py-2 rounded text-white border-red border-2 hover:bg-red"
-          onClick={clearComponents}
+          onClick={clearRootComponents}
         >
           Clear Rows
         </button>

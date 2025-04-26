@@ -14,6 +14,7 @@ type PlanFeatures struct {
 	AdvancedActionTypes       bool `mapstructure:"advanced_action_types"`
 	AIAssistant               bool `mapstructure:"ai_assistant"`
 	CustomBot                 bool `mapstructure:"custom_bot"`
+	ComponentsV2              bool `mapstructure:"components_v2"`
 	MaxCustomCommands         int  `mapstructure:"max_custom_commands"`
 	IsPremium                 bool `mapstructure:"is_premium"`
 	MaxImageUploadSize        int  `mapstructure:"max_image_upload_size"`
@@ -50,5 +51,6 @@ func (f *PlanFeatures) Merge(b PlanFeatures) {
 	f.AIAssistant = f.AIAssistant || b.AIAssistant
 	f.IsPremium = f.IsPremium || b.IsPremium
 	f.CustomBot = f.CustomBot || b.CustomBot
+	f.ComponentsV2 = f.ComponentsV2 || b.ComponentsV2
 	f.PeriodicScheduledMessages = f.PeriodicScheduledMessages || b.PeriodicScheduledMessages
 }

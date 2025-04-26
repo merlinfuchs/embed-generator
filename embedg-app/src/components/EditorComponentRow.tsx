@@ -28,10 +28,10 @@ export default function EditorComponentRow({ rowIndex, rowId }: Props) {
   );
   const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
     (state) => [
-      state.moveComponentRowUp,
-      state.moveComponentRowDown,
-      state.duplicateComponentRow,
-      state.deleteComponentRow,
+      state.moveRootComponentUp,
+      state.moveRootComponentDown,
+      state.duplicateRootComponent,
+      state.deleteRootComponent,
     ],
     shallow
   );

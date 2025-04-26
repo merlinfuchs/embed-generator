@@ -89,6 +89,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		TTS:             data.TTS,
 		Embeds:          data.Embeds,
 		AllowedMentions: data.AllowedMentions,
+		Flags:           data.Flags,
 	}
 
 	attachments := make([]*discordgo.MessageAttachment, len(req.Attachments))
@@ -166,6 +167,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		TTS:             data.TTS,
 		Embeds:          data.Embeds,
 		AllowedMentions: data.AllowedMentions,
+		Flags:           data.Flags,
 	}
 
 	attachments := make([]*discordgo.MessageAttachment, len(req.Attachments))

@@ -52,6 +52,7 @@ func (b *Bot) SendMessageToChannel(ctx context.Context, channelID string, params
 			Components:      params.Components,
 			Files:           params.Files,
 			AllowedMentions: params.AllowedMentions,
+			Flags:           params.Flags,
 		}, discordgo.WithContext(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("Failed to send message: %w", err)

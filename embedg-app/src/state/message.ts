@@ -12,6 +12,7 @@ import {
   MessageComponentSelectMenu,
   MessageAction,
   Emoji,
+  Component,
 } from "../discord/schema";
 import { getUniqueId } from "../util";
 import { TemporalState, temporal } from "zundo";
@@ -55,12 +56,12 @@ export interface MessageStore extends Message {
   deleteEmbedField: (i: number, j: number) => void;
   duplicateEmbedField: (i: number, j: number) => void;
   clearEmbedFields: (i: number) => void;
-  addComponentRow: (row: MessageComponentActionRow) => void;
-  clearComponentRows: () => void;
-  moveComponentRowUp: (i: number) => void;
-  moveComponentRowDown: (i: number) => void;
-  duplicateComponentRow: (i: number) => void;
-  deleteComponentRow: (i: number) => void;
+  addRootComponent: (component: Component) => void;
+  clearRootComponents: () => void;
+  moveRootComponentUp: (i: number) => void;
+  moveRootComponentDown: (i: number) => void;
+  duplicateRootComponent: (i: number) => void;
+  deleteRootComponent: (i: number) => void;
   addButton: (i: number, button: MessageComponentButton) => void;
   clearButtons: (i: number) => void;
   moveButtonDown: (i: number, j: number) => void;
@@ -193,6 +194,7 @@ export const defaultMessage: Message = {
   ],
   components: [],
   actions: {},
+  flags: 0,
 };
 
 export const emptyMessage: Message = {
@@ -560,15 +562,15 @@ export const createMessageStore = (key: string) =>
                 }
                 embed.fields = [];
               }),
-            addComponentRow: (row: MessageComponentActionRow) =>
+            addRootComponent: (component: Component) =>
               set((state) => {
                 if (!state.components) {
-                  state.components = [row];
+                  state.components = [component];
                 } else {
-                  state.components.push(row);
+                  state.components.push(component);
                 }
               }),
-            clearComponentRows: () =>
+            clearRootComponents: () =>
               set((state) => {
                 for (const row of state.components) {
                   if (row.type !== 1) {
@@ -588,60 +590,65 @@ export const createMessageStore = (key: string) =>
 
                 state.components = [];
               }),
-            moveComponentRowUp: (i: number) =>
+            moveRootComponentUp: (i: number) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const component = state.components && state.components[i];
+                if (!component) {
                   return;
                 }
                 state.components.splice(i, 1);
-                state.components.splice(i - 1, 0, row);
+                state.components.splice(i - 1, 0, component);
               }),
-            moveComponentRowDown: (i: number) =>
+            moveRootComponentDown: (i: number) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const component = state.components && state.components[i];
+                if (!component) {
                   return;
                 }
                 state.components.splice(i, 1);
-                state.components.splice(i + 1, 0, row);
+                state.components.splice(i + 1, 0, component);
               }),
-            duplicateComponentRow: (i: number) =>
+            duplicateRootComponent: (i: number) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
+                const component = state.components && state.components[i];
+                if (!component) {
                   return;
                 }
 
-                // This is a bit complex because we can't allow duplicated action set ids
-                const newRow: MessageComponentActionRow = {
-                  id: getUniqueId(),
-                  type: 1,
-                  components: row.components.map((comp) => {
-                    if (comp.type === 2) {
-                      const actionId = getUniqueId().toString();
-                      state.actions[actionId] = { actions: [] };
-                      return { ...comp, action_set_id: actionId };
-                    } else {
-                      return {
-                        ...comp,
-                        options: comp.options.map((option) => {
-                          const actionId = getUniqueId().toString();
-                          state.actions[actionId] = { actions: [] };
-                          return {
-                            ...option,
-                            action_set_id: actionId,
-                          };
-                        }),
-                      };
-                    }
-                  }),
-                };
+                if (component.type === 1) {
+                  // This is a bit complex because we can't allow duplicated action set ids
+                  const newRow: MessageComponentActionRow = {
+                    id: getUniqueId(),
+                    type: 1,
+                    components: component.components.map((comp) => {
+                      if (comp.type === 2) {
+                        const actionId = getUniqueId().toString();
+                        state.actions[actionId] = { actions: [] };
+                        return { ...comp, action_set_id: actionId };
+                      } else {
+                        return {
+                          ...comp,
+                          options: comp.options.map((option) => {
+                            const actionId = getUniqueId().toString();
+                            state.actions[actionId] = { actions: [] };
+                            return {
+                              ...option,
+                              action_set_id: actionId,
+                            };
+                          }),
+                        };
+                      }
+                    }),
+                  };
 
-                // TODO: change action set ids
-                state.components.splice(i + 1, 0, newRow);
+                  // TODO: change action set ids
+                  state.components.splice(i + 1, 0, newRow);
+                } else {
+                  // TODO: Handle children for grid, etc.
+                  state.components.splice(i + 1, 0, component);
+                }
               }),
-            deleteComponentRow: (i: number) =>
+            deleteRootComponent: (i: number) =>
               set((state) => {
                 const removed = state.components.splice(i, 1);
 
@@ -1247,14 +1254,17 @@ export const createMessageStore = (key: string) =>
               return (flags & (1 << 15)) !== 0;
             },
             setComponentsV2Enabled: (enabled: boolean) => {
-              set((state) => {
-                const currentFlags = state.flags ?? 0;
-                if (enabled) {
-                  state.flags = currentFlags | (1 << 15);
-                } else {
-                  state.flags = currentFlags & ~(1 << 15) || undefined;
-                }
-              });
+              if (enabled) {
+                set({
+                  content: "",
+                  embeds: [],
+                  actions: {},
+                  components: [],
+                  flags: 1 << 15,
+                });
+              } else {
+                set(defaultMessage);
+              }
             },
           }),
           {

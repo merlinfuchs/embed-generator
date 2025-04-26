@@ -15,6 +15,7 @@ type MessageWithActions struct {
 	AllowedMentions *discordgo.MessageAllowedMentions `json:"allowed_mentions,omitempty"`
 	Components      []ComponentWithActions            `json:"components,omitempty"`
 	Actions         map[string]ActionSet              `json:"actions,omitempty"`
+	Flags           discordgo.MessageFlags            `json:"flags,omitempty"`
 }
 
 type ComponentWithActions struct {
