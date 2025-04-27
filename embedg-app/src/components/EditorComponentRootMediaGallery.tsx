@@ -38,7 +38,7 @@ export default function EditorComponentRootMediaGallery({
     <div className="bg-dark-3 p-3 rounded-md">
       <Collapsable
         id={`components.${rootId}`}
-        valiationPathPrefix={`components.${rootIndex}`}
+        validationPathPrefix={`components.${rootIndex}`}
         title="Media Gallery"
         size="large"
         buttons={

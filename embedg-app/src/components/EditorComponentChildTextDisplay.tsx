@@ -52,7 +52,7 @@ export default function EditorComponentChildTextDisplay({
     <div className="bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow border-2 border-dark-5">
       <Collapsable
         id={`components.${rootId}`}
-        valiationPathPrefix={`components.${rootIndex}.components`}
+        validationPathPrefix={`components.${rootIndex}.components`}
         title="Text Display"
         size="large"
         buttons={

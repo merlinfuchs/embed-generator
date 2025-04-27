@@ -12,7 +12,7 @@ interface Props {
   extra?: ReactNode;
   buttons?: ReactNode;
   size?: "medium" | "large";
-  valiationPathPrefix?: string | string[];
+  validationPathPrefix?: string | string[];
   defaultCollapsed?: boolean;
 }
 
@@ -20,17 +20,13 @@ export default function Collapsable({
   id,
   children,
   title,
-  size,
+  size = "medium",
   extra,
   buttons,
-  valiationPathPrefix,
+  validationPathPrefix: valiationPathPrefix,
   defaultCollapsed,
 }: Props) {
   const [collapsed, toggleCollapsed] = useCollapsedState(id, defaultCollapsed);
-
-  if (!size) {
-    size = "medium";
-  }
 
   return (
     <div>

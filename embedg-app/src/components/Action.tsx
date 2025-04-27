@@ -171,7 +171,7 @@ export default function Action({
     <div className="p-3 border-2 border-dark-6 rounded-md">
       <Collapsable
         id={collapsableId}
-        valiationPathPrefix={valiationPathPrefix}
+        validationPathPrefix={valiationPathPrefix}
         title={`Action ${actionIndex + 1}`}
         buttons={
           <div className="flex-none text-gray-300 flex items-center space-x-2">

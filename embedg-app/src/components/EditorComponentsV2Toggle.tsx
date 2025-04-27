@@ -4,7 +4,7 @@ import EditorIconButton from "./EditorIconButton";
 import { SquaresPlusIcon } from "@heroicons/react/20/solid";
 import ConfirmModal from "./ConfirmModal";
 
-export default function EditorComponentsV2Button() {
+export default function EditorComponentsV2Toggle() {
   const componentsV2Enabled = useCurrentMessageStore((s) =>
     s.getComponentsV2Enabled()
   );

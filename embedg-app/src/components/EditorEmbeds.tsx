@@ -20,7 +20,7 @@ export default function EditorEmbeds() {
       id="embeds"
       title="Embeds"
       size="large"
-      valiationPathPrefix="embeds"
+      validationPathPrefix="embeds"
       extra={
         <div className="text-sm italic font-light text-gray-400">
           {embeds.length} / 10

@@ -7,7 +7,7 @@ import {
 import { usePremiumGuildFeatures } from "../util/premium";
 import EditorUndoButtons from "./EditorUndoButtons";
 import EditorIconButton from "./EditorIconButton";
-import EditorComponentsV2Button from "./EditorComponentsV2Button";
+import EditorComponentsV2Toggle from "./EditorComponentsV2Toggle";
 
 export default function EditorMenuBar() {
   const aiAssistantAllowed = usePremiumGuildFeatures()?.ai_assistant;
@@ -28,7 +28,7 @@ export default function EditorMenuBar() {
             <SparklesIcon />
           </EditorIconButton>
         )}
-        {componentsV2Allowed && <EditorComponentsV2Button />}
+        {componentsV2Allowed && <EditorComponentsV2Toggle />}
         <EditorIconButton label="Share Message" href="/editor/share">
           <LinkIcon />
         </EditorIconButton>

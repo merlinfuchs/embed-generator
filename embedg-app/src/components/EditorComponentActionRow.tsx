@@ -1,85 +1,63 @@
-import {
-  ChevronDownIcon,
-  ChevronUpIcon,
-  DocumentDuplicateIcon,
-  TrashIcon,
-} from "@heroicons/react/20/solid";
+import { useMemo } from "react";
 import { shallow } from "zustand/shallow";
 import { useCurrentMessageStore } from "../state/message";
 import { getUniqueId } from "../util";
 import { AutoAnimate } from "../util/autoAnimate";
-import Collapsable from "./Collapsable";
-import EditorComponentChild from "./EditorComponentChild";
+import EditorComponentActionRowButton from "./EditorComponentActionRowButton";
+import EditorComponentActionRowSelectMenu from "./EditorComponentActionRowSelectMenu";
+import EditorComponentCollapsable from "./EditorComponentCollapsable";
 
 interface Props {
   rootIndex: number;
   rootId: number;
 }
 
-export default function EditorComponentRootActionRow({
-  rootIndex,
-  rootId,
-}: Props) {
-  const rootCount = useCurrentMessageStore((state) => state.components.length);
+export default function EditorComponentActionRow({ rootIndex, rootId }: Props) {
+  const componentCount = useCurrentMessageStore(
+    (state) => state.components.length
+  );
   const children = useCurrentMessageStore(
-    (state) => state.getSubComponents(rootIndex).map((c) => c.id) || [],
+    (state) =>
+      state.getActionRow(rootIndex)?.components.map((c) => ({
+        id: c.id,
+        type: c.type,
+      })) || [],
     shallow
   );
-  const isButtonRow = useCurrentMessageStore((state) =>
-    state.getSubComponents(rootIndex).every((c) => c.type === 2)
+  const isButtonRow = useMemo(
+    () => children.every((c) => c.type === 2),
+    [children]
   );
   const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
     (state) => [
-      state.moveRootComponentUp,
-      state.moveRootComponentDown,
-      state.duplicateRootComponent,
-      state.deleteRootComponent,
+      state.moveComponentUp,
+      state.moveComponentDown,
+      state.duplicateActionRow,
+      state.deleteComponent,
     ],
     shallow
   );
 
   const [addSubComponent, clearSubComponents] = useCurrentMessageStore(
-    (state) => [state.addSubComponent, state.clearSubComponents],
+    (state) => [state.addActionRowComponent, state.clearActionRowComponents],
     shallow
   );
 
+  // TODO: Use EditorComponentBaseActionRow
+
   return (
     <div className="bg-dark-3 p-3 rounded-md">
-      <Collapsable
+      <EditorComponentCollapsable
         id={`components.${rootId}`}
-        valiationPathPrefix={`components.${rootIndex}.components`}
+        validationPathPrefix={`components.${rootIndex}.components`}
         title="Row"
         size="large"
-        buttons={
-          <div className="flex-none text-gray-300 flex items-center space-x-2">
-            {rootIndex > 0 && (
-              <ChevronUpIcon
-                className="h-6 w-6 flex-none"
-                role="button"
-                onClick={() => moveUp(rootIndex)}
-              />
-            )}
-            {rootIndex < rootCount - 1 && (
-              <ChevronDownIcon
-                className="h-6 w-6 flex-none"
-                role="button"
-                onClick={() => moveDown(rootIndex)}
-              />
-            )}
-            {rootCount < 10 && (
-              <DocumentDuplicateIcon
-                className="h-5 w-5 flex-none"
-                role="button"
-                onClick={() => duplicate(rootIndex)}
-              />
-            )}
-            <TrashIcon
-              className="h-5 w-5 flex-none"
-              role="button"
-              onClick={() => remove(rootIndex)}
-            />
-          </div>
+        moveUp={rootIndex > 0 ? () => moveUp(rootIndex) : undefined}
+        moveDown={
+          rootIndex < componentCount - 1 ? () => moveDown(rootIndex) : undefined
         }
+        duplicate={componentCount < 5 ? () => duplicate(rootIndex) : undefined}
+        remove={() => remove(rootIndex)}
         extra={
           <div className="text-gray-500 truncate flex space-x-2 pl-1">
             <div>-</div>
@@ -90,15 +68,25 @@ export default function EditorComponentRootActionRow({
         }
       >
         <AutoAnimate>
-          {children.map((id, i) => (
-            <EditorComponentChild
-              key={id}
-              rootIndex={rootIndex}
-              rootId={rootId}
-              childIndex={i}
-              childId={id}
-            />
-          ))}
+          {children.map(({ id, type }, i) =>
+            type === 2 ? (
+              <EditorComponentActionRowButton
+                key={id}
+                rootIndex={rootIndex}
+                rootId={rootId}
+                childIndex={i}
+                childId={id}
+              />
+            ) : (
+              <EditorComponentActionRowSelectMenu
+                key={id}
+                rootIndex={rootIndex}
+                rootId={rootId}
+                childIndex={i}
+                childId={id}
+              />
+            )
+          )}
           {isButtonRow && (
             <div>
               <div className="space-x-3 mt-3">
@@ -135,7 +123,7 @@ export default function EditorComponentRootActionRow({
             </div>
           )}
         </AutoAnimate>
-      </Collapsable>
+      </EditorComponentCollapsable>
     </div>
   );
 }

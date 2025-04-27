@@ -59,7 +59,7 @@ export default function EditorEmbed({ embedIndex, embedId }: Props) {
       <Collapsable
         title={`Embed ${embedIndex + 1}`}
         id={`embeds.${embedId}`}
-        valiationPathPrefix={`embeds.${embedIndex}`}
+        validationPathPrefix={`embeds.${embedIndex}`}
         size="large"
         defaultCollapsed={true}
         extra={

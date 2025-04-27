@@ -36,7 +36,7 @@ export default function ActionSet({ cmdId }: Props) {
   return (
     <Collapsable
       id={`actions.${cmdId}`}
-      valiationPathPrefix={`actions.${cmdId}`}
+      validationPathPrefix={`actions.${cmdId}`}
       title="Actions"
       extra={
         <div className="text-sm italic font-light text-gray-400">

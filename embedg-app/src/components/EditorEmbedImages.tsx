@@ -26,7 +26,7 @@ export default function EditorEmbedImages({ embedIndex, embedId }: Props) {
     <Collapsable
       title="Images"
       id={`embeds.${embedId}.images`}
-      valiationPathPrefix={[
+      validationPathPrefix={[
         `embeds.${embedIndex}.image`,
         `embeds.${embedIndex}.thumbnail`,
       ]}

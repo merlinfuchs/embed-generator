@@ -313,7 +313,9 @@ export const componentTextDisplaySchema = z.object({
   content: z.string().min(1),
 });
 
-export type ComponentTextDisplay = z.infer<typeof componentTextDisplaySchema>;
+export type MessageComponentTextDisplay = z.infer<
+  typeof componentTextDisplaySchema
+>;
 
 export const componentThumbnailSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
@@ -323,7 +325,9 @@ export const componentThumbnailSchema = z.object({
   spoiler: z.optional(z.boolean()),
 });
 
-export type ComponentThumbnail = z.infer<typeof componentThumbnailSchema>;
+export type MessageComponentThumbnail = z.infer<
+  typeof componentThumbnailSchema
+>;
 
 export const componentSectionSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
@@ -332,7 +336,7 @@ export const componentSectionSchema = z.object({
   accessory: z.union([componentThumbnailSchema, componentButtonSchema]),
 });
 
-export type ComponentSection = z.infer<typeof componentSectionSchema>;
+export type MessageComponentSection = z.infer<typeof componentSectionSchema>;
 
 export const componentMediaGalleryItemSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
@@ -347,7 +351,9 @@ export const componentMediaGallerySchema = z.object({
   items: z.array(componentMediaGalleryItemSchema).min(1).max(10),
 });
 
-export type ComponentMediaGallery = z.infer<typeof componentMediaGallerySchema>;
+export type MessageComponentMediaGallery = z.infer<
+  typeof componentMediaGallerySchema
+>;
 
 export const componentFileSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
@@ -356,7 +362,7 @@ export const componentFileSchema = z.object({
   spoiler: z.optional(z.boolean()),
 });
 
-export type ComponentFile = z.infer<typeof componentFileSchema>;
+export type MessageComponentFile = z.infer<typeof componentFileSchema>;
 
 export const componentSeparatorSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
@@ -365,7 +371,9 @@ export const componentSeparatorSchema = z.object({
   spacing: z.union([z.literal(1), z.literal(2)]).default(1),
 });
 
-export type ComponentSeparator = z.infer<typeof componentSeparatorSchema>;
+export type MessageComponentSeparator = z.infer<
+  typeof componentSeparatorSchema
+>;
 
 export const componentContainerSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
@@ -387,7 +395,9 @@ export const componentContainerSchema = z.object({
   spoiler: z.optional(z.boolean()),
 });
 
-export type ComponentContainer = z.infer<typeof componentContainerSchema>;
+export type MessageComponentContainer = z.infer<
+  typeof componentContainerSchema
+>;
 
 export const componentSchema = z.union([
   componentActionRowSchema,
@@ -402,7 +412,7 @@ export const componentSchema = z.union([
   componentContainerSchema,
 ]);
 
-export type Component = z.infer<typeof componentSchema>;
+export type MessageComponent = z.infer<typeof componentSchema>;
 
 export const messageActionSchema = z
   .object({

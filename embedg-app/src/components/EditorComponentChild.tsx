@@ -1,10 +1,6 @@
 import { useCurrentMessageStore } from "../state/message";
-import EditorComponentMediaGallery from "./EditorComponentRootMediaGallery";
-import EditorComponentActionRow from "./EditorComponentRootActionRow";
-import EditorComponentTextDisplay from "./EditorComponentRootTextDisplay";
-import EditorComponentSection from "./EditorComponentRootSection";
-import EditorComponentChildButton from "./EditorComponentChildButton";
-import EditorComponentChildSelectMenu from "./EditorComponentChildSelectMenu";
+import EditorComponentActionRowButton from "./EditorComponentActionRowButton";
+import EditorComponentActionRowSelectMenu from "./EditorComponentActionRowSelectMenu";
 import EditorComponentChildTextDisplay from "./EditorComponentChildTextDisplay";
 
 interface Props {
@@ -34,7 +30,7 @@ export default function EditorComponentChild({
 
   if (child.type === 2) {
     return (
-      <EditorComponentChildButton
+      <EditorComponentActionRowButton
         rootIndex={rootIndex}
         rootId={rootId}
         childIndex={childIndex}
@@ -43,7 +39,7 @@ export default function EditorComponentChild({
     );
   } else if (child.type === 3) {
     return (
-      <EditorComponentChildSelectMenu
+      <EditorComponentActionRowSelectMenu
         rootIndex={rootIndex}
         rootId={rootId}
         childIndex={childIndex}

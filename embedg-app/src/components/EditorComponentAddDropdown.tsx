@@ -1,4 +1,4 @@
-import { ChevronDownIcon } from "@heroicons/react/20/solid";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
 import { useCurrentMessageStore } from "../state/message";
 import { getUniqueId } from "../util";
@@ -7,15 +7,13 @@ import ClickOutsideHandler from "./ClickOutsideHandler";
 
 export default function EditorComponentAddDropdown() {
   const components = useCurrentMessageStore((state) => state.components);
-  const addRootComponent = useCurrentMessageStore(
-    (state) => state.addRootComponent
-  );
+  const addComponent = useCurrentMessageStore((state) => state.addComponent);
 
   const [open, setOpen] = useState(false);
 
   function addButtonRow() {
     setOpen(false);
-    addRootComponent({
+    addComponent({
       id: getUniqueId(),
       type: 1,
       components: [],
@@ -24,7 +22,7 @@ export default function EditorComponentAddDropdown() {
 
   function addSelectMenuRow() {
     setOpen(false);
-    addRootComponent({
+    addComponent({
       id: getUniqueId(),
       type: 1,
       components: [
@@ -39,7 +37,7 @@ export default function EditorComponentAddDropdown() {
 
   function addSection() {
     setOpen(false);
-    addRootComponent({
+    addComponent({
       id: getUniqueId(),
       type: 9,
       components: [],
@@ -57,7 +55,7 @@ export default function EditorComponentAddDropdown() {
 
   function addTextDisplay() {
     setOpen(false);
-    addRootComponent({
+    addComponent({
       id: getUniqueId(),
       type: 10,
       content: "",
@@ -66,7 +64,7 @@ export default function EditorComponentAddDropdown() {
 
   function addMediaGallery() {
     setOpen(false);
-    addRootComponent({
+    addComponent({
       id: getUniqueId(),
       type: 12,
       items: [],
@@ -89,10 +87,10 @@ export default function EditorComponentAddDropdown() {
           }}
         >
           <div>Add Component</div>
-          <ChevronDownIcon className="w-5 h-5" />
+          <ChevronUpIcon className="w-5 h-5" />
         </button>
         {open && (
-          <div className="absolute bg-dark-2 top-full mt-1 left-0 rounded shadow-lg border-2 border-dark-2 z-10 text-white">
+          <div className="absolute bg-dark-2 bottom-full mb-1 left-0 rounded shadow-lg border-2 border-dark-2 z-10 text-white">
             <button
               className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left"
               onClick={addButtonRow}

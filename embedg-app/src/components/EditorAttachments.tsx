@@ -58,7 +58,7 @@ export default function EditorAttachments() {
       title="Attachments"
       size="large"
       defaultCollapsed={true}
-      valiationPathPrefix="attachments"
+      validationPathPrefix="attachments"
       extra={
         <div className="flex space-x-2">
           <div className="text-sm italic font-light text-gray-400">

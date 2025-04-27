@@ -32,7 +32,7 @@ export default function CustomCommandParameters({
   return (
     <Collapsable
       id={`command.${cmdId}.parameters`}
-      valiationPathPrefix={`actions.${cmdId}`}
+      validationPathPrefix={`actions.${cmdId}`}
       title="Arguments"
       extra={
         <div className="text-sm italic font-light text-gray-400">

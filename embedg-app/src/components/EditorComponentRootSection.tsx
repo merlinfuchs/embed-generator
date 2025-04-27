@@ -10,6 +10,7 @@ import { getUniqueId } from "../util";
 import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";
 import EditorComponentChild from "./EditorComponentChild";
+import EditorComponentSectionAccessory from "./EditorComponentSectionAccessory";
 
 interface Props {
   rootIndex: number;
@@ -20,6 +21,7 @@ export default function EditorComponentRootSection({
   rootIndex,
   rootId,
 }: Props) {
+  return null;
   const rootCount = useCurrentMessageStore((state) => state.components.length);
   const children = useCurrentMessageStore(
     (state) => state.getSubComponents(rootIndex).map((c) => c.id) || [],
@@ -47,7 +49,7 @@ export default function EditorComponentRootSection({
     <div className="bg-dark-3 p-3 rounded-md">
       <Collapsable
         id={`components.${rootId}`}
-        valiationPathPrefix={`components.${rootIndex}.components`}
+        validationPathPrefix={`components.${rootIndex}.components`}
         title="Section"
         size="large"
         buttons={
@@ -82,6 +84,11 @@ export default function EditorComponentRootSection({
         }
       >
         <AutoAnimate>
+          <EditorComponentSectionAccessory
+            rootIndex={rootIndex}
+            rootId={rootId}
+          />
+
           {children.map((id, i) => (
             <EditorComponentChild
               key={id}
