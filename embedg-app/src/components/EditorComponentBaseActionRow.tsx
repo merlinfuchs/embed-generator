@@ -20,31 +20,29 @@ interface Props {
   moveUp: () => void;
   moveDown: () => void;
   remove: () => void;
-  addSubComponent: (component: MessageComponentButton) => void;
+  addSubComponent: (
+    component: MessageComponentButton | MessageComponentSelectMenu
+  ) => void;
   clearSubComponents: () => void;
   moveSubComponentUp: (index: number) => void;
   moveSubComponentDown: (index: number) => void;
   deleteSubComponent: (index: number) => void;
-  onButtonChange: (
+  onSubComponentChange: (
     index: number,
-    data: Partial<MessageComponentButton>
+    data: Partial<MessageComponentButton | MessageComponentSelectMenu>
   ) => void;
-  duplicateButton: (index: number) => void;
-  onSelectMenuChange: (
-    index: number,
-    data: Partial<MessageComponentSelectMenu>
-  ) => void;
+  duplicateSubComponent: (index: number) => void;
   onSelectMenuOptionChange: (
-    index: number,
-    optionIndex: number,
+    a: number,
+    o: number,
     data: Partial<MessageComponentSelectMenuOption>
   ) => void;
-  addSelectMenuOption: (index: number) => void;
-  duplicateSelectMenuOption: (index: number) => void;
-  moveSelectMenuOptionUp: (index: number) => void;
-  moveSelectMenuOptionDown: (index: number) => void;
-  removeSelectMenuOption: (index: number) => void;
-  clearSelectMenuOptions: (index: number) => void;
+  addSelectMenuOption: (k: number) => void;
+  duplicateSelectMenuOption: (k: number, o: number) => void;
+  moveSelectMenuOptionUp: (k: number, o: number) => void;
+  moveSelectMenuOptionDown: (k: number, o: number) => void;
+  removeSelectMenuOption: (k: number, o: number) => void;
+  clearSelectMenuOptions: (k: number) => void;
 }
 
 export default function EditorComponentBaseActionRow({
@@ -61,9 +59,8 @@ export default function EditorComponentBaseActionRow({
   moveSubComponentUp,
   moveSubComponentDown,
   deleteSubComponent,
-  onButtonChange,
-  duplicateButton,
-  onSelectMenuChange,
+  onSubComponentChange,
+  duplicateSubComponent,
   onSelectMenuOptionChange,
   addSelectMenuOption,
   duplicateSelectMenuOption,
@@ -78,95 +75,93 @@ export default function EditorComponentBaseActionRow({
   );
 
   return (
-    <div className="bg-dark-3 p-3 rounded-md">
-      <EditorComponentCollapsable
-        id={id}
-        validationPathPrefix={validationPathPrefix}
-        title={title}
-        size="large"
-        moveUp={moveUp}
-        moveDown={moveDown}
-        duplicate={duplicate}
-        remove={remove}
-        extra={
-          <div className="text-gray-500 truncate flex space-x-2 pl-1">
-            <div>-</div>
-            <div className="truncate">
-              {isButtonRow ? "Buttons" : "Select Menu"}
+    <EditorComponentCollapsable
+      id={id}
+      validationPathPrefix={validationPathPrefix}
+      title={title}
+      size="large"
+      moveUp={moveUp}
+      moveDown={moveDown}
+      duplicate={duplicate}
+      remove={remove}
+      extra={
+        <div className="text-gray-500 truncate flex space-x-2 pl-1">
+          <div>-</div>
+          <div className="truncate">
+            {isButtonRow ? "Buttons" : "Select Menu"}
+          </div>
+        </div>
+      }
+    >
+      <AutoAnimate>
+        {data.components.map((child, i) =>
+          child.type === 2 ? (
+            <EditorComponentBaseButton
+              key={child.id}
+              id={`${id}.components.${child.id}`}
+              validationPathPrefix={`${validationPathPrefix}.components.${i}`}
+              data={child}
+              onChange={(data) => onSubComponentChange(i, data)}
+              duplicate={() => duplicateSubComponent(i)}
+              moveUp={() => moveSubComponentUp(i)}
+              moveDown={() => moveSubComponentDown(i)}
+              remove={() => deleteSubComponent(i)}
+            />
+          ) : (
+            <EditorComponentBaseSelectMenu
+              key={child.id}
+              id={`${id}.components.${child.id}`}
+              validationPathPrefix={`${validationPathPrefix}.components.${i}`}
+              data={child}
+              onChange={(data) => onSubComponentChange(i, data)}
+              onOptionChange={(index, data) =>
+                onSelectMenuOptionChange(i, index, data)
+              }
+              addOption={() => addSelectMenuOption(i)}
+              duplicateOption={(o) => duplicateSelectMenuOption(i, o)}
+              moveOptionUp={(o) => moveSelectMenuOptionUp(i, o)}
+              moveOptionDown={(o) => moveSelectMenuOptionDown(i, o)}
+              removeOption={(o) => removeSelectMenuOption(i, o)}
+              clearOptions={() => clearSelectMenuOptions(i)}
+            />
+          )
+        )}
+        {isButtonRow && (
+          <div>
+            <div className="space-x-3 mt-3">
+              {data.components.length < 5 ? (
+                <button
+                  className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white"
+                  onClick={() =>
+                    addSubComponent({
+                      id: getUniqueId(),
+                      type: 2,
+                      style: 2,
+                      label: "",
+                      action_set_id: getUniqueId().toString(),
+                    })
+                  }
+                >
+                  Add Button
+                </button>
+              ) : (
+                <button
+                  disabled
+                  className="bg-dark-2 px-3 py-2 rounded transition-colors cursor-not-allowed text-gray-300"
+                >
+                  Add Button
+                </button>
+              )}
+              <button
+                className="px-3 py-2 rounded border-2 border-red hover:bg-red transition-colors text-white"
+                onClick={clearSubComponents}
+              >
+                Clear Buttons
+              </button>
             </div>
           </div>
-        }
-      >
-        <AutoAnimate>
-          {data.components.map((child, i) =>
-            child.type === 2 ? (
-              <EditorComponentBaseButton
-                key={child.id}
-                id={`${id}.components.${child.id}`}
-                validationPathPrefix={`${validationPathPrefix}.components.${i}`}
-                data={child}
-                onChange={(data) => onButtonChange(i, data)}
-                duplicate={() => duplicateButton(i)}
-                moveUp={() => moveSubComponentUp(i)}
-                moveDown={() => moveSubComponentDown(i)}
-                remove={() => deleteSubComponent(i)}
-              />
-            ) : (
-              <EditorComponentBaseSelectMenu
-                key={child.id}
-                id={`${id}.components.${child.id}`}
-                validationPathPrefix={`${validationPathPrefix}.components.${i}`}
-                data={child}
-                onChange={(data) => onSelectMenuChange(i, data)}
-                onOptionChange={(index, data) =>
-                  onSelectMenuOptionChange(i, index, data)
-                }
-                addOption={() => addSelectMenuOption(i)}
-                duplicateOption={() => duplicateSelectMenuOption(i)}
-                moveOptionUp={() => moveSelectMenuOptionUp(i)}
-                moveOptionDown={() => moveSelectMenuOptionDown(i)}
-                removeOption={() => removeSelectMenuOption(i)}
-                clearOptions={() => clearSelectMenuOptions(i)}
-              />
-            )
-          )}
-          {isButtonRow && (
-            <div>
-              <div className="space-x-3 mt-3">
-                {data.components.length < 5 ? (
-                  <button
-                    className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white"
-                    onClick={() =>
-                      addSubComponent({
-                        id: getUniqueId(),
-                        type: 2,
-                        style: 2,
-                        label: "",
-                        action_set_id: getUniqueId().toString(),
-                      })
-                    }
-                  >
-                    Add Button
-                  </button>
-                ) : (
-                  <button
-                    disabled
-                    className="bg-dark-2 px-3 py-2 rounded transition-colors cursor-not-allowed text-gray-300"
-                  >
-                    Add Button
-                  </button>
-                )}
-                <button
-                  className="px-3 py-2 rounded border-2 border-red hover:bg-red transition-colors text-white"
-                  onClick={clearSubComponents}
-                >
-                  Clear Buttons
-                </button>
-              </div>
-            </div>
-          )}
-        </AutoAnimate>
-      </EditorComponentCollapsable>
-    </div>
+        )}
+      </AutoAnimate>
+    </EditorComponentCollapsable>
   );
 }

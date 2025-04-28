@@ -48,69 +48,67 @@ export default function EditorComponentBaseMediaGallery({
   duplicateItem,
 }: Props) {
   return (
-    <div className="bg-dark-3 p-3 rounded-md">
-      <EditorComponentCollapsable
-        id={id}
-        validationPathPrefix={validationPathPrefix}
-        title={title}
-        size="large"
-        moveUp={moveUp}
-        moveDown={moveDown}
-        duplicate={duplicate}
-        remove={remove}
-      >
-        <AutoAnimate>
-          {data.items.map((child, i) => (
-            <div
-              className="bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow border-2 border-dark-5"
-              key={child.id}
-            >
-              <EditorComponentBaseMediaGalleryItem
-                id={`${id}.items.${child.id}`}
-                validationPathPrefix={`${validationPathPrefix}.items.${i}`}
-                data={child}
-                onChange={(data) => onItemChange(i, data)}
-                duplicate={() => duplicateItem(i)}
-                moveUp={() => moveItemUp(i)}
-                moveDown={() => moveItemDown(i)}
-                remove={() => deleteItem(i)}
-              />
-            </div>
-          ))}
-          <div>
-            <div className="space-x-3 mt-3">
-              {data.items.length < 10 ? (
-                <button
-                  className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white"
-                  onClick={() =>
-                    addItem({
-                      id: getUniqueId(),
-                      media: {
-                        url: "",
-                      },
-                    })
-                  }
-                >
-                  Add Item
-                </button>
-              ) : (
-                <button
-                  disabled
-                  className="bg-dark-2 px-3 py-2 rounded transition-colors cursor-not-allowed text-gray-300"
-                >
-                  Add Item
-                </button>
-              )}
-              <button
-                className="px-3 py-2 rounded border-2 border-red hover:bg-red transition-colors text-white"
-                onClick={clearItems}
-              >
-                Clear Items
-              </button>
-            </div>
+    <EditorComponentCollapsable
+      id={id}
+      validationPathPrefix={validationPathPrefix}
+      title={title}
+      size="large"
+      moveUp={moveUp}
+      moveDown={moveDown}
+      duplicate={duplicate}
+      remove={remove}
+    >
+      <AutoAnimate>
+        {data.items.map((child, i) => (
+          <div
+            className="bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow border-2 border-dark-5"
+            key={child.id}
+          >
+            <EditorComponentBaseMediaGalleryItem
+              id={`${id}.items.${child.id}`}
+              validationPathPrefix={`${validationPathPrefix}.items.${i}`}
+              data={child}
+              onChange={(data) => onItemChange(i, data)}
+              duplicate={() => duplicateItem(i)}
+              moveUp={() => moveItemUp(i)}
+              moveDown={() => moveItemDown(i)}
+              remove={() => deleteItem(i)}
+            />
           </div>
-        </AutoAnimate>
-      </EditorComponentCollapsable>
-    </div>
+        ))}
+        <div>
+          <div className="space-x-3 mt-3">
+            {data.items.length < 10 ? (
+              <button
+                className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white"
+                onClick={() =>
+                  addItem({
+                    id: getUniqueId(),
+                    media: {
+                      url: "",
+                    },
+                  })
+                }
+              >
+                Add Item
+              </button>
+            ) : (
+              <button
+                disabled
+                className="bg-dark-2 px-3 py-2 rounded transition-colors cursor-not-allowed text-gray-300"
+              >
+                Add Item
+              </button>
+            )}
+            <button
+              className="px-3 py-2 rounded border-2 border-red hover:bg-red transition-colors text-white"
+              onClick={clearItems}
+            >
+              Clear Items
+            </button>
+          </div>
+        </div>
+      </AutoAnimate>
+    </EditorComponentCollapsable>
   );
 }

@@ -15,13 +15,13 @@ interface Props {
   onChange: (data: Partial<MessageComponentSelectMenu>) => void;
 
   addOption: () => void;
-  moveOptionUp: (index: number) => void;
-  moveOptionDown: (index: number) => void;
-  duplicateOption: (index: number) => void;
-  removeOption: (index: number) => void;
+  moveOptionUp: (o: number) => void;
+  moveOptionDown: (o: number) => void;
+  duplicateOption: (o: number) => void;
+  removeOption: (o: number) => void;
   clearOptions: () => void;
   onOptionChange: (
-    index: number,
+    o: number,
     data: Partial<MessageComponentSelectMenuOption>
   ) => void;
 }

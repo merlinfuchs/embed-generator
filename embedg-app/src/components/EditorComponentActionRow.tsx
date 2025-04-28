@@ -68,53 +68,54 @@ export default function EditorComponentActionRow({ rootIndex, rootId }: Props) {
   }
 
   return (
-    <EditorComponentBaseActionRow
-      id={`components.${rootId}`}
-      validationPathPrefix={`components.${rootIndex}`}
-      data={actionRow}
-      duplicate={() => duplicate(rootIndex)}
-      moveUp={rootIndex > 0 ? () => moveUp(rootIndex) : () => {}}
-      moveDown={
-        rootIndex < componentCount - 1 ? () => moveDown(rootIndex) : () => {}
-      }
-      remove={() => remove(rootIndex)}
-      addSubComponent={(component) => addSubComponent(rootIndex, component)}
-      clearSubComponents={() => clearSubComponents(rootIndex)}
-      moveSubComponentUp={(index) => moveSubComponentUp(rootIndex, index)}
-      moveSubComponentDown={(index) => moveSubComponentDown(rootIndex, index)}
-      deleteSubComponent={(index) => deleteSubComponent(rootIndex, index)}
-      onButtonChange={(index, data) =>
-        updateActionRowComponent(rootIndex, index, data)
-      }
-      duplicateButton={(index) => duplicateActionRowComponent(rootIndex, index)}
-      onSelectMenuChange={(index, data) =>
-        updateActionRowComponent(rootIndex, index, data)
-      }
-      onSelectMenuOptionChange={(index, optionIndex, data) =>
-        updateActionRowSelectMenuOption(rootIndex, index, optionIndex, data)
-      }
-      addSelectMenuOption={(index) =>
-        addActionRowSelectMenuOption(rootIndex, index, {
-          id: getUniqueId(),
-          label: "",
-          action_set_id: getUniqueId().toString(),
-        })
-      }
-      duplicateSelectMenuOption={(index) =>
-        duplicateActionRowSelectMenuOption(rootIndex, index, 0)
-      }
-      moveSelectMenuOptionUp={(index) =>
-        moveActionRowSelectMenuOptionUp(rootIndex, index, 0)
-      }
-      moveSelectMenuOptionDown={(index) =>
-        moveActionRowSelectMenuOptionDown(rootIndex, index, 0)
-      }
-      removeSelectMenuOption={(index) =>
-        deleteActionRowSelectMenuOption(rootIndex, index, 0)
-      }
-      clearSelectMenuOptions={(index) =>
-        clearActionRowSelectMenuOptions(rootIndex, index)
-      }
-    />
+    <div className="bg-dark-3 p-3 rounded-md">
+      <EditorComponentBaseActionRow
+        id={`components.${rootId}`}
+        validationPathPrefix={`components.${rootIndex}`}
+        data={actionRow}
+        duplicate={() => duplicate(rootIndex)}
+        moveUp={rootIndex > 0 ? () => moveUp(rootIndex) : () => {}}
+        moveDown={
+          rootIndex < componentCount - 1 ? () => moveDown(rootIndex) : () => {}
+        }
+        remove={() => remove(rootIndex)}
+        addSubComponent={(component) => addSubComponent(rootIndex, component)}
+        clearSubComponents={() => clearSubComponents(rootIndex)}
+        moveSubComponentUp={(index) => moveSubComponentUp(rootIndex, index)}
+        moveSubComponentDown={(index) => moveSubComponentDown(rootIndex, index)}
+        deleteSubComponent={(index) => deleteSubComponent(rootIndex, index)}
+        onSubComponentChange={(index, data) =>
+          updateActionRowComponent(rootIndex, index, data)
+        }
+        duplicateSubComponent={(index) =>
+          duplicateActionRowComponent(rootIndex, index)
+        }
+        onSelectMenuOptionChange={(index, optionIndex, data) =>
+          updateActionRowSelectMenuOption(rootIndex, index, optionIndex, data)
+        }
+        addSelectMenuOption={(index) =>
+          addActionRowSelectMenuOption(rootIndex, index, {
+            id: getUniqueId(),
+            label: "",
+            action_set_id: getUniqueId().toString(),
+          })
+        }
+        duplicateSelectMenuOption={(index) =>
+          duplicateActionRowSelectMenuOption(rootIndex, index, 0)
+        }
+        moveSelectMenuOptionUp={(index) =>
+          moveActionRowSelectMenuOptionUp(rootIndex, index, 0)
+        }
+        moveSelectMenuOptionDown={(index) =>
+          moveActionRowSelectMenuOptionDown(rootIndex, index, 0)
+        }
+        removeSelectMenuOption={(index) =>
+          deleteActionRowSelectMenuOption(rootIndex, index, 0)
+        }
+        clearSelectMenuOptions={(index) =>
+          clearActionRowSelectMenuOptions(rootIndex, index)
+        }
+      />
+    </div>
   );
 }

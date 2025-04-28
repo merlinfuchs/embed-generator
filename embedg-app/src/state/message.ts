@@ -1,29 +1,28 @@
+import debounce from "just-debounce-it";
+import { TemporalState, temporal } from "zundo";
 import { create, useStore } from "zustand";
 import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import {
-  MessageComponentButtonStyle,
   EmbedField,
   Message,
-  MessageComponentActionRow,
-  MessageComponentButton,
-  MessageEmbed,
-  MessageComponentSelectMenuOption,
-  MessageComponentSelectMenu,
   MessageAction,
   MessageComponent,
-  MessageComponentTextDisplay,
-  MessageComponentSection,
-  MessageComponentSeparator,
+  MessageComponentActionRow,
+  MessageComponentButton,
+  MessageComponentContainer,
+  MessageComponentContainerSubComponent,
   MessageComponentFile,
   MessageComponentMediaGallery,
   MessageComponentMediaGalleryItem,
-  MessageComponentContainer,
-  MessageComponentContainerSubComponent,
+  MessageComponentSection,
+  MessageComponentSelectMenu,
+  MessageComponentSelectMenuOption,
+  MessageComponentSeparator,
+  MessageComponentTextDisplay,
+  MessageEmbed,
 } from "../discord/schema";
 import { getUniqueId } from "../util";
-import { TemporalState, temporal } from "zundo";
-import debounce from "just-debounce-it";
 
 export interface MessageStore extends Message {
   clear(): void;
@@ -173,6 +172,106 @@ export interface MessageStore extends Message {
     data: Partial<MessageComponentContainerSubComponent>
   ) => void;
   duplicateContainerComponent: (i: number, j: number) => void;
+
+  addContainerActionRowComponent: (
+    c: number,
+    a: number,
+    component: MessageComponentButton | MessageComponentSelectMenu
+  ) => void;
+  clearContainerRowActionComponents: (c: number, a: number) => void;
+  moveContainerActionRowComponentUp: (c: number, a: number, k: number) => void;
+  moveContainerActionRowComponentDown: (
+    c: number,
+    a: number,
+    k: number
+  ) => void;
+  deleteContainerActionRowComponent: (c: number, a: number, k: number) => void;
+  duplicateContainerActionRowComponent: (
+    c: number,
+    a: number,
+    k: number
+  ) => void;
+  updateContainerActionRowComponent: (
+    c: number,
+    a: number,
+    k: number,
+    data: Partial<MessageComponentButton | MessageComponentSelectMenu>
+  ) => void;
+  addContainerActionRowSelectMenuOption: (
+    c: number,
+    a: number,
+    k: number
+  ) => void;
+  updateContainerActionRowSelectMenuOption: (
+    c: number,
+    a: number,
+    k: number,
+    o: number,
+    data: Partial<MessageComponentSelectMenuOption>
+  ) => void;
+  duplicateContainerActionRowSelectMenuOption: (
+    c: number,
+    a: number,
+    k: number,
+    o: number
+  ) => void;
+  moveContainerActionRowSelectMenuOptionUp: (
+    c: number,
+    a: number,
+    k: number,
+    o: number
+  ) => void;
+  moveContainerActionRowSelectMenuOptionDown: (
+    c: number,
+    a: number,
+    k: number,
+    o: number
+  ) => void;
+  removeContainerActionRowSelectMenuOption: (
+    c: number,
+    a: number,
+    k: number,
+    o: number
+  ) => void;
+  clearContainerActionRowSelectMenuOptions: (
+    c: number,
+    a: number,
+    k: number
+  ) => void;
+
+  addContainerSectionComponent: (
+    i: number,
+    j: number,
+    component: MessageComponentTextDisplay
+  ) => void;
+  clearContainerSectionComponents: (i: number, j: number) => void;
+  moveContainerSectionComponentUp: (i: number, j: number, k: number) => void;
+  moveContainerSectionComponentDown: (i: number, j: number, k: number) => void;
+  deleteContainerSectionComponent: (i: number, j: number, k: number) => void;
+  updateContainerSectionComponent: (
+    i: number,
+    j: number,
+    k: number,
+    data: Partial<MessageComponentContainerSubComponent>
+  ) => void;
+  duplicateContainerSectionComponent: (i: number, j: number, k: number) => void;
+
+  addContainerMediaGalleryItem: (
+    i: number,
+    j: number,
+    component: MessageComponentMediaGalleryItem
+  ) => void;
+  clearContainerMediaGalleryItems: (i: number, j: number) => void;
+  moveContainerMediaGalleryItemUp: (i: number, j: number, k: number) => void;
+  moveContainerMediaGalleryItemDown: (i: number, j: number, k: number) => void;
+  deleteContainerMediaGalleryItem: (i: number, j: number, k: number) => void;
+  updateContainerMediaGalleryItem: (
+    i: number,
+    j: number,
+    k: number,
+    data: Partial<MessageComponentMediaGalleryItem>
+  ) => void;
+  duplicateContainerMediaGalleryItem: (i: number, j: number, k: number) => void;
 
   addAction: (id: string, action: MessageAction) => void;
   clearActions: (id: string) => void;
@@ -1411,6 +1510,394 @@ export const createMessageStore = (key: string) =>
                 }
                 const newComponent = { ...component, id: getUniqueId() };
                 container.components.splice(j + 1, 0, newComponent);
+              }),
+
+            addContainerActionRowComponent: (c, a, component) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    actionRow.components.push(component);
+                  }
+                }
+              }),
+
+            clearContainerRowActionComponents: (c, a) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    actionRow.components = [];
+                  }
+                }
+              }),
+
+            moveContainerActionRowComponentUp: (c, a, k) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1 && k > 0) {
+                    const component = actionRow.components[k];
+                    actionRow.components[k] = actionRow.components[k - 1];
+                    actionRow.components[k - 1] = component;
+                  }
+                }
+              }),
+
+            moveContainerActionRowComponentDown: (c, a, k) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (
+                    actionRow?.type === 1 &&
+                    k < actionRow.components.length - 1
+                  ) {
+                    const component = actionRow.components[k];
+                    actionRow.components[k] = actionRow.components[k + 1];
+                    actionRow.components[k + 1] = component;
+                  }
+                }
+              }),
+
+            deleteContainerActionRowComponent: (c, a, k) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    actionRow.components.splice(k, 1);
+                  }
+                }
+              }),
+
+            duplicateContainerActionRowComponent: (c, a, k) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    const component = actionRow.components[k];
+                    // TODO: handle select menus
+                    if (component.type === 2) {
+                      actionRow.components.splice(k + 1, 0, {
+                        ...component,
+                        id: getUniqueId(),
+                        action_set_id: getUniqueId().toString(),
+                      });
+                    }
+                  }
+                }
+              }),
+
+            updateContainerActionRowComponent: (c, a, k, data) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    Object.assign(actionRow.components[k], data);
+                  }
+                }
+              }),
+
+            addContainerActionRowSelectMenuOption: (c, a, k) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    const selectMenu = actionRow.components[k];
+                    if (selectMenu?.type === 3) {
+                      selectMenu.options.push({
+                        id: getUniqueId(),
+                        label: "",
+                        action_set_id: getUniqueId().toString(),
+                      });
+                    }
+                  }
+                }
+              }),
+
+            updateContainerActionRowSelectMenuOption: (c, a, k, o, data) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    const selectMenu = actionRow.components[k];
+                    if (selectMenu?.type === 3) {
+                      selectMenu.options[o] = {
+                        ...selectMenu.options[o],
+                        ...data,
+                      };
+                    }
+                  }
+                }
+              }),
+
+            duplicateContainerActionRowSelectMenuOption: (c, a, k, o) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    const selectMenu = actionRow.components[k];
+                    if (selectMenu?.type === 3) {
+                      const option = selectMenu.options[o];
+                      selectMenu.options.splice(o + 1, 0, {
+                        ...option,
+                        id: getUniqueId(),
+                        action_set_id: getUniqueId().toString(),
+                      });
+                    }
+                  }
+                }
+              }),
+
+            moveContainerActionRowSelectMenuOptionUp: (c, a, k, o) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    const selectMenu = actionRow.components[k];
+                    if (selectMenu?.type === 3 && o > 0) {
+                      const option = selectMenu.options[o];
+                      selectMenu.options[o] = selectMenu.options[o - 1];
+                      selectMenu.options[o - 1] = option;
+                    }
+                  }
+                }
+              }),
+
+            moveContainerActionRowSelectMenuOptionDown: (c, a, k, o) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    const selectMenu = actionRow.components[k];
+                    if (
+                      selectMenu?.type === 3 &&
+                      o < selectMenu.options.length - 1
+                    ) {
+                      const option = selectMenu.options[o];
+                      selectMenu.options[o] = selectMenu.options[o + 1];
+                      selectMenu.options[o + 1] = option;
+                    }
+                  }
+                }
+              }),
+
+            removeContainerActionRowSelectMenuOption: (c, a, k, o) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    const selectMenu = actionRow.components[k];
+                    if (selectMenu?.type === 3) {
+                      selectMenu.options.splice(o, 1);
+                    }
+                  }
+                }
+              }),
+
+            clearContainerActionRowSelectMenuOptions: (c, a, k) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    const selectMenu = actionRow.components[k];
+                    if (selectMenu?.type === 3) {
+                      selectMenu.options = [];
+                    }
+                  }
+                }
+              }),
+
+            addContainerSectionComponent: (i, j, component) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const section = container.components[j];
+                  if (section?.type === 9) {
+                    section.components.push(component);
+                  }
+                }
+              }),
+
+            clearContainerSectionComponents: (i, j) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const section = container.components[j];
+                  if (section?.type === 9) {
+                    section.components = [];
+                  }
+                }
+              }),
+
+            moveContainerSectionComponentUp: (i, j, k) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const section = container.components[j];
+                  if (section?.type === 9 && k > 0) {
+                    const component = section.components[k];
+                    section.components[k] = section.components[k - 1];
+                    section.components[k - 1] = component;
+                  }
+                }
+              }),
+
+            moveContainerSectionComponentDown: (i, j, k) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const section = container.components[j];
+                  if (
+                    section?.type === 9 &&
+                    k < section.components.length - 1
+                  ) {
+                    const component = section.components[k];
+                    section.components[k] = section.components[k + 1];
+                    section.components[k + 1] = component;
+                  }
+                }
+              }),
+
+            deleteContainerSectionComponent: (i, j, k) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const section = container.components[j];
+                  if (section?.type === 9) {
+                    section.components.splice(k, 1);
+                  }
+                }
+              }),
+
+            updateContainerSectionComponent: (i, j, k, data) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const section = container.components[j];
+                  if (section?.type === 9) {
+                    const component = section.components[k];
+                    if (component) {
+                      Object.assign(component, data);
+                    }
+                  }
+                }
+              }),
+
+            duplicateContainerSectionComponent: (i, j, k) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const section = container.components[j];
+                  if (section?.type === 9) {
+                    const component = section.components[k];
+                    if (component) {
+                      const newComponent = { ...component, id: getUniqueId() };
+                      section.components.splice(k + 1, 0, newComponent);
+                    }
+                  }
+                }
+              }),
+
+            addContainerMediaGalleryItem: (i, j, component) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const gallery = container.components[j];
+                  if (gallery?.type === 12) {
+                    gallery.items.push(component);
+                  }
+                }
+              }),
+
+            clearContainerMediaGalleryItems: (i, j) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const gallery = container.components[j];
+                  if (gallery?.type === 12) {
+                    gallery.items = [];
+                  }
+                }
+              }),
+
+            moveContainerMediaGalleryItemUp: (i, j, k) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const gallery = container.components[j];
+                  if (gallery?.type === 12 && k > 0) {
+                    const item = gallery.items[k];
+                    gallery.items[k] = gallery.items[k - 1];
+                    gallery.items[k - 1] = item;
+                  }
+                }
+              }),
+
+            moveContainerMediaGalleryItemDown: (i, j, k) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const gallery = container.components[j];
+                  if (gallery?.type === 12 && k < gallery.items.length - 1) {
+                    const item = gallery.items[k];
+                    gallery.items[k] = gallery.items[k + 1];
+                    gallery.items[k + 1] = item;
+                  }
+                }
+              }),
+
+            deleteContainerMediaGalleryItem: (i, j, k) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const gallery = container.components[j];
+                  if (gallery?.type === 12) {
+                    gallery.items.splice(k, 1);
+                  }
+                }
+              }),
+
+            updateContainerMediaGalleryItem: (i, j, k, data) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const gallery = container.components[j];
+                  if (gallery?.type === 12) {
+                    const item = gallery.items[k];
+                    if (item) {
+                      Object.assign(item, data);
+                    }
+                  }
+                }
+              }),
+
+            duplicateContainerMediaGalleryItem: (i, j, k) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const gallery = container.components[j];
+                  if (gallery?.type === 12) {
+                    const item = gallery.items[k];
+                    if (item) {
+                      const newItem = { ...item, id: getUniqueId() };
+                      gallery.items.splice(k + 1, 0, newItem);
+                    }
+                  }
+                }
               }),
 
             getComponentsV2Enabled: () => {

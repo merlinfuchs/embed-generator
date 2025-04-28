@@ -37,8 +37,8 @@ export default function EditorComponentRootSection({
     moveSubComponentUp,
     moveSubComponentDown,
     deleteSubComponent,
-    updateTextDisplay,
-    duplicateTextDisplay,
+    updateSubComponent,
+    duplicateSubComponent,
   ] = useCurrentMessageStore(
     (state) => [
       state.addSectionComponent,
@@ -57,26 +57,31 @@ export default function EditorComponentRootSection({
   }
 
   return (
-    <EditorComponentBaseSection
-      id={`components.${rootId}`}
-      validationPathPrefix={`components.${rootIndex}`}
-      data={section}
-      onChange={(data) => updateSection(rootIndex, data)}
-      duplicate={() => duplicate(rootIndex)}
-      moveUp={rootIndex > 0 ? () => moveUp(rootIndex) : () => {}}
-      moveDown={
-        rootIndex < componentCount - 1 ? () => moveDown(rootIndex) : () => {}
-      }
-      remove={() => remove(rootIndex)}
-      addSubComponent={(component) => addSubComponent(rootIndex, component)}
-      clearSubComponents={() => clearSubComponents(rootIndex)}
-      moveSubComponentUp={(index) => moveSubComponentUp(rootIndex, index)}
-      moveSubComponentDown={(index) => moveSubComponentDown(rootIndex, index)}
-      deleteSubComponent={(index) => deleteSubComponent(rootIndex, index)}
-      onTextDisplayChange={(index, data) =>
-        updateTextDisplay(rootIndex, index, data)
-      }
-      duplicateTextDisplay={(index) => duplicateTextDisplay(rootIndex, index)}
-    />
+    <div className="bg-dark-3 p-3 rounded-md">
+      <EditorComponentBaseSection
+        id={`components.${rootId}`}
+        validationPathPrefix={`components.${rootIndex}`}
+        size="large"
+        data={section}
+        onChange={(data) => updateSection(rootIndex, data)}
+        duplicate={() => duplicate(rootIndex)}
+        moveUp={rootIndex > 0 ? () => moveUp(rootIndex) : () => {}}
+        moveDown={
+          rootIndex < componentCount - 1 ? () => moveDown(rootIndex) : () => {}
+        }
+        remove={() => remove(rootIndex)}
+        addSubComponent={(component) => addSubComponent(rootIndex, component)}
+        clearSubComponents={() => clearSubComponents(rootIndex)}
+        moveSubComponentUp={(index) => moveSubComponentUp(rootIndex, index)}
+        moveSubComponentDown={(index) => moveSubComponentDown(rootIndex, index)}
+        deleteSubComponent={(index) => deleteSubComponent(rootIndex, index)}
+        onSubComponentChange={(index, data) =>
+          updateSubComponent(rootIndex, index, data)
+        }
+        duplicateSubComponent={(index) =>
+          duplicateSubComponent(rootIndex, index)
+        }
+      />
+    </div>
   );
 }

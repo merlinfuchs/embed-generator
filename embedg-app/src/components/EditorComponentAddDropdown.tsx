@@ -4,11 +4,21 @@ import { useCurrentMessageStore } from "../state/message";
 import { getUniqueId } from "../util";
 import { useState } from "react";
 import ClickOutsideHandler from "./ClickOutsideHandler";
+import { MessageComponent } from "../discord/schema";
 
-export default function EditorComponentAddDropdown() {
-  const components = useCurrentMessageStore((state) => state.components);
-  const addComponent = useCurrentMessageStore((state) => state.addComponent);
+interface Props {
+  context: "root" | "container";
+  v2Enabled: boolean;
+  addComponent: (component: MessageComponent) => void;
+  disabled?: boolean;
+}
 
+export default function EditorComponentAddDropdown({
+  context,
+  v2Enabled,
+  addComponent,
+  disabled,
+}: Props) {
   const [open, setOpen] = useState(false);
 
   function addButtonRow() {
@@ -105,14 +115,15 @@ export default function EditorComponentAddDropdown() {
         <button
           className={clsx(
             "px-3 py-2.5 rounded text-white flex items-center space-x-2",
-            components.length < 5
-              ? "bg-blurple hover:bg-blurple-dark"
-              : "bg-dark-3 cursor-not-allowed"
+            disabled
+              ? "bg-dark-3 cursor-not-allowed"
+              : "bg-blurple hover:bg-blurple-dark"
           )}
           onClick={() => {
-            if (components.length >= 5) return;
+            if (disabled) return;
             setOpen(!open);
           }}
+          disabled={disabled}
         >
           <div>Add Component</div>
           <ChevronUpIcon className="w-5 h-5" />
@@ -131,42 +142,46 @@ export default function EditorComponentAddDropdown() {
             >
               Add Select Menu
             </button>
-            <button
-              className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left"
-              onClick={addSection}
-            >
-              Add Section
-            </button>
-            <button
-              className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left"
-              onClick={addTextDisplay}
-            >
-              Add Text Display
-            </button>
-            <button
-              className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left"
-              onClick={addMediaGallery}
-            >
-              Add Media Gallery
-            </button>
-            <button
-              className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left"
-              onClick={addFile}
-            >
-              Add File
-            </button>
-            <button
-              className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left"
-              onClick={addSeparator}
-            >
-              Add Separator
-            </button>
-            <button
-              className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left"
-              onClick={addContainer}
-            >
-              Add Container
-            </button>
+            {v2Enabled && (
+              <>
+                <button
+                  className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left"
+                  onClick={addSection}
+                >
+                  Add Section
+                </button>
+                <button
+                  className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left"
+                  onClick={addTextDisplay}
+                >
+                  Add Text Display
+                </button>
+                <button
+                  className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left"
+                  onClick={addMediaGallery}
+                >
+                  Add Media Gallery
+                </button>
+                <button
+                  className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left"
+                  onClick={addFile}
+                >
+                  Add File
+                </button>
+                <button
+                  className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left"
+                  onClick={addSeparator}
+                >
+                  Add Separator
+                </button>
+                <button
+                  className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left"
+                  onClick={addContainer}
+                >
+                  Add Container
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>

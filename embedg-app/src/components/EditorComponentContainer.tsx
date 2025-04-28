@@ -42,6 +42,37 @@ export default function EditorComponentRootContainer({
     deleteSubComponent,
     updateSubComponent,
     duplicateSubComponent,
+
+    actionRowAddSubComponent,
+    actionRowClearSubComponents,
+    actionRowMoveSubComponentUp,
+    actionRowMoveSubComponentDown,
+    actionRowDeleteSubComponent,
+    actionRowDuplicateSubComponent,
+    actionRowOnSubComponentChange,
+    actionRowAddSelectMenuOption,
+    actionRowOnSelectMenuOptionChange,
+    actionRowDuplicateSelectMenuOption,
+    actionRowMoveSelectMenuOptionUp,
+    actionRowMoveSelectMenuOptionDown,
+    actionRowRemoveSelectMenuOption,
+    actionRowClearSelectMenuOptions,
+
+    sectionAddSubComponent,
+    sectionClearSubComponents,
+    sectionMoveSubComponentUp,
+    sectionMoveSubComponentDown,
+    sectionDeleteSubComponent,
+    sectionOnSubComponentChange,
+    sectionDuplicateSubComponent,
+
+    mediaGalleryAddItem,
+    mediaGalleryClearItems,
+    mediaGalleryMoveItemUp,
+    mediaGalleryMoveItemDown,
+    mediaGalleryDeleteItem,
+    mediaGalleryOnItemChange,
+    mediaGalleryDuplicateItem,
   ] = useCurrentMessageStore(
     (state) => [
       state.addContainerComponent,
@@ -51,6 +82,37 @@ export default function EditorComponentRootContainer({
       state.deleteContainerComponent,
       state.updateContainerComponent,
       state.duplicateContainerComponent,
+
+      state.addContainerActionRowComponent,
+      state.clearContainerRowActionComponents,
+      state.moveContainerActionRowComponentUp,
+      state.moveContainerActionRowComponentDown,
+      state.deleteContainerActionRowComponent,
+      state.duplicateContainerActionRowComponent,
+      state.updateContainerActionRowComponent,
+      state.addContainerActionRowSelectMenuOption,
+      state.updateContainerActionRowSelectMenuOption,
+      state.duplicateContainerActionRowSelectMenuOption,
+      state.moveContainerActionRowSelectMenuOptionUp,
+      state.moveContainerActionRowSelectMenuOptionDown,
+      state.removeContainerActionRowSelectMenuOption,
+      state.clearContainerActionRowSelectMenuOptions,
+
+      state.addContainerSectionComponent,
+      state.clearContainerSectionComponents,
+      state.moveContainerSectionComponentUp,
+      state.moveContainerSectionComponentDown,
+      state.deleteContainerSectionComponent,
+      state.updateContainerSectionComponent,
+      state.duplicateContainerSectionComponent,
+
+      state.addContainerMediaGalleryItem,
+      state.clearContainerMediaGalleryItems,
+      state.moveContainerMediaGalleryItemUp,
+      state.moveContainerMediaGalleryItemDown,
+      state.deleteContainerMediaGalleryItem,
+      state.updateContainerMediaGalleryItem,
+      state.duplicateContainerMediaGalleryItem,
     ],
     shallow
   );
@@ -79,6 +141,93 @@ export default function EditorComponentRootContainer({
       duplicateSubComponent={(index) => duplicateSubComponent(rootIndex, index)}
       onSubComponentChange={(index, data) =>
         updateSubComponent(rootIndex, index, data)
+      }
+      actionRowAddSubComponent={(a, k) =>
+        actionRowAddSubComponent(rootIndex, a, k)
+      }
+      actionRowClearSubComponents={(a) =>
+        actionRowClearSubComponents(rootIndex, a)
+      }
+      actionRowMoveSubComponentUp={(a, k) =>
+        actionRowMoveSubComponentUp(rootIndex, a, k)
+      }
+      actionRowMoveSubComponentDown={(a, k) =>
+        actionRowMoveSubComponentDown(rootIndex, a, k)
+      }
+      actionRowDeleteSubComponent={(a, k) =>
+        actionRowDeleteSubComponent(rootIndex, a, k)
+      }
+      actionRowDuplicateSubComponent={(a, k) =>
+        actionRowDuplicateSubComponent(rootIndex, a, k)
+      }
+      actionRowOnSubComponentChange={(a, k, data) =>
+        actionRowOnSubComponentChange(rootIndex, a, k, data)
+      }
+      actionRowAddSelectMenuOption={(a, k) =>
+        actionRowAddSelectMenuOption(rootIndex, a, k)
+      }
+      actionRowOnSelectMenuOptionChange={(
+        index,
+        childIndex,
+        optionIndex,
+        data
+      ) =>
+        actionRowOnSelectMenuOptionChange(
+          rootIndex,
+          index,
+          childIndex,
+          optionIndex,
+          data
+        )
+      }
+      actionRowDuplicateSelectMenuOption={(a, k, o) =>
+        actionRowDuplicateSelectMenuOption(rootIndex, a, k, o)
+      }
+      actionRowMoveSelectMenuOptionUp={(a, k, o) =>
+        actionRowMoveSelectMenuOptionUp(rootIndex, a, k, o)
+      }
+      actionRowMoveSelectMenuOptionDown={(a, k, o) =>
+        actionRowMoveSelectMenuOptionDown(rootIndex, a, k, o)
+      }
+      actionRowRemoveSelectMenuOption={(a, k, o) =>
+        actionRowRemoveSelectMenuOption(rootIndex, a, k, o)
+      }
+      actionRowClearSelectMenuOptions={(a, k) =>
+        actionRowClearSelectMenuOptions(rootIndex, a, k)
+      }
+      sectionAddSubComponent={(s, component) =>
+        sectionAddSubComponent(rootIndex, s, component)
+      }
+      sectionClearSubComponents={(s) => sectionClearSubComponents(rootIndex, s)}
+      sectionMoveSubComponentUp={(s, k) =>
+        sectionMoveSubComponentUp(rootIndex, s, k)
+      }
+      sectionMoveSubComponentDown={(s, k) =>
+        sectionMoveSubComponentDown(rootIndex, s, k)
+      }
+      sectionDeleteSubComponent={(s, k) =>
+        sectionDeleteSubComponent(rootIndex, s, k)
+      }
+      sectionOnSubComponentChange={(s, k, data) =>
+        sectionOnSubComponentChange(rootIndex, s, k, data)
+      }
+      sectionDuplicateSubComponent={(s, k) =>
+        sectionDuplicateSubComponent(rootIndex, s, k)
+      }
+      mediaGalleryAddItem={(a, component) =>
+        mediaGalleryAddItem(rootIndex, a, component)
+      }
+      mediaGalleryClearItems={(a) => mediaGalleryClearItems(rootIndex, a)}
+      mediaGalleryMoveItemUp={(a, i) => mediaGalleryMoveItemUp(rootIndex, a, i)}
+      mediaGalleryMoveItemDown={(a, i) =>
+        mediaGalleryMoveItemDown(rootIndex, a, i)
+      }
+      mediaGalleryDeleteItem={(a, i) => mediaGalleryDeleteItem(rootIndex, a, i)}
+      mediaGalleryOnItemChange={(a, i, data) =>
+        mediaGalleryOnItemChange(rootIndex, a, i, data)
+      }
+      mediaGalleryDuplicateItem={(a, i) =>
+        mediaGalleryDuplicateItem(rootIndex, a, i)
       }
     />
   );

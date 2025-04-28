@@ -15,8 +15,13 @@ export default function EditorComponents({
     (state) => state.components.map((e) => e.id),
     shallow
   );
-  const clearComponents = useCurrentMessageStore(
-    (state) => state.clearComponents
+  const [clearComponents, addComponent] = useCurrentMessageStore(
+    (state) => [state.clearComponents, state.addComponent],
+    shallow
+  );
+
+  const componentsV2Enabled = useCurrentMessageStore((state) =>
+    state.getComponentsV2Enabled()
   );
 
   const sendMode = useSendSettingsStore((state) => state.mode);
@@ -53,7 +58,12 @@ export default function EditorComponents({
         ))}
       </AutoAnimate>
       <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 items-start">
-        <EditorComponentAddDropdown />
+        <EditorComponentAddDropdown
+          context="root"
+          v2Enabled={componentsV2Enabled}
+          addComponent={addComponent}
+          disabled={components.length >= 5}
+        />
 
         <button
           className="px-3 py-2 rounded text-white border-red border-2 hover:bg-red"

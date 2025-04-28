@@ -54,27 +54,29 @@ export default function EditorComponentGallery({ rootIndex, rootId }: Props) {
   }
 
   return (
-    <EditorComponentBaseMediaGallery
-      id={`components.${rootId}`}
-      validationPathPrefix={`components.${rootIndex}`}
-      data={gallery}
-      duplicate={() => duplicate(rootIndex)}
-      moveUp={rootIndex > 0 ? () => moveUp(rootIndex) : () => {}}
-      moveDown={
-        rootIndex < componentCount - 1 ? () => moveDown(rootIndex) : () => {}
-      }
-      remove={() => remove(rootIndex)}
-      addItem={(item: MessageComponentMediaGalleryItem) =>
-        addItem(rootIndex, item)
-      }
-      clearItems={() => clearItems(rootIndex)}
-      moveItemUp={(index: number) => moveItemUp(rootIndex, index)}
-      moveItemDown={(index: number) => moveItemDown(rootIndex, index)}
-      deleteItem={(index: number) => deleteItem(rootIndex, index)}
-      onItemChange={(index: number, data: any) =>
-        updateGalleryItem(rootIndex, index, data)
-      }
-      duplicateItem={(index: number) => duplicateItem(rootIndex, index)}
-    />
+    <div className="bg-dark-3 p-3 rounded-md">
+      <EditorComponentBaseMediaGallery
+        id={`components.${rootId}`}
+        validationPathPrefix={`components.${rootIndex}`}
+        data={gallery}
+        duplicate={() => duplicate(rootIndex)}
+        moveUp={rootIndex > 0 ? () => moveUp(rootIndex) : () => {}}
+        moveDown={
+          rootIndex < componentCount - 1 ? () => moveDown(rootIndex) : () => {}
+        }
+        remove={() => remove(rootIndex)}
+        addItem={(item: MessageComponentMediaGalleryItem) =>
+          addItem(rootIndex, item)
+        }
+        clearItems={() => clearItems(rootIndex)}
+        moveItemUp={(index: number) => moveItemUp(rootIndex, index)}
+        moveItemDown={(index: number) => moveItemDown(rootIndex, index)}
+        deleteItem={(index: number) => deleteItem(rootIndex, index)}
+        onItemChange={(index: number, data: any) =>
+          updateGalleryItem(rootIndex, index, data)
+        }
+        duplicateItem={(index: number) => duplicateItem(rootIndex, index)}
+      />
+    </div>
   );
 }

@@ -25,7 +25,7 @@ export default function EditorComponentActionRowButton({
   );
 
   const updateButton = useCurrentMessageStore(
-    (state) => state.updateActionRowButton,
+    (state) => state.updateActionRowComponent,
     shallow
   );
 
@@ -33,7 +33,7 @@ export default function EditorComponentActionRowButton({
     (state) => [
       state.moveActionRowComponentUp,
       state.moveActionRowComponentDown,
-      state.duplicateActionRowButton,
+      state.duplicateActionRowComponent,
       state.deleteActionRowComponent,
     ],
     shallow

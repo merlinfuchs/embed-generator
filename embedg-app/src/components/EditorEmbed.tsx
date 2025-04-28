@@ -1,20 +1,19 @@
-import { useCurrentMessageStore } from "../state/message";
-import EditorEmbedAuthor from "./EditorEmbedAuthor";
-import Collapsable from "./Collapsable";
-import EditorEmbedBody from "./EditorEmbedBody";
-import EditorEmbedFields from "./EditorEmbedFields";
 import {
   ChevronDownIcon,
   ChevronUpIcon,
   DocumentDuplicateIcon,
   TrashIcon,
 } from "@heroicons/react/20/solid";
-import { shallow } from "zustand/shallow";
-import EditorEmbedImages from "./EditorEmbedImages";
-import EditorEmbedFooter from "./EditorEmbedFooter";
 import { useMemo } from "react";
-import { useCollapsedStatesStore } from "../state/collapsed";
+import { shallow } from "zustand/shallow";
+import { useCurrentMessageStore } from "../state/message";
 import { colorIntToHex } from "../util/discord";
+import Collapsable from "./Collapsable";
+import EditorEmbedAuthor from "./EditorEmbedAuthor";
+import EditorEmbedBody from "./EditorEmbedBody";
+import EditorEmbedFields from "./EditorEmbedFields";
+import EditorEmbedFooter from "./EditorEmbedFooter";
+import EditorEmbedImages from "./EditorEmbedImages";
 
 interface Props {
   embedIndex: number;

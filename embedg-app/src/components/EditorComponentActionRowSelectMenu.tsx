@@ -20,8 +20,8 @@ export default function EditorComponentActionRowSelectMenu({
     (state) => state.getActionRowSelectMenu(rootIndex, childIndex),
     shallow
   );
-  const updateActionRowSelectMenu = useCurrentMessageStore(
-    (state) => state.updateActionRowSelectMenu
+  const updateActionRowComponent = useCurrentMessageStore(
+    (state) => state.updateActionRowComponent
   );
 
   const [
@@ -54,7 +54,7 @@ export default function EditorComponentActionRowSelectMenu({
       id={`components.${rootId}.components.${childId}`}
       validationPathPrefix={`components.${rootIndex}.components.${childIndex}`}
       data={selectMenu}
-      onChange={(v) => updateActionRowSelectMenu(rootIndex, childIndex, v)}
+      onChange={(v) => updateActionRowComponent(rootIndex, childIndex, v)}
       addOption={() =>
         addOption(rootIndex, childIndex, {
           id: getUniqueId(),
