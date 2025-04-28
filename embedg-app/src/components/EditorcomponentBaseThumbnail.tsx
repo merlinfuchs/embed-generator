@@ -39,6 +39,14 @@ export default function EditorComponentBaseThumbnail({
       moveUp={moveUp}
       moveDown={moveDown}
       remove={remove}
+      extra={
+        data.description ? (
+          <div className="text-gray-500 truncate flex space-x-2 pl-1">
+            <div>-</div>
+            <div className="truncate">{data.description}</div>
+          </div>
+        ) : null
+      }
     >
       <div className="space-y-4">
         <div className="flex space-x-3">

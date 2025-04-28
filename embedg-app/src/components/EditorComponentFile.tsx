@@ -17,8 +17,8 @@ export default function EditorComponentFile({ rootIndex, rootId }: Props) {
     deleteComponent,
   ] = useCurrentMessageStore(
     (state) => [
-      state.updateFile,
-      state.duplicateFile,
+      state.updateComponent,
+      state.duplicateComponent,
       state.moveComponentUp,
       state.moveComponentDown,
       state.deleteComponent,

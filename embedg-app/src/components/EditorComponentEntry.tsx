@@ -5,6 +5,7 @@ import EditorComponentSeparator from "./EditorComponentSeparator";
 import EditorComponentTextDisplay from "./EditorComponentTextDisplay";
 import EditorComponentFile from "./EditorComponentFile";
 import EditorComponentGallery from "./EditorComponentGallery";
+import EditorComponentContainer from "./EditorComponentContainer";
 
 interface Props {
   rootIndex: number;
@@ -32,6 +33,8 @@ export default function EditorComponentEntry({ rootIndex, rootId }: Props) {
     return <EditorComponentFile rootIndex={rootIndex} rootId={rootId} />;
   } else if (root.type === 14) {
     return <EditorComponentSeparator rootIndex={rootIndex} rootId={rootId} />;
+  } else if (root.type === 17) {
+    return <EditorComponentContainer rootIndex={rootIndex} rootId={rootId} />;
   } else {
     return <div>Unknown root component type: {root.type}</div>;
   }

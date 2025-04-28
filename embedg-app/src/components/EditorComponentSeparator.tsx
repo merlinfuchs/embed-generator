@@ -17,14 +17,14 @@ export default function EditorComponentSeparator({ rootIndex, rootId }: Props) {
     shallow
   );
   const updateSeparator = useCurrentMessageStore(
-    (state) => state.updateSeparator
+    (state) => state.updateComponent
   );
 
   const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
     (state) => [
       state.moveComponentUp,
       state.moveComponentDown,
-      state.duplicateSeparator,
+      state.duplicateComponent,
       state.deleteComponent,
     ],
     shallow

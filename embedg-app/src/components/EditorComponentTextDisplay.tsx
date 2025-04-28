@@ -20,14 +20,14 @@ export default function EditorComponentTextDisplay({
     shallow
   );
   const updateTextDisplay = useCurrentMessageStore(
-    (state) => state.updateTextDisplay
+    (state) => state.updateComponent
   );
 
   const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
     (state) => [
       state.moveComponentUp,
       state.moveComponentDown,
-      state.duplicateTextDisplay,
+      state.duplicateComponent,
       state.deleteComponent,
     ],
     shallow

@@ -380,22 +380,23 @@ export type MessageComponentSeparator = z.infer<
   typeof componentSeparatorSchema
 >;
 
+export const componentContainerSubComponentSchema = z.union([
+  componentActionRowSchema,
+  componentTextDisplaySchema,
+  componentSectionSchema,
+  componentMediaGallerySchema,
+  componentSeparatorSchema,
+  componentFileSchema,
+]);
+
+export type MessageComponentContainerSubComponent = z.infer<
+  typeof componentContainerSubComponentSchema
+>;
+
 export const componentContainerSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
   type: z.literal(17),
-  components: z
-    .array(
-      z.union([
-        componentActionRowSchema,
-        componentTextDisplaySchema,
-        componentSectionSchema,
-        componentMediaGallerySchema,
-        componentSeparatorSchema,
-        componentFileSchema,
-      ])
-    )
-    .min(1)
-    .max(10),
+  components: z.array(componentContainerSubComponentSchema).min(1).max(10),
   accent_color: z.optional(z.number()),
   spoiler: z.optional(z.boolean()),
 });

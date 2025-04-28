@@ -1,44 +1,38 @@
 import {
-  MessageComponentButton,
-  MessageComponentSection,
-  MessageComponentTextDisplay,
-  MessageComponentThumbnail,
+  MessageComponentContainer,
+  MessageComponentContainerSubComponent,
 } from "../discord/schema";
 import { getUniqueId } from "../util";
 import { AutoAnimate } from "../util/autoAnimate";
-import EditorComponentBaseButton from "./EditorComponentBaseButton";
-import EditorComponentBaseTextDisplay from "./EditorComponentBaseTextDisplay";
-import EditorComponentBaseThumbnail from "./EditorcomponentBaseThumbnail";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
 
 interface Props {
   id: string;
   validationPathPrefix: string;
   title?: string;
-  data: MessageComponentSection;
-  onChange: (data: Partial<MessageComponentSection>) => void;
+  data: MessageComponentContainer;
+  onChange: (data: Partial<MessageComponentContainer>) => void;
   duplicate: () => void;
   moveUp: () => void;
   moveDown: () => void;
   remove: () => void;
-  addSubComponent: (component: MessageComponentTextDisplay) => void;
+  addSubComponent: (component: MessageComponentContainerSubComponent) => void;
   clearSubComponents: () => void;
   moveSubComponentUp: (index: number) => void;
   moveSubComponentDown: (index: number) => void;
   deleteSubComponent: (index: number) => void;
-  onTextDisplayChange: (
+  duplicateSubComponent: (index: number) => void;
+  onSubComponentChange: (
     index: number,
-    data: Partial<MessageComponentTextDisplay>
+    data: Partial<MessageComponentContainerSubComponent>
   ) => void;
-  duplicateTextDisplay: (index: number) => void;
 }
 
-export default function EditorComponentBaseSection({
+export default function EditorComponentBaseContainer({
   id,
   validationPathPrefix,
-  title = "Section",
+  title = "Container",
   data,
-  onChange,
   duplicate,
   moveUp,
   moveDown,
@@ -48,25 +42,10 @@ export default function EditorComponentBaseSection({
   moveSubComponentUp,
   moveSubComponentDown,
   deleteSubComponent,
-  onTextDisplayChange,
-  duplicateTextDisplay,
+  duplicateSubComponent,
+  onSubComponentChange,
 }: Props) {
   // TODO: implement editing of accessory
-
-  function onAccessoryThumbnailChange(
-    thumbnailData: Partial<MessageComponentThumbnail>
-  ) {
-    if (data.accessory.type === 11) {
-      onChange({
-        accessory: {
-          ...data.accessory,
-          ...thumbnailData,
-        },
-      });
-    }
-  }
-
-  // TODO: Add support for button accessories
 
   return (
     <div className="bg-dark-3 p-3 rounded-md">
@@ -86,47 +65,16 @@ export default function EditorComponentBaseSection({
           </div>
         }
       >
-        {data.accessory.type === 11 && (
-          <div className="bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow border-2 border-dark-5">
-            <EditorComponentBaseThumbnail
-              id={`${id}.accessory`}
-              title="Accessory"
-              validationPathPrefix={`${validationPathPrefix}.accessory`}
-              data={data.accessory}
-              onChange={(data) => onAccessoryThumbnailChange(data)}
-            />
-          </div>
-        )}
-
         <AutoAnimate>
           {data.components.map((child, i) => (
             <div
               className="bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow border-2 border-dark-5"
               key={child.id}
-            >
-              <EditorComponentBaseTextDisplay
-                id={`${id}.components.${child.id}`}
-                validationPathPrefix={`${validationPathPrefix}.components.${i}`}
-                data={child}
-                onChange={(data) => onTextDisplayChange(i, data)}
-                duplicate={
-                  data.components.length < 3
-                    ? () => duplicateTextDisplay(i)
-                    : undefined
-                }
-                moveUp={i > 0 ? () => moveSubComponentUp(i) : undefined}
-                moveDown={
-                  i < data.components.length - 1
-                    ? () => moveSubComponentDown(i)
-                    : undefined
-                }
-                remove={() => deleteSubComponent(i)}
-              />
-            </div>
+            ></div>
           ))}
           <div>
             <div className="space-x-3 mt-3">
-              {data.components.length < 3 ? (
+              {data.components.length < 5 ? (
                 <button
                   className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white"
                   onClick={() =>

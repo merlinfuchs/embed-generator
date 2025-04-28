@@ -16,7 +16,7 @@ export default function EditorComponentActionRow({ rootIndex, rootId }: Props) {
     (state) => [
       state.moveComponentUp,
       state.moveComponentDown,
-      state.duplicateActionRow,
+      state.duplicateComponent,
       state.deleteComponent,
     ],
     shallow
@@ -31,9 +31,8 @@ export default function EditorComponentActionRow({ rootIndex, rootId }: Props) {
     moveSubComponentUp,
     moveSubComponentDown,
     deleteSubComponent,
-    updateActionRowButton,
-    duplicateActionRowButton,
-    updateActionRowSelectMenu,
+    updateActionRowComponent,
+    duplicateActionRowComponent,
     updateActionRowSelectMenuOption,
     addActionRowSelectMenuOption,
     duplicateActionRowSelectMenuOption,
@@ -46,9 +45,8 @@ export default function EditorComponentActionRow({ rootIndex, rootId }: Props) {
       state.moveActionRowComponentUp,
       state.moveActionRowComponentDown,
       state.deleteActionRowComponent,
-      state.updateActionRowButton,
-      state.duplicateActionRowButton,
-      state.updateActionRowSelectMenu,
+      state.updateActionRowComponent,
+      state.duplicateActionRowComponent,
       state.updateActionRowSelectMenuOption,
       state.addActionRowSelectMenuOption,
       state.duplicateActionRowSelectMenuOption,
@@ -86,11 +84,11 @@ export default function EditorComponentActionRow({ rootIndex, rootId }: Props) {
       moveSubComponentDown={(index) => moveSubComponentDown(rootIndex, index)}
       deleteSubComponent={(index) => deleteSubComponent(rootIndex, index)}
       onButtonChange={(index, data) =>
-        updateActionRowButton(rootIndex, index, data)
+        updateActionRowComponent(rootIndex, index, data)
       }
-      duplicateButton={(index) => duplicateActionRowButton(rootIndex, index)}
+      duplicateButton={(index) => duplicateActionRowComponent(rootIndex, index)}
       onSelectMenuChange={(index, data) =>
-        updateActionRowSelectMenu(rootIndex, index, data)
+        updateActionRowComponent(rootIndex, index, data)
       }
       onSelectMenuOptionChange={(index, optionIndex, data) =>
         updateActionRowSelectMenuOption(rootIndex, index, optionIndex, data)

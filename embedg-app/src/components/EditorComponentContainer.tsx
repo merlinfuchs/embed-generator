@@ -1,13 +1,14 @@
 import { shallow } from "zustand/shallow";
 import { useCurrentMessageStore } from "../state/message";
 import EditorComponentBaseSection from "./EditorComponentBaseSection";
+import EditorComponentBaseContainer from "./EditorComponentBaseContainer";
 
 interface Props {
   rootIndex: number;
   rootId: number;
 }
 
-export default function EditorComponentRootSection({
+export default function EditorComponentRootContainer({
   rootIndex,
   rootId,
 }: Props) {
@@ -15,11 +16,13 @@ export default function EditorComponentRootSection({
     (state) => state.components.length
   );
 
-  const section = useCurrentMessageStore(
-    (state) => state.getSection(rootIndex),
+  const container = useCurrentMessageStore(
+    (state) => state.getContainer(rootIndex),
     shallow
   );
-  const updateSection = useCurrentMessageStore((state) => state.updateSection);
+  const updateContainer = useCurrentMessageStore(
+    (state) => state.updateContainer
+  );
 
   const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
     (state) => [
@@ -37,31 +40,31 @@ export default function EditorComponentRootSection({
     moveSubComponentUp,
     moveSubComponentDown,
     deleteSubComponent,
-    updateTextDisplay,
-    duplicateTextDisplay,
+    updateSubComponent,
+    duplicateSubComponent,
   ] = useCurrentMessageStore(
     (state) => [
-      state.addSectionComponent,
-      state.clearSectionComponents,
-      state.moveSectionComponentUp,
-      state.moveSectionComponentDown,
-      state.deleteSectionComponent,
-      state.updateSectionComponent,
-      state.duplicateSectionComponent,
+      state.addContainerComponent,
+      state.clearContainerComponents,
+      state.moveContainerComponentUp,
+      state.moveContainerComponentDown,
+      state.deleteContainerComponent,
+      state.updateContainerComponent,
+      state.duplicateContainerComponent,
     ],
     shallow
   );
 
-  if (!section) {
+  if (!container) {
     return null;
   }
 
   return (
-    <EditorComponentBaseSection
+    <EditorComponentBaseContainer
       id={`components.${rootId}`}
       validationPathPrefix={`components.${rootIndex}`}
-      data={section}
-      onChange={(data) => updateSection(rootIndex, data)}
+      data={container}
+      onChange={(data) => updateContainer(rootIndex, data)}
       duplicate={() => duplicate(rootIndex)}
       moveUp={rootIndex > 0 ? () => moveUp(rootIndex) : () => {}}
       moveDown={
@@ -73,10 +76,10 @@ export default function EditorComponentRootSection({
       moveSubComponentUp={(index) => moveSubComponentUp(rootIndex, index)}
       moveSubComponentDown={(index) => moveSubComponentDown(rootIndex, index)}
       deleteSubComponent={(index) => deleteSubComponent(rootIndex, index)}
-      onTextDisplayChange={(index, data) =>
-        updateTextDisplay(rootIndex, index, data)
+      duplicateSubComponent={(index) => duplicateSubComponent(rootIndex, index)}
+      onSubComponentChange={(index, data) =>
+        updateSubComponent(rootIndex, index, data)
       }
-      duplicateTextDisplay={(index) => duplicateTextDisplay(rootIndex, index)}
     />
   );
 }

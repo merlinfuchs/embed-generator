@@ -18,6 +18,8 @@ import {
   MessageComponentFile,
   MessageComponentMediaGallery,
   MessageComponentMediaGalleryItem,
+  MessageComponentContainer,
+  MessageComponentContainerSubComponent,
 } from "../discord/schema";
 import { getUniqueId } from "../util";
 import { TemporalState, temporal } from "zundo";
@@ -67,9 +69,9 @@ export interface MessageStore extends Message {
   moveComponentUp: (i: number) => void;
   deleteComponent: (i: number) => void;
   clearComponents: () => void;
-
+  duplicateComponent: (i: number) => void;
+  updateComponent: (i: number, data: Partial<MessageComponent>) => void;
   getActionRow: (i: number) => MessageComponentActionRow | null;
-  duplicateActionRow: (i: number) => void;
   addActionRowComponent: (
     i: number,
     component: MessageComponentButton | MessageComponentSelectMenu
@@ -78,24 +80,19 @@ export interface MessageStore extends Message {
   moveActionRowComponentUp: (i: number, j: number) => void;
   deleteActionRowComponent: (i: number, j: number) => void;
   clearActionRowComponents: (i: number) => void;
-
-  getActionRowButton: (i: number, j: number) => MessageComponentButton | null;
-  updateActionRowButton: (
+  duplicateActionRowComponent: (i: number, j: number) => void;
+  updateActionRowComponent: (
     i: number,
     j: number,
-    button: Partial<MessageComponentButton>
+    data: Partial<MessageComponentButton | MessageComponentSelectMenu>
   ) => void;
-  duplicateActionRowButton: (i: number, j: number) => void;
+
+  getActionRowButton: (i: number, j: number) => MessageComponentButton | null;
 
   getActionRowSelectMenu: (
     i: number,
     j: number
   ) => MessageComponentSelectMenu | null;
-  updateActionRowSelectMenu: (
-    i: number,
-    j: number,
-    menu: Partial<MessageComponentSelectMenu>
-  ) => void;
   addActionRowSelectMenuOption: (
     i: number,
     j: number,
@@ -114,7 +111,7 @@ export interface MessageStore extends Message {
   ) => void;
 
   getSection: (i: number) => MessageComponentSection | null;
-  duplicateSection: (i: number) => void;
+  updateSection: (i: number, data: Partial<MessageComponentSection>) => void;
   addSectionComponent: (
     i: number,
     component: MessageComponentTextDisplay
@@ -128,15 +125,14 @@ export interface MessageStore extends Message {
     i: number,
     j: number
   ) => MessageComponentTextDisplay | null;
-  updateSectionTextDisplay: (
+  updateSectionComponent: (
     i: number,
     j: number,
     data: Partial<MessageComponentTextDisplay>
   ) => void;
-  duplicateSectionTextDisplay: (i: number, j: number) => void;
+  duplicateSectionComponent: (i: number, j: number) => void;
 
   getGallery: (i: number) => MessageComponentMediaGallery | null;
-  duplicateGallery: (i: number) => void;
   addGalleryItem: (i: number, item: MessageComponentMediaGalleryItem) => void;
   clearGalleryItems: (i: number) => void;
   moveGalleryItemDown: (i: number, j: number) => void;
@@ -155,22 +151,28 @@ export interface MessageStore extends Message {
   duplicateGalleryItem: (i: number, j: number) => void;
 
   getTextDisplay: (i: number) => MessageComponentTextDisplay | null;
-  updateTextDisplay: (
-    i: number,
-    data: Partial<MessageComponentTextDisplay>
-  ) => void;
-  duplicateTextDisplay: (i: number) => void;
-
   getFile: (i: number) => MessageComponentFile | null;
-  updateFile: (i: number, data: Partial<MessageComponentFile>) => void;
-  duplicateFile: (i: number) => void;
-
   getSeparator: (i: number) => MessageComponentSeparator | null;
-  updateSeparator: (
+
+  getContainer: (i: number) => MessageComponentContainer | null;
+  updateContainer: (
     i: number,
-    data: Partial<MessageComponentSeparator>
+    data: Partial<MessageComponentContainer>
   ) => void;
-  duplicateSeparator: (i: number) => void;
+  addContainerComponent: (
+    i: number,
+    component: MessageComponentContainerSubComponent
+  ) => void;
+  clearContainerComponents: (i: number) => void;
+  moveContainerComponentDown: (i: number, j: number) => void;
+  moveContainerComponentUp: (i: number, j: number) => void;
+  deleteContainerComponent: (i: number, j: number) => void;
+  updateContainerComponent: (
+    i: number,
+    j: number,
+    data: Partial<MessageComponentContainerSubComponent>
+  ) => void;
+  duplicateContainerComponent: (i: number, j: number) => void;
 
   addAction: (id: string, action: MessageAction) => void;
   clearActions: (id: string) => void;
@@ -619,16 +621,15 @@ export const createMessageStore = (key: string) =>
             clearComponents: () =>
               set((state) => {
                 for (const row of state.components) {
-                  if (row.type !== 1) {
-                    continue;
-                  }
-
-                  for (const comp of row.components) {
-                    if (comp.type === 2) {
-                      delete state.actions[comp.action_set_id];
-                    } else if (comp.type === 3) {
-                      for (const option of comp.options) {
-                        delete state.actions[option.action_set_id];
+                  // TODO: Handle other container types
+                  if (row.type === 1) {
+                    for (const comp of row.components) {
+                      if (comp.type === 2) {
+                        delete state.actions[comp.action_set_id];
+                      } else if (comp.type === 3) {
+                        for (const option of comp.options) {
+                          delete state.actions[option.action_set_id];
+                        }
                       }
                     }
                   }
@@ -660,20 +661,82 @@ export const createMessageStore = (key: string) =>
                 const removed = state.components.splice(i, 1);
 
                 for (const row of removed) {
-                  if (row.type !== 1) {
-                    continue;
-                  }
-
-                  for (const comp of row.components) {
-                    if (comp.type === 2) {
-                      delete state.actions[comp.action_set_id];
-                    } else if (comp.type === 3) {
-                      for (const option of comp.options) {
-                        delete state.actions[option.action_set_id];
+                  // TODO: Handle other container types
+                  if (row.type === 1) {
+                    for (const comp of row.components) {
+                      if (comp.type === 2) {
+                        delete state.actions[comp.action_set_id];
+                      } else if (comp.type === 3) {
+                        for (const option of comp.options) {
+                          delete state.actions[option.action_set_id];
+                        }
                       }
                     }
                   }
                 }
+              }),
+            duplicateComponent: (i: number) =>
+              set((state) => {
+                const component = state.components[i];
+                if (!component) {
+                  return;
+                }
+
+                let newComponent: MessageComponent;
+
+                if (component.type === 1) {
+                  newComponent = {
+                    id: getUniqueId(),
+                    type: 1,
+                    components: component.components.map((comp) => {
+                      if (comp.type === 2) {
+                        const actionId = getUniqueId().toString();
+                        state.actions[actionId] = { actions: [] };
+                        return { ...comp, action_set_id: actionId };
+                      } else {
+                        return {
+                          ...comp,
+                          options: comp.options.map((option) => {
+                            const actionId = getUniqueId().toString();
+                            state.actions[actionId] = { actions: [] };
+                            return {
+                              ...option,
+                              action_set_id: actionId,
+                            };
+                          }),
+                        };
+                      }
+                    }),
+                  };
+                } else if (component.type === 9) {
+                  const accessory = { ...component.accessory };
+                  if (accessory.type === 2) {
+                    const actionId = getUniqueId().toString();
+                    state.actions[actionId] = { actions: [] };
+                    accessory.action_set_id = actionId;
+                  }
+
+                  newComponent = {
+                    ...component,
+                    id: getUniqueId(),
+                    accessory: accessory,
+                  };
+                } else {
+                  newComponent = {
+                    ...component,
+                    id: getUniqueId(),
+                  };
+                }
+
+                state.components.splice(i + 1, 0, newComponent);
+              }),
+            updateComponent: (i: number, data: Partial<MessageComponent>) =>
+              set((state) => {
+                const component = state.components[i];
+                if (!component) {
+                  return;
+                }
+                Object.assign(component, data);
               }),
 
             getActionRow: (i: number) => {
@@ -684,39 +747,6 @@ export const createMessageStore = (key: string) =>
               }
               return row;
             },
-            duplicateActionRow: (i: number) =>
-              set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
-                  return;
-                }
-
-                const newRow: MessageComponentActionRow = {
-                  id: getUniqueId(),
-                  type: 1,
-                  components: row.components.map((comp) => {
-                    if (comp.type === 2) {
-                      const actionId = getUniqueId().toString();
-                      state.actions[actionId] = { actions: [] };
-                      return { ...comp, action_set_id: actionId };
-                    } else {
-                      return {
-                        ...comp,
-                        options: comp.options.map((option) => {
-                          const actionId = getUniqueId().toString();
-                          state.actions[actionId] = { actions: [] };
-                          return {
-                            ...option,
-                            action_set_id: actionId,
-                          };
-                        }),
-                      };
-                    }
-                  }),
-                };
-
-                state.components.splice(i + 1, 0, newRow);
-              }),
             addActionRowComponent: (
               i: number,
               component: MessageComponentButton | MessageComponentSelectMenu
@@ -764,7 +794,16 @@ export const createMessageStore = (key: string) =>
                 if (!row || row.type !== 1) {
                   return;
                 }
-                row.components.splice(j, 1);
+                const removed = row.components.splice(j, 1);
+                for (const comp of removed) {
+                  if (comp.type === 2) {
+                    delete state.actions[comp.action_set_id];
+                  } else if (comp.type === 3) {
+                    for (const option of comp.options) {
+                      delete state.actions[option.action_set_id];
+                    }
+                  }
+                }
               }),
             clearActionRowComponents: (i: number) =>
               set((state) => {
@@ -772,50 +811,14 @@ export const createMessageStore = (key: string) =>
                 if (!row || row.type !== 1) {
                   return;
                 }
+                for (const comp of row.components) {
+                  if (comp.type === 2) {
+                    delete state.actions[comp.action_set_id];
+                  }
+                }
                 row.components = [];
               }),
-
-            getActionRowButton: (i: number, j: number) => {
-              const state = get();
-              const row = state.components && state.components[i];
-              if (!row || row.type !== 1) {
-                return null;
-              }
-              const button = row.components && row.components[j];
-              if (!button || button.type !== 2) {
-                return null;
-              }
-              return button;
-            },
-            updateActionRowButton: (
-              i: number,
-              j: number,
-              data: Partial<MessageComponentButton>
-            ) => {
-              set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
-                  return;
-                }
-                const button = row.components && row.components[j];
-                if (button && button.type === 2) {
-                  Object.assign(button, data);
-                }
-              });
-            },
-            addActionRowButton: (i: number, button: MessageComponentButton) =>
-              set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
-                  return;
-                }
-                if (row.components) {
-                  row.components.push(button);
-                } else {
-                  row.components = [button];
-                }
-              }),
-            duplicateActionRowButton: (i: number, j: number) =>
+            duplicateActionRowComponent: (i: number, j: number) =>
               set((state) => {
                 const row = state.components && state.components[i];
                 if (!row || row.type !== 1) {
@@ -835,7 +838,36 @@ export const createMessageStore = (key: string) =>
                   action_set_id: actionId,
                 });
               }),
+            updateActionRowComponent: (
+              i: number,
+              j: number,
+              data: Partial<MessageComponentButton | MessageComponentSelectMenu>
+            ) => {
+              set((state) => {
+                const row = state.components && state.components[i];
+                if (!row || row.type !== 1) {
+                  return;
+                }
+                const component = row.components[j];
+                if (!component) {
+                  return;
+                }
+                Object.assign(component, data);
+              });
+            },
 
+            getActionRowButton: (i: number, j: number) => {
+              const state = get();
+              const row = state.components && state.components[i];
+              if (!row || row.type !== 1) {
+                return null;
+              }
+              const button = row.components && row.components[j];
+              if (!button || button.type !== 2) {
+                return null;
+              }
+              return button;
+            },
             getActionRowSelectMenu: (i: number, j: number) => {
               const state = get();
               const row = state.components && state.components[i];
@@ -849,22 +881,7 @@ export const createMessageStore = (key: string) =>
               }
               return null;
             },
-            updateActionRowSelectMenu: (
-              i: number,
-              j: number,
-              data: Partial<MessageComponentSelectMenu>
-            ) => {
-              set((state) => {
-                const row = state.components && state.components[i];
-                if (!row || row.type !== 1) {
-                  return;
-                }
-                const selectMenu = row.components && row.components[j];
-                if (selectMenu && selectMenu.type === 3) {
-                  Object.assign(selectMenu, data);
-                }
-              });
-            },
+
             addActionRowSelectMenuOption: (
               i: number,
               j: number,
@@ -1027,15 +1044,18 @@ export const createMessageStore = (key: string) =>
               }
               return section;
             },
-            duplicateSection: (i: number) =>
+            updateSection: (
+              i: number,
+              data: Partial<MessageComponentSection>
+            ) =>
               set((state) => {
                 const section = state.components && state.components[i];
                 if (!section || section.type !== 9) {
                   return;
                 }
-                const newSection = { ...section, id: getUniqueId() };
-                state.components.splice(i + 1, 0, newSection);
+                Object.assign(section, data);
               }),
+
             addSectionComponent: (
               i: number,
               component: MessageComponentTextDisplay
@@ -1106,7 +1126,7 @@ export const createMessageStore = (key: string) =>
               }
               return component;
             },
-            updateSectionTextDisplay: (
+            updateSectionComponent: (
               i: number,
               j: number,
               data: Partial<MessageComponentTextDisplay>
@@ -1117,19 +1137,19 @@ export const createMessageStore = (key: string) =>
                   return;
                 }
                 const component = section.components && section.components[j];
-                if (!component || component.type !== 10) {
+                if (!component) {
                   return;
                 }
                 Object.assign(component, data);
               }),
-            duplicateSectionTextDisplay: (i: number, j: number) =>
+            duplicateSectionComponent: (i: number, j: number) =>
               set((state) => {
                 const section = state.components && state.components[i];
                 if (!section || section.type !== 9) {
                   return;
                 }
                 const component = section.components && section.components[j];
-                if (!component || component.type !== 10) {
+                if (!component) {
                   return;
                 }
                 const newComponent = { ...component, id: getUniqueId() };
@@ -1144,15 +1164,6 @@ export const createMessageStore = (key: string) =>
               }
               return gallery;
             },
-            duplicateGallery: (i: number) =>
-              set((state) => {
-                const gallery = state.components && state.components[i];
-                if (!gallery || gallery.type !== 11) {
-                  return;
-                }
-                const newGallery = { ...gallery, id: getUniqueId() };
-                state.components.splice(i + 1, 0, newGallery);
-              }),
             addGalleryItem: (
               i: number,
               item: MessageComponentMediaGalleryItem
@@ -1255,26 +1266,6 @@ export const createMessageStore = (key: string) =>
               }
               return display;
             },
-            updateTextDisplay: (
-              i: number,
-              data: Partial<MessageComponentTextDisplay>
-            ) =>
-              set((state) => {
-                const display = state.components && state.components[i];
-                if (!display || display.type !== 10) {
-                  return;
-                }
-                Object.assign(display, data);
-              }),
-            duplicateTextDisplay: (i: number) =>
-              set((state) => {
-                const display = state.components && state.components[i];
-                if (!display || display.type !== 10) {
-                  return;
-                }
-                const newDisplay = { ...display, id: getUniqueId() };
-                state.components.splice(i + 1, 0, newDisplay);
-              }),
 
             getFile: (i: number) => {
               const state = get();
@@ -1284,23 +1275,6 @@ export const createMessageStore = (key: string) =>
               }
               return file;
             },
-            updateFile: (i: number, data: Partial<MessageComponentFile>) =>
-              set((state) => {
-                const file = state.components && state.components[i];
-                if (!file || file.type !== 13) {
-                  return;
-                }
-                Object.assign(file, data);
-              }),
-            duplicateFile: (i: number) =>
-              set((state) => {
-                const file = state.components && state.components[i];
-                if (!file || file.type !== 13) {
-                  return;
-                }
-                const newFile = { ...file, id: getUniqueId() };
-                state.components.splice(i + 1, 0, newFile);
-              }),
 
             getSeparator: (i: number) => {
               const state = get();
@@ -1310,25 +1284,133 @@ export const createMessageStore = (key: string) =>
               }
               return separator;
             },
-            updateSeparator: (
+
+            getContainer: (i: number) => {
+              const state = get();
+              const container = state.components && state.components[i];
+              if (!container || container.type !== 17) {
+                return null;
+              }
+              return container;
+            },
+
+            updateContainer: (
               i: number,
-              data: Partial<MessageComponentSeparator>
+              data: Partial<MessageComponentContainer>
             ) =>
               set((state) => {
-                const separator = state.components && state.components[i];
-                if (!separator || separator.type !== 14) {
+                const container = state.components && state.components[i];
+                if (!container || container.type !== 17) {
                   return;
                 }
-                Object.assign(separator, data);
+                Object.assign(container, data);
               }),
-            duplicateSeparator: (i: number) =>
+            addContainerComponent: (
+              i: number,
+              component: MessageComponentContainerSubComponent
+            ) =>
               set((state) => {
-                const separator = state.components && state.components[i];
-                if (!separator || separator.type !== 14) {
+                const container = state.components && state.components[i];
+                if (!container || container.type !== 17) {
                   return;
                 }
-                const newSeparator = { ...separator, id: getUniqueId() };
-                state.components.splice(i + 1, 0, newSeparator);
+                if (!container.components) {
+                  container.components = [component];
+                } else {
+                  container.components.push(component);
+                }
+              }),
+            clearContainerComponents: (i: number) =>
+              set((state) => {
+                const container = state.components && state.components[i];
+                if (!container || container.type !== 17) {
+                  return;
+                }
+                container.components = [];
+              }),
+            moveContainerComponentDown: (i: number, j: number) =>
+              set((state) => {
+                const container = state.components && state.components[i];
+                if (
+                  !container ||
+                  container.type !== 17 ||
+                  !container.components
+                ) {
+                  return;
+                }
+                const component = container.components[j];
+                if (!component) {
+                  return;
+                }
+                container.components.splice(j, 1);
+                container.components.splice(j + 1, 0, component);
+              }),
+            moveContainerComponentUp: (i: number, j: number) =>
+              set((state) => {
+                const container = state.components && state.components[i];
+                if (
+                  !container ||
+                  container.type !== 17 ||
+                  !container.components
+                ) {
+                  return;
+                }
+                const component = container.components[j];
+                if (!component) {
+                  return;
+                }
+                container.components.splice(j, 1);
+                container.components.splice(j - 1, 0, component);
+              }),
+            deleteContainerComponent: (i: number, j: number) =>
+              set((state) => {
+                const container = state.components && state.components[i];
+                if (
+                  !container ||
+                  container.type !== 17 ||
+                  !container.components
+                ) {
+                  return;
+                }
+                container.components.splice(j, 1);
+              }),
+            updateContainerComponent: (
+              i: number,
+              j: number,
+              data: Partial<MessageComponentContainerSubComponent>
+            ) =>
+              set((state) => {
+                const container = state.components && state.components[i];
+                if (
+                  !container ||
+                  container.type !== 17 ||
+                  !container.components
+                ) {
+                  return;
+                }
+                const component = container.components[j];
+                if (!component) {
+                  return;
+                }
+                Object.assign(component, data);
+              }),
+            duplicateContainerComponent: (i: number, j: number) =>
+              set((state) => {
+                const container = state.components && state.components[i];
+                if (
+                  !container ||
+                  container.type !== 17 ||
+                  !container.components
+                ) {
+                  return;
+                }
+                // TODO: update action set ids
+                const component = container.components[j];
+                if (!component) {
+                  return;
+                }
+                const newComponent = { ...component, id: getUniqueId() };
+                container.components.splice(j + 1, 0, newComponent);
               }),
 
             getComponentsV2Enabled: () => {

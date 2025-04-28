@@ -17,7 +17,7 @@ export default function EditorComponentGallery({ rootIndex, rootId }: Props) {
     (state) => [
       state.moveComponentUp,
       state.moveComponentDown,
-      state.duplicateSection,
+      state.duplicateComponent,
       state.deleteComponent,
     ],
     shallow

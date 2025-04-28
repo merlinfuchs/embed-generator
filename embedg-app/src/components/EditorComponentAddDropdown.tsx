@@ -45,7 +45,7 @@ export default function EditorComponentAddDropdown() {
         id: getUniqueId(),
         type: 11,
         media: {
-          url: "https://xenon.bot/logo-big.png",
+          url: "",
         },
       },
     });
@@ -87,6 +87,15 @@ export default function EditorComponentAddDropdown() {
       file: {
         url: "",
       },
+    });
+  }
+
+  function addContainer() {
+    setOpen(false);
+    addComponent({
+      id: getUniqueId(),
+      type: 17,
+      components: [],
     });
   }
 
@@ -151,6 +160,12 @@ export default function EditorComponentAddDropdown() {
               onClick={addSeparator}
             >
               Add Separator
+            </button>
+            <button
+              className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left"
+              onClick={addContainer}
+            >
+              Add Container
             </button>
           </div>
         )}
