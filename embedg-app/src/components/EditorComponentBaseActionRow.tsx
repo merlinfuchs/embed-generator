@@ -14,6 +14,7 @@ import EditorComponentBaseSelectMenu from "./EditorComponentBaseSelectMenu";
 interface Props {
   id: string;
   validationPathPrefix: string;
+  title?: string;
   data: MessageComponentActionRow;
   duplicate: () => void;
   moveUp: () => void;
@@ -49,6 +50,7 @@ interface Props {
 export default function EditorComponentBaseActionRow({
   id,
   validationPathPrefix,
+  title = "Action Row",
   data,
   duplicate,
   moveUp,
@@ -80,7 +82,7 @@ export default function EditorComponentBaseActionRow({
       <EditorComponentCollapsable
         id={id}
         validationPathPrefix={validationPathPrefix}
-        title="Row"
+        title={title}
         size="large"
         moveUp={moveUp}
         moveDown={moveDown}
@@ -90,7 +92,7 @@ export default function EditorComponentBaseActionRow({
           <div className="text-gray-500 truncate flex space-x-2 pl-1">
             <div>-</div>
             <div className="truncate">
-              {isButtonRow ? "Button Row" : "Select Menu Row"}
+              {isButtonRow ? "Buttons" : "Select Menu"}
             </div>
           </div>
         }
@@ -101,7 +103,7 @@ export default function EditorComponentBaseActionRow({
               <EditorComponentBaseButton
                 key={child.id}
                 id={`${id}.components.${child.id}`}
-                validationPathPrefix={validationPathPrefix}
+                validationPathPrefix={`${validationPathPrefix}.components.${i}`}
                 data={child}
                 onChange={(data) => onButtonChange(i, data)}
                 duplicate={() => duplicateButton(i)}
@@ -113,7 +115,7 @@ export default function EditorComponentBaseActionRow({
               <EditorComponentBaseSelectMenu
                 key={child.id}
                 id={`${id}.components.${child.id}`}
-                validationPathPrefix={validationPathPrefix}
+                validationPathPrefix={`${validationPathPrefix}.components.${i}`}
                 data={child}
                 onChange={(data) => onSelectMenuChange(i, data)}
                 onOptionChange={(index, data) =>

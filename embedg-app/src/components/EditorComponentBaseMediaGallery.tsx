@@ -1,9 +1,11 @@
 import {
-  MessageComponentSection,
+  MessageComponentMediaGallery,
+  MessageComponentMediaGalleryItem,
   MessageComponentTextDisplay,
 } from "../discord/schema";
 import { getUniqueId } from "../util";
 import { AutoAnimate } from "../util/autoAnimate";
+import EditorComponentBaseMediaGalleryItem from "./EditorComponentBaseMediaGalleryItem";
 import EditorComponentBaseTextDisplay from "./EditorComponentBaseTextDisplay";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
 
@@ -11,42 +13,40 @@ interface Props {
   id: string;
   validationPathPrefix: string;
   title?: string;
-  data: MessageComponentSection;
+  data: MessageComponentMediaGallery;
   duplicate: () => void;
   moveUp: () => void;
   moveDown: () => void;
   remove: () => void;
-  addSubComponent: (component: MessageComponentTextDisplay) => void;
-  clearSubComponents: () => void;
-  moveSubComponentUp: (index: number) => void;
-  moveSubComponentDown: (index: number) => void;
-  deleteSubComponent: (index: number) => void;
-  onTextDisplayChange: (
+  addItem: (item: MessageComponentMediaGalleryItem) => void;
+  clearItems: () => void;
+  moveItemUp: (index: number) => void;
+  moveItemDown: (index: number) => void;
+  deleteItem: (index: number) => void;
+  onItemChange: (
     index: number,
-    data: Partial<MessageComponentTextDisplay>
+    data: Partial<MessageComponentMediaGalleryItem>
   ) => void;
-  duplicateTextDisplay: (index: number) => void;
+  duplicateItem: (index: number) => void;
 }
 
-export default function EditorComponentBaseSection({
+export default function EditorComponentBaseMediaGallery({
   id,
   validationPathPrefix,
-  title = "Section",
+  title = "Media Gallery",
   data,
   duplicate,
   moveUp,
   moveDown,
   remove,
-  addSubComponent,
-  clearSubComponents,
-  moveSubComponentUp,
-  moveSubComponentDown,
-  deleteSubComponent,
-  onTextDisplayChange,
-  duplicateTextDisplay,
+  addItem,
+  clearItems,
+  moveItemUp,
+  moveItemDown,
+  deleteItem,
+  onItemChange,
+  duplicateItem,
 }: Props) {
-  // TODO: implement editing of accessory
-
   return (
     <div className="bg-dark-3 p-3 rounded-md">
       <EditorComponentCollapsable
@@ -58,59 +58,54 @@ export default function EditorComponentBaseSection({
         moveDown={moveDown}
         duplicate={duplicate}
         remove={remove}
-        extra={
-          <div className="text-gray-500 truncate flex space-x-2 pl-1">
-            <div>-</div>
-            <div className="truncate">Text</div>
-          </div>
-        }
       >
         <AutoAnimate>
-          {data.components.map((child, i) => (
+          {data.items.map((child, i) => (
             <div
               className="bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow border-2 border-dark-5"
               key={child.id}
             >
-              <EditorComponentBaseTextDisplay
-                id={`${id}.components.${child.id}`}
-                validationPathPrefix={`${validationPathPrefix}.components.${i}`}
+              <EditorComponentBaseMediaGalleryItem
+                id={`${id}.items.${child.id}`}
+                validationPathPrefix={`${validationPathPrefix}.items.${i}`}
                 data={child}
-                onChange={(data) => onTextDisplayChange(i, data)}
-                duplicate={() => duplicateTextDisplay(i)}
-                moveUp={() => moveSubComponentUp(i)}
-                moveDown={() => moveSubComponentDown(i)}
-                remove={() => deleteSubComponent(i)}
+                onChange={(data) => onItemChange(i, data)}
+                duplicate={() => duplicateItem(i)}
+                moveUp={() => moveItemUp(i)}
+                moveDown={() => moveItemDown(i)}
+                remove={() => deleteItem(i)}
               />
             </div>
           ))}
           <div>
             <div className="space-x-3 mt-3">
-              {data.components.length < 5 ? (
+              {data.items.length < 10 ? (
                 <button
                   className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white"
                   onClick={() =>
-                    addSubComponent({
+                    addItem({
                       id: getUniqueId(),
-                      type: 10,
-                      content: "",
+                      media: {
+                        url: "",
+                      },
                     })
                   }
                 >
-                  Add Text
+                  Add Item
                 </button>
               ) : (
                 <button
                   disabled
                   className="bg-dark-2 px-3 py-2 rounded transition-colors cursor-not-allowed text-gray-300"
                 >
-                  Add Text
+                  Add Item
                 </button>
               )}
               <button
                 className="px-3 py-2 rounded border-2 border-red hover:bg-red transition-colors text-white"
-                onClick={clearSubComponents}
+                onClick={clearItems}
               >
-                Clear Texts
+                Clear Items
               </button>
             </div>
           </div>

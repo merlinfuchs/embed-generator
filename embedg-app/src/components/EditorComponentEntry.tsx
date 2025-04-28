@@ -1,8 +1,10 @@
 import { useCurrentMessageStore } from "../state/message";
-import EditorComponentRootMediaGallery from "./EditorComponentRootMediaGallery";
 import EditorComponentRootActionRow from "./EditorComponentActionRow";
-import EditorComponentRootSection from "./EditorComponentRootSection";
+import EditorComponentSection from "./EditorComponentSection";
+import EditorComponentSeparator from "./EditorComponentSeparator";
 import EditorComponentTextDisplay from "./EditorComponentTextDisplay";
+import EditorComponentFile from "./EditorComponentFile";
+import EditorComponentGallery from "./EditorComponentGallery";
 
 interface Props {
   rootIndex: number;
@@ -21,13 +23,15 @@ export default function EditorComponentEntry({ rootIndex, rootId }: Props) {
       <EditorComponentRootActionRow rootIndex={rootIndex} rootId={rootId} />
     );
   } else if (root.type === 9) {
-    return <EditorComponentRootSection rootIndex={rootIndex} rootId={rootId} />;
+    return <EditorComponentSection rootIndex={rootIndex} rootId={rootId} />;
   } else if (root.type === 10) {
     return <EditorComponentTextDisplay rootIndex={rootIndex} rootId={rootId} />;
   } else if (root.type === 12) {
-    return (
-      <EditorComponentRootMediaGallery rootIndex={rootIndex} rootId={rootId} />
-    );
+    return <EditorComponentGallery rootIndex={rootIndex} rootId={rootId} />;
+  } else if (root.type === 13) {
+    return <EditorComponentFile rootIndex={rootIndex} rootId={rootId} />;
+  } else if (root.type === 14) {
+    return <EditorComponentSeparator rootIndex={rootIndex} rootId={rootId} />;
   } else {
     return <div>Unknown root component type: {root.type}</div>;
   }

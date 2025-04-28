@@ -2,16 +2,17 @@ import { z } from "zod";
 import { getUniqueId } from "../util";
 
 const VARIABLE_RE = new RegExp("\\{\\{[^}]+\\}\\}");
+const ATTACHMENT_RE = new RegExp("attachment://\\.+");
 
 const HOSTNAME_RE = new RegExp("\\.[a-zA-Z]{2,}$");
 const urlRefinement: [(v: string) => boolean, string] = [
   (v) => {
     if (v.match(VARIABLE_RE)) return true;
-
+    if (v.match(ATTACHMENT_RE)) return true;
     try {
       const url = new URL(v);
       return !!url.hostname.match(HOSTNAME_RE);
-    } catch {
+    } catch (e) {
       return false;
     }
   },
@@ -344,6 +345,10 @@ export const componentMediaGalleryItemSchema = z.object({
   description: z.optional(z.string()),
   spoiler: z.optional(z.boolean()),
 });
+
+export type MessageComponentMediaGalleryItem = z.infer<
+  typeof componentMediaGalleryItemSchema
+>;
 
 export const componentMediaGallerySchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),

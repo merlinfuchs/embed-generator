@@ -43,12 +43,10 @@ export default function EditorComponentAddDropdown() {
       components: [],
       accessory: {
         id: getUniqueId(),
-        type: 2,
-        label: "test",
-        action_set_id: getUniqueId().toString(),
-        disabled: false,
-        style: 1,
-        emoji: null,
+        type: 11,
+        media: {
+          url: "https://xenon.bot/logo-big.png",
+        },
       },
     });
   }
@@ -68,6 +66,27 @@ export default function EditorComponentAddDropdown() {
       id: getUniqueId(),
       type: 12,
       items: [],
+    });
+  }
+
+  function addSeparator() {
+    setOpen(false);
+    addComponent({
+      id: getUniqueId(),
+      type: 14,
+      spacing: 1,
+      divider: true,
+    });
+  }
+
+  function addFile() {
+    setOpen(false);
+    addComponent({
+      id: getUniqueId(),
+      type: 13,
+      file: {
+        url: "",
+      },
     });
   }
 
@@ -120,6 +139,18 @@ export default function EditorComponentAddDropdown() {
               onClick={addMediaGallery}
             >
               Add Media Gallery
+            </button>
+            <button
+              className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left"
+              onClick={addFile}
+            >
+              Add File
+            </button>
+            <button
+              className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left"
+              onClick={addSeparator}
+            >
+              Add Separator
             </button>
           </div>
         )}

@@ -20,6 +20,9 @@ export default function EditorView() {
 
   const debouncedSetValidationError = debounce((msg: Message) => {
     const res = messageSchema.safeParse(msg);
+    if (!res.success) {
+      console.log(res.error);
+    }
     setValidationError(res.success ? null : res.error);
   }, 250);
 

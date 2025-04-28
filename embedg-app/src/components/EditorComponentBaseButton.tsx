@@ -1,24 +1,16 @@
-import {
-  ChevronDownIcon,
-  ChevronUpIcon,
-  DocumentDuplicateIcon,
-  TrashIcon,
-} from "@heroicons/react/20/solid";
-import { useCurrentMessageStore } from "../state/message";
-import Collapsable from "./Collapsable";
-import { shallow } from "zustand/shallow";
-import EditorInput from "./EditorInput";
-import EditorActionSet from "./EditorActionSet";
-import EditorComponentEmojiSelect from "./EditorComponentEmojiSelect";
-import CheckBox from "./CheckBox";
 import { MessageComponentButton } from "../discord/schema";
+import CheckBox from "./CheckBox";
+import EditorActionSet from "./EditorActionSet";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
+import EditorComponentEmojiSelect from "./EditorComponentEmojiSelect";
+import EditorInput from "./EditorInput";
 
 interface Props {
   id: string;
   validationPathPrefix: string;
   title?: string;
   data: MessageComponentButton;
+  size?: "medium" | "large";
   onChange: (data: Partial<MessageComponentButton>) => void;
 
   duplicate?: () => void;
@@ -39,6 +31,7 @@ export default function EditorComponentBaseButton({
   id,
   validationPathPrefix,
   title = "Button",
+  size = "medium",
   data,
   onChange,
   duplicate,
@@ -64,6 +57,7 @@ export default function EditorComponentBaseButton({
             </div>
           )
         }
+        size={size}
         duplicate={duplicate}
         moveUp={moveUp}
         moveDown={moveDown}
