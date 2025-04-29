@@ -177,12 +177,14 @@ export default function EditorComponentAddDropdown({
                 >
                   Add Separator
                 </button>
-                <button
-                  className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left"
-                  onClick={addContainer}
-                >
-                  Add Container
-                </button>
+                {context === "root" && (
+                  <button
+                    className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left"
+                    onClick={addContainer}
+                  >
+                    Add Container
+                  </button>
+                )}
               </>
             )}
           </div>

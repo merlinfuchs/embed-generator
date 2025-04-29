@@ -221,7 +221,7 @@ export const emojiSchema = z
 export type Emoji = z.infer<typeof emojiSchema>;
 
 export const unfurledMediaItemSchema = z.object({
-  url: z.string().refine(...urlRefinement), // TODO: validate unfurled media url
+  url: z.string().refine(...urlRefinement),
 });
 
 export type UnfurledMediaItem = z.infer<typeof unfurledMediaItemSchema>;

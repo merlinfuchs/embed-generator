@@ -52,7 +52,6 @@ export default function EditorComponentBaseThumbnail({
         <div className="flex space-x-3">
           <EditorInput
             label="File URL"
-            maxLength={80}
             value={data.media.url}
             onChange={(v) =>
               onChange({
