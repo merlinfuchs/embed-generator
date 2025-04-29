@@ -1,7 +1,9 @@
 import { MessageComponentFile } from "../discord/schema";
+import { useCurrentAttachmentsStore } from "../state/attachments";
 import CheckBox from "./CheckBox";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
 import EditorInput from "./EditorInput";
+import ValidationError from "./ValidationError";
 
 interface Props {
   id: string;
@@ -29,7 +31,7 @@ export default function EditorComponentBaseFile({
   moveDown,
   remove,
 }: Props) {
-  // TODO: Allow selecting files from attachment
+  const attachments = useCurrentAttachmentsStore((state) => state.attachments);
 
   return (
     <EditorComponentCollapsable
@@ -44,20 +46,26 @@ export default function EditorComponentBaseFile({
     >
       <div className="space-y-4">
         <div className="flex space-x-3">
-          <EditorInput
-            label="File URL"
-            maxLength={80}
-            value={data.file.url}
-            onChange={(v) =>
-              onChange({
-                file: {
-                  url: v,
-                },
-              })
-            }
-            className="flex-auto"
-            validationPath={`${validationPathPrefix}.file.url`}
-          />
+          <div className="flex-auto">
+            <div className="mb-1.5 flex">
+              <div className="uppercase text-gray-300 text-sm font-medium">
+                Attachment
+              </div>
+            </div>
+            <select
+              className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
+              value={data.file.url}
+              onChange={(e) => onChange({ file: { url: e.target.value } })}
+            >
+              {attachments.map((attachment) => (
+                <option value={`attachment://${attachment.name}`}>
+                  {attachment.name}
+                </option>
+              ))}
+              <option value="">Select Attachment</option>
+            </select>
+            <ValidationError path={`${validationPathPrefix}.file.url`} />
+          </div>
           <div className="flex-none">
             <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
               Spoiler
