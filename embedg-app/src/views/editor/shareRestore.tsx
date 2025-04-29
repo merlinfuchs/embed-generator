@@ -31,6 +31,7 @@ export default function ShareRestoreView() {
           title: "Failed to parse shared message",
           message: `${e}`,
         });
+        console.error(e);
       }
     } else {
       createToast({

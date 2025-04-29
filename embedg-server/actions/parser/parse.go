@@ -205,7 +205,10 @@ func (m *ActionParser) UnparseMessageComponents(data []discordgo.MessageComponen
 			continue
 		}
 
+		// TODO: v2 component types
+
 		ar := actions.ComponentWithActions{
+			Type:       discordgo.ActionsRowComponent,
 			Components: make([]actions.ComponentWithActions, 0, len(row.Components)),
 		}
 
