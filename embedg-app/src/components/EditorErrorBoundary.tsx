@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useCurrentMessageStore } from "../state/message";
+
 export default function EditorErrorBoundary({
   children,
 }: {
