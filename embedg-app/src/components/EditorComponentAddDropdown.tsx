@@ -11,6 +11,7 @@ interface Props {
   v2Enabled: boolean;
   addComponent: (component: MessageComponent) => void;
   disabled?: boolean;
+  size?: "small" | "large";
 }
 
 export default function EditorComponentAddDropdown({
@@ -18,6 +19,7 @@ export default function EditorComponentAddDropdown({
   v2Enabled,
   addComponent,
   disabled,
+  size = "small",
 }: Props) {
   const [open, setOpen] = useState(false);
 
@@ -114,7 +116,8 @@ export default function EditorComponentAddDropdown({
       <div className="relative">
         <button
           className={clsx(
-            "px-3 py-2.5 rounded text-white flex items-center space-x-2",
+            "rounded text-white flex items-center space-x-2",
+            size === "large" ? "py-3 px-3" : "py-2 px-2",
             disabled
               ? "bg-dark-3 cursor-not-allowed"
               : "bg-blurple hover:bg-blurple-dark"

@@ -341,7 +341,12 @@ export const componentSectionSchema = z.object({
   ),
   accessory: z.preprocess(
     (d) => d ?? undefined,
-    z.optional(z.union([componentThumbnailSchema, componentButtonSchema]))
+    z.union([componentThumbnailSchema, componentButtonSchema]).default({
+      type: 11,
+      media: {
+        url: "",
+      },
+    })
   ),
 });
 

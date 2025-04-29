@@ -57,16 +57,17 @@ export default function EditorComponents({
           </div>
         ))}
       </AutoAnimate>
-      <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 items-start">
+      <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 items-center">
         <EditorComponentAddDropdown
           context="root"
+          size="large"
           v2Enabled={componentsV2Enabled}
           addComponent={addComponent}
           disabled={components.length >= 5}
         />
 
         <button
-          className="px-3 py-2 rounded text-white border-red border-2 hover:bg-red"
+          className="px-3 py-2.5 rounded text-white border-red border-2 hover:bg-red"
           onClick={clearComponents}
         >
           Clear Components

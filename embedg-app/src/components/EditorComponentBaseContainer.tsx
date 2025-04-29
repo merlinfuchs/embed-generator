@@ -378,7 +378,7 @@ export default function EditorComponentBaseContainer({
             </div>
           ))}
           <div>
-            <div className="flex space-x-3 mt-3">
+            <div className="flex space-x-3 mt-3 items-center">
               <EditorComponentAddDropdown
                 context="container"
                 v2Enabled={true}
@@ -400,7 +400,7 @@ export default function EditorComponentBaseContainer({
                 className="px-3 py-2 rounded border-2 border-red hover:bg-red transition-colors text-white"
                 onClick={clearSubComponents}
               >
-                Clear Texts
+                Clear Components
               </button>
             </div>
           </div>
