@@ -8,6 +8,7 @@ import {
   Message,
   MessageAction,
   MessageComponent,
+  MessageComponentAccessory,
   MessageComponentActionRow,
   MessageComponentButton,
   MessageComponentContainer,
@@ -111,6 +112,10 @@ export interface MessageStore extends Message {
 
   getSection: (i: number) => MessageComponentSection | null;
   updateSection: (i: number, data: Partial<MessageComponentSection>) => void;
+  updateSectionAccessory: (
+    i: number,
+    data: Partial<MessageComponentAccessory>
+  ) => void;
   addSectionComponent: (
     i: number,
     component: MessageComponentTextDisplay
@@ -239,6 +244,11 @@ export interface MessageStore extends Message {
     k: number
   ) => void;
 
+  updateContainerSectionAccessory: (
+    i: number,
+    j: number,
+    data: Partial<MessageComponentAccessory>
+  ) => void;
   addContainerSectionComponent: (
     i: number,
     j: number,
@@ -1154,6 +1164,23 @@ export const createMessageStore = (key: string) =>
                 }
                 Object.assign(section, data);
               }),
+            updateSectionAccessory: (
+              i: number,
+              data: Partial<MessageComponentAccessory>
+            ) =>
+              set((state) => {
+                const accessory = state.components && state.components[i];
+                if (!accessory) {
+                  return;
+                }
+
+                if (data.type === 2 && accessory.type === 11) {
+                  if (data.action_set_id) {
+                    delete state.actions[data.action_set_id];
+                  }
+                }
+                Object.assign(accessory, data);
+              }),
 
             addSectionComponent: (
               i: number,
@@ -1717,6 +1744,21 @@ export const createMessageStore = (key: string) =>
                     if (selectMenu?.type === 3) {
                       selectMenu.options = [];
                     }
+                  }
+                }
+              }),
+
+            updateContainerSectionAccessory: (i, j, data) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const section = container.components[j];
+                  if (section.type === 9) {
+                    const accessory = section.accessory;
+                    if (accessory.type === 2 && data.type === 11) {
+                      delete state.actions[accessory.action_set_id];
+                    }
+                    Object.assign(accessory, data);
                   }
                 }
               }),

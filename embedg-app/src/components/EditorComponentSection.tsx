@@ -32,6 +32,7 @@ export default function EditorComponentRootSection({
   );
 
   const [
+    updateSectionAccessory,
     addSubComponent,
     clearSubComponents,
     moveSubComponentUp,
@@ -41,6 +42,7 @@ export default function EditorComponentRootSection({
     duplicateSubComponent,
   ] = useCurrentMessageStore(
     (state) => [
+      state.updateSectionAccessory,
       state.addSectionComponent,
       state.clearSectionComponents,
       state.moveSectionComponentUp,
@@ -70,6 +72,7 @@ export default function EditorComponentRootSection({
           rootIndex < componentCount - 1 ? () => moveDown(rootIndex) : () => {}
         }
         remove={() => remove(rootIndex)}
+        onAccessoryChange={(data) => updateSectionAccessory(rootIndex, data)}
         addSubComponent={(component) => addSubComponent(rootIndex, component)}
         clearSubComponents={() => clearSubComponents(rootIndex)}
         moveSubComponentUp={(index) => moveSubComponentUp(rootIndex, index)}

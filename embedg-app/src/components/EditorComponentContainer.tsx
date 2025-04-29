@@ -58,6 +58,7 @@ export default function EditorComponentRootContainer({
     actionRowRemoveSelectMenuOption,
     actionRowClearSelectMenuOptions,
 
+    sectionOnAccessoryChange,
     sectionAddSubComponent,
     sectionClearSubComponents,
     sectionMoveSubComponentUp,
@@ -98,6 +99,7 @@ export default function EditorComponentRootContainer({
       state.removeContainerActionRowSelectMenuOption,
       state.clearContainerActionRowSelectMenuOptions,
 
+      state.updateContainerSectionAccessory,
       state.addContainerSectionComponent,
       state.clearContainerSectionComponents,
       state.moveContainerSectionComponentUp,
@@ -194,6 +196,9 @@ export default function EditorComponentRootContainer({
       }
       actionRowClearSelectMenuOptions={(a, k) =>
         actionRowClearSelectMenuOptions(rootIndex, a, k)
+      }
+      sectionOnAccessoryChange={(i, data) =>
+        sectionOnAccessoryChange(rootIndex, i, data)
       }
       sectionAddSubComponent={(s, component) =>
         sectionAddSubComponent(rootIndex, s, component)

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import {
+  MessageComponentAccessory,
   MessageComponentButton,
   MessageComponentContainer,
   MessageComponentContainerSubComponent,
@@ -23,6 +24,7 @@ import EditorInput from "./EditorInput";
 import { colorIntToHex } from "../util/discord";
 import ColorPicker from "./ColorPicker";
 import ValidationError from "./ValidationError";
+import Collapsable from "./Collapsable";
 
 interface Props {
   id: string;
@@ -72,6 +74,10 @@ interface Props {
   actionRowRemoveSelectMenuOption: (a: number, k: number, o: number) => void;
   actionRowClearSelectMenuOptions: (a: number, k: number) => void;
 
+  sectionOnAccessoryChange: (
+    i: number,
+    data: Partial<MessageComponentAccessory>
+  ) => void;
   sectionAddSubComponent: (
     s: number,
     comp: MessageComponentTextDisplay
@@ -136,6 +142,7 @@ export default function EditorComponentBaseContainer({
   actionRowRemoveSelectMenuOption,
   actionRowClearSelectMenuOptions,
 
+  sectionOnAccessoryChange,
   sectionAddSubComponent,
   sectionClearSubComponents,
   sectionMoveSubComponentUp,
@@ -213,198 +220,212 @@ export default function EditorComponentBaseContainer({
           </div>
         </div>
 
-        <AutoAnimate>
-          {data.components.map((child, i) => (
-            <div
-              className="bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow border-2 border-dark-5"
-              key={child.id}
-            >
-              {child.type === 1 ? (
-                <EditorComponentBaseActionRow
-                  id={`${id}.components.${child.id}`}
-                  validationPathPrefix={`${validationPathPrefix}.components.${i}`}
-                  data={child}
-                  duplicate={() => duplicateSubComponent(i)}
-                  moveUp={() => moveSubComponentUp(i)}
-                  moveDown={() => moveSubComponentDown(i)}
-                  remove={() => deleteSubComponent(i)}
-                  addSubComponent={(comp) => {
-                    actionRowAddSubComponent(i, comp);
-                  }}
-                  clearSubComponents={() => {
-                    actionRowClearSubComponents(i);
-                  }}
-                  moveSubComponentUp={(index) => {
-                    actionRowMoveSubComponentUp(i, index);
-                  }}
-                  moveSubComponentDown={(index) => {
-                    actionRowMoveSubComponentDown(i, index);
-                  }}
-                  deleteSubComponent={(index) => {
-                    actionRowDeleteSubComponent(i, index);
-                  }}
-                  onSubComponentChange={(index, data) => {
-                    actionRowOnSubComponentChange(i, index, data);
-                  }}
-                  duplicateSubComponent={(index) => {
-                    actionRowDuplicateSubComponent(i, index);
-                  }}
-                  onSelectMenuOptionChange={(index, optionIndex, data) => {
-                    actionRowOnSelectMenuOptionChange(
-                      i,
-                      index,
-                      optionIndex,
-                      data
-                    );
-                  }}
-                  addSelectMenuOption={(k) => {
-                    actionRowAddSelectMenuOption(i, k);
-                  }}
-                  duplicateSelectMenuOption={(k, o) => {
-                    actionRowDuplicateSelectMenuOption(i, k, o);
-                  }}
-                  moveSelectMenuOptionUp={(k, o) => {
-                    actionRowMoveSelectMenuOptionUp(i, k, o);
-                  }}
-                  moveSelectMenuOptionDown={(k, o) => {
-                    actionRowMoveSelectMenuOptionDown(i, k, o);
-                  }}
-                  removeSelectMenuOption={(k, o) => {
-                    actionRowRemoveSelectMenuOption(i, k, o);
-                  }}
-                  clearSelectMenuOptions={(k) => {
-                    actionRowClearSelectMenuOptions(i, k);
-                  }}
-                />
-              ) : child.type === 9 ? (
-                <EditorComponentBaseSection
-                  id={`${id}.components.${child.id}`}
-                  validationPathPrefix={`${validationPathPrefix}.components.${i}`}
-                  data={child}
-                  onChange={(data) => onSubComponentChange(i, data)}
-                  duplicate={() => duplicateSubComponent(i)}
-                  moveUp={() => moveSubComponentUp(i)}
-                  moveDown={() => moveSubComponentDown(i)}
-                  remove={() => deleteSubComponent(i)}
-                  addSubComponent={(comp) => {
-                    sectionAddSubComponent(i, comp);
-                  }}
-                  clearSubComponents={() => {
-                    sectionClearSubComponents(i);
-                  }}
-                  moveSubComponentUp={(index) => {
-                    sectionMoveSubComponentUp(i, index);
-                  }}
-                  moveSubComponentDown={(index) => {
-                    sectionMoveSubComponentDown(i, index);
-                  }}
-                  deleteSubComponent={(index) => {
-                    sectionDeleteSubComponent(i, index);
-                  }}
-                  onSubComponentChange={(index, data) => {
-                    sectionOnSubComponentChange(i, index, data);
-                  }}
-                  duplicateSubComponent={(index) => {
-                    sectionDuplicateSubComponent(i, index);
-                  }}
-                />
-              ) : child.type === 10 ? (
-                <EditorComponentBaseTextDisplay
-                  id={`${id}.components.${child.id}`}
-                  validationPathPrefix={`${validationPathPrefix}.components.${i}`}
-                  data={child}
-                  onChange={(data) => onSubComponentChange(i, data)}
-                  duplicate={() => duplicateSubComponent(i)}
-                  moveUp={() => moveSubComponentUp(i)}
-                  moveDown={() => moveSubComponentDown(i)}
-                  remove={() => deleteSubComponent(i)}
-                />
-              ) : child.type === 12 ? (
-                <EditorComponentBaseMediaGallery
-                  id={`${id}.components.${child.id}`}
-                  validationPathPrefix={`${validationPathPrefix}.components.${i}`}
-                  data={child}
-                  duplicate={() => duplicateSubComponent(i)}
-                  moveUp={() => moveSubComponentUp(i)}
-                  moveDown={() => moveSubComponentDown(i)}
-                  remove={() => deleteSubComponent(i)}
-                  addItem={(comp) => {
-                    mediaGalleryAddItem(i, comp);
-                  }}
-                  clearItems={() => {
-                    mediaGalleryClearItems(i);
-                  }}
-                  moveItemUp={(index) => {
-                    mediaGalleryMoveItemUp(i, index);
-                  }}
-                  moveItemDown={(index) => {
-                    mediaGalleryMoveItemDown(i, index);
-                  }}
-                  deleteItem={(index) => {
-                    mediaGalleryDeleteItem(i, index);
-                  }}
-                  onItemChange={(index, data) => {
-                    mediaGalleryOnItemChange(i, index, data);
-                  }}
-                  duplicateItem={(index) => {
-                    mediaGalleryDuplicateItem(i, index);
-                  }}
-                />
-              ) : child.type === 13 ? (
-                <EditorComponentBaseFile
-                  id={`${id}.components.${child.id}`}
-                  validationPathPrefix={`${validationPathPrefix}.components.${i}`}
-                  data={child}
-                  onChange={(data) => onSubComponentChange(i, data)}
-                  duplicate={() => duplicateSubComponent(i)}
-                  moveUp={() => moveSubComponentUp(i)}
-                  moveDown={() => moveSubComponentDown(i)}
-                  remove={() => deleteSubComponent(i)}
-                />
-              ) : child.type === 14 ? (
-                <EditorComponentBaseSeparator
-                  id={`${id}.components.${child.id}`}
-                  validationPathPrefix={`${validationPathPrefix}.components.${i}`}
-                  data={child}
-                  onChange={(data) => onSubComponentChange(i, data)}
-                  duplicate={() => duplicateSubComponent(i)}
-                  moveUp={() => moveSubComponentUp(i)}
-                  moveDown={() => moveSubComponentDown(i)}
-                  remove={() => deleteSubComponent(i)}
-                />
-              ) : (
-                <div>Not implemented</div>
-              )}
+        <Collapsable
+          id={`${id}.components`}
+          validationPathPrefix={`${validationPathPrefix}.components`}
+          title="Components"
+          extra={
+            <div className="text-sm italic font-light text-gray-400">
+              {data.components.length} / 10
             </div>
-          ))}
-          <div>
-            <div className="flex space-x-3 mt-3 items-center">
-              <EditorComponentAddDropdown
-                context="container"
-                v2Enabled={true}
-                addComponent={(comp) => {
-                  if (
-                    comp.type === 1 ||
-                    comp.type === 9 ||
-                    comp.type === 10 ||
-                    comp.type === 12 ||
-                    comp.type === 13 ||
-                    comp.type === 14
-                  ) {
-                    addSubComponent(comp);
-                  }
-                }}
-                disabled={data.components.length >= 10}
-              />
-              <button
-                className="px-3 py-2 rounded border-2 border-red hover:bg-red transition-colors text-white"
-                onClick={clearSubComponents}
+          }
+        >
+          <AutoAnimate>
+            {data.components.map((child, i) => (
+              <div
+                className="bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow border-2 border-dark-5"
+                key={child.id}
               >
-                Clear Components
-              </button>
+                {child.type === 1 ? (
+                  <EditorComponentBaseActionRow
+                    id={`${id}.components.${child.id}`}
+                    validationPathPrefix={`${validationPathPrefix}.components.${i}`}
+                    data={child}
+                    duplicate={() => duplicateSubComponent(i)}
+                    moveUp={() => moveSubComponentUp(i)}
+                    moveDown={() => moveSubComponentDown(i)}
+                    remove={() => deleteSubComponent(i)}
+                    addSubComponent={(comp) => {
+                      actionRowAddSubComponent(i, comp);
+                    }}
+                    clearSubComponents={() => {
+                      actionRowClearSubComponents(i);
+                    }}
+                    moveSubComponentUp={(index) => {
+                      actionRowMoveSubComponentUp(i, index);
+                    }}
+                    moveSubComponentDown={(index) => {
+                      actionRowMoveSubComponentDown(i, index);
+                    }}
+                    deleteSubComponent={(index) => {
+                      actionRowDeleteSubComponent(i, index);
+                    }}
+                    onSubComponentChange={(index, data) => {
+                      actionRowOnSubComponentChange(i, index, data);
+                    }}
+                    duplicateSubComponent={(index) => {
+                      actionRowDuplicateSubComponent(i, index);
+                    }}
+                    onSelectMenuOptionChange={(index, optionIndex, data) => {
+                      actionRowOnSelectMenuOptionChange(
+                        i,
+                        index,
+                        optionIndex,
+                        data
+                      );
+                    }}
+                    addSelectMenuOption={(k) => {
+                      actionRowAddSelectMenuOption(i, k);
+                    }}
+                    duplicateSelectMenuOption={(k, o) => {
+                      actionRowDuplicateSelectMenuOption(i, k, o);
+                    }}
+                    moveSelectMenuOptionUp={(k, o) => {
+                      actionRowMoveSelectMenuOptionUp(i, k, o);
+                    }}
+                    moveSelectMenuOptionDown={(k, o) => {
+                      actionRowMoveSelectMenuOptionDown(i, k, o);
+                    }}
+                    removeSelectMenuOption={(k, o) => {
+                      actionRowRemoveSelectMenuOption(i, k, o);
+                    }}
+                    clearSelectMenuOptions={(k) => {
+                      actionRowClearSelectMenuOptions(i, k);
+                    }}
+                  />
+                ) : child.type === 9 ? (
+                  <EditorComponentBaseSection
+                    id={`${id}.components.${child.id}`}
+                    validationPathPrefix={`${validationPathPrefix}.components.${i}`}
+                    data={child}
+                    onChange={(data) => onSubComponentChange(i, data)}
+                    duplicate={() => duplicateSubComponent(i)}
+                    moveUp={() => moveSubComponentUp(i)}
+                    moveDown={() => moveSubComponentDown(i)}
+                    remove={() => deleteSubComponent(i)}
+                    onAccessoryChange={(data) => {
+                      sectionOnAccessoryChange(i, data);
+                    }}
+                    addSubComponent={(comp) => {
+                      sectionAddSubComponent(i, comp);
+                    }}
+                    clearSubComponents={() => {
+                      sectionClearSubComponents(i);
+                    }}
+                    moveSubComponentUp={(index) => {
+                      sectionMoveSubComponentUp(i, index);
+                    }}
+                    moveSubComponentDown={(index) => {
+                      sectionMoveSubComponentDown(i, index);
+                    }}
+                    deleteSubComponent={(index) => {
+                      sectionDeleteSubComponent(i, index);
+                    }}
+                    onSubComponentChange={(index, data) => {
+                      sectionOnSubComponentChange(i, index, data);
+                    }}
+                    duplicateSubComponent={(index) => {
+                      sectionDuplicateSubComponent(i, index);
+                    }}
+                  />
+                ) : child.type === 10 ? (
+                  <EditorComponentBaseTextDisplay
+                    id={`${id}.components.${child.id}`}
+                    validationPathPrefix={`${validationPathPrefix}.components.${i}`}
+                    data={child}
+                    onChange={(data) => onSubComponentChange(i, data)}
+                    duplicate={() => duplicateSubComponent(i)}
+                    moveUp={() => moveSubComponentUp(i)}
+                    moveDown={() => moveSubComponentDown(i)}
+                    remove={() => deleteSubComponent(i)}
+                  />
+                ) : child.type === 12 ? (
+                  <EditorComponentBaseMediaGallery
+                    id={`${id}.components.${child.id}`}
+                    validationPathPrefix={`${validationPathPrefix}.components.${i}`}
+                    data={child}
+                    duplicate={() => duplicateSubComponent(i)}
+                    moveUp={() => moveSubComponentUp(i)}
+                    moveDown={() => moveSubComponentDown(i)}
+                    remove={() => deleteSubComponent(i)}
+                    addItem={(comp) => {
+                      mediaGalleryAddItem(i, comp);
+                    }}
+                    clearItems={() => {
+                      mediaGalleryClearItems(i);
+                    }}
+                    moveItemUp={(index) => {
+                      mediaGalleryMoveItemUp(i, index);
+                    }}
+                    moveItemDown={(index) => {
+                      mediaGalleryMoveItemDown(i, index);
+                    }}
+                    deleteItem={(index) => {
+                      mediaGalleryDeleteItem(i, index);
+                    }}
+                    onItemChange={(index, data) => {
+                      mediaGalleryOnItemChange(i, index, data);
+                    }}
+                    duplicateItem={(index) => {
+                      mediaGalleryDuplicateItem(i, index);
+                    }}
+                  />
+                ) : child.type === 13 ? (
+                  <EditorComponentBaseFile
+                    id={`${id}.components.${child.id}`}
+                    validationPathPrefix={`${validationPathPrefix}.components.${i}`}
+                    data={child}
+                    onChange={(data) => onSubComponentChange(i, data)}
+                    duplicate={() => duplicateSubComponent(i)}
+                    moveUp={() => moveSubComponentUp(i)}
+                    moveDown={() => moveSubComponentDown(i)}
+                    remove={() => deleteSubComponent(i)}
+                  />
+                ) : child.type === 14 ? (
+                  <EditorComponentBaseSeparator
+                    id={`${id}.components.${child.id}`}
+                    validationPathPrefix={`${validationPathPrefix}.components.${i}`}
+                    data={child}
+                    onChange={(data) => onSubComponentChange(i, data)}
+                    duplicate={() => duplicateSubComponent(i)}
+                    moveUp={() => moveSubComponentUp(i)}
+                    moveDown={() => moveSubComponentDown(i)}
+                    remove={() => deleteSubComponent(i)}
+                  />
+                ) : (
+                  <div>Not implemented</div>
+                )}
+              </div>
+            ))}
+            <div>
+              <div className="flex space-x-3 mt-3 items-center">
+                <EditorComponentAddDropdown
+                  context="container"
+                  v2Enabled={true}
+                  addComponent={(comp) => {
+                    if (
+                      comp.type === 1 ||
+                      comp.type === 9 ||
+                      comp.type === 10 ||
+                      comp.type === 12 ||
+                      comp.type === 13 ||
+                      comp.type === 14
+                    ) {
+                      addSubComponent(comp);
+                    }
+                  }}
+                  disabled={data.components.length >= 10}
+                />
+                <button
+                  className="px-3 py-2 rounded border-2 border-red hover:bg-red transition-colors text-white"
+                  onClick={clearSubComponents}
+                >
+                  Clear Components
+                </button>
+              </div>
             </div>
-          </div>
-        </AutoAnimate>
+          </AutoAnimate>
+        </Collapsable>
       </EditorComponentCollapsable>
     </div>
   );

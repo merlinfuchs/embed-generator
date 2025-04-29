@@ -330,11 +330,20 @@ export type MessageComponentThumbnail = z.infer<
   typeof componentThumbnailSchema
 >;
 
+export const componentAccessorySchema = z.union([
+  componentThumbnailSchema,
+  componentButtonSchema,
+]);
+
+export type MessageComponentAccessory = z.infer<
+  typeof componentAccessorySchema
+>;
+
 export const componentSectionSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
   type: z.literal(9),
   components: z.array(componentTextDisplaySchema).min(1).max(5),
-  accessory: z.union([componentThumbnailSchema, componentButtonSchema]),
+  accessory: componentAccessorySchema,
 });
 
 export type MessageComponentSection = z.infer<typeof componentSectionSchema>;
