@@ -1169,7 +1169,12 @@ export const createMessageStore = (key: string) =>
               data: Partial<MessageComponentAccessory>
             ) =>
               set((state) => {
-                const accessory = state.components && state.components[i];
+                const section = state.components && state.components[i];
+                if (!section || section.type !== 9) {
+                  return;
+                }
+
+                const accessory = section.accessory;
                 if (!accessory) {
                   return;
                 }

@@ -6,10 +6,15 @@ import { ChangeEvent, useRef } from "react";
 import { getUniqueId } from "../util";
 import EditorAttachment from "./EditorAttachment";
 import { shallow } from "zustand/shallow";
+import { useCurrentMessageStore } from "../state/message";
 
 export default function EditorAttachments() {
   const attachments = useCurrentAttachmentsStore((state) =>
     state.attachments.map((a) => a.id)
+  );
+
+  const componentsV2Enabled = useCurrentMessageStore((state) =>
+    state.getComponentsV2Enabled()
   );
 
   const totalBytes = useCurrentAttachmentsStore((state) =>
@@ -76,7 +81,9 @@ export default function EditorAttachments() {
       }
     >
       <div className="text-gray-400 mb-3">
-        Attachments do currently not appear in the preview.
+        {componentsV2Enabled
+          ? "Attachments do not directly appear in the message. Instead, you can use them in File components."
+          : "Attachments do currently not appear in the preview."}
       </div>
       <AutoAnimate className="flex flex-wrap">
         {attachments.map((id, i) => (

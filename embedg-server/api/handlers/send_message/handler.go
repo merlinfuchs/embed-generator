@@ -82,14 +82,16 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 	}
 
 	params := &discordgo.WebhookParams{
-		Content:         data.Content,
 		Username:        data.Username,
 		AvatarURL:       data.AvatarURL,
 		ThreadName:      req.ThreadName.String,
-		TTS:             data.TTS,
-		Embeds:          data.Embeds,
 		AllowedMentions: data.AllowedMentions,
 		Flags:           data.Flags,
+	}
+	if !data.ComponentsV2Enabled() {
+		params.Content = data.Content
+		params.Embeds = data.Embeds
+		params.TTS = data.TTS
 	}
 
 	attachments := make([]*discordgo.MessageAttachment, len(req.Attachments))
@@ -161,13 +163,15 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 	}
 
 	params := &discordgo.WebhookParams{
-		Content:         data.Content,
 		Username:        data.Username,
 		AvatarURL:       data.AvatarURL,
-		TTS:             data.TTS,
-		Embeds:          data.Embeds,
 		AllowedMentions: data.AllowedMentions,
 		Flags:           data.Flags,
+	}
+	if !data.ComponentsV2Enabled() {
+		params.Content = data.Content
+		params.Embeds = data.Embeds
+		params.TTS = data.TTS
 	}
 
 	attachments := make([]*discordgo.MessageAttachment, len(req.Attachments))

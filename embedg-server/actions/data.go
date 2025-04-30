@@ -18,6 +18,10 @@ type MessageWithActions struct {
 	Flags           discordgo.MessageFlags            `json:"flags,omitempty"`
 }
 
+func (m MessageWithActions) ComponentsV2Enabled() bool {
+	return m.Flags&(1<<15) != 0
+}
+
 type ComponentWithActions struct {
 	ID       int                     `json:"id,omitempty"`
 	Type     discordgo.ComponentType `json:"type"`
