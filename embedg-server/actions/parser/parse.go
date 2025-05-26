@@ -61,7 +61,6 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions) 
 	case discordgo.ButtonComponent:
 		if data.Style == discordgo.LinkButton {
 			return discordgo.Button{
-				ID:       data.ID,
 				Label:    data.Label,
 				Style:    data.Style,
 				Disabled: data.Disabled,
@@ -70,7 +69,6 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions) 
 			}, nil
 		} else {
 			return discordgo.Button{
-				ID:       data.ID,
 				CustomID: "action:" + data.ActionSetID,
 				Label:    data.Label,
 				Style:    data.Style,
@@ -91,7 +89,6 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions) 
 		}
 
 		return discordgo.SelectMenu{
-			ID:          data.ID,
 			MenuType:    discordgo.StringSelectMenu,
 			CustomID:    "action:options:" + util.UniqueID(),
 			Placeholder: data.Placeholder,
@@ -102,7 +99,6 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions) 
 		}, nil
 	case discordgo.SectionComponent:
 		se := discordgo.Section{
-			ID:         data.ID,
 			Components: make([]discordgo.MessageComponent, 0, len(data.Components)),
 		}
 
@@ -126,7 +122,6 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions) 
 		return se, nil
 	case discordgo.TextDisplayComponent:
 		return discordgo.TextDisplay{
-			ID:      data.ID,
 			Content: data.Content,
 		}, nil
 	case discordgo.ThumbnailComponent:
@@ -135,7 +130,6 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions) 
 		}
 
 		return discordgo.Thumbnail{
-			ID:          data.ID,
 			Content:     data.Content,
 			Media:       discordgo.UnfurledMediaItem{URL: data.Media.URL},
 			Description: data.Description,
@@ -152,7 +146,6 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions) 
 		}
 
 		return discordgo.MediaGallery{
-			ID:    data.ID,
 			Items: items,
 		}, nil
 	case discordgo.FileComponent:
@@ -161,20 +154,17 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions) 
 		}
 
 		return discordgo.ComponentFile{
-			ID:      data.ID,
 			Content: data.Content,
 			File:    discordgo.UnfurledMediaItem{URL: data.File.URL},
 			Spoiler: data.Spoiler,
 		}, nil
 	case discordgo.SeparatorComponent:
 		return discordgo.Separator{
-			ID:      data.ID,
 			Divider: data.Divider,
 			Spacing: data.Spacing,
 		}, nil
 	case discordgo.ContainerComponent:
 		c := discordgo.Container{
-			ID:          data.ID,
 			Content:     data.Content,
 			Components:  make([]discordgo.MessageComponent, 0, len(data.Components)),
 			AccentColor: data.AccentColor,
