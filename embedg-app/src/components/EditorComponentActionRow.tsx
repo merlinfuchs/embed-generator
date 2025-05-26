@@ -100,17 +100,17 @@ export default function EditorComponentActionRow({ rootIndex, rootId }: Props) {
             action_set_id: getUniqueId().toString(),
           })
         }
-        duplicateSelectMenuOption={(index) =>
-          duplicateActionRowSelectMenuOption(rootIndex, index, 0)
+        duplicateSelectMenuOption={(index, optionIndex) =>
+          duplicateActionRowSelectMenuOption(rootIndex, index, optionIndex)
         }
-        moveSelectMenuOptionUp={(index) =>
-          moveActionRowSelectMenuOptionUp(rootIndex, index, 0)
+        moveSelectMenuOptionUp={(index, optionIndex) =>
+          moveActionRowSelectMenuOptionUp(rootIndex, index, optionIndex)
         }
-        moveSelectMenuOptionDown={(index) =>
-          moveActionRowSelectMenuOptionDown(rootIndex, index, 0)
+        moveSelectMenuOptionDown={(index, optionIndex) =>
+          moveActionRowSelectMenuOptionDown(rootIndex, index, optionIndex)
         }
-        removeSelectMenuOption={(index) =>
-          deleteActionRowSelectMenuOption(rootIndex, index, 0)
+        removeSelectMenuOption={(index, optionIndex) =>
+          deleteActionRowSelectMenuOption(rootIndex, index, optionIndex)
         }
         clearSelectMenuOptions={(index) =>
           clearActionRowSelectMenuOptions(rootIndex, index)

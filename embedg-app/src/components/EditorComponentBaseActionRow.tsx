@@ -16,10 +16,10 @@ interface Props {
   validationPathPrefix: string;
   title?: string;
   data: MessageComponentActionRow;
-  duplicate: () => void;
-  moveUp: () => void;
-  moveDown: () => void;
-  remove: () => void;
+  duplicate?: () => void;
+  moveUp?: () => void;
+  moveDown?: () => void;
+  remove?: () => void;
   addSubComponent: (
     component: MessageComponentButton | MessageComponentSelectMenu
   ) => void;
@@ -102,9 +102,17 @@ export default function EditorComponentBaseActionRow({
               validationPathPrefix={`${validationPathPrefix}.components.${i}`}
               data={child}
               onChange={(data) => onSubComponentChange(i, data)}
-              duplicate={() => duplicateSubComponent(i)}
-              moveUp={() => moveSubComponentUp(i)}
-              moveDown={() => moveSubComponentDown(i)}
+              duplicate={
+                data.components.length < 5
+                  ? () => duplicateSubComponent(i)
+                  : undefined
+              }
+              moveUp={i > 0 ? () => moveSubComponentUp(i) : undefined}
+              moveDown={
+                i < data.components.length - 1
+                  ? () => moveSubComponentDown(i)
+                  : undefined
+              }
               remove={() => deleteSubComponent(i)}
             />
           ) : (

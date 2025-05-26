@@ -14,10 +14,10 @@ interface Props {
   validationPathPrefix: string;
   title?: string;
   data: MessageComponentMediaGallery;
-  duplicate: () => void;
-  moveUp: () => void;
-  moveDown: () => void;
-  remove: () => void;
+  duplicate?: () => void;
+  moveUp?: () => void;
+  moveDown?: () => void;
+  remove?: () => void;
   addItem: (item: MessageComponentMediaGalleryItem) => void;
   clearItems: () => void;
   moveItemUp: (index: number) => void;
@@ -69,9 +69,13 @@ export default function EditorComponentBaseMediaGallery({
               validationPathPrefix={`${validationPathPrefix}.items.${i}`}
               data={child}
               onChange={(data) => onItemChange(i, data)}
-              duplicate={() => duplicateItem(i)}
-              moveUp={() => moveItemUp(i)}
-              moveDown={() => moveItemDown(i)}
+              duplicate={
+                data.items.length < 10 ? () => duplicateItem(i) : undefined
+              }
+              moveUp={i > 0 ? () => moveItemUp(i) : undefined}
+              moveDown={
+                i < data.items.length - 1 ? () => moveItemDown(i) : undefined
+              }
               remove={() => deleteItem(i)}
             />
           </div>

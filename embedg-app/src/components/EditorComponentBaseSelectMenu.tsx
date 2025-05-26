@@ -80,9 +80,17 @@ export default function EditorComponentBaseSelectMenu({
                 title={`Option ${i + 1}`}
                 data={option}
                 onChange={(v) => onOptionChange(i, v)}
-                moveUp={() => moveOptionUp(i)}
-                moveDown={() => moveOptionDown(i)}
-                duplicate={() => duplicateOption(i)}
+                moveUp={i > 0 ? () => moveOptionUp(i) : undefined}
+                moveDown={
+                  i < data.options.length - 1
+                    ? () => moveOptionDown(i)
+                    : undefined
+                }
+                duplicate={
+                  data.options.length < 25
+                    ? () => duplicateOption(i)
+                    : undefined
+                }
                 remove={() => removeOption(i)}
               />
             </div>

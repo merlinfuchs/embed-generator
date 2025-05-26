@@ -20,10 +20,10 @@ interface Props {
   size?: "medium" | "large";
   data: MessageComponentSection;
   onChange: (data: Partial<MessageComponentSection>) => void;
-  duplicate: () => void;
-  moveUp: () => void;
-  moveDown: () => void;
-  remove: () => void;
+  duplicate?: () => void;
+  moveUp?: () => void;
+  moveDown?: () => void;
+  remove?: () => void;
   onAccessoryChange: (data: Partial<MessageComponentAccessory>) => void;
   addSubComponent: (component: MessageComponentTextDisplay) => void;
   clearSubComponents: () => void;

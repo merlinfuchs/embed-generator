@@ -241,9 +241,17 @@ export default function EditorComponentBaseContainer({
                     id={`${id}.components.${child.id}`}
                     validationPathPrefix={`${validationPathPrefix}.components.${i}`}
                     data={child}
-                    duplicate={() => duplicateSubComponent(i)}
-                    moveUp={() => moveSubComponentUp(i)}
-                    moveDown={() => moveSubComponentDown(i)}
+                    duplicate={
+                      data.components.length < 10
+                        ? () => duplicateSubComponent(i)
+                        : undefined
+                    }
+                    moveUp={i > 0 ? () => moveSubComponentUp(i) : undefined}
+                    moveDown={
+                      i < data.components.length - 1
+                        ? () => moveSubComponentDown(i)
+                        : undefined
+                    }
                     remove={() => deleteSubComponent(i)}
                     addSubComponent={(comp) => {
                       actionRowAddSubComponent(i, comp);
@@ -299,9 +307,17 @@ export default function EditorComponentBaseContainer({
                     validationPathPrefix={`${validationPathPrefix}.components.${i}`}
                     data={child}
                     onChange={(data) => onSubComponentChange(i, data)}
-                    duplicate={() => duplicateSubComponent(i)}
-                    moveUp={() => moveSubComponentUp(i)}
-                    moveDown={() => moveSubComponentDown(i)}
+                    duplicate={
+                      data.components.length < 10
+                        ? () => duplicateSubComponent(i)
+                        : undefined
+                    }
+                    moveUp={i > 0 ? () => moveSubComponentUp(i) : undefined}
+                    moveDown={
+                      i < data.components.length - 1
+                        ? () => moveSubComponentDown(i)
+                        : undefined
+                    }
                     remove={() => deleteSubComponent(i)}
                     onAccessoryChange={(data) => {
                       sectionOnAccessoryChange(i, data);
@@ -334,9 +350,17 @@ export default function EditorComponentBaseContainer({
                     validationPathPrefix={`${validationPathPrefix}.components.${i}`}
                     data={child}
                     onChange={(data) => onSubComponentChange(i, data)}
-                    duplicate={() => duplicateSubComponent(i)}
-                    moveUp={() => moveSubComponentUp(i)}
-                    moveDown={() => moveSubComponentDown(i)}
+                    duplicate={
+                      data.components.length < 10
+                        ? () => duplicateSubComponent(i)
+                        : undefined
+                    }
+                    moveUp={i > 0 ? () => moveSubComponentUp(i) : undefined}
+                    moveDown={
+                      i < data.components.length - 1
+                        ? () => moveSubComponentDown(i)
+                        : undefined
+                    }
                     remove={() => deleteSubComponent(i)}
                   />
                 ) : child.type === 12 ? (
@@ -344,9 +368,17 @@ export default function EditorComponentBaseContainer({
                     id={`${id}.components.${child.id}`}
                     validationPathPrefix={`${validationPathPrefix}.components.${i}`}
                     data={child}
-                    duplicate={() => duplicateSubComponent(i)}
-                    moveUp={() => moveSubComponentUp(i)}
-                    moveDown={() => moveSubComponentDown(i)}
+                    duplicate={
+                      data.components.length < 10
+                        ? () => duplicateSubComponent(i)
+                        : undefined
+                    }
+                    moveUp={i > 0 ? () => moveSubComponentUp(i) : undefined}
+                    moveDown={
+                      i < data.components.length - 1
+                        ? () => moveSubComponentDown(i)
+                        : undefined
+                    }
                     remove={() => deleteSubComponent(i)}
                     addItem={(comp) => {
                       mediaGalleryAddItem(i, comp);
@@ -376,9 +408,17 @@ export default function EditorComponentBaseContainer({
                     validationPathPrefix={`${validationPathPrefix}.components.${i}`}
                     data={child}
                     onChange={(data) => onSubComponentChange(i, data)}
-                    duplicate={() => duplicateSubComponent(i)}
-                    moveUp={() => moveSubComponentUp(i)}
-                    moveDown={() => moveSubComponentDown(i)}
+                    duplicate={
+                      data.components.length < 10
+                        ? () => duplicateSubComponent(i)
+                        : undefined
+                    }
+                    moveUp={i > 0 ? () => moveSubComponentUp(i) : undefined}
+                    moveDown={
+                      i < data.components.length - 1
+                        ? () => moveSubComponentDown(i)
+                        : undefined
+                    }
                     remove={() => deleteSubComponent(i)}
                   />
                 ) : child.type === 14 ? (
@@ -387,9 +427,17 @@ export default function EditorComponentBaseContainer({
                     validationPathPrefix={`${validationPathPrefix}.components.${i}`}
                     data={child}
                     onChange={(data) => onSubComponentChange(i, data)}
-                    duplicate={() => duplicateSubComponent(i)}
-                    moveUp={() => moveSubComponentUp(i)}
-                    moveDown={() => moveSubComponentDown(i)}
+                    duplicate={
+                      data.components.length < 10
+                        ? () => duplicateSubComponent(i)
+                        : undefined
+                    }
+                    moveUp={i > 0 ? () => moveSubComponentUp(i) : undefined}
+                    moveDown={
+                      i < data.components.length - 1
+                        ? () => moveSubComponentDown(i)
+                        : undefined
+                    }
                     remove={() => deleteSubComponent(i)}
                   />
                 ) : (
