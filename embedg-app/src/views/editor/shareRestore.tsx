@@ -36,7 +36,7 @@ export default function ShareRestoreView() {
     } else {
       createToast({
         title: "Failed to load shared message",
-        message: `${sharedMessage.error}`,
+        message: `${sharedMessage.error.message}`,
         type: "error",
       });
     }
