@@ -94,7 +94,6 @@ export default function ToolsColoredText() {
     span.setAttribute("data-ansi", style.toString());
 
     const range = selection.getRangeAt(0);
-    console.log(range);
     range.deleteContents();
     range.insertNode(span);
 

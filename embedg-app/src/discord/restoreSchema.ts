@@ -432,6 +432,10 @@ export const messageActionSchema = z
     id: uniqueIdSchema,
     text: z.preprocess((d) => d ?? undefined, z.string().default("")),
     public: z.preprocess((d) => d ?? undefined, z.boolean().default(false)),
+    allow_role_mentions: z.preprocess(
+      (d) => d ?? undefined,
+      z.boolean().default(false)
+    ),
   })
   .or(
     z.object({
@@ -439,6 +443,10 @@ export const messageActionSchema = z
       id: uniqueIdSchema,
       target_id: z.string(),
       public: z.preprocess((d) => d ?? undefined, z.boolean().default(false)),
+      allow_role_mentions: z.preprocess(
+        (d) => d ?? undefined,
+        z.boolean().default(false)
+      ),
     })
   )
   .or(
@@ -447,6 +455,10 @@ export const messageActionSchema = z
       id: uniqueIdSchema.default(() => getUniqueId()),
       target_id: z.string(),
       public: z.preprocess((d) => d ?? undefined, z.boolean().default(false)),
+      allow_role_mentions: z.preprocess(
+        (d) => d ?? undefined,
+        z.boolean().default(false)
+      ),
       disable_default_response: z.preprocess(
         (d) => d ?? undefined,
         z.boolean().default(false)

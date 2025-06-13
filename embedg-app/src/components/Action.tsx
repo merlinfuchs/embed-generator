@@ -32,6 +32,7 @@ interface Props {
   setText(text: string): void;
   setTargetId(targetId: string): void;
   setPublic(p: boolean): void;
+  setAllowRoleMentions(p: boolean): void;
   setDisableDefaultResponse(p: boolean): void;
   setRoleIds(roleIds: string[]): void;
   setPermissions(permissions: string): void;
@@ -79,6 +80,7 @@ export default function Action({
   setText,
   setTargetId,
   setPublic,
+  setAllowRoleMentions,
   setDisableDefaultResponse,
   setRoleIds,
   setPermissions,
@@ -260,6 +262,19 @@ export default function Action({
                   </div>
                 </div>
                 <CheckBox checked={action.public} onChange={setPublic} />
+              </div>
+            )}
+            {(action.type === 1 || action.type === 5) && (
+              <div className="flex-none">
+                <div className="mb-1.5 flex">
+                  <div className="uppercase text-gray-300 text-sm font-medium">
+                    Ping Roles
+                  </div>
+                </div>
+                <CheckBox
+                  checked={action.allow_role_mentions}
+                  onChange={(v) => setAllowRoleMentions(v)}
+                />
               </div>
             )}
             {(action.type === 2 ||

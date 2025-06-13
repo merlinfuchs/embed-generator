@@ -293,6 +293,7 @@ export interface MessageStore extends Message {
   setActionText: (id: string, i: number, text: string) => void;
   setActionTargetId: (id: string, i: number, target: string) => void;
   setActionPublic: (id: string, i: number, val: boolean) => void;
+  setActionAllowRoleMentions: (id: string, i: number, val: boolean) => void;
   setActionDisableDefaultResponse: (
     id: string,
     i: number,
@@ -2037,6 +2038,7 @@ export const createMessageStore = (key: string) =>
                     id: action.id,
                     text: "",
                     public: false,
+                    allow_role_mentions: false,
                   };
                 } else if (type === 5 || type === 7 || type === 9) {
                   actionSet.actions[i] = {
@@ -2044,6 +2046,7 @@ export const createMessageStore = (key: string) =>
                     id: action.id,
                     target_id: "",
                     public: false,
+                    allow_role_mentions: false,
                   };
                 } else if (type === 2 || type === 3 || type === 4) {
                   actionSet.actions[i] = {
@@ -2052,6 +2055,7 @@ export const createMessageStore = (key: string) =>
                     target_id: "",
                     public: false,
                     disable_default_response: false,
+                    allow_role_mentions: false,
                   };
                 } else if (type === 10) {
                   actionSet.actions[i] = {
@@ -2101,6 +2105,14 @@ export const createMessageStore = (key: string) =>
                 const action = actionSet.actions[i];
                 if (action.type !== 10) {
                   action.public = val;
+                }
+              }),
+            setActionAllowRoleMentions: (id: string, i: number, val: boolean) =>
+              set((state) => {
+                const actionSet = state.actions[id];
+                const action = actionSet.actions[i];
+                if (action.type !== 10) {
+                  action.allow_role_mentions = val;
                 }
               }),
             setActionDisableDefaultResponse: (

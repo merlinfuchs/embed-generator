@@ -106,6 +106,7 @@ type Action struct {
 	TargetID               string     `json:"target_id"`
 	Text                   string     `json:"text"`
 	Public                 bool       `json:"public"`
+	AllowRoleMentions      bool       `json:"allow_role_mentions"`
 	DisableDefaultResponse bool       `json:"disable_default_response"`
 	Permissions            string     `json:"permissions"`
 	RoleIDs                []string   `json:"role_ids"`

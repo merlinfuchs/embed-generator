@@ -435,6 +435,7 @@ export const messageActionSchema = z
     id: uniqueIdSchema.default(() => getUniqueId()),
     text: z.string().min(1).max(2000),
     public: z.boolean().default(false),
+    allow_role_mentions: z.boolean().default(false),
   })
   .or(
     z.object({
@@ -442,6 +443,7 @@ export const messageActionSchema = z
       id: uniqueIdSchema.default(() => getUniqueId()),
       target_id: z.string().min(1),
       public: z.boolean().default(false),
+      allow_role_mentions: z.boolean().default(false),
     })
   )
   .or(
@@ -450,6 +452,7 @@ export const messageActionSchema = z
       id: uniqueIdSchema.default(() => getUniqueId()),
       target_id: z.string().min(1),
       public: z.boolean().default(false),
+      allow_role_mentions: z.boolean().default(false),
       disable_default_response: z.boolean().default(false),
     })
   )
