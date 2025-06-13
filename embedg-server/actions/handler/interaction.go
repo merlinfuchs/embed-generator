@@ -42,14 +42,12 @@ func (i *GatewayInteraction) Respond(data *discordgo.InteractionResponseData, t 
 		})
 	} else {
 		msg, err = i.Session.FollowupMessageCreate(i.Inner, true, &discordgo.WebhookParams{
-			Content:    data.Content,
-			Embeds:     data.Embeds,
-			Components: data.Components,
-			Files:      data.Files,
-			Flags:      data.Flags,
-			AllowedMentions: &discordgo.MessageAllowedMentions{
-				Parse: data.AllowedMentions.Parse,
-			},
+			Content:         data.Content,
+			Embeds:          data.Embeds,
+			Components:      data.Components,
+			Files:           data.Files,
+			Flags:           data.Flags,
+			AllowedMentions: data.AllowedMentions,
 		})
 	}
 
@@ -94,14 +92,12 @@ func (i *RestInteraction) Respond(data *discordgo.InteractionResponseData, t ...
 		}
 	} else {
 		msg, err = i.Session.FollowupMessageCreate(i.Inner, true, &discordgo.WebhookParams{
-			Content:    data.Content,
-			Embeds:     data.Embeds,
-			Components: data.Components,
-			Files:      data.Files,
-			Flags:      data.Flags,
-			AllowedMentions: &discordgo.MessageAllowedMentions{
-				Parse: data.AllowedMentions.Parse,
-			},
+			Content:         data.Content,
+			Embeds:          data.Embeds,
+			Components:      data.Components,
+			Files:           data.Files,
+			Flags:           data.Flags,
+			AllowedMentions: data.AllowedMentions,
 		})
 	}
 
