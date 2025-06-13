@@ -213,86 +213,90 @@ export default function Action({
         }
       >
         <div className="space-y-4">
-          <div className="flex flex-col space-y-3 lg:flex-row lg:space-x-3 lg:space-y-0">
-            <div className="flex-none">
-              <div className="mb-1.5 flex">
-                <div className="uppercase text-gray-300 text-sm font-medium">
-                  Type
-                </div>
-              </div>
-              <select
-                className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
-                value={actionTypeGroup}
-                onChange={(v) => setActionTypeGroup(v.target.value)}
-              >
-                <option value="text_response">Text Response</option>
-                <option value="saved_message_response">
-                  Saved Message Response
-                </option>
-                <option value="toggle_role">Toggle Role</option>
-                <option value="add_role">Add Role</option>
-                <option value="remove_role">Remove Role</option>
-                <option value="check_permissions">Check Permissions</option>
-              </select>
-            </div>
-            {(actionTypeGroup === "text_response" ||
-              actionTypeGroup === "saved_message_response") && (
+          <div className="flex flex-col space-y-3 xl:flex-row xl:space-x-3 xl:space-y-0">
+            <div className="flex flex-col space-y-3 lg:flex-row lg:space-x-3 lg:space-y-0">
               <div className="flex-none">
                 <div className="mb-1.5 flex">
                   <div className="uppercase text-gray-300 text-sm font-medium">
-                    Target
+                    Type
                   </div>
                 </div>
                 <select
                   className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
-                  value={responseStyle}
-                  onChange={(v) => setResponseStyle(v.target.value)}
+                  value={actionTypeGroup}
+                  onChange={(v) => setActionTypeGroup(v.target.value)}
                 >
-                  <option value="channel">Channel Message</option>
-                  <option value="dm">Direct Message</option>
-                  <option value="edit">Edit Message</option>
+                  <option value="text_response">Text Response</option>
+                  <option value="saved_message_response">
+                    Saved Message Response
+                  </option>
+                  <option value="toggle_role">Toggle Role</option>
+                  <option value="add_role">Add Role</option>
+                  <option value="remove_role">Remove Role</option>
+                  <option value="check_permissions">Check Permissions</option>
                 </select>
               </div>
-            )}
-            {(action.type === 1 || action.type === 5) && (
-              <div className="flex-none">
-                <div className="mb-1.5 flex">
-                  <div className="uppercase text-gray-300 text-sm font-medium">
-                    Public
+              {(actionTypeGroup === "text_response" ||
+                actionTypeGroup === "saved_message_response") && (
+                <div className="flex-none">
+                  <div className="mb-1.5 flex">
+                    <div className="uppercase text-gray-300 text-sm font-medium">
+                      Target
+                    </div>
                   </div>
+                  <select
+                    className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
+                    value={responseStyle}
+                    onChange={(v) => setResponseStyle(v.target.value)}
+                  >
+                    <option value="channel">Channel Message</option>
+                    <option value="dm">Direct Message</option>
+                    <option value="edit">Edit Message</option>
+                  </select>
                 </div>
-                <CheckBox checked={action.public} onChange={setPublic} />
-              </div>
-            )}
-            {(action.type === 1 || action.type === 5) && (
-              <div className="flex-none">
-                <div className="mb-1.5 flex">
-                  <div className="uppercase text-gray-300 text-sm font-medium">
-                    Ping Roles
+              )}
+            </div>
+            <div className="flex flex-col space-y-3 lg:flex-row lg:space-x-3 lg:space-y-0">
+              {(action.type === 1 || action.type === 5) && (
+                <div className="flex-none">
+                  <div className="mb-1.5 flex">
+                    <div className="uppercase text-gray-300 text-sm font-medium">
+                      Public
+                    </div>
                   </div>
+                  <CheckBox checked={action.public} onChange={setPublic} />
                 </div>
-                <CheckBox
-                  checked={action.allow_role_mentions}
-                  onChange={(v) => setAllowRoleMentions(v)}
-                />
-              </div>
-            )}
-            {(action.type === 2 ||
-              action.type === 3 ||
-              action.type === 4 ||
-              action.type === 10) && (
-              <div className="flex-none">
-                <div className="mb-1.5 flex">
-                  <div className="uppercase text-gray-300 text-sm font-medium">
-                    Default Response
+              )}
+              {(action.type === 1 || action.type === 5) && (
+                <div className="flex-none">
+                  <div className="mb-1.5 flex">
+                    <div className="uppercase text-gray-300 text-sm font-medium">
+                      Ping Roles
+                    </div>
                   </div>
+                  <CheckBox
+                    checked={action.allow_role_mentions}
+                    onChange={(v) => setAllowRoleMentions(v)}
+                  />
                 </div>
-                <CheckBox
-                  checked={!action.disable_default_response}
-                  onChange={(v) => setDisableDefaultResponse(!v)}
-                />
-              </div>
-            )}
+              )}
+              {(action.type === 2 ||
+                action.type === 3 ||
+                action.type === 4 ||
+                action.type === 10) && (
+                <div className="flex-none">
+                  <div className="mb-1.5 flex">
+                    <div className="uppercase text-gray-300 text-sm font-medium">
+                      Default Response
+                    </div>
+                  </div>
+                  <CheckBox
+                    checked={!action.disable_default_response}
+                    onChange={(v) => setDisableDefaultResponse(!v)}
+                  />
+                </div>
+              )}
+            </div>
           </div>
           {action.type === 1 || action.type === 6 || action.type === 8 ? (
             <EditorInput

@@ -30,6 +30,7 @@ export default function ActionSet({ cmdId }: Props) {
       type: 1,
       text: "",
       public: false,
+      allow_role_mentions: false,
     });
   }
 
