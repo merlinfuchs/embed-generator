@@ -47,6 +47,9 @@ func (i *GatewayInteraction) Respond(data *discordgo.InteractionResponseData, t 
 			Components: data.Components,
 			Files:      data.Files,
 			Flags:      data.Flags,
+			AllowedMentions: &discordgo.MessageAllowedMentions{
+				Parse: data.AllowedMentions.Parse,
+			},
 		})
 	}
 
@@ -96,6 +99,9 @@ func (i *RestInteraction) Respond(data *discordgo.InteractionResponseData, t ...
 			Components: data.Components,
 			Files:      data.Files,
 			Flags:      data.Flags,
+			AllowedMentions: &discordgo.MessageAllowedMentions{
+				Parse: data.AllowedMentions.Parse,
+			},
 		})
 	}
 
