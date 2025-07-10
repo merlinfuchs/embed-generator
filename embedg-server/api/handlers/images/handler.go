@@ -158,6 +158,11 @@ func (h *ImagesHandler) HandleDownloadImage(c *fiber.Ctx) error {
 	c.Set("Content-Type", file.ContentType)
 	c.Set("Content-Disposition", "inline")
 
+	// Add security headers to prevent XSS and other attacks
+	c.Set("X-Content-Type-Options", "nosniff")
+	c.Set("X-Frame-Options", "DENY")
+	c.Set("Content-Security-Policy", "default-src 'none'")
+
 	return c.Send(file.Body)
 }
 
