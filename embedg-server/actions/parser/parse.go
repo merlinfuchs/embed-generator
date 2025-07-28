@@ -196,55 +196,143 @@ func (m *ActionParser) UnparseMessageComponents(data []discordgo.MessageComponen
 	res := make([]actions.ComponentWithActions, 0, len(data))
 
 	for _, comp := range data {
-		row, ok := comp.(*discordgo.ActionsRow)
-		if !ok {
-			continue
+		parsed, err := m.UnparseMessageComponent(comp)
+		if err != nil {
+			return nil, err
 		}
-
-		// TODO: v2 component types
-
-		ar := actions.ComponentWithActions{
-			Type:       discordgo.ActionsRowComponent,
-			Components: make([]actions.ComponentWithActions, 0, len(row.Components)),
-		}
-
-		for _, comp := range row.Components {
-			switch c := comp.(type) {
-			case *discordgo.Button:
-				ar.Components = append(ar.Components, actions.ComponentWithActions{
-					Type:        discordgo.ButtonComponent,
-					Disabled:    c.Disabled,
-					Style:       c.Style,
-					Label:       c.Label,
-					Emoji:       c.Emoji,
-					URL:         c.URL,
-					ActionSetID: strings.TrimPrefix(c.CustomID, "action:"),
-				})
-			case *discordgo.SelectMenu:
-				options := make([]actions.ComponentSelectOptionWithActions, 0, len(c.Options))
-				for _, option := range c.Options {
-					options = append(options, actions.ComponentSelectOptionWithActions{
-						Label:       option.Label,
-						Description: option.Description,
-						Emoji:       option.Emoji,
-						Default:     option.Default,
-						ActionSetID: strings.TrimPrefix(option.Value, "action:"),
-					})
-				}
-
-				ar.Components = append(ar.Components, actions.ComponentWithActions{
-					Type:        discordgo.SelectMenuComponent,
-					Disabled:    c.Disabled,
-					Placeholder: c.Placeholder,
-					MinValues:   c.MinValues,
-					MaxValues:   c.MaxValues,
-					Options:     options,
-				})
-			}
-		}
-
-		res = append(res, ar)
+		res = append(res, parsed)
 	}
 
 	return res, nil
+}
+
+func (m *ActionParser) UnparseMessageComponent(data discordgo.MessageComponent) (actions.ComponentWithActions, error) {
+	switch c := data.(type) {
+	case *discordgo.ActionsRow:
+		ar := actions.ComponentWithActions{
+			Type:       discordgo.ActionsRowComponent,
+			Components: make([]actions.ComponentWithActions, 0, len(c.Components)),
+		}
+
+		for _, comp := range c.Components {
+			parsed, err := m.UnparseMessageComponent(comp)
+			if err != nil {
+				return actions.ComponentWithActions{}, err
+			}
+			ar.Components = append(ar.Components, parsed)
+		}
+
+		return ar, nil
+	case *discordgo.Button:
+		return actions.ComponentWithActions{
+			Type:        discordgo.ButtonComponent,
+			Disabled:    c.Disabled,
+			Style:       c.Style,
+			Label:       c.Label,
+			Emoji:       c.Emoji,
+			URL:         c.URL,
+			ActionSetID: strings.TrimPrefix(c.CustomID, "action:"),
+		}, nil
+	case *discordgo.SelectMenu:
+		options := make([]actions.ComponentSelectOptionWithActions, 0, len(c.Options))
+		for _, option := range c.Options {
+			options = append(options, actions.ComponentSelectOptionWithActions{
+				Label:       option.Label,
+				Description: option.Description,
+				Emoji:       option.Emoji,
+				Default:     option.Default,
+				ActionSetID: strings.TrimPrefix(option.Value, "action:"),
+			})
+		}
+
+		return actions.ComponentWithActions{
+			Type:        discordgo.SelectMenuComponent,
+			Disabled:    c.Disabled,
+			Placeholder: c.Placeholder,
+			MinValues:   c.MinValues,
+			MaxValues:   c.MaxValues,
+			Options:     options,
+		}, nil
+	case *discordgo.Section:
+		se := actions.ComponentWithActions{
+			Type:       discordgo.SectionComponent,
+			Components: make([]actions.ComponentWithActions, 0, len(c.Components)),
+		}
+
+		for _, comp := range c.Components {
+			parsed, err := m.UnparseMessageComponent(comp)
+			if err != nil {
+				return actions.ComponentWithActions{}, err
+			}
+			se.Components = append(se.Components, parsed)
+		}
+
+		if c.Accessory != nil {
+			parsed, err := m.UnparseMessageComponent(c.Accessory)
+			if err != nil {
+				return actions.ComponentWithActions{}, err
+			}
+			se.Accessory = &parsed
+		}
+
+		return se, nil
+	case *discordgo.TextDisplay:
+		return actions.ComponentWithActions{
+			Type:    discordgo.TextDisplayComponent,
+			Content: c.Content,
+		}, nil
+	case *discordgo.Thumbnail:
+		return actions.ComponentWithActions{
+			Type:        discordgo.ThumbnailComponent,
+			Content:     c.Content,
+			Media:       &actions.UnfurledMediaItem{URL: c.Media.URL},
+			Description: c.Description,
+		}, nil
+	case *discordgo.MediaGallery:
+		items := make([]actions.ComponentMediaGalleryItem, 0, len(c.Items))
+		for _, item := range c.Items {
+			items = append(items, actions.ComponentMediaGalleryItem{
+				Media:       actions.UnfurledMediaItem{URL: item.Media.URL},
+				Description: item.Description,
+				Spoiler:     item.Spoiler,
+			})
+		}
+
+		return actions.ComponentWithActions{
+			Type:  discordgo.MediaGalleryComponent,
+			Items: items,
+		}, nil
+	case *discordgo.ComponentFile:
+		return actions.ComponentWithActions{
+			Type:    discordgo.FileComponent,
+			Content: c.Content,
+			File:    &actions.UnfurledMediaItem{URL: c.File.URL},
+			Spoiler: c.Spoiler,
+		}, nil
+	case *discordgo.Separator:
+		return actions.ComponentWithActions{
+			Type:    discordgo.SeparatorComponent,
+			Divider: c.Divider,
+			Spacing: c.Spacing,
+		}, nil
+	case *discordgo.Container:
+		components := make([]actions.ComponentWithActions, 0, len(c.Components))
+		for _, comp := range c.Components {
+			parsed, err := m.UnparseMessageComponent(comp)
+			if err != nil {
+				return actions.ComponentWithActions{}, err
+			}
+			components = append(components, parsed)
+		}
+
+		return actions.ComponentWithActions{
+			Type:        discordgo.ContainerComponent,
+			Content:     c.Content,
+			Components:  components,
+			AccentColor: c.AccentColor,
+			Spoiler:     c.Spoiler,
+		}, nil
+	default:
+		return actions.ComponentWithActions{}, fmt.Errorf("invalid component type: %T", c)
+	}
 }

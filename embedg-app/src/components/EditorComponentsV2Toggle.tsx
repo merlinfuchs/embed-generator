@@ -1,9 +1,8 @@
+import clsx from "clsx";
 import { useState } from "react";
 import { useCurrentMessageStore } from "../state/message";
-import EditorIconButton from "./EditorIconButton";
-import { SquaresPlusIcon } from "@heroicons/react/20/solid";
 import ConfirmModal from "./ConfirmModal";
-import clsx from "clsx";
+import { useSendSettingsStore } from "../state/sendSettings";
 
 export default function EditorComponentsV2Toggle() {
   const componentsV2Enabled = useCurrentMessageStore((s) =>

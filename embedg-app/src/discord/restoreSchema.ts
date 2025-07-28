@@ -553,7 +553,7 @@ export const messageSchema = z.object({
     (d) => d ?? undefined,
     z.record(z.string(), messageActionSetSchema).default({})
   ),
-  flags: z.preprocess((d) => d ?? undefined, z.number().optional()),
+  flags: z.preprocess((d) => d ?? 0, z.number()),
 });
 
 export type Message = z.infer<typeof messageSchema>;
