@@ -730,21 +730,6 @@ export const createMessageStore = (key: string) =>
               }),
             clearComponents: () =>
               set((state) => {
-                for (const row of state.components) {
-                  // TODO: Handle other container types
-                  if (row.type === 1) {
-                    for (const comp of row.components) {
-                      if (comp.type === 2) {
-                        delete state.actions[comp.action_set_id];
-                      } else if (comp.type === 3) {
-                        for (const option of comp.options) {
-                          delete state.actions[option.action_set_id];
-                        }
-                      }
-                    }
-                  }
-                }
-
                 state.components = [];
                 state.actions = {};
               }),
@@ -770,19 +755,26 @@ export const createMessageStore = (key: string) =>
               set((state) => {
                 const removed = state.components.splice(i, 1);
 
-                for (const row of removed) {
-                  // TODO: Handle other container types
-                  if (row.type === 1) {
-                    for (const comp of row.components) {
-                      if (comp.type === 2) {
-                        delete state.actions[comp.action_set_id];
-                      } else if (comp.type === 3) {
-                        for (const option of comp.options) {
-                          delete state.actions[option.action_set_id];
-                        }
-                      }
+                function deleteComponent(component: any) {
+                  if (component.action_set_id) {
+                    delete state.actions[component.action_set_id];
+                  }
+
+                  if (component.components) {
+                    for (const comp of component.components) {
+                      deleteComponent(comp);
                     }
                   }
+
+                  if (component.options) {
+                    for (const option of component.options) {
+                      deleteComponent(option);
+                    }
+                  }
+                }
+
+                for (const comp of removed) {
+                  deleteComponent(comp);
                 }
               }),
             duplicateComponent: (i: number) =>
@@ -1541,7 +1533,11 @@ export const createMessageStore = (key: string) =>
                 if (!component) {
                   return;
                 }
-                const newComponent = { ...component, id: getUniqueId() };
+                const newComponent = {
+                  ...component,
+                  id: getUniqueId(),
+                  component,
+                };
                 container.components.splice(j + 1, 0, newComponent);
               }),
 
@@ -1614,12 +1610,16 @@ export const createMessageStore = (key: string) =>
                   const actionRow = container.components[a];
                   if (actionRow?.type === 1) {
                     const component = actionRow.components[k];
-                    // TODO: handle select menus
                     if (component.type === 2) {
+                      const actionSetId = getUniqueId().toString();
+
+                      state.actions[actionSetId] =
+                        state.actions[component.action_set_id];
+
                       actionRow.components.splice(k + 1, 0, {
                         ...component,
                         id: getUniqueId(),
-                        action_set_id: getUniqueId().toString(),
+                        action_set_id: actionSetId,
                       });
                     }
                   }

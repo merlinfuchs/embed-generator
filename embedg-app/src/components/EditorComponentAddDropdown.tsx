@@ -199,6 +199,7 @@ export default function EditorComponentAddDropdown({
           <div className="absolute bg-dark-2 bottom-full mb-1 left-0 rounded shadow-lg border-2 border-dark-2 z-10 text-white">
             {componentTypes.map((componentType) => (
               <button
+                key={componentType.type}
                 className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left flex items-center gap-2"
                 onClick={() => {
                   if (allowedComponentTypes.includes(componentType.type)) {
