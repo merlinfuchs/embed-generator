@@ -3,6 +3,7 @@ import { useCurrentMessageStore } from "../state/message";
 import EditorIconButton from "./EditorIconButton";
 import { SquaresPlusIcon } from "@heroicons/react/20/solid";
 import ConfirmModal from "./ConfirmModal";
+import clsx from "clsx";
 
 export default function EditorComponentsV2Toggle() {
   const componentsV2Enabled = useCurrentMessageStore((s) =>
@@ -29,21 +30,35 @@ export default function EditorComponentsV2Toggle() {
 
   return (
     <div>
-      <EditorIconButton
-        onClick={() => {
-          if (componentsV2Enabled) {
-            setComponentsV2DisableModal(true);
-          } else {
-            setComponentsV2EnableModal(true);
-          }
-        }}
-        label={
-          componentsV2Enabled ? "Disable Components V2" : "Enable Components V2"
-        }
-        highlight={componentsV2Enabled}
-      >
-        <SquaresPlusIcon />
-      </EditorIconButton>
+      <div className="flex">
+        <button
+          className="flex bg-dark-2 p-1 rounded text-white"
+          onClick={() => {
+            if (componentsV2Enabled) {
+              setComponentsV2DisableModal(true);
+            } else {
+              setComponentsV2EnableModal(true);
+            }
+          }}
+        >
+          <div
+            className={clsx(
+              "py-1 px-2 rounded transition-colors",
+              !componentsV2Enabled && "bg-dark-3"
+            )}
+          >
+            Embeds V1
+          </div>
+          <div
+            className={clsx(
+              "py-1 px-2 rounded transition-colors",
+              componentsV2Enabled && "bg-dark-3"
+            )}
+          >
+            Components V2
+          </div>
+        </button>
+      </div>
 
       {componentsV2EnableModal && (
         <ConfirmModal
@@ -51,7 +66,15 @@ export default function EditorComponentsV2Toggle() {
           subTitle="This will change the way the editor works and will remove all existing data."
           onClose={() => setComponentsV2EnableModal(false)}
           onConfirm={toggleComponentsV2}
-        />
+        >
+          <a
+            href="https://message.style/docs/features/components-v2"
+            className="text-blue-400 hover:underline"
+            target="_blank"
+          >
+            Learn More
+          </a>
+        </ConfirmModal>
       )}
       {componentsV2DisableModal && (
         <ConfirmModal
@@ -59,7 +82,15 @@ export default function EditorComponentsV2Toggle() {
           subTitle="This will change the way the editor works and will remove all existing data."
           onClose={() => setComponentsV2DisableModal(false)}
           onConfirm={toggleComponentsV2}
-        />
+        >
+          <a
+            href="https://message.style/docs/features/components-v2"
+            className="text-blue-400 hover:underline"
+            target="_blank"
+          >
+            Learn More
+          </a>
+        </ConfirmModal>
       )}
     </div>
   );
