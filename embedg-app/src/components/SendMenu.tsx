@@ -1,10 +1,10 @@
 import clsx from "clsx";
-import { useUserQuery } from "../api/queries";
-import LoginSuggest from "./LoginSuggest";
 import { shallow } from "zustand/shallow";
-import SendMenuWebhook from "./SendMenuWebhook";
-import SendMenuChannel from "./SendMenuChannel";
+import { useUserQuery } from "../api/queries";
 import { useSendSettingsStore } from "../state/sendSettings";
+import LoginSuggest from "./LoginSuggest";
+import SendMenuChannel from "./SendMenuChannel";
+import SendMenuWebhook from "./SendMenuWebhook";
 
 export default function SendMenu() {
   const [mode, setMode] = useSendSettingsStore(

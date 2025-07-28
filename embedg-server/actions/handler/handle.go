@@ -149,9 +149,23 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				return nil
 			}
 
+			allowedMentions := []discordgo.AllowedMentionType{
+				discordgo.AllowedMentionTypeUsers,
+			}
+			if action.AllowRoleMentions {
+				allowedMentions = append(
+					allowedMentions,
+					discordgo.AllowedMentionTypeRoles,
+					discordgo.AllowedMentionTypeEveryone,
+				)
+			}
+
 			i.Respond(&discordgo.InteractionResponseData{
 				Content: content,
 				Flags:   flags,
+				AllowedMentions: &discordgo.MessageAllowedMentions{
+					Parse: allowedMentions,
+				},
 			})
 		case actions.ActionTypeToggleRole:
 			if !legacyPermissions && !derivedPerms.CanManageRole(action.TargetID) {
@@ -273,10 +287,21 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 
 			var components []discordgo.MessageComponent
 			if !legacyPermissions {
-				components, err = m.parser.ParseMessageComponents(data.Components)
+				components, err = m.parser.ParseMessageComponents(data.Components, features.ComponentTypes)
 				if err != nil {
 					return fmt.Errorf("Invalid actions: %w", err)
 				}
+			}
+
+			allowedMentions := []discordgo.AllowedMentionType{
+				discordgo.AllowedMentionTypeUsers,
+			}
+			if action.AllowRoleMentions {
+				allowedMentions = append(
+					allowedMentions,
+					discordgo.AllowedMentionTypeRoles,
+					discordgo.AllowedMentionTypeEveryone,
+				)
 			}
 
 			// We need to get the message id of the response, so it has to be a followup response
@@ -291,6 +316,9 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				Embeds:     data.Embeds,
 				Components: components,
 				Flags:      flags,
+				AllowedMentions: &discordgo.MessageAllowedMentions{
+					Parse: allowedMentions,
+				},
 			})
 			if newMsg != nil && !legacyPermissions {
 				err = m.parser.CreateActionsForMessage(context.TODO(), data.Actions, derivedPerms, newMsg.ID, !action.Public)
@@ -407,7 +435,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 
 			var components []discordgo.MessageComponent
 			if !legacyPermissions {
-				components, err = m.parser.ParseMessageComponents(data.Components)
+				components, err = m.parser.ParseMessageComponents(data.Components, features.ComponentTypes)
 				if err != nil {
 					return fmt.Errorf("Invalid actions: %w", err)
 				}

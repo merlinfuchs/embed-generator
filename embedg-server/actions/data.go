@@ -13,30 +13,63 @@ type MessageWithActions struct {
 	TTS             bool                              `json:"tts,omitempty"`
 	Embeds          []*discordgo.MessageEmbed         `json:"embeds,omitempty"`
 	AllowedMentions *discordgo.MessageAllowedMentions `json:"allowed_mentions,omitempty"`
-	Components      []ActionRowWithActions            `json:"components,omitempty"`
+	Components      []ComponentWithActions            `json:"components,omitempty"`
 	Actions         map[string]ActionSet              `json:"actions,omitempty"`
+	Flags           discordgo.MessageFlags            `json:"flags,omitempty"`
 }
 
-type ActionRowWithActions struct {
-	Components []ComponentWithActions `json:"components"`
+func (m MessageWithActions) ComponentsV2Enabled() bool {
+	return m.Flags&(1<<15) != 0
 }
 
 type ComponentWithActions struct {
+	ID       int                     `json:"id,omitempty"`
 	Type     discordgo.ComponentType `json:"type"`
-	Disabled bool                    `json:"disabled"`
+	Disabled bool                    `json:"disabled,omitempty"`
+	Spoiler  bool                    `json:"spoiler,omitempty"`
+
+	// Action Row & Section & Container
+	Components []ComponentWithActions `json:"components,omitempty"`
 
 	// Button
-	Style       discordgo.ButtonStyle     `json:"style"`
-	Label       string                    `json:"label"`
-	Emoji       *discordgo.ComponentEmoji `json:"emoji"`
-	URL         string                    `json:"url"`
-	ActionSetID string                    `json:"action_set_id"`
+	Style       discordgo.ButtonStyle     `json:"style,omitempty"`
+	Label       string                    `json:"label,omitempty"`
+	Emoji       *discordgo.ComponentEmoji `json:"emoji,omitempty"`
+	URL         string                    `json:"url,omitempty"`
+	ActionSetID string                    `json:"action_set_id,omitempty"`
 
 	// Select Menu
-	Placeholder string                             `json:"placeholder"`
-	MinValues   *int                               `json:"min_values"`
-	MaxValues   int                                `json:"max_values"`
-	Options     []ComponentSelectOptionWithActions `json:"options"`
+	Placeholder string                             `json:"placeholder,omitempty"`
+	MinValues   *int                               `json:"min_values,omitempty"`
+	MaxValues   int                                `json:"max_values,omitempty"`
+	Options     []ComponentSelectOptionWithActions `json:"options,omitempty"`
+
+	// Section
+	Accessory *ComponentWithActions `json:"accessory"`
+
+	// Text Display
+	Content string `json:"content,omitempty"`
+
+	// Thumbnail
+	Description string             `json:"description,omitempty"`
+	Media       *UnfurledMediaItem `json:"media,omitempty"`
+
+	// Media Gallery
+	Items []ComponentMediaGalleryItem `json:"items,omitempty"`
+
+	// File
+	File *UnfurledMediaItem `json:"file,omitempty"`
+
+	// Separator
+	Divider bool `json:"divider,omitempty"`
+	Spacing int  `json:"spacing,omitempty"`
+
+	// Container
+	AccentColor int `json:"accent_color,omitempty"`
+}
+
+type UnfurledMediaItem struct {
+	URL string `json:"url"`
 }
 
 type ComponentSelectOptionWithActions struct {
@@ -45,6 +78,12 @@ type ComponentSelectOptionWithActions struct {
 	Emoji       *discordgo.ComponentEmoji `json:"emoji"`
 	Default     bool                      `json:"default"`
 	ActionSetID string                    `json:"action_set_id"`
+}
+
+type ComponentMediaGalleryItem struct {
+	Media       UnfurledMediaItem `json:"media"`
+	Description string            `json:"description,omitempty"`
+	Spoiler     bool              `json:"spoiler,omitempty"`
 }
 
 type ActionType int
@@ -67,6 +106,7 @@ type Action struct {
 	TargetID               string     `json:"target_id"`
 	Text                   string     `json:"text"`
 	Public                 bool       `json:"public"`
+	AllowRoleMentions      bool       `json:"allow_role_mentions"`
 	DisableDefaultResponse bool       `json:"disable_default_response"`
 	Permissions            string     `json:"permissions"`
 	RoleIDs                []string   `json:"role_ids"`

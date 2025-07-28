@@ -226,6 +226,12 @@ export const emojiSchema = z.object({
   animated: z.preprocess((d) => d ?? undefined, z.boolean().default(false)),
 });
 
+export const unfurledMediaItemSchema = z.object({
+  url: z.preprocess((d) => d ?? undefined, z.string().default("")),
+});
+
+export type UnfurledMediaItem = z.infer<typeof unfurledMediaItemSchema>;
+
 export type Emoji = z.infer<typeof emojiSchema>;
 
 export const buttonStyleSchema = z
@@ -237,7 +243,7 @@ export const buttonStyleSchema = z
 
 export type MessageComponentButtonStyle = z.infer<typeof buttonStyleSchema>;
 
-export const buttonSchema = z
+export const componentButtonSchema = z
   .object({
     id: uniqueIdSchema,
     type: z.literal(2),
@@ -263,9 +269,9 @@ export const buttonSchema = z
     })
   );
 
-export type MessageComponentButton = z.infer<typeof buttonSchema>;
+export type MessageComponentButton = z.infer<typeof componentButtonSchema>;
 
-export const selectMenuOptionSchema = z.object({
+export const componentSelectMenuOptionSchema = z.object({
   id: uniqueIdSchema,
   label: z.preprocess((d) => d ?? undefined, z.string().default("")),
   description: z.preprocess((d) => d || undefined, z.optional(z.string())),
@@ -277,32 +283,148 @@ export const selectMenuOptionSchema = z.object({
 });
 
 export type MessageComponentSelectMenuOption = z.infer<
-  typeof selectMenuOptionSchema
+  typeof componentSelectMenuOptionSchema
 >;
 
-export const selectMenuSchema = z.object({
+export const componentSelectMenuSchema = z.object({
   id: uniqueIdSchema,
   type: z.literal(3),
   placeholder: z.preprocess((d) => d ?? undefined, z.optional(z.string())),
   disabled: z.preprocess((d) => d ?? undefined, z.optional(z.boolean())),
   options: z.preprocess(
     (d) => d ?? undefined,
-    z.array(selectMenuOptionSchema).default([])
+    z.array(componentSelectMenuOptionSchema).default([])
   ),
 });
 
-export type MessageComponentSelectMenu = z.infer<typeof selectMenuSchema>;
+export type MessageComponentSelectMenu = z.infer<
+  typeof componentSelectMenuSchema
+>;
 
-export const actionRowSchema = z.object({
+export const componentActionRowSchema = z.object({
   id: uniqueIdSchema,
-  type: z.preprocess((d) => d ?? undefined, z.literal(1).default(1)),
+  type: z.literal(1),
   components: z.preprocess(
     (d) => d ?? undefined,
-    z.array(buttonSchema.or(selectMenuSchema)).default([])
+    z.array(componentButtonSchema.or(componentSelectMenuSchema)).default([])
   ),
 });
 
-export type MessageComponentActionRow = z.infer<typeof actionRowSchema>;
+export type MessageComponentActionRow = z.infer<
+  typeof componentActionRowSchema
+>;
+
+export const componentTextDisplaySchema = z.object({
+  id: uniqueIdSchema,
+  type: z.literal(10),
+  content: z.preprocess((d) => d ?? undefined, z.string().default("")),
+});
+
+export type ComponentTextDisplay = z.infer<typeof componentTextDisplaySchema>;
+
+export const componentThumbnailSchema = z.object({
+  id: uniqueIdSchema,
+  type: z.literal(11),
+  media: unfurledMediaItemSchema,
+  description: z.preprocess((d) => d ?? undefined, z.optional(z.string())),
+  spoiler: z.preprocess((d) => d ?? undefined, z.optional(z.boolean())),
+});
+
+export type ComponentThumbnail = z.infer<typeof componentThumbnailSchema>;
+
+export const componentSectionSchema = z.object({
+  id: uniqueIdSchema,
+  type: z.literal(9),
+  components: z.preprocess(
+    (d) => d ?? undefined,
+    z.array(componentTextDisplaySchema).default([])
+  ),
+  accessory: z.preprocess(
+    (d) => d ?? undefined,
+    z.union([componentThumbnailSchema, componentButtonSchema]).default({
+      type: 11,
+      media: {
+        url: "",
+      },
+    })
+  ),
+});
+
+export type ComponentSection = z.infer<typeof componentSectionSchema>;
+
+export const componentMediaGalleryItemSchema = z.object({
+  id: uniqueIdSchema,
+  media: unfurledMediaItemSchema,
+  description: z.preprocess((d) => d ?? undefined, z.optional(z.string())),
+  spoiler: z.preprocess((d) => d ?? undefined, z.optional(z.boolean())),
+});
+
+export const componentMediaGallerySchema = z.object({
+  id: uniqueIdSchema,
+  type: z.literal(12),
+  items: z.preprocess(
+    (d) => d ?? undefined,
+    z.array(componentMediaGalleryItemSchema).default([])
+  ),
+});
+
+export type ComponentMediaGallery = z.infer<typeof componentMediaGallerySchema>;
+
+export const componentFileSchema = z.object({
+  id: uniqueIdSchema,
+  type: z.literal(13),
+  file: unfurledMediaItemSchema,
+  spoiler: z.preprocess((d) => d ?? undefined, z.optional(z.boolean())),
+});
+
+export type ComponentFile = z.infer<typeof componentFileSchema>;
+
+export const componentSeparatorSchema = z.object({
+  id: uniqueIdSchema,
+  type: z.literal(14),
+  divider: z.preprocess((d) => d ?? undefined, z.boolean().default(true)),
+  spacing: z.preprocess(
+    (d) => d ?? undefined,
+    z.union([z.literal(1), z.literal(2)]).default(1)
+  ),
+});
+
+export type ComponentSeparator = z.infer<typeof componentSeparatorSchema>;
+
+export const componentContainerSchema = z.object({
+  id: uniqueIdSchema,
+  type: z.literal(17),
+  components: z
+    .array(
+      z.union([
+        componentActionRowSchema,
+        componentTextDisplaySchema,
+        componentSectionSchema,
+        componentMediaGallerySchema,
+        componentSeparatorSchema,
+        componentFileSchema,
+      ])
+    )
+    .min(1)
+    .max(10),
+  accent_color: z.preprocess((d) => d ?? undefined, z.optional(z.number())),
+  spoiler: z.preprocess((d) => d ?? undefined, z.optional(z.boolean())),
+});
+
+export type ComponentContainer = z.infer<typeof componentContainerSchema>;
+
+export const componentSchema = z.union([
+  componentActionRowSchema,
+  componentButtonSchema,
+  componentSelectMenuSchema,
+  componentSectionSchema,
+  componentTextDisplaySchema,
+  componentThumbnailSchema,
+  componentMediaGallerySchema,
+  componentFileSchema,
+  componentSeparatorSchema,
+  componentContainerSchema,
+]);
 
 export const messageActionSchema = z
   .object({
@@ -310,6 +432,10 @@ export const messageActionSchema = z
     id: uniqueIdSchema,
     text: z.preprocess((d) => d ?? undefined, z.string().default("")),
     public: z.preprocess((d) => d ?? undefined, z.boolean().default(false)),
+    allow_role_mentions: z.preprocess(
+      (d) => d ?? undefined,
+      z.boolean().default(false)
+    ),
   })
   .or(
     z.object({
@@ -317,6 +443,10 @@ export const messageActionSchema = z
       id: uniqueIdSchema,
       target_id: z.string(),
       public: z.preprocess((d) => d ?? undefined, z.boolean().default(false)),
+      allow_role_mentions: z.preprocess(
+        (d) => d ?? undefined,
+        z.boolean().default(false)
+      ),
     })
   )
   .or(
@@ -325,6 +455,10 @@ export const messageActionSchema = z
       id: uniqueIdSchema.default(() => getUniqueId()),
       target_id: z.string(),
       public: z.preprocess((d) => d ?? undefined, z.boolean().default(false)),
+      allow_role_mentions: z.preprocess(
+        (d) => d ?? undefined,
+        z.boolean().default(false)
+      ),
       disable_default_response: z.preprocess(
         (d) => d ?? undefined,
         z.boolean().default(false)
@@ -412,13 +546,14 @@ export const messageSchema = z.object({
   allowed_mentions: messageAllowedMentionsSchema,
   components: z.preprocess(
     (d) => d ?? undefined,
-    z.array(actionRowSchema).default([])
+    z.array(componentSchema).default([])
   ),
   thread_name: messageThreadName,
   actions: z.preprocess(
     (d) => d ?? undefined,
     z.record(z.string(), messageActionSetSchema).default({})
   ),
+  flags: z.preprocess((d) => d ?? 0, z.number()),
 });
 
 export type Message = z.infer<typeof messageSchema>;
@@ -428,6 +563,10 @@ export function parseMessageWithAction(raw: any) {
 
   // create messing action sets
   for (const row of parsedData.components) {
+    if (row.type !== 1) {
+      continue;
+    }
+
     for (const comp of row.components) {
       if (comp.type === 2) {
         if (!parsedData.actions[comp.action_set_id]) {

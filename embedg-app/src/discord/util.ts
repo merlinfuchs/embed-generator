@@ -34,3 +34,15 @@ export function parseWebhookUrl(webhookUrl: string): WebhookInfo | null {
 
   return null;
 }
+
+export function isComponentV2Enabled(flags: number): boolean {
+  return (flags & (1 << 15)) === 1;
+}
+
+export function enableComponentV2(flags: number): number {
+  return flags | (1 << 15);
+}
+
+export function disableComponentV2(flags: number): number {
+  return flags & ~(1 << 15);
+}

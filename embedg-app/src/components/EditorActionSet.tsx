@@ -30,13 +30,14 @@ export default function EditorActionSet({ setId }: Props) {
       type: 1,
       text: "",
       public: false,
+      allow_role_mentions: false,
     });
   }
 
   return (
     <Collapsable
       id={`actions.${setId}`}
-      valiationPathPrefix={`actions.${setId}`}
+      validationPathPrefix={`actions.${setId}`}
       title="Actions"
       extra={
         <div className="text-sm italic font-light text-gray-400">

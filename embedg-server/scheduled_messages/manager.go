@@ -144,9 +144,10 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		Embeds:          data.Embeds,
 		AllowedMentions: data.AllowedMentions,
 		ThreadName:      scheduledMessage.ThreadName.String,
+		Flags:           data.Flags,
 	}
 
-	params.Components, err = m.actionParser.ParseMessageComponents(data.Components)
+	params.Components, err = m.actionParser.ParseMessageComponents(data.Components, features.ComponentTypes)
 	if err != nil {
 		return helpers.BadRequest("invalid_actions", err.Error())
 	}

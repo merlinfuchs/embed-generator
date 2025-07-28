@@ -83,6 +83,8 @@ premium:
         periodic_scheduled_messages: false
         max_template_ops: 1000
         max_kv_keys: 10
+        components_v2: true
+        component_types: [1, 2, 3, 9, 10, 11, 12, 17]
     # An additional premium plan that will apply when the user or guild has the SKU
     - id: premium_server
       sku_id: "123"
@@ -99,6 +101,8 @@ premium:
         periodic_scheduled_messages: true
         max_template_ops: 10000
         max_kv_keys: 1000
+        components_v2: true
+        component_types: [1, 2, 3, 9, 10, 11, 12, 13, 14, 17]
 ```
 
 You can also set the config values using environment variables. For example `EMBEDG_DISCORD__TOKEN` will set the discord

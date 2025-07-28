@@ -128,7 +128,7 @@ func registerRoutes(app *fiber.App, stores *stores, bot *bot.Bot, managers *mana
 		return c.Redirect(fmt.Sprintf("https://discord.com/application-directory/%s/premium", viper.GetString("discord.client_id")), 302)
 	})
 
-	// Serve statix files
+	// Serve static files
 	app.Use("/app/", filesystem.New(filesystem.Config{
 		Root:         http.FS(embedgapp.DistFS),
 		Browse:       false,

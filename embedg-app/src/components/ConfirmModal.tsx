@@ -3,6 +3,7 @@ import Modal from "./Modal";
 interface Props {
   title: string;
   subTitle: string;
+  children?: React.ReactNode;
 
   onClose: () => void;
   onConfirm: () => void;
@@ -11,6 +12,7 @@ interface Props {
 export default function ConfirmModal({
   title,
   subTitle,
+  children,
   onClose,
   onConfirm,
 }: Props) {
@@ -22,6 +24,12 @@ export default function ConfirmModal({
           <div className="text-gray-300 text-sm whitespace-normal">
             {subTitle}
           </div>
+
+          {children && (
+            <div className="text-gray-300 text-sm whitespace-normal mt-3">
+              {children}
+            </div>
+          )}
         </div>
         <div className="space-x-2 flex justify-end">
           <button

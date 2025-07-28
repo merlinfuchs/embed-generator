@@ -62,6 +62,7 @@ export default function EditorAction({ cmdId, actionIndex }: Props) {
     setText,
     setTargetId,
     setPublic,
+    setAllowRoleMentions,
     setDisableDefaultResponse,
     setRoleIds,
     setPermissions,
@@ -71,6 +72,7 @@ export default function EditorAction({ cmdId, actionIndex }: Props) {
       state.setActionText,
       state.setActionTargetId,
       state.setActionPublic,
+      state.setActionAllowRoleMentions,
       state.setActionDisableDefaultResponse,
       state.setActionRoleIds,
       state.setActionPermissions,
@@ -94,6 +96,9 @@ export default function EditorAction({ cmdId, actionIndex }: Props) {
       setType={(type) => setType(cmdId, actionIndex, type)}
       setTargetId={(id) => setTargetId(cmdId, actionIndex, id)}
       setPublic={(public_) => setPublic(cmdId, actionIndex, public_)}
+      setAllowRoleMentions={(allow) =>
+        setAllowRoleMentions(cmdId, actionIndex, allow)
+      }
       setDisableDefaultResponse={(disable) =>
         setDisableDefaultResponse(cmdId, actionIndex, disable)
       }

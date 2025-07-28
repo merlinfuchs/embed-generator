@@ -106,6 +106,7 @@ func New(pg *postgres.PostgresStore, bot *bot.Bot) *PremiumManager {
 	defaultPlanFeatures := model.PlanFeatures{
 		MaxSavedMessages:       25,
 		MaxActionsPerComponent: 2,
+		ComponentTypes:         []int{1, 2, 3},
 	}
 	for _, plan := range plans {
 		if plan.Default {

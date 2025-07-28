@@ -2,16 +2,17 @@ import { z } from "zod";
 import { getUniqueId } from "../util";
 
 const VARIABLE_RE = new RegExp("\\{\\{[^}]+\\}\\}");
+const ATTACHMENT_RE = new RegExp("attachment://\\.+");
 
 const HOSTNAME_RE = new RegExp("\\.[a-zA-Z]{2,}$");
 const urlRefinement: [(v: string) => boolean, string] = [
   (v) => {
     if (v.match(VARIABLE_RE)) return true;
-
+    if (v.match(ATTACHMENT_RE)) return true;
     try {
       const url = new URL(v);
       return !!url.hostname.match(HOSTNAME_RE);
-    } catch {
+    } catch (e) {
       return false;
     }
   },
@@ -219,16 +220,24 @@ export const emojiSchema = z
 
 export type Emoji = z.infer<typeof emojiSchema>;
 
-export const buttonStyleSchema = z
+export const unfurledMediaItemSchema = z.object({
+  url: z.string().refine(...urlRefinement),
+});
+
+export type UnfurledMediaItem = z.infer<typeof unfurledMediaItemSchema>;
+
+export const componentButtonStyleSchema = z
   .literal(1)
   .or(z.literal(2))
   .or(z.literal(3))
   .or(z.literal(4))
   .or(z.literal(5));
 
-export type MessageComponentButtonStyle = z.infer<typeof buttonStyleSchema>;
+export type MessageComponentButtonStyle = z.infer<
+  typeof componentButtonStyleSchema
+>;
 
-export const buttonSchema = z
+export const componentButtonSchema = z
   .object({
     id: uniqueIdSchema.default(() => getUniqueId()),
     type: z.literal(2),
@@ -260,9 +269,9 @@ export const buttonSchema = z
     }
   });
 
-export type MessageComponentButton = z.infer<typeof buttonSchema>;
+export type MessageComponentButton = z.infer<typeof componentButtonSchema>;
 
-export const selectMenuOptionSchema = z.object({
+export const componentSelectMenuOptionSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
   label: z.string().min(1).max(100),
   description: z.optional(z.string().min(1).max(100)),
@@ -271,26 +280,154 @@ export const selectMenuOptionSchema = z.object({
 });
 
 export type MessageComponentSelectMenuOption = z.infer<
-  typeof selectMenuOptionSchema
+  typeof componentSelectMenuOptionSchema
 >;
 
-export const selectMenuSchema = z.object({
+export const componentSelectMenuSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
   type: z.literal(3),
   placeholder: z.optional(z.string().max(150)),
   disabled: z.optional(z.boolean()),
-  options: z.array(selectMenuOptionSchema).min(1).max(25),
+  options: z.array(componentSelectMenuOptionSchema).min(1).max(25),
 });
 
-export type MessageComponentSelectMenu = z.infer<typeof selectMenuSchema>;
+export type MessageComponentSelectMenu = z.infer<
+  typeof componentSelectMenuSchema
+>;
 
-export const actionRowSchema = z.object({
+export const componentActionRowSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
   type: z.literal(1),
-  components: z.array(buttonSchema.or(selectMenuSchema)).min(1).max(5),
+  components: z
+    .array(z.union([componentButtonSchema, componentSelectMenuSchema]))
+    .min(1)
+    .max(5),
 });
 
-export type MessageComponentActionRow = z.infer<typeof actionRowSchema>;
+export type MessageComponentActionRow = z.infer<
+  typeof componentActionRowSchema
+>;
+
+export const componentTextDisplaySchema = z.object({
+  id: uniqueIdSchema.default(() => getUniqueId()),
+  type: z.literal(10),
+  content: z.string().min(1),
+});
+
+export type MessageComponentTextDisplay = z.infer<
+  typeof componentTextDisplaySchema
+>;
+
+export const componentThumbnailSchema = z.object({
+  id: uniqueIdSchema.default(() => getUniqueId()),
+  type: z.literal(11),
+  media: unfurledMediaItemSchema,
+  description: z.optional(z.string()),
+  spoiler: z.optional(z.boolean()),
+});
+
+export type MessageComponentThumbnail = z.infer<
+  typeof componentThumbnailSchema
+>;
+
+export const componentAccessorySchema = z.union([
+  componentThumbnailSchema,
+  componentButtonSchema,
+]);
+
+export type MessageComponentAccessory = z.infer<
+  typeof componentAccessorySchema
+>;
+
+export const componentSectionSchema = z.object({
+  id: uniqueIdSchema.default(() => getUniqueId()),
+  type: z.literal(9),
+  components: z.array(componentTextDisplaySchema).min(1).max(5),
+  accessory: componentAccessorySchema,
+});
+
+export type MessageComponentSection = z.infer<typeof componentSectionSchema>;
+
+export const componentMediaGalleryItemSchema = z.object({
+  id: uniqueIdSchema.default(() => getUniqueId()),
+  media: unfurledMediaItemSchema,
+  description: z.optional(z.string()),
+  spoiler: z.optional(z.boolean()),
+});
+
+export type MessageComponentMediaGalleryItem = z.infer<
+  typeof componentMediaGalleryItemSchema
+>;
+
+export const componentMediaGallerySchema = z.object({
+  id: uniqueIdSchema.default(() => getUniqueId()),
+  type: z.literal(12),
+  items: z.array(componentMediaGalleryItemSchema).min(1).max(10),
+});
+
+export type MessageComponentMediaGallery = z.infer<
+  typeof componentMediaGallerySchema
+>;
+
+export const componentFileSchema = z.object({
+  id: uniqueIdSchema.default(() => getUniqueId()),
+  type: z.literal(13),
+  file: unfurledMediaItemSchema,
+  spoiler: z.optional(z.boolean()),
+});
+
+export type MessageComponentFile = z.infer<typeof componentFileSchema>;
+
+export const componentSeparatorSchema = z.object({
+  id: uniqueIdSchema.default(() => getUniqueId()),
+  type: z.literal(14),
+  divider: z.boolean().default(true),
+  spacing: z.union([z.literal(1), z.literal(2)]).default(1),
+});
+
+export type MessageComponentSeparator = z.infer<
+  typeof componentSeparatorSchema
+>;
+
+export const componentContainerSubComponentSchema = z.union([
+  componentActionRowSchema,
+  componentTextDisplaySchema,
+  componentSectionSchema,
+  componentMediaGallerySchema,
+  componentSeparatorSchema,
+  componentFileSchema,
+]);
+
+export type MessageComponentContainerSubComponent = z.infer<
+  typeof componentContainerSubComponentSchema
+>;
+
+export const componentContainerSchema = z.object({
+  id: uniqueIdSchema.default(() => getUniqueId()),
+  type: z.literal(17),
+  components: z.array(componentContainerSubComponentSchema).min(1).max(10),
+  accent_color: z.optional(z.number()),
+  spoiler: z.optional(z.boolean()),
+});
+
+export type MessageComponentContainer = z.infer<
+  typeof componentContainerSchema
+>;
+
+export const componentSchema = z.union([
+  componentActionRowSchema,
+  componentButtonSchema,
+  componentSelectMenuSchema,
+  componentSectionSchema,
+  componentTextDisplaySchema,
+  componentThumbnailSchema,
+  componentMediaGallerySchema,
+  componentFileSchema,
+  componentSeparatorSchema,
+  componentContainerSchema,
+]);
+
+export type MessageComponent = z.infer<typeof componentSchema>;
 
 export const messageActionSchema = z
   .object({
@@ -298,6 +435,7 @@ export const messageActionSchema = z
     id: uniqueIdSchema.default(() => getUniqueId()),
     text: z.string().min(1).max(2000),
     public: z.boolean().default(false),
+    allow_role_mentions: z.boolean().default(false),
   })
   .or(
     z.object({
@@ -305,6 +443,7 @@ export const messageActionSchema = z
       id: uniqueIdSchema.default(() => getUniqueId()),
       target_id: z.string().min(1),
       public: z.boolean().default(false),
+      allow_role_mentions: z.boolean().default(false),
     })
   )
   .or(
@@ -313,6 +452,7 @@ export const messageActionSchema = z
       id: uniqueIdSchema.default(() => getUniqueId()),
       target_id: z.string().min(1),
       public: z.boolean().default(false),
+      allow_role_mentions: z.boolean().default(false),
       disable_default_response: z.boolean().default(false),
     })
   )
@@ -339,7 +479,7 @@ export const messageActionSchema = z
 export type MessageAction = z.infer<typeof messageActionSchema>;
 
 export const messageActionSetSchema = z.object({
-  actions: z.array(messageActionSchema).max(5), //.min(1),
+  actions: z.array(messageActionSchema), // .max(5), //.min(1),
 });
 
 export type MessageActionSet = z.infer<typeof messageActionSetSchema>;
@@ -397,18 +537,31 @@ export const messageSchema = z
     tts: messageTtsSchema.default(false),
     embeds: z.array(embedSchema).max(10).default([]),
     allowed_mentions: messageAllowedMentionsSchema,
-    components: z.array(actionRowSchema).max(5).default([]),
+    components: z.array(componentSchema).max(5).default([]),
     thread_name: messageThreadName,
     actions: z.record(z.string(), messageActionSetSchema).default({}),
+    flags: z.number().optional(),
   })
   .superRefine((data, ctx) => {
-    // this currently doesn't take attachments into account
-    if (!data.content && !data.embeds.length && !data.components.length) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["content"],
-        message: "Content is required when no other fields are set",
-      });
+    const flags = data.flags ?? 0;
+    if (flags & (1 << 15)) {
+      if (data.components.length == 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["components"],
+          message: "Components are required when components v2 is enabled",
+        });
+      }
+      // TODO: check total text display length <= 4000
+    } else {
+      // this currently doesn't take attachments into account
+      if (!data.content && !data.embeds.length && !data.components.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["content"],
+          message: "Content is required when no other fields are set",
+        });
+      }
     }
   });
 

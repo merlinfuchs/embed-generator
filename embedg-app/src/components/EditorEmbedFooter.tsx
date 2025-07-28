@@ -37,7 +37,7 @@ export default function EditorEmbedFooter({ embedIndex, embedId }: Props) {
     <Collapsable
       title="Footer"
       id={`embeds.${embedId}.footer`}
-      valiationPathPrefix={[
+      validationPathPrefix={[
         `embeds.${embedIndex}.footer`,
         `embeds.${embedIndex}.timestamp`,
       ]}

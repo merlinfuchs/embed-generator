@@ -31,11 +31,12 @@ export default function ShareRestoreView() {
           title: "Failed to parse shared message",
           message: `${e}`,
         });
+        console.error(e);
       }
     } else {
       createToast({
         title: "Failed to load shared message",
-        message: `${sharedMessage.error}`,
+        message: `${sharedMessage.error.message}`,
         type: "error",
       });
     }

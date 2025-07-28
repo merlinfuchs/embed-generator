@@ -34,6 +34,7 @@
     "react-cron-generator": "^2.0.10",
     "react-datetime-picker": "^5.2.0",
     "react-dom": "^18.2.0",
+    "react-error-boundary": "^5.0.0",
     "react-query": "^3.39.3",
     "react-router-dom": "^6.10.0",
     "react-textarea-autosize": "^8.4.1",
@@ -49,7 +50,7 @@
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
     "@vitejs/plugin-react-swc": "^3.0.0",
-    "typescript": "^4.9.3",
+    "typescript": "^5.8.3",
     "vite": "^4.2.0"
   }
 }

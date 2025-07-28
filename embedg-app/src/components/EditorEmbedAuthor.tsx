@@ -36,7 +36,7 @@ export default function EditorEmbedAuthor({ embedIndex, embedId }: Props) {
     <Collapsable
       title="Author"
       id={`embeds.${embedId}.author`}
-      valiationPathPrefix={`embeds.${embedIndex}.author`}
+      validationPathPrefix={`embeds.${embedIndex}.author`}
     >
       <div className="space-y-3">
         <EditorInput

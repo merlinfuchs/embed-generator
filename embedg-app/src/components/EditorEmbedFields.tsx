@@ -25,7 +25,7 @@ export default function EditorEmbedFields({ embedIndex, embedId }: Props) {
   return (
     <Collapsable
       id={`embeds.${embedId}.fields`}
-      valiationPathPrefix={`embeds.${embedIndex}.fields`}
+      validationPathPrefix={`embeds.${embedIndex}.fields`}
       title="Fields"
       extra={
         <div className="text-sm italic font-light text-gray-400">

@@ -38,7 +38,7 @@ export default function EditorEmbedBody({ embedIndex, embedId }: Props) {
     <Collapsable
       id={`embeds.${embedId}.content`}
       title="Body"
-      valiationPathPrefix={[
+      validationPathPrefix={[
         `embeds.${embedIndex}.title`,
         `embeds.${embedIndex}.description`,
         `embeds.${embedIndex}.url`,

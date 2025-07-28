@@ -2,13 +2,13 @@ import {
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon,
 } from "@heroicons/react/20/solid";
+import { useEffect } from "react";
 import {
   useCurrentMessageStore,
   useCurrentMessageUndoStore,
 } from "../state/message";
-import EditorIconButton from "./EditorIconButton";
-import { useEffect } from "react";
 import { useSettingsStore } from "../state/settings";
+import EditorIconButton from "./EditorIconButton";
 
 export default function EditorUndoButtons() {
   const historyEnabled = useSettingsStore((s) => s.editHistoryEnabled);

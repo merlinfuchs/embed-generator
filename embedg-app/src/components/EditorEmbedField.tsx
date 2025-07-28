@@ -61,7 +61,7 @@ export default function EditorEmbedField({
     <div className="border-2 border-dark-6 rounded-md p-3">
       <Collapsable
         id={`embeds.${embedId}.fields.${fieldId}`}
-        valiationPathPrefix={`embeds.${embedIndex}.fields.${fieldIndex}`}
+        validationPathPrefix={`embeds.${embedIndex}.fields.${fieldIndex}`}
         title={`Field ${fieldIndex + 1}`}
         extra={
           name && (

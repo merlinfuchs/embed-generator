@@ -1,21 +1,29 @@
+import debounce from "just-debounce-it";
+import { TemporalState, temporal } from "zundo";
 import { create, useStore } from "zustand";
 import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import {
-  MessageComponentButtonStyle,
   EmbedField,
   Message,
+  MessageAction,
+  MessageComponent,
+  MessageComponentAccessory,
   MessageComponentActionRow,
   MessageComponentButton,
-  MessageEmbed,
-  MessageComponentSelectMenuOption,
+  MessageComponentContainer,
+  MessageComponentContainerSubComponent,
+  MessageComponentFile,
+  MessageComponentMediaGallery,
+  MessageComponentMediaGalleryItem,
+  MessageComponentSection,
   MessageComponentSelectMenu,
-  MessageAction,
-  Emoji,
+  MessageComponentSelectMenuOption,
+  MessageComponentSeparator,
+  MessageComponentTextDisplay,
+  MessageEmbed,
 } from "../discord/schema";
 import { getUniqueId } from "../util";
-import { TemporalState, temporal } from "zundo";
-import debounce from "just-debounce-it";
 
 export interface MessageStore extends Message {
   clear(): void;
@@ -55,69 +63,226 @@ export interface MessageStore extends Message {
   deleteEmbedField: (i: number, j: number) => void;
   duplicateEmbedField: (i: number, j: number) => void;
   clearEmbedFields: (i: number) => void;
-  addComponentRow: (row: MessageComponentActionRow) => void;
-  clearComponentRows: () => void;
-  moveComponentRowUp: (i: number) => void;
-  moveComponentRowDown: (i: number) => void;
-  duplicateComponentRow: (i: number) => void;
-  deleteComponentRow: (i: number) => void;
-  addButton: (i: number, button: MessageComponentButton) => void;
-  clearButtons: (i: number) => void;
-  moveButtonDown: (i: number, j: number) => void;
-  moveButtonUp: (i: number, j: number) => void;
-  duplicateButton: (i: number, j: number) => void;
-  deleteButton: (i: number, j: number) => void;
-  setButtonStyle: (
+
+  addComponent: (component: MessageComponent) => void;
+  moveComponentDown: (i: number) => void;
+  moveComponentUp: (i: number) => void;
+  deleteComponent: (i: number) => void;
+  clearComponents: () => void;
+  duplicateComponent: (i: number) => void;
+  updateComponent: (i: number, data: Partial<MessageComponent>) => void;
+  getActionRow: (i: number) => MessageComponentActionRow | null;
+  addActionRowComponent: (
+    i: number,
+    component: MessageComponentButton | MessageComponentSelectMenu
+  ) => void;
+  moveActionRowComponentDown: (i: number, j: number) => void;
+  moveActionRowComponentUp: (i: number, j: number) => void;
+  deleteActionRowComponent: (i: number, j: number) => void;
+  clearActionRowComponents: (i: number) => void;
+  duplicateActionRowComponent: (i: number, j: number) => void;
+  updateActionRowComponent: (
     i: number,
     j: number,
-    style: MessageComponentButtonStyle
+    data: Partial<MessageComponentButton | MessageComponentSelectMenu>
   ) => void;
-  setButtonLabel: (i: number, j: number, label: string) => void;
-  setButtonEmoji: (i: number, j: number, emoji: Emoji | undefined) => void;
-  setButtonUrl: (i: number, j: number, url: string) => void;
-  setButtonDisabled: (
+
+  getActionRowButton: (i: number, j: number) => MessageComponentButton | null;
+
+  getActionRowSelectMenu: (
     i: number,
-    j: number,
-    disabled: boolean | undefined
-  ) => void;
-  setSelectMenuPlaceholder: (
-    i: number,
-    j: number,
-    placeholder: string | undefined
-  ) => void;
-  setSelectMenuDisabled: (
-    i: number,
-    j: number,
-    disabled: boolean | undefined
-  ) => void;
-  addSelectMenuOption: (
+    j: number
+  ) => MessageComponentSelectMenu | null;
+  addActionRowSelectMenuOption: (
     i: number,
     j: number,
     option: MessageComponentSelectMenuOption
   ) => void;
-  clearSelectMenuOptions: (i: number, j: number) => void;
-  moveSelectMenuOptionDown: (i: number, j: number, k: number) => void;
-  moveSelectMenuOptionUp: (i: number, j: number, k: number) => void;
-  duplicateSelectMenuOption: (i: number, j: number, k: number) => void;
-  deleteSelectMenuOption: (i: number, j: number, k: number) => void;
-  setSelectMenuOptionLabel: (
+  clearActionRowSelectMenuOptions: (i: number, j: number) => void;
+  moveActionRowSelectMenuOptionDown: (i: number, j: number, k: number) => void;
+  moveActionRowSelectMenuOptionUp: (i: number, j: number, k: number) => void;
+  duplicateActionRowSelectMenuOption: (i: number, j: number, k: number) => void;
+  deleteActionRowSelectMenuOption: (i: number, j: number, k: number) => void;
+  updateActionRowSelectMenuOption: (
     i: number,
     j: number,
     k: number,
-    label: string
+    option: Partial<MessageComponentSelectMenuOption>
   ) => void;
-  setSelectMenuOptionDescription: (
+
+  getSection: (i: number) => MessageComponentSection | null;
+  updateSection: (i: number, data: Partial<MessageComponentSection>) => void;
+  updateSectionAccessory: (
+    i: number,
+    data: Partial<MessageComponentAccessory>
+  ) => void;
+  addSectionComponent: (
+    i: number,
+    component: MessageComponentTextDisplay
+  ) => void;
+  clearSectionComponents: (i: number) => void;
+  moveSectionComponentDown: (i: number, j: number) => void;
+  moveSectionComponentUp: (i: number, j: number) => void;
+  deleteSectionComponent: (i: number, j: number) => void;
+
+  getSectionTextDisplay: (
+    i: number,
+    j: number
+  ) => MessageComponentTextDisplay | null;
+  updateSectionComponent: (
+    i: number,
+    j: number,
+    data: Partial<MessageComponentTextDisplay>
+  ) => void;
+  duplicateSectionComponent: (i: number, j: number) => void;
+
+  getGallery: (i: number) => MessageComponentMediaGallery | null;
+  addGalleryItem: (i: number, item: MessageComponentMediaGalleryItem) => void;
+  clearGalleryItems: (i: number) => void;
+  moveGalleryItemDown: (i: number, j: number) => void;
+  moveGalleryItemUp: (i: number, j: number) => void;
+  deleteGalleryItem: (i: number, j: number) => void;
+
+  getGalleryItem: (
+    i: number,
+    j: number
+  ) => MessageComponentMediaGalleryItem | null;
+  updateGalleryItem: (
+    i: number,
+    j: number,
+    data: Partial<MessageComponentMediaGalleryItem>
+  ) => void;
+  duplicateGalleryItem: (i: number, j: number) => void;
+
+  getTextDisplay: (i: number) => MessageComponentTextDisplay | null;
+  getFile: (i: number) => MessageComponentFile | null;
+  getSeparator: (i: number) => MessageComponentSeparator | null;
+
+  getContainer: (i: number) => MessageComponentContainer | null;
+  updateContainer: (
+    i: number,
+    data: Partial<MessageComponentContainer>
+  ) => void;
+  addContainerComponent: (
+    i: number,
+    component: MessageComponentContainerSubComponent
+  ) => void;
+  clearContainerComponents: (i: number) => void;
+  moveContainerComponentDown: (i: number, j: number) => void;
+  moveContainerComponentUp: (i: number, j: number) => void;
+  deleteContainerComponent: (i: number, j: number) => void;
+  updateContainerComponent: (
+    i: number,
+    j: number,
+    data: Partial<MessageComponentContainerSubComponent>
+  ) => void;
+  duplicateContainerComponent: (i: number, j: number) => void;
+
+  addContainerActionRowComponent: (
+    c: number,
+    a: number,
+    component: MessageComponentButton | MessageComponentSelectMenu
+  ) => void;
+  clearContainerRowActionComponents: (c: number, a: number) => void;
+  moveContainerActionRowComponentUp: (c: number, a: number, k: number) => void;
+  moveContainerActionRowComponentDown: (
+    c: number,
+    a: number,
+    k: number
+  ) => void;
+  deleteContainerActionRowComponent: (c: number, a: number, k: number) => void;
+  duplicateContainerActionRowComponent: (
+    c: number,
+    a: number,
+    k: number
+  ) => void;
+  updateContainerActionRowComponent: (
+    c: number,
+    a: number,
+    k: number,
+    data: Partial<MessageComponentButton | MessageComponentSelectMenu>
+  ) => void;
+  addContainerActionRowSelectMenuOption: (
+    c: number,
+    a: number,
+    k: number
+  ) => void;
+  updateContainerActionRowSelectMenuOption: (
+    c: number,
+    a: number,
+    k: number,
+    o: number,
+    data: Partial<MessageComponentSelectMenuOption>
+  ) => void;
+  duplicateContainerActionRowSelectMenuOption: (
+    c: number,
+    a: number,
+    k: number,
+    o: number
+  ) => void;
+  moveContainerActionRowSelectMenuOptionUp: (
+    c: number,
+    a: number,
+    k: number,
+    o: number
+  ) => void;
+  moveContainerActionRowSelectMenuOptionDown: (
+    c: number,
+    a: number,
+    k: number,
+    o: number
+  ) => void;
+  removeContainerActionRowSelectMenuOption: (
+    c: number,
+    a: number,
+    k: number,
+    o: number
+  ) => void;
+  clearContainerActionRowSelectMenuOptions: (
+    c: number,
+    a: number,
+    k: number
+  ) => void;
+
+  updateContainerSectionAccessory: (
+    i: number,
+    j: number,
+    data: Partial<MessageComponentAccessory>
+  ) => void;
+  addContainerSectionComponent: (
+    i: number,
+    j: number,
+    component: MessageComponentTextDisplay
+  ) => void;
+  clearContainerSectionComponents: (i: number, j: number) => void;
+  moveContainerSectionComponentUp: (i: number, j: number, k: number) => void;
+  moveContainerSectionComponentDown: (i: number, j: number, k: number) => void;
+  deleteContainerSectionComponent: (i: number, j: number, k: number) => void;
+  updateContainerSectionComponent: (
     i: number,
     j: number,
     k: number,
-    description: string | undefined
+    data: Partial<MessageComponentContainerSubComponent>
   ) => void;
-  setSelectMenuOptionEmoji: (
+  duplicateContainerSectionComponent: (i: number, j: number, k: number) => void;
+
+  addContainerMediaGalleryItem: (
+    i: number,
+    j: number,
+    component: MessageComponentMediaGalleryItem
+  ) => void;
+  clearContainerMediaGalleryItems: (i: number, j: number) => void;
+  moveContainerMediaGalleryItemUp: (i: number, j: number, k: number) => void;
+  moveContainerMediaGalleryItemDown: (i: number, j: number, k: number) => void;
+  deleteContainerMediaGalleryItem: (i: number, j: number, k: number) => void;
+  updateContainerMediaGalleryItem: (
     i: number,
     j: number,
     k: number,
-    emoji: Emoji | undefined
+    data: Partial<MessageComponentMediaGalleryItem>
   ) => void;
+  duplicateContainerMediaGalleryItem: (i: number, j: number, k: number) => void;
+
   addAction: (id: string, action: MessageAction) => void;
   clearActions: (id: string) => void;
   deleteAction: (id: string, i: number) => void;
@@ -128,6 +293,7 @@ export interface MessageStore extends Message {
   setActionText: (id: string, i: number, text: string) => void;
   setActionTargetId: (id: string, i: number, target: string) => void;
   setActionPublic: (id: string, i: number, val: boolean) => void;
+  setActionAllowRoleMentions: (id: string, i: number, val: boolean) => void;
   setActionDisableDefaultResponse: (
     id: string,
     i: number,
@@ -136,8 +302,8 @@ export interface MessageStore extends Message {
   setActionPermissions: (id: string, i: number, val: string) => void;
   setActionRoleIds: (id: string, i: number, val: string[]) => void;
 
-  getSelectMenu: (i: number, j: number) => MessageComponentSelectMenu | null;
-  getButton: (i: number, j: number) => MessageComponentButton | null;
+  getComponentsV2Enabled: () => boolean;
+  setComponentsV2Enabled: (enabled: boolean) => void;
 }
 
 export const defaultMessage: Message = {
@@ -189,6 +355,7 @@ export const defaultMessage: Message = {
   ],
   components: [],
   actions: {},
+  flags: 0,
 };
 
 export const emptyMessage: Message = {
@@ -556,173 +723,207 @@ export const createMessageStore = (key: string) =>
                 }
                 embed.fields = [];
               }),
-            addComponentRow: (row: MessageComponentActionRow) =>
-              set((state) => {
-                if (!state.components) {
-                  state.components = [row];
-                } else {
-                  state.components.push(row);
-                }
-              }),
-            clearComponentRows: () =>
-              set((state) => {
-                for (const row of state.components) {
-                  for (const comp of row.components) {
-                    if (comp.type === 2) {
-                      delete state.actions[comp.action_set_id];
-                    } else if (comp.type === 3) {
-                      for (const option of comp.options) {
-                        delete state.actions[option.action_set_id];
-                      }
-                    }
-                  }
-                }
 
+            addComponent: (component: MessageComponent) =>
+              set((state) => {
+                state.components.push(component);
+              }),
+            clearComponents: () =>
+              set((state) => {
                 state.components = [];
+                state.actions = {};
               }),
-            moveComponentRowUp: (i: number) =>
+            moveComponentUp: (i: number) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row) {
+                const component = state.components && state.components[i];
+                if (!component) {
                   return;
                 }
                 state.components.splice(i, 1);
-                state.components.splice(i - 1, 0, row);
+                state.components.splice(i - 1, 0, component);
               }),
-            moveComponentRowDown: (i: number) =>
+            moveComponentDown: (i: number) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row) {
+                const component = state.components && state.components[i];
+                if (!component) {
                   return;
                 }
                 state.components.splice(i, 1);
-                state.components.splice(i + 1, 0, row);
+                state.components.splice(i + 1, 0, component);
               }),
-            duplicateComponentRow: (i: number) =>
-              set((state) => {
-                const row = state.components && state.components[i];
-                if (!row) {
-                  return;
-                }
-
-                // This is a bit complex because we can't allow duplicated action set ids
-                const newRow: MessageComponentActionRow = {
-                  id: getUniqueId(),
-                  type: 1,
-                  components: row.components.map((comp) => {
-                    if (comp.type === 2) {
-                      const actionId = getUniqueId().toString();
-                      state.actions[actionId] = { actions: [] };
-                      return { ...comp, action_set_id: actionId };
-                    } else {
-                      return {
-                        ...comp,
-                        options: comp.options.map((option) => {
-                          const actionId = getUniqueId().toString();
-                          state.actions[actionId] = { actions: [] };
-                          return {
-                            ...option,
-                            action_set_id: actionId,
-                          };
-                        }),
-                      };
-                    }
-                  }),
-                };
-
-                // TODO: change action set ids
-                state.components.splice(i + 1, 0, newRow);
-              }),
-            deleteComponentRow: (i: number) =>
+            deleteComponent: (i: number) =>
               set((state) => {
                 const removed = state.components.splice(i, 1);
 
-                for (const row of removed) {
-                  for (const comp of row.components) {
-                    if (comp.type === 2) {
-                      delete state.actions[comp.action_set_id];
-                    } else if (comp.type === 3) {
-                      for (const option of comp.options) {
-                        delete state.actions[option.action_set_id];
+                function deleteComponent(component: any) {
+                  if (component.action_set_id) {
+                    delete state.actions[component.action_set_id];
+                  }
+
+                  if (component.components) {
+                    for (const comp of component.components) {
+                      deleteComponent(comp);
+                    }
+                  }
+
+                  if (component.options) {
+                    for (const option of component.options) {
+                      deleteComponent(option);
+                    }
+                  }
+                }
+
+                for (const comp of removed) {
+                  deleteComponent(comp);
+                }
+              }),
+            duplicateComponent: (i: number) =>
+              set((state) => {
+                const component = state.components[i];
+                if (!component) {
+                  return;
+                }
+
+                let newComponent: MessageComponent;
+
+                if (component.type === 1) {
+                  newComponent = {
+                    id: getUniqueId(),
+                    type: 1,
+                    components: component.components.map((comp) => {
+                      if (comp.type === 2) {
+                        const actionId = getUniqueId().toString();
+                        state.actions[actionId] = { actions: [] };
+                        return { ...comp, action_set_id: actionId };
+                      } else {
+                        return {
+                          ...comp,
+                          options: comp.options.map((option) => {
+                            const actionId = getUniqueId().toString();
+                            state.actions[actionId] = { actions: [] };
+                            return {
+                              ...option,
+                              action_set_id: actionId,
+                            };
+                          }),
+                        };
                       }
+                    }),
+                  };
+                } else if (component.type === 9) {
+                  const accessory = { ...component.accessory };
+                  if (accessory.type === 2) {
+                    const actionId = getUniqueId().toString();
+                    state.actions[actionId] = { actions: [] };
+                    accessory.action_set_id = actionId;
+                  }
+
+                  newComponent = {
+                    ...component,
+                    id: getUniqueId(),
+                    accessory: accessory,
+                  };
+                } else {
+                  newComponent = {
+                    ...component,
+                    id: getUniqueId(),
+                  };
+                }
+
+                state.components.splice(i + 1, 0, newComponent);
+              }),
+            updateComponent: (i: number, data: Partial<MessageComponent>) =>
+              set((state) => {
+                const component = state.components[i];
+                if (!component) {
+                  return;
+                }
+                Object.assign(component, data);
+              }),
+
+            getActionRow: (i: number) => {
+              const state = get();
+              const row = state.components && state.components[i];
+              if (!row || row.type !== 1) {
+                return null;
+              }
+              return row;
+            },
+            addActionRowComponent: (
+              i: number,
+              component: MessageComponentButton | MessageComponentSelectMenu
+            ) =>
+              set((state) => {
+                const row = state.components && state.components[i];
+                if (!row || row.type !== 1) {
+                  return;
+                }
+                if (row.components) {
+                  row.components.push(component);
+                } else {
+                  row.components = [component];
+                }
+              }),
+            moveActionRowComponentDown: (i: number, j: number) =>
+              set((state) => {
+                const row = state.components && state.components[i];
+                if (!row || row.type !== 1) {
+                  return;
+                }
+                const component = row.components && row.components[j];
+                if (!component) {
+                  return;
+                }
+                row.components.splice(j, 1);
+                row.components.splice(j + 1, 0, component);
+              }),
+            moveActionRowComponentUp: (i: number, j: number) =>
+              set((state) => {
+                const row = state.components && state.components[i];
+                if (!row || row.type !== 1) {
+                  return;
+                }
+                const component = row.components && row.components[j];
+                if (!component) {
+                  return;
+                }
+                row.components.splice(j, 1);
+                row.components.splice(j - 1, 0, component);
+              }),
+            deleteActionRowComponent: (i: number, j: number) =>
+              set((state) => {
+                const row = state.components && state.components[i];
+                if (!row || row.type !== 1) {
+                  return;
+                }
+                const removed = row.components.splice(j, 1);
+                for (const comp of removed) {
+                  if (comp.type === 2) {
+                    delete state.actions[comp.action_set_id];
+                  } else if (comp.type === 3) {
+                    for (const option of comp.options) {
+                      delete state.actions[option.action_set_id];
                     }
                   }
                 }
               }),
-            addButton: (i: number, button: MessageComponentButton) =>
+            clearActionRowComponents: (i: number) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
-
-                state.actions[button.action_set_id] = { actions: [] };
-
-                if (!row.components) {
-                  row.components = [button];
-                } else {
-                  row.components.push(button);
-                }
-              }),
-            clearButtons: (i: number) =>
-              set((state) => {
-                const row = state.components && state.components[i];
-                if (!row) {
-                  return;
-                }
-
-                for (const button of row.components) {
-                  if (button.type === 2) {
-                    delete state.actions[button.action_set_id];
+                for (const comp of row.components) {
+                  if (comp.type === 2) {
+                    delete state.actions[comp.action_set_id];
                   }
                 }
-
                 row.components = [];
               }),
-            deleteButton: (i: number, j: number) =>
-              set((state) => {
-                const row = state.components[i];
-                if (!row) {
-                  return;
-                }
-
-                const removed = row.components.splice(j, 1);
-                for (const button of removed) {
-                  if (button.type === 2) {
-                    delete state.actions[button.action_set_id];
-                  }
-                }
-              }),
-            moveButtonUp: (i: number, j: number) =>
-              set((state) => {
-                const row = state.components[i];
-                if (!row) {
-                  return;
-                }
-                const button = row.components[j];
-                if (!button) {
-                  return;
-                }
-                row.components.splice(j, 1);
-                row.components.splice(j - 1, 0, button);
-              }),
-            moveButtonDown: (i: number, j: number) =>
+            duplicateActionRowComponent: (i: number, j: number) =>
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
-                  return;
-                }
-                const button = row.components[j];
-                if (!button) {
-                  return;
-                }
-                row.components.splice(j, 1);
-                row.components.splice(j + 1, 0, button);
-              }),
-            duplicateButton: (i: number, j: number) =>
-              set((state) => {
-                const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
                 const button = row.components && row.components[j];
@@ -739,122 +940,61 @@ export const createMessageStore = (key: string) =>
                   action_set_id: actionId,
                 });
               }),
-            setButtonStyle: (
+            updateActionRowComponent: (
               i: number,
               j: number,
-              style: MessageComponentButtonStyle
-            ) =>
+              data: Partial<MessageComponentButton | MessageComponentSelectMenu>
+            ) => {
               set((state) => {
                 const row = state.components && state.components[i];
-                if (!row) {
+                if (!row || row.type !== 1) {
                   return;
                 }
-                const button = row.components && row.components[j];
-                if (!button || button.type !== 2) {
+                const component = row.components[j];
+                if (!component) {
                   return;
                 }
+                Object.assign(component, data);
+              });
+            },
 
-                button.style = style;
-                if (button.style === 5) {
-                  button.url = "";
-                  state.actions[button.action_set_id] = { actions: [] };
-                }
-              }),
-            setButtonLabel: (i: number, j: number, label: string) =>
-              set((state) => {
-                const row = state.components && state.components[i];
-                if (!row) {
-                  return;
-                }
-                const button = row.components && row.components[j];
-                if (!button || button.type !== 2) {
-                  return;
-                }
-                button.label = label;
-              }),
-            setButtonEmoji: (i: number, j: number, emoji: Emoji | undefined) =>
-              set((state) => {
-                const row = state.components && state.components[i];
-                if (!row) {
-                  return;
-                }
-                const button = row.components && row.components[j];
-                if (!button || button.type !== 2) {
-                  return;
-                }
-                button.emoji = emoji;
-              }),
-            setButtonUrl: (i: number, j: number, url: string) =>
-              set((state) => {
-                const row = state.components && state.components[i];
-                if (!row) {
-                  return;
-                }
-                const button = row.components && row.components[j];
-                if (!button || button.type !== 2 || button.style !== 5) {
-                  return;
-                }
-                button.url = url;
-              }),
-            setButtonDisabled: (
-              i: number,
-              j: number,
-              disabled: boolean | undefined
-            ) =>
-              set((state) => {
-                const row = state.components && state.components[i];
-                if (!row) {
-                  return;
-                }
-                const button = row.components && row.components[j];
-                if (!button) {
-                  return;
-                }
-                button.disabled = disabled;
-              }),
-            setSelectMenuPlaceholder: (
-              i: number,
-              j: number,
-              placeholder: string | undefined
-            ) =>
-              set((state) => {
-                const row = state.components && state.components[i];
-                if (!row) {
-                  return;
-                }
-                const selectMenu = row.components && row.components[j];
-                if (!selectMenu || selectMenu.type !== 3) {
-                  return;
-                }
-                selectMenu.placeholder = placeholder;
-              }),
-            setSelectMenuDisabled: (
-              i: number,
-              j: number,
-              disabled: boolean | undefined
-            ) =>
-              set((state) => {
-                const row = state.components && state.components[i];
-                if (!row) {
-                  return;
-                }
-                const selectMenu = row.components && row.components[j];
-                if (!selectMenu || selectMenu.type !== 3) {
-                  return;
-                }
-                selectMenu.disabled = disabled;
-              }),
-            addSelectMenuOption: (
+            getActionRowButton: (i: number, j: number) => {
+              const state = get();
+              const row = state.components && state.components[i];
+              if (!row || row.type !== 1) {
+                return null;
+              }
+              const button = row.components && row.components[j];
+              if (!button || button.type !== 2) {
+                return null;
+              }
+              return button;
+            },
+            getActionRowSelectMenu: (i: number, j: number) => {
+              const state = get();
+              const row = state.components && state.components[i];
+              if (!row || row.type !== 1) {
+                return null;
+              }
+
+              const selectMenu = row.components && row.components[j];
+              if (selectMenu && selectMenu.type === 3) {
+                return selectMenu;
+              }
+              return null;
+            },
+
+            addActionRowSelectMenuOption: (
               i: number,
               j: number,
               option: MessageComponentSelectMenuOption
             ) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const selectMenu = row.components && row.components[j];
+                const selectMenu = root.components && root.components[j];
                 if (!selectMenu || selectMenu.type !== 3) {
                   return;
                 }
@@ -867,13 +1007,13 @@ export const createMessageStore = (key: string) =>
                   selectMenu.options.push(option);
                 }
               }),
-            clearSelectMenuOptions: (i: number, j: number) =>
+            clearActionRowSelectMenuOptions: (i: number, j: number) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const selectMenu = row.components && row.components[j];
+                const selectMenu = root.components && root.components[j];
                 if (!selectMenu || selectMenu.type !== 3) {
                   return;
                 }
@@ -884,13 +1024,17 @@ export const createMessageStore = (key: string) =>
 
                 selectMenu.options = [];
               }),
-            moveSelectMenuOptionDown: (i: number, j: number, k: number) =>
+            moveActionRowSelectMenuOptionDown: (
+              i: number,
+              j: number,
+              k: number
+            ) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const selectMenu = row.components && row.components[j];
+                const selectMenu = root.components && root.components[j];
                 if (!selectMenu || selectMenu.type !== 3) {
                   return;
                 }
@@ -901,13 +1045,17 @@ export const createMessageStore = (key: string) =>
                 selectMenu.options.splice(k, 1);
                 selectMenu.options.splice(k + 1, 0, option);
               }),
-            moveSelectMenuOptionUp: (i: number, j: number, k: number) =>
+            moveActionRowSelectMenuOptionUp: (
+              i: number,
+              j: number,
+              k: number
+            ) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const selectMenu = row.components && row.components[j];
+                const selectMenu = root.components && root.components[j];
                 if (!selectMenu || selectMenu.type !== 3) {
                   return;
                 }
@@ -918,13 +1066,17 @@ export const createMessageStore = (key: string) =>
                 selectMenu.options.splice(k, 1);
                 selectMenu.options.splice(k - 1, 0, option);
               }),
-            duplicateSelectMenuOption: (i: number, j: number, k: number) =>
+            duplicateActionRowSelectMenuOption: (
+              i: number,
+              j: number,
+              k: number
+            ) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const selectMenu = row.components && row.components[j];
+                const selectMenu = root.components && root.components[j];
                 if (!selectMenu || selectMenu.type !== 3) {
                   return;
                 }
@@ -942,13 +1094,18 @@ export const createMessageStore = (key: string) =>
                   action_set_id: actionId,
                 });
               }),
-            deleteSelectMenuOption: (i: number, j: number, k: number) =>
+
+            deleteActionRowSelectMenuOption: (
+              i: number,
+              j: number,
+              k: number
+            ) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const selectMenu = row.components && row.components[j];
+                const selectMenu = root.components && root.components[j];
                 if (!selectMenu || selectMenu.type !== 3) {
                   return;
                 }
@@ -958,69 +1115,858 @@ export const createMessageStore = (key: string) =>
                   delete state.actions[option.action_set_id];
                 }
               }),
-            setSelectMenuOptionLabel: (
+            updateActionRowSelectMenuOption: (
               i: number,
               j: number,
               k: number,
-              label: string
+              data: Partial<MessageComponentSelectMenuOption>
             ) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row) {
+                const root = state.components && state.components[i];
+                if (!root || (root.type !== 9 && root.type !== 1)) {
                   return;
                 }
-                const selectMenu = row.components && row.components[j];
+                const selectMenu = root.components && root.components[j];
                 if (!selectMenu || selectMenu.type !== 3) {
                   return;
                 }
-                const option = selectMenu.options && selectMenu.options[k];
+                const option = selectMenu.options[k];
                 if (!option) {
                   return;
                 }
-                option.label = label;
+
+                Object.assign(option, data);
               }),
-            setSelectMenuOptionDescription: (
+
+            getSection: (i: number) => {
+              const state = get();
+              const section = state.components && state.components[i];
+              if (!section || section.type !== 9) {
+                return null;
+              }
+              return section;
+            },
+            updateSection: (
+              i: number,
+              data: Partial<MessageComponentSection>
+            ) =>
+              set((state) => {
+                const section = state.components && state.components[i];
+                if (!section || section.type !== 9) {
+                  return;
+                }
+                Object.assign(section, data);
+              }),
+            updateSectionAccessory: (
+              i: number,
+              data: Partial<MessageComponentAccessory>
+            ) =>
+              set((state) => {
+                const section = state.components && state.components[i];
+                if (!section || section.type !== 9) {
+                  return;
+                }
+
+                const accessory = section.accessory;
+                if (!accessory) {
+                  return;
+                }
+
+                if (data.type === 2 && accessory.type === 11) {
+                  if (data.action_set_id) {
+                    delete state.actions[data.action_set_id];
+                  }
+                }
+                Object.assign(accessory, data);
+              }),
+
+            addSectionComponent: (
+              i: number,
+              component: MessageComponentTextDisplay
+            ) =>
+              set((state) => {
+                const section = state.components && state.components[i];
+                if (!section || section.type !== 9) {
+                  return;
+                }
+                if (!section.components) {
+                  section.components = [component];
+                } else {
+                  section.components.push(component);
+                }
+              }),
+            clearSectionComponents: (i: number) =>
+              set((state) => {
+                const section = state.components && state.components[i];
+                if (!section || section.type !== 9) {
+                  return;
+                }
+                section.components = [];
+              }),
+            moveSectionComponentDown: (i: number, j: number) =>
+              set((state) => {
+                const section = state.components && state.components[i];
+                if (!section || section.type !== 9) {
+                  return;
+                }
+                const component = section.components[j];
+                if (!component) {
+                  return;
+                }
+                section.components.splice(j, 1);
+                section.components.splice(j + 1, 0, component);
+              }),
+            moveSectionComponentUp: (i: number, j: number) =>
+              set((state) => {
+                const section = state.components && state.components[i];
+                if (!section || section.type !== 9) {
+                  return;
+                }
+                const component = section.components[j];
+                if (!component) {
+                  return;
+                }
+                section.components.splice(j, 1);
+                section.components.splice(j - 1, 0, component);
+              }),
+            deleteSectionComponent: (i: number, j: number) =>
+              set((state) => {
+                const section = state.components && state.components[i];
+                if (!section || section.type !== 9) {
+                  return;
+                }
+                section.components.splice(j, 1);
+              }),
+
+            getSectionTextDisplay: (i: number, j: number) => {
+              const state = get();
+              const section = state.components && state.components[i];
+              if (!section || section.type !== 9) {
+                return null;
+              }
+              const component = section.components && section.components[j];
+              if (!component || component.type !== 10) {
+                return null;
+              }
+              return component;
+            },
+            updateSectionComponent: (
               i: number,
               j: number,
-              k: number,
-              description: string | undefined
+              data: Partial<MessageComponentTextDisplay>
             ) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row) {
+                const section = state.components && state.components[i];
+                if (!section || section.type !== 9) {
                   return;
                 }
-                const selectMenu = row.components && row.components[j];
-                if (!selectMenu || selectMenu.type !== 3) {
+                const component = section.components && section.components[j];
+                if (!component) {
                   return;
                 }
-                const option = selectMenu.options && selectMenu.options[k];
-                if (!option) {
-                  return;
-                }
-                option.description = description;
+                Object.assign(component, data);
               }),
-            setSelectMenuOptionEmoji: (
+            duplicateSectionComponent: (i: number, j: number) =>
+              set((state) => {
+                const section = state.components && state.components[i];
+                if (!section || section.type !== 9) {
+                  return;
+                }
+                const component = section.components && section.components[j];
+                if (!component) {
+                  return;
+                }
+                const newComponent = { ...component, id: getUniqueId() };
+                section.components.splice(j + 1, 0, newComponent);
+              }),
+
+            getGallery: (i: number) => {
+              const state = get();
+              const gallery = state.components && state.components[i];
+              if (!gallery || gallery.type !== 12) {
+                return null;
+              }
+              return gallery;
+            },
+            addGalleryItem: (
+              i: number,
+              item: MessageComponentMediaGalleryItem
+            ) =>
+              set((state) => {
+                const gallery = state.components && state.components[i];
+                if (!gallery || gallery.type !== 12) {
+                  return;
+                }
+                if (!gallery.items) {
+                  gallery.items = [];
+                }
+                gallery.items.push({ ...item, id: getUniqueId() });
+              }),
+            clearGalleryItems: (i: number) =>
+              set((state) => {
+                const gallery = state.components && state.components[i];
+                if (!gallery || gallery.type !== 12) {
+                  return;
+                }
+                gallery.items = [];
+              }),
+            moveGalleryItemDown: (i: number, j: number) =>
+              set((state) => {
+                const gallery = state.components && state.components[i];
+                if (!gallery || gallery.type !== 12 || !gallery.items) {
+                  return;
+                }
+                if (j >= gallery.items.length - 1) {
+                  return;
+                }
+                const temp = gallery.items[j];
+                gallery.items[j] = gallery.items[j + 1];
+                gallery.items[j + 1] = temp;
+              }),
+            moveGalleryItemUp: (i: number, j: number) =>
+              set((state) => {
+                const gallery = state.components && state.components[i];
+                if (!gallery || gallery.type !== 12 || !gallery.items) {
+                  return;
+                }
+                if (j <= 0) {
+                  return;
+                }
+                const temp = gallery.items[j];
+                gallery.items[j] = gallery.items[j - 1];
+                gallery.items[j - 1] = temp;
+              }),
+            deleteGalleryItem: (i: number, j: number) =>
+              set((state) => {
+                const gallery = state.components && state.components[i];
+                if (!gallery || gallery.type !== 12 || !gallery.items) {
+                  return;
+                }
+                gallery.items.splice(j, 1);
+              }),
+            getGalleryItem: (i: number, j: number) => {
+              const state = get();
+              const gallery = state.components && state.components[i];
+              if (!gallery || gallery.type !== 12 || !gallery.items) {
+                return null;
+              }
+              return gallery.items[j] || null;
+            },
+            updateGalleryItem: (
               i: number,
               j: number,
-              k: number,
-              emoji: Emoji | undefined
+              data: Partial<MessageComponentMediaGalleryItem>
             ) =>
               set((state) => {
-                const row = state.components && state.components[i];
-                if (!row) {
+                const gallery = state.components && state.components[i];
+                if (!gallery || gallery.type !== 12 || !gallery.items) {
                   return;
                 }
-                const selectMenu = row.components && row.components[j];
-                if (!selectMenu || selectMenu.type !== 3) {
+                const item = gallery.items[j];
+                if (!item) {
                   return;
                 }
-                const option = selectMenu.options && selectMenu.options[k];
-                if (!option) {
-                  return;
-                }
-                option.emoji = emoji;
+                Object.assign(item, data);
               }),
+            duplicateGalleryItem: (i: number, j: number) =>
+              set((state) => {
+                const gallery = state.components && state.components[i];
+                if (!gallery || gallery.type !== 12 || !gallery.items) {
+                  return;
+                }
+                const item = gallery.items[j];
+                if (!item) {
+                  return;
+                }
+                const newItem = { ...item, id: getUniqueId() };
+                gallery.items.splice(j + 1, 0, newItem);
+              }),
+
+            getTextDisplay: (i: number) => {
+              const state = get();
+              const display = state.components && state.components[i];
+              if (!display || display.type !== 10) {
+                return null;
+              }
+              return display;
+            },
+
+            getFile: (i: number) => {
+              const state = get();
+              const file = state.components && state.components[i];
+              if (!file || file.type !== 13) {
+                return null;
+              }
+              return file;
+            },
+
+            getSeparator: (i: number) => {
+              const state = get();
+              const separator = state.components && state.components[i];
+              if (!separator || separator.type !== 14) {
+                return null;
+              }
+              return separator;
+            },
+
+            getContainer: (i: number) => {
+              const state = get();
+              const container = state.components && state.components[i];
+              if (!container || container.type !== 17) {
+                return null;
+              }
+              return container;
+            },
+
+            updateContainer: (
+              i: number,
+              data: Partial<MessageComponentContainer>
+            ) =>
+              set((state) => {
+                const container = state.components && state.components[i];
+                if (!container || container.type !== 17) {
+                  return;
+                }
+                Object.assign(container, data);
+              }),
+            addContainerComponent: (
+              i: number,
+              component: MessageComponentContainerSubComponent
+            ) =>
+              set((state) => {
+                const container = state.components && state.components[i];
+                if (!container || container.type !== 17) {
+                  return;
+                }
+                if (!container.components) {
+                  container.components = [component];
+                } else {
+                  container.components.push(component);
+                }
+              }),
+            clearContainerComponents: (i: number) =>
+              set((state) => {
+                const container = state.components && state.components[i];
+                if (!container || container.type !== 17) {
+                  return;
+                }
+                container.components = [];
+              }),
+            moveContainerComponentDown: (i: number, j: number) =>
+              set((state) => {
+                const container = state.components && state.components[i];
+                if (
+                  !container ||
+                  container.type !== 17 ||
+                  !container.components
+                ) {
+                  return;
+                }
+                const component = container.components[j];
+                if (!component) {
+                  return;
+                }
+                container.components.splice(j, 1);
+                container.components.splice(j + 1, 0, component);
+              }),
+            moveContainerComponentUp: (i: number, j: number) =>
+              set((state) => {
+                const container = state.components && state.components[i];
+                if (
+                  !container ||
+                  container.type !== 17 ||
+                  !container.components
+                ) {
+                  return;
+                }
+                const component = container.components[j];
+                if (!component) {
+                  return;
+                }
+                container.components.splice(j, 1);
+                container.components.splice(j - 1, 0, component);
+              }),
+            deleteContainerComponent: (i: number, j: number) =>
+              set((state) => {
+                const container = state.components && state.components[i];
+                if (
+                  !container ||
+                  container.type !== 17 ||
+                  !container.components
+                ) {
+                  return;
+                }
+                container.components.splice(j, 1);
+              }),
+            updateContainerComponent: (
+              i: number,
+              j: number,
+              data: Partial<MessageComponentContainerSubComponent>
+            ) =>
+              set((state) => {
+                const container = state.components && state.components[i];
+                if (
+                  !container ||
+                  container.type !== 17 ||
+                  !container.components
+                ) {
+                  return;
+                }
+                const component = container.components[j];
+                if (!component) {
+                  return;
+                }
+                Object.assign(component, data);
+              }),
+            duplicateContainerComponent: (i: number, j: number) =>
+              set((state) => {
+                const container = state.components && state.components[i];
+                if (
+                  !container ||
+                  container.type !== 17 ||
+                  !container.components
+                ) {
+                  return;
+                }
+                // TODO: update action set ids
+                const component = container.components[j];
+                if (!component) {
+                  return;
+                }
+                const newComponent = {
+                  ...component,
+                  id: getUniqueId(),
+                  component,
+                };
+                container.components.splice(j + 1, 0, newComponent);
+              }),
+
+            addContainerActionRowComponent: (c, a, component) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    actionRow.components.push(component);
+                  }
+                }
+              }),
+
+            clearContainerRowActionComponents: (c, a) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    actionRow.components = [];
+                  }
+                }
+              }),
+
+            moveContainerActionRowComponentUp: (c, a, k) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1 && k > 0) {
+                    const component = actionRow.components[k];
+                    actionRow.components[k] = actionRow.components[k - 1];
+                    actionRow.components[k - 1] = component;
+                  }
+                }
+              }),
+
+            moveContainerActionRowComponentDown: (c, a, k) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (
+                    actionRow?.type === 1 &&
+                    k < actionRow.components.length - 1
+                  ) {
+                    const component = actionRow.components[k];
+                    actionRow.components[k] = actionRow.components[k + 1];
+                    actionRow.components[k + 1] = component;
+                  }
+                }
+              }),
+
+            deleteContainerActionRowComponent: (c, a, k) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    actionRow.components.splice(k, 1);
+                  }
+                }
+              }),
+
+            duplicateContainerActionRowComponent: (c, a, k) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    const component = actionRow.components[k];
+                    if (component.type === 2) {
+                      const actionSetId = getUniqueId().toString();
+
+                      state.actions[actionSetId] =
+                        state.actions[component.action_set_id];
+
+                      actionRow.components.splice(k + 1, 0, {
+                        ...component,
+                        id: getUniqueId(),
+                        action_set_id: actionSetId,
+                      });
+                    }
+                  }
+                }
+              }),
+
+            updateContainerActionRowComponent: (c, a, k, data) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    Object.assign(actionRow.components[k], data);
+                  }
+                }
+              }),
+
+            addContainerActionRowSelectMenuOption: (c, a, k) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    const selectMenu = actionRow.components[k];
+                    if (selectMenu?.type === 3) {
+                      selectMenu.options.push({
+                        id: getUniqueId(),
+                        label: "",
+                        action_set_id: getUniqueId().toString(),
+                      });
+                    }
+                  }
+                }
+              }),
+
+            updateContainerActionRowSelectMenuOption: (c, a, k, o, data) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    const selectMenu = actionRow.components[k];
+                    if (selectMenu?.type === 3) {
+                      selectMenu.options[o] = {
+                        ...selectMenu.options[o],
+                        ...data,
+                      };
+                    }
+                  }
+                }
+              }),
+
+            duplicateContainerActionRowSelectMenuOption: (c, a, k, o) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    const selectMenu = actionRow.components[k];
+                    if (selectMenu?.type === 3) {
+                      const option = selectMenu.options[o];
+                      selectMenu.options.splice(o + 1, 0, {
+                        ...option,
+                        id: getUniqueId(),
+                        action_set_id: getUniqueId().toString(),
+                      });
+                    }
+                  }
+                }
+              }),
+
+            moveContainerActionRowSelectMenuOptionUp: (c, a, k, o) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    const selectMenu = actionRow.components[k];
+                    if (selectMenu?.type === 3 && o > 0) {
+                      const option = selectMenu.options[o];
+                      selectMenu.options[o] = selectMenu.options[o - 1];
+                      selectMenu.options[o - 1] = option;
+                    }
+                  }
+                }
+              }),
+
+            moveContainerActionRowSelectMenuOptionDown: (c, a, k, o) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    const selectMenu = actionRow.components[k];
+                    if (
+                      selectMenu?.type === 3 &&
+                      o < selectMenu.options.length - 1
+                    ) {
+                      const option = selectMenu.options[o];
+                      selectMenu.options[o] = selectMenu.options[o + 1];
+                      selectMenu.options[o + 1] = option;
+                    }
+                  }
+                }
+              }),
+
+            removeContainerActionRowSelectMenuOption: (c, a, k, o) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    const selectMenu = actionRow.components[k];
+                    if (selectMenu?.type === 3) {
+                      selectMenu.options.splice(o, 1);
+                    }
+                  }
+                }
+              }),
+
+            clearContainerActionRowSelectMenuOptions: (c, a, k) =>
+              set((state) => {
+                const container = state.components[c];
+                if (container?.type === 17) {
+                  const actionRow = container.components[a];
+                  if (actionRow?.type === 1) {
+                    const selectMenu = actionRow.components[k];
+                    if (selectMenu?.type === 3) {
+                      selectMenu.options = [];
+                    }
+                  }
+                }
+              }),
+
+            updateContainerSectionAccessory: (i, j, data) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const section = container.components[j];
+                  if (section.type === 9) {
+                    const accessory = section.accessory;
+                    if (accessory.type === 2 && data.type === 11) {
+                      delete state.actions[accessory.action_set_id];
+                    }
+                    Object.assign(accessory, data);
+                  }
+                }
+              }),
+
+            addContainerSectionComponent: (i, j, component) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const section = container.components[j];
+                  if (section?.type === 9) {
+                    section.components.push(component);
+                  }
+                }
+              }),
+
+            clearContainerSectionComponents: (i, j) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const section = container.components[j];
+                  if (section?.type === 9) {
+                    section.components = [];
+                  }
+                }
+              }),
+
+            moveContainerSectionComponentUp: (i, j, k) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const section = container.components[j];
+                  if (section?.type === 9 && k > 0) {
+                    const component = section.components[k];
+                    section.components[k] = section.components[k - 1];
+                    section.components[k - 1] = component;
+                  }
+                }
+              }),
+
+            moveContainerSectionComponentDown: (i, j, k) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const section = container.components[j];
+                  if (
+                    section?.type === 9 &&
+                    k < section.components.length - 1
+                  ) {
+                    const component = section.components[k];
+                    section.components[k] = section.components[k + 1];
+                    section.components[k + 1] = component;
+                  }
+                }
+              }),
+
+            deleteContainerSectionComponent: (i, j, k) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const section = container.components[j];
+                  if (section?.type === 9) {
+                    section.components.splice(k, 1);
+                  }
+                }
+              }),
+
+            updateContainerSectionComponent: (i, j, k, data) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const section = container.components[j];
+                  if (section?.type === 9) {
+                    const component = section.components[k];
+                    if (component) {
+                      Object.assign(component, data);
+                    }
+                  }
+                }
+              }),
+
+            duplicateContainerSectionComponent: (i, j, k) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const section = container.components[j];
+                  if (section?.type === 9) {
+                    const component = section.components[k];
+                    if (component) {
+                      const newComponent = { ...component, id: getUniqueId() };
+                      section.components.splice(k + 1, 0, newComponent);
+                    }
+                  }
+                }
+              }),
+
+            addContainerMediaGalleryItem: (i, j, component) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const gallery = container.components[j];
+                  if (gallery?.type === 12) {
+                    gallery.items.push(component);
+                  }
+                }
+              }),
+
+            clearContainerMediaGalleryItems: (i, j) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const gallery = container.components[j];
+                  if (gallery?.type === 12) {
+                    gallery.items = [];
+                  }
+                }
+              }),
+
+            moveContainerMediaGalleryItemUp: (i, j, k) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const gallery = container.components[j];
+                  if (gallery?.type === 12 && k > 0) {
+                    const item = gallery.items[k];
+                    gallery.items[k] = gallery.items[k - 1];
+                    gallery.items[k - 1] = item;
+                  }
+                }
+              }),
+
+            moveContainerMediaGalleryItemDown: (i, j, k) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const gallery = container.components[j];
+                  if (gallery?.type === 12 && k < gallery.items.length - 1) {
+                    const item = gallery.items[k];
+                    gallery.items[k] = gallery.items[k + 1];
+                    gallery.items[k + 1] = item;
+                  }
+                }
+              }),
+
+            deleteContainerMediaGalleryItem: (i, j, k) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const gallery = container.components[j];
+                  if (gallery?.type === 12) {
+                    gallery.items.splice(k, 1);
+                  }
+                }
+              }),
+
+            updateContainerMediaGalleryItem: (i, j, k, data) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const gallery = container.components[j];
+                  if (gallery?.type === 12) {
+                    const item = gallery.items[k];
+                    if (item) {
+                      Object.assign(item, data);
+                    }
+                  }
+                }
+              }),
+
+            duplicateContainerMediaGalleryItem: (i, j, k) =>
+              set((state) => {
+                const container = state.components[i];
+                if (container?.type === 17) {
+                  const gallery = container.components[j];
+                  if (gallery?.type === 12) {
+                    const item = gallery.items[k];
+                    if (item) {
+                      const newItem = { ...item, id: getUniqueId() };
+                      gallery.items.splice(k + 1, 0, newItem);
+                    }
+                  }
+                }
+              }),
+
+            getComponentsV2Enabled: () => {
+              const state = get();
+              const flags = state.flags ?? 0;
+              return (flags & (1 << 15)) !== 0;
+            },
+            setComponentsV2Enabled: (enabled: boolean) => {
+              if (enabled) {
+                set({
+                  content: "",
+                  embeds: [],
+                  actions: {},
+                  components: [],
+                  flags: 1 << 15,
+                });
+              } else {
+                set(defaultMessage);
+              }
+            },
+
             addAction: (id: string, action: MessageAction) =>
               set((state) => {
                 const actionSet = state.actions[id];
@@ -1092,6 +2038,7 @@ export const createMessageStore = (key: string) =>
                     id: action.id,
                     text: "",
                     public: false,
+                    allow_role_mentions: false,
                   };
                 } else if (type === 5 || type === 7 || type === 9) {
                   actionSet.actions[i] = {
@@ -1099,6 +2046,7 @@ export const createMessageStore = (key: string) =>
                     id: action.id,
                     target_id: "",
                     public: false,
+                    allow_role_mentions: false,
                   };
                 } else if (type === 2 || type === 3 || type === 4) {
                   actionSet.actions[i] = {
@@ -1107,6 +2055,7 @@ export const createMessageStore = (key: string) =>
                     target_id: "",
                     public: false,
                     disable_default_response: false,
+                    allow_role_mentions: false,
                   };
                 } else if (type === 10) {
                   actionSet.actions[i] = {
@@ -1158,6 +2107,14 @@ export const createMessageStore = (key: string) =>
                   action.public = val;
                 }
               }),
+            setActionAllowRoleMentions: (id: string, i: number, val: boolean) =>
+              set((state) => {
+                const actionSet = state.actions[id];
+                const action = actionSet.actions[i];
+                if (action.type !== 10) {
+                  action.allow_role_mentions = val;
+                }
+              }),
             setActionDisableDefaultResponse: (
               id: string,
               i: number,
@@ -1191,33 +2148,6 @@ export const createMessageStore = (key: string) =>
                   action.role_ids = val;
                 }
               }),
-
-            getSelectMenu: (i: number, j: number) => {
-              const state = get();
-              const row = state.components && state.components[i];
-              if (!row) {
-                return null;
-              }
-
-              const selectMenu = row.components && row.components[j];
-              if (selectMenu && selectMenu.type === 3) {
-                return selectMenu;
-              }
-              return null;
-            },
-            getButton: (i: number, j: number) => {
-              const state = get();
-              const row = state.components && state.components[i];
-              if (!row) {
-                return null;
-              }
-
-              const button = row.components && row.components[j];
-              if (button && button.type === 2) {
-                return button;
-              }
-              return null;
-            },
           }),
           {
             limit: 10,
