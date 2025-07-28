@@ -449,7 +449,6 @@ export default function EditorComponentBaseContainer({
               <div className="flex space-x-3 mt-3 items-center">
                 <EditorComponentAddDropdown
                   context="container"
-                  v2Enabled={true}
                   addComponent={(comp) => {
                     if (
                       comp.type === 1 ||

@@ -20,10 +20,6 @@ export default function EditorComponents({
     shallow
   );
 
-  const componentsV2Enabled = useCurrentMessageStore((state) =>
-    state.getComponentsV2Enabled()
-  );
-
   const sendMode = useSendSettingsStore((state) => state.mode);
 
   return (
@@ -61,7 +57,6 @@ export default function EditorComponents({
         <EditorComponentAddDropdown
           context="root"
           size="large"
-          v2Enabled={componentsV2Enabled}
           addComponent={addComponent}
           disabled={components.length >= 5}
         />

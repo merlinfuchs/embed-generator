@@ -113,7 +113,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		}
 	}
 
-	params.Components, err = h.actionParser.ParseMessageComponents(data.Components)
+	params.Components, err = h.actionParser.ParseMessageComponents(data.Components, features.ComponentTypes)
 	if err != nil {
 		return helpers.BadRequest("invalid_actions", err.Error())
 	}

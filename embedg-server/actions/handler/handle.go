@@ -287,7 +287,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 
 			var components []discordgo.MessageComponent
 			if !legacyPermissions {
-				components, err = m.parser.ParseMessageComponents(data.Components)
+				components, err = m.parser.ParseMessageComponents(data.Components, features.ComponentTypes)
 				if err != nil {
 					return fmt.Errorf("Invalid actions: %w", err)
 				}
@@ -435,7 +435,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 
 			var components []discordgo.MessageComponent
 			if !legacyPermissions {
-				components, err = m.parser.ParseMessageComponents(data.Components)
+				components, err = m.parser.ParseMessageComponents(data.Components, features.ComponentTypes)
 				if err != nil {
 					return fmt.Errorf("Invalid actions: %w", err)
 				}

@@ -8,19 +8,20 @@ import (
 )
 
 type GetPremiumPlanFeaturesResponseDataWire struct {
-	MaxSavedMessages          int  `json:"max_saved_messages"`
-	MaxActionsPerComponent    int  `json:"max_actions_per_component"`
-	AdvancedActionTypes       bool `json:"advanced_action_types"`
-	AIAssistant               bool `json:"ai_assistant"`
-	ComponentsV2              bool `json:"components_v2"`
-	CustomBot                 bool `json:"custom_bot"`
-	MaxCustomCommands         int  `json:"max_custom_commands"`
-	IsPremium                 bool `json:"is_premium"`
-	MaxImageUploadSize        int  `json:"max_image_upload_size"`
-	MaxScheduledMessages      int  `json:"max_scheduled_messages"`
-	PeriodicScheduledMessages bool `json:"periodic_scheduled_messages"`
-	MaxTemplateOps            int  `json:"max_template_ops"`
-	MaxKVKeys                 int  `json:"max_kv_keys"`
+	MaxSavedMessages          int   `json:"max_saved_messages"`
+	MaxActionsPerComponent    int   `json:"max_actions_per_component"`
+	AdvancedActionTypes       bool  `json:"advanced_action_types"`
+	AIAssistant               bool  `json:"ai_assistant"`
+	ComponentsV2              bool  `json:"components_v2"`
+	ComponentTypes            []int `json:"component_types"`
+	CustomBot                 bool  `json:"custom_bot"`
+	MaxCustomCommands         int   `json:"max_custom_commands"`
+	IsPremium                 bool  `json:"is_premium"`
+	MaxImageUploadSize        int   `json:"max_image_upload_size"`
+	MaxScheduledMessages      int   `json:"max_scheduled_messages"`
+	PeriodicScheduledMessages bool  `json:"periodic_scheduled_messages"`
+	MaxTemplateOps            int   `json:"max_template_ops"`
+	MaxKVKeys                 int   `json:"max_kv_keys"`
 }
 
 type GetPremiumPlanFeaturesResponseWire APIResponse[GetPremiumPlanFeaturesResponseDataWire]

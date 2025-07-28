@@ -2,6 +2,8 @@ package parser
 
 import (
 	"errors"
+	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/merlinfuchs/discordgo"
@@ -25,11 +27,11 @@ func New(accessManager *access.AccessManager, pg *postgres.PostgresStore, state 
 	}
 }
 
-func (m *ActionParser) ParseMessageComponents(data []actions.ComponentWithActions) ([]discordgo.MessageComponent, error) {
+func (m *ActionParser) ParseMessageComponents(data []actions.ComponentWithActions, allowedComponentTypes []int) ([]discordgo.MessageComponent, error) {
 	components := make([]discordgo.MessageComponent, 0, len(data))
 
 	for _, component := range data {
-		parsed, err := m.ParseMessageComponent(component)
+		parsed, err := m.ParseMessageComponent(component, allowedComponentTypes)
 		if err != nil {
 			return nil, err
 		}
@@ -40,7 +42,11 @@ func (m *ActionParser) ParseMessageComponents(data []actions.ComponentWithAction
 	return components, nil
 }
 
-func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions) (discordgo.MessageComponent, error) {
+func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions, allowedComponentTypes []int) (discordgo.MessageComponent, error) {
+	if !slices.Contains(allowedComponentTypes, int(data.Type)) {
+		return nil, fmt.Errorf("component type %d not allowed, you need to upgrade to a premium plan to use this component", data.Type)
+	}
+
 	switch data.Type {
 	case discordgo.ActionsRowComponent:
 		ar := discordgo.ActionsRow{
@@ -49,7 +55,7 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions) 
 		}
 
 		for _, component := range data.Components {
-			parsed, err := m.ParseMessageComponent(component)
+			parsed, err := m.ParseMessageComponent(component, allowedComponentTypes)
 			if err != nil {
 				return nil, err
 			}
@@ -103,7 +109,7 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions) 
 		}
 
 		for _, component := range data.Components {
-			parsed, err := m.ParseMessageComponent(component)
+			parsed, err := m.ParseMessageComponent(component, allowedComponentTypes)
 			if err != nil {
 				return nil, err
 			}
@@ -112,7 +118,7 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions) 
 		}
 
 		if data.Accessory != nil {
-			parsed, err := m.ParseMessageComponent(*data.Accessory)
+			parsed, err := m.ParseMessageComponent(*data.Accessory, allowedComponentTypes)
 			if err != nil {
 				return nil, err
 			}
@@ -172,7 +178,7 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions) 
 		}
 
 		for _, component := range data.Components {
-			parsed, err := m.ParseMessageComponent(component)
+			parsed, err := m.ParseMessageComponent(component, allowedComponentTypes)
 			if err != nil {
 				return nil, err
 			}
