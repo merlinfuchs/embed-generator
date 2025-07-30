@@ -20,8 +20,8 @@ func (c *BlobStore) StoreDBBackup(
 	objectName := fmt.Sprintf("%s/%s.tar.gz", database, key)
 
 	_, err := c.client.PutObject(ctx, dbBackupBucket, objectName, reader, size, minio.PutObjectOptions{
-		ContentType: "application/tar+gzip",
-		// TODO: ServerSideEncryption: c.encryption,
+		ContentType:          "application/tar+gzip",
+		ServerSideEncryption: c.encryption,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to store db backup: %w", err)

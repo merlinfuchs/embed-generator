@@ -13,7 +13,8 @@ const imagesBucketName = "images"
 func (s *BlobStore) UploadFile(ctx context.Context, image *Image) error {
 	reader := bytes.NewReader(image.Body)
 	_, err := s.client.PutObject(ctx, imagesBucketName, image.FileName, reader, int64(len(image.Body)), minio.PutObjectOptions{
-		ContentType: image.ContentType,
+		ContentType:          image.ContentType,
+		ServerSideEncryption: s.encryption,
 	})
 	if err != nil {
 		return err
@@ -25,7 +26,9 @@ func (s *BlobStore) UploadFile(ctx context.Context, image *Image) error {
 func (s *BlobStore) UploadFileIfNotExists(ctx context.Context, image *Image) error {
 	reader := bytes.NewReader(image.Body)
 
-	exists, err := s.client.StatObject(ctx, imagesBucketName, image.FileName, minio.StatObjectOptions{})
+	exists, err := s.client.StatObject(ctx, imagesBucketName, image.FileName, minio.StatObjectOptions{
+		ServerSideEncryption: s.encryption,
+	})
 	// TODO: refactor to not use error string
 	if err != nil && err.Error() != "The specified key does not exist." {
 		return err
@@ -36,13 +39,16 @@ func (s *BlobStore) UploadFileIfNotExists(ctx context.Context, image *Image) err
 	}
 
 	_, err = s.client.PutObject(ctx, imagesBucketName, image.FileName, reader, int64(len(image.Body)), minio.PutObjectOptions{
-		ContentType: image.ContentType,
+		ContentType:          image.ContentType,
+		ServerSideEncryption: s.encryption,
 	})
 	return err
 }
 
 func (s *BlobStore) DownloadFile(ctx context.Context, fileName string) (*Image, error) {
-	object, err := s.client.GetObject(ctx, imagesBucketName, fileName, minio.GetObjectOptions{})
+	object, err := s.client.GetObject(ctx, imagesBucketName, fileName, minio.GetObjectOptions{
+		ServerSideEncryption: s.encryption,
+	})
 	if err != nil {
 		return nil, err
 	}
