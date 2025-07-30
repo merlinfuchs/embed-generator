@@ -1,9 +1,6 @@
 package main
 
 import (
-	"math/rand"
-	"time"
-
 	"github.com/merlinfuchs/embed-generator/embedg-server/buildinfo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/config"
 	"github.com/merlinfuchs/embed-generator/embedg-server/entry/admin"
@@ -47,7 +44,6 @@ func main() {
 	config.InitConfig()
 	telemetry.SetupLogger()
 
-	rand.Seed(time.Now().UnixNano())
 	if err := rootCmd.Execute(); err != nil {
 		panic(err)
 	}

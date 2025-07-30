@@ -876,6 +876,14 @@ github.com/merlinfuchs/discordgo v0.0.0-20250426142519-6392d64dc041 h1:d50RMS4n0
 github.com/merlinfuchs/discordgo v0.0.0-20250426142519-6392d64dc041/go.mod h1:xAeB1tSUX3ilHSX7DKudmCAuIj5z/UZJDCbr8QKpMzI=
 github.com/merlinfuchs/discordgo v0.0.0-20250526190658-cd627391fce9 h1:87otyuxV+ae0IMhzL+DzAMTEFE0E4zdpD6uOMx4mSBQ=
 github.com/merlinfuchs/discordgo v0.0.0-20250526190658-cd627391fce9/go.mod h1:xAeB1tSUX3ilHSX7DKudmCAuIj5z/UZJDCbr8QKpMzI=
+github.com/merlinfuchs/discordgo v0.0.0-20250730113949-13a224f27ea4 h1:Al8EowEJSNC1zmITBv7MbJ+21LCgOPeB980gYcZC2/M=
+github.com/merlinfuchs/discordgo v0.0.0-20250730113949-13a224f27ea4/go.mod h1:xAeB1tSUX3ilHSX7DKudmCAuIj5z/UZJDCbr8QKpMzI=
+github.com/merlinfuchs/discordgo v0.0.0-20250730114542-5254442425c5 h1:HbWpp78hq6EACEISr66Sb2wzH7zN1XnpWPqIuxLL+fg=
+github.com/merlinfuchs/discordgo v0.0.0-20250730114542-5254442425c5/go.mod h1:xAeB1tSUX3ilHSX7DKudmCAuIj5z/UZJDCbr8QKpMzI=
+github.com/merlinfuchs/discordgo v0.0.0-20250730115033-8ab4535d53d1 h1:qOTN4GHRDaFJ6JlDbX7LJ2YyPzc7PC9hg5z2yuk1FWg=
+github.com/merlinfuchs/discordgo v0.0.0-20250730115033-8ab4535d53d1/go.mod h1:xAeB1tSUX3ilHSX7DKudmCAuIj5z/UZJDCbr8QKpMzI=
+github.com/merlinfuchs/discordgo v0.0.0-20250730145105-7de64e5124f2 h1:11hoaSkQPCv8VCEV+Y32jKBMB4YTzzrmdEjcvpR6IO0=
+github.com/merlinfuchs/discordgo v0.0.0-20250730145105-7de64e5124f2/go.mod h1:xAeB1tSUX3ilHSX7DKudmCAuIj5z/UZJDCbr8QKpMzI=
 github.com/merlinfuchs/embed-generator/embedg-site v0.0.0-20231008112155-6159480ecdbf h1:2gfrkGaSc94oc2XhTvXHzs43h3KozEKt/xqgShill5M=
 github.com/merlinfuchs/embed-generator/embedg-site v0.0.0-20231008112155-6159480ecdbf/go.mod h1:JcvikErltUsWRvLr2KcxeoKfwOSNkgxIaYk0oBBFVRQ=
 github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=

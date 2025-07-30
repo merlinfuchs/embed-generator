@@ -135,18 +135,27 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions, 
 			return nil, errors.New("media is required for thumbnail component")
 		}
 
+		var description *string
+		if data.Description != "" {
+			description = &data.Description
+		}
+
 		return discordgo.Thumbnail{
-			Content:     data.Content,
 			Media:       discordgo.UnfurledMediaItem{URL: data.Media.URL},
-			Description: data.Description,
+			Description: description,
 			Spoiler:     data.Spoiler,
 		}, nil
 	case discordgo.MediaGalleryComponent:
 		items := make([]discordgo.MediaGalleryItem, len(data.Items))
 		for x, item := range data.Items {
+			var description *string
+			if item.Description != "" {
+				description = &item.Description
+			}
+
 			items[x] = discordgo.MediaGalleryItem{
 				Media:       discordgo.UnfurledMediaItem{URL: item.Media.URL},
-				Description: item.Description,
+				Description: description,
 				Spoiler:     item.Spoiler,
 			}
 		}
@@ -154,26 +163,35 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions, 
 		return discordgo.MediaGallery{
 			Items: items,
 		}, nil
-	case discordgo.FileComponent:
+	case discordgo.FileComponentType:
 		if data.File == nil {
 			return nil, errors.New("file is required for file component")
 		}
 
-		return discordgo.ComponentFile{
-			Content: data.Content,
+		return discordgo.FileComponent{
 			File:    discordgo.UnfurledMediaItem{URL: data.File.URL},
 			Spoiler: data.Spoiler,
 		}, nil
 	case discordgo.SeparatorComponent:
+		var spacing *discordgo.SeparatorSpacingSize
+		if data.Spacing != 0 {
+			s := discordgo.SeparatorSpacingSize(data.Spacing)
+			spacing = &s
+		}
+
 		return discordgo.Separator{
-			Divider: data.Divider,
-			Spacing: data.Spacing,
+			Divider: &data.Divider,
+			Spacing: spacing,
 		}, nil
 	case discordgo.ContainerComponent:
+		var accentColor *int
+		if data.AccentColor != 0 {
+			accentColor = &data.AccentColor
+		}
+
 		c := discordgo.Container{
-			Content:     data.Content,
 			Components:  make([]discordgo.MessageComponent, 0, len(data.Components)),
-			AccentColor: data.AccentColor,
+			AccentColor: accentColor,
 			Spoiler:     data.Spoiler,
 		}
 
@@ -284,16 +302,20 @@ func (m *ActionParser) UnparseMessageComponent(data discordgo.MessageComponent) 
 	case *discordgo.Thumbnail:
 		return actions.ComponentWithActions{
 			Type:        discordgo.ThumbnailComponent,
-			Content:     c.Content,
 			Media:       &actions.UnfurledMediaItem{URL: c.Media.URL},
-			Description: c.Description,
+			Description: *c.Description,
 		}, nil
 	case *discordgo.MediaGallery:
 		items := make([]actions.ComponentMediaGalleryItem, 0, len(c.Items))
 		for _, item := range c.Items {
+			var description string
+			if item.Description != nil {
+				description = *item.Description
+			}
+
 			items = append(items, actions.ComponentMediaGalleryItem{
 				Media:       actions.UnfurledMediaItem{URL: item.Media.URL},
-				Description: item.Description,
+				Description: description,
 				Spoiler:     item.Spoiler,
 			})
 		}
@@ -302,18 +324,27 @@ func (m *ActionParser) UnparseMessageComponent(data discordgo.MessageComponent) 
 			Type:  discordgo.MediaGalleryComponent,
 			Items: items,
 		}, nil
-	case *discordgo.ComponentFile:
+	case *discordgo.FileComponent:
 		return actions.ComponentWithActions{
-			Type:    discordgo.FileComponent,
-			Content: c.Content,
+			Type:    discordgo.FileComponentType,
 			File:    &actions.UnfurledMediaItem{URL: c.File.URL},
 			Spoiler: c.Spoiler,
 		}, nil
 	case *discordgo.Separator:
+		var divider bool
+		if c.Divider != nil {
+			divider = *c.Divider
+		}
+
+		var spacing int
+		if c.Spacing != nil {
+			spacing = int(*c.Spacing)
+		}
+
 		return actions.ComponentWithActions{
 			Type:    discordgo.SeparatorComponent,
-			Divider: c.Divider,
-			Spacing: c.Spacing,
+			Divider: divider,
+			Spacing: spacing,
 		}, nil
 	case *discordgo.Container:
 		components := make([]actions.ComponentWithActions, 0, len(c.Components))
@@ -325,11 +356,15 @@ func (m *ActionParser) UnparseMessageComponent(data discordgo.MessageComponent) 
 			components = append(components, parsed)
 		}
 
+		var accentColor int
+		if c.AccentColor != nil {
+			accentColor = *c.AccentColor
+		}
+
 		return actions.ComponentWithActions{
 			Type:        discordgo.ContainerComponent,
-			Content:     c.Content,
 			Components:  components,
-			AccentColor: c.AccentColor,
+			AccentColor: accentColor,
 			Spoiler:     c.Spoiler,
 		}, nil
 	default:
