@@ -4,11 +4,11 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/merlinfuchs/embed-generator/embedg-server/admin"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api"
 	"github.com/merlinfuchs/embed-generator/embedg-server/buildinfo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/config"
-	"github.com/merlinfuchs/embed-generator/embedg-server/migrate"
+	"github.com/merlinfuchs/embed-generator/embedg-server/entry/admin"
+	"github.com/merlinfuchs/embed-generator/embedg-server/entry/database"
+	"github.com/merlinfuchs/embed-generator/embedg-server/entry/server"
 	"github.com/merlinfuchs/embed-generator/embedg-server/telemetry"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -27,13 +27,8 @@ func init() {
 
 	rootCmd.PersistentFlags().BoolP("debug", "D", false, "Debug mode (prints debug messages and call traces)")
 
-	rootCmd.AddCommand(&cobra.Command{
-		Use: "server",
-		Run: func(cmd *cobra.Command, args []string) {
-			api.Serve()
-		},
-	})
-	rootCmd.AddCommand(migrate.Setup())
+	rootCmd.AddCommand(server.Setup())
+	rootCmd.AddCommand(database.Setup())
 	rootCmd.AddCommand(admin.Setup())
 }
 

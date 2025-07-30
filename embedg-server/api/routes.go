@@ -27,12 +27,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-func registerRoutes(app *fiber.App, stores *stores, bot *bot.Bot, managers *managers) {
+func registerRoutes(app *fiber.App, stores *Stores, bot *bot.Bot, managers *managers) {
 	app.Get("/api/health", func(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusOK)
 	})
 
-	authHandler := auth.New(stores.pg, bot, managers.session)
+	authHandler := auth.New(stores.PG, bot, managers.session)
 	app.Get("/api/auth/login", authHandler.HandleAuthRedirect)
 	app.Get("/api/auth/callback", authHandler.HandleAuthCallback)
 	app.Post("/api/auth/exchange", helpers.WithRequestBody(authHandler.HandleAuthExchange))
@@ -40,11 +40,11 @@ func registerRoutes(app *fiber.App, stores *stores, bot *bot.Bot, managers *mana
 
 	sessionMiddleware := session.NewSessionMiddleware(managers.session)
 
-	usersHandler := users.New(stores.pg, managers.premium)
+	usersHandler := users.New(stores.PG, managers.premium)
 	usersGroup := app.Group("/api/users", sessionMiddleware.SessionRequired())
 	usersGroup.Get("/:userID", usersHandler.HandleGetUser)
 
-	savedMessagesHandler := saved_messages.New(stores.pg, managers.access)
+	savedMessagesHandler := saved_messages.New(stores.PG, managers.access)
 	savedMessagesGroup := app.Group("/api/saved-messages", sessionMiddleware.SessionRequired())
 	savedMessagesGroup.Get("/", savedMessagesHandler.HandleListSavedMessages)
 	savedMessagesGroup.Post("/", helpers.WithRequestBodyValidated(savedMessagesHandler.HandleCreateSavedMessage))
@@ -52,15 +52,15 @@ func registerRoutes(app *fiber.App, stores *stores, bot *bot.Bot, managers *mana
 	savedMessagesGroup.Put("/:messageID", helpers.WithRequestBodyValidated(savedMessagesHandler.HandleUpdateSavedMessage))
 	savedMessagesGroup.Delete("/:messageID", savedMessagesHandler.HandleDeleteSavedMessage)
 
-	sharedMessageHandler := shared_messages.New(bot, stores.pg)
+	sharedMessageHandler := shared_messages.New(bot, stores.PG)
 	sharedMessagesGroup := app.Group("/api/shared-messages")
 	sharedMessagesGroup.Post("/", helpers.WithRequestBodyValidated(sharedMessageHandler.HandleCreateSharedMessage))
 	sharedMessagesGroup.Get("/:messageID", sharedMessageHandler.HandleGetSharedMessage)
 
-	assistantHandler := assistant.New(stores.pg, managers.access, managers.premium)
+	assistantHandler := assistant.New(stores.PG, managers.access, managers.premium)
 	app.Post("/api/assistant/message", sessionMiddleware.SessionRequired(), helpers.WithRequestBody(assistantHandler.HandleAssistantGenerateMessage))
 
-	guildsHanlder := guilds.New(stores.pg, bot, managers.access, managers.premium)
+	guildsHanlder := guilds.New(stores.PG, bot, managers.access, managers.premium)
 	guildsGroup := app.Group("/api/guilds", sessionMiddleware.SessionRequired())
 	guildsGroup.Get("/", guildsHanlder.HandleListGuilds)
 	guildsGroup.Get("/:guildID", guildsHanlder.HandleGetGuild)
@@ -70,18 +70,18 @@ func registerRoutes(app *fiber.App, stores *stores, bot *bot.Bot, managers *mana
 	guildsGroup.Get("/:guildID/stickers", guildsHanlder.HandleListGuildStickers)
 	guildsGroup.Get("/:guildID/branding", guildsHanlder.HandleGetGuildBranding)
 
-	sendMessageHandler := send_message.New(bot, stores.pg, managers.access, managers.actionParser, managers.premium)
+	sendMessageHandler := send_message.New(bot, stores.PG, managers.access, managers.actionParser, managers.premium)
 	app.Post("/api/send-message/channel", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(sendMessageHandler.HandleSendMessageToChannel))
 	app.Post("/api/send-message/webhook", helpers.WithRequestBodyValidated(sendMessageHandler.HandleSendMessageToWebhook))
 	app.Post("/api/restore-message/channel", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(sendMessageHandler.HandleRestoreMessageFromChannel))
 	app.Post("/api/restore-message/webhook", helpers.WithRequestBodyValidated(sendMessageHandler.HandleRestoreMessageFromWebhook))
 
-	premiumHandler := premium_handler.New(stores.pg, bot, managers.access, managers.premium)
+	premiumHandler := premium_handler.New(stores.PG, bot, managers.access, managers.premium)
 	app.Get("/api/premium/features", sessionMiddleware.SessionRequired(), premiumHandler.HandleGetFeatures)
 	app.Get("/api/premium/entitlements", sessionMiddleware.SessionRequired(), premiumHandler.HandleListEntitlements)
 	app.Post("/api/premium/entitlements/:entitlementID/consume", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(premiumHandler.HandleConsumeEntitlement))
 
-	customBotHandler := custom_bots.New(stores.pg, bot, managers.access, managers.premium, managers.actionParser)
+	customBotHandler := custom_bots.New(stores.PG, bot, managers.access, managers.premium, managers.actionParser)
 	app.Post("/api/custom-bot", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(customBotHandler.HandleConfigureCustomBot))
 	app.Put("/api/custom-bot/presence", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(customBotHandler.HandleUpdateCustomBotPresence))
 	app.Get("/api/custom-bot", sessionMiddleware.SessionRequired(), customBotHandler.HandleGetCustomBot)
@@ -94,12 +94,12 @@ func registerRoutes(app *fiber.App, stores *stores, bot *bot.Bot, managers *mana
 	app.Post("/api/custom-bot/commands/deploy", sessionMiddleware.SessionRequired(), customBotHandler.HandleDeployCustomCommands)
 	app.Post("/api/gateway/:customBotID", customBotHandler.HandleCustomBotInteraction)
 
-	imagesHandler := images.New(stores.pg, managers.access, managers.premium, stores.blob)
+	imagesHandler := images.New(stores.PG, managers.access, managers.premium, stores.Blob)
 	app.Post("/api/images", sessionMiddleware.SessionRequired(), imagesHandler.HandleUploadImage)
 	app.Get("/api/images/:imageID", sessionMiddleware.SessionRequired(), imagesHandler.HandleGetImage)
 	app.Get("/cdn/images/:imageKey", imagesHandler.HandleDownloadImage)
 
-	scheduledMessagesHandler := scheduled_messages.New(stores.pg, managers.access, managers.premium)
+	scheduledMessagesHandler := scheduled_messages.New(stores.PG, managers.access, managers.premium)
 	scheduledMessagesGroup := app.Group("/api/scheduled-messages", sessionMiddleware.SessionRequired())
 	scheduledMessagesGroup.Get("/", scheduledMessagesHandler.HandleListScheduledMessages)
 	scheduledMessagesGroup.Post("/", helpers.WithRequestBodyValidated(scheduledMessagesHandler.HandleCreateScheduledMessage))
@@ -107,7 +107,7 @@ func registerRoutes(app *fiber.App, stores *stores, bot *bot.Bot, managers *mana
 	scheduledMessagesGroup.Put("/:messageID", helpers.WithRequestBodyValidated(scheduledMessagesHandler.HandleUpdateScheduledMessage))
 	scheduledMessagesGroup.Delete("/:messageID", scheduledMessagesHandler.HandleDeleteScheduledMessage)
 
-	embedLinksHandler := embed_links.New(stores.pg)
+	embedLinksHandler := embed_links.New(stores.PG)
 	app.Post("/api/embed-links", helpers.WithRequestBodyValidated(embedLinksHandler.HandleCreateEmbedLink))
 	app.Get("/api/embed-links/:linkID/oembed", embedLinksHandler.HandleRenderEmbedLinkJSON)
 	app.Get("/e/:linkID", embedLinksHandler.HandleRenderEmbedLinkHTML)

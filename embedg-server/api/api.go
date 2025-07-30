@@ -7,12 +7,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
-	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
-func Serve() {
+func Serve(stores *Stores) {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			var e *wire.Error
@@ -35,20 +34,11 @@ func Serve() {
 		EnableStackTrace: true,
 	}))
 
-	stores := createStores()
+	managers := createManagers(stores, stores.Bot)
 
-	bot, err := bot.New(viper.GetString("discord.token"), stores.pg)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to initialize bot")
-	}
+	registerRoutes(app, stores, stores.Bot, managers)
 
-	managers := createManagers(stores, bot)
-
-	registerRoutes(app, stores, bot, managers)
-
-	go bot.Start()
-
-	err = app.Listen(fmt.Sprintf("%s:%d", viper.GetString("api.host"), viper.GetInt("api.port")))
+	err := app.Listen(fmt.Sprintf("%s:%d", viper.GetString("api.host"), viper.GetInt("api.port")))
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to start server")
 	}

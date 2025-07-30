@@ -22,16 +22,16 @@ type managers struct {
 	actionHandler *handler.ActionHandler
 }
 
-func createManagers(stores *stores, bot *bot.Bot) *managers {
-	sessionManager := session.New(stores.pg)
+func createManagers(stores *Stores, bot *bot.Bot) *managers {
+	sessionManager := session.New(stores.PG)
 	accessManager := access.New(bot.State, bot.Session)
-	premiumManager := premium.New(stores.pg, bot)
+	premiumManager := premium.New(stores.PG, bot)
 
-	actionParser := parser.New(accessManager, stores.pg, bot.State)
-	actionHandler := handler.New(stores.pg, actionParser, premiumManager)
+	actionParser := parser.New(accessManager, stores.PG, bot.State)
+	actionHandler := handler.New(stores.PG, actionParser, premiumManager)
 
-	customBots := custom_bots.NewCustomBotManager(stores.pg, actionHandler)
-	scheduledMessages := scheduled_messages.NewScheduledMessageManager(stores.pg, actionParser, bot, premiumManager)
+	customBots := custom_bots.NewCustomBotManager(stores.PG, actionHandler)
+	scheduledMessages := scheduled_messages.NewScheduledMessageManager(stores.PG, actionParser, bot, premiumManager)
 
 	bot.ActionHandler = actionHandler
 	bot.ActionParser = actionParser

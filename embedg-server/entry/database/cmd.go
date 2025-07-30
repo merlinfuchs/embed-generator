@@ -1,4 +1,4 @@
-package migrate
+package database
 
 import (
 	"github.com/rs/zerolog/log"
