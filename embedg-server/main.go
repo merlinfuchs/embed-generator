@@ -28,7 +28,8 @@ func init() {
 	rootCmd.PersistentFlags().BoolP("debug", "D", false, "Debug mode (prints debug messages and call traces)")
 
 	rootCmd.AddCommand(server.Setup())
-	rootCmd.AddCommand(database.Setup())
+	rootCmd.AddCommand(database.SetupMigrate())
+	rootCmd.AddCommand(database.SetupBackup())
 	rootCmd.AddCommand(admin.Setup())
 }
 

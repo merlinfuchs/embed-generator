@@ -13,6 +13,7 @@ import (
 
 var requiredBuckets = []string{
 	imagesBucketName,
+	dbBackupBucket,
 }
 
 type BlobStore struct {

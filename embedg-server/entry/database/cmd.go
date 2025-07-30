@@ -1,25 +1,41 @@
 package database
 
 import (
+	"context"
+
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
-var migratableStores = []string{"postgres"}
+var storeTypes = []string{"postgres"}
 
-func Setup() *cobra.Command {
+func SetupMigrate() *cobra.Command {
 	migrateRootCmd := &cobra.Command{
 		Use:   "migrate [store] [operation]",
 		Short: "Migrate given data store",
 	}
 
-	for _, storeName := range migratableStores {
+	for _, storeName := range storeTypes {
 		c := buildMigrationCommand(storeName)
 		c.PersistentFlags().Bool("danger", false, "Pass --danger to acknowledge this is potentially dangerous.")
 		migrateRootCmd.AddCommand(c)
 	}
 
 	return migrateRootCmd
+}
+
+func SetupBackup() *cobra.Command {
+	backupRootCmd := &cobra.Command{
+		Use:   "backup [store] [operation]",
+		Short: "Backup given data store",
+	}
+
+	for _, storeName := range storeTypes {
+		c := buildBackupCommand(storeName)
+		backupRootCmd.AddCommand(c)
+	}
+
+	return backupRootCmd
 }
 
 func getVersionFlagValue(cmd *cobra.Command) int {
@@ -104,5 +120,50 @@ func buildMigrationCommand(datastoreName string) *cobra.Command {
 	r.AddCommand(list)
 	r.AddCommand(force)
 	r.AddCommand(to)
+	return r
+}
+
+func buildBackupCommand(datastoreName string) *cobra.Command {
+	r := &cobra.Command{
+		Use:   datastoreName + " [operation]",
+		Short: "Backup " + datastoreName + " with the given operation",
+	}
+
+	create := &cobra.Command{
+		Use:   "create",
+		Short: "Create a backup of the store",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := Backup(context.Background(), datastoreName, BackupOpts{
+				Operation: "create",
+				Name:      cmd.Flag("name").Value.String(),
+			})
+			if err != nil {
+				log.Fatal().Err(err).Msg("Failed to create backup")
+			}
+		},
+	}
+	create.Flags().String("name", "", "Name of the backup")
+	create.MarkFlagRequired("name")
+
+	r.AddCommand(create)
+
+	restore := &cobra.Command{
+		Use:   "restore",
+		Short: "Restore the store",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := Backup(context.Background(), datastoreName, BackupOpts{
+				Operation: "restore",
+				Name:      cmd.Flag("name").Value.String(),
+			})
+			if err != nil {
+				log.Fatal().Err(err).Msg("Failed to restore backup")
+			}
+		},
+	}
+	restore.Flags().String("name", "", "Name of the backup to restore")
+	restore.MarkFlagRequired("name")
+
+	r.AddCommand(restore)
+
 	return r
 }
