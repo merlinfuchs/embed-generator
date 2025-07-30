@@ -8,7 +8,7 @@ import (
 	"github.com/minio/minio-go/v7"
 )
 
-const imagesBucketName = "images"
+const imagesBucketName = "embedg-files"
 
 func (s *BlobStore) UploadFile(ctx context.Context, image *Image) error {
 	reader := bytes.NewReader(image.Body)
