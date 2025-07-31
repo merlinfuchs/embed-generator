@@ -9,6 +9,7 @@ type ShardListWire struct {
 
 type ShardWire struct {
 	ID                     int       `json:"id"`
+	HasSession             bool      `json:"has_session"`
 	LastHeartbeatAck       time.Time `json:"last_heartbeat_ack"`
 	LastHeartbeatSent      time.Time `json:"last_heartbeat_sent"`
 	ShouldReconnectOnError bool      `json:"should_reconnect_on_error"`

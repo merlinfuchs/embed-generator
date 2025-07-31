@@ -35,6 +35,8 @@ func (h *HealthHandler) HandleHealthShardList(c *fiber.Ctx) error {
 		}
 	}
 
+	suspiciousOnly := c.Query("suspicious") == "true"
+
 	shards := h.bot.ShardManager.ShardList()
 
 	shardListWire := make([]wire.ShardWire, 0, len(shards))
@@ -43,22 +45,34 @@ func (h *HealthHandler) HandleHealthShardList(c *fiber.Ctx) error {
 			continue
 		}
 
-		var suspicious bool
-		if time.Since(shard.Session.LastHeartbeatAck) > 5*60*time.Second {
-			suspicious = true
-		}
-		if time.Since(shard.Session.LastHeartbeatSent) > 5*time.Second && shard.Session.LastHeartbeatAck.Before(shard.Session.LastHeartbeatSent) {
-			suspicious = true
-		}
+		if shard.Session == nil {
+			shardListWire = append(shardListWire, wire.ShardWire{
+				ID:         shard.ID,
+				Suspicious: true,
+			})
+		} else {
+			var suspicious bool
+			if time.Since(shard.Session.LastHeartbeatAck) > 5*60*time.Second {
+				suspicious = true
+			}
+			if time.Since(shard.Session.LastHeartbeatSent) > 5*time.Second && shard.Session.LastHeartbeatAck.Before(shard.Session.LastHeartbeatSent) {
+				suspicious = true
+			}
 
-		shardListWire = append(shardListWire, wire.ShardWire{
-			ID:                     shard.ID,
-			LastHeartbeatAck:       shard.Session.LastHeartbeatAck,
-			LastHeartbeatSent:      shard.Session.LastHeartbeatSent,
-			ShouldReconnectOnError: shard.Session.ShouldReconnectOnError,
-			ShouldRetryOnRateLimit: shard.Session.ShouldRetryOnRateLimit,
-			Suspicious:             suspicious,
-		})
+			if suspiciousOnly && !suspicious {
+				continue
+			}
+
+			shardListWire = append(shardListWire, wire.ShardWire{
+				ID:                     shard.ID,
+				HasSession:             true,
+				LastHeartbeatAck:       shard.Session.LastHeartbeatAck,
+				LastHeartbeatSent:      shard.Session.LastHeartbeatSent,
+				ShouldReconnectOnError: shard.Session.ShouldReconnectOnError,
+				ShouldRetryOnRateLimit: shard.Session.ShouldRetryOnRateLimit,
+				Suspicious:             suspicious,
+			})
+		}
 	}
 
 	return c.JSON(wire.ShardListWire{
