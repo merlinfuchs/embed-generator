@@ -267,8 +267,9 @@ func (b *Bot) GetWebhookForChannel(ctx context.Context, channelID string, webhoo
 		}
 	}
 
-	// We haven't found the webhook yet, so let's try with the custom bot session if any
-	if webhook == nil || webhook.Token == "" {
+	// We have found the webhook, but it belongs to another application
+	// so let's try with the custom bot session if any
+	if webhook != nil && webhook.Token == "" {
 		customBot, err := b.pg.Q.GetCustomBotByGuildID(ctx, channel.GuildID)
 		if err != nil && err != sql.ErrNoRows {
 			return nil, fmt.Errorf("Failed to get custom bot: %w", err)
@@ -294,7 +295,7 @@ func (b *Bot) GetWebhookForChannel(ctx context.Context, channelID string, webhoo
 	}
 
 	if webhook == nil {
-		return nil, fmt.Errorf("The webhook doesn't exist.")
+		return nil, fmt.Errorf("No webhook found that matches the given ID.")
 	}
 
 	if webhook.Token == "" {
