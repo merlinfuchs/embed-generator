@@ -40,6 +40,13 @@ type ShardManager struct {
 	stopped bool
 }
 
+func (m *ShardManager) ShardList() []*Shard {
+	m.RLock()
+	defer m.RUnlock()
+
+	return m.Shards
+}
+
 // AddHandler registers an event handler for all Shards.
 func (m *ShardManager) AddHandler(handler interface{}) {
 	m.Lock()

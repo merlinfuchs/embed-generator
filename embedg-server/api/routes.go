@@ -12,6 +12,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/custom_bots"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/embed_links"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/guilds"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/health"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/images"
 	premium_handler "github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/premium"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/saved_messages"
@@ -28,9 +29,10 @@ import (
 )
 
 func registerRoutes(app *fiber.App, stores *Stores, bot *bot.Bot, managers *managers) {
-	app.Get("/api/health", func(c *fiber.Ctx) error {
-		return c.SendStatus(fiber.StatusOK)
-	})
+	healthHandler := health.New(bot)
+	healthGroup := app.Group("/api/health")
+	healthGroup.Get("/", healthHandler.HandleHealth)
+	app.Get("/api/health/shard-list", healthHandler.HandleHealthShardList)
 
 	authHandler := auth.New(stores.PG, bot, managers.session)
 	app.Get("/api/auth/login", authHandler.HandleAuthRedirect)

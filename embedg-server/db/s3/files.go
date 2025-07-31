@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"strings"
 
 	"github.com/minio/minio-go/v7"
 )
@@ -50,11 +51,19 @@ func (s *BlobStore) DownloadFile(ctx context.Context, fileName string) (*Image, 
 		ServerSideEncryption: s.encryption,
 	})
 	if err != nil {
+		if strings.Contains(err.Error(), "key does not exist") {
+			return nil, nil
+		}
+
 		return nil, err
 	}
 
 	data, err := io.ReadAll(object)
 	if err != nil {
+		if strings.Contains(err.Error(), "key does not exist") {
+			return nil, nil
+		}
+
 		return nil, err
 	}
 

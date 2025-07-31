@@ -155,6 +155,10 @@ func (h *ImagesHandler) HandleDownloadImage(c *fiber.Ctx) error {
 		return fmt.Errorf("could not download image: %w", err)
 	}
 
+	if file == nil {
+		return helpers.NotFound("unknown_image", "Unknown image")
+	}
+
 	c.Set("Content-Type", file.ContentType)
 	c.Set("Content-Disposition", "inline")
 
