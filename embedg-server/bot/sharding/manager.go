@@ -38,6 +38,7 @@ type ShardManager struct {
 	token string
 
 	stopped bool
+	stopCh  chan struct{}
 }
 
 func (m *ShardManager) ShardList() []*Shard {
@@ -80,7 +81,8 @@ func (m *ShardManager) GuildCount() (count int) {
 func New(token string) (cluster *ShardManager, err error) {
 	// Initialize the Manager with provided bot token.
 	cluster = &ShardManager{
-		token: token,
+		token:  token,
+		stopCh: make(chan struct{}),
 	}
 
 	// Initialize the gateway.
@@ -238,6 +240,7 @@ func (m *ShardManager) Start() (err error) {
 		}(d)
 	}
 
+	go m.monitorShards()
 	return
 }
 
@@ -247,6 +250,7 @@ func (m *ShardManager) Shutdown() {
 	defer m.Unlock()
 
 	m.stopped = true
+	close(m.stopCh)
 
 	wg := sync.WaitGroup{}
 	for _, shard := range m.Shards {
