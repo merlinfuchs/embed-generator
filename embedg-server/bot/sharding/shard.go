@@ -104,6 +104,17 @@ func (s *Shard) Stop() (err error) {
 	return
 }
 
+func (s *Shard) Kill() (err error) {
+	s.Lock()
+	defer s.Unlock()
+
+	if s.Session != nil {
+		err = s.Session.Kill()
+	}
+
+	return
+}
+
 func (s *Shard) BlockWSForRequest() {
 	s.wsRequestLock.Lock()
 	go func() {

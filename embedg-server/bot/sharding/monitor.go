@@ -32,12 +32,12 @@ func (m *ShardManager) checkShards() {
 			continue
 		}
 
-		if time.Since(shard.Session.LastHeartbeatAck) > 5*60*time.Second {
+		if time.Since(shard.Session.LastHeartbeatAck) > 15*time.Minute {
 			go m.restartShard(shard)
 			continue
 		}
 
-		if time.Since(shard.Session.LastHeartbeatSent) > 5*time.Second &&
+		if time.Since(shard.Session.LastHeartbeatSent) > 10*time.Second &&
 			shard.Session.LastHeartbeatAck.Before(shard.Session.LastHeartbeatSent) {
 			go m.restartShard(shard)
 			continue
@@ -46,13 +46,18 @@ func (m *ShardManager) checkShards() {
 }
 
 func (m *ShardManager) restartShard(shard *Shard) {
+	m.Lock()
+	defer m.Unlock()
+
 	log.Info().Int("shard_id", shard.ID).Msg("Restarting suspicious shard")
 
-	if err := shard.Stop(); err != nil {
+	if err := shard.Kill(); err != nil {
 		log.Error().Err(err).Msg("Failed to stop suspicious shard for reconnect")
 	}
 
 	if err := shard.Start(m.token, m.Intents); err != nil {
 		log.Error().Err(err).Msg("Failed to start suspicious shard for reconnect")
 	}
+
+	log.Info().Int("shard_id", shard.ID).Msg("Shard restarted")
 }
