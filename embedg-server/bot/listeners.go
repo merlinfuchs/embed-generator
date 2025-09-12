@@ -11,8 +11,19 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func onReady(s *discordgo.Session, r *discordgo.Ready) {
+func (b *Bot) onReady(s *discordgo.Session, r *discordgo.Ready) {
+	for _, g := range r.Guilds {
+		b.State.AddGuilds(g.ID)
+	}
 	log.Info().Msgf("Shard %d is ready", s.ShardID)
+}
+
+func (b *Bot) onGuildCreate(s *discordgo.Session, g *discordgo.GuildCreate) {
+	b.State.AddGuilds(g.ID)
+}
+
+func (b *Bot) onGuildDelete(s *discordgo.Session, g *discordgo.GuildDelete) {
+	b.State.RemoveGuilds(g.ID)
 }
 
 func onConnect(s *discordgo.Session, c *discordgo.Connect) {

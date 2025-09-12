@@ -22,6 +22,7 @@ type Bot struct {
 	ActionHandler *handler.ActionHandler
 	ActionParser  *parser.ActionParser
 	Rest          rest.RestClient
+	State         *State
 }
 
 func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
@@ -30,7 +31,8 @@ func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 		return nil, err
 	}
 
-	manager.Intents = discordgo.IntentGuildMessages
+	// TODO: Make sure shards don't cache guilds
+	manager.Intents = discordgo.IntentGuildMessages | discordgo.IntentGuilds
 	manager.Presence = &discordgo.GatewayStatusUpdate{
 		Game: discordgo.Activity{
 			Name: viper.GetString("discord.activity_name"),
@@ -43,9 +45,12 @@ func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 		ShardManager: manager,
 		pg:           pg,
 		Rest:         rest.NewRestClientWithCache(manager.Session),
+		State:        NewState(),
 	}
 
-	b.AddHandler(onReady)
+	b.AddHandler(b.onReady)
+	b.AddHandler(b.onGuildCreate)
+	b.AddHandler(b.onGuildDelete)
 	b.AddHandler(onConnect)
 	b.AddHandler(onDisconnect)
 	b.AddHandler(onResumed)

@@ -10,6 +10,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
+	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
@@ -19,20 +20,20 @@ import (
 
 type GuildsHanlder struct {
 	pg        *postgres.PostgresStore
-	rest      rest.RestClient
+	bot       *bot.Bot
 	am        *access.AccessManager
 	planStore store.PlanStore
 }
 
 func New(
 	pg *postgres.PostgresStore,
-	rest rest.RestClient,
+	bot *bot.Bot,
 	am *access.AccessManager,
 	planStore store.PlanStore,
 ) *GuildsHanlder {
 	return &GuildsHanlder{
 		pg:        pg,
-		rest:      rest,
+		bot:       bot,
 		am:        am,
 		planStore: planStore,
 	}
@@ -41,15 +42,17 @@ func New(
 func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
 
-	guilds, err := h.rest.OauthUserGuilds(c.Context(), session.AccessToken)
+	guilds, err := h.bot.Rest.OauthUserGuilds(c.Context(), session.AccessToken)
 	if err != nil {
 		return fmt.Errorf("Failed to get oauth user guilds: %w", err)
 	}
 
-	// TODO: Filter out guilds that the bot isn't in
-
 	res := make([]wire.GuildWire, 0, len(guilds))
 	for _, guild := range guilds {
+		if !h.bot.State.HasGuild(guild.ID) {
+			continue
+		}
+
 		res = append(res, wire.GuildWire{
 			ID:                       guild.ID,
 			Name:                     guild.Name,
@@ -69,7 +72,7 @@ func (h *GuildsHanlder) HandleGetGuild(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
 	guildID := c.Params("guildID")
 
-	guild, err := h.rest.OauthUserGuild(c.Context(), session.AccessToken, guildID)
+	guild, err := h.bot.Rest.OauthUserGuild(c.Context(), session.AccessToken, guildID)
 	if err != nil {
 		if errors.Is(err, rest.ErrNotFound) {
 			return helpers.NotFound("unknown_guild", "The guild does not exist or the bot is missing access.")
@@ -98,7 +101,7 @@ func (h *GuildsHanlder) HandleListGuildChannels(c *fiber.Ctx) error {
 		return err
 	}
 
-	channels, err := h.rest.GuildChannels(c.Context(), guildID)
+	channels, err := h.bot.Rest.GuildChannels(c.Context(), guildID)
 	if err != nil {
 		if errors.Is(err, rest.ErrNotFound) {
 			return helpers.NotFound("unknown_guild", "The guild does not exist or the bot is missing access.")
@@ -106,7 +109,7 @@ func (h *GuildsHanlder) HandleListGuildChannels(c *fiber.Ctx) error {
 		return err
 	}
 
-	threads, err := h.rest.GuildThreads(c.Context(), guildID)
+	threads, err := h.bot.Rest.GuildThreads(c.Context(), guildID)
 	if err != nil {
 		if errors.Is(err, rest.ErrNotFound) {
 			return helpers.NotFound("unknown_guild", "The guild does not exist or the bot is missing access.")
@@ -156,7 +159,7 @@ func (h *GuildsHanlder) HandleListGuildRoles(c *fiber.Ctx) error {
 		return err
 	}
 
-	roles, err := h.rest.GuildRoles(c.Context(), guildID)
+	roles, err := h.bot.Rest.GuildRoles(c.Context(), guildID)
 	if err != nil {
 		if errors.Is(err, rest.ErrNotFound) {
 			return helpers.NotFound("unknown_guild", "The guild does not exist or the bot is missing access.")
@@ -187,7 +190,7 @@ func (h *GuildsHanlder) HandleListGuildEmojis(c *fiber.Ctx) error {
 		return err
 	}
 
-	guild, err := h.rest.Guild(c.Context(), guildID)
+	guild, err := h.bot.Rest.Guild(c.Context(), guildID)
 	if err != nil {
 		if errors.Is(err, rest.ErrNotFound) {
 			return helpers.NotFound("unknown_guild", "The guild does not exist or the bot is missing access.")
@@ -218,7 +221,7 @@ func (h *GuildsHanlder) HandleListGuildStickers(c *fiber.Ctx) error {
 		return err
 	}
 
-	guild, err := h.rest.Guild(c.Context(), guildID)
+	guild, err := h.bot.Rest.Guild(c.Context(), guildID)
 	if err != nil {
 		if errors.Is(err, rest.ErrNotFound) {
 			return helpers.NotFound("unknown_guild", "The guild does not exist or the bot is missing access.")
