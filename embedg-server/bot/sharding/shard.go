@@ -21,7 +21,6 @@ type Shard struct {
 	// Total Shard count.
 	ShardCount int
 	Presence   *discordgo.GatewayStatusUpdate
-	State      *discordgo.State
 
 	// Event handlers.
 	handlers []interface{}
@@ -74,8 +73,7 @@ func (s *Shard) Start(token string, intent discordgo.Intent) (err error) {
 	// Identify our intent.
 	s.Session.Identify.Intents = intent
 
-	s.Session.StateEnabled = s.State != nil
-	s.Session.State = s.State
+	s.Session.StateEnabled = false
 
 	if s.Presence != nil {
 		s.Session.Identify.Presence = *s.Presence

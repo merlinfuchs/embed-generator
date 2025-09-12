@@ -31,7 +31,6 @@ func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 		return nil, err
 	}
 
-	// TODO: Make sure shards don't cache guilds
 	manager.Intents = discordgo.IntentGuildMessages | discordgo.IntentGuilds
 	manager.Presence = &discordgo.GatewayStatusUpdate{
 		Game: discordgo.Activity{
