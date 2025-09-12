@@ -46,18 +46,17 @@ func (m *ShardManager) checkShards() {
 }
 
 func (m *ShardManager) restartShard(shard *Shard) {
-	m.Lock()
-	defer m.Unlock()
-
 	log.Info().Int("shard_id", shard.ID).Msg("Restarting suspicious shard")
 
 	if err := shard.Kill(); err != nil {
 		log.Error().Err(err).Msg("Failed to stop suspicious shard for reconnect")
 	}
 
+	log.Info().Int("shard_id", shard.ID).Msg("Suspicious shard stopped")
+
 	if err := shard.Start(m.token, m.Intents); err != nil {
 		log.Error().Err(err).Msg("Failed to start suspicious shard for reconnect")
 	}
 
-	log.Info().Int("shard_id", shard.ID).Msg("Shard restarted")
+	log.Info().Int("shard_id", shard.ID).Msg("Suspicious shard restarted")
 }

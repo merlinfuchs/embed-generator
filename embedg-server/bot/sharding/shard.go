@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/merlinfuchs/discordgo"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
@@ -105,12 +106,16 @@ func (s *Shard) Stop() (err error) {
 }
 
 func (s *Shard) Kill() (err error) {
+	log.Info().Int("shard_id", s.ID).Msg("Killing shard")
 	s.Lock()
 	defer s.Unlock()
+	log.Info().Int("shard_id", s.ID).Msg("Shard locked")
 
 	if s.Session != nil {
 		err = s.Session.Kill()
 	}
+
+	log.Info().Int("shard_id", s.ID).Msg("Shard killed")
 
 	return
 }
