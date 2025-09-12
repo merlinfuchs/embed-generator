@@ -36,11 +36,11 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 	session := c.Locals("session").(*session.Session)
 	guildID := c.Query("guild_id")
 
-	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+	if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 		return err
 	}
 
-	if err := h.am.CheckChannelAccessForRequest(c, req.ChannelID); err != nil {
+	if err := h.am.CheckChannelAccess(c, req.ChannelID); err != nil {
 		return err
 	}
 
@@ -133,7 +133,7 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 func (h *ScheduledMessageHandler) HandleListScheduledMessages(c *fiber.Ctx) error {
 	guildID := c.Query("guild_id")
 
-	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+	if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 		return err
 	}
 
@@ -159,7 +159,7 @@ func (h *ScheduledMessageHandler) HandleGetScheduledMessage(c *fiber.Ctx) error 
 	messageID := c.Params("messageID")
 	guildID := c.Query("guild_id")
 
-	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+	if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 		return err
 	}
 
@@ -185,11 +185,11 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 	messageID := c.Params("messageID")
 	guildID := c.Query("guild_id")
 
-	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+	if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 		return err
 	}
 
-	if err := h.am.CheckChannelAccessForRequest(c, req.ChannelID); err != nil {
+	if err := h.am.CheckChannelAccess(c, req.ChannelID); err != nil {
 		return err
 	}
 
@@ -283,7 +283,7 @@ func (h *ScheduledMessageHandler) HandleDeleteScheduledMessage(c *fiber.Ctx) err
 	messageID := c.Params("messageID")
 	guildID := c.Query("guild_id")
 
-	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+	if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 		return err
 	}
 

@@ -6,6 +6,7 @@ import (
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
+	"github.com/merlinfuchs/embed-generator/embedg-server/bot/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot/sharding"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
@@ -20,6 +21,7 @@ type Bot struct {
 	pg            *postgres.PostgresStore
 	ActionHandler *handler.ActionHandler
 	ActionParser  *parser.ActionParser
+	Rest          rest.RestClient
 }
 
 func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
@@ -28,8 +30,7 @@ func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 		return nil, err
 	}
 
-	manager.Intents = discordgo.IntentGuilds | discordgo.IntentGuildMessages | discordgo.IntentGuildEmojis
-	manager.State = discordgo.NewState()
+	manager.Intents = discordgo.IntentGuildMessages
 	manager.Presence = &discordgo.GatewayStatusUpdate{
 		Game: discordgo.Activity{
 			Name: viper.GetString("discord.activity_name"),
@@ -41,6 +42,7 @@ func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 	b := &Bot{
 		ShardManager: manager,
 		pg:           pg,
+		Rest:         rest.NewRestClientWithCache(manager.Session),
 	}
 
 	b.AddHandler(onReady)

@@ -49,7 +49,12 @@ func CreateSessionForUser(userID string) (string, error) {
 		}
 	}
 
-	sessionToken, err := sessionManager.CreateSession(context.Background(), userID, session.GuildIds, session.AccessToken)
+	sessionToken, err := sessionManager.CreateSession(
+		context.Background(),
+		userID,
+		session.AccessToken,
+		session.ExpiresAt,
+	)
 	if err != nil {
 		return "", err
 	}

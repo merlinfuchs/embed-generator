@@ -9,21 +9,22 @@ import (
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
+	"github.com/merlinfuchs/embed-generator/embedg-server/bot/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 )
 
 type ActionParser struct {
+	rest          rest.RestClient
 	accessManager *access.AccessManager
 	pg            *postgres.PostgresStore
-	state         *discordgo.State
 }
 
-func New(accessManager *access.AccessManager, pg *postgres.PostgresStore, state *discordgo.State) *ActionParser {
+func New(rest rest.RestClient, accessManager *access.AccessManager, pg *postgres.PostgresStore) *ActionParser {
 	return &ActionParser{
+		rest:          rest,
 		accessManager: accessManager,
 		pg:            pg,
-		state:         state,
 	}
 }
 

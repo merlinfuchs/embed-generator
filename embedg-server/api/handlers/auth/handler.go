@@ -11,7 +11,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
-	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/ravener/discord-oauth2"
@@ -23,12 +22,11 @@ import (
 
 type AuthHandler struct {
 	pg             *postgres.PostgresStore
-	bot            *bot.Bot
 	sessionManager *session.SessionManager
 	oauth2Config   *oauth2.Config
 }
 
-func New(pg *postgres.PostgresStore, bot *bot.Bot, sessionManager *session.SessionManager) *AuthHandler {
+func New(pg *postgres.PostgresStore, sessionManager *session.SessionManager) *AuthHandler {
 	conf := &oauth2.Config{
 		RedirectURL:  fmt.Sprintf("%s/auth/callback", viper.GetString("api.public_url")),
 		ClientID:     viper.GetString("discord.client_id"),
@@ -39,7 +37,6 @@ func New(pg *postgres.PostgresStore, bot *bot.Bot, sessionManager *session.Sessi
 
 	return &AuthHandler{
 		pg:             pg,
-		bot:            bot,
 		sessionManager: sessionManager,
 		oauth2Config:   conf,
 	}
@@ -157,7 +154,7 @@ func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.T
 		guildIDs[i] = guild.ID
 	}
 
-	token, err := h.sessionManager.CreateSession(c.Context(), user.ID, guildIDs, tokenData.AccessToken)
+	token, err := h.sessionManager.CreateSession(c.Context(), user.ID, tokenData.AccessToken, tokenData.Expiry)
 	if err != nil {
 		return nil, "", err
 	}

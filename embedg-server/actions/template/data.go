@@ -1,29 +1,31 @@
 package template
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"github.com/merlinfuchs/discordgo"
+	"github.com/merlinfuchs/embed-generator/embedg-server/bot/rest"
 )
 
 var standardDataMap = map[string]interface{}{}
 
 type InteractionData struct {
-	state *discordgo.State
-	i     *discordgo.Interaction
+	rest rest.RestClient
+	i    *discordgo.Interaction
 }
 
-func NewInteractionData(state *discordgo.State, i *discordgo.Interaction) *InteractionData {
+func NewInteractionData(rest rest.RestClient, i *discordgo.Interaction) *InteractionData {
 	return &InteractionData{
-		state: state,
-		i:     i,
+		rest: rest,
+		i:    i,
 	}
 }
 
 func (d *InteractionData) User() interface{} {
 	if d.i.Member != nil {
-		res := NewMemberData(d.state, d.i.GuildID, d.i.Member)
+		res := NewMemberData(d.rest, d.i.GuildID, d.i.Member)
 		return &res
 	}
 
@@ -35,7 +37,7 @@ func (d *InteractionData) Member() *MemberData {
 		return nil
 	}
 
-	return NewMemberData(d.state, d.i.GuildID, d.i.Member)
+	return NewMemberData(d.rest, d.i.GuildID, d.i.Member)
 }
 
 func (d *InteractionData) Command() *CommandData {
@@ -44,7 +46,7 @@ func (d *InteractionData) Command() *CommandData {
 	}
 
 	data := d.i.ApplicationCommandData()
-	return NewCommandData(d.state, d.i.GuildID, &data)
+	return NewCommandData(d.rest, d.i.GuildID, &data)
 }
 
 type UserData struct {
@@ -105,15 +107,15 @@ func (d *UserData) BannerURL() string {
 
 type MemberData struct {
 	UserData
-	state   *discordgo.State
+	rest    rest.RestClient
 	guildID string
 	m       *discordgo.Member
 }
 
-func NewMemberData(state *discordgo.State, guildID string, m *discordgo.Member) *MemberData {
+func NewMemberData(rest rest.RestClient, guildID string, m *discordgo.Member) *MemberData {
 	return &MemberData{
 		UserData: UserData{m.User},
-		state:    state,
+		rest:     rest,
 		guildID:  guildID,
 		m:        m,
 	}
@@ -126,7 +128,7 @@ func (d *MemberData) Nick() string {
 func (d *MemberData) Roles() []*RoleData {
 	res := make([]*RoleData, len(d.m.Roles))
 	for i, roleID := range d.m.Roles {
-		res[i] = NewRoleData(d.state, d.guildID, roleID, nil)
+		res[i] = NewRoleData(d.rest, d.guildID, roleID, nil)
 	}
 
 	return res
@@ -161,14 +163,14 @@ func (d *MemberData) AvatarURL() string {
 }
 
 type CommandData struct {
-	state   *discordgo.State
+	rest    rest.RestClient
 	guildID string
 	c       *discordgo.ApplicationCommandInteractionData
 }
 
-func NewCommandData(state *discordgo.State, guildID string, c *discordgo.ApplicationCommandInteractionData) *CommandData {
+func NewCommandData(rest rest.RestClient, guildID string, c *discordgo.ApplicationCommandInteractionData) *CommandData {
 	return &CommandData{
-		state:   state,
+		rest:    rest,
 		guildID: guildID,
 		c:       c,
 	}
@@ -193,7 +195,7 @@ func (d *CommandData) Mention() string {
 func (d *CommandData) Options() map[string]interface{} {
 	res := make(map[string]interface{})
 	for _, opt := range d.c.Options {
-		res[opt.Name] = NewCommandOptionData(d.state, d.guildID, d.c, opt)
+		res[opt.Name] = NewCommandOptionData(d.rest, d.guildID, d.c, opt)
 	}
 
 	return res
@@ -203,7 +205,7 @@ func (d *CommandData) Args() map[string]interface{} {
 	return d.Options()
 }
 
-func NewCommandOptionData(state *discordgo.State, guildID string, c *discordgo.ApplicationCommandInteractionData, o *discordgo.ApplicationCommandInteractionDataOption) interface{} {
+func NewCommandOptionData(rest rest.RestClient, guildID string, c *discordgo.ApplicationCommandInteractionData, o *discordgo.ApplicationCommandInteractionDataOption) interface{} {
 	switch o.Type {
 	case discordgo.ApplicationCommandOptionString:
 		return o.StringValue()
@@ -222,16 +224,16 @@ func NewCommandOptionData(state *discordgo.State, guildID string, c *discordgo.A
 		channel := o.ChannelValue(nil)
 		resolved := c.Resolved.Channels[channel.ID]
 		if resolved != nil {
-			return NewChannelData(state, channel.ID, resolved)
+			return NewChannelData(rest, channel.ID, resolved)
 		}
-		return NewChannelData(state, channel.ID, nil)
+		return NewChannelData(rest, channel.ID, nil)
 	case discordgo.ApplicationCommandOptionRole:
 		role := o.RoleValue(nil, "")
 		resolved := c.Resolved.Roles[role.ID]
 		if resolved != nil {
-			return NewRoleData(state, guildID, role.ID, resolved)
+			return NewRoleData(rest, guildID, role.ID, resolved)
 		}
-		return NewRoleData(state, guildID, role.ID, nil)
+		return NewRoleData(rest, guildID, role.ID, nil)
 	case discordgo.ApplicationCommandOptionNumber:
 		return fmt.Sprintf("%f", o.FloatValue())
 	case discordgo.ApplicationCommandOptionAttachment:
@@ -246,14 +248,14 @@ func NewCommandOptionData(state *discordgo.State, guildID string, c *discordgo.A
 }
 
 type GuildData struct {
-	state   *discordgo.State
+	rest    rest.RestClient
 	guildID string
 	guild   *discordgo.Guild
 }
 
-func NewGuildData(state *discordgo.State, guildID string, g *discordgo.Guild) *GuildData {
+func NewGuildData(rest rest.RestClient, guildID string, g *discordgo.Guild) *GuildData {
 	return &GuildData{
-		state:   state,
+		rest:    rest,
 		guildID: guildID,
 		guild:   g,
 	}
@@ -264,8 +266,11 @@ func (d *GuildData) ensureGuild() error {
 		return nil
 	}
 
-	guild, err := d.state.Guild(d.guildID)
+	guild, err := d.rest.Guild(context.TODO(), d.guildID)
 	if err != nil {
+		if err == rest.ErrNotFound {
+			return nil
+		}
 		return err
 	}
 
@@ -358,14 +363,14 @@ func (d *GuildData) BoostLevel() (int, error) {
 }
 
 type ChannelData struct {
-	state     *discordgo.State
+	rest      rest.RestClient
 	channelID string
 	channel   *discordgo.Channel
 }
 
-func NewChannelData(state *discordgo.State, channelID string, c *discordgo.Channel) *ChannelData {
+func NewChannelData(rest rest.RestClient, channelID string, c *discordgo.Channel) *ChannelData {
 	return &ChannelData{
-		state:     state,
+		rest:      rest,
 		channelID: channelID,
 		channel:   c,
 	}
@@ -376,7 +381,7 @@ func (d *ChannelData) ensureChannel() error {
 		return nil
 	}
 
-	channel, err := d.state.Channel(d.channelID)
+	channel, err := d.rest.Channel(context.TODO(), d.channelID)
 	if err != nil {
 		return err
 	}
@@ -414,15 +419,15 @@ func (d *ChannelData) Topic() (string, error) {
 }
 
 type RoleData struct {
-	state   *discordgo.State
+	rest    rest.RestClient
 	guildID string
 	roleID  string
 	role    *discordgo.Role
 }
 
-func NewRoleData(state *discordgo.State, guildID string, roleID string, role *discordgo.Role) *RoleData {
+func NewRoleData(rest rest.RestClient, guildID string, roleID string, role *discordgo.Role) *RoleData {
 	return &RoleData{
-		state:   state,
+		rest:    rest,
 		guildID: guildID,
 		roleID:  roleID,
 		role:    role,
@@ -434,7 +439,7 @@ func (d *RoleData) ensureRole() error {
 		return nil
 	}
 
-	role, err := d.state.Role(d.guildID, d.roleID)
+	role, err := d.rest.GuildRole(context.TODO(), d.guildID, d.roleID)
 	if err != nil {
 		return err
 	}

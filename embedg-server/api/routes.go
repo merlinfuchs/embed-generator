@@ -34,7 +34,7 @@ func registerRoutes(app *fiber.App, stores *Stores, bot *bot.Bot, managers *mana
 	healthGroup.Get("/", healthHandler.HandleHealth)
 	app.Get("/api/health/shard-list", healthHandler.HandleHealthShardList)
 
-	authHandler := auth.New(stores.PG, bot, managers.session)
+	authHandler := auth.New(stores.PG, managers.session)
 	app.Get("/api/auth/login", authHandler.HandleAuthRedirect)
 	app.Get("/api/auth/callback", authHandler.HandleAuthCallback)
 	app.Post("/api/auth/exchange", helpers.WithRequestBody(authHandler.HandleAuthExchange))
@@ -62,7 +62,7 @@ func registerRoutes(app *fiber.App, stores *Stores, bot *bot.Bot, managers *mana
 	assistantHandler := assistant.New(stores.PG, managers.access, managers.premium)
 	app.Post("/api/assistant/message", sessionMiddleware.SessionRequired(), helpers.WithRequestBody(assistantHandler.HandleAssistantGenerateMessage))
 
-	guildsHanlder := guilds.New(stores.PG, bot, managers.access, managers.premium)
+	guildsHanlder := guilds.New(stores.PG, bot.Rest, managers.access, managers.premium)
 	guildsGroup := app.Group("/api/guilds", sessionMiddleware.SessionRequired())
 	guildsGroup.Get("/", guildsHanlder.HandleListGuilds)
 	guildsGroup.Get("/:guildID", guildsHanlder.HandleGetGuild)
@@ -78,7 +78,7 @@ func registerRoutes(app *fiber.App, stores *Stores, bot *bot.Bot, managers *mana
 	app.Post("/api/restore-message/channel", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(sendMessageHandler.HandleRestoreMessageFromChannel))
 	app.Post("/api/restore-message/webhook", helpers.WithRequestBodyValidated(sendMessageHandler.HandleRestoreMessageFromWebhook))
 
-	premiumHandler := premium_handler.New(stores.PG, bot, managers.access, managers.premium)
+	premiumHandler := premium_handler.New(stores.PG, bot.Rest, managers.access, managers.premium)
 	app.Get("/api/premium/features", sessionMiddleware.SessionRequired(), premiumHandler.HandleGetFeatures)
 	app.Get("/api/premium/entitlements", sessionMiddleware.SessionRequired(), premiumHandler.HandleListEntitlements)
 	app.Post("/api/premium/entitlements/:entitlementID/consume", sessionMiddleware.SessionRequired(), helpers.WithRequestBodyValidated(premiumHandler.HandleConsumeEntitlement))

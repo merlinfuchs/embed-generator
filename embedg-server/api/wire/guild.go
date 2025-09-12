@@ -9,6 +9,7 @@ type GuildWire struct {
 	Name string      `json:"name"`
 	Icon null.String `json:"icon"`
 
+	// TODO: Remove this
 	HasChannelWithUserAccess bool `json:"has_channel_with_user_access"`
 	HasChannelWithBotAccess  bool `json:"has_channel_with_bot_access"`
 }
@@ -24,6 +25,7 @@ type GuildChannelWire struct {
 	ParentID null.String `json:"parent_id"`
 	Type     int         `json:"type"`
 
+	// TODO: Remove this
 	UserAccess      bool   `json:"user_access"`
 	UserPermissions string `json:"user_permissions"`
 	BotAccess       bool   `json:"bot_access"`

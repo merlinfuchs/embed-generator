@@ -15,7 +15,7 @@ import (
 
 // SendMessageToChannel sends a message to a channel, either using a webhook or using the configured custom bot.
 func (b *Bot) SendMessageToChannel(ctx context.Context, channelID string, params *discordgo.WebhookParams) (*discordgo.Message, error) {
-	channel, err := b.State.Channel(channelID)
+	channel, err := b.Rest.Channel(ctx, channelID)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get channel: %w", err)
 	}
@@ -97,7 +97,7 @@ func (b *Bot) SendMessageToChannel(ctx context.Context, channelID string, params
 
 // EditMessageInChannel edits a message in a channel, either sent by a webhook or by the configured custom bot.
 func (b *Bot) EditMessageInChannel(ctx context.Context, channelID string, messageID string, params *discordgo.WebhookEdit) (*discordgo.Message, error) {
-	channel, err := b.State.Channel(channelID)
+	channel, err := b.Rest.Channel(ctx, channelID)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get channel: %w", err)
 	}
@@ -184,13 +184,13 @@ func (b *Bot) EditMessageInChannel(ctx context.Context, channelID string, messag
 
 // FindWebhookForChannel returns a webhook for the given channel that was created by the bot or the configured custom bot.
 func (b *Bot) FindWebhookForChannel(ctx context.Context, channelID string) (*discordgo.Webhook, error) {
-	channel, err := b.State.Channel(channelID)
+	channel, err := b.Rest.Channel(ctx, channelID)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get channel: %w", err)
 	}
 
 	if channel.Type == discordgo.ChannelTypeGuildNewsThread || channel.Type == discordgo.ChannelTypeGuildPublicThread || channel.Type == discordgo.ChannelTypeGuildPrivateThread {
-		channel, err = b.State.Channel(channel.ParentID)
+		channel, err = b.Rest.Channel(ctx, channel.ParentID)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get parent channel: %w", err)
 		}
@@ -241,13 +241,13 @@ func (b *Bot) FindWebhookForChannel(ctx context.Context, channelID string) (*dis
 
 // GetWebhookForChannel returns the webhook for the given channel if available.
 func (b *Bot) GetWebhookForChannel(ctx context.Context, channelID string, webhookID string) (*discordgo.Webhook, error) {
-	channel, err := b.State.Channel(channelID)
+	channel, err := b.Rest.Channel(ctx, channelID)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get channel: %w", err)
 	}
 
 	if channel.Type == discordgo.ChannelTypeGuildNewsThread || channel.Type == discordgo.ChannelTypeGuildPublicThread || channel.Type == discordgo.ChannelTypeGuildPrivateThread {
-		channel, err = b.State.Channel(channel.ParentID)
+		channel, err = b.Rest.Channel(ctx, channel.ParentID)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get parent channel: %w", err)
 		}

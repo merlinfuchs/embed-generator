@@ -14,6 +14,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/template"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/variables"
+	"github.com/merlinfuchs/embed-generator/embedg-server/bot/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
@@ -130,9 +131,12 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 		return fmt.Errorf("could not get plan features: %w", err)
 	}
 
+	// TODO: Use global rest client?
+	restClient := rest.NewRestClientWithCache(s)
+
 	templates := template.NewContext(
 		"HANDLE_ACTION", features.MaxTemplateOps,
-		template.NewInteractionProvider(s.State, interaction),
+		template.NewInteractionProvider(restClient, interaction),
 		template.NewKVProvider(interaction.GuildID, m.pg, features.MaxKVKeys),
 	)
 

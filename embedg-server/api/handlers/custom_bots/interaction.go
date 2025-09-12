@@ -63,7 +63,7 @@ func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 	}
 
 	if handle {
-		respCh := make(chan *discordgo.InteractionResponse, 0)
+		respCh := make(chan *discordgo.InteractionResponse)
 
 		ri := &handler.RestInteraction{
 			Inner:           interaction.Interaction,

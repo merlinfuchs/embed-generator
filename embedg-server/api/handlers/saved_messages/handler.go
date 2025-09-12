@@ -37,7 +37,7 @@ func (h *SavedMessagesHandler) HandleListSavedMessages(c *fiber.Ctx) error {
 	var err error
 
 	if guildID != "" {
-		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+		if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 			return err
 		}
 		messages, err = h.pg.Q.GetSavedMessagesForGuild(c.Context(), sql.NullString{String: guildID, Valid: true})
@@ -66,7 +66,7 @@ func (h *SavedMessagesHandler) HandleCreateSavedMessage(c *fiber.Ctx, req wire.S
 	guildID := c.Query("guild_id")
 
 	if guildID != "" {
-		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+		if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 			return err
 		}
 	}
@@ -97,7 +97,7 @@ func (h *SavedMessagesHandler) HandleUpdateSavedMessage(c *fiber.Ctx, req wire.S
 	guildID := c.Query("guild_id")
 
 	if guildID != "" {
-		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+		if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 			return err
 		}
 	}
@@ -144,7 +144,7 @@ func (h *SavedMessagesHandler) HandleDeleteSavedMessage(c *fiber.Ctx) error {
 	guildID := c.Query("guild_id")
 
 	if guildID != "" {
-		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+		if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 			return err
 		}
 	}
@@ -181,7 +181,7 @@ func (h *SavedMessagesHandler) HandleImportSavedMessages(c *fiber.Ctx, req wire.
 	guildID := c.Query("guild_id")
 
 	if guildID != "" {
-		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+		if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 			return err
 		}
 	}

@@ -360,7 +360,7 @@ func (b *Bot) handleImageCommand(s *discordgo.Session, i *discordgo.Interaction,
 		avatarURL := makeStatic(user.AvatarURL("1024"), 1)
 		return imageUrlResponse(s, i, avatarURL)
 	case "icon":
-		guild, err := b.State.Guild(i.GuildID)
+		guild, err := b.Rest.Guild(context.TODO(), i.GuildID)
 		if err != nil {
 			return err
 		}

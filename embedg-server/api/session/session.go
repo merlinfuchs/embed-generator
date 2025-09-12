@@ -18,7 +18,6 @@ import (
 
 type Session struct {
 	UserID      string
-	GuildIDs    []string
 	AccessToken string
 	CreatedAt   time.Time
 	ExpiresAt   time.Time
@@ -55,14 +54,13 @@ func (s *SessionManager) GetSession(c *fiber.Ctx) (*Session, error) {
 
 	return &Session{
 		UserID:      model.UserID,
-		GuildIDs:    model.GuildIds,
 		AccessToken: model.AccessToken,
 		CreatedAt:   model.CreatedAt,
 		ExpiresAt:   model.ExpiresAt,
 	}, nil
 }
 
-func (s *SessionManager) CreateSession(ctx context.Context, userID string, guildIDs []string, accessToken string) (string, error) {
+func (s *SessionManager) CreateSession(ctx context.Context, userID string, accessToken string, expiresAt time.Time) (string, error) {
 	token := generateSessionToken()
 
 	tokenHash, err := hashSessionToken(token)
@@ -73,10 +71,9 @@ func (s *SessionManager) CreateSession(ctx context.Context, userID string, guild
 	_, err = s.pg.Q.InsertSession(ctx, pgmodel.InsertSessionParams{
 		TokenHash:   tokenHash,
 		UserID:      userID,
-		GuildIds:    guildIDs,
 		AccessToken: accessToken,
 		CreatedAt:   time.Now().UTC(),
-		ExpiresAt:   time.Now().UTC().Add(30 * 24 * time.Hour),
+		ExpiresAt:   expiresAt,
 	})
 	if err != nil {
 		return "", err

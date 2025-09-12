@@ -1,0 +1,1 @@
+ALTER TABLE sessions ADD COLUMN guild_ids TEXT[];

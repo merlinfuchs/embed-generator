@@ -32,7 +32,7 @@ func New(pg *postgres.PostgresStore, am *access.AccessManager, planStore store.P
 func (h *AssistantHandler) HandleAssistantGenerateMessage(c *fiber.Ctx, req wire.AssistantGenerateMessageRequestWire) error {
 	guildID := c.Query("guild_id")
 
-	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+	if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 		return err
 	}
 

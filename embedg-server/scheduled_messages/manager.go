@@ -121,8 +121,8 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 
 	templates := template.NewContext(
 		"SCHEDULED_MESSAGE", features.MaxTemplateOps,
-		template.NewGuildProvider(m.bot.State, scheduledMessage.GuildID, nil),
-		template.NewChannelProvider(m.bot.State, scheduledMessage.ChannelID, nil),
+		template.NewGuildProvider(m.bot.Rest, scheduledMessage.GuildID, nil),
+		template.NewChannelProvider(m.bot.Rest, scheduledMessage.ChannelID, nil),
 		template.NewKVProvider(scheduledMessage.GuildID, m.pg, features.MaxKVKeys),
 	)
 
@@ -157,7 +157,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		return fmt.Errorf("Failed to send message: %w", err)
 	}
 
-	permContext, err := m.actionParser.DerivePermissionsForActions(scheduledMessage.CreatorID, scheduledMessage.GuildID, scheduledMessage.ChannelID)
+	permContext, err := m.actionParser.DerivePermissionsForActions(ctx, scheduledMessage.CreatorID, scheduledMessage.GuildID, scheduledMessage.ChannelID)
 	if err != nil {
 		return fmt.Errorf("Failed to create permission context: %w", err)
 	}

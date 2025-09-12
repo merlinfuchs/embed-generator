@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/merlinfuchs/discordgo"
+	"github.com/merlinfuchs/embed-generator/embedg-server/bot/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 )
@@ -20,13 +21,13 @@ type ContextProvider interface {
 }
 
 type InteractionProvider struct {
-	state       *discordgo.State
+	rest        rest.RestClient
 	interaction *discordgo.Interaction
 }
 
-func NewInteractionProvider(state *discordgo.State, interaction *discordgo.Interaction) *InteractionProvider {
+func NewInteractionProvider(rest rest.RestClient, interaction *discordgo.Interaction) *InteractionProvider {
 	return &InteractionProvider{
-		state:       state,
+		rest:        rest,
 		interaction: interaction,
 	}
 }
@@ -34,24 +35,24 @@ func NewInteractionProvider(state *discordgo.State, interaction *discordgo.Inter
 func (p *InteractionProvider) ProvideFuncs(funcs map[string]interface{}) {}
 
 func (p *InteractionProvider) ProvideData(data map[string]interface{}) {
-	data["Interaction"] = NewInteractionData(p.state, p.interaction)
+	data["Interaction"] = NewInteractionData(p.rest, p.interaction)
 
-	guildData := NewGuildData(p.state, p.interaction.GuildID, nil)
+	guildData := NewGuildData(p.rest, p.interaction.GuildID, nil)
 	data["Guild"] = guildData
 	data["Server"] = guildData
 
-	data["Channel"] = NewChannelData(p.state, p.interaction.ChannelID, nil)
+	data["Channel"] = NewChannelData(p.rest, p.interaction.ChannelID, nil)
 }
 
 type GuildProvider struct {
-	state   *discordgo.State
+	rest    rest.RestClient
 	guildID string
 	guild   *discordgo.Guild
 }
 
-func NewGuildProvider(state *discordgo.State, guildID string, guild *discordgo.Guild) *GuildProvider {
+func NewGuildProvider(rest rest.RestClient, guildID string, guild *discordgo.Guild) *GuildProvider {
 	return &GuildProvider{
-		state:   state,
+		rest:    rest,
 		guildID: guildID,
 		guild:   guild,
 	}
@@ -60,20 +61,20 @@ func NewGuildProvider(state *discordgo.State, guildID string, guild *discordgo.G
 func (p *GuildProvider) ProvideFuncs(funcs map[string]interface{}) {}
 
 func (p *GuildProvider) ProvideData(data map[string]interface{}) {
-	guildData := NewGuildData(p.state, p.guildID, p.guild)
+	guildData := NewGuildData(p.rest, p.guildID, p.guild)
 	data["Guild"] = guildData
 	data["Server"] = guildData
 }
 
 type ChannelProvider struct {
-	state     *discordgo.State
+	rest      rest.RestClient
 	channelID string
 	channel   *discordgo.Channel
 }
 
-func NewChannelProvider(state *discordgo.State, channelID string, channel *discordgo.Channel) *ChannelProvider {
+func NewChannelProvider(rest rest.RestClient, channelID string, channel *discordgo.Channel) *ChannelProvider {
 	return &ChannelProvider{
-		state:     state,
+		rest:      rest,
 		channelID: channelID,
 		channel:   channel,
 	}
@@ -82,7 +83,7 @@ func NewChannelProvider(state *discordgo.State, channelID string, channel *disco
 func (p *ChannelProvider) ProvideFuncs(funcs map[string]interface{}) {}
 
 func (p *ChannelProvider) ProvideData(data map[string]interface{}) {
-	data["Channel"] = NewChannelData(p.state, p.channelID, p.channel)
+	data["Channel"] = NewChannelData(p.rest, p.channelID, p.channel)
 }
 
 type KVProvider struct {

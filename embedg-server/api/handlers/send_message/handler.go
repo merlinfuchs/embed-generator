@@ -49,11 +49,11 @@ func New(
 func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.MessageSendToChannelRequestWire) error {
 	session := c.Locals("session").(*session.Session)
 
-	if err := h.accessManager.CheckChannelAccessForRequest(c, req.ChannelID); err != nil {
+	if err := h.accessManager.CheckChannelAccess(c, req.ChannelID); err != nil {
 		return err
 	}
 
-	channel, err := h.bot.State.Channel(req.ChannelID)
+	channel, err := h.bot.Rest.Channel(c.Context(), req.ChannelID)
 	if err != nil {
 		return fmt.Errorf("Failed to get channel: %w", err)
 	}
@@ -65,8 +65,8 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 
 	templates := template.NewContext(
 		"SEND_MESSAGE", features.MaxTemplateOps,
-		template.NewGuildProvider(h.bot.State, channel.GuildID, nil),
-		template.NewChannelProvider(h.bot.State, req.ChannelID, nil),
+		template.NewGuildProvider(h.bot.Rest, channel.GuildID, nil),
+		template.NewChannelProvider(h.bot.Rest, req.ChannelID, nil),
 		template.NewKVProvider(channel.GuildID, h.pg, features.MaxKVKeys),
 	)
 
@@ -135,7 +135,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return fmt.Errorf("Failed to send message: %w", err)
 	}
 
-	permContext, err := h.actionParser.DerivePermissionsForActions(session.UserID, req.GuildID, req.ChannelID)
+	permContext, err := h.actionParser.DerivePermissionsForActions(c.Context(), session.UserID, req.GuildID, req.ChannelID)
 	if err != nil {
 		return fmt.Errorf("Failed to create permission context: %w", err)
 	}

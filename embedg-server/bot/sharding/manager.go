@@ -25,8 +25,6 @@ type ShardManager struct {
 	// Number of shards that can identify concurrently.
 	ShardConcurrency int
 
-	State *discordgo.State
-
 	Presence     *discordgo.GatewayStatusUpdate
 	FirstShardID int
 	LastShardID  int
@@ -204,7 +202,6 @@ func (m *ShardManager) Start() (err error) {
 			ID:         i,
 			ShardCount: m.ShardCount,
 			Presence:   m.Presence,
-			State:      m.State,
 		})
 	}
 

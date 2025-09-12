@@ -21,7 +21,7 @@ import (
 
 func (h *CustomBotsHandler) HandleListCustomCommands(c *fiber.Ctx) error {
 	guildID := c.Query("guild_id")
-	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+	if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 		return err
 	}
 
@@ -59,7 +59,7 @@ func (h *CustomBotsHandler) HandleListCustomCommands(c *fiber.Ctx) error {
 
 func (h *CustomBotsHandler) HandleGetCustomCommand(c *fiber.Ctx) error {
 	guildID := c.Query("guild_id")
-	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+	if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 		return err
 	}
 
@@ -101,7 +101,7 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 	req.Normalize()
 
 	guildID := c.Query("guild_id")
-	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+	if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 		return err
 	}
 
@@ -129,7 +129,7 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return err
 	}
 
-	derivedPerms, err := h.actionParser.DerivePermissionsForActions(session.UserID, guildID, "")
+	derivedPerms, err := h.actionParser.DerivePermissionsForActions(c.Context(), session.UserID, guildID, "")
 	if err != nil {
 		return helpers.BadRequest("invalid_actions", err.Error())
 	}
@@ -183,7 +183,7 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 	req.Normalize()
 
 	guildID := c.Query("guild_id")
-	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+	if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 		return err
 	}
 
@@ -202,7 +202,7 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return err
 	}
 
-	derivedPerms, err := h.actionParser.DerivePermissionsForActions(session.UserID, guildID, "")
+	derivedPerms, err := h.actionParser.DerivePermissionsForActions(c.Context(), session.UserID, guildID, "")
 	if err != nil {
 		return helpers.BadRequest("invalid_actions", err.Error())
 	}
@@ -252,7 +252,7 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 
 func (h *CustomBotsHandler) HandleDeleteCustomCommand(c *fiber.Ctx) error {
 	guildID := c.Query("guild_id")
-	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+	if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 		return err
 	}
 
@@ -274,7 +274,7 @@ func (h *CustomBotsHandler) HandleDeleteCustomCommand(c *fiber.Ctx) error {
 
 func (h *CustomBotsHandler) HandleDeployCustomCommands(c *fiber.Ctx) error {
 	guildID := c.Query("guild_id")
-	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+	if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 		return err
 	}
 

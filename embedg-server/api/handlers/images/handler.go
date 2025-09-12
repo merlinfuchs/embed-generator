@@ -43,7 +43,7 @@ func (h *ImagesHandler) HandleUploadImage(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
 	guildID := c.Query("guild_id")
 	if guildID != "" {
-		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+		if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 			return err
 		}
 	}

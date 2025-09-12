@@ -43,7 +43,7 @@ func New(pg *postgres.PostgresStore, bot *bot.Bot, am *access.AccessManager, pla
 
 func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.CustomBotConfigureRequestWire) error {
 	guildID := c.Query("guild_id")
-	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+	if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 		return err
 	}
 
@@ -84,7 +84,7 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 		}
 	}
 
-	guild, err := h.bot.State.Guild(guildID)
+	guild, err := h.bot.Rest.Guild(c.Context(), guildID)
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 
 func (h *CustomBotsHandler) HandleUpdateCustomBotPresence(c *fiber.Ctx, req wire.CustomBotUpdatePresenceRequestWire) error {
 	guildID := c.Query("guild_id")
-	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+	if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 		return err
 	}
 
@@ -184,7 +184,7 @@ func (h *CustomBotsHandler) HandleUpdateCustomBotPresence(c *fiber.Ctx, req wire
 
 func (h *CustomBotsHandler) HandleDisableCustomBot(c *fiber.Ctx) error {
 	guildID := c.Query("guild_id")
-	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+	if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 		return err
 	}
 
@@ -204,7 +204,7 @@ func (h *CustomBotsHandler) HandleDisableCustomBot(c *fiber.Ctx) error {
 
 func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 	guildID := c.Query("guild_id")
-	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+	if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 		return err
 	}
 
@@ -254,7 +254,7 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 		}
 	}
 
-	guild, err := h.bot.State.Guild(guildID)
+	guild, err := h.bot.Rest.Guild(c.Context(), guildID)
 	if err != nil {
 		return err
 	}

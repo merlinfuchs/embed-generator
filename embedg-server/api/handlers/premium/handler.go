@@ -10,7 +10,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
-	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
+	"github.com/merlinfuchs/embed-generator/embedg-server/bot/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
@@ -22,15 +22,15 @@ import (
 
 type PremiumHandler struct {
 	pg        *postgres.PostgresStore
-	bot       *bot.Bot
+	rest      rest.RestClient
 	am        *access.AccessManager
 	planStore store.PlanStore
 }
 
-func New(pg *postgres.PostgresStore, bot *bot.Bot, am *access.AccessManager, planStore store.PlanStore) *PremiumHandler {
+func New(pg *postgres.PostgresStore, rest rest.RestClient, am *access.AccessManager, planStore store.PlanStore) *PremiumHandler {
 	return &PremiumHandler{
 		pg:        pg,
-		bot:       bot,
+		rest:      rest,
 		am:        am,
 		planStore: planStore,
 	}
@@ -44,7 +44,7 @@ func (h *PremiumHandler) HandleGetFeatures(c *fiber.Ctx) error {
 	var err error
 
 	if guildID != "" {
-		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+		if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 			return err
 		}
 		features, err = h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
@@ -84,7 +84,7 @@ func (h *PremiumHandler) HandleListEntitlements(c *fiber.Ctx) error {
 	var err error
 
 	if guildID != "" {
-		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+		if err := h.am.CheckUserGuildAccess(c, guildID); err != nil {
 			return err
 		}
 		entitlements, err = h.pg.Q.GetActiveEntitlementsForGuild(c.Context(), sql.NullString{String: guildID, Valid: true})
@@ -164,7 +164,7 @@ func (h *PremiumHandler) HandleConsumeEntitlement(c *fiber.Ctx, req wire.Consume
 		clientID := viper.GetString("discord.client_id")
 		url := fmt.Sprintf("https://discord.com/api/v10/applications/%s/entitlements/%s/consume", clientID, entitlement.ID)
 
-		_, err := h.bot.Session.Request("POST", url, nil)
+		_, err := h.rest.Request(c.Context(), "POST", url, nil)
 		if err != nil {
 			return fmt.Errorf("failed to do request: %w", err)
 		}
