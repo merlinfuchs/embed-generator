@@ -62,7 +62,6 @@ type RestClientWithCache struct {
 	channelCache         *ttlcache.Cache[string, *discordgo.Channel]
 	guildChannelCache    *ttlcache.Cache[string, []*discordgo.Channel]
 	guildThreadsCache    *ttlcache.Cache[string, []*discordgo.Channel]
-	guildRolesCache      *ttlcache.Cache[string, []*discordgo.Role]
 	memberCache          *ttlcache.Cache[string, *discordgo.Member]
 	oauthUserCache       *ttlcache.Cache[string, *discordgo.User]
 	oauthUserGuildsCache *ttlcache.Cache[string, []*OauthUserGuild]
@@ -76,11 +75,10 @@ func NewRestClientWithCache(session *discordgo.Session) *RestClientWithCache {
 	rest := &RestClientWithCache{
 		session:              session,
 		oauthGuildsCache:     ttlcache.New(ttlcache.WithTTL[string, []*discordgo.Guild](5 * time.Minute)),
-		guildCache:           ttlcache.New(ttlcache.WithTTL[string, *discordgo.Guild](15 * time.Minute)),
+		guildCache:           ttlcache.New(ttlcache.WithTTL[string, *discordgo.Guild](3 * time.Minute)),
 		channelCache:         ttlcache.New(ttlcache.WithTTL[string, *discordgo.Channel](3 * time.Minute)),
 		guildChannelCache:    ttlcache.New(ttlcache.WithTTL[string, []*discordgo.Channel](3 * time.Minute)),
 		guildThreadsCache:    ttlcache.New(ttlcache.WithTTL[string, []*discordgo.Channel](3 * time.Minute)),
-		guildRolesCache:      ttlcache.New(ttlcache.WithTTL[string, []*discordgo.Role](3 * time.Minute)),
 		memberCache:          ttlcache.New(ttlcache.WithTTL[string, *discordgo.Member](3 * time.Minute)),
 		oauthUserCache:       ttlcache.New(ttlcache.WithTTL[string, *discordgo.User](3 * time.Minute)),
 		oauthUserGuildsCache: ttlcache.New(ttlcache.WithTTL[string, []*OauthUserGuild](3 * time.Minute)),
@@ -92,7 +90,6 @@ func NewRestClientWithCache(session *discordgo.Session) *RestClientWithCache {
 	go rest.channelCache.Start()
 	go rest.guildChannelCache.Start()
 	go rest.guildThreadsCache.Start()
-	go rest.guildRolesCache.Start()
 	go rest.memberCache.Start()
 	go rest.oauthUserCache.Start()
 	go rest.oauthUserGuildsCache.Start()
@@ -225,16 +222,12 @@ func (c *RestClientWithCache) GuildMember(ctx context.Context, guildID string, u
 }
 
 func (c *RestClientWithCache) GuildRoles(ctx context.Context, guildID string) ([]*discordgo.Role, error) {
-	return getOrSet(c, guildRolesCacheKey(guildID), c.guildRolesCache, func() ([]*discordgo.Role, error) {
-		roles, err := c.session.GuildRoles(guildID, discordgo.WithContext(ctx))
-		if err != nil {
-			if util.IsDiscordRestErrorCode(err, discordgo.ErrCodeUnknownGuild, discordgo.ErrCodeMissingAccess) {
-				return nil, ErrNotFound
-			}
-			return nil, err
-		}
-		return roles, nil
-	})
+	guild, err := c.Guild(ctx, guildID)
+	if err != nil {
+		return nil, err
+	}
+
+	return guild.Roles, nil
 }
 
 func (c *RestClientWithCache) GuildRole(ctx context.Context, guildID string, roleID string) (*discordgo.Role, error) {
@@ -313,4 +306,24 @@ func (c *RestClientWithCache) OauthUserGuild(ctx context.Context, accessToken st
 	}
 
 	return nil, ErrNotFound
+}
+
+func (c *RestClientWithCache) InvalidateGuildCache(guildID string) {
+	c.guildCache.Delete(guildCacheKey(guildID))
+}
+
+func (c *RestClientWithCache) InvalidateGuildChannelsCache(guildID string) {
+	c.guildChannelCache.Delete(guildChannelsCacheKey(guildID))
+}
+
+func (c *RestClientWithCache) InvalidateGuildThreadsCache(guildID string) {
+	c.guildThreadsCache.Delete(guildThreadsCacheKey(guildID))
+}
+
+func (c *RestClientWithCache) InvalidateChannelCache(channelID string) {
+	c.channelCache.Delete(channelCacheKey(channelID))
+}
+
+func (c *RestClientWithCache) InvalidateMemberCache(guildID string, userID string) {
+	c.memberCache.Delete(memberCacheKey(guildID, userID))
 }

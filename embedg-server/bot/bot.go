@@ -21,7 +21,7 @@ type Bot struct {
 	pg            *postgres.PostgresStore
 	ActionHandler *handler.ActionHandler
 	ActionParser  *parser.ActionParser
-	Rest          rest.RestClient
+	Rest          *rest.RestClientWithCache
 	State         *State
 }
 
@@ -49,7 +49,19 @@ func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 
 	b.AddHandler(b.onReady)
 	b.AddHandler(b.onGuildCreate)
+	b.AddHandler(b.onGuildUpdate)
 	b.AddHandler(b.onGuildDelete)
+	b.AddHandler(b.onChannelCreate)
+	b.AddHandler(b.onChannelUpdate)
+	b.AddHandler(b.onChannelDelete)
+	b.AddHandler(b.onThreadCreate)
+	b.AddHandler(b.onThreadUpdate)
+	b.AddHandler(b.onThreadDelete)
+	b.AddHandler(b.onRoleCreate)
+	b.AddHandler(b.onRoleUpdate)
+	b.AddHandler(b.onRoleDelete)
+	b.AddHandler(b.onMemberUpdate)
+	b.AddHandler(b.onMemberRemove)
 	b.AddHandler(onConnect)
 	b.AddHandler(onDisconnect)
 	b.AddHandler(onResumed)

@@ -104,7 +104,7 @@ func (m *AccessManager) UserGuildPermissions(ctx context.Context, userID string,
 
 	var permissions int64
 	for _, role := range guild.Roles {
-		if memberRoles[role.ID] {
+		if memberRoles[role.ID] || role.ID == guild.ID {
 			permissions |= role.Permissions
 		}
 	}
@@ -155,7 +155,7 @@ func (m *AccessManager) UserChannelPermissions(ctx context.Context, userID strin
 
 	var permissions int64
 	for _, role := range guild.Roles {
-		if memberRoles[role.ID] {
+		if memberRoles[role.ID] || role.ID == guild.ID {
 			permissions |= role.Permissions
 		}
 	}
@@ -164,12 +164,27 @@ func (m *AccessManager) UserChannelPermissions(ctx context.Context, userID strin
 		return discordgo.PermissionAll, nil
 	}
 
+	var everyoneAllow int64
+	var everyoneDeny int64
+	var allow int64
+	var deny int64
+
 	for _, overwrite := range channel.PermissionOverwrites {
+		if overwrite.ID == guild.ID {
+			everyoneAllow |= overwrite.Allow
+			everyoneDeny |= overwrite.Deny
+		}
+
 		if overwrite.ID == userID || memberRoles[overwrite.ID] {
-			permissions |= overwrite.Allow
-			permissions &= ^overwrite.Deny
+			allow |= overwrite.Allow
+			deny |= overwrite.Deny
 		}
 	}
+
+	permissions &= ^everyoneDeny
+	permissions |= everyoneAllow
+	permissions &= ^deny
+	permissions |= allow
 
 	return permissions, err
 }

@@ -22,8 +22,74 @@ func (b *Bot) onGuildCreate(s *discordgo.Session, g *discordgo.GuildCreate) {
 	b.State.AddGuilds(g.ID)
 }
 
+func (b *Bot) onGuildUpdate(s *discordgo.Session, g *discordgo.GuildUpdate) {
+	b.Rest.InvalidateGuildCache(g.ID)
+}
+
 func (b *Bot) onGuildDelete(s *discordgo.Session, g *discordgo.GuildDelete) {
+	b.Rest.InvalidateGuildCache(g.ID)
 	b.State.RemoveGuilds(g.ID)
+}
+
+func (b *Bot) onChannelCreate(s *discordgo.Session, c *discordgo.ChannelCreate) {
+	if c.GuildID != "" {
+		b.Rest.InvalidateGuildChannelsCache(c.GuildID)
+	}
+}
+
+func (b *Bot) onChannelUpdate(s *discordgo.Session, c *discordgo.ChannelUpdate) {
+	if c.GuildID != "" {
+		b.Rest.InvalidateGuildChannelsCache(c.GuildID)
+	}
+	b.Rest.InvalidateChannelCache(c.ID)
+}
+
+func (b *Bot) onChannelDelete(s *discordgo.Session, c *discordgo.ChannelDelete) {
+	if c.GuildID != "" {
+		b.Rest.InvalidateGuildChannelsCache(c.GuildID)
+	}
+	b.Rest.InvalidateChannelCache(c.ID)
+}
+
+func (b *Bot) onThreadCreate(s *discordgo.Session, t *discordgo.ThreadCreate) {
+	if t.GuildID != "" {
+		b.Rest.InvalidateGuildThreadsCache(t.GuildID)
+	}
+	b.Rest.InvalidateChannelCache(t.ID)
+}
+
+func (b *Bot) onThreadUpdate(s *discordgo.Session, t *discordgo.ThreadUpdate) {
+	if t.GuildID != "" {
+		b.Rest.InvalidateGuildThreadsCache(t.GuildID)
+	}
+	b.Rest.InvalidateChannelCache(t.ID)
+}
+
+func (b *Bot) onThreadDelete(s *discordgo.Session, t *discordgo.ThreadDelete) {
+	if t.GuildID != "" {
+		b.Rest.InvalidateGuildThreadsCache(t.GuildID)
+	}
+	b.Rest.InvalidateChannelCache(t.ID)
+}
+
+func (b *Bot) onRoleCreate(s *discordgo.Session, r *discordgo.GuildRoleCreate) {
+	b.Rest.InvalidateGuildCache(r.GuildID)
+}
+
+func (b *Bot) onRoleUpdate(s *discordgo.Session, r *discordgo.GuildRoleUpdate) {
+	b.Rest.InvalidateGuildCache(r.GuildID)
+}
+
+func (b *Bot) onRoleDelete(s *discordgo.Session, r *discordgo.GuildRoleDelete) {
+	b.Rest.InvalidateGuildCache(r.GuildID)
+}
+
+func (b *Bot) onMemberUpdate(s *discordgo.Session, m *discordgo.GuildMemberUpdate) {
+	b.Rest.InvalidateMemberCache(m.GuildID, m.User.ID)
+}
+
+func (b *Bot) onMemberRemove(s *discordgo.Session, m *discordgo.GuildMemberRemove) {
+	b.Rest.InvalidateMemberCache(m.GuildID, m.User.ID)
 }
 
 func onConnect(s *discordgo.Session, c *discordgo.Connect) {
