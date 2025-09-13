@@ -4,29 +4,29 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
+	"github.com/merlinfuchs/embed-generator/embedg-server/bot/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/ravener/discord-oauth2"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
-	"gopkg.in/guregu/null.v4"
 )
 
 type AuthHandler struct {
+	rest           rest.RestClient
 	pg             *postgres.PostgresStore
 	sessionManager *session.SessionManager
 	oauth2Config   *oauth2.Config
 }
 
-func New(pg *postgres.PostgresStore, sessionManager *session.SessionManager) *AuthHandler {
+func New(rest rest.RestClient, pg *postgres.PostgresStore, sessionManager *session.SessionManager) *AuthHandler {
 	conf := &oauth2.Config{
 		RedirectURL:  fmt.Sprintf("%s/auth/callback", viper.GetString("api.public_url")),
 		ClientID:     viper.GetString("discord.client_id"),
@@ -36,6 +36,7 @@ func New(pg *postgres.PostgresStore, sessionManager *session.SessionManager) *Au
 	}
 
 	return &AuthHandler{
+		rest:           rest,
 		pg:             pg,
 		sessionManager: sessionManager,
 		oauth2Config:   conf,
@@ -105,53 +106,20 @@ func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.T
 		return nil, "", fmt.Errorf("Failed to exchange token: %w", err)
 	}
 
-	client := h.oauth2Config.Client(c.Context(), tokenData)
-	resp, err := client.Get("https://discord.com/api/users/@me")
+	user, err := h.rest.OauthUser(c.Context(), tokenData.AccessToken)
 	if err != nil {
 		return nil, "", h.HandleAuthRedirect(c)
 	}
-
-	user := struct {
-		ID            string      `json:"id"`
-		Username      string      `json:"username"`
-		Discriminator string      `json:"discriminator"`
-		Avatar        null.String `json:"avatar"`
-	}{}
-	err = json.NewDecoder(resp.Body).Decode(&user)
-	if err != nil {
-		return nil, "", fmt.Errorf("Failed to decode user info: %w", err)
-	}
-	resp.Body.Close()
 
 	_, err = h.pg.Q.UpsertUser(c.Context(), pgmodel.UpsertUserParams{
 		ID:            user.ID,
 		Name:          user.Username,
 		Discriminator: user.Discriminator,
-		Avatar:        sql.NullString{String: user.Avatar.String, Valid: user.Avatar.Valid},
+		Avatar:        sql.NullString{String: user.Avatar, Valid: user.Avatar != ""},
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to upsert user")
 		return nil, "", err
-	}
-
-	resp, err = client.Get("https://discord.com/api/users/@me/guilds")
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to get guilds")
-		return nil, "", fmt.Errorf("Failed to get guilds: %w", err)
-	}
-
-	guilds := []struct {
-		ID string `json:"id"`
-	}{}
-	err = json.NewDecoder(resp.Body).Decode(&guilds)
-	if err != nil {
-		return nil, "", fmt.Errorf("Failed to decode guilds: %w", err)
-	}
-	resp.Body.Close()
-
-	guildIDs := make([]string, len(guilds))
-	for i, guild := range guilds {
-		guildIDs[i] = guild.ID
 	}
 
 	token, err := h.sessionManager.CreateSession(c.Context(), user.ID, tokenData.AccessToken, tokenData.Expiry)

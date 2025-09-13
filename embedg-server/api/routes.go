@@ -34,7 +34,7 @@ func registerRoutes(app *fiber.App, stores *Stores, bot *bot.Bot, managers *mana
 	healthGroup.Get("/", healthHandler.HandleHealth)
 	app.Get("/api/health/shard-list", healthHandler.HandleHealthShardList)
 
-	authHandler := auth.New(stores.PG, managers.session)
+	authHandler := auth.New(bot.Rest, stores.PG, managers.session)
 	app.Get("/api/auth/login", authHandler.HandleAuthRedirect)
 	app.Get("/api/auth/callback", authHandler.HandleAuthCallback)
 	app.Post("/api/auth/exchange", helpers.WithRequestBody(authHandler.HandleAuthExchange))
