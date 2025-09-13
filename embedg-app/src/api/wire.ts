@@ -141,8 +141,6 @@ export interface GuildWire {
   id: string;
   name: string;
   icon: null | string;
-  has_channel_with_user_access: boolean;
-  has_channel_with_bot_access: boolean;
 }
 export type ListGuildsResponseWire = APIResponse<GuildWire[]>;
 export type GetGuildResponseWire = APIResponse<GuildWire>;
@@ -152,10 +150,6 @@ export interface GuildChannelWire {
   position: number /* int */;
   parent_id: null | string;
   type: number /* int */;
-  user_access: boolean;
-  user_permissions: string;
-  bot_access: boolean;
-  bot_permissions: string;
 }
 export type ListChannelsResponseWire = APIResponse<GuildChannelWire[]>;
 export interface GuildRoleWire {
@@ -187,6 +181,23 @@ export interface GuildBrandingWire {
   default_avatar_url: null | string;
 }
 export type GetGuildBrandingResponseWire = APIResponse<GuildBrandingWire>;
+
+//////////
+// source: health.go
+
+export interface ShardListWire {
+  shard_count: number /* int */;
+  shards: ShardWire[];
+}
+export interface ShardWire {
+  id: number /* int */;
+  has_session: boolean;
+  last_heartbeat_ack: string /* RFC3339 */;
+  last_heartbeat_sent: string /* RFC3339 */;
+  should_reconnect_on_error: boolean;
+  should_retry_on_rate_limit: boolean;
+  suspicious: boolean;
+}
 
 //////////
 // source: images.go

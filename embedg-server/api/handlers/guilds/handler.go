@@ -54,11 +54,9 @@ func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 		}
 
 		res = append(res, wire.GuildWire{
-			ID:                       guild.ID,
-			Name:                     guild.Name,
-			Icon:                     null.NewString(guild.Icon, guild.Icon != ""),
-			HasChannelWithUserAccess: true,
-			HasChannelWithBotAccess:  true,
+			ID:   guild.ID,
+			Name: guild.Name,
+			Icon: null.NewString(guild.Icon, guild.Icon != ""),
 		})
 	}
 
@@ -81,11 +79,9 @@ func (h *GuildsHanlder) HandleGetGuild(c *fiber.Ctx) error {
 	}
 
 	res := wire.GuildWire{
-		ID:                       guild.ID,
-		Name:                     guild.Name,
-		Icon:                     null.NewString(guild.Icon, guild.Icon != ""),
-		HasChannelWithUserAccess: true,
-		HasChannelWithBotAccess:  true,
+		ID:   guild.ID,
+		Name: guild.Name,
+		Icon: null.NewString(guild.Icon, guild.Icon != ""),
 	}
 
 	return c.JSON(wire.GetGuildResponseWire{
@@ -121,29 +117,21 @@ func (h *GuildsHanlder) HandleListGuildChannels(c *fiber.Ctx) error {
 
 	for _, channel := range channels {
 		res = append(res, wire.GuildChannelWire{
-			ID:              channel.ID,
-			Name:            channel.Name,
-			Position:        channel.Position,
-			ParentID:        null.NewString(channel.ParentID, channel.ParentID != ""),
-			Type:            int(channel.Type),
-			UserAccess:      true,
-			UserPermissions: fmt.Sprintf("%d", 0),
-			BotAccess:       true,
-			BotPermissions:  fmt.Sprintf("%d", 0),
+			ID:       channel.ID,
+			Name:     channel.Name,
+			Position: channel.Position,
+			ParentID: null.NewString(channel.ParentID, channel.ParentID != ""),
+			Type:     int(channel.Type),
 		})
 	}
 
 	for _, channel := range threads {
 		res = append(res, wire.GuildChannelWire{
-			ID:              channel.ID,
-			Name:            channel.Name,
-			Position:        channel.Position,
-			ParentID:        null.NewString(channel.ParentID, channel.ParentID != ""),
-			Type:            int(channel.Type),
-			UserAccess:      true,
-			UserPermissions: fmt.Sprintf("%d", 0),
-			BotAccess:       true,
-			BotPermissions:  fmt.Sprintf("%d", 0),
+			ID:       channel.ID,
+			Name:     channel.Name,
+			Position: channel.Position,
+			ParentID: null.NewString(channel.ParentID, channel.ParentID != ""),
+			Type:     int(channel.Type),
 		})
 	}
 

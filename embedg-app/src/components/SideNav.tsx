@@ -276,11 +276,8 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
   useEffect(() => {
     if (!guildId) {
       if (guilds?.success) {
-        const defaultGuild = guilds.data.find(
-          (g) => g.has_channel_with_bot_access && g.has_channel_with_user_access
-        );
-        if (defaultGuild) {
-          setGuildId(defaultGuild.id);
+        if (guilds.data.length !== 0) {
+          setGuildId(guilds.data[0].id);
         }
       }
     } else if (!isLoading) {
@@ -357,19 +354,9 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
             guilds.data.map((g) => (
               <div
                 key={g.id}
-                className={clsx(
-                  "py-2 flex space-x-2 items-center rounded px-3",
-                  g.has_channel_with_bot_access &&
-                    g.has_channel_with_user_access
-                    ? "hover:bg-dark-3 cursor-pointer"
-                    : "opacity-60 cursor-not-allowed"
-                )}
+                className="py-2 flex space-x-2 items-center rounded px-3 hover:bg-dark-3 cursor-pointer"
                 role="button"
-                onClick={() =>
-                  g.has_channel_with_bot_access &&
-                  g.has_channel_with_user_access &&
-                  selectGuild(g.id)
-                }
+                onClick={() => selectGuild(g.id)}
               >
                 <img
                   src={guildIconUrl(g)}

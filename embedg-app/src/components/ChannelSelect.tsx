@@ -73,10 +73,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
         res.push({
           ...rootChannel,
           level: 0,
-          canSelect:
-            rootChannel.user_access &&
-            rootChannel.bot_access &&
-            canSelectChannelType(rootChannel.type),
+          canSelect: canSelectChannelType(rootChannel.type),
         });
       }
 
@@ -96,10 +93,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
           res.push({
             ...childChannel,
             level: 1,
-            canSelect:
-              childChannel.user_access &&
-              childChannel.bot_access &&
-              canSelectChannelType(childChannel.type),
+            canSelect: canSelectChannelType(childChannel.type),
           });
         }
 
@@ -115,10 +109,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
             res.push({
               ...childThread,
               level: 2,
-              canSelect:
-                childThread.user_access &&
-                childThread.bot_access &&
-                canSelectChannelType(childThread.type),
+              canSelect: canSelectChannelType(childThread.type),
             });
           }
         }

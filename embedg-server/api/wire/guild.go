@@ -8,10 +8,6 @@ type GuildWire struct {
 	ID   string      `json:"id"`
 	Name string      `json:"name"`
 	Icon null.String `json:"icon"`
-
-	// TODO: Remove this
-	HasChannelWithUserAccess bool `json:"has_channel_with_user_access"`
-	HasChannelWithBotAccess  bool `json:"has_channel_with_bot_access"`
 }
 
 type ListGuildsResponseWire APIResponse[[]GuildWire]
@@ -24,12 +20,6 @@ type GuildChannelWire struct {
 	Position int         `json:"position"`
 	ParentID null.String `json:"parent_id"`
 	Type     int         `json:"type"`
-
-	// TODO: Remove this
-	UserAccess      bool   `json:"user_access"`
-	UserPermissions string `json:"user_permissions"`
-	BotAccess       bool   `json:"bot_access"`
-	BotPermissions  string `json:"bot_permissions"`
 }
 
 type ListChannelsResponseWire APIResponse[[]GuildChannelWire]
