@@ -178,7 +178,7 @@ const config: Config = {
   ],
 
   scripts: [
-    { src: "https://swetrix.org/swetrix.js", defer: true },
+    { src: "/swetrix.js", defer: true },
     { src: "js/setupswetrix.js", defer: true },
   ],
 };
