@@ -1,11 +1,9 @@
-package custom_bots
+package interaction
 
 import (
 	"bytes"
 	"crypto/ed25519"
-	"database/sql"
 	"encoding/hex"
-	"fmt"
 	"strings"
 	"time"
 
@@ -13,37 +11,32 @@ import (
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
+	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 )
 
-func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
-	customBotID := c.Params("customBotID")
+type InteractionHandler struct {
+	bot *bot.Bot
+}
 
-	customBot, err := h.pg.Q.GetCustomBot(c.Context(), customBotID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return helpers.NotFound("unknown_bot", "Custom bot not found")
-		}
-		return err
+func New(bot *bot.Bot) *InteractionHandler {
+	return &InteractionHandler{
+		bot: bot,
 	}
+}
 
-	if !verifyInteractionSignaure(c, customBot.PublicKey) {
+func (h *InteractionHandler) HandleBotInteraction(c *fiber.Ctx) error {
+	publicKey := viper.GetString("discord.public_key")
+
+	if !verifyInteractionSignaure(c, publicKey) {
 		return helpers.Unauthorized("invalid_signature", "Invalid signature")
 	}
 
 	interaction := &discordgo.InteractionCreate{}
-	err = c.BodyParser(interaction)
+	err := c.BodyParser(interaction)
 	if err != nil {
 		return err
-	}
-
-	if interaction.AppID != customBot.ApplicationID {
-		return fmt.Errorf("application id mismatch")
-	}
-
-	err = h.pg.Q.SetCustomBotHandledFirstInteraction(c.Context(), customBotID)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to set custom bot handled first interaction")
 	}
 
 	if interaction.Type == discordgo.InteractionPing {
@@ -64,18 +57,16 @@ func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 	}
 
 	if handle {
-		respCh := make(chan *discordgo.InteractionResponse)
+		respCh := make(chan *discordgo.InteractionResponse, 0)
 
 		ri := &handler.RestInteraction{
 			Inner:           interaction.Interaction,
-			Session:         h.bot.Session, // TODO?: Use custom bot session
+			Session:         h.bot.Session,
 			InitialResponse: respCh,
 		}
 
 		go func() {
-			session, _ := discordgo.New("Bot " + customBot.Token)
-
-			err := h.bot.ActionHandler.HandleActionInteraction(session, ri)
+			err := h.bot.ActionHandler.HandleActionInteraction(h.bot.Session, ri)
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to handle action interaction")
 			}

@@ -14,6 +14,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/guilds"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/health"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/images"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/interaction"
 	premium_handler "github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/premium"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/saved_messages"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/scheduled_messages"
@@ -95,6 +96,9 @@ func registerRoutes(app *fiber.App, stores *Stores, bot *bot.Bot, managers *mana
 	app.Delete("/api/custom-bot/commands/:commandID", sessionMiddleware.SessionRequired(), customBotHandler.HandleDeleteCustomCommand)
 	app.Post("/api/custom-bot/commands/deploy", sessionMiddleware.SessionRequired(), customBotHandler.HandleDeployCustomCommands)
 	app.Post("/api/gateway/:customBotID", customBotHandler.HandleCustomBotInteraction)
+
+	interactionHandler := interaction.New(bot)
+	app.Post("/api/gateway", interactionHandler.HandleBotInteraction)
 
 	imagesHandler := images.New(stores.PG, managers.access, managers.premium, stores.Blob)
 	app.Post("/api/images", sessionMiddleware.SessionRequired(), imagesHandler.HandleUploadImage)
