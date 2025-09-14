@@ -24,7 +24,7 @@ type managers struct {
 
 func createManagers(stores *Stores, bot *bot.Bot) *managers {
 	sessionManager := session.New(stores.PG)
-	accessManager := access.New(bot.State, bot.Session)
+	accessManager := access.New(bot.State, bot.Session, bot.Rest)
 	premiumManager := premium.New(stores.PG, bot)
 
 	actionParser := parser.New(accessManager, stores.PG, bot.State)

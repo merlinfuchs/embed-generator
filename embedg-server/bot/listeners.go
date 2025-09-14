@@ -34,6 +34,14 @@ func (b *Bot) onMessageDelete(_ *discordgo.Session, msg *discordgo.MessageDelete
 	}
 }
 
+func (b *Bot) onGuildMemberUpdate(_ *discordgo.Session, g *discordgo.GuildMemberUpdate) {
+	b.Rest.InvalidateMemberCache(g.GuildID, g.User.ID)
+}
+
+func (b *Bot) onGuildMemberRemove(_ *discordgo.Session, g *discordgo.GuildMemberRemove) {
+	b.Rest.InvalidateMemberCache(g.GuildID, g.User.ID)
+}
+
 func (b *Bot) onInteractionCreate(_ *discordgo.Session, i *discordgo.InteractionCreate) {
 	if i.Type == discordgo.InteractionMessageComponent {
 		data := i.MessageComponentData()

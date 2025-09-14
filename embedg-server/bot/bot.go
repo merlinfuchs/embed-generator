@@ -6,6 +6,7 @@ import (
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
+	"github.com/merlinfuchs/embed-generator/embedg-server/bot/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot/sharding"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
@@ -22,6 +23,7 @@ type Bot struct {
 	ActionParser  *parser.ActionParser
 
 	State *discordgo.State
+	Rest  *rest.RestClientWithCache
 }
 
 func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
@@ -43,6 +45,7 @@ func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 		ShardManager: manager,
 		pg:           pg,
 		State:        discordgo.NewState(),
+		Rest:         rest.NewRestClientWithCache(manager.Session),
 	}
 
 	b.AddHandler(onReady)
@@ -54,6 +57,8 @@ func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 	b.AddHandler(b.onInterface)
 
 	b.AddHandler(b.onMessageDelete)
+	b.AddHandler(b.onGuildMemberUpdate)
+	b.AddHandler(b.onGuildMemberRemove)
 
 	go b.lazyTierTask()
 
