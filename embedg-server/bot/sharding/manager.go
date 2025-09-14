@@ -25,8 +25,6 @@ type ShardManager struct {
 	// Number of shards that can identify concurrently.
 	ShardConcurrency int
 
-	State *discordgo.State
-
 	Presence     *discordgo.GatewayStatusUpdate
 	FirstShardID int
 	LastShardID  int
@@ -87,8 +85,13 @@ func New(token string) (cluster *ShardManager, err error) {
 
 	// Initialize the gateway.
 	cluster.Session, err = discordgo.New(token)
+	if err != nil {
+		return nil, err
+	}
 
 	cluster.Session.LogLevel = viper.GetInt("discord.log_level")
+	// The session will never connect to the gateway, but we use it for global state
+	cluster.Session.StateEnabled = true
 
 	// Set recommended shard count.
 	resp, err := cluster.Session.GatewayBot()
@@ -204,7 +207,6 @@ func (m *ShardManager) Start() (err error) {
 			ID:         i,
 			ShardCount: m.ShardCount,
 			Presence:   m.Presence,
-			State:      m.State,
 		})
 	}
 

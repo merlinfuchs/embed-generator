@@ -20,6 +20,8 @@ type Bot struct {
 	pg            *postgres.PostgresStore
 	ActionHandler *handler.ActionHandler
 	ActionParser  *parser.ActionParser
+
+	State *discordgo.State
 }
 
 func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
@@ -29,7 +31,6 @@ func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 	}
 
 	manager.Intents = discordgo.IntentGuilds | discordgo.IntentGuildMessages | discordgo.IntentGuildEmojis
-	manager.State = discordgo.NewState()
 	manager.Presence = &discordgo.GatewayStatusUpdate{
 		Game: discordgo.Activity{
 			Name: viper.GetString("discord.activity_name"),
@@ -41,6 +42,7 @@ func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 	b := &Bot{
 		ShardManager: manager,
 		pg:           pg,
+		State:        discordgo.NewState(),
 	}
 
 	b.AddHandler(onReady)
@@ -48,7 +50,8 @@ func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 	b.AddHandler(onDisconnect)
 	b.AddHandler(onResumed)
 	b.AddHandler(b.onInteractionCreate)
-	b.AddHandler(b.onEvent)
+	b.AddHandler(b.onRawEvent)
+	b.AddHandler(b.onInterface)
 
 	b.AddHandler(b.onMessageDelete)
 
