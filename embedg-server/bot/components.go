@@ -7,33 +7,30 @@ import (
 	"strings"
 
 	"github.com/merlinfuchs/discordgo"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 )
 
-func (b *Bot) handleComponentInteraction(s *discordgo.Session, i *discordgo.Interaction, data discordgo.MessageComponentInteractionData) error {
+func (b *Bot) handleComponentInteraction(s *discordgo.Session, i handler.Interaction, data discordgo.MessageComponentInteractionData) {
 	if strings.HasPrefix(data.CustomID, "embed:") {
-		return b.handleEmbedComponentInteraction(s, i, data)
+		b.handleEmbedComponentInteraction(s, i, data)
 	} else {
 		textResponse(s, i, "This component is not supported anymore. Please update the message at <https://message.style> to fix this.")
 	}
-	return nil
 }
 
-func (b *Bot) handleEmbedComponentInteraction(s *discordgo.Session, i *discordgo.Interaction, data discordgo.MessageComponentInteractionData) error {
+func (b *Bot) handleEmbedComponentInteraction(s *discordgo.Session, i handler.Interaction, data discordgo.MessageComponentInteractionData) {
 	var currentEmbed discordgo.MessageEmbed
-	if len(i.Message.Embeds) > 0 {
-		currentEmbed = *i.Message.Embeds[0]
+	if len(i.Interaction().Message.Embeds) > 0 {
+		currentEmbed = *i.Interaction().Message.Embeds[0]
 	}
 
 	switch data.CustomID {
 	case "embed:cancel":
-		return s.InteractionRespond(i, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseUpdateMessage,
-			Data: &discordgo.InteractionResponseData{
-				Content: "You have cancalled the embed editor.",
-			},
-		})
+		i.Respond(&discordgo.InteractionResponseData{
+			Content: "You have cancalled the embed editor.",
+		}, discordgo.InteractionResponseUpdateMessage)
 	case "embed:submit":
-		return modalResponse(s, i, "Send Embed", "embed:send", []discordgo.MessageComponent{
+		modalResponse(s, i, "Send Embed", "embed:send", []discordgo.MessageComponent{
 			discordgo.ActionsRow{
 				Components: []discordgo.MessageComponent{
 					discordgo.TextInput{
@@ -207,13 +204,12 @@ func (b *Bot) handleEmbedComponentInteraction(s *discordgo.Session, i *discordgo
 			},
 		})
 	}
-	return nil
 }
 
-func (b *Bot) handleModalInteraction(s *discordgo.Session, i *discordgo.Interaction, data discordgo.ModalSubmitInteractionData) error {
+func (b *Bot) handleModalInteraction(s *discordgo.Session, i handler.Interaction, data discordgo.ModalSubmitInteractionData) {
 	var currentEmbed discordgo.MessageEmbed
-	if len(i.Message.Embeds) > 0 {
-		currentEmbed = *i.Message.Embeds[0]
+	if len(i.Interaction().Message.Embeds) > 0 {
+		currentEmbed = *i.Interaction().Message.Embeds[0]
 	}
 
 	switch data.CustomID {
@@ -326,32 +322,26 @@ func (b *Bot) handleModalInteraction(s *discordgo.Session, i *discordgo.Interact
 			}
 		}
 
-		_, err := b.SendMessageToChannel(context.Background(), i.ChannelID, &discordgo.WebhookParams{
+		_, err := b.SendMessageToChannel(context.Background(), i.Interaction().ChannelID, &discordgo.WebhookParams{
 			Username:  username,
 			AvatarURL: avatarURL,
 			Embeds:    []*discordgo.MessageEmbed{&currentEmbed},
 		})
 		if err != nil {
-			return textResponse(s, i, fmt.Sprintf("Failed to send message: `%e`", err))
+			textResponse(s, i, fmt.Sprintf("Failed to send message: `%e`", err))
 		}
 	}
 
-	return s.InteractionRespond(i, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseUpdateMessage,
-		Data: &discordgo.InteractionResponseData{
-			Embeds:     []*discordgo.MessageEmbed{&currentEmbed},
-			Components: embedEditComponent(),
-		},
-	})
+	i.Respond(&discordgo.InteractionResponseData{
+		Embeds:     []*discordgo.MessageEmbed{&currentEmbed},
+		Components: embedEditComponent(),
+	}, discordgo.InteractionResponseUpdateMessage)
 }
 
-func modalResponse(s *discordgo.Session, i *discordgo.Interaction, title string, customID string, components []discordgo.MessageComponent) error {
-	return s.InteractionRespond(i, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseModal,
-		Data: &discordgo.InteractionResponseData{
-			Title:      title,
-			CustomID:   customID,
-			Components: components,
-		},
-	})
+func modalResponse(s *discordgo.Session, i handler.Interaction, title string, customID string, components []discordgo.MessageComponent) {
+	i.Respond(&discordgo.InteractionResponseData{
+		Title:      title,
+		CustomID:   customID,
+		Components: components,
+	}, discordgo.InteractionResponseModal)
 }

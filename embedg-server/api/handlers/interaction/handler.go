@@ -45,43 +45,41 @@ func (h *InteractionHandler) HandleBotInteraction(c *fiber.Ctx) error {
 		})
 	}
 
-	handle := false
+	customAction := false
 	switch interaction.Type {
 	case discordgo.InteractionMessageComponent:
 		data := interaction.MessageComponentData()
 		if strings.HasPrefix(data.CustomID, "action:") {
-			handle = true
+			customAction = true
 		}
-	case discordgo.InteractionApplicationCommand:
-		handle = true
 	}
 
-	if handle {
-		respCh := make(chan *discordgo.InteractionResponse, 0)
+	respCh := make(chan *discordgo.InteractionResponse)
 
-		ri := &handler.RestInteraction{
-			Inner:           interaction.Interaction,
-			Session:         h.bot.Session,
-			InitialResponse: respCh,
-		}
+	ri := &handler.RestInteraction{
+		Inner:           interaction.Interaction,
+		Session:         h.bot.Session,
+		InitialResponse: respCh,
+	}
 
-		go func() {
+	go func() {
+		if customAction {
 			err := h.bot.ActionHandler.HandleActionInteraction(h.bot.Session, ri)
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to handle action interaction")
 			}
-		}()
-
-		select {
-		case resp := <-respCh:
-			return c.JSON(resp)
-		case <-c.Context().Done():
-			return c.SendStatus(fiber.StatusNoContent)
-		case <-time.After(3 * time.Second):
-			return c.SendStatus(fiber.StatusInternalServerError)
+		} else {
+			h.bot.HandlerInteraction(h.bot.Session, ri, interaction.Interaction.Data)
 		}
-	} else {
-		return c.SendStatus(fiber.StatusBadRequest)
+	}()
+
+	select {
+	case resp := <-respCh:
+		return c.JSON(resp)
+	case <-c.Context().Done():
+		return c.SendStatus(fiber.StatusNoContent)
+	case <-time.After(3 * time.Second):
+		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 }
 
