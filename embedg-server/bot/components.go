@@ -329,6 +329,7 @@ func (b *Bot) handleModalInteraction(s *discordgo.Session, i handler.Interaction
 		})
 		if err != nil {
 			textResponse(s, i, fmt.Sprintf("Failed to send message: `%e`", err))
+			return
 		}
 	}
 

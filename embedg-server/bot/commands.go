@@ -383,15 +383,18 @@ func (b *Bot) handleImageCommand(s *discordgo.Session, i handler.Interaction, da
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to get server")
 			textResponse(s, i, "Failed to get server.")
+			return
 		}
 		if guild.Icon == "" {
 			textResponse(s, i, "This server has no icon.")
+			return
 		}
 		iconURL := makeStatic(guild.IconURL("1024"), 1)
 		imageUrlResponse(s, i, iconURL)
 	case "emoji":
 		// emoji := subCMD.Options[0].StringValue()
 		// TODO: get emoji id from regex
+		return
 	}
 }
 
@@ -409,21 +412,25 @@ func (b *Bot) handleMessageCommand(s *discordgo.Session, i handler.Interaction, 
 	if err != nil {
 		if util.IsDiscordRestErrorCode(err, discordgo.ErrCodeUnknownMessage) {
 			textResponse(s, i, "Message not found.")
+			return
 		}
 		log.Error().Err(err).Msg("Failed to get message")
 		textResponse(s, i, "Failed to get message.")
+		return
 	}
 
 	components, err := b.ActionParser.UnparseMessageComponents(message.Components)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to unparse message components")
 		textResponse(s, i, "Failed to unparse message components.")
+		return
 	}
 
 	actionSets, err := b.ActionParser.RetrieveActionsForMessage(context.TODO(), messageID)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to retrieve actions for message")
 		textResponse(s, i, "Failed to retrieve actions for message.")
+		return
 	}
 
 	messageDump, err := json.MarshalIndent(actions.MessageWithActions{
@@ -437,6 +444,7 @@ func (b *Bot) handleMessageCommand(s *discordgo.Session, i handler.Interaction, 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to marshal message dump")
 		textResponse(s, i, "Failed to marshal message dump.")
+		return
 	}
 
 	switch subCMD.Name {
@@ -450,6 +458,7 @@ func (b *Bot) handleMessageCommand(s *discordgo.Session, i handler.Interaction, 
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to insert shared message")
 			textResponse(s, i, "Failed to create shared message.")
+			return
 		}
 
 		url := fmt.Sprintf("%s/editor/share/%s", viper.GetString("app.public_url"), msg.ID)
@@ -459,6 +468,7 @@ func (b *Bot) handleMessageCommand(s *discordgo.Session, i handler.Interaction, 
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to create vaultb.in paste")
 			textResponse(s, i, "Failed to create vaultb.in paste.")
+			return
 		}
 
 		textResponse(s, i, fmt.Sprintf("You can find the JSON code here: <%s>", paste.URL()))
@@ -473,12 +483,14 @@ func (b *Bot) handleRestoreContextCommand(s *discordgo.Session, i handler.Intera
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to unparse message components")
 		textResponse(s, i, "Failed to unparse message components.")
+		return
 	}
 
 	actionSets, err := b.ActionParser.RetrieveActionsForMessage(context.TODO(), messageID)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to retrieve actions for message")
 		textResponse(s, i, "Failed to retrieve actions for message.")
+		return
 	}
 
 	messageDump, err := json.MarshalIndent(actions.MessageWithActions{
@@ -492,6 +504,7 @@ func (b *Bot) handleRestoreContextCommand(s *discordgo.Session, i handler.Intera
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to marshal message dump")
 		textResponse(s, i, "Failed to marshal message dump.")
+		return
 	}
 
 	msg, err := b.pg.Q.InsertSharedMessage(context.TODO(), pgmodel.InsertSharedMessageParams{
@@ -503,6 +516,7 @@ func (b *Bot) handleRestoreContextCommand(s *discordgo.Session, i handler.Intera
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to insert shared message")
 		textResponse(s, i, "Failed to create shared message.")
+		return
 	}
 
 	url := fmt.Sprintf("%s/editor/share/%s", viper.GetString("app.public_url"), msg.ID)
@@ -517,12 +531,14 @@ func (b *Bot) handleJSONContextCommand(s *discordgo.Session, i handler.Interacti
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to unparse message components")
 		textResponse(s, i, "Failed to unparse message components.")
+		return
 	}
 
 	actionSets, err := b.ActionParser.RetrieveActionsForMessage(context.TODO(), messageID)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to retrieve actions for message")
 		textResponse(s, i, "Failed to retrieve actions for message.")
+		return
 	}
 
 	messageDump, err := json.MarshalIndent(actions.MessageWithActions{
@@ -536,12 +552,14 @@ func (b *Bot) handleJSONContextCommand(s *discordgo.Session, i handler.Interacti
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to marshal message dump")
 		textResponse(s, i, "Failed to marshal message dump.")
+		return
 	}
 
 	paste, err := util.CreateVaultBinPaste(string(messageDump), "json")
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create vaultb.in paste")
 		textResponse(s, i, "Failed to create vaultb.in paste.")
+		return
 	}
 
 	textResponse(s, i, fmt.Sprintf("You can find the JSON code here: <%s>", paste.URL()))
