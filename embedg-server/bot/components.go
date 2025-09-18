@@ -115,7 +115,7 @@ func (b *Bot) handleEmbedComponentInteraction(s *discordgo.Session, i handler.In
 					discordgo.TextInput{
 						CustomID: "embed:description",
 						Label:    "Description",
-						Value:    currentEmbed.Title,
+						Value:    currentEmbed.Description,
 						Style:    discordgo.TextInputParagraph,
 					},
 				},
