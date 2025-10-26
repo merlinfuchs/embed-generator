@@ -2,21 +2,22 @@ package health
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
+	"github.com/disgoorg/disgo/bot"
+	"github.com/disgoorg/disgo/gateway"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
-	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
+	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 )
 
 type HealthHandler struct {
-	bot *bot.Bot
+	client *bot.Client
 }
 
-func New(bot *bot.Bot) *HealthHandler {
+func New(client *bot.Client) *HealthHandler {
 	return &HealthHandler{
-		bot: bot,
+		client: client,
 	}
 }
 
@@ -26,57 +27,63 @@ func (h *HealthHandler) HandleHealth(c *fiber.Ctx) error {
 
 func (h *HealthHandler) HandleHealthShardList(c *fiber.Ctx) error {
 	rawGuildID := c.Query("guild_id")
-	var guildID uint64
+	var guildID util.ID
 	if rawGuildID != "" {
 		var err error
-		guildID, err = strconv.ParseUint(rawGuildID, 10, 64)
+		guildID, err = util.ParseID(rawGuildID)
 		if err != nil {
 			return c.SendStatus(http.StatusBadRequest)
 		}
 	}
 
-	suspiciousOnly := c.Query("suspicious") == "true"
+	shardListWire := make([]wire.ShardWire, 0)
+	var shardCount int
 
-	shards := h.bot.ShardManager.ShardList()
+	if guildID != 0 {
+		shard := h.client.ShardManager.ShardByGuildID(guildID)
 
-	shardListWire := make([]wire.ShardWire, 0, len(shards))
-	for _, shard := range shards {
-		if guildID != 0 && guildID%uint64(h.bot.ShardManager.ShardCount) != uint64(shard.ID) {
-			continue
-		}
+		shardListWire = append(shardListWire, wire.ShardWire{
+			ID:         shard.ShardID(),
+			Status:     shard.Status().String(),
+			Latency:    shard.Latency().Milliseconds(),
+			Suspicious: isShardSuspicious(shard),
+		})
+	} else {
+		suspiciousOnly := c.Query("suspicious") == "true"
 
-		if shard.Session == nil {
-			shardListWire = append(shardListWire, wire.ShardWire{
-				ID:         shard.ID,
-				Suspicious: true,
-			})
-		} else {
-			var suspicious bool
-			if time.Since(shard.Session.LastHeartbeatAck) > 5*60*time.Second {
-				suspicious = true
-			}
-			if time.Since(shard.Session.LastHeartbeatSent) > 5*time.Second && shard.Session.LastHeartbeatAck.Before(shard.Session.LastHeartbeatSent) {
-				suspicious = true
-			}
+		shards := h.client.ShardManager.Shards()
 
+		for shard := range shards {
+			shardCount += 1
+
+			suspicious := isShardSuspicious(shard)
 			if suspiciousOnly && !suspicious {
 				continue
 			}
 
 			shardListWire = append(shardListWire, wire.ShardWire{
-				ID:                     shard.ID,
-				HasSession:             true,
-				LastHeartbeatAck:       shard.Session.LastHeartbeatAck,
-				LastHeartbeatSent:      shard.Session.LastHeartbeatSent,
-				ShouldReconnectOnError: shard.Session.ShouldReconnectOnError,
-				ShouldRetryOnRateLimit: shard.Session.ShouldRetryOnRateLimit,
-				Suspicious:             suspicious,
+				ID:         shard.ShardID(),
+				Status:     shard.Status().String(),
+				Latency:    shard.Latency().Milliseconds(),
+				Suspicious: suspicious,
 			})
 		}
 	}
 
 	return c.JSON(wire.ShardListWire{
-		ShardCount: h.bot.ShardManager.ShardCount,
+		ShardCount: shardCount,
 		Shards:     shardListWire,
 	})
+}
+
+func isShardSuspicious(shard gateway.Gateway) bool {
+	if shard.Status() != gateway.StatusReady {
+		return true
+	}
+
+	if shard.Latency() > 10*time.Second {
+		return true
+	}
+
+	return false
 }

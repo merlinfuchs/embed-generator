@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/disgoorg/disgo/cache"
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
@@ -44,14 +45,14 @@ func (p *InteractionProvider) ProvideData(data map[string]interface{}) {
 }
 
 type GuildProvider struct {
-	state   *discordgo.State
+	caches  cache.Caches
 	guildID string
 	guild   *discordgo.Guild
 }
 
-func NewGuildProvider(state *discordgo.State, guildID string, guild *discordgo.Guild) *GuildProvider {
+func NewGuildProvider(caches cache.Caches, guildID string, guild *discordgo.Guild) *GuildProvider {
 	return &GuildProvider{
-		state:   state,
+		caches:  caches,
 		guildID: guildID,
 		guild:   guild,
 	}
@@ -60,20 +61,20 @@ func NewGuildProvider(state *discordgo.State, guildID string, guild *discordgo.G
 func (p *GuildProvider) ProvideFuncs(funcs map[string]interface{}) {}
 
 func (p *GuildProvider) ProvideData(data map[string]interface{}) {
-	guildData := NewGuildData(p.state, p.guildID, p.guild)
+	guildData := NewGuildData(p.caches, p.guildID, p.guild)
 	data["Guild"] = guildData
 	data["Server"] = guildData
 }
 
 type ChannelProvider struct {
-	state     *discordgo.State
+	caches    cache.Caches
 	channelID string
 	channel   *discordgo.Channel
 }
 
-func NewChannelProvider(state *discordgo.State, channelID string, channel *discordgo.Channel) *ChannelProvider {
+func NewChannelProvider(caches cache.Caches, channelID string, channel *discordgo.Channel) *ChannelProvider {
 	return &ChannelProvider{
-		state:     state,
+		caches:    caches,
 		channelID: channelID,
 		channel:   channel,
 	}
@@ -82,7 +83,7 @@ func NewChannelProvider(state *discordgo.State, channelID string, channel *disco
 func (p *ChannelProvider) ProvideFuncs(funcs map[string]interface{}) {}
 
 func (p *ChannelProvider) ProvideData(data map[string]interface{}) {
-	data["Channel"] = NewChannelData(p.state, p.channelID, p.channel)
+	data["Channel"] = NewChannelData(p.caches, p.channelID, p.channel)
 }
 
 type KVProvider struct {

@@ -7,11 +7,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
+	"github.com/merlinfuchs/embed-generator/embedg-server/embedg"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
-func Serve(stores *Stores) {
+func Serve(embedg *embedg.EmbedGenerator, stores *Stores) {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			var e *wire.Error
@@ -34,9 +35,9 @@ func Serve(stores *Stores) {
 		EnableStackTrace: true,
 	}))
 
-	managers := createManagers(stores, stores.Bot)
+	managers := createManagers(stores, embedg)
 
-	registerRoutes(app, stores, stores.Bot, managers)
+	registerRoutes(app, stores, embedg, managers)
 
 	err := app.Listen(fmt.Sprintf("%s:%d", viper.GetString("api.host"), viper.GetInt("api.port")))
 	if err != nil {

@@ -1,26 +1,25 @@
 package access
 
 import (
-	"context"
 	"fmt"
 
+	"github.com/disgoorg/disgo/cache"
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/rest"
 	"github.com/merlinfuchs/discordgo"
-	"github.com/merlinfuchs/embed-generator/embedg-server/bot/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/spf13/viper"
 )
 
 type AccessManager struct {
-	state   *discordgo.State
-	session *discordgo.Session
-	rest    rest.RestClient
+	caches cache.Caches
+	rest   rest.Rest
 }
 
-func New(state *discordgo.State, session *discordgo.Session, rest rest.RestClient) *AccessManager {
+func New(caches cache.Caches, rest rest.Rest) *AccessManager {
 	return &AccessManager{
-		state:   state,
-		session: session,
-		rest:    rest,
+		caches: caches,
+		rest:   rest,
 	}
 }
 
@@ -30,8 +29,8 @@ type GuildAccess struct {
 }
 
 type ChannelAccess struct {
-	UserPermissions int64
-	BotPermissions  int64
+	UserPermissions discord.Permissions
+	BotPermissions  discord.Permissions
 }
 
 func (c *ChannelAccess) UserAccess() bool {
@@ -42,25 +41,24 @@ func (c *ChannelAccess) BotAccess() bool {
 	return c.BotPermissions&(discordgo.PermissionManageWebhooks|discordgo.PermissionAdministrator) != 0
 }
 
-func (m *AccessManager) GetGuildAccessForUser(userID string, guildID string) (GuildAccess, error) {
+func (m *AccessManager) GetGuildAccessForUser(userID util.ID, guildID util.ID) (GuildAccess, error) {
 	res := GuildAccess{}
 
-	guild, err := m.state.Guild(guildID)
-	if err != nil {
-		if err == discordgo.ErrStateNotFound {
-			return res, nil
-		}
-		return res, err
+	guild, ok := m.caches.Guild(guildID)
+	if !ok {
+		return res, nil
 	}
 
 	if guild.OwnerID == userID {
 		res.HasChannelWithUserAccess = true
 	}
 
-	for _, channel := range guild.Channels {
+	channels := m.caches.ChannelsForGuild(guildID)
+
+	for channel := range channels {
 		if !res.HasChannelWithUserAccess {
 			access := ChannelAccess{}
-			err := m.SetChannelAccessUserPermissions(&access, userID, channel.ID)
+			err := m.SetChannelAccessUserPermissions(&access, userID, channel.ID())
 			if err != nil {
 				return res, err
 			}
@@ -72,7 +70,7 @@ func (m *AccessManager) GetGuildAccessForUser(userID string, guildID string) (Gu
 
 		if !res.HasChannelWithBotAccess {
 			access := ChannelAccess{}
-			err = m.SetChannelAccessBotPermissions(&access, channel.ID)
+			err := m.SetChannelAccessBotPermissions(&access, channel.ID())
 			if err != nil {
 				return res, err
 			}
@@ -91,7 +89,7 @@ func (m *AccessManager) GetGuildAccessForUser(userID string, guildID string) (Gu
 	return res, nil
 }
 
-func (m *AccessManager) GetChannelAccessForUser(userID string, channelID string) (ChannelAccess, error) {
+func (m *AccessManager) GetChannelAccessForUser(userID util.ID, channelID util.ID) (ChannelAccess, error) {
 	res := ChannelAccess{}
 
 	err := m.SetChannelAccessUserPermissions(&res, userID, channelID)
@@ -107,7 +105,7 @@ func (m *AccessManager) GetChannelAccessForUser(userID string, channelID string)
 	return res, nil
 }
 
-func (m *AccessManager) SetChannelAccessUserPermissions(res *ChannelAccess, userID string, channelID string) (err error) {
+func (m *AccessManager) SetChannelAccessUserPermissions(res *ChannelAccess, userID util.ID, channelID util.ID) (err error) {
 	res.UserPermissions, err = m.ComputeUserPermissionsForChannel(userID, channelID)
 	if err != nil {
 		if util.IsDiscordRestErrorCode(err, discordgo.ErrCodeUnknownMember) {
@@ -120,7 +118,7 @@ func (m *AccessManager) SetChannelAccessUserPermissions(res *ChannelAccess, user
 	return nil
 }
 
-func (m *AccessManager) SetChannelAccessBotPermissions(res *ChannelAccess, channelID string) error {
+func (m *AccessManager) SetChannelAccessBotPermissions(res *ChannelAccess, channelID util.ID) error {
 	botPerms, err := m.ComputeBotPermissionsForChannel(channelID)
 	if err != nil {
 		return err
@@ -134,21 +132,21 @@ func (m *AccessManager) SetChannelAccessBotPermissions(res *ChannelAccess, chann
 	return nil
 }
 
-func (m *AccessManager) ComputeUserPermissionsForChannel(userID string, channelID string) (int64, error) {
-	channel, err := m.state.Channel(channelID)
-	if err != nil {
-		if err == discordgo.ErrStateNotFound {
-			return 0, nil
-		}
-		return 0, err
+func (m *AccessManager) ComputeUserPermissionsForChannel(userID util.ID, channelID util.ID) (discord.Permissions, error) {
+	channel, ok := m.caches.Channel(channelID)
+	if !ok {
+		return 0, nil
 	}
 
-	guild, err := m.state.Guild(channel.GuildID)
-	if err != nil {
-		if err == discordgo.ErrStateNotFound {
-			return 0, nil
-		}
-		return 0, err
+	guild, ok := m.caches.Guild(channel.GuildID())
+	if !ok {
+		return 0, nil
+	}
+
+	roleIterator := m.caches.Roles(channel.GuildID())
+	roles := make([]discord.Role, 0)
+	for role := range roleIterator {
+		roles = append(roles, role)
 	}
 
 	if guild.OwnerID == userID {
@@ -161,23 +159,26 @@ func (m *AccessManager) ComputeUserPermissionsForChannel(userID string, channelI
 		return 0, err
 	}
 
-	perms := memberPermissions(guild, channel, userID, member.Roles)
+	perms := memberPermissions(&guild, roles, channel, userID, member.RoleIDs)
 	return perms, err
 }
 
-func (m *AccessManager) ComputeBotPermissionsForChannel(channelID string) (int64, error) {
-	userID := viper.GetString("discord.client_id")
+func (m *AccessManager) ComputeBotPermissionsForChannel(channelID util.ID) (discord.Permissions, error) {
+	userID, err := util.ParseID(viper.GetString("discord.client_id"))
+	if err != nil {
+		return 0, fmt.Errorf("Failed to parse bot user ID: %w", err)
+	}
 
 	return m.ComputeUserPermissionsForChannel(userID, channelID)
 }
 
-func (m *AccessManager) GetGuildMember(guildID string, userID string) (*discordgo.Member, error) {
-	member, _ := m.state.Member(guildID, userID)
-	if member != nil {
-		return member, nil
+func (m *AccessManager) GetGuildMember(guildID util.ID, userID util.ID) (*discord.Member, error) {
+	cached, ok := m.caches.Member(guildID, userID)
+	if ok {
+		return &cached, nil
 	}
 
-	member, err := m.rest.GuildMember(context.Background(), guildID, userID)
+	member, err := m.rest.GetMember(guildID, userID)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get guild member: %w", err)
 	}

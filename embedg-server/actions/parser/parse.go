@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/disgoorg/disgo/cache"
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
@@ -16,14 +17,14 @@ import (
 type ActionParser struct {
 	accessManager *access.AccessManager
 	pg            *postgres.PostgresStore
-	state         *discordgo.State
+	caches        cache.Caches
 }
 
-func New(accessManager *access.AccessManager, pg *postgres.PostgresStore, state *discordgo.State) *ActionParser {
+func New(accessManager *access.AccessManager, pg *postgres.PostgresStore, caches cache.Caches) *ActionParser {
 	return &ActionParser{
 		accessManager: accessManager,
 		pg:            pg,
-		state:         state,
+		caches:        caches,
 	}
 }
 

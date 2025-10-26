@@ -1,22 +1,26 @@
 package access
 
-import "github.com/merlinfuchs/discordgo"
+import (
+	"github.com/disgoorg/disgo/discord"
+	"github.com/merlinfuchs/discordgo"
+	"github.com/merlinfuchs/embed-generator/embedg-server/util"
+)
 
-func memberPermissions(guild *discordgo.Guild, channel *discordgo.Channel, userID string, roles []string) (apermissions int64) {
+func memberPermissions(guild *discord.Guild, roles []discord.Role, channel discord.GuildChannel, userID util.ID, roleIDs []util.ID) (apermissions discord.Permissions) {
 	if userID == guild.OwnerID {
 		apermissions = discordgo.PermissionAll
 		return
 	}
 
-	for _, role := range guild.Roles {
+	for _, role := range roles {
 		if role.ID == guild.ID {
 			apermissions |= role.Permissions
 			break
 		}
 	}
 
-	for _, role := range guild.Roles {
-		for _, roleID := range roles {
+	for _, role := range roles {
+		for _, roleID := range roleIDs {
 			if role.ID == roleID {
 				apermissions |= role.Permissions
 				break
@@ -34,22 +38,26 @@ func memberPermissions(guild *discordgo.Guild, channel *discordgo.Channel, userI
 	}
 
 	// Apply @everyone overrides from the channel.
-	for _, overwrite := range channel.PermissionOverwrites {
-		if guild.ID == overwrite.ID {
-			apermissions &= ^overwrite.Deny
-			apermissions |= overwrite.Allow
-			break
+	for _, overwrite := range channel.PermissionOverwrites() {
+		if roleOverwrite, ok := overwrite.(discord.RolePermissionOverwrite); ok {
+			if guild.ID == roleOverwrite.ID() {
+				apermissions &= ^roleOverwrite.Deny
+				apermissions |= roleOverwrite.Allow
+				break
+			}
 		}
 	}
 
-	var denies, allows int64
+	var denies, allows discord.Permissions
 	// Member overwrites can override role overrides, so do two passes
-	for _, overwrite := range channel.PermissionOverwrites {
-		for _, roleID := range roles {
-			if overwrite.Type == discordgo.PermissionOverwriteTypeRole && roleID == overwrite.ID {
-				denies |= overwrite.Deny
-				allows |= overwrite.Allow
-				break
+	for _, overwrite := range channel.PermissionOverwrites() {
+		if roleOverwrite, ok := overwrite.(discord.RolePermissionOverwrite); ok {
+			for _, roleID := range roleIDs {
+				if roleOverwrite.ID() == roleID {
+					denies |= roleOverwrite.Deny
+					allows |= roleOverwrite.Allow
+					break
+				}
 			}
 		}
 	}
@@ -57,11 +65,13 @@ func memberPermissions(guild *discordgo.Guild, channel *discordgo.Channel, userI
 	apermissions &= ^denies
 	apermissions |= allows
 
-	for _, overwrite := range channel.PermissionOverwrites {
-		if overwrite.Type == discordgo.PermissionOverwriteTypeMember && overwrite.ID == userID {
-			apermissions &= ^overwrite.Deny
-			apermissions |= overwrite.Allow
-			break
+	for _, overwrite := range channel.PermissionOverwrites() {
+		if memberOverwrite, ok := overwrite.(discord.MemberPermissionOverwrite); ok {
+			if memberOverwrite.ID() == userID {
+				apermissions &= ^memberOverwrite.Deny
+				apermissions |= memberOverwrite.Allow
+				break
+			}
 		}
 	}
 

@@ -7,21 +7,24 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/disgoorg/disgo/cache"
+	"github.com/disgoorg/disgo/rest"
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/template"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
-	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
+	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
 )
 
 type ScheduledMessageManager struct {
 	pg           *postgres.PostgresStore
-	bot          *bot.Bot
+	caches       cache.Caches
+	rest         rest.Rest
 	actionParser *parser.ActionParser
 	planStore    store.PlanStore
 }
@@ -29,12 +32,14 @@ type ScheduledMessageManager struct {
 func NewScheduledMessageManager(
 	pg *postgres.PostgresStore,
 	actionParser *parser.ActionParser,
-	bot *bot.Bot,
+	caches cache.Caches,
+	rest rest.Rest,
 	planStore store.PlanStore,
 ) *ScheduledMessageManager {
 	m := &ScheduledMessageManager{
 		pg:           pg,
-		bot:          bot,
+		caches:       caches,
+		rest:         rest,
 		actionParser: actionParser,
 		planStore:    planStore,
 	}
@@ -114,15 +119,15 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		return fmt.Errorf("Failed to get saved message from scheduled message: %w", err)
 	}
 
-	features, err := m.planStore.GetPlanFeaturesForGuild(ctx, scheduledMessage.GuildID)
+	features, err := m.planStore.GetPlanFeaturesForGuild(ctx, util.ToID(scheduledMessage.GuildID))
 	if err != nil {
 		return fmt.Errorf("could not get plan features: %w", err)
 	}
 
 	templates := template.NewContext(
 		"SCHEDULED_MESSAGE", features.MaxTemplateOps,
-		template.NewGuildProvider(m.bot.State, scheduledMessage.GuildID, nil),
-		template.NewChannelProvider(m.bot.State, scheduledMessage.ChannelID, nil),
+		template.NewGuildProvider(m.caches, scheduledMessage.GuildID, nil),
+		template.NewChannelProvider(m.caches, scheduledMessage.ChannelID, nil),
 		template.NewKVProvider(scheduledMessage.GuildID, m.pg, features.MaxKVKeys),
 	)
 

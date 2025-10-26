@@ -39,12 +39,9 @@ type EmbedGenerator struct {
 }
 
 func NewEmbedGenerator(
-	ctx context.Context,
 	cfg EmbedGeneratorConfig,
 
 	pg *postgres.PostgresStore,
-	actionHandler *actionshandler.ActionHandler,
-	actionParser *actionsparser.ActionParser,
 ) (*EmbedGenerator, error) {
 	clientRouter := handler.New()
 
@@ -91,15 +88,12 @@ func NewEmbedGenerator(
 	}
 
 	embedg := &EmbedGenerator{
-		ctx: ctx,
 		cfg: cfg,
 
 		client:       client,
 		clientRouter: clientRouter,
 
-		pg:            pg,
-		actionHandler: actionHandler,
-		actionParser:  actionParser,
+		pg: pg,
 	}
 
 	embedg.registerHandlers()
@@ -108,6 +102,7 @@ func NewEmbedGenerator(
 }
 
 func (g *EmbedGenerator) Start(ctx context.Context) error {
+	g.ctx = ctx
 	if err := g.client.OpenShardManager(ctx); err != nil {
 		return err
 	}
@@ -135,6 +130,14 @@ func (g *EmbedGenerator) ActionHandler() *actionshandler.ActionHandler {
 	return g.actionHandler
 }
 
+func (g *EmbedGenerator) SetActionHandler(actionHandler *actionshandler.ActionHandler) {
+	g.actionHandler = actionHandler
+}
+
 func (g *EmbedGenerator) ActionParser() *actionsparser.ActionParser {
 	return g.actionParser
+}
+
+func (g *EmbedGenerator) SetActionParser(actionParser *actionsparser.ActionParser) {
+	g.actionParser = actionParser
 }

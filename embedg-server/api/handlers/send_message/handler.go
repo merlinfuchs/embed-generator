@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/disgoorg/disgo/cache"
+	"github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
@@ -14,7 +16,6 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
-	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
@@ -23,7 +24,8 @@ import (
 )
 
 type SendMessageHandler struct {
-	bot           *bot.Bot
+	caches        cache.Caches
+	rest          rest.Rest
 	pg            *postgres.PostgresStore
 	accessManager *access.AccessManager
 	actionParser  *parser.ActionParser
@@ -31,14 +33,16 @@ type SendMessageHandler struct {
 }
 
 func New(
-	bot *bot.Bot,
+	caches cache.Caches,
+	rest rest.Rest,
 	pg *postgres.PostgresStore,
 	accessManager *access.AccessManager,
 	actionParser *parser.ActionParser,
 	planStore store.PlanStore,
 ) *SendMessageHandler {
 	return &SendMessageHandler{
-		bot:           bot,
+		caches:        caches,
+		rest:          rest,
 		pg:            pg,
 		accessManager: accessManager,
 		actionParser:  actionParser,

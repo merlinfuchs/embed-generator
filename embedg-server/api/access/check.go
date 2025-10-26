@@ -4,9 +4,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
+	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 )
 
-func (m *AccessManager) CheckGuildAccessForRequest(c *fiber.Ctx, guildID string) error {
+func (m *AccessManager) CheckGuildAccessForRequest(c *fiber.Ctx, guildID util.ID) error {
 	session := c.Locals("session").(*session.Session)
 
 	access, err := m.GetGuildAccessForUser(session.UserID, guildID)
@@ -25,7 +26,7 @@ func (m *AccessManager) CheckGuildAccessForRequest(c *fiber.Ctx, guildID string)
 	return nil
 }
 
-func (m *AccessManager) CheckChannelAccessForRequest(c *fiber.Ctx, channelID string) error {
+func (m *AccessManager) CheckChannelAccessForRequest(c *fiber.Ctx, channelID util.ID) error {
 	session := c.Locals("session").(*session.Session)
 
 	access, err := m.GetChannelAccessForUser(session.UserID, channelID)

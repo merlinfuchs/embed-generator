@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/disgoorg/disgo/rest"
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
@@ -12,35 +13,50 @@ import (
 )
 
 func (m *PremiumManager) lazyPremiumRolesTask() {
-	for {
-		time.Sleep(15 * time.Minute)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-		if err := m.assignPremiumRoles(); err != nil {
-			log.Error().Err(err).Msg("Failed to assign premium roles")
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(15 * time.Minute):
+			if err := m.assignPremiumRoles(ctx); err != nil {
+				log.Error().Err(err).Msg("Failed to assign premium roles")
+			}
 		}
 	}
 }
 
-func (m *PremiumManager) assignPremiumRoles() error {
-	guildID := viper.GetString("premium.guild_id")
-	roleID := viper.GetString("premium.role_id")
-	if guildID == "" || roleID == "" {
+func (m *PremiumManager) assignPremiumRoles(ctx context.Context) error {
+	rawGuildID := viper.GetString("premium.guild_id")
+	rawRoleID := viper.GetString("premium.role_id")
+	if rawGuildID == "" || rawRoleID == "" {
 		return nil
 	}
 
-	userIDs, err := m.GetEntitledUserIDs(context.Background())
+	guildID, err := util.ParseID(rawGuildID)
+	if err != nil {
+		return fmt.Errorf("Failed to parse guild ID: %w", err)
+	}
+	roleID, err := util.ParseID(rawRoleID)
+	if err != nil {
+		return fmt.Errorf("Failed to parse role ID: %w", err)
+	}
+
+	userIDs, err := m.GetEntitledUserIDs(ctx)
 	if err != nil {
 		return fmt.Errorf("Failed to get entitled user IDs: %w", err)
 	}
 
 	for _, userID := range userIDs {
-		features, err := m.GetPlanFeaturesForUser(context.Background(), userID)
+		features, err := m.GetPlanFeaturesForUser(ctx, userID)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to get plan features for guild")
 			continue
 		}
 
-		member, err := m.bot.Session.GuildMember(guildID, userID)
+		member, err := m.rest.GetMember(guildID, userID, rest.WithCtx(ctx))
 		if err != nil {
 			if util.IsDiscordRestErrorCode(err, discordgo.ErrCodeUnknownMember) {
 				continue
@@ -51,7 +67,7 @@ func (m *PremiumManager) assignPremiumRoles() error {
 		}
 
 		hasPremiumRole := false
-		for _, r := range member.Roles {
+		for _, r := range member.RoleIDs {
 			if r == roleID {
 				hasPremiumRole = true
 				break
@@ -59,12 +75,12 @@ func (m *PremiumManager) assignPremiumRoles() error {
 		}
 
 		if features.IsPremium && !hasPremiumRole {
-			err = m.bot.Session.GuildMemberRoleAdd(guildID, userID, roleID)
+			err = m.rest.AddMemberRole(guildID, userID, roleID, rest.WithCtx(ctx))
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to add premium role")
 			}
 		} else if !features.IsPremium && hasPremiumRole {
-			err = m.bot.Session.GuildMemberRoleRemove(guildID, userID, roleID)
+			err = m.rest.RemoveMemberRole(guildID, userID, roleID, rest.WithCtx(ctx))
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to remove premium role")
 			}

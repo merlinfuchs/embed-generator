@@ -61,6 +61,23 @@ func IsDiscordRestErrorCode(err error, codes ...int) bool {
 	return false
 }
 
+func IsDiscordRestStatusCode(err error, statusCodes ...int) bool {
+	var httpErr *rest.Error
+	if errors.As(err, &httpErr) {
+		if httpErr.Response == nil {
+			return false
+		}
+
+		for _, statusCode := range statusCodes {
+			if httpErr.Response.StatusCode == statusCode {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 func DiscordAvatarURL(id string, discriminator string, avatar string) string {
 	if avatar == "" {
 		parsedDiscriminator, _ := strconv.Atoi(discriminator)

@@ -1,8 +1,10 @@
 package server
 
 import (
+	"context"
+
 	"github.com/merlinfuchs/embed-generator/embedg-server/api"
-	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
+	"github.com/merlinfuchs/embed-generator/embedg-server/embedg"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -23,16 +25,23 @@ func Setup() *cobra.Command {
 func startServer() {
 	stores := createStores()
 
-	bot, err := bot.New(viper.GetString("discord.token"), stores.pg)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	embedg, err := embedg.NewEmbedGenerator(
+		embedg.EmbedGeneratorConfig{
+			DiscordToken: viper.GetString("discord.token"),
+		},
+		stores.pg,
+	)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to initialize bot")
+		log.Fatal().Err(err).Msg("Failed to initialize embedg")
 	}
 
-	go bot.Start()
+	go embedg.Start(ctx)
 
-	api.Serve(&api.Stores{
+	api.Serve(embedg, &api.Stores{
 		PG:   stores.pg,
 		Blob: stores.blob,
-		Bot:  bot,
 	})
 }

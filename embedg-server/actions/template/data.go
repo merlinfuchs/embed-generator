@@ -4,20 +4,23 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/disgoorg/disgo/cache"
+	"github.com/disgoorg/disgo/discord"
 	"github.com/merlinfuchs/discordgo"
+	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 )
 
 var standardDataMap = map[string]interface{}{}
 
 type InteractionData struct {
-	state *discordgo.State
-	i     *discordgo.Interaction
+	caches cache.Caches
+	i      *discord.Interaction
 }
 
-func NewInteractionData(state *discordgo.State, i *discordgo.Interaction) *InteractionData {
+func NewInteractionData(caches cache.Caches, i *discord.Interaction) *InteractionData {
 	return &InteractionData{
-		state: state,
-		i:     i,
+		caches: caches,
+		i:      i,
 	}
 }
 
@@ -48,10 +51,10 @@ func (d *InteractionData) Command() *CommandData {
 }
 
 type UserData struct {
-	u *discordgo.User
+	u discord.User
 }
 
-func NewUserData(u *discordgo.User) *UserData {
+func NewUserData(u discord.User) *UserData {
 	return &UserData{u: u}
 }
 
@@ -60,12 +63,12 @@ func (d *UserData) String() string {
 }
 
 func (d *UserData) ID() string {
-	return d.u.ID
+	return d.u.ID.String()
 }
 
 func (d *UserData) Name() string {
-	if d.u.GlobalName != "" {
-		return d.u.GlobalName
+	if d.u.GlobalName != nil {
+		return *d.u.GlobalName
 	}
 
 	return d.u.Username
@@ -76,7 +79,11 @@ func (d *UserData) Username() string {
 }
 
 func (d *UserData) GlobalName() string {
-	return d.u.GlobalName
+	if d.u.GlobalName != nil {
+		return *d.u.GlobalName
+	}
+
+	return ""
 }
 
 func (d *UserData) Discriminator() string {
@@ -84,11 +91,19 @@ func (d *UserData) Discriminator() string {
 }
 
 func (d *UserData) Avatar() string {
-	return d.u.Avatar
+	if d.u.Avatar != nil {
+		return *d.u.Avatar
+	}
+
+	return ""
 }
 
 func (d *UserData) Banner() string {
-	return d.u.Banner
+	if d.u.Banner != nil {
+		return *d.u.Banner
+	}
+
+	return ""
 }
 
 func (d *UserData) Mention() string {
@@ -96,68 +111,82 @@ func (d *UserData) Mention() string {
 }
 
 func (d *UserData) AvatarURL() string {
-	return d.u.AvatarURL("512")
+	avatarURL := d.u.AvatarURL(discord.WithSize(512))
+	if avatarURL == nil {
+		return ""
+	}
+
+	return *avatarURL
 }
 
 func (d *UserData) BannerURL() string {
-	return d.u.BannerURL("1024")
+	bannerURL := d.u.BannerURL(discord.WithSize(1024))
+	if bannerURL == nil {
+		return ""
+	}
+
+	return *bannerURL
 }
 
 type MemberData struct {
 	UserData
-	state   *discordgo.State
-	guildID string
-	m       *discordgo.Member
+	caches  cache.Caches
+	guildID util.ID
+	m       *discord.Member
 }
 
-func NewMemberData(state *discordgo.State, guildID string, m *discordgo.Member) *MemberData {
+func NewMemberData(caches cache.Caches, guildID util.ID, m *discord.Member) *MemberData {
 	return &MemberData{
 		UserData: UserData{m.User},
-		state:    state,
+		caches:   caches,
 		guildID:  guildID,
 		m:        m,
 	}
 }
 
 func (d *MemberData) Nick() string {
-	return d.m.Nick
+	if d.m.Nick != nil {
+		return *d.m.Nick
+	}
+
+	return ""
 }
 
 func (d *MemberData) Roles() []*RoleData {
-	res := make([]*RoleData, len(d.m.Roles))
-	for i, roleID := range d.m.Roles {
-		res[i] = NewRoleData(d.state, d.guildID, roleID, nil)
+	res := make([]*RoleData, len(d.m.RoleIDs))
+	for i, roleID := range d.m.RoleIDs {
+		res[i] = NewRoleData(d.caches, d.guildID, roleID, nil)
 	}
 
 	return res
 }
 
 func (d *MemberData) JoinedAt() time.Time {
-	return d.m.JoinedAt
+	if d.m.JoinedAt != nil {
+		return *d.m.JoinedAt
+	}
+
+	return time.Time{}
 }
 
 func (d *MemberData) Name() string {
-	if d.m.Nick != "" {
-		return d.m.Nick
+	if d.m.Nick != nil {
+		return *d.m.Nick
 	}
 
 	return d.UserData.Name()
 }
 
 func (d *MemberData) Avatar() string {
-	if d.m.Avatar != "" {
-		return d.m.Avatar
+	if d.m.Avatar != nil {
+		return *d.m.Avatar
 	}
 
 	return d.UserData.Avatar()
 }
 
 func (d *MemberData) AvatarURL() string {
-	if d.m.Avatar != "" {
-		return d.m.AvatarURL("512")
-	}
-
-	return d.UserData.AvatarURL()
+	return d.m.EffectiveAvatarURL(discord.WithSize(512))
 }
 
 type CommandData struct {
@@ -246,14 +275,14 @@ func NewCommandOptionData(state *discordgo.State, guildID string, c *discordgo.A
 }
 
 type GuildData struct {
-	state   *discordgo.State
-	guildID string
-	guild   *discordgo.Guild
+	caches  cache.Caches
+	guildID util.ID
+	guild   *discord.Guild
 }
 
-func NewGuildData(state *discordgo.State, guildID string, g *discordgo.Guild) *GuildData {
+func NewGuildData(caches cache.Caches, guildID util.ID, g *discord.Guild) *GuildData {
 	return &GuildData{
-		state:   state,
+		caches:  caches,
 		guildID: guildID,
 		guild:   g,
 	}
@@ -264,24 +293,24 @@ func (d *GuildData) ensureGuild() error {
 		return nil
 	}
 
-	guild, err := d.state.Guild(d.guildID)
-	if err != nil {
-		return err
+	guild, ok := d.caches.Guild(d.guildID)
+	if !ok {
+		return fmt.Errorf("guild not found in cache")
 	}
 
-	d.guild = guild
+	d.guild = &guild
 	return nil
 }
 
 func (d *GuildData) String() string {
 	if err := d.ensureGuild(); err != nil {
-		return d.guildID
+		return d.guildID.String()
 	}
 	return d.guild.Name
 }
 
 func (d *GuildData) ID() string {
-	return d.guildID
+	return d.guildID.String()
 }
 
 func (d *GuildData) Name() (string, error) {
@@ -297,7 +326,11 @@ func (d *GuildData) Description() (string, error) {
 		return "", err
 	}
 
-	return d.guild.Description, nil
+	if d.guild.Description != nil {
+		return *d.guild.Description, nil
+	}
+
+	return "", nil
 }
 
 func (d *GuildData) Icon() (string, error) {
@@ -305,7 +338,11 @@ func (d *GuildData) Icon() (string, error) {
 		return "", err
 	}
 
-	return d.guild.Icon, nil
+	if d.guild.Icon != nil {
+		return *d.guild.Icon, nil
+	}
+
+	return "", nil
 }
 
 func (d *GuildData) IconURL() (string, error) {
@@ -313,7 +350,12 @@ func (d *GuildData) IconURL() (string, error) {
 		return "", err
 	}
 
-	return d.guild.IconURL("512"), nil
+	iconURL := d.guild.IconURL(discord.WithSize(512))
+	if iconURL == nil {
+		return "", nil
+	}
+
+	return *iconURL, nil
 }
 
 func (d *GuildData) Banner() (string, error) {
@@ -321,7 +363,11 @@ func (d *GuildData) Banner() (string, error) {
 		return "", err
 	}
 
-	return d.guild.Banner, nil
+	if d.guild.Banner != nil {
+		return *d.guild.Banner, nil
+	}
+
+	return "", nil
 }
 
 func (d *GuildData) BannerURL() (string, error) {
@@ -329,12 +375,16 @@ func (d *GuildData) BannerURL() (string, error) {
 		return "", err
 	}
 
-	return d.guild.BannerURL("1024"), nil
+	bannerURL := d.guild.BannerURL(discord.WithSize(1024))
+	if bannerURL == nil {
+		return "", nil
+	}
+
+	return *bannerURL, nil
 }
 
 func (d *GuildData) MemberCount() (int, error) {
 	if err := d.ensureGuild(); err != nil {
-		fmt.Println(err)
 		return 0, err
 	}
 
@@ -358,14 +408,14 @@ func (d *GuildData) BoostLevel() (int, error) {
 }
 
 type ChannelData struct {
-	state     *discordgo.State
+	caches    cache.Caches
 	channelID string
-	channel   *discordgo.Channel
+	channel   discord.GuildChannel
 }
 
-func NewChannelData(state *discordgo.State, channelID string, c *discordgo.Channel) *ChannelData {
+func NewChannelData(caches cache.Caches, channelID string, c discord.GuildChannel) *ChannelData {
 	return &ChannelData{
-		state:     state,
+		caches:    caches,
 		channelID: channelID,
 		channel:   c,
 	}
@@ -376,9 +426,9 @@ func (d *ChannelData) ensureChannel() error {
 		return nil
 	}
 
-	channel, err := d.state.Channel(d.channelID)
-	if err != nil {
-		return err
+	channel, ok := d.caches.Channel(util.ToID(d.channelID))
+	if !ok {
+		return fmt.Errorf("channel not found in cache")
 	}
 
 	d.channel = channel
@@ -398,7 +448,7 @@ func (d *ChannelData) Name() (string, error) {
 		return "", err
 	}
 
-	return d.channel.Name, nil
+	return d.channel.Name(), nil
 }
 
 func (d *ChannelData) Mention() string {
@@ -410,19 +460,26 @@ func (d *ChannelData) Topic() (string, error) {
 		return "", err
 	}
 
-	return d.channel.Topic, nil
+	if text, ok := d.channel.(discord.GuildTextChannel); ok {
+		topic := text.Topic()
+		if topic != nil {
+			return *topic, nil
+		}
+	}
+
+	return "", nil
 }
 
 type RoleData struct {
-	state   *discordgo.State
-	guildID string
-	roleID  string
-	role    *discordgo.Role
+	caches  cache.Caches
+	guildID util.ID
+	roleID  util.ID
+	role    *discord.Role
 }
 
-func NewRoleData(state *discordgo.State, guildID string, roleID string, role *discordgo.Role) *RoleData {
+func NewRoleData(caches cache.Caches, guildID util.ID, roleID util.ID, role *discord.Role) *RoleData {
 	return &RoleData{
-		state:   state,
+		caches:  caches,
 		guildID: guildID,
 		roleID:  roleID,
 		role:    role,
@@ -434,12 +491,12 @@ func (d *RoleData) ensureRole() error {
 		return nil
 	}
 
-	role, err := d.state.Role(d.guildID, d.roleID)
-	if err != nil {
-		return err
+	role, ok := d.caches.Role(d.guildID, d.roleID)
+	if !ok {
+		return fmt.Errorf("role not found in cache")
 	}
 
-	d.role = role
+	d.role = &role
 	return nil
 }
 
@@ -448,11 +505,11 @@ func (d *RoleData) String() string {
 }
 
 func (d *RoleData) ID() string {
-	return d.roleID
+	return d.roleID.String()
 }
 
 func (d *RoleData) Mention() string {
-	return fmt.Sprintf("<@&%s>", d.roleID)
+	return fmt.Sprintf("<@&%s>", d.roleID.String())
 }
 
 func (d *RoleData) Name() (string, error) {

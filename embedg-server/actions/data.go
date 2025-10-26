@@ -3,7 +3,9 @@ package actions
 import (
 	"slices"
 
+	"github.com/disgoorg/disgo/discord"
 	"github.com/merlinfuchs/discordgo"
+	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 )
 
 type MessageWithActions struct {
@@ -117,11 +119,11 @@ type ActionSet struct {
 }
 
 type ActionDerivedPermissions struct {
-	UserID             string   `json:"user_id"`
-	GuildIsOwner       bool     `json:"guild_is_owner"`
-	GuildPermissions   int64    `json:"guild_permissions"`
-	ChannelPermissions int64    `json:"channel_permissions"`
-	AllowedRoleIDs     []string `json:"lower_role_ids"`
+	UserID             util.ID             `json:"user_id"`
+	GuildIsOwner       bool                `json:"guild_is_owner"`
+	GuildPermissions   discord.Permissions `json:"guild_permissions"`
+	ChannelPermissions discord.Permissions `json:"channel_permissions"`
+	AllowedRoleIDs     []util.ID           `json:"lower_role_ids"`
 }
 
 func (a *ActionDerivedPermissions) HasChannelPermission(permission int64) bool {

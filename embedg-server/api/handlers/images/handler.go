@@ -41,8 +41,17 @@ func New(pg *postgres.PostgresStore, am *access.AccessManager, planStore store.P
 
 func (h *ImagesHandler) HandleUploadImage(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
-	guildID := c.Query("guild_id")
-	if guildID != "" {
+
+	rawGuildID := c.Query("guild_id")
+	var guildID util.ID
+
+	if rawGuildID != "" {
+		var err error
+		guildID, err = util.ParseID(c.Query("guild_id"))
+		if err != nil {
+			return helpers.BadRequest("invalid_guild_id", "Invalid guild ID")
+		}
+
 		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 			return err
 		}
@@ -96,10 +105,10 @@ func (h *ImagesHandler) HandleUploadImage(c *fiber.Ctx) error {
 
 	image, err := h.pg.Q.InsertImage(c.Context(), pgmodel.InsertImageParams{
 		ID:     util.UniqueID(),
-		UserID: session.UserID,
+		UserID: session.UserID.String(),
 		GuildID: sql.NullString{
-			String: guildID,
-			Valid:  guildID != "",
+			String: guildID.String(),
+			Valid:  guildID != 0,
 		},
 		FileName:        file.Filename,
 		FileHash:        fileHash,

@@ -8,7 +8,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
-	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
@@ -17,14 +16,12 @@ import (
 )
 
 type SharedMessageHandler struct {
-	bot *bot.Bot
-	pg  *postgres.PostgresStore
+	pg *postgres.PostgresStore
 }
 
-func New(bot *bot.Bot, pg *postgres.PostgresStore) *SharedMessageHandler {
+func New(pg *postgres.PostgresStore) *SharedMessageHandler {
 	return &SharedMessageHandler{
-		bot: bot,
-		pg:  pg,
+		pg: pg,
 	}
 }
 

@@ -4,13 +4,12 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/disgoorg/disgo/cache"
 	"github.com/gofiber/fiber/v2"
-	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
-	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
@@ -20,15 +19,15 @@ import (
 
 type GuildsHanlder struct {
 	pg        *postgres.PostgresStore
-	bot       *bot.Bot
+	caches    cache.Caches
 	am        *access.AccessManager
 	planStore store.PlanStore
 }
 
-func New(pg *postgres.PostgresStore, bot *bot.Bot, am *access.AccessManager, planStore store.PlanStore) *GuildsHanlder {
+func New(pg *postgres.PostgresStore, caches cache.Caches, am *access.AccessManager, planStore store.PlanStore) *GuildsHanlder {
 	return &GuildsHanlder{
 		pg:        pg,
-		bot:       bot,
+		caches:    caches,
 		am:        am,
 		planStore: planStore,
 	}
@@ -39,15 +38,12 @@ func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 
 	res := make([]wire.GuildWire, 0, len(session.GuildIDs))
 	for _, guildID := range session.GuildIDs {
-		guild, err := h.bot.State.Guild(guildID)
-		if err != nil {
-			if err == discordgo.ErrStateNotFound {
-				continue
-			}
-			return err
+		guild, ok := h.caches.Guild(guildID)
+		if !ok {
+			continue
 		}
 
-		access, err := h.am.GetGuildAccessForUser(session.UserID, guild.ID)
+		access, err := h.am.GetGuildAccessForUser(session.UserID, guildID)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to check guild access")
 			return err
@@ -56,7 +52,7 @@ func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 		res = append(res, wire.GuildWire{
 			ID:                       guild.ID,
 			Name:                     guild.Name,
-			Icon:                     null.NewString(guild.Icon, guild.Icon != ""),
+			Icon:                     null.StringFromPtr(guild.Icon),
 			HasChannelWithUserAccess: access.HasChannelWithUserAccess,
 			HasChannelWithBotAccess:  access.HasChannelWithBotAccess,
 		})
@@ -70,21 +66,21 @@ func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 
 func (h *GuildsHanlder) HandleGetGuild(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
-	guildID := c.Params("guildID")
+	guildID, err := util.ParseID(c.Params("guildID"))
+	if err != nil {
+		return helpers.BadRequest("invalid_guild_id", "Invalid guild ID")
+	}
 
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
-	guild, err := h.bot.State.Guild(guildID)
-	if err != nil {
-		if err == discordgo.ErrStateNotFound {
-			return helpers.NotFound("unknown_guild", "The guild does not exist.")
-		}
-		return err
+	guild, ok := h.caches.Guild(guildID)
+	if !ok {
+		return helpers.NotFound("unknown_guild", "The guild does not exist.")
 	}
 
-	access, err := h.am.GetGuildAccessForUser(session.UserID, guild.ID)
+	access, err := h.am.GetGuildAccessForUser(session.UserID, guildID)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to check guild access")
 		return err
@@ -93,7 +89,7 @@ func (h *GuildsHanlder) HandleGetGuild(c *fiber.Ctx) error {
 	res := wire.GuildWire{
 		ID:                       guild.ID,
 		Name:                     guild.Name,
-		Icon:                     null.NewString(guild.Icon, guild.Icon != ""),
+		Icon:                     null.StringFromPtr(guild.Icon),
 		HasChannelWithUserAccess: access.HasChannelWithUserAccess,
 		HasChannelWithBotAccess:  access.HasChannelWithBotAccess,
 	}
@@ -106,23 +102,41 @@ func (h *GuildsHanlder) HandleGetGuild(c *fiber.Ctx) error {
 
 func (h *GuildsHanlder) HandleListGuildChannels(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
-	guildID := c.Params("guildID")
+	guildID, err := util.ParseID(c.Params("guildID"))
+	if err != nil {
+		return helpers.BadRequest("invalid_guild_id", "Invalid guild ID")
+	}
 
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
-	guild, err := h.bot.State.Guild(guildID)
-	if err != nil {
-		if err == discordgo.ErrStateNotFound {
-			return helpers.NotFound("unknown_guild", "The guild does not exist.")
+	// TODO: validate that this contains both channels and threads
+	channels := h.caches.ChannelsForGuild(guildID)
+
+	res := make([]wire.GuildChannelWire, 0)
+
+	for channel := range channels {
+		access, err := h.am.GetChannelAccessForUser(session.UserID, channel.ID())
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to check channel access")
+			return err
 		}
-		return err
+
+		res = append(res, wire.GuildChannelWire{
+			ID:              channel.ID(),
+			Name:            channel.Name(),
+			Position:        channel.Position(),
+			ParentID:        util.NullIDFromPtr(channel.ParentID()),
+			Type:            int(channel.Type()),
+			UserAccess:      access.UserAccess(),
+			UserPermissions: fmt.Sprintf("%d", access.UserPermissions),
+			BotAccess:       access.BotAccess(),
+			BotPermissions:  fmt.Sprintf("%d", access.BotPermissions),
+		})
 	}
 
-	res := make([]wire.GuildChannelWire, 0, len(guild.Channels)+len(guild.Threads))
-
-	for _, channel := range guild.Channels {
+	/* for _, channel := range guild.Threads {
 		access, err := h.am.GetChannelAccessForUser(session.UserID, channel.ID)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to check channel access")
@@ -140,27 +154,7 @@ func (h *GuildsHanlder) HandleListGuildChannels(c *fiber.Ctx) error {
 			BotAccess:       access.BotAccess(),
 			BotPermissions:  fmt.Sprintf("%d", access.BotPermissions),
 		})
-	}
-
-	for _, channel := range guild.Threads {
-		access, err := h.am.GetChannelAccessForUser(session.UserID, channel.ID)
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to check channel access")
-			return err
-		}
-
-		res = append(res, wire.GuildChannelWire{
-			ID:              channel.ID,
-			Name:            channel.Name,
-			Position:        channel.Position,
-			ParentID:        null.NewString(channel.ParentID, channel.ParentID != ""),
-			Type:            int(channel.Type),
-			UserAccess:      access.UserAccess(),
-			UserPermissions: fmt.Sprintf("%d", access.UserPermissions),
-			BotAccess:       access.BotAccess(),
-			BotPermissions:  fmt.Sprintf("%d", access.BotPermissions),
-		})
-	}
+	} */
 
 	return c.JSON(wire.ListChannelsResponseWire{
 		Success: true,
@@ -169,21 +163,19 @@ func (h *GuildsHanlder) HandleListGuildChannels(c *fiber.Ctx) error {
 }
 
 func (h *GuildsHanlder) HandleListGuildRoles(c *fiber.Ctx) error {
-	guildID := c.Params("guildID")
+	guildID, err := util.ParseID(c.Params("guildID"))
+	if err != nil {
+		return helpers.BadRequest("invalid_guild_id", "Invalid guild ID")
+	}
+
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
-	guild, err := h.bot.State.Guild(guildID)
-	if err != nil {
-		if err == discordgo.ErrStateNotFound {
-			return helpers.NotFound("unknown_guild", "The guild does not exist.")
-		}
-		return err
-	}
+	roles := h.caches.Roles(guildID)
 
-	res := make([]wire.GuildRoleWire, 0, len(guild.Roles))
-	for _, role := range guild.Roles {
+	res := make([]wire.GuildRoleWire, 0)
+	for role := range roles {
 		res = append(res, wire.GuildRoleWire{
 			ID:       role.ID,
 			Name:     role.Name,
@@ -200,21 +192,19 @@ func (h *GuildsHanlder) HandleListGuildRoles(c *fiber.Ctx) error {
 }
 
 func (h *GuildsHanlder) HandleListGuildEmojis(c *fiber.Ctx) error {
-	guildID := c.Params("guildID")
+	guildID, err := util.ParseID(c.Params("guildID"))
+	if err != nil {
+		return helpers.BadRequest("invalid_guild_id", "Invalid guild ID")
+	}
+
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
-	guild, err := h.bot.State.Guild(guildID)
-	if err != nil {
-		if err == discordgo.ErrStateNotFound {
-			return helpers.NotFound("unknown_guild", "The guild does not exist.")
-		}
-		return err
-	}
+	emojis := h.caches.Emojis(guildID)
 
-	res := make([]wire.GuildEmojiWire, 0, len(guild.Emojis))
-	for _, emoji := range guild.Emojis {
+	res := make([]wire.GuildEmojiWire, 0)
+	for emoji := range emojis {
 		res = append(res, wire.GuildEmojiWire{
 			ID:        emoji.ID,
 			Name:      emoji.Name,
@@ -231,25 +221,28 @@ func (h *GuildsHanlder) HandleListGuildEmojis(c *fiber.Ctx) error {
 }
 
 func (h *GuildsHanlder) HandleListGuildStickers(c *fiber.Ctx) error {
-	guildID := c.Params("guildID")
+	guildID, err := util.ParseID(c.Params("guildID"))
+	if err != nil {
+		return helpers.BadRequest("invalid_guild_id", "Invalid guild ID")
+	}
+
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
-	guild, err := h.bot.State.Guild(guildID)
-	if err != nil {
-		if err == discordgo.ErrStateNotFound {
-			return helpers.NotFound("unknown_guild", "The guild does not exist.")
-		}
-		return err
-	}
+	stickers := h.caches.Stickers(guildID)
 
-	res := make([]wire.GuildStickerWire, 0, len(guild.Stickers))
-	for _, sticker := range guild.Stickers {
+	res := make([]wire.GuildStickerWire, 0)
+	for sticker := range stickers {
+		var available bool
+		if sticker.Available != nil {
+			available = *sticker.Available
+		}
+
 		res = append(res, wire.GuildStickerWire{
 			ID:          sticker.ID,
 			Name:        sticker.Name,
-			Available:   sticker.Available,
+			Available:   available,
 			Description: sticker.Description,
 		})
 	}
@@ -261,14 +254,18 @@ func (h *GuildsHanlder) HandleListGuildStickers(c *fiber.Ctx) error {
 }
 
 func (h *GuildsHanlder) HandleGetGuildBranding(c *fiber.Ctx) error {
-	guildID := c.Params("guildID")
+	guildID, err := util.ParseID(c.Params("guildID"))
+	if err != nil {
+		return helpers.BadRequest("invalid_guild_id", "Invalid guild ID")
+	}
+
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
 	res := wire.GuildBrandingWire{}
 
-	customBot, err := h.pg.Q.GetCustomBotByGuildID(c.Context(), guildID)
+	customBot, err := h.pg.Q.GetCustomBotByGuildID(c.Context(), guildID.String())
 	if err != nil {
 		if err != sql.ErrNoRows {
 			return err

@@ -6,33 +6,33 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/disgoorg/disgo/discord"
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
+	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 )
 
-func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actions.ActionSet, userID string, guildID string, channelID string) error {
-	var channel *discordgo.Channel
-	if channelID != "" {
-		var err error
-		channel, err = m.state.Channel(channelID)
-		if err != nil {
-			return err
+func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actions.ActionSet, userID util.ID, guildID util.ID, channelID util.ID) error {
+	if channelID != 0 {
+		channel, ok := m.caches.Channel(channelID)
+		if !ok {
+			return fmt.Errorf("channel not found in cache")
 		}
 
-		if channel.GuildID != guildID {
+		if channel.GuildID() != guildID {
 			return fmt.Errorf("Channel %s does not belong to guild %s", channelID, guildID)
 		}
 	}
 
-	guild, err := m.state.Guild(guildID)
-	if err != nil {
-		return err
+	guild, ok := m.caches.Guild(guildID)
+	if !ok {
+		return fmt.Errorf("guild not found in cache")
 	}
 
 	var channelAccess *access.ChannelAccess
-	if channelID != "" {
+	if channelID != 0 {
 		ca, err := m.accessManager.GetChannelAccessForUser(userID, channelID)
 		if err != nil {
 			return err
@@ -52,17 +52,17 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 	memberIsOwner := guild.OwnerID == userID
 
 	highestRolePosition := 0
-	var permissions int64
+	var permissions discord.Permissions
 
-	defaultRole, err := m.state.Role(guildID, guildID)
-	if err == nil {
+	defaultRole, ok := m.caches.Role(guildID, guildID)
+	if ok {
 		highestRolePosition = defaultRole.Position
 		permissions = defaultRole.Permissions
 	}
 
-	for _, roleID := range member.Roles {
-		role, err := m.state.Role(guildID, roleID)
-		if err == nil && role.Position > highestRolePosition {
+	for _, roleID := range member.RoleIDs {
+		role, ok := m.caches.Role(guildID, roleID)
+		if ok && role.Position > highestRolePosition {
 			highestRolePosition = role.Position
 			permissions |= role.Permissions
 		}
@@ -89,12 +89,14 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 						return fmt.Errorf("You have no permission to manage roles in the channel %s", channelID)
 					}
 
-					role, err := m.state.Role(guildID, action.TargetID)
+					roleID, err := util.ParseID(action.TargetID)
 					if err != nil {
-						if err == discordgo.ErrStateNotFound {
-							return fmt.Errorf("Role %s does not exist", action.TargetID)
-						}
-						return err
+						return fmt.Errorf("Invalid role ID: %s", action.TargetID)
+					}
+
+					role, ok := m.caches.Role(guildID, roleID)
+					if !ok {
+						return fmt.Errorf("Role %s does not exist", action.TargetID)
 					}
 
 					if !memberIsOwner && role.Position >= highestRolePosition {
@@ -103,7 +105,7 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 					break
 				case actions.ActionTypeSavedMessageResponse, actions.ActionTypeSavedMessageDM, actions.ActionTypeSavedMessageEdit:
 					msg, err := m.pg.Q.GetSavedMessageForGuild(context.TODO(), pgmodel.GetSavedMessageForGuildParams{
-						GuildID: sql.NullString{Valid: true, String: guildID},
+						GuildID: sql.NullString{Valid: true, String: guildID.String()},
 						ID:      action.TargetID,
 					})
 					if err != nil {
@@ -130,32 +132,30 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 	return checkActions(actionSets, 0)
 }
 
-func (m *ActionParser) DerivePermissionsForActions(userID string, guildID string, channelID string) (actions.ActionDerivedPermissions, error) {
+func (m *ActionParser) DerivePermissionsForActions(userID util.ID, guildID util.ID, channelID util.ID) (actions.ActionDerivedPermissions, error) {
 	res := actions.ActionDerivedPermissions{
 		UserID: userID,
 	}
 
-	var channel *discordgo.Channel
-	if channelID != "" {
-		var err error
-		channel, err = m.state.Channel(channelID)
-		if err != nil {
-			return res, err
+	if channelID != 0 {
+		channel, ok := m.caches.Channel(channelID)
+		if !ok {
+			return res, fmt.Errorf("channel not found in cache")
 		}
 
-		if channel.GuildID != guildID {
+		if channel.GuildID() != guildID {
 			return res, fmt.Errorf("Channel %s does not belong to guild %s", channelID, guildID)
 		}
 	}
 
-	guild, err := m.state.Guild(guildID)
-	if err != nil {
-		return res, err
+	guild, ok := m.caches.Guild(guildID)
+	if !ok {
+		return res, fmt.Errorf("guild not found in cache")
 	}
 
 	res.GuildIsOwner = guild.OwnerID == userID
 
-	if channelID != "" {
+	if channelID != 0 {
 		ca, err := m.accessManager.GetChannelAccessForUser(userID, channelID)
 		if err != nil {
 			return res, err
@@ -170,21 +170,21 @@ func (m *ActionParser) DerivePermissionsForActions(userID string, guildID string
 
 	highestRolePosition := 0
 
-	defaultRole, err := m.state.Role(guildID, guildID)
-	if err == nil {
+	defaultRole, ok := m.caches.Role(guildID, guildID)
+	if ok {
 		highestRolePosition = defaultRole.Position
 		res.GuildPermissions = defaultRole.Permissions
 	}
 
-	for _, roleID := range member.Roles {
-		role, err := m.state.Role(guildID, roleID)
-		if err == nil && role.Position > highestRolePosition {
+	for _, roleID := range member.RoleIDs {
+		role, ok := m.caches.Role(guildID, roleID)
+		if ok && role.Position > highestRolePosition {
 			highestRolePosition = role.Position
 			res.GuildPermissions |= role.Permissions
 		}
 	}
 
-	for _, role := range guild.Roles {
+	for role := range m.caches.Roles(guildID) {
 		if role.Position < highestRolePosition {
 			res.AllowedRoleIDs = append(res.AllowedRoleIDs, role.ID)
 		}

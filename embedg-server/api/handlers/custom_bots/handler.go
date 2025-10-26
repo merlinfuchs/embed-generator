@@ -7,13 +7,14 @@ import (
 
 	"slices"
 
+	"github.com/disgoorg/disgo/cache"
+	"github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
-	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
@@ -25,16 +26,16 @@ import (
 
 type CustomBotsHandler struct {
 	pg           *postgres.PostgresStore
-	bot          *bot.Bot
+	caches       cache.Caches
 	am           *access.AccessManager
 	planStore    store.PlanStore
 	actionParser *parser.ActionParser
 }
 
-func New(pg *postgres.PostgresStore, bot *bot.Bot, am *access.AccessManager, planStore store.PlanStore, actionParser *parser.ActionParser) *CustomBotsHandler {
+func New(pg *postgres.PostgresStore, caches cache.Caches, am *access.AccessManager, planStore store.PlanStore, actionParser *parser.ActionParser) *CustomBotsHandler {
 	return &CustomBotsHandler{
 		pg:           pg,
-		bot:          bot,
+		caches:       caches,
 		am:           am,
 		planStore:    planStore,
 		actionParser: actionParser,
@@ -56,26 +57,26 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 		return helpers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
 	}
 
-	session, err := discordgo.New("Bot " + req.Token)
+	client := rest.New(rest.NewClient(req.Token))
 	if err != nil {
 		return err
 	}
 
-	app, err := session.Application("@me")
+	app, err := client.GetCurrentApplication()
 	if err != nil {
-		if derr, ok := err.(*discordgo.RESTError); ok && derr.Response.StatusCode == 401 {
+		if util.IsDiscordRestStatusCode(err, 401) {
 			return fmt.Errorf("Invalid bot token, please check it again.")
 		}
 		return err
 	}
 
-	user, err := session.User("@me")
+	user, err := client.GetCurrentUser("")
 	if err != nil {
 		return err
 	}
 
 	isMember := true
-	member, err := session.GuildMember(guildID, user.ID)
+	member, err := client.GetMember(util.ToID(guildID), user.ID)
 	if err != nil {
 		if util.IsDiscordRestErrorCode(err, discordgo.ErrCodeMissingAccess, discordgo.ErrCodeUnknownGuild) {
 			isMember = false
@@ -84,15 +85,12 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 		}
 	}
 
-	guild, err := h.bot.State.Guild(guildID)
-	if err != nil {
-		return err
-	}
+	roles := h.caches.Roles(util.ToID(guildID))
 
 	hasPermissions := false
 	if isMember {
-		for _, role := range guild.Roles {
-			if slices.Contains(member.Roles, role.ID) || role.ID == guildID {
+		for role := range roles {
+			if slices.Contains(member.RoleIDs, role.ID) || role.ID == util.ToID(guildID) {
 				if role.Permissions&discordgo.PermissionManageWebhooks != 0 {
 					hasPermissions = true
 					break
@@ -101,14 +99,19 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 		}
 	}
 
+	var userAvatar sql.NullString
+	if user.Avatar != nil {
+		userAvatar = sql.NullString{String: *user.Avatar, Valid: *user.Avatar != ""}
+	}
+
 	customBot, err := h.pg.Q.UpsertCustomBot(c.Context(), pgmodel.UpsertCustomBotParams{
 		ID:                util.UniqueID(),
 		GuildID:           guildID,
-		ApplicationID:     app.ID,
-		UserID:            user.ID,
+		ApplicationID:     app.ID.String(),
+		UserID:            user.ID.String(),
 		UserName:          user.Username,
 		UserDiscriminator: user.Discriminator,
-		UserAvatar:        sql.NullString{String: user.Avatar, Valid: user.Avatar != ""},
+		UserAvatar:        userAvatar,
 		Token:             req.Token,
 		PublicKey:         app.VerifyKey,
 		CreatedAt:         time.Now().UTC(),
@@ -216,27 +219,28 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 		return err
 	}
 
-	session, err := discordgo.New("Bot " + customBot.Token)
+	client := rest.New(rest.NewClient(customBot.Token))
 	if err != nil {
 		return err
 	}
 
 	isMember := true
 	tokenValid := true
-	member, err := session.GuildMember(guildID, customBot.UserID)
+	member, err := client.GetMember(util.ToID(guildID), util.ToID(customBot.UserID))
 	if err != nil {
-		if derr, ok := err.(*discordgo.RESTError); ok {
-			if derr.Response.StatusCode == 401 {
-				tokenValid = false
-				isMember = false
-			} else if derr.Response.StatusCode == 403 || derr.Response.StatusCode == 404 {
-				isMember = false
-			} else {
-				return err
-			}
+		if util.IsDiscordRestStatusCode(err, 401) {
+			tokenValid = false
+			isMember = false
+		} else if util.IsDiscordRestStatusCode(err, 403) || util.IsDiscordRestStatusCode(err, 404) {
+			isMember = false
 		} else {
 			return err
 		}
+	}
+
+	var userAvatar sql.NullString
+	if member.User.Avatar != nil {
+		userAvatar = sql.NullString{String: *member.User.Avatar, Valid: *member.User.Avatar != ""}
 	}
 
 	if member != nil {
@@ -244,25 +248,19 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 			GuildID:           guildID,
 			UserName:          member.User.Username,
 			UserDiscriminator: member.User.Discriminator,
-			UserAvatar: sql.NullString{
-				String: member.User.Avatar,
-				Valid:  member.User.Avatar != "",
-			},
+			UserAvatar:        userAvatar,
 		})
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to update custom bot user info")
 		}
 	}
 
-	guild, err := h.bot.State.Guild(guildID)
-	if err != nil {
-		return err
-	}
+	roles := h.caches.Roles(util.ToID(guildID))
 
 	hasPermissions := false
 	if member != nil {
-		for _, role := range guild.Roles {
-			if slices.Contains(member.Roles, role.ID) || role.ID == guildID {
+		for role := range roles {
+			if slices.Contains(member.RoleIDs, role.ID) || role.ID == util.ToID(guildID) {
 				if role.Permissions&discordgo.PermissionManageWebhooks != 0 {
 					hasPermissions = true
 					break

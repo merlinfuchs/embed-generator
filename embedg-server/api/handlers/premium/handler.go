@@ -5,16 +5,17 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
-	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
+	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"gopkg.in/guregu/null.v4"
@@ -22,15 +23,15 @@ import (
 
 type PremiumHandler struct {
 	pg        *postgres.PostgresStore
-	bot       *bot.Bot
+	rest      rest.Rest
 	am        *access.AccessManager
 	planStore store.PlanStore
 }
 
-func New(pg *postgres.PostgresStore, bot *bot.Bot, am *access.AccessManager, planStore store.PlanStore) *PremiumHandler {
+func New(pg *postgres.PostgresStore, rest rest.Rest, am *access.AccessManager, planStore store.PlanStore) *PremiumHandler {
 	return &PremiumHandler{
 		pg:        pg,
-		bot:       bot,
+		rest:      rest,
 		am:        am,
 		planStore: planStore,
 	}
@@ -38,12 +39,17 @@ func New(pg *postgres.PostgresStore, bot *bot.Bot, am *access.AccessManager, pla
 
 func (h *PremiumHandler) HandleGetFeatures(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
-	guildID := c.Query("guild_id")
+	rawGuildID := c.Query("guild_id")
 
 	var features model.PlanFeatures
 	var err error
 
-	if guildID != "" {
+	if rawGuildID != "" {
+		guildID, err := util.ParseID(rawGuildID)
+		if err != nil {
+			return helpers.BadRequest("invalid_guild_id", "Invalid guild ID")
+		}
+
 		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 			return err
 		}
@@ -78,18 +84,29 @@ func (h *PremiumHandler) HandleGetFeatures(c *fiber.Ctx) error {
 
 func (h *PremiumHandler) HandleListEntitlements(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
-	guildID := c.Query("guild_id")
+	rawGuildID := c.Query("guild_id")
 
 	var entitlements []pgmodel.Entitlement
 	var err error
 
-	if guildID != "" {
+	if rawGuildID != "" {
+		guildID, err := util.ParseID(rawGuildID)
+		if err != nil {
+			return helpers.BadRequest("invalid_guild_id", "Invalid guild ID")
+		}
+
 		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 			return err
 		}
-		entitlements, err = h.pg.Q.GetActiveEntitlementsForGuild(c.Context(), sql.NullString{String: guildID, Valid: true})
+		entitlements, err = h.pg.Q.GetActiveEntitlementsForGuild(
+			c.Context(),
+			sql.NullString{String: guildID.String(), Valid: true},
+		)
 	} else {
-		entitlements, err = h.pg.Q.GetActiveEntitlementsForUser(c.Context(), sql.NullString{String: session.UserID, Valid: true})
+		entitlements, err = h.pg.Q.GetActiveEntitlementsForUser(
+			c.Context(),
+			sql.NullString{String: session.UserID.String(), Valid: true},
+		)
 	}
 
 	if err != nil {
@@ -134,7 +151,7 @@ func (h *PremiumHandler) HandleConsumeEntitlement(c *fiber.Ctx, req wire.Consume
 	entitlement, err := h.pg.Q.GetEntitlement(c.Context(), pgmodel.GetEntitlementParams{
 		ID: entitlementID,
 		UserID: sql.NullString{
-			String: session.UserID,
+			String: session.UserID.String(),
 			Valid:  true,
 		},
 	})
@@ -161,12 +178,11 @@ func (h *PremiumHandler) HandleConsumeEntitlement(c *fiber.Ctx, req wire.Consume
 	}
 
 	if !entitlement.Consumed {
-		clientID := viper.GetString("discord.client_id")
-		url := fmt.Sprintf("https://discord.com/api/v10/applications/%s/entitlements/%s/consume", clientID, entitlement.ID)
+		clientID := util.ToID(viper.GetString("discord.client_id"))
 
-		_, err := h.bot.Session.Request("POST", url, nil)
+		err = h.rest.ConsumeEntitlement(clientID, util.ToID(entitlement.ID), rest.WithCtx(c.Context()))
 		if err != nil {
-			return fmt.Errorf("failed to do request: %w", err)
+			return fmt.Errorf("failed to consume entitlement: %w", err)
 		}
 	}
 

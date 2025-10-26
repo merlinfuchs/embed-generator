@@ -30,7 +30,7 @@ func (h *UsersHandler) HandleGetUser(c *fiber.Ctx) error {
 	userID := c.Params("userID")
 
 	if userID == "@me" {
-		userID = session.UserID
+		userID = session.UserID.String()
 	}
 
 	user, err := h.pg.Q.GetUser(c.Context(), userID)

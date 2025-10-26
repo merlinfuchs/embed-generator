@@ -7,22 +7,27 @@ import (
 	"strings"
 	"time"
 
+	"github.com/disgoorg/disgo/cache"
+	"github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
-	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
 type InteractionHandler struct {
-	bot *bot.Bot
+	caches        cache.Caches
+	rest          rest.Rest
+	actionHandler *handler.ActionHandler
 }
 
-func New(bot *bot.Bot) *InteractionHandler {
+func New(caches cache.Caches, rest rest.Rest, actionHandler *handler.ActionHandler) *InteractionHandler {
 	return &InteractionHandler{
-		bot: bot,
+		caches:        caches,
+		rest:          rest,
+		actionHandler: actionHandler,
 	}
 }
 
@@ -64,7 +69,7 @@ func (h *InteractionHandler) HandleBotInteraction(c *fiber.Ctx) error {
 
 	go func() {
 		if customAction {
-			err := h.bot.ActionHandler.HandleActionInteraction(h.bot.Session, ri)
+			err := h.actionHandler.HandleActionInteraction(h.bot.Session, ri)
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to handle action interaction")
 			}

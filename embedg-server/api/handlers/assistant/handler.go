@@ -9,6 +9,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
+	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	openai "github.com/sashabaranov/go-openai"
 	"github.com/spf13/viper"
 )
@@ -30,7 +31,10 @@ func New(pg *postgres.PostgresStore, am *access.AccessManager, planStore store.P
 }
 
 func (h *AssistantHandler) HandleAssistantGenerateMessage(c *fiber.Ctx, req wire.AssistantGenerateMessageRequestWire) error {
-	guildID := c.Query("guild_id")
+	guildID, err := util.ParseID(c.Query("guild_id"))
+	if err != nil {
+		return helpers.BadRequest("invalid_guild_id", "Invalid guild ID")
+	}
 
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err

@@ -233,7 +233,7 @@ var commands = []discord.ApplicationCommandCreate{
 }
 
 func (g *EmbedGenerator) SyncCommands() error {
-	if err := handler.SyncCommands(g.Client(), commands, []snowflake.ID{}); err != nil {
+	if err := handler.SyncCommands(g.Client(), commands, []util.ID{}); err != nil {
 		return fmt.Errorf("error while syncing commands: %w", err)
 	}
 	return nil
@@ -468,7 +468,7 @@ func (g *EmbedGenerator) handleMessageRestoreCommand(e *handler.CommandEvent) er
 	messageIDOrURL := e.SlashCommandInteractionData().String("message_id_or_url")
 
 	channelID := e.Channel().ID()
-	var messageID snowflake.ID
+	var messageID util.ID
 
 	match := messageURLRegex.FindStringSubmatch(messageIDOrURL)
 	if match != nil {

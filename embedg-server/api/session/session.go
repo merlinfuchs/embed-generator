@@ -12,13 +12,14 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
+	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
 type Session struct {
-	UserID      string
-	GuildIDs    []string
+	UserID      util.ID
+	GuildIDs    []util.ID
 	AccessToken string
 	CreatedAt   time.Time
 	ExpiresAt   time.Time
@@ -53,9 +54,14 @@ func (s *SessionManager) GetSession(c *fiber.Ctx) (*Session, error) {
 		return nil, err
 	}
 
+	guildIDs := make([]util.ID, len(model.GuildIds))
+	for i, guildID := range model.GuildIds {
+		guildIDs[i] = util.ToID(guildID)
+	}
+
 	return &Session{
-		UserID:      model.UserID,
-		GuildIDs:    model.GuildIds,
+		UserID:      util.ToID(model.UserID),
+		GuildIDs:    guildIDs,
 		AccessToken: model.AccessToken,
 		CreatedAt:   model.CreatedAt,
 		ExpiresAt:   model.ExpiresAt,

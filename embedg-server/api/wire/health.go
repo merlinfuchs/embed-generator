@@ -1,18 +1,13 @@
 package wire
 
-import "time"
-
 type ShardListWire struct {
 	ShardCount int         `json:"shard_count"`
 	Shards     []ShardWire `json:"shards"`
 }
 
 type ShardWire struct {
-	ID                     int       `json:"id"`
-	HasSession             bool      `json:"has_session"`
-	LastHeartbeatAck       time.Time `json:"last_heartbeat_ack"`
-	LastHeartbeatSent      time.Time `json:"last_heartbeat_sent"`
-	ShouldReconnectOnError bool      `json:"should_reconnect_on_error"`
-	ShouldRetryOnRateLimit bool      `json:"should_retry_on_rate_limit"`
-	Suspicious             bool      `json:"suspicious"`
+	ID         int    `json:"id"`
+	Status     string `json:"status"`
+	Latency    int64  `json:"latency"`
+	Suspicious bool   `json:"suspicious"`
 }
