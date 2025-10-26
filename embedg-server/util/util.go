@@ -2,10 +2,12 @@ package util
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"mime"
 	"strconv"
 
+	"github.com/disgoorg/disgo/rest"
 	"github.com/merlinfuchs/discordgo"
 	"github.com/spf13/viper"
 )
@@ -34,17 +36,28 @@ func GetFileExtensionFromMimeType(mimeType string) string {
 }
 
 func IsDiscordRestErrorCode(err error, codes ...int) bool {
-	if err, ok := err.(*discordgo.RESTError); ok {
-		if err.Message == nil {
+	var restError *discordgo.RESTError
+	if errors.As(err, &restError) {
+		if restError.Message == nil {
 			return false
 		}
 
 		for _, code := range codes {
-			if err.Message.Code == code {
+			if restError.Message.Code == code {
 				return true
 			}
 		}
 	}
+
+	var httpErr *rest.Error
+	if errors.As(err, &httpErr) {
+		for _, code := range codes {
+			if int(httpErr.Code) == code {
+				return true
+			}
+		}
+	}
+
 	return false
 }
 
