@@ -14,9 +14,19 @@ func ExecuteGuildedWebhook(webhookID, webhookToken string, params discord.Webhoo
 	webhookURL := fmt.Sprintf("https://media.guilded.gg/webhooks/%s/%s", webhookID, webhookToken)
 
 	files := params.Files
-	params.Files = make([]*discordgo.File, 0)
+	params.Files = make([]*discord.File, 0)
 
-	contentType, body, err := discordgo.MultipartBodyWithJSON(params, files)
+	// Convert discord.File to discordgo.File
+	discordgoFiles := make([]*discordgo.File, 0, len(files))
+	for _, file := range files {
+		discordgoFiles = append(discordgoFiles, &discordgo.File{
+			Name:        file.Name,
+			ContentType: "", // discord.File doesn't have ContentType
+			Reader:      file.Reader,
+		})
+	}
+
+	contentType, body, err := discordgo.MultipartBodyWithJSON(params, discordgoFiles)
 	if err != nil {
 		return fmt.Errorf("failed to construct request body: %w", err)
 	}

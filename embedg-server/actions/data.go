@@ -4,7 +4,6 @@ import (
 	"slices"
 
 	"github.com/disgoorg/disgo/discord"
-	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 )
 
@@ -25,20 +24,20 @@ func (m MessageWithActions) ComponentsV2Enabled() bool {
 }
 
 type ComponentWithActions struct {
-	ID       int                     `json:"id,omitempty"`
-	Type     discordgo.ComponentType `json:"type"`
-	Disabled bool                    `json:"disabled,omitempty"`
-	Spoiler  bool                    `json:"spoiler,omitempty"`
+	ID       int                   `json:"id,omitempty"`
+	Type     discord.ComponentType `json:"type"`
+	Disabled bool                  `json:"disabled,omitempty"`
+	Spoiler  bool                  `json:"spoiler,omitempty"`
 
 	// Action Row & Section & Container
 	Components []ComponentWithActions `json:"components,omitempty"`
 
 	// Button
-	Style       discordgo.ButtonStyle     `json:"style,omitempty"`
-	Label       string                    `json:"label,omitempty"`
-	Emoji       *discordgo.ComponentEmoji `json:"emoji,omitempty"`
-	URL         string                    `json:"url,omitempty"`
-	ActionSetID string                    `json:"action_set_id,omitempty"`
+	Style       discord.ButtonStyle     `json:"style,omitempty"`
+	Label       string                  `json:"label,omitempty"`
+	Emoji       *discord.ComponentEmoji `json:"emoji,omitempty"`
+	URL         string                  `json:"url,omitempty"`
+	ActionSetID string                  `json:"action_set_id,omitempty"`
 
 	// Select Menu
 	Placeholder string                             `json:"placeholder,omitempty"`
@@ -75,11 +74,11 @@ type UnfurledMediaItem struct {
 }
 
 type ComponentSelectOptionWithActions struct {
-	Label       string                    `json:"label"`
-	Description string                    `json:"description"`
-	Emoji       *discordgo.ComponentEmoji `json:"emoji"`
-	Default     bool                      `json:"default"`
-	ActionSetID string                    `json:"action_set_id"`
+	Label       string                  `json:"label"`
+	Description string                  `json:"description"`
+	Emoji       *discord.ComponentEmoji `json:"emoji"`
+	Default     bool                    `json:"default"`
+	ActionSetID string                  `json:"action_set_id"`
 }
 
 type ComponentMediaGalleryItem struct {
@@ -139,5 +138,5 @@ func (a *ActionDerivedPermissions) CanManageRole(roleID util.ID) bool {
 		return true
 	}
 
-	return a.HasGuildPermission(discordgo.PermissionManageRoles) && slices.Contains(a.AllowedRoleIDs, roleID)
+	return a.HasGuildPermission(discord.PermissionManageRoles) && slices.Contains(a.AllowedRoleIDs, roleID)
 }

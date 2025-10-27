@@ -88,7 +88,7 @@ func (m *CustomBotManager) lazyCustomBotGatewayTask() {
 					log.Error().Err(err).Msg("Failed to set custom bot handled first interaction")
 				}
 
-				err := m.actionHandler.HandleActionInteraction(instance.Client, &handler.GatewayInteraction{
+				err := m.actionHandler.HandleActionInteraction(instance.Client.Rest, &handler.GatewayInteraction{
 					Rest:  instance.Client.Rest,
 					Inner: i.Interaction,
 				})
