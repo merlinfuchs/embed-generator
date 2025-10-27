@@ -1,23 +1,9 @@
 package embedg
 
 import (
-	"context"
 	"fmt"
 	"strings"
-
-	"github.com/disgoorg/disgo/discord"
-	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 )
-
-func (g *EmbedGenerator) SendMessageToChannel(ctx context.Context, channelID util.ID, params discord.WebhookMessageCreate) (*discord.Message, error) {
-	// TODO: Implement
-	return nil, nil
-}
-
-func (g *EmbedGenerator) UpdateMessageInChannel(ctx context.Context, channelID util.ID, messageID util.ID, params discord.WebhookMessageUpdate) (*discord.Message, error) {
-	// TODO: Implement
-	return nil, nil
-}
 
 func emojiImageURL(emoji string, animated bool) string {
 	// Convert unicode emoji to Twemoji URL

@@ -3,6 +3,7 @@ package embedg
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/disgoorg/disgo"
 	"github.com/disgoorg/disgo/bot"
@@ -17,6 +18,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/embedg/rest"
 	"github.com/rs/zerolog/log"
+	slogzerolog "github.com/samber/slog-zerolog/v2"
 )
 
 type EmbedGeneratorConfig struct {
@@ -42,6 +44,8 @@ func NewEmbedGenerator(
 	pg *postgres.PostgresStore,
 ) (*EmbedGenerator, error) {
 	clientRouter := handler.New()
+
+	logHandler := slogzerolog.Option{Level: slog.LevelInfo, Logger: &log.Logger}.NewZerologHandler()
 
 	client, err := disgo.New(cfg.DiscordToken,
 		bot.WithRest(rest.NewRestClient(cfg.DiscordToken)),
@@ -79,6 +83,7 @@ func NewEmbedGenerator(
 				Msg("Embed Generator has connected to the gateway and is ready")
 		}),
 		bot.WithEventListeners(clientRouter),
+		bot.WithLogger(slog.New(logHandler)),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create client: %w", err)

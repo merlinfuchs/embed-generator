@@ -3,6 +3,7 @@ package custom_bots
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/disgoorg/disgo"
@@ -14,6 +15,7 @@ import (
 	"github.com/disgoorg/disgo/sharding"
 	"github.com/merlinfuchs/embed-generator/embedg-server/embedg/rest"
 	"github.com/rs/zerolog/log"
+	slogzerolog "github.com/samber/slog-zerolog/v2"
 	"gopkg.in/guregu/null.v4"
 )
 
@@ -23,6 +25,8 @@ type CustomBot struct {
 }
 
 func NewCustomBot(token string, presence CustomBotPresence) (*CustomBot, error) {
+	logHandler := slogzerolog.Option{Level: slog.LevelInfo, Logger: &log.Logger}.NewZerologHandler()
+
 	client, err := disgo.New(token,
 		bot.WithShardManagerConfigOpts(
 			sharding.WithShardCount(1),
@@ -46,6 +50,7 @@ func NewCustomBot(token string, presence CustomBotPresence) (*CustomBot, error) 
 				Str("username", e.User.Username).
 				Msg("Custom bot has connected to the gateway and is ready")
 		}),
+		bot.WithLogger(slog.New(logHandler)),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create session: %w", err)
