@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/disgoorg/disgo/discord"
-	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
@@ -85,7 +84,7 @@ func (m *ActionParser) CheckPermissionsForActionSets(actionSets map[string]actio
 				case actions.ActionTypeTextResponse, actions.ActionTypeTextDM, actions.ActionTypeTextEdit:
 					break
 				case actions.ActionTypeAddRole, actions.ActionTypeRemoveRole, actions.ActionTypeToggleRole:
-					if permissions&discordgo.PermissionManageRoles == 0 {
+					if permissions&discord.PermissionManageRoles == 0 {
 						return fmt.Errorf("You have no permission to manage roles in the channel %s", channelID)
 					}
 

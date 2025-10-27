@@ -34,11 +34,11 @@ type ChannelAccess struct {
 }
 
 func (c *ChannelAccess) UserAccess() bool {
-	return c.UserPermissions&(discordgo.PermissionManageWebhooks|discordgo.PermissionAdministrator) != 0
+	return c.UserPermissions&(discord.PermissionManageWebhooks|discord.PermissionAdministrator) != 0
 }
 
 func (c *ChannelAccess) BotAccess() bool {
-	return c.BotPermissions&(discordgo.PermissionManageWebhooks|discordgo.PermissionAdministrator) != 0
+	return c.BotPermissions&(discord.PermissionManageWebhooks|discord.PermissionAdministrator) != 0
 }
 
 func (m *AccessManager) GetGuildAccessForUser(userID util.ID, guildID util.ID) (GuildAccess, error) {
@@ -151,7 +151,7 @@ func (m *AccessManager) ComputeUserPermissionsForChannel(userID util.ID, channel
 
 	if guild.OwnerID == userID {
 		// Owner has access to all channels
-		return discordgo.PermissionAll, nil
+		return discord.PermissionsAll, nil
 	}
 
 	member, err := m.GetGuildMember(guild.ID, userID)

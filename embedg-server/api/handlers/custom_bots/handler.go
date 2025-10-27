@@ -7,6 +7,7 @@ import (
 
 	"slices"
 
+	"github.com/disgoorg/disgo/discord"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
@@ -95,7 +96,7 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 	if isMember {
 		for role := range roles {
 			if slices.Contains(member.RoleIDs, role.ID) || role.ID == guildID {
-				if role.Permissions&discordgo.PermissionManageWebhooks != 0 {
+				if role.Permissions&discord.PermissionManageWebhooks != 0 {
 					hasPermissions = true
 					break
 				}
@@ -277,7 +278,7 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 	if member != nil {
 		for role := range roles {
 			if slices.Contains(member.RoleIDs, role.ID) || role.ID == guildID {
-				if role.Permissions&discordgo.PermissionManageWebhooks != 0 {
+				if role.Permissions&discord.PermissionManageWebhooks != 0 {
 					hasPermissions = true
 					break
 				}

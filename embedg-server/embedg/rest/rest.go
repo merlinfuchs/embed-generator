@@ -6,6 +6,7 @@ import (
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
+	"github.com/disgoorg/snowflake/v2"
 	"github.com/jellydator/ttlcache/v3"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 )
@@ -28,7 +29,7 @@ func NewRestClient(token string, opts ...rest.ConfigOpt) *RestClient {
 	}
 }
 
-func (c *RestClient) GetMember(guildID util.ID, userID util.ID, opts ...rest.RequestOpt) (*discord.Member, error) {
+func (c *RestClient) GetMember(guildID snowflake.ID, userID snowflake.ID, opts ...rest.RequestOpt) (*discord.Member, error) {
 	var resErr error
 
 	key := memberCacheKey(guildID, userID)

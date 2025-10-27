@@ -3,8 +3,6 @@ package embedg
 import (
 	"context"
 	"fmt"
-	"log/slog"
-	"strconv"
 
 	"github.com/disgoorg/disgo"
 	"github.com/disgoorg/disgo/bot"
@@ -18,6 +16,7 @@ import (
 	actionsparser "github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/embedg/rest"
+	"github.com/rs/zerolog/log"
 )
 
 type EmbedGeneratorConfig struct {
@@ -31,7 +30,6 @@ type EmbedGenerator struct {
 
 	client       *bot.Client
 	clientRouter handler.Router
-	rest         *rest.RestClient
 
 	pg            *postgres.PostgresStore
 	actionHandler *actionshandler.ActionHandler
@@ -46,6 +44,7 @@ func NewEmbedGenerator(
 	clientRouter := handler.New()
 
 	client, err := disgo.New(cfg.DiscordToken,
+		bot.WithRest(rest.NewRestClient(cfg.DiscordToken)),
 		bot.WithShardManagerConfigOpts(
 			sharding.WithAutoScaling(false),
 			sharding.WithGatewayConfigOpts(
@@ -64,7 +63,6 @@ func NewEmbedGenerator(
 		bot.WithEventManagerConfigOpts(
 			bot.WithAsyncEventsEnabled(),
 		),
-		bot.WithRestClient(rest.NewRestClient(cfg.DiscordToken)),
 		bot.WithCacheConfigOpts(
 			cache.WithCaches(
 				cache.FlagGuilds,
@@ -74,12 +72,11 @@ func NewEmbedGenerator(
 			),
 		),
 		bot.WithEventListenerFunc(func(e *events.Ready) {
-			slog.Info(
-				"Shard is ready",
-				slog.String("shard_id", strconv.Itoa(e.ShardID())),
-				slog.String("user_id", e.User.ID.String()),
-				slog.String("username", e.User.Username),
-			)
+			log.Info().
+				Int("shard_id", e.ShardID()).
+				Str("user_id", e.User.ID.String()).
+				Str("username", e.User.Username).
+				Msg("Embed Generator has connected to the gateway and is ready")
 		}),
 		bot.WithEventListeners(clientRouter),
 	)

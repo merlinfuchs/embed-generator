@@ -2,13 +2,12 @@ package access
 
 import (
 	"github.com/disgoorg/disgo/discord"
-	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 )
 
 func memberPermissions(guild *discord.Guild, roles []discord.Role, channel discord.GuildChannel, userID util.ID, roleIDs []util.ID) (apermissions discord.Permissions) {
 	if userID == guild.OwnerID {
-		apermissions = discordgo.PermissionAll
+		apermissions = discord.PermissionsAll
 		return
 	}
 
@@ -28,8 +27,8 @@ func memberPermissions(guild *discord.Guild, roles []discord.Role, channel disco
 		}
 	}
 
-	if apermissions&discordgo.PermissionAdministrator == discordgo.PermissionAdministrator {
-		apermissions |= discordgo.PermissionAll
+	if apermissions&discord.PermissionAdministrator == discord.PermissionAdministrator {
+		apermissions |= discord.PermissionsAll
 		return // Administrator bypasses all overrides
 	}
 
@@ -75,8 +74,8 @@ func memberPermissions(guild *discord.Guild, roles []discord.Role, channel disco
 		}
 	}
 
-	if apermissions&discordgo.PermissionAdministrator == discordgo.PermissionAdministrator {
-		apermissions |= discordgo.PermissionAll
+	if apermissions&discord.PermissionAdministrator == discord.PermissionAdministrator {
+		apermissions |= discord.PermissionsAll
 	}
 
 	return apermissions

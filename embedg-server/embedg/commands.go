@@ -3,7 +3,6 @@ package embedg
 import (
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"regexp"
 
 	"github.com/disgoorg/disgo/bot"
@@ -18,6 +17,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	actionhandler "github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
@@ -382,10 +382,7 @@ func (g *EmbedGenerator) handleImageIconCommand(e *handler.CommandEvent) error {
 
 	guild, ok := e.Guild()
 	if !ok {
-		slog.Error(
-			"Guild for image command is not in cache",
-			slog.Uint64("guild_id", uint64(*e.GuildID())),
-		)
+		log.Error().Int64("guild_id", int64(*e.GuildID())).Msg("Guild for image command is not in cache")
 		return e.CreateMessage(discord.MessageCreate{
 			Content: "Server is not in cache, please report this!",
 		})

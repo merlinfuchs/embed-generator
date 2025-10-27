@@ -3,8 +3,6 @@ package custom_bots
 import (
 	"context"
 	"fmt"
-	"log/slog"
-	"strconv"
 	"time"
 
 	"github.com/disgoorg/disgo"
@@ -27,6 +25,7 @@ type CustomBot struct {
 func NewCustomBot(token string, presence CustomBotPresence) (*CustomBot, error) {
 	client, err := disgo.New(token,
 		bot.WithShardManagerConfigOpts(
+			sharding.WithShardCount(1),
 			sharding.WithAutoScaling(false),
 			sharding.WithGatewayConfigOpts(
 				gateway.WithIntents(),
@@ -41,12 +40,11 @@ func NewCustomBot(token string, presence CustomBotPresence) (*CustomBot, error) 
 			cache.WithCaches(),
 		),
 		bot.WithEventListenerFunc(func(e *events.Ready) {
-			slog.Info(
-				"Shard is ready",
-				slog.String("shard_id", strconv.Itoa(e.ShardID())),
-				slog.String("user_id", e.User.ID.String()),
-				slog.String("username", e.User.Username),
-			)
+			log.Info().
+				Int("shard_id", e.ShardID()).
+				Str("user_id", e.User.ID.String()).
+				Str("username", e.User.Username).
+				Msg("Custom bot has connected to the gateway and is ready")
 		}),
 	)
 	if err != nil {
