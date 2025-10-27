@@ -5,8 +5,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/disgoorg/disgo/bot"
+	"github.com/disgoorg/disgo/events"
 	"github.com/gorilla/websocket"
-	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
@@ -56,14 +57,14 @@ func (m *CustomBotManager) lazyCustomBotGatewayTask() {
 				ActivityURL:   null.String{NullString: customBot.GatewayActivityUrl},
 			}
 
-			if bot, ok := m.bots[customBot.ID]; ok {
-				if bot.Presence != presence {
-					bot.UpdatePresence(presence)
+			if instance, ok := m.bots[customBot.ID]; ok {
+				if instance.Presence != presence {
+					instance.UpdatePresence(presence)
 				}
 				continue
 			}
 
-			bot, err := NewCustomBot(customBot.Token, presence)
+			instance, err := NewCustomBot(customBot.Token, presence)
 			if err != nil {
 				var wsErr *websocket.CloseError
 				if errors.As(err, &wsErr) && wsErr.Code == 4004 {
@@ -81,22 +82,23 @@ func (m *CustomBotManager) lazyCustomBotGatewayTask() {
 				continue
 			}
 
-			bot.Session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			instance.Client.AddEventListeners(bot.NewListenerFunc(func(i *events.InteractionCreate) {
 				err = m.pg.Q.SetCustomBotHandledFirstInteraction(context.Background(), customBot.ID)
 				if err != nil {
 					log.Error().Err(err).Msg("Failed to set custom bot handled first interaction")
 				}
 
-				err := m.actionHandler.HandleActionInteraction(s, &handler.GatewayInteraction{
-					Session: s,
-					Inner:   i.Interaction,
+				err := m.actionHandler.HandleActionInteraction(instance.Client, &handler.GatewayInteraction{
+					Rest:  instance.Client.Rest,
+					Inner: i.Interaction,
 				})
 				if err != nil {
 					log.Error().Err(err).Msg("Failed to handle action interaction from custom bot gateway")
 				}
-			})
+			}))
 
-			bot.Session.AddHandler(func(s *discordgo.Session, i *discordgo.Disconnect) {
+			// TODO: Re-implement token reset detection
+			/* instance.Client.AddEventListeners(bot.NewListenerFunc(func(i *events.Disconnect) {
 				// Normally DiscordGo would handle reconnection, but it doesn't have any logic to detect a token reset and will just keep trying to reconnect with the old token
 				// We only make a single reconnect attempt, if that fails we hand it off to the background task to spawn a new session
 				// The background task will detect if the token is invalid and mark the custom bot accordingly
@@ -107,9 +109,9 @@ func (m *CustomBotManager) lazyCustomBotGatewayTask() {
 
 					delete(m.bots, customBot.ID)
 				}
-			})
+			})) */
 
-			m.bots[customBot.ID] = bot
+			m.bots[customBot.ID] = instance
 			newBots++
 		}
 

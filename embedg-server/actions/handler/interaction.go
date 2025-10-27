@@ -1,23 +1,26 @@
 package handler
 
 import (
-	"github.com/merlinfuchs/discordgo"
+	"fmt"
+
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/rest"
 	"github.com/rs/zerolog/log"
 )
 
 type Interaction interface {
-	Interaction() *discordgo.Interaction
+	Interaction() discord.Interaction
 	HasResponded() bool
-	Respond(data *discordgo.InteractionResponseData, t ...discordgo.InteractionResponseType) *discordgo.Message
+	Respond(data discord.InteractionResponseData, t ...discord.InteractionResponseType) *discord.Message
 }
 
 type GatewayInteraction struct {
 	Responded bool
-	Session   *discordgo.Session
-	Inner     *discordgo.Interaction
+	Rest      rest.Rest
+	Inner     discord.Interaction
 }
 
-func (i *GatewayInteraction) Interaction() *discordgo.Interaction {
+func (i *GatewayInteraction) Interaction() discord.Interaction {
 	return i.Inner
 }
 
@@ -25,30 +28,32 @@ func (i *GatewayInteraction) HasResponded() bool {
 	return i.Responded
 }
 
-func (i *GatewayInteraction) Respond(data *discordgo.InteractionResponseData, t ...discordgo.InteractionResponseType) *discordgo.Message {
+func (i *GatewayInteraction) Respond(data discord.InteractionResponseData, t ...discord.InteractionResponseType) *discord.Message {
 	var err error
 
-	responseType := discordgo.InteractionResponseChannelMessageWithSource
+	responseType := discord.InteractionResponseTypeCreateMessage
 	if len(t) > 0 {
 		responseType = t[0]
 	}
 
-	var msg *discordgo.Message
+	var msg *discord.Message
 
 	if !i.Responded {
-		err = i.Session.InteractionRespond(i.Inner, &discordgo.InteractionResponse{
-			Type: responseType,
-			Data: data,
-		})
+		err = i.Rest.CreateInteractionResponse(
+			i.Inner.ID(),
+			i.Inner.Token(),
+			discord.InteractionResponse{
+				Type: responseType,
+				Data: data,
+			},
+		)
 	} else {
-		msg, err = i.Session.FollowupMessageCreate(i.Inner, true, &discordgo.WebhookParams{
-			Content:         data.Content,
-			Embeds:          data.Embeds,
-			Components:      data.Components,
-			Files:           data.Files,
-			Flags:           data.Flags,
-			AllowedMentions: data.AllowedMentions,
-		})
+		msgData, ok := data.(discord.MessageCreate)
+		if !ok {
+			err = fmt.Errorf("can't create followup message, data is not a MessageCreate")
+		} else {
+			msg, err = i.Rest.CreateFollowupMessage(i.Inner.ApplicationID(), i.Inner.Token(), msgData)
+		}
 	}
 
 	if err != nil {
@@ -62,12 +67,12 @@ func (i *GatewayInteraction) Respond(data *discordgo.InteractionResponseData, t 
 
 type RestInteraction struct {
 	Responded       bool
-	InitialResponse chan *discordgo.InteractionResponse
-	Session         *discordgo.Session
-	Inner           *discordgo.Interaction
+	InitialResponse chan *discord.InteractionResponse
+	Rest            rest.Rest
+	Inner           discord.Interaction
 }
 
-func (i *RestInteraction) Interaction() *discordgo.Interaction {
+func (i *RestInteraction) Interaction() discord.Interaction {
 	return i.Inner
 }
 
@@ -75,30 +80,28 @@ func (i *RestInteraction) HasResponded() bool {
 	return i.Responded
 }
 
-func (i *RestInteraction) Respond(data *discordgo.InteractionResponseData, t ...discordgo.InteractionResponseType) *discordgo.Message {
+func (i *RestInteraction) Respond(data discord.InteractionResponseData, t ...discord.InteractionResponseType) *discord.Message {
 	var err error
 
-	responseType := discordgo.InteractionResponseChannelMessageWithSource
+	responseType := discord.InteractionResponseTypeCreateMessage
 	if len(t) > 0 {
 		responseType = t[0]
 	}
 
-	var msg *discordgo.Message
+	var msg *discord.Message
 
 	if !i.Responded {
-		i.InitialResponse <- &discordgo.InteractionResponse{
+		i.InitialResponse <- &discord.InteractionResponse{
 			Type: responseType,
 			Data: data,
 		}
 	} else {
-		msg, err = i.Session.FollowupMessageCreate(i.Inner, true, &discordgo.WebhookParams{
-			Content:         data.Content,
-			Embeds:          data.Embeds,
-			Components:      data.Components,
-			Files:           data.Files,
-			Flags:           data.Flags,
-			AllowedMentions: data.AllowedMentions,
-		})
+		msgData, ok := data.(discord.MessageCreate)
+		if !ok {
+			err = fmt.Errorf("can't create followup message, data is not a MessageCreate")
+		} else {
+			msg, err = i.Rest.CreateFollowupMessage(i.Inner.ApplicationID(), i.Inner.Token(), msgData)
+		}
 	}
 
 	if err != nil {

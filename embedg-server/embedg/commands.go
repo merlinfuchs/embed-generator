@@ -6,7 +6,9 @@ import (
 	"log/slog"
 	"regexp"
 
+	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/handler"
 	"github.com/disgoorg/disgo/handler/middleware"
 	"github.com/disgoorg/disgo/rest"
@@ -14,6 +16,7 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
+	actionhandler "github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/spf13/viper"
 )
@@ -240,6 +243,13 @@ func (g *EmbedGenerator) SyncCommands() error {
 }
 
 func (g *EmbedGenerator) registerHandlers() {
+	g.client.AddEventListeners(bot.NewListenerFunc(func(e *events.InteractionCreate) {
+		g.HandleInteraction(&actionhandler.GatewayInteraction{
+			Rest:  g.client.Rest,
+			Inner: e.Interaction,
+		})
+	}))
+
 	r := g.clientRouter
 
 	r.Use(middleware.Logger)
@@ -540,5 +550,6 @@ func (g *EmbedGenerator) handleUserFormatMentionContextCommand(e *handler.Comman
 }
 
 func (g *EmbedGenerator) handleEmbedCommand(e *handler.CommandEvent) error {
+	// TODO: Implement with components
 	return nil
 }

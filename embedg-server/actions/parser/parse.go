@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/disgoorg/disgo/cache"
+	"github.com/disgoorg/disgo/discord"
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
@@ -28,8 +29,8 @@ func New(accessManager *access.AccessManager, pg *postgres.PostgresStore, caches
 	}
 }
 
-func (m *ActionParser) ParseMessageComponents(data []actions.ComponentWithActions, allowedComponentTypes []int) ([]discordgo.MessageComponent, error) {
-	components := make([]discordgo.MessageComponent, 0, len(data))
+func (m *ActionParser) ParseMessageComponents(data []actions.ComponentWithActions, allowedComponentTypes []int) ([]discord.LayoutComponent, error) {
+	components := make([]discord.LayoutComponent, 0, len(data))
 
 	for _, component := range data {
 		parsed, err := m.ParseMessageComponent(component, allowedComponentTypes)
@@ -211,7 +212,7 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions, 
 	}
 }
 
-func (m *ActionParser) UnparseMessageComponents(data []discordgo.MessageComponent) ([]actions.ComponentWithActions, error) {
+func (m *ActionParser) UnparseMessageComponents(data []discord.LayoutComponent) ([]actions.ComponentWithActions, error) {
 	res := make([]actions.ComponentWithActions, 0, len(data))
 
 	for _, comp := range data {
@@ -225,7 +226,7 @@ func (m *ActionParser) UnparseMessageComponents(data []discordgo.MessageComponen
 	return res, nil
 }
 
-func (m *ActionParser) UnparseMessageComponent(data discordgo.MessageComponent) (actions.ComponentWithActions, error) {
+func (m *ActionParser) UnparseMessageComponent(data discord.LayoutComponent) (actions.ComponentWithActions, error) {
 	switch c := data.(type) {
 	case *discordgo.ActionsRow:
 		ar := actions.ComponentWithActions{

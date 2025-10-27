@@ -74,8 +74,7 @@ func registerRoutes(app *fiber.App, stores *Stores, embedg *embedg.EmbedGenerato
 	guildsGroup.Get("/:guildID/branding", guildsHanlder.HandleGetGuildBranding)
 
 	sendMessageHandler := send_message.New(
-		embedg.Caches(),
-		embedg.Rest(),
+		embedg,
 		stores.PG,
 		managers.access,
 		managers.actionParser,
@@ -93,7 +92,7 @@ func registerRoutes(app *fiber.App, stores *Stores, embedg *embedg.EmbedGenerato
 
 	customBotHandler := custom_bots.New(
 		stores.PG,
-		embedg.Caches(),
+		embedg,
 		managers.access,
 		managers.premium,
 		managers.actionParser,
@@ -110,7 +109,7 @@ func registerRoutes(app *fiber.App, stores *Stores, embedg *embedg.EmbedGenerato
 	app.Post("/api/custom-bot/commands/deploy", sessionMiddleware.SessionRequired(), customBotHandler.HandleDeployCustomCommands)
 	app.Post("/api/gateway/:customBotID", customBotHandler.HandleCustomBotInteraction)
 
-	interactionHandler := interaction.New(embedg.Caches(), embedg.Rest(), managers.actionHandler)
+	interactionHandler := interaction.New(embedg)
 	app.Post("/api/gateway", interactionHandler.HandleBotInteraction)
 
 	imagesHandler := images.New(stores.PG, managers.access, managers.premium, stores.Blob)

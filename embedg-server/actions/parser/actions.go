@@ -12,8 +12,8 @@ import (
 	"github.com/sqlc-dev/pqtype"
 )
 
-func (m *ActionParser) CreateActionsForMessage(ctx context.Context, actionSets map[string]actions.ActionSet, derivedPerms actions.ActionDerivedPermissions, messageID string, ephemeral bool) error {
-	err := m.pg.Q.DeleteMessageActionSetsForMessage(ctx, messageID)
+func (m *ActionParser) CreateActionsForMessage(ctx context.Context, actionSets map[string]actions.ActionSet, derivedPerms actions.ActionDerivedPermissions, messageID util.ID, ephemeral bool) error {
+	err := m.pg.Q.DeleteMessageActionSetsForMessage(ctx, messageID.String())
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to delete message action sets")
 	}
@@ -31,7 +31,7 @@ func (m *ActionParser) CreateActionsForMessage(ctx context.Context, actionSets m
 
 		_, err = m.pg.Q.InsertMessageActionSet(ctx, pgmodel.InsertMessageActionSetParams{
 			ID:                 util.UniqueID(),
-			MessageID:          messageID,
+			MessageID:          messageID.String(),
 			SetID:              actionSetID,
 			Actions:            raw,
 			DerivedPermissions: pqtype.NullRawMessage{Valid: true, RawMessage: rawDerivedPerms},
@@ -44,8 +44,8 @@ func (m *ActionParser) CreateActionsForMessage(ctx context.Context, actionSets m
 	return nil
 }
 
-func (m *ActionParser) RetrieveActionsForMessage(ctx context.Context, messageID string) (map[string]actions.ActionSet, error) {
-	rows, err := m.pg.Q.GetMessageActionSets(ctx, messageID)
+func (m *ActionParser) RetrieveActionsForMessage(ctx context.Context, messageID util.ID) (map[string]actions.ActionSet, error) {
+	rows, err := m.pg.Q.GetMessageActionSets(ctx, messageID.String())
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get message action sets: %w", err)
 	}
@@ -65,6 +65,6 @@ func (m *ActionParser) RetrieveActionsForMessage(ctx context.Context, messageID 
 	return res, nil
 }
 
-func (m *ActionParser) DeleteActionsForMessage(messageID string) error {
+func (m *ActionParser) DeleteActionsForMessage(messageID util.ID) error {
 	return nil
 }

@@ -20,12 +20,16 @@ import (
 )
 
 func (h *CustomBotsHandler) HandleListCustomCommands(c *fiber.Ctx) error {
-	guildID := c.Query("guild_id")
+	guildID, err := util.ParseID(c.Query("guild_id"))
+	if err != nil {
+		return helpers.BadRequest("invalid_guild_id", "Invalid guild ID")
+	}
+
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
-	commands, err := h.pg.Q.GetCustomCommands(c.Context(), guildID)
+	commands, err := h.pg.Q.GetCustomCommands(c.Context(), guildID.String())
 	if err != nil {
 		return err
 	}
@@ -58,13 +62,17 @@ func (h *CustomBotsHandler) HandleListCustomCommands(c *fiber.Ctx) error {
 }
 
 func (h *CustomBotsHandler) HandleGetCustomCommand(c *fiber.Ctx) error {
-	guildID := c.Query("guild_id")
+	guildID, err := util.ParseID(c.Query("guild_id"))
+	if err != nil {
+		return helpers.BadRequest("invalid_guild_id", "Invalid guild ID")
+	}
+
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
 	command, err := h.pg.Q.GetCustomCommand(c.Context(), pgmodel.GetCustomCommandParams{
-		GuildID: guildID,
+		GuildID: guildID.String(),
 		ID:      c.Params("commandID"),
 	})
 	if err != nil {
@@ -100,7 +108,11 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 	session := c.Locals("session").(*session.Session)
 	req.Normalize()
 
-	guildID := c.Query("guild_id")
+	guildID, err := util.ParseID(c.Query("guild_id"))
+	if err != nil {
+		return helpers.BadRequest("invalid_guild_id", "Invalid guild ID")
+	}
+
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
@@ -114,7 +126,7 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return helpers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
 	}
 
-	existingCount, err := h.pg.Q.CountCustomCommands(c.Context(), guildID)
+	existingCount, err := h.pg.Q.CountCustomCommands(c.Context(), guildID.String())
 	if err != nil {
 		return err
 	}
@@ -129,7 +141,7 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return err
 	}
 
-	derivedPerms, err := h.actionParser.DerivePermissionsForActions(session.UserID, guildID, "")
+	derivedPerms, err := h.actionParser.DerivePermissionsForActions(session.UserID, guildID, 0)
 	if err != nil {
 		return helpers.BadRequest("invalid_actions", err.Error())
 	}
@@ -146,7 +158,7 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 
 	command, err := h.pg.Q.InsertCustomCommand(c.Context(), pgmodel.InsertCustomCommandParams{
 		ID:          util.UniqueID(),
-		GuildID:     guildID,
+		GuildID:     guildID.String(),
 		Name:        req.Name,
 		Description: req.Description,
 		Parameters:  rawParameters,
@@ -182,7 +194,11 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 	session := c.Locals("session").(*session.Session)
 	req.Normalize()
 
-	guildID := c.Query("guild_id")
+	guildID, err := util.ParseID(c.Query("guild_id"))
+	if err != nil {
+		return helpers.BadRequest("invalid_guild_id", "Invalid guild ID")
+	}
+
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
@@ -202,7 +218,7 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return err
 	}
 
-	derivedPerms, err := h.actionParser.DerivePermissionsForActions(session.UserID, guildID, "")
+	derivedPerms, err := h.actionParser.DerivePermissionsForActions(session.UserID, guildID, 0)
 	if err != nil {
 		return helpers.BadRequest("invalid_actions", err.Error())
 	}
@@ -219,7 +235,7 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 
 	command, err := h.pg.Q.UpdateCustomCommand(c.Context(), pgmodel.UpdateCustomCommandParams{
 		ID:          c.Params("commandID"),
-		GuildID:     guildID,
+		GuildID:     guildID.String(),
 		Name:        req.Name,
 		Description: req.Description,
 		Enabled:     req.Enabled,
@@ -251,13 +267,17 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 }
 
 func (h *CustomBotsHandler) HandleDeleteCustomCommand(c *fiber.Ctx) error {
-	guildID := c.Query("guild_id")
+	guildID, err := util.ParseID(c.Query("guild_id"))
+	if err != nil {
+		return helpers.BadRequest("invalid_guild_id", "Invalid guild ID")
+	}
+
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
-	_, err := h.pg.Q.DeleteCustomCommand(c.Context(), pgmodel.DeleteCustomCommandParams{
-		GuildID: guildID,
+	_, err = h.pg.Q.DeleteCustomCommand(c.Context(), pgmodel.DeleteCustomCommandParams{
+		GuildID: guildID.String(),
 		ID:      c.Params("commandID"),
 	})
 	if err != nil {
@@ -273,7 +293,11 @@ func (h *CustomBotsHandler) HandleDeleteCustomCommand(c *fiber.Ctx) error {
 }
 
 func (h *CustomBotsHandler) HandleDeployCustomCommands(c *fiber.Ctx) error {
-	guildID := c.Query("guild_id")
+	guildID, err := util.ParseID(c.Query("guild_id"))
+	if err != nil {
+		return helpers.BadRequest("invalid_guild_id", "Invalid guild ID")
+	}
+
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
@@ -287,7 +311,7 @@ func (h *CustomBotsHandler) HandleDeployCustomCommands(c *fiber.Ctx) error {
 		return helpers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
 	}
 
-	customBot, err := h.pg.Q.GetCustomBotByGuildID(c.Context(), guildID)
+	customBot, err := h.pg.Q.GetCustomBotByGuildID(c.Context(), guildID.String())
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return helpers.NotFound("not_configured", "There is no custom bot configured right now, you need to configure one first.")
@@ -295,7 +319,7 @@ func (h *CustomBotsHandler) HandleDeployCustomCommands(c *fiber.Ctx) error {
 		return fmt.Errorf("Failed to retrieve custom bot: %w", err)
 	}
 
-	commands, err := h.pg.Q.GetCustomCommands(c.Context(), guildID)
+	commands, err := h.pg.Q.GetCustomCommands(c.Context(), guildID.String())
 	if err != nil {
 		return fmt.Errorf("Failed to retrieve custom commands: %w", err)
 	}
@@ -314,13 +338,13 @@ func (h *CustomBotsHandler) HandleDeployCustomCommands(c *fiber.Ctx) error {
 		return fmt.Errorf("Failed to create custom bot session: %w", err)
 	}
 
-	_, err = session.ApplicationCommandBulkOverwrite(customBot.ApplicationID, guildID, payload)
+	_, err = session.ApplicationCommandBulkOverwrite(customBot.ApplicationID, guildID.String(), payload)
 	if err != nil {
 		return fmt.Errorf("Failed to deploy commands: %w", err)
 	}
 
 	_, err = h.pg.Q.SetCustomCommandsDeployedAt(c.Context(), pgmodel.SetCustomCommandsDeployedAtParams{
-		GuildID: guildID,
+		GuildID: guildID.String(),
 		DeployedAt: sql.NullTime{
 			Time:  time.Now().UTC(),
 			Valid: true,
@@ -335,6 +359,8 @@ func (h *CustomBotsHandler) HandleDeployCustomCommands(c *fiber.Ctx) error {
 	})
 }
 
+// commandsToPayload converts a list of custom commands to a list of Discord application commands
+// This still uses discordgo because I didn't have the nerve to convert it to disgo yet.
 func commandsToPayload(commands []pgmodel.CustomCommand) (error, []*discordgo.ApplicationCommand) {
 	res := make([]*discordgo.ApplicationCommand, 0, len(commands))
 

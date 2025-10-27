@@ -6,7 +6,6 @@ import (
 
 	"github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/discord"
-	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 )
 
@@ -14,10 +13,10 @@ var standardDataMap = map[string]interface{}{}
 
 type InteractionData struct {
 	caches cache.Caches
-	i      *discord.Interaction
+	i      discord.Interaction
 }
 
-func NewInteractionData(caches cache.Caches, i *discord.Interaction) *InteractionData {
+func NewInteractionData(caches cache.Caches, i discord.Interaction) *InteractionData {
 	return &InteractionData{
 		caches: caches,
 		i:      i,
@@ -25,29 +24,33 @@ func NewInteractionData(caches cache.Caches, i *discord.Interaction) *Interactio
 }
 
 func (d *InteractionData) User() interface{} {
-	if d.i.Member != nil {
-		res := NewMemberData(d.state, d.i.GuildID, d.i.Member)
+	if d.i.Member() != nil {
+		res := NewMemberData(d.caches, *d.i.GuildID(), d.i.Member().Member)
 		return &res
 	}
 
-	return NewUserData(d.i.User)
+	return NewUserData(d.i.User())
 }
 
 func (d *InteractionData) Member() *MemberData {
-	if d.i.Member == nil {
+	if d.i.Member() == nil {
 		return nil
 	}
 
-	return NewMemberData(d.state, d.i.GuildID, d.i.Member)
+	return NewMemberData(d.caches, *d.i.GuildID(), d.i.Member().Member)
 }
 
 func (d *InteractionData) Command() *CommandData {
-	if d.i.Type != discordgo.InteractionApplicationCommand {
+	if d.i.Type() != discord.InteractionTypeApplicationCommand {
 		return nil
 	}
 
-	data := d.i.ApplicationCommandData()
-	return NewCommandData(d.state, d.i.GuildID, &data)
+	cmdInteraction, ok := d.i.(discord.ApplicationCommandInteraction)
+	if !ok {
+		return nil
+	}
+
+	return NewCommandData(d.caches, *d.i.GuildID(), cmdInteraction.Data)
 }
 
 type UserData struct {
@@ -132,10 +135,10 @@ type MemberData struct {
 	UserData
 	caches  cache.Caches
 	guildID util.ID
-	m       *discord.Member
+	m       discord.Member
 }
 
-func NewMemberData(caches cache.Caches, guildID util.ID, m *discord.Member) *MemberData {
+func NewMemberData(caches cache.Caches, guildID util.ID, m discord.Member) *MemberData {
 	return &MemberData{
 		UserData: UserData{m.User},
 		caches:   caches,
@@ -190,14 +193,14 @@ func (d *MemberData) AvatarURL() string {
 }
 
 type CommandData struct {
-	state   *discordgo.State
-	guildID string
-	c       *discordgo.ApplicationCommandInteractionData
+	caches  cache.Caches
+	guildID util.ID
+	c       discord.ApplicationCommandInteractionData
 }
 
-func NewCommandData(state *discordgo.State, guildID string, c *discordgo.ApplicationCommandInteractionData) *CommandData {
+func NewCommandData(caches cache.Caches, guildID util.ID, c discord.ApplicationCommandInteractionData) *CommandData {
 	return &CommandData{
-		state:   state,
+		caches:  caches,
 		guildID: guildID,
 		c:       c,
 	}
@@ -208,21 +211,24 @@ func (d *CommandData) String() string {
 }
 
 func (d *CommandData) ID() string {
-	return d.c.ID
+	return d.c.CommandID().String()
 }
 
 func (d *CommandData) Name() string {
-	return d.c.Name
+	return d.c.CommandName()
 }
 
 func (d *CommandData) Mention() string {
-	return fmt.Sprintf("</%s:%s>", d.c.Name, d.c.ID)
+	return fmt.Sprintf("</%s:%s>", d.c.CommandName(), d.c.CommandID().String())
 }
 
 func (d *CommandData) Options() map[string]interface{} {
 	res := make(map[string]interface{})
-	for _, opt := range d.c.Options {
-		res[opt.Name] = NewCommandOptionData(d.state, d.guildID, d.c, opt)
+
+	if slashCMD, ok := d.c.(discord.SlashCommandInteractionData); ok {
+		for _, opt := range slashCMD.Options {
+			res[opt.Name] = NewCommandOptionData(d.caches, d.guildID, slashCMD, opt)
+		}
 	}
 
 	return res
@@ -232,43 +238,40 @@ func (d *CommandData) Args() map[string]interface{} {
 	return d.Options()
 }
 
-func NewCommandOptionData(state *discordgo.State, guildID string, c *discordgo.ApplicationCommandInteractionData, o *discordgo.ApplicationCommandInteractionDataOption) interface{} {
+func NewCommandOptionData(caches cache.Caches, guildID util.ID, c discord.SlashCommandInteractionData, o discord.SlashCommandOption) interface{} {
 	switch o.Type {
-	case discordgo.ApplicationCommandOptionString:
-		return o.StringValue()
-	case discordgo.ApplicationCommandOptionInteger:
-		return o.IntValue()
-	case discordgo.ApplicationCommandOptionBoolean:
-		return o.BoolValue()
-	case discordgo.ApplicationCommandOptionUser:
-		user := o.UserValue(nil)
-		resolved := c.Resolved.Users[user.ID]
-		if resolved != nil {
+	case discord.ApplicationCommandOptionTypeString:
+		return o.String()
+	case discord.ApplicationCommandOptionTypeInt:
+		return o.Int()
+	case discord.ApplicationCommandOptionTypeBool:
+		return o.Bool()
+	case discord.ApplicationCommandOptionTypeUser:
+		userID := o.Snowflake()
+		resolved, ok := c.Resolved.Users[userID]
+		if ok {
 			return UserData{resolved}
 		}
-		return UserData{user}
-	case discordgo.ApplicationCommandOptionChannel:
-		channel := o.ChannelValue(nil)
-		resolved := c.Resolved.Channels[channel.ID]
-		if resolved != nil {
-			return NewChannelData(state, channel.ID, resolved)
+		return UserData{u: discord.User{ID: userID}}
+	case discord.ApplicationCommandOptionTypeChannel:
+		channelID := o.Snowflake()
+		return NewChannelData(caches, channelID, nil)
+	case discord.ApplicationCommandOptionTypeRole:
+		roleID := o.Snowflake()
+		resolved, ok := c.Resolved.Roles[roleID]
+		if ok {
+			return NewRoleData(caches, guildID, roleID, &resolved)
 		}
-		return NewChannelData(state, channel.ID, nil)
-	case discordgo.ApplicationCommandOptionRole:
-		role := o.RoleValue(nil, "")
-		resolved := c.Resolved.Roles[role.ID]
-		if resolved != nil {
-			return NewRoleData(state, guildID, role.ID, resolved)
+		return NewRoleData(caches, guildID, roleID, nil)
+	case discord.ApplicationCommandOptionTypeFloat:
+		return o.Float()
+	case discord.ApplicationCommandOptionTypeAttachment:
+		attachmentID := o.Snowflake()
+		resolved, ok := c.Resolved.Attachments[attachmentID]
+		if ok {
+			return NewAttachmentData(resolved)
 		}
-		return NewRoleData(state, guildID, role.ID, nil)
-	case discordgo.ApplicationCommandOptionNumber:
-		return fmt.Sprintf("%f", o.FloatValue())
-	case discordgo.ApplicationCommandOptionAttachment:
-		attachment := c.Resolved.Attachments[o.Value.(string)]
-		if attachment != nil {
-			return NewAttachmentData(attachment)
-		}
-		return nil
+		return NewAttachmentData(discord.Attachment{ID: attachmentID})
 	}
 
 	return nil
@@ -409,11 +412,11 @@ func (d *GuildData) BoostLevel() (int, error) {
 
 type ChannelData struct {
 	caches    cache.Caches
-	channelID string
+	channelID util.ID
 	channel   discord.GuildChannel
 }
 
-func NewChannelData(caches cache.Caches, channelID string, c discord.GuildChannel) *ChannelData {
+func NewChannelData(caches cache.Caches, channelID util.ID, c discord.GuildChannel) *ChannelData {
 	return &ChannelData{
 		caches:    caches,
 		channelID: channelID,
@@ -426,7 +429,7 @@ func (d *ChannelData) ensureChannel() error {
 		return nil
 	}
 
-	channel, ok := d.caches.Channel(util.ToID(d.channelID))
+	channel, ok := d.caches.Channel(d.channelID)
 	if !ok {
 		return fmt.Errorf("channel not found in cache")
 	}
@@ -440,7 +443,7 @@ func (d *ChannelData) String() string {
 }
 
 func (d *ChannelData) ID() string {
-	return d.channelID
+	return d.channelID.String()
 }
 
 func (d *ChannelData) Name() (string, error) {
@@ -521,10 +524,10 @@ func (d *RoleData) Name() (string, error) {
 }
 
 type AttachmentData struct {
-	a *discordgo.MessageAttachment
+	a discord.Attachment
 }
 
-func NewAttachmentData(a *discordgo.MessageAttachment) *AttachmentData {
+func NewAttachmentData(a discord.Attachment) *AttachmentData {
 	return &AttachmentData{a: a}
 }
 
@@ -533,7 +536,7 @@ func (d *AttachmentData) String() string {
 }
 
 func (d *AttachmentData) ID() string {
-	return d.a.ID
+	return d.a.ID.String()
 }
 
 func (d *AttachmentData) URL() string {

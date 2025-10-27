@@ -6,10 +6,11 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/disgoorg/disgo/discord"
 	"github.com/merlinfuchs/discordgo"
 )
 
-func ExecuteGuildedWebhook(webhookID, webhookToken string, params *discordgo.WebhookParams) error {
+func ExecuteGuildedWebhook(webhookID, webhookToken string, params discord.WebhookMessageCreate) error {
 	webhookURL := fmt.Sprintf("https://media.guilded.gg/webhooks/%s/%s", webhookID, webhookToken)
 
 	files := params.Files

@@ -4,30 +4,24 @@ import (
 	"bytes"
 	"crypto/ed25519"
 	"encoding/hex"
-	"strings"
 	"time"
 
-	"github.com/disgoorg/disgo/cache"
-	"github.com/disgoorg/disgo/rest"
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/events"
 	"github.com/gofiber/fiber/v2"
-	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
-	"github.com/rs/zerolog/log"
+	"github.com/merlinfuchs/embed-generator/embedg-server/embedg"
 	"github.com/spf13/viper"
 )
 
 type InteractionHandler struct {
-	caches        cache.Caches
-	rest          rest.Rest
-	actionHandler *handler.ActionHandler
+	embedg *embedg.EmbedGenerator
 }
 
-func New(caches cache.Caches, rest rest.Rest, actionHandler *handler.ActionHandler) *InteractionHandler {
+func New(embedg *embedg.EmbedGenerator) *InteractionHandler {
 	return &InteractionHandler{
-		caches:        caches,
-		rest:          rest,
-		actionHandler: actionHandler,
+		embedg: embedg,
 	}
 }
 
@@ -38,45 +32,27 @@ func (h *InteractionHandler) HandleBotInteraction(c *fiber.Ctx) error {
 		return helpers.Unauthorized("invalid_signature", "Invalid signature")
 	}
 
-	interaction := &discordgo.InteractionCreate{}
+	interaction := &events.InteractionCreate{}
 	err := c.BodyParser(interaction)
 	if err != nil {
 		return err
 	}
 
-	if interaction.Type == discordgo.InteractionPing {
-		return c.JSON(discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponsePong,
+	if interaction.Type() == discord.InteractionTypePing {
+		return c.JSON(discord.InteractionResponse{
+			Type: discord.InteractionResponseTypePong,
 		})
 	}
 
-	customAction := false
-	switch interaction.Type {
-	case discordgo.InteractionMessageComponent:
-		data := interaction.MessageComponentData()
-		if strings.HasPrefix(data.CustomID, "action:") {
-			customAction = true
-		}
-	}
-
-	respCh := make(chan *discordgo.InteractionResponse)
+	respCh := make(chan *discord.InteractionResponse)
 
 	ri := &handler.RestInteraction{
 		Inner:           interaction.Interaction,
-		Session:         h.bot.Session,
+		Rest:            h.embedg.Rest(),
 		InitialResponse: respCh,
 	}
 
-	go func() {
-		if customAction {
-			err := h.actionHandler.HandleActionInteraction(h.bot.Session, ri)
-			if err != nil {
-				log.Error().Err(err).Msg("Failed to handle action interaction")
-			}
-		} else {
-			h.bot.HandlerInteraction(h.bot.Session, ri, interaction.Interaction.Data)
-		}
-	}()
+	h.embedg.HandleInteraction(ri)
 
 	select {
 	case resp := <-respCh:

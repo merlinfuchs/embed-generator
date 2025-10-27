@@ -34,13 +34,16 @@ func New(pg *postgres.PostgresStore, am *access.AccessManager, planStore store.P
 
 func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req wire.ScheduledMessageCreateRequestWire) error {
 	session := c.Locals("session").(*session.Session)
-	guildID := c.Query("guild_id")
+	guildID, err := util.ParseID(c.Query("guild_id"))
+	if err != nil {
+		return helpers.BadRequest("invalid_guild_id", "The guild_id field is invalid.")
+	}
 
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
-	if err := h.am.CheckChannelAccessForRequest(c, req.ChannelID); err != nil {
+	if err := h.am.CheckChannelAccessForRequest(c, util.ToID(req.ChannelID)); err != nil {
 		return err
 	}
 
@@ -83,8 +86,8 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 
 	msg, err := h.pg.Q.InsertScheduledMessage(c.Context(), pgmodel.InsertScheduledMessageParams{
 		ID:        util.UniqueID(),
-		CreatorID: session.UserID,
-		GuildID:   guildID,
+		CreatorID: session.UserID.String(),
+		GuildID:   guildID.String(),
 		ChannelID: req.ChannelID,
 		MessageID: sql.NullString{
 			String: req.MessageID.String,
@@ -131,13 +134,16 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 }
 
 func (h *ScheduledMessageHandler) HandleListScheduledMessages(c *fiber.Ctx) error {
-	guildID := c.Query("guild_id")
+	guildID, err := util.ParseID(c.Query("guild_id"))
+	if err != nil {
+		return helpers.BadRequest("invalid_guild_id", "The guild_id field is invalid.")
+	}
 
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
-	messages, err := h.pg.Q.GetScheduledMessages(c.Context(), guildID)
+	messages, err := h.pg.Q.GetScheduledMessages(c.Context(), guildID.String())
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get scheduled messages")
@@ -157,7 +163,10 @@ func (h *ScheduledMessageHandler) HandleListScheduledMessages(c *fiber.Ctx) erro
 
 func (h *ScheduledMessageHandler) HandleGetScheduledMessage(c *fiber.Ctx) error {
 	messageID := c.Params("messageID")
-	guildID := c.Query("guild_id")
+	guildID, err := util.ParseID(c.Query("guild_id"))
+	if err != nil {
+		return helpers.BadRequest("invalid_guild_id", "The guild_id field is invalid.")
+	}
 
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
@@ -165,7 +174,7 @@ func (h *ScheduledMessageHandler) HandleGetScheduledMessage(c *fiber.Ctx) error 
 
 	msg, err := h.pg.Q.GetScheduledMessage(c.Context(), pgmodel.GetScheduledMessageParams{
 		ID:      messageID,
-		GuildID: guildID,
+		GuildID: guildID.String(),
 	})
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -183,13 +192,16 @@ func (h *ScheduledMessageHandler) HandleGetScheduledMessage(c *fiber.Ctx) error 
 
 func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req wire.ScheduledMessageUpdateRequestWire) error {
 	messageID := c.Params("messageID")
-	guildID := c.Query("guild_id")
+	guildID, err := util.ParseID(c.Query("guild_id"))
+	if err != nil {
+		return helpers.BadRequest("invalid_guild_id", "The guild_id field is invalid.")
+	}
 
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
-	if err := h.am.CheckChannelAccessForRequest(c, req.ChannelID); err != nil {
+	if err := h.am.CheckChannelAccessForRequest(c, util.ToID(req.ChannelID)); err != nil {
 		return err
 	}
 
@@ -230,7 +242,7 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 
 	msg, err := h.pg.Q.UpdateScheduledMessage(c.Context(), pgmodel.UpdateScheduledMessageParams{
 		ID:        messageID,
-		GuildID:   guildID,
+		GuildID:   guildID.String(),
 		ChannelID: req.ChannelID,
 		MessageID: sql.NullString{
 			String: req.MessageID.String,
@@ -281,15 +293,18 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 
 func (h *ScheduledMessageHandler) HandleDeleteScheduledMessage(c *fiber.Ctx) error {
 	messageID := c.Params("messageID")
-	guildID := c.Query("guild_id")
+	guildID, err := util.ParseID(c.Query("guild_id"))
+	if err != nil {
+		return helpers.BadRequest("invalid_guild_id", "The guild_id field is invalid.")
+	}
 
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
-	err := h.pg.Q.DeleteScheduledMessage(c.Context(), pgmodel.DeleteScheduledMessageParams{
+	err = h.pg.Q.DeleteScheduledMessage(c.Context(), pgmodel.DeleteScheduledMessageParams{
 		ID:      messageID,
-		GuildID: guildID,
+		GuildID: guildID.String(),
 	})
 
 	if err != nil {

@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/disgoorg/disgo/cache"
+	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
+	"github.com/disgoorg/snowflake/v2"
 	"github.com/gofiber/fiber/v2"
-	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/template"
@@ -17,6 +17,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/embedg"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
@@ -24,8 +25,7 @@ import (
 )
 
 type SendMessageHandler struct {
-	caches        cache.Caches
-	rest          rest.Rest
+	embedg        *embedg.EmbedGenerator
 	pg            *postgres.PostgresStore
 	accessManager *access.AccessManager
 	actionParser  *parser.ActionParser
@@ -33,16 +33,14 @@ type SendMessageHandler struct {
 }
 
 func New(
-	caches cache.Caches,
-	rest rest.Rest,
+	embedg *embedg.EmbedGenerator,
 	pg *postgres.PostgresStore,
 	accessManager *access.AccessManager,
 	actionParser *parser.ActionParser,
 	planStore store.PlanStore,
 ) *SendMessageHandler {
 	return &SendMessageHandler{
-		caches:        caches,
-		rest:          rest,
+		embedg:        embedg,
 		pg:            pg,
 		accessManager: accessManager,
 		actionParser:  actionParser,
@@ -53,25 +51,25 @@ func New(
 func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.MessageSendToChannelRequestWire) error {
 	session := c.Locals("session").(*session.Session)
 
-	if err := h.accessManager.CheckChannelAccessForRequest(c, req.ChannelID); err != nil {
+	if err := h.accessManager.CheckChannelAccessForRequest(c, util.ToID(req.ChannelID)); err != nil {
 		return err
 	}
 
-	channel, err := h.bot.State.Channel(req.ChannelID)
-	if err != nil {
-		return fmt.Errorf("Failed to get channel: %w", err)
+	channel, ok := h.embedg.Caches().Channel(util.ToID(req.ChannelID))
+	if !ok {
+		return helpers.BadRequest("channel_not_found", "Channel not found")
 	}
 
-	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), channel.GuildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), channel.GuildID())
 	if err != nil {
 		return fmt.Errorf("could not get plan features: %w", err)
 	}
 
 	templates := template.NewContext(
 		"SEND_MESSAGE", features.MaxTemplateOps,
-		template.NewGuildProvider(h.bot.State, channel.GuildID, nil),
-		template.NewChannelProvider(h.bot.State, req.ChannelID, nil),
-		template.NewKVProvider(channel.GuildID, h.pg, features.MaxKVKeys),
+		template.NewGuildProvider(h.embedg.Caches(), channel.GuildID(), nil),
+		template.NewChannelProvider(h.embedg.Caches(), util.ToID(req.ChannelID), nil),
+		template.NewKVProvider(channel.GuildID(), h.pg, features.MaxKVKeys),
 	)
 
 	data := &actions.MessageWithActions{}
@@ -85,7 +83,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return fmt.Errorf("Failed to parse and execute message template: %w", err)
 	}
 
-	params := &discordgo.WebhookParams{
+	params := discord.WebhookMessageCreate{
 		Username:        data.Username,
 		AvatarURL:       data.AvatarURL,
 		ThreadName:      req.ThreadName.String,
@@ -98,7 +96,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		params.TTS = data.TTS
 	}
 
-	attachments := make([]*discordgo.MessageAttachment, len(req.Attachments))
+	attachments := make([]discord.AttachmentUpdate, len(req.Attachments))
 
 	for i, attachment := range req.Attachments {
 		dataURL, err := dataurl.DecodeString(attachment.DataURL)
@@ -106,14 +104,14 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 			return helpers.BadRequest("invalid_attachments", "Failed to parse attachment data URL")
 		}
 
-		params.Files = append(params.Files, &discordgo.File{
-			Name:        attachment.Name,
-			ContentType: dataURL.ContentType(),
-			Reader:      bytes.NewReader(dataURL.Data),
+		params.Files = append(params.Files, &discord.File{
+			Name: attachment.Name,
+			// ContentType: dataURL.ContentType(),
+			Reader: bytes.NewReader(dataURL.Data),
 		})
 
-		attachments[i] = &discordgo.MessageAttachment{
-			ID: fmt.Sprintf("%d", i),
+		attachments[i] = discord.AttachmentKeep{
+			ID: util.ID(i),
 		}
 	}
 
@@ -122,9 +120,9 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return helpers.BadRequest("invalid_actions", err.Error())
 	}
 
-	var msg *discordgo.Message
+	var msg *discord.Message
 	if req.MessageID.Valid {
-		msg, err = h.bot.EditMessageInChannel(c.Context(), req.ChannelID, req.MessageID.String, &discordgo.WebhookEdit{
+		msg, err = h.embedg.UpdateMessageInChannel(c.Context(), util.ToID(req.ChannelID), util.ToID(req.MessageID.String), discord.WebhookMessageUpdate{
 			Content:         &params.Content,
 			Embeds:          &params.Embeds,
 			Components:      &params.Components,
@@ -133,13 +131,13 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 			Attachments:     &attachments,
 		})
 	} else {
-		msg, err = h.bot.SendMessageToChannel(c.Context(), req.ChannelID, params)
+		msg, err = h.embedg.SendMessageToChannel(c.Context(), util.ToID(req.ChannelID), params)
 	}
 	if err != nil {
 		return fmt.Errorf("Failed to send message: %w", err)
 	}
 
-	permContext, err := h.actionParser.DerivePermissionsForActions(session.UserID, req.GuildID, req.ChannelID)
+	permContext, err := h.actionParser.DerivePermissionsForActions(session.UserID, util.ToID(req.GuildID), util.ToID(req.ChannelID))
 	if err != nil {
 		return fmt.Errorf("Failed to create permission context: %w", err)
 	}
@@ -153,8 +151,8 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 	return c.JSON(wire.MessageSendResponseWire{
 		Success: true,
 		Data: wire.MessageSendResponseDataWire{
-			MessageID: msg.ID,
-			ChannelID: msg.ChannelID,
+			MessageID: msg.ID.String(),
+			ChannelID: msg.ChannelID.String(),
 		},
 	})
 }
@@ -166,7 +164,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		return err
 	}
 
-	params := &discordgo.WebhookParams{
+	params := discord.WebhookMessageCreate{
 		Username:        data.Username,
 		AvatarURL:       data.AvatarURL,
 		AllowedMentions: data.AllowedMentions,
@@ -178,7 +176,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		params.TTS = data.TTS
 	}
 
-	attachments := make([]*discordgo.MessageAttachment, len(req.Attachments))
+	attachments := make([]discord.AttachmentUpdate, len(req.Attachments))
 
 	for i, attachment := range req.Attachments {
 		dataURL, err := dataurl.DecodeString(attachment.DataURL)
@@ -186,14 +184,14 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 			return helpers.BadRequest("invalid_attachments", "Failed to parse attachment data URL")
 		}
 
-		params.Files = append(params.Files, &discordgo.File{
-			Name:        attachment.Name,
-			ContentType: dataURL.ContentType(),
-			Reader:      bytes.NewReader(dataURL.Data),
+		params.Files = append(params.Files, &discord.File{
+			Name: attachment.Name,
+			// ContentType: dataURL.ContentType(),
+			Reader: bytes.NewReader(dataURL.Data),
 		})
 
-		attachments[i] = &discordgo.MessageAttachment{
-			ID: fmt.Sprintf("%d", i),
+		attachments[i] = discord.AttachmentKeep{
+			ID: util.ID(i),
 		}
 	}
 
@@ -209,33 +207,41 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		})
 	}
 
-	var msg *discordgo.Message
+	var threadID snowflake.ID
 	if req.ThreadID.Valid {
-		if req.MessageID.Valid {
-			msg, err = h.bot.Session.WebhookThreadMessageEdit(req.WebhookID, req.WebhookToken, req.ThreadID.String, req.MessageID.String, &discordgo.WebhookEdit{
+		threadID = util.ToID(req.ThreadID.String)
+	}
+
+	var msg *discord.Message
+	if req.MessageID.Valid {
+		msg, err = h.embedg.Rest().UpdateWebhookMessage(
+			util.ToID(req.WebhookID),
+			req.WebhookToken,
+			util.ToID(req.MessageID.String),
+			discord.WebhookMessageUpdate{
 				Content:         &params.Content,
 				Embeds:          &params.Embeds,
 				Components:      &params.Components,
 				AllowedMentions: params.AllowedMentions,
 				Files:           params.Files,
 				Attachments:     &attachments,
-			})
-		} else {
-			msg, err = h.bot.Session.WebhookThreadExecute(req.WebhookID, req.WebhookToken, true, req.ThreadID.String, params)
-		}
+			},
+			rest.UpdateWebhookMessageParams{
+				ThreadID:       threadID,
+				WithComponents: false,
+			},
+		)
 	} else {
-		if req.MessageID.Valid {
-			msg, err = h.bot.Session.WebhookMessageEdit(req.WebhookID, req.WebhookToken, req.MessageID.String, &discordgo.WebhookEdit{
-				Content:         &params.Content,
-				Embeds:          &params.Embeds,
-				Components:      &params.Components,
-				AllowedMentions: params.AllowedMentions,
-				Files:           params.Files,
-				Attachments:     &attachments,
-			})
-		} else {
-			msg, err = h.bot.Session.WebhookExecute(req.WebhookID, req.WebhookToken, true, params)
-		}
+		msg, err = h.embedg.Rest().CreateWebhookMessage(
+			util.ToID(req.WebhookID),
+			req.WebhookToken,
+			params,
+			rest.CreateWebhookMessageParams{
+				Wait:           true,
+				ThreadID:       threadID,
+				WithComponents: false,
+			},
+		)
 	}
 	if err != nil {
 		return err
@@ -244,8 +250,8 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 	return c.JSON(wire.MessageSendResponseWire{
 		Success: true,
 		Data: wire.MessageSendResponseDataWire{
-			MessageID: msg.ID,
-			ChannelID: msg.ChannelID,
+			MessageID: msg.ID.String(),
+			ChannelID: msg.ChannelID.String(),
 		},
 	})
 }

@@ -7,15 +7,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/disgoorg/disgo/cache"
-	"github.com/disgoorg/disgo/rest"
-	"github.com/merlinfuchs/discordgo"
+	"github.com/disgoorg/disgo/discord"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/template"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
+	"github.com/merlinfuchs/embed-generator/embedg-server/embedg"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/rs/zerolog/log"
@@ -23,8 +22,7 @@ import (
 
 type ScheduledMessageManager struct {
 	pg           *postgres.PostgresStore
-	caches       cache.Caches
-	rest         rest.Rest
+	embedg       *embedg.EmbedGenerator
 	actionParser *parser.ActionParser
 	planStore    store.PlanStore
 }
@@ -32,14 +30,12 @@ type ScheduledMessageManager struct {
 func NewScheduledMessageManager(
 	pg *postgres.PostgresStore,
 	actionParser *parser.ActionParser,
-	caches cache.Caches,
-	rest rest.Rest,
+	embedg *embedg.EmbedGenerator,
 	planStore store.PlanStore,
 ) *ScheduledMessageManager {
 	m := &ScheduledMessageManager{
 		pg:           pg,
-		caches:       caches,
-		rest:         rest,
+		embedg:       embedg,
 		actionParser: actionParser,
 		planStore:    planStore,
 	}
@@ -126,9 +122,9 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 
 	templates := template.NewContext(
 		"SCHEDULED_MESSAGE", features.MaxTemplateOps,
-		template.NewGuildProvider(m.caches, scheduledMessage.GuildID, nil),
-		template.NewChannelProvider(m.caches, scheduledMessage.ChannelID, nil),
-		template.NewKVProvider(scheduledMessage.GuildID, m.pg, features.MaxKVKeys),
+		template.NewGuildProvider(m.embedg.Caches(), util.ToID(scheduledMessage.GuildID), nil),
+		template.NewChannelProvider(m.embedg.Caches(), util.ToID(scheduledMessage.ChannelID), nil),
+		template.NewKVProvider(util.ToID(scheduledMessage.GuildID), m.pg, features.MaxKVKeys),
 	)
 
 	data := &actions.MessageWithActions{}
@@ -141,7 +137,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		return fmt.Errorf("Failed to parse and execute message template: %w", err)
 	}
 
-	params := &discordgo.WebhookParams{
+	params := discord.WebhookMessageCreate{
 		Content:         data.Content,
 		Username:        data.Username,
 		AvatarURL:       data.AvatarURL,
@@ -157,12 +153,12 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		return helpers.BadRequest("invalid_actions", err.Error())
 	}
 
-	msg, err := m.bot.SendMessageToChannel(ctx, scheduledMessage.ChannelID, params)
+	msg, err := m.embedg.SendMessageToChannel(ctx, util.ToID(scheduledMessage.ChannelID), params)
 	if err != nil {
 		return fmt.Errorf("Failed to send message: %w", err)
 	}
 
-	permContext, err := m.actionParser.DerivePermissionsForActions(scheduledMessage.CreatorID, scheduledMessage.GuildID, scheduledMessage.ChannelID)
+	permContext, err := m.actionParser.DerivePermissionsForActions(util.ToID(scheduledMessage.CreatorID), util.ToID(scheduledMessage.GuildID), util.ToID(scheduledMessage.ChannelID))
 	if err != nil {
 		return fmt.Errorf("Failed to create permission context: %w", err)
 	}

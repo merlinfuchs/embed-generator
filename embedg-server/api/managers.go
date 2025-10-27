@@ -34,8 +34,7 @@ func createManagers(stores *Stores, embedg *embedg.EmbedGenerator) *managers {
 	scheduledMessages := scheduled_messages.NewScheduledMessageManager(
 		stores.PG,
 		actionParser,
-		embedg.Caches(),
-		embedg.Rest(),
+		embedg,
 		premiumManager,
 	)
 

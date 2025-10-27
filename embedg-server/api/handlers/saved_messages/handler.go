@@ -31,18 +31,23 @@ func New(pg *postgres.PostgresStore, am *access.AccessManager) *SavedMessagesHan
 func (h *SavedMessagesHandler) HandleListSavedMessages(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
 
-	guildID := c.Query("guild_id")
+	rawGuildID := c.Query("guild_id")
 
 	var messages []pgmodel.SavedMessage
 	var err error
 
-	if guildID != "" {
+	if rawGuildID != "" {
+		guildID, err := util.ParseID(rawGuildID)
+		if err != nil {
+			return helpers.BadRequest("invalid_guild_id", "The guild_id field is invalid.")
+		}
+
 		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 			return err
 		}
-		messages, err = h.pg.Q.GetSavedMessagesForGuild(c.Context(), sql.NullString{String: guildID, Valid: true})
+		messages, err = h.pg.Q.GetSavedMessagesForGuild(c.Context(), sql.NullString{String: guildID.String(), Valid: true})
 	} else {
-		messages, err = h.pg.Q.GetSavedMessagesForCreator(c.Context(), session.UserID)
+		messages, err = h.pg.Q.GetSavedMessagesForCreator(c.Context(), session.UserID.String())
 	}
 
 	if err != nil {
@@ -63,9 +68,14 @@ func (h *SavedMessagesHandler) HandleListSavedMessages(c *fiber.Ctx) error {
 
 func (h *SavedMessagesHandler) HandleCreateSavedMessage(c *fiber.Ctx, req wire.SavedMessageCreateRequestWire) error {
 	session := c.Locals("session").(*session.Session)
-	guildID := c.Query("guild_id")
+	rawGuildID := c.Query("guild_id")
 
-	if guildID != "" {
+	if rawGuildID != "" {
+		guildID, err := util.ParseID(rawGuildID)
+		if err != nil {
+			return helpers.BadRequest("invalid_guild_id", "The guild_id field is invalid.")
+		}
+
 		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 			return err
 		}
@@ -73,8 +83,8 @@ func (h *SavedMessagesHandler) HandleCreateSavedMessage(c *fiber.Ctx, req wire.S
 
 	message, err := h.pg.Q.InsertSavedMessage(c.Context(), pgmodel.InsertSavedMessageParams{
 		ID:          util.UniqueID(),
-		CreatorID:   session.UserID,
-		GuildID:     sql.NullString{String: guildID, Valid: guildID != ""},
+		CreatorID:   session.UserID.String(),
+		GuildID:     sql.NullString{String: rawGuildID, Valid: rawGuildID != ""},
 		UpdatedAt:   time.Now().UTC(),
 		Name:        req.Name,
 		Description: sql.NullString{String: req.Description.String, Valid: req.Description.Valid},
@@ -94,9 +104,14 @@ func (h *SavedMessagesHandler) HandleCreateSavedMessage(c *fiber.Ctx, req wire.S
 func (h *SavedMessagesHandler) HandleUpdateSavedMessage(c *fiber.Ctx, req wire.SavedMessageUpdateRequestWire) error {
 	session := c.Locals("session").(*session.Session)
 	messageID := c.Params("messageID")
-	guildID := c.Query("guild_id")
+	rawGuildID := c.Query("guild_id")
 
-	if guildID != "" {
+	if rawGuildID != "" {
+		guildID, err := util.ParseID(rawGuildID)
+		if err != nil {
+			return helpers.BadRequest("invalid_guild_id", "The guild_id field is invalid.")
+		}
+
 		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 			return err
 		}
@@ -104,10 +119,10 @@ func (h *SavedMessagesHandler) HandleUpdateSavedMessage(c *fiber.Ctx, req wire.S
 
 	var message pgmodel.SavedMessage
 	var err error
-	if guildID != "" {
+	if rawGuildID != "" {
 		message, err = h.pg.Q.UpdateSavedMessageForGuild(c.Context(), pgmodel.UpdateSavedMessageForGuildParams{
 			ID:          messageID,
-			GuildID:     sql.NullString{String: guildID, Valid: true},
+			GuildID:     sql.NullString{String: rawGuildID, Valid: true},
 			UpdatedAt:   time.Now().UTC(),
 			Name:        req.Name,
 			Description: sql.NullString{String: req.Description.String, Valid: req.Description.Valid},
@@ -116,7 +131,7 @@ func (h *SavedMessagesHandler) HandleUpdateSavedMessage(c *fiber.Ctx, req wire.S
 	} else {
 		message, err = h.pg.Q.UpdateSavedMessageForCreator(c.Context(), pgmodel.UpdateSavedMessageForCreatorParams{
 			ID:          messageID,
-			CreatorID:   session.UserID,
+			CreatorID:   session.UserID.String(),
 			UpdatedAt:   time.Now().UTC(),
 			Name:        req.Name,
 			Description: sql.NullString{String: req.Description.String, Valid: req.Description.Valid},
@@ -141,24 +156,29 @@ func (h *SavedMessagesHandler) HandleUpdateSavedMessage(c *fiber.Ctx, req wire.S
 func (h *SavedMessagesHandler) HandleDeleteSavedMessage(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
 	messageID := c.Params("messageID")
-	guildID := c.Query("guild_id")
+	rawGuildID := c.Query("guild_id")
 
-	if guildID != "" {
+	if rawGuildID != "" {
+		guildID, err := util.ParseID(rawGuildID)
+		if err != nil {
+			return helpers.BadRequest("invalid_guild_id", "The guild_id field is invalid.")
+		}
+
 		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 			return err
 		}
 	}
 
 	var err error
-	if guildID != "" {
+	if rawGuildID != "" {
 		err = h.pg.Q.DeleteSavedMessageForGuild(c.Context(), pgmodel.DeleteSavedMessageForGuildParams{
 			ID:      messageID,
-			GuildID: sql.NullString{String: guildID, Valid: true},
+			GuildID: sql.NullString{String: rawGuildID, Valid: true},
 		})
 	} else {
 		err = h.pg.Q.DeleteSavedMessageForCreator(c.Context(), pgmodel.DeleteSavedMessageForCreatorParams{
 			ID:        messageID,
-			CreatorID: session.UserID,
+			CreatorID: session.UserID.String(),
 		})
 	}
 
@@ -178,9 +198,14 @@ func (h *SavedMessagesHandler) HandleDeleteSavedMessage(c *fiber.Ctx) error {
 
 func (h *SavedMessagesHandler) HandleImportSavedMessages(c *fiber.Ctx, req wire.SavedMessagesImportRequestWire) error {
 	session := c.Locals("session").(*session.Session)
-	guildID := c.Query("guild_id")
+	rawGuildID := c.Query("guild_id")
 
-	if guildID != "" {
+	if rawGuildID != "" {
+		guildID, err := util.ParseID(rawGuildID)
+		if err != nil {
+			return helpers.BadRequest("invalid_guild_id", "The guild_id field is invalid.")
+		}
+
 		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 			return err
 		}
@@ -191,8 +216,8 @@ func (h *SavedMessagesHandler) HandleImportSavedMessages(c *fiber.Ctx, req wire.
 	for i, msg := range req.Messages {
 		message, err := h.pg.Q.InsertSavedMessage(c.Context(), pgmodel.InsertSavedMessageParams{
 			ID:          util.UniqueID(),
-			CreatorID:   session.UserID,
-			GuildID:     sql.NullString{String: guildID, Valid: guildID != ""},
+			CreatorID:   session.UserID.String(),
+			GuildID:     sql.NullString{String: rawGuildID, Valid: rawGuildID != ""},
 			UpdatedAt:   time.Now().UTC(),
 			Name:        msg.Name,
 			Description: sql.NullString{String: msg.Description.String, Valid: msg.Description.Valid},

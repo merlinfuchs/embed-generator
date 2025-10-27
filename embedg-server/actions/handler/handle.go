@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/disgoorg/disgo/rest"
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
@@ -38,7 +39,7 @@ func New(pg *postgres.PostgresStore, parser *parser.ActionParser, planStore stor
 	}
 }
 
-func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interaction) error {
+func (m *ActionHandler) HandleActionInteraction(rest rest.Rest, i Interaction) error {
 	interaction := i.Interaction()
 
 	var rawActions []byte
@@ -83,7 +84,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 
 		col, err := m.pg.Q.GetCustomCommandByName(context.TODO(), pgmodel.GetCustomCommandByNameParams{
 			Name:    fullName,
-			GuildID: interaction.GuildID,
+			GuildID: interaction.GuildID().String(),
 		})
 		if err != nil {
 			if err == sql.ErrNoRows {
