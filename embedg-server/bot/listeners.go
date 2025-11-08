@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
@@ -66,6 +67,9 @@ func (b *Bot) onRawEvent(_ *discordgo.Session, e *discordgo.Event) {
 func (b *Bot) onInterface(_ *discordgo.Session, i interface{}) {
 	err := b.State.OnInterface(b.Session, i)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to handle interface for state")
+		log.Error().
+			Err(err).
+			Str("type", fmt.Sprintf("%T", i)).
+			Msg("Failed to handle interface for state")
 	}
 }

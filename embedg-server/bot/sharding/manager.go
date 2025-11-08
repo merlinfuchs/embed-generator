@@ -53,6 +53,7 @@ func (m *ShardManager) AddHandler(handler interface{}) {
 
 	m.handlers = append(m.handlers, handler)
 
+	m.Session.AddHandler(handler)
 	for _, shard := range m.Shards {
 		shard.AddHandler(handler)
 	}
@@ -184,6 +185,7 @@ func (m *ShardManager) Restart() (nMgr *ShardManager, err error) {
 	}
 
 	// Apply the same handlers.
+	mgr.Session.AddHandler(m.Session.AddHandler)
 	for _, handler := range m.handlers {
 		mgr.AddHandler(handler)
 	}
