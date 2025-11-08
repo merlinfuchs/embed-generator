@@ -28,7 +28,8 @@ func NewCustomBotManager(pg *postgres.PostgresStore, actionHandler *handler.Acti
 		bots:          make(map[string]*CustomBot),
 	}
 
-	go m.lazyCustomBotGatewayTask()
+	// TODO: Re-enable once debugged
+	// go m.lazyCustomBotGatewayTask()
 
 	return m
 }

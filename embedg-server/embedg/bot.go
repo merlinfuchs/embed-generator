@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/disgoorg/disgo"
 	"github.com/disgoorg/disgo/bot"
@@ -13,6 +14,7 @@ import (
 	"github.com/disgoorg/disgo/handler"
 	disgorest "github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/disgo/sharding"
+	"github.com/disgoorg/snowflake/v2"
 	actionshandler "github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	actionsparser "github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
@@ -45,16 +47,19 @@ func NewEmbedGenerator(
 ) (*EmbedGenerator, error) {
 	clientRouter := handler.New()
 
-	logHandler := slogzerolog.Option{Level: slog.LevelInfo, Logger: &log.Logger}.NewZerologHandler()
+	snowflake.AllowUnquoted = true
+	logHandler := slogzerolog.Option{Level: slog.LevelWarn, Logger: &log.Logger}.NewZerologHandler()
 
 	client, err := disgo.New(cfg.DiscordToken,
 		bot.WithRest(rest.NewRestClient(cfg.DiscordToken)),
 		bot.WithShardManagerConfigOpts(
 			sharding.WithAutoScaling(false),
+			sharding.WithIdentifyRateLimiterConfigOpt(
+				gateway.WithIdentifyMaxConcurrency(4),
+			),
 			sharding.WithGatewayConfigOpts(
 				gateway.WithIntents(
 					gateway.IntentGuilds,
-					gateway.IntentGuildMembers,
 					gateway.IntentGuildExpressions,
 					gateway.IntentGuildMessages,
 					gateway.IntentMessageContent,
@@ -82,6 +87,13 @@ func NewEmbedGenerator(
 				Str("username", e.User.Username).
 				Msg("Embed Generator has connected to the gateway and is ready")
 		}),
+		bot.WithEventListenerFunc(func(e *events.HeartbeatAck) {
+			log.Info().
+				Int("shard_id", e.ShardID()).
+				Str("last_heartbeat", e.LastHeartbeat.Format(time.RFC3339)).
+				Str("new_heartbeat", e.NewHeartbeat.Format(time.RFC3339)).
+				Msg("Heartbeat ACK received")
+		}),
 		bot.WithEventListeners(clientRouter),
 		bot.WithLogger(slog.New(logHandler)),
 	)
@@ -98,7 +110,7 @@ func NewEmbedGenerator(
 		pg: pg,
 	}
 
-	embedg.registerHandlers()
+	// embedg.registerHandlers()
 
 	return embedg, nil
 }

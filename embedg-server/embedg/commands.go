@@ -511,7 +511,7 @@ func (g *EmbedGenerator) handleMessageRestoreCommand(e *handler.CommandEvent) er
 
 	// TODO: Unparse components
 
-	messageDump, err := json.MarshalIndent(actions.MessageWithActions{
+	_, err = json.MarshalIndent(actions.MessageWithActions{
 		Username: message.Author.Username,
 		// AvatarURL:  message.Author.AvatarURL("1024"),
 		Content: message.Content,
@@ -520,8 +520,6 @@ func (g *EmbedGenerator) handleMessageRestoreCommand(e *handler.CommandEvent) er
 	if err != nil {
 		return fmt.Errorf("failed to marshal message dump: %w", err)
 	}
-
-	fmt.Println(messageDump)
 
 	return nil
 }

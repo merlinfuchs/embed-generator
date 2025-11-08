@@ -25,7 +25,7 @@ type CustomBot struct {
 }
 
 func NewCustomBot(token string, presence CustomBotPresence) (*CustomBot, error) {
-	logHandler := slogzerolog.Option{Level: slog.LevelInfo, Logger: &log.Logger}.NewZerologHandler()
+	logHandler := slogzerolog.Option{Level: slog.LevelWarn, Logger: &log.Logger}.NewZerologHandler()
 
 	client, err := disgo.New(token,
 		bot.WithShardManagerConfigOpts(
