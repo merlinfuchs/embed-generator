@@ -13,8 +13,9 @@ RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesourc
 RUN apt-get update
 RUN apt-get -y install nodejs
 
-# Install yarn
-RUN npm install -g yarn
+# Enable Yarn via Corepack (bundled with Node.js)
+RUN corepack enable
+RUN corepack prepare yarn@1.22.22 --activate
 
 # Build site
 RUN cd embedg-site && yarn install && yarn build && cd ..
