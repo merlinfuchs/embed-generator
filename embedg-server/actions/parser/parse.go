@@ -300,10 +300,16 @@ func (m *ActionParser) UnparseMessageComponent(data discordgo.MessageComponent) 
 			Content: c.Content,
 		}, nil
 	case *discordgo.Thumbnail:
+		var description string
+		if c.Description != nil {
+			description = *c.Description
+		}
+
 		return actions.ComponentWithActions{
 			Type:        discordgo.ThumbnailComponent,
 			Media:       &actions.UnfurledMediaItem{URL: c.Media.URL},
-			Description: *c.Description,
+			Description: description,
+			Spoiler:     c.Spoiler,
 		}, nil
 	case *discordgo.MediaGallery:
 		items := make([]actions.ComponentMediaGalleryItem, 0, len(c.Items))
