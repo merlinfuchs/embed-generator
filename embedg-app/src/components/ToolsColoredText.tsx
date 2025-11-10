@@ -50,11 +50,8 @@ export default function ToolsColoredText() {
   const [copyButtonText, setCopyButtonText] = useState("Copy Format");
 
   useEffect(() => {
-    if (!editorRef.current) {
-      return;
-    }
-
     const editor = editorRef.current;
+    if (!editor) return;
 
     // https://stackoverflow.com/a/61237402
     function onKeyDown(e: KeyboardEvent) {

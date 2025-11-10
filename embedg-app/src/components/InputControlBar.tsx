@@ -87,6 +87,9 @@ export default function InputControlBar({ value, onChange, inputRef }: Props) {
   }
 
   useEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+
     function onKeyDown(e: KeyboardEvent) {
       if (!e.ctrlKey) return;
 
@@ -110,10 +113,10 @@ export default function InputControlBar({ value, onChange, inputRef }: Props) {
       }
     }
 
-    inputRef.current?.addEventListener("keydown", onKeyDown);
+    input.addEventListener("keydown", onKeyDown);
 
     return () => {
-      inputRef.current?.removeEventListener("keydown", onKeyDown);
+      input.removeEventListener("keydown", onKeyDown);
     };
   }, [inputRef.current]);
 
