@@ -21,6 +21,8 @@ func setupDefaults() {
 
 	v.SetDefault("app.public_url", "http://localhost:5173/app")
 
+	// v.SetDefault("nats.url", "nats://localhost:4222")
+
 	// API defaults
 	v.SetDefault("api.host", "localhost")
 	v.SetDefault("api.port", 8080)

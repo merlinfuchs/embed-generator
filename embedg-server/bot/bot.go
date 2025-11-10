@@ -2,12 +2,14 @@ package bot
 
 import (
 	_ "embed"
+	"fmt"
 
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot/sharding"
+	"github.com/merlinfuchs/embed-generator/embedg-server/bot/stateway"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -24,6 +26,8 @@ type Bot struct {
 
 	State *discordgo.State
 	Rest  *rest.RestClientWithCache
+
+	Stateway *stateway.Client
 }
 
 func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
@@ -46,6 +50,16 @@ func New(token string, pg *postgres.PostgresStore) (*Bot, error) {
 		pg:           pg,
 		State:        discordgo.NewState(),
 		Rest:         rest.NewRestClientWithCache(manager.Session),
+	}
+
+	natsURL := viper.GetString("nats.url")
+	if natsURL != "" {
+		stateway, err := stateway.NewClient(natsURL, manager)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create stateway client: %w", err)
+		}
+
+		b.Stateway = stateway
 	}
 
 	b.AddHandler(onReady)
@@ -72,9 +86,20 @@ func (b *Bot) Start() error {
 		return err
 	}
 
-	err = b.ShardManager.Start()
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to open discord session")
+	if b.Stateway != nil {
+		log.Info().Msg("Stateway NATS configured, starting Stateway client instead of shards")
+		err = b.Stateway.Start()
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed to start stateway client")
+			return err
+		}
+	} else {
+		log.Info().Msg("No Stateway NATS configured, starting shards")
+		err = b.ShardManager.Start()
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed to open discord session")
+		}
 	}
+
 	return err
 }
