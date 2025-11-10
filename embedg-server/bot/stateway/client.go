@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/bot/sharding"
 	"github.com/merlinfuchs/stateway/stateway-lib/broker"
-	"github.com/merlinfuchs/stateway/stateway-lib/event"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 )
 
 type Client struct {
@@ -40,37 +39,29 @@ func (c *Client) Start() error {
 
 	c.Manager.Session.SyncEvents = false
 
-	log.Info().Msgf("Listening to Stateway NATS broker")
-	err := broker.Listen(c.ctx, c.Broker, broker.NewFuncListener(
-		"embedg",
-		[]string{
-			"ready",
-			"resumed",
-			"guild.>",
-			"channel.>",
-			"thread.>",
-			"entitlement.>",
-			"webhooks.>",
-			"interaction.>",
-			"message.delete",
-		},
-		func(ctx context.Context, event *event.GatewayEvent) error {
-			err := c.Manager.Session.OnRawEvent(&discordgo.Event{
-				Operation: 0,
-				Type:      event.Type,
-				RawData:   event.Data,
+	gatewayCount := viper.GetInt("nats.gateway_count")
+	if gatewayCount == 0 {
+		log.Info().Msg("Listening to Stateway NATS broker for all gateways")
+		err := broker.Listen(c.ctx, c.Broker, &GatewayListener{
+			session: c.Manager.Session,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to listen to broker: %w", err)
+		}
+		return nil
+	} else {
+		for i := 0; i < gatewayCount; i++ {
+			log.Info().Msgf("Listening to Stateway NATS broker for gateway %d", i)
+			err := broker.Listen(c.ctx, c.Broker, &GatewayListener{
+				session:    c.Manager.Session,
+				gatewayIDs: []int{i},
 			})
 			if err != nil {
-				log.Error().Err(err).Msg("Failed to handle message")
+				return fmt.Errorf("failed to listen to broker: %w", err)
 			}
-			return nil
-		},
-	))
-	if err != nil {
-		return fmt.Errorf("failed to listen to broker: %w", err)
+		}
+		return nil
 	}
-
-	return nil
 }
 
 func (c *Client) Stop() error {

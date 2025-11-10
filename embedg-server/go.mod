@@ -53,7 +53,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
-	github.com/merlinfuchs/stateway/stateway-lib v0.0.0-20251108162526-92e7e53a11a4 // indirect
+	github.com/merlinfuchs/stateway/stateway-lib v0.0.0-20251109101747-4829dfd63e8d // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/minio/sha256-simd v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
