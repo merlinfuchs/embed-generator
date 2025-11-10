@@ -21,7 +21,7 @@ export default function HomeFooter(): JSX.Element {
                 target="_blank"
                 className="text-gray-300 hover:text-white"
               >
-                Github
+                GitHub
               </a>
               <a
                 href="/discord"

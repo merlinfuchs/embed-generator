@@ -41,7 +41,7 @@ export default function UpsellPopup() {
       <div className="text-sm text-gray-300 mb-4">
         This is an open source project and free to use. If you like it, consider
         supporting the project by getting premium or starring the project on
-        Github.
+        GitHub.
       </div>
       <div className="flex space-x-3 text-center text-sm font-medium">
         <Link
@@ -55,7 +55,7 @@ export default function UpsellPopup() {
           target="_blank"
           className="bg-blurple px-3 py-2 rounded block w-full text-gray-100"
         >
-          Star on Github
+          Star on GitHub
         </a>
       </div>
     </div>
