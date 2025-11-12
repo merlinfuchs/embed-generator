@@ -36,3 +36,8 @@ func UniqueID() snowflake.ID {
 func ParseID(id string) (ID, error) {
 	return snowflake.Parse(id)
 }
+
+func DefinitelyID(id string) ID {
+	res, _ := snowflake.Parse(id)
+	return res
+}

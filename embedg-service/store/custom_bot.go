@@ -33,5 +33,5 @@ type CustomBotStore interface {
 	GetCustomBot(ctx context.Context, id string) (*model.CustomBot, error)
 	GetCustomBotByGuildID(ctx context.Context, guildID common.ID) (*model.CustomBot, error)
 	SetCustomBotHandledFirstInteraction(ctx context.Context, id string) error
-	GetCustomBots(ctx context.Context) ([]*model.CustomBot, error)
+	GetCustomBots(ctx context.Context) ([]model.CustomBot, error)
 }

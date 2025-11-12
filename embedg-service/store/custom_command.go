@@ -9,7 +9,7 @@ import (
 )
 
 type CustomCommandStore interface {
-	GetCustomCommands(ctx context.Context, guildID common.ID) ([]*model.CustomCommand, error)
+	GetCustomCommands(ctx context.Context, guildID common.ID) ([]model.CustomCommand, error)
 	GetCustomCommand(ctx context.Context, guildID common.ID, id string) (*model.CustomCommand, error)
 	GetCustomCommandByName(ctx context.Context, guildID common.ID, name string) (*model.CustomCommand, error)
 	CountCustomCommands(ctx context.Context, guildID common.ID) (int64, error)
