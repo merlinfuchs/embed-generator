@@ -22,7 +22,7 @@ func (l *GatewayListener) BalanceKey() string {
 			balanceKey += fmt.Sprintf("%d", gatewayID)
 		}
 	} else {
-		balanceKey += "*"
+		balanceKey += "all"
 	}
 	return balanceKey
 }

@@ -12,19 +12,29 @@ import (
 )
 
 func onReady(s *discordgo.Session, r *discordgo.Ready) {
-	log.Info().Msgf("Shard %d is ready", s.ShardID)
+	log.Info().
+		Str("client_id", r.User.ID).
+		Str("username", r.User.Username).
+		Int("shard_id", s.ShardID).
+		Msg("Shard is ready")
 }
 
 func onConnect(s *discordgo.Session, c *discordgo.Connect) {
-	log.Info().Msgf("Shard %d connected", s.ShardID)
+	log.Info().
+		Int("shard_id", s.ShardID).
+		Msg("Shard connected")
 }
 
 func onDisconnect(s *discordgo.Session, d *discordgo.Disconnect) {
-	log.Info().Msgf("Shard %d disconnected", s.ShardID)
+	log.Info().
+		Int("shard_id", s.ShardID).
+		Msg("Shard disconnected")
 }
 
 func onResumed(s *discordgo.Session, r *discordgo.Resumed) {
-	log.Info().Msgf("Shard %d resumed", s.ShardID)
+	log.Info().
+		Int("shard_id", s.ShardID).
+		Msg("Shard resumed")
 }
 
 func (b *Bot) onMessageDelete(_ *discordgo.Session, msg *discordgo.MessageDelete) {

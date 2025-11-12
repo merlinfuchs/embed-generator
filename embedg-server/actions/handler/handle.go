@@ -280,9 +280,8 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				return nil
 			}
 
-			var flags discordgo.MessageFlags
 			if !action.Public {
-				flags = discordgo.MessageFlagsEphemeral
+				data.Flags |= discordgo.MessageFlagsEphemeral
 			}
 
 			var components []discordgo.MessageComponent
@@ -307,7 +306,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			// We need to get the message id of the response, so it has to be a followup response
 			if !i.HasResponded() {
 				i.Respond(&discordgo.InteractionResponseData{
-					Flags: flags,
+					Flags: data.Flags,
 				}, discordgo.InteractionResponseDeferredChannelMessageWithSource)
 			}
 
@@ -315,7 +314,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 				Content:    data.Content,
 				Embeds:     data.Embeds,
 				Components: components,
-				Flags:      flags,
+				Flags:      data.Flags,
 				AllowedMentions: &discordgo.MessageAllowedMentions{
 					Parse: allowedMentions,
 				},
@@ -387,6 +386,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			_, err = s.ChannelMessageSendComplex(dmChannel.ID, &discordgo.MessageSend{
 				Content: data.Content,
 				Embeds:  data.Embeds,
+				Flags:   data.Flags,
 			})
 			if err != nil {
 				i.Respond(&discordgo.InteractionResponseData{
@@ -444,6 +444,7 @@ func (m *ActionHandler) HandleActionInteraction(s *discordgo.Session, i Interact
 			i.Respond(&discordgo.InteractionResponseData{
 				Content:    data.Content,
 				Embeds:     data.Embeds,
+				Flags:      data.Flags,
 				Components: components,
 			}, discordgo.InteractionResponseUpdateMessage)
 
