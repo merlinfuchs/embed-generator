@@ -18,7 +18,7 @@ import (
 	"github.com/knadh/koanf/v2"
 )
 
-const ConfigFile = "stateway.toml"
+const ConfigFile = "embedg.toml"
 
 //go:embed default.toml
 var defaultConfig []byte

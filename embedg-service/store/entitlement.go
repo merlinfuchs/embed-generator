@@ -14,4 +14,5 @@ type EntitlementStore interface {
 	GetEntitlement(ctx context.Context, id common.ID, userID common.ID) (*model.Entitlement, error)
 	UpdateEntitlementConsumedGuildID(ctx context.Context, id common.ID, consumedGuildID common.NullID) (*model.Entitlement, error)
 	UpsertEntitlement(ctx context.Context, entitlement model.Entitlement) (*model.Entitlement, error)
+	GetEntitledUserIDs(ctx context.Context) ([]common.ID, error)
 }

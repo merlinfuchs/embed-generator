@@ -51,3 +51,6 @@ DO UPDATE SET
   updated_at = $4, 
   consumed = $9
 RETURNING *;
+
+-- name: GetEntitledUserIDs :many
+SELECT DISTINCT user_id FROM entitlements;

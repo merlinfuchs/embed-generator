@@ -1,28 +1,30 @@
 package model
 
+import "github.com/merlinfuchs/embed-generator/embedg-service/common"
+
 type Plan struct {
-	ID         string       `mapstructure:"id"`
-	SKUID      string       `mapstructure:"sku_id"`
-	Default    bool         `mapstructure:"default"`
-	Features   PlanFeatures `mapstructure:"features"`
-	Consumable bool         `mapstructure:"consumable"`
+	ID         string       `toml:"id"`
+	SKUID      common.ID    `toml:"sku_id"`
+	Default    bool         `toml:"default"`
+	Features   PlanFeatures `toml:"features"`
+	Consumable bool         `toml:"consumable"`
 }
 
 type PlanFeatures struct {
-	MaxSavedMessages          int   `mapstructure:"max_saved_messages"`
-	MaxActionsPerComponent    int   `mapstructure:"max_actions_per_component"`
-	AdvancedActionTypes       bool  `mapstructure:"advanced_action_types"`
-	AIAssistant               bool  `mapstructure:"ai_assistant"`
-	CustomBot                 bool  `mapstructure:"custom_bot"`
-	ComponentsV2              bool  `mapstructure:"components_v2"`
-	ComponentTypes            []int `mapstructure:"component_types"`
-	MaxCustomCommands         int   `mapstructure:"max_custom_commands"`
-	IsPremium                 bool  `mapstructure:"is_premium"`
-	MaxImageUploadSize        int   `mapstructure:"max_image_upload_size"`
-	MaxScheduledMessages      int   `mapstructure:"max_scheduled_messages"`
-	PeriodicScheduledMessages bool  `mapstructure:"periodic_scheduled_messages"`
-	MaxTemplateOps            int   `mapstructure:"max_template_ops"`
-	MaxKVKeys                 int   `mapstructure:"max_kv_keys"`
+	MaxSavedMessages          int   `toml:"max_saved_messages"`
+	MaxActionsPerComponent    int   `toml:"max_actions_per_component"`
+	AdvancedActionTypes       bool  `toml:"advanced_action_types"`
+	AIAssistant               bool  `toml:"ai_assistant"`
+	CustomBot                 bool  `toml:"custom_bot"`
+	ComponentsV2              bool  `toml:"components_v2"`
+	ComponentTypes            []int `toml:"component_types"`
+	MaxCustomCommands         int   `toml:"max_custom_commands"`
+	IsPremium                 bool  `toml:"is_premium"`
+	MaxImageUploadSize        int   `toml:"max_image_upload_size"`
+	MaxScheduledMessages      int   `toml:"max_scheduled_messages"`
+	PeriodicScheduledMessages bool  `toml:"periodic_scheduled_messages"`
+	MaxTemplateOps            int   `toml:"max_template_ops"`
+	MaxKVKeys                 int   `toml:"max_kv_keys"`
 }
 
 func (f *PlanFeatures) Merge(b PlanFeatures) {

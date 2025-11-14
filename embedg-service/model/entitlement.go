@@ -13,7 +13,7 @@ type Entitlement struct {
 	GuildID         common.NullID
 	UpdatedAt       time.Time
 	Deleted         bool
-	SkuID           string
+	SkuID           common.ID
 	StartsAt        null.Time
 	EndsAt          null.Time
 	Consumed        bool

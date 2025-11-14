@@ -907,6 +907,8 @@ github.com/merlinfuchs/stateway/stateway-lib v0.0.0-20251108220848-8195b521776b 
 github.com/merlinfuchs/stateway/stateway-lib v0.0.0-20251108220848-8195b521776b/go.mod h1:lBq4eaCNMEMiMs9HmainZm8nUNiXEqbuj/fiAUN2WHU=
 github.com/merlinfuchs/stateway/stateway-lib v0.0.0-20251109101747-4829dfd63e8d h1:m1nl+T0JorfW/GvhKgjcYyARv5h9bbL5lUrDBy2I9LU=
 github.com/merlinfuchs/stateway/stateway-lib v0.0.0-20251109101747-4829dfd63e8d/go.mod h1:lBq4eaCNMEMiMs9HmainZm8nUNiXEqbuj/fiAUN2WHU=
+github.com/merlinfuchs/stateway/stateway-lib v0.0.0-20251113155245-58bf88272926 h1:cHYOssZzAWarRvmp3b9Q9iU31xeDBqunAa5U7NdNomw=
+github.com/merlinfuchs/stateway/stateway-lib v0.0.0-20251113155245-58bf88272926/go.mod h1:lBq4eaCNMEMiMs9HmainZm8nUNiXEqbuj/fiAUN2WHU=
 github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
 github.com/miekg/pkcs11 v1.0.3/go.mod h1:XsNlhZGX73bx86s2hdc/FuaLm2CPZJemRLMA+WTFxgs=
 github.com/minio/md5-simd v1.1.2 h1:Gdi1DZK69+ZVMoNHRXJyNcxrMA4dSxoYHZSQbirFg34=

@@ -2,9 +2,13 @@ package config
 
 import (
 	"github.com/go-playground/validator/v10"
+	"github.com/merlinfuchs/embed-generator/embedg-service/common"
+	"github.com/merlinfuchs/embed-generator/embedg-service/model"
 )
 
 type RootConfig struct {
+	Discord  DiscordConfig  `toml:"discord"`
+	Premium  PremiumConfig  `toml:"premium"`
 	Logging  LoggingConfig  `toml:"logging"`
 	Database DatabaseConfig `toml:"database"`
 	Broker   BrokerConfig   `toml:"broker"`
@@ -13,6 +17,16 @@ type RootConfig struct {
 func (cfg *RootConfig) Validate() error {
 	validate := validator.New(validator.WithRequiredStructEnabled())
 	return validate.Struct(cfg)
+}
+
+type DiscordConfig struct {
+	Token string `toml:"token" validate:"required"`
+}
+
+type PremiumConfig struct {
+	BeneficialGuildID common.ID    `toml:"beneficial_guild_id" `
+	BeneficialRoleID  common.ID    `toml:"beneficial_role_id"`
+	Plans             []model.Plan `toml:"plans"`
 }
 
 type LoggingConfig struct {
@@ -45,7 +59,8 @@ type S3Config struct {
 }
 
 type BrokerConfig struct {
-	NATS NATSConfig `toml:"nats"`
+	NATS         NATSConfig `toml:"nats"`
+	GatewayCount int        `toml:"gateway_count"`
 }
 
 type NATSConfig struct {

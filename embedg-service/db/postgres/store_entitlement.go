@@ -74,7 +74,7 @@ func (c *Client) UpsertEntitlement(ctx context.Context, entitlement model.Entitl
 		GuildID:   pgtype.Text{String: entitlement.GuildID.ID.String(), Valid: entitlement.GuildID.Valid},
 		UpdatedAt: pgtype.Timestamp{Time: entitlement.UpdatedAt, Valid: true},
 		Deleted:   entitlement.Deleted,
-		SkuID:     entitlement.SkuID,
+		SkuID:     entitlement.SkuID.String(),
 		StartsAt:  pgtype.Timestamp{Time: entitlement.StartsAt.Time, Valid: entitlement.StartsAt.Valid},
 		EndsAt:    pgtype.Timestamp{Time: entitlement.EndsAt.Time, Valid: entitlement.EndsAt.Valid},
 		Consumed:  entitlement.Consumed,
@@ -83,6 +83,20 @@ func (c *Client) UpsertEntitlement(ctx context.Context, entitlement model.Entitl
 		return nil, err
 	}
 	return rowToEntitlement(row), nil
+}
+
+func (c *Client) GetEntitledUserIDs(ctx context.Context) ([]common.ID, error) {
+	rows, err := c.Q.GetEntitledUserIDs(ctx)
+	if err != nil {
+		return nil, err
+	}
+	userIDs := make([]common.ID, 0, len(rows))
+	for _, row := range rows {
+		if row.Valid {
+			userIDs = append(userIDs, common.DefinitelyID(row.String))
+		}
+	}
+	return userIDs, nil
 }
 
 func rowsToEntitlements(rows []pgmodel.Entitlement) []model.Entitlement {
@@ -116,7 +130,7 @@ func rowToEntitlement(row pgmodel.Entitlement) *model.Entitlement {
 		GuildID:         guildID,
 		UpdatedAt:       row.UpdatedAt.Time,
 		Deleted:         row.Deleted,
-		SkuID:           row.SkuID,
+		SkuID:           common.DefinitelyID(row.SkuID),
 		StartsAt:        null.NewTime(row.StartsAt.Time, row.StartsAt.Valid),
 		EndsAt:          null.NewTime(row.EndsAt.Time, row.EndsAt.Valid),
 		Consumed:        row.Consumed,
