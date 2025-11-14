@@ -32,9 +32,9 @@ func (c *Client) GetScheduledMessages(ctx context.Context, guildID common.ID) ([
 	return rowsToScheduledMessages(rows), nil
 }
 
-func (c *Client) GetScheduledMessage(ctx context.Context, id common.ID, guildID common.ID) (*model.ScheduledMessage, error) {
+func (c *Client) GetScheduledMessage(ctx context.Context, guildID common.ID, id string) (*model.ScheduledMessage, error) {
 	row, err := c.Q.GetScheduledMessage(ctx, pgmodel.GetScheduledMessageParams{
-		ID:      id.String(),
+		ID:      id,
 		GuildID: guildID.String(),
 	})
 	if err != nil {
@@ -46,9 +46,9 @@ func (c *Client) GetScheduledMessage(ctx context.Context, id common.ID, guildID 
 	return rowToScheduledMessage(row), nil
 }
 
-func (c *Client) DeleteScheduledMessage(ctx context.Context, id common.ID, guildID common.ID) error {
+func (c *Client) DeleteScheduledMessage(ctx context.Context, guildID common.ID, id string) error {
 	err := c.Q.DeleteScheduledMessage(ctx, pgmodel.DeleteScheduledMessageParams{
-		ID:      id.String(),
+		ID:      id,
 		GuildID: guildID.String(),
 	})
 	return err
@@ -100,22 +100,22 @@ func (c *Client) UpdateScheduledMessage(ctx context.Context, msg model.Scheduled
 	return err
 }
 
-func (c *Client) UpdateScheduledMessageNextAt(ctx context.Context, id common.ID, guildID common.ID, nextAt time.Time) error {
+func (c *Client) UpdateScheduledMessageNextAt(ctx context.Context, guildID common.ID, id string, nextAt time.Time, updatedAt time.Time) error {
 	_, err := c.Q.UpdateScheduledMessageNextAt(ctx, pgmodel.UpdateScheduledMessageNextAtParams{
-		ID:        id.String(),
+		ID:        id,
 		GuildID:   guildID.String(),
 		NextAt:    pgtype.Timestamp{Time: nextAt, Valid: true},
-		UpdatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
+		UpdatedAt: pgtype.Timestamp{Time: updatedAt, Valid: true},
 	})
 	return err
 }
 
-func (c *Client) UpdateScheduledMessageEnabled(ctx context.Context, id common.ID, guildID common.ID, enabled bool) error {
+func (c *Client) UpdateScheduledMessageEnabled(ctx context.Context, guildID common.ID, id string, enabled bool, updatedAt time.Time) error {
 	_, err := c.Q.UpdateScheduledMessageEnabled(ctx, pgmodel.UpdateScheduledMessageEnabledParams{
-		ID:        id.String(),
+		ID:        id,
 		GuildID:   guildID.String(),
 		Enabled:   enabled,
-		UpdatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
+		UpdatedAt: pgtype.Timestamp{Time: updatedAt, Valid: true},
 	})
 	return err
 }

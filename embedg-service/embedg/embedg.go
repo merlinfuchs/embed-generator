@@ -6,6 +6,7 @@ import (
 
 	"github.com/disgoorg/disgo"
 	"github.com/disgoorg/disgo/bot"
+	discache "github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
 	"github.com/merlinfuchs/stateway/stateway-lib/broker"
@@ -20,10 +21,11 @@ type EmbedGeneratorConfig struct {
 }
 
 type EmbedGenerator struct {
-	client *bot.Client
-	cache  cache.Cache
-	broker broker.Broker
-	config EmbedGeneratorConfig
+	client       *bot.Client
+	cache        cache.Cache
+	compatCaches discache.Caches
+	broker       broker.Broker
+	config       EmbedGeneratorConfig
 
 	actionSetStore store.MessageActionSetStore
 }
@@ -54,10 +56,12 @@ func NewEmbedGenerator(
 	gateway.EventHandlerFunc = client.EventManager.HandleGatewayEvent
 
 	cache := cache.NewCacheClient(br, cache.WithAppID(client.ApplicationID))
+	compatCaches := compat.NewDisgoCaches(cache)
 
 	embedg := &EmbedGenerator{
 		client:         client,
 		cache:          cache,
+		compatCaches:   compatCaches,
 		broker:         br,
 		config:         config,
 		actionSetStore: actionSetStore,
@@ -81,6 +85,10 @@ func (g *EmbedGenerator) Rest() rest.Rest {
 
 func (g *EmbedGenerator) Cache() cache.Cache {
 	return g.cache
+}
+
+func (g *EmbedGenerator) Caches() discache.Caches {
+	return g.compatCaches
 }
 
 func (g *EmbedGenerator) Broker() broker.Broker {

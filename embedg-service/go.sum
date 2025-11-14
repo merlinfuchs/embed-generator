@@ -130,6 +130,8 @@ github.com/merlinfuchs/stateway/stateway-lib v0.0.0-20251113155805-2bd114a648cd 
 github.com/merlinfuchs/stateway/stateway-lib v0.0.0-20251113155805-2bd114a648cd/go.mod h1:lBq4eaCNMEMiMs9HmainZm8nUNiXEqbuj/fiAUN2WHU=
 github.com/merlinfuchs/stateway/stateway-lib v0.0.0-20251113160650-ae2b292f9996 h1:S/kJ8TbbQNpq/lzCg7J053AL5zJLcGTIMKIY3S5foDk=
 github.com/merlinfuchs/stateway/stateway-lib v0.0.0-20251113160650-ae2b292f9996/go.mod h1:lBq4eaCNMEMiMs9HmainZm8nUNiXEqbuj/fiAUN2WHU=
+github.com/merlinfuchs/stateway/stateway-lib v0.0.0-20251114183614-d84bd15fa3c7 h1:Ob8PtJtcMAkoUu0hZNarqLeFHx+/a+VN1/1NWffWYJ4=
+github.com/merlinfuchs/stateway/stateway-lib v0.0.0-20251114183614-d84bd15fa3c7/go.mod h1:lBq4eaCNMEMiMs9HmainZm8nUNiXEqbuj/fiAUN2WHU=
 github.com/minio/crc64nvme v1.1.0 h1:e/tAguZ+4cw32D+IO/8GSf5UVr9y+3eJcxZI2WOO/7Q=
 github.com/minio/crc64nvme v1.1.0/go.mod h1:eVfm2fAzLlxMdUGc0EEBGSMmPwmXD5XiNRpnu9J3bvg=
 github.com/minio/md5-simd v1.1.2 h1:Gdi1DZK69+ZVMoNHRXJyNcxrMA4dSxoYHZSQbirFg34=
