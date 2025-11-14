@@ -14,14 +14,17 @@ import (
 
 var _ store.SharedMessageStore = (*Client)(nil)
 
-func (c *Client) CreateSharedMessage(ctx context.Context, msg model.SharedMessage) error {
-	_, err := c.Q.InsertSharedMessage(ctx, pgmodel.InsertSharedMessageParams{
+func (c *Client) CreateSharedMessage(ctx context.Context, msg model.SharedMessage) (*model.SharedMessage, error) {
+	row, err := c.Q.InsertSharedMessage(ctx, pgmodel.InsertSharedMessageParams{
 		ID:        msg.ID,
 		CreatedAt: pgtype.Timestamp{Time: msg.CreatedAt, Valid: true},
 		ExpiresAt: pgtype.Timestamp{Time: msg.ExpiresAt, Valid: true},
 		Data:      msg.Data,
 	})
-	return err
+	if err != nil {
+		return nil, err
+	}
+	return rowToSharedMessage(row), nil
 }
 
 func (c *Client) GetSharedMessage(ctx context.Context, id string) (*model.SharedMessage, error) {

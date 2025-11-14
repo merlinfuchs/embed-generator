@@ -125,15 +125,18 @@ func rowToEntitlement(row pgmodel.Entitlement) *model.Entitlement {
 	}
 
 	return &model.Entitlement{
-		ID:              row.ID,
-		UserID:          userID,
-		GuildID:         guildID,
-		UpdatedAt:       row.UpdatedAt.Time,
-		Deleted:         row.Deleted,
-		SkuID:           common.DefinitelyID(row.SkuID),
-		StartsAt:        null.NewTime(row.StartsAt.Time, row.StartsAt.Valid),
-		EndsAt:          null.NewTime(row.EndsAt.Time, row.EndsAt.Valid),
-		Consumed:        row.Consumed,
-		ConsumedGuildID: null.NewString(row.ConsumedGuildID.String, row.ConsumedGuildID.Valid),
+		ID:        row.ID,
+		UserID:    userID,
+		GuildID:   guildID,
+		UpdatedAt: row.UpdatedAt.Time,
+		Deleted:   row.Deleted,
+		SkuID:     common.DefinitelyID(row.SkuID),
+		StartsAt:  null.NewTime(row.StartsAt.Time, row.StartsAt.Valid),
+		EndsAt:    null.NewTime(row.EndsAt.Time, row.EndsAt.Valid),
+		Consumed:  row.Consumed,
+		ConsumedGuildID: common.NullID{
+			Valid: row.ConsumedGuildID.Valid,
+			ID:    common.DefinitelyID(row.ConsumedGuildID.String),
+		},
 	}
 }

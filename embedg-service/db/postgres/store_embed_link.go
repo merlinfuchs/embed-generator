@@ -6,7 +6,6 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/merlinfuchs/embed-generator/embedg-service/common"
 	"github.com/merlinfuchs/embed-generator/embedg-service/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-service/model"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
@@ -17,7 +16,7 @@ var _ store.EmbedLinkStore = (*Client)(nil)
 
 func (c *Client) CreateEmbedLink(ctx context.Context, embedLink model.EmbedLink) (*model.EmbedLink, error) {
 	row, err := c.Q.InsertEmbedLink(ctx, pgmodel.InsertEmbedLinkParams{
-		ID:             embedLink.ID.String(),
+		ID:             embedLink.ID,
 		Url:            embedLink.Url,
 		ThemeColor:     pgtype.Text{String: embedLink.ThemeColor.String, Valid: embedLink.ThemeColor.Valid},
 		OgTitle:        pgtype.Text{String: embedLink.OgTitle.String, Valid: embedLink.OgTitle.Valid},
@@ -52,7 +51,7 @@ func (c *Client) GetEmbedLink(ctx context.Context, id string) (*model.EmbedLink,
 
 func rowToEmbedLink(row pgmodel.EmbedLink) *model.EmbedLink {
 	return &model.EmbedLink{
-		ID:             common.DefinitelyID(row.ID),
+		ID:             row.ID,
 		Url:            row.Url,
 		ThemeColor:     null.NewString(row.ThemeColor.String, row.ThemeColor.Valid),
 		OgTitle:        null.NewString(row.OgTitle.String, row.OgTitle.Valid),

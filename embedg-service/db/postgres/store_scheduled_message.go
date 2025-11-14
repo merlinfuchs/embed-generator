@@ -54,8 +54,8 @@ func (c *Client) DeleteScheduledMessage(ctx context.Context, guildID common.ID, 
 	return err
 }
 
-func (c *Client) CreateScheduledMessage(ctx context.Context, msg model.ScheduledMessage) error {
-	_, err := c.Q.InsertScheduledMessage(ctx, pgmodel.InsertScheduledMessageParams{
+func (c *Client) CreateScheduledMessage(ctx context.Context, msg model.ScheduledMessage) (*model.ScheduledMessage, error) {
+	row, err := c.Q.InsertScheduledMessage(ctx, pgmodel.InsertScheduledMessageParams{
 		ID:             msg.ID,
 		CreatorID:      msg.CreatorID.String(),
 		GuildID:        msg.GuildID.String(),
@@ -75,11 +75,14 @@ func (c *Client) CreateScheduledMessage(ctx context.Context, msg model.Scheduled
 		CreatedAt:      pgtype.Timestamp{Time: msg.CreatedAt, Valid: true},
 		UpdatedAt:      pgtype.Timestamp{Time: msg.UpdatedAt, Valid: true},
 	})
-	return err
+	if err != nil {
+		return nil, err
+	}
+	return rowToScheduledMessage(row), nil
 }
 
-func (c *Client) UpdateScheduledMessage(ctx context.Context, msg model.ScheduledMessage) error {
-	_, err := c.Q.UpdateScheduledMessage(ctx, pgmodel.UpdateScheduledMessageParams{
+func (c *Client) UpdateScheduledMessage(ctx context.Context, msg model.ScheduledMessage) (*model.ScheduledMessage, error) {
+	row, err := c.Q.UpdateScheduledMessage(ctx, pgmodel.UpdateScheduledMessageParams{
 		ID:             msg.ID,
 		GuildID:        msg.GuildID.String(),
 		ChannelID:      msg.ChannelID.String(),
@@ -97,7 +100,13 @@ func (c *Client) UpdateScheduledMessage(ctx context.Context, msg model.Scheduled
 		UpdatedAt:      pgtype.Timestamp{Time: msg.UpdatedAt, Valid: true},
 		CronTimezone:   pgtype.Text{String: msg.CronTimezone.String, Valid: msg.CronTimezone.Valid},
 	})
-	return err
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, store.ErrNotFound
+		}
+		return nil, err
+	}
+	return rowToScheduledMessage(row), nil
 }
 
 func (c *Client) UpdateScheduledMessageNextAt(ctx context.Context, guildID common.ID, id string, nextAt time.Time, updatedAt time.Time) error {

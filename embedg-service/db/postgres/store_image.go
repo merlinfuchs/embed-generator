@@ -14,8 +14,8 @@ import (
 
 var _ store.ImageStore = (*Client)(nil)
 
-func (c *Client) CreateImage(ctx context.Context, img model.Image) error {
-	_, err := c.Q.InsertImage(ctx, pgmodel.InsertImageParams{
+func (c *Client) CreateImage(ctx context.Context, img model.Image) (*model.Image, error) {
+	row, err := c.Q.InsertImage(ctx, pgmodel.InsertImageParams{
 		ID:              img.ID,
 		GuildID:         pgtype.Text{String: img.GuildID.ID.String(), Valid: img.GuildID.Valid},
 		UserID:          img.UserID.String(),
@@ -25,7 +25,10 @@ func (c *Client) CreateImage(ctx context.Context, img model.Image) error {
 		FileSize:        int32(img.FileSize),
 		S3Key:           img.S3Key,
 	})
-	return err
+	if err != nil {
+		return nil, err
+	}
+	return rowToImage(row), nil
 }
 
 func (c *Client) GetImage(ctx context.Context, id string) (*model.Image, error) {

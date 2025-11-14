@@ -12,6 +12,7 @@ import (
 	"github.com/merlinfuchs/stateway/stateway-lib/broker"
 	"github.com/merlinfuchs/stateway/stateway-lib/cache"
 	"github.com/merlinfuchs/stateway/stateway-lib/compat"
+	"github.com/merlinfuchs/stateway/stateway-lib/gateway"
 )
 
 type EmbedGeneratorConfig struct {
@@ -23,6 +24,7 @@ type EmbedGeneratorConfig struct {
 type EmbedGenerator struct {
 	client       *bot.Client
 	cache        cache.Cache
+	gateway      gateway.Gateway
 	compatCaches discache.Caches
 	broker       broker.Broker
 	config       EmbedGeneratorConfig
@@ -40,7 +42,7 @@ func NewEmbedGenerator(
 		return nil, fmt.Errorf("failed to create NATS broker: %w", err)
 	}
 
-	gateway := compat.NewDisgoGateway(br, compat.DisgoGatewayConfig{
+	compatGateway := compat.NewDisgoGateway(br, compat.DisgoGatewayConfig{
 		GatewayCount: config.GatewayCount,
 		EventTypes: []string{
 			"message.delete",
@@ -51,19 +53,22 @@ func NewEmbedGenerator(
 		},
 	})
 
-	client, err := disgo.New(config.Token, bot.WithGateway(gateway))
+	client, err := disgo.New(config.Token, bot.WithGateway(compatGateway))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Discord client: %w", err)
 	}
 
-	gateway.EventHandlerFunc = client.EventManager.HandleGatewayEvent
+	compatGateway.EventHandlerFunc = client.EventManager.HandleGatewayEvent
 
 	cache := cache.NewCacheClient(br, cache.WithAppID(client.ApplicationID))
 	compatCaches := compat.NewDisgoCaches(ctx, cache)
 
+	gateway := gateway.NewGatewayClient(br)
+
 	embedg := &EmbedGenerator{
 		client:         client,
 		cache:          cache,
+		gateway:        gateway,
 		compatCaches:   compatCaches,
 		broker:         br,
 		config:         config,
@@ -90,12 +95,12 @@ func (g *EmbedGenerator) Cache() cache.Cache {
 	return g.cache
 }
 
-func (g *EmbedGenerator) Caches() discache.Caches {
-	return g.compatCaches
+func (g *EmbedGenerator) Gateway() gateway.Gateway {
+	return g.gateway
 }
 
-func (g *EmbedGenerator) Broker() broker.Broker {
-	return g.broker
+func (g *EmbedGenerator) Caches() discache.Caches {
+	return g.compatCaches
 }
 
 func (g *EmbedGenerator) Open(ctx context.Context) error {

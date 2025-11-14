@@ -2,7 +2,6 @@ package webhook
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	_ "embed"
@@ -26,12 +25,10 @@ func (m *WebhookManager) SendMessageToChannel(ctx context.Context, channelID com
 	useCustomBot := false
 	restClient, customBot, err := m.customBotManager.GetRestForGuild(ctx, channel.GuildID())
 	if err != nil {
-		if err != sql.ErrNoRows {
-			log.Error().Err(err).Msg("failed to get custom bot for message username and avatar")
-		}
-	} else if params.Username == "" && params.AvatarURL == "" {
+		log.Error().Err(err).Msg("failed to get custom bot for message username and avatar")
+	} else if customBot != nil && params.Username == "" && params.AvatarURL == "" {
 		useCustomBot = true
-	} else {
+	} else if customBot != nil {
 		if params.Username == "" {
 			params.Username = customBot.UserName
 		}
@@ -89,9 +86,7 @@ func (m *WebhookManager) UpdateMessageInChannel(ctx context.Context, channelID c
 	useCustomBot := false
 	restClient, customBot, err := m.customBotManager.GetRestForGuild(ctx, channel.GuildID())
 	if err != nil {
-		if err != sql.ErrNoRows {
-			log.Error().Err(err).Msg("failed to get custom bot for message username and avatar")
-		}
+		log.Error().Err(err).Msg("failed to get custom bot for message username and avatar")
 	}
 
 	msg, err := restClient.GetMessage(channelID, messageID, rest.WithCtx(ctx))
@@ -103,7 +98,7 @@ func (m *WebhookManager) UpdateMessageInChannel(ctx context.Context, channelID c
 	}
 
 	if msg.WebhookID == nil {
-		if msg.Author.ID == customBot.UserID {
+		if customBot != nil && msg.Author.ID == customBot.UserID {
 			useCustomBot = true
 		} else {
 			return nil, fmt.Errorf("Message wasn't sent by a webhook and can therefore not be edited.")
@@ -162,7 +157,7 @@ func (m *WebhookManager) findWebhookForChannel(ctx context.Context, channelID co
 	}
 
 	restClient, customBot, err := m.customBotManager.GetRestForGuild(ctx, channel.GuildID())
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil {
 		return nil, fmt.Errorf("Failed to get custom bot: %w", err)
 	}
 

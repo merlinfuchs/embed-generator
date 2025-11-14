@@ -7,6 +7,6 @@ import (
 )
 
 type ImageStore interface {
-	CreateImage(ctx context.Context, img model.Image) error
+	CreateImage(ctx context.Context, img model.Image) (*model.Image, error)
 	GetImage(ctx context.Context, id string) (*model.Image, error)
 }

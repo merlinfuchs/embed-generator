@@ -8,7 +8,7 @@ import (
 )
 
 type SharedMessageStore interface {
-	CreateSharedMessage(ctx context.Context, msg model.SharedMessage) error
+	CreateSharedMessage(ctx context.Context, msg model.SharedMessage) (*model.SharedMessage, error)
 	GetSharedMessage(ctx context.Context, id string) (*model.SharedMessage, error)
 	DeleteExpiredSharedMessages(ctx context.Context, now time.Time) error
 }

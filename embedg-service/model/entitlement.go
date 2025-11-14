@@ -17,5 +17,5 @@ type Entitlement struct {
 	StartsAt        null.Time
 	EndsAt          null.Time
 	Consumed        bool
-	ConsumedGuildID null.String
+	ConsumedGuildID common.NullID
 }

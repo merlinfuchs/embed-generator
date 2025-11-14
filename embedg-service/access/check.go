@@ -2,7 +2,7 @@ package access
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/merlinfuchs/embed-generator/embedg-service/api/handler"
+	"github.com/merlinfuchs/embed-generator/embedg-service/api/handlers"
 	"github.com/merlinfuchs/embed-generator/embedg-service/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
 )
@@ -16,11 +16,11 @@ func (m *AccessManager) CheckGuildAccessForRequest(c *fiber.Ctx, guildID common.
 	}
 
 	if !access.HasChannelWithBotAccess {
-		return handler.Forbidden("bot_missing_access", "The bot doesn't have access to this guild")
+		return handlers.Forbidden("bot_missing_access", "The bot doesn't have access to this guild")
 	}
 
 	if !access.HasChannelWithUserAccess {
-		return handler.Forbidden("missing_access", "You don't have access to this guild")
+		return handlers.Forbidden("missing_access", "You don't have access to this guild")
 	}
 
 	return nil
@@ -35,11 +35,11 @@ func (m *AccessManager) CheckChannelAccessForRequest(c *fiber.Ctx, channelID com
 	}
 
 	if !access.BotAccess() {
-		return handler.Forbidden("bot_missing_access", "The bot doesn't have access to this channel")
+		return handlers.Forbidden("bot_missing_access", "The bot doesn't have access to this channel")
 	}
 
 	if !access.UserAccess() {
-		return handler.Forbidden("missing_access", "You don't have access to this channel")
+		return handlers.Forbidden("missing_access", "You don't have access to this channel")
 	}
 
 	return nil

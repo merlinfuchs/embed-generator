@@ -41,3 +41,10 @@ func DefinitelyID(id string) ID {
 	res, _ := snowflake.Parse(id)
 	return res
 }
+
+func NullIDFromPtr(id *ID) NullID {
+	if id == nil {
+		return NullID{Valid: false}
+	}
+	return NullID{Valid: true, ID: *id}
+}

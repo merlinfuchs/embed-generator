@@ -16,8 +16,8 @@ import (
 
 var _ store.SavedMessageStore = (*Client)(nil)
 
-func (c *Client) CreateSavedMessage(ctx context.Context, msg model.SavedMessage) error {
-	_, err := c.Q.InsertSavedMessage(ctx, pgmodel.InsertSavedMessageParams{
+func (c *Client) CreateSavedMessage(ctx context.Context, msg model.SavedMessage) (*model.SavedMessage, error) {
+	row, err := c.Q.InsertSavedMessage(ctx, pgmodel.InsertSavedMessageParams{
 		ID:          msg.ID,
 		CreatorID:   msg.CreatorID.String(),
 		GuildID:     pgtype.Text{String: msg.GuildID.ID.String(), Valid: msg.GuildID.Valid},
@@ -26,11 +26,14 @@ func (c *Client) CreateSavedMessage(ctx context.Context, msg model.SavedMessage)
 		Description: pgtype.Text{String: msg.Description.String, Valid: msg.Description.Valid},
 		Data:        msg.Data,
 	})
-	return err
+	if err != nil {
+		return nil, err
+	}
+	return rowToSavedMessage(row), nil
 }
 
-func (c *Client) UpdateSavedMessageForCreator(ctx context.Context, msg model.SavedMessage) error {
-	_, err := c.Q.UpdateSavedMessageForCreator(ctx, pgmodel.UpdateSavedMessageForCreatorParams{
+func (c *Client) UpdateSavedMessageForCreator(ctx context.Context, msg model.SavedMessage) (*model.SavedMessage, error) {
+	row, err := c.Q.UpdateSavedMessageForCreator(ctx, pgmodel.UpdateSavedMessageForCreatorParams{
 		ID:          msg.ID,
 		CreatorID:   msg.CreatorID.String(),
 		UpdatedAt:   pgtype.Timestamp{Time: msg.UpdatedAt, Valid: true},
@@ -38,11 +41,17 @@ func (c *Client) UpdateSavedMessageForCreator(ctx context.Context, msg model.Sav
 		Description: pgtype.Text{String: msg.Description.String, Valid: msg.Description.Valid},
 		Data:        msg.Data,
 	})
-	return err
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, store.ErrNotFound
+		}
+		return nil, err
+	}
+	return rowToSavedMessage(row), nil
 }
 
-func (c *Client) UpdateSavedMessageForGuild(ctx context.Context, msg model.SavedMessage) error {
-	_, err := c.Q.UpdateSavedMessageForGuild(ctx, pgmodel.UpdateSavedMessageForGuildParams{
+func (c *Client) UpdateSavedMessageForGuild(ctx context.Context, msg model.SavedMessage) (*model.SavedMessage, error) {
+	row, err := c.Q.UpdateSavedMessageForGuild(ctx, pgmodel.UpdateSavedMessageForGuildParams{
 		ID:          msg.ID,
 		GuildID:     pgtype.Text{String: msg.GuildID.ID.String(), Valid: msg.GuildID.Valid},
 		UpdatedAt:   pgtype.Timestamp{Time: msg.UpdatedAt, Valid: true},
@@ -50,21 +59,27 @@ func (c *Client) UpdateSavedMessageForGuild(ctx context.Context, msg model.Saved
 		Description: pgtype.Text{String: msg.Description.String, Valid: msg.Description.Valid},
 		Data:        msg.Data,
 	})
-	return err
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, store.ErrNotFound
+		}
+		return nil, err
+	}
+	return rowToSavedMessage(row), nil
 }
 
-func (c *Client) DeleteSavedMessageForCreator(ctx context.Context, msg model.SavedMessage) error {
+func (c *Client) DeleteSavedMessageForCreator(ctx context.Context, creatorID common.ID, id string) error {
 	err := c.Q.DeleteSavedMessageForCreator(ctx, pgmodel.DeleteSavedMessageForCreatorParams{
-		ID:        msg.ID,
-		CreatorID: msg.CreatorID.String(),
+		ID:        id,
+		CreatorID: creatorID.String(),
 	})
 	return err
 }
 
-func (c *Client) DeleteSavedMessageForGuild(ctx context.Context, msg model.SavedMessage) error {
+func (c *Client) DeleteSavedMessageForGuild(ctx context.Context, guildID common.ID, id string) error {
 	err := c.Q.DeleteSavedMessageForGuild(ctx, pgmodel.DeleteSavedMessageForGuildParams{
-		ID:      msg.ID,
-		GuildID: pgtype.Text{String: msg.GuildID.ID.String(), Valid: msg.GuildID.Valid},
+		ID:      id,
+		GuildID: pgtype.Text{String: guildID.String(), Valid: true},
 	})
 	return err
 }
