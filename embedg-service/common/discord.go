@@ -2,6 +2,8 @@ package common
 
 import (
 	"errors"
+	"fmt"
+	"strconv"
 
 	"github.com/disgoorg/disgo/rest"
 )
@@ -34,4 +36,13 @@ func IsDiscordRestStatusCode(err error, statusCodes ...int) bool {
 	}
 
 	return false
+}
+
+func DiscordAvatarURL(id ID, discriminator string, avatar string) string {
+	if avatar == "" {
+		parsedDiscriminator, _ := strconv.Atoi(discriminator)
+		return fmt.Sprintf("https://cdn.discordapp.com/embed/avatars/%d.png", parsedDiscriminator%5)
+	}
+
+	return fmt.Sprintf("https://cdn.discordapp.com/avatars/%s/%s.png", id, avatar)
 }

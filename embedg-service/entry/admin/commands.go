@@ -10,7 +10,7 @@ import (
 )
 
 func SyncCommands(ctx context.Context, pg *postgres.Client, cfg *config.RootConfig) error {
-	embedg, err := embedg.NewEmbedGenerator(embedg.EmbedGeneratorConfig{
+	embedg, err := embedg.NewEmbedGenerator(ctx, embedg.EmbedGeneratorConfig{
 		Token:        cfg.Discord.Token,
 		BrokerURL:    cfg.Broker.NATS.URL,
 		GatewayCount: cfg.Broker.GatewayCount,

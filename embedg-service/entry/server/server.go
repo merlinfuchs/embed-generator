@@ -10,13 +10,14 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-service/config"
 	"github.com/merlinfuchs/embed-generator/embedg-service/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-service/embedg"
+	"github.com/merlinfuchs/embed-generator/embedg-service/manager/custom_bot"
 	"github.com/merlinfuchs/embed-generator/embedg-service/manager/premium"
 	scheduled_messages "github.com/merlinfuchs/embed-generator/embedg-service/manager/scheduled_message"
 	"github.com/merlinfuchs/embed-generator/embedg-service/manager/webhook"
 )
 
 func Run(ctx context.Context, pg *postgres.Client, cfg *config.RootConfig) error {
-	embedg, err := embedg.NewEmbedGenerator(embedg.EmbedGeneratorConfig{
+	embedg, err := embedg.NewEmbedGenerator(ctx, embedg.EmbedGeneratorConfig{
 		Token:        cfg.Discord.Token,
 		BrokerURL:    cfg.Broker.NATS.URL,
 		GatewayCount: cfg.Broker.GatewayCount,
@@ -36,7 +37,9 @@ func Run(ctx context.Context, pg *postgres.Client, cfg *config.RootConfig) error
 	embedg.Client().AddEventListeners(premiumManager)
 	go premiumManager.Run(ctx)
 
-	webhookManager := webhook.NewWebhookManager(embedg.Rest())
+	customBotManager := custom_bot.NewCustomBotManager(pg, embedg.Rest())
+
+	webhookManager := webhook.NewWebhookManager(embedg.Rest(), embedg.Caches(), customBotManager)
 	embedg.Client().AddEventListeners(webhookManager)
 
 	scheduledMessageManager := scheduled_messages.NewScheduledMessageManager(

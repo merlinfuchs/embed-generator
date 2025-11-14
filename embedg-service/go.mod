@@ -15,7 +15,7 @@ require (
 	github.com/knadh/koanf/providers/file v1.2.0
 	github.com/knadh/koanf/providers/rawbytes v1.0.0
 	github.com/knadh/koanf/v2 v2.3.0
-	github.com/merlinfuchs/stateway/stateway-lib v0.0.0-20251114183614-d84bd15fa3c7
+	github.com/merlinfuchs/stateway/stateway-lib v0.0.0-20251114190957-d01173222b8b
 	github.com/minio/minio-go/v7 v7.0.97
 	github.com/pelletier/go-toml/v2 v2.2.4
 	github.com/rs/zerolog v1.34.0

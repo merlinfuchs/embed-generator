@@ -31,6 +31,7 @@ type EmbedGenerator struct {
 }
 
 func NewEmbedGenerator(
+	ctx context.Context,
 	config EmbedGeneratorConfig,
 	actionSetStore store.MessageActionSetStore,
 ) (*EmbedGenerator, error) {
@@ -43,6 +44,8 @@ func NewEmbedGenerator(
 		GatewayCount: config.GatewayCount,
 		EventTypes: []string{
 			"message.delete",
+			"channel.delete",
+			"webhooks.update",
 			"interaction.>",
 			"entitlement.>",
 		},
@@ -56,7 +59,7 @@ func NewEmbedGenerator(
 	gateway.EventHandlerFunc = client.EventManager.HandleGatewayEvent
 
 	cache := cache.NewCacheClient(br, cache.WithAppID(client.ApplicationID))
-	compatCaches := compat.NewDisgoCaches(cache)
+	compatCaches := compat.NewDisgoCaches(ctx, cache)
 
 	embedg := &EmbedGenerator{
 		client:         client,
