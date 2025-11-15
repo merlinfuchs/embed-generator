@@ -14,28 +14,24 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-service/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-service/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
-	"github.com/merlinfuchs/embed-generator/embedg-service/db/s3"
 	"github.com/merlinfuchs/embed-generator/embedg-service/model"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
-	"github.com/merlinfuchs/embed-generator/embedg-service/util"
 	"github.com/spf13/viper"
 )
 
-var appPublicURL *url.URL
-
 type ImagesHandler struct {
 	imageStore store.ImageStore
+	fileStore  store.FileStore
 	am         *access.AccessManager
 	planStore  store.PlanStore
-	blob       *s3.BlobStore
 }
 
-func New(imageStore store.ImageStore, am *access.AccessManager, planStore store.PlanStore, blob *s3.BlobStore) *ImagesHandler {
+func New(imageStore store.ImageStore, fileStore store.FileStore, am *access.AccessManager, planStore store.PlanStore) *ImagesHandler {
 	return &ImagesHandler{
 		imageStore: imageStore,
+		fileStore:  fileStore,
 		am:         am,
 		planStore:  planStore,
-		blob:       blob,
 	}
 }
 
@@ -43,11 +39,11 @@ func (h *ImagesHandler) HandleUploadImage(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
 
 	rawGuildID := c.Query("guild_id")
-	var guildID util.ID
+	var guildID common.ID
 
 	if rawGuildID != "" {
 		var err error
-		guildID, err = util.ParseID(c.Query("guild_id"))
+		guildID, err = common.ParseID(c.Query("guild_id"))
 		if err != nil {
 			return handlers.BadRequest("invalid_guild_id", "Invalid guild ID")
 		}
@@ -91,10 +87,10 @@ func (h *ImagesHandler) HandleUploadImage(c *fiber.Ctx) error {
 		return fmt.Errorf("could not read file: %w", err)
 	}
 
-	fileHash := util.HashBytes(body)
-	fileKey := fileHash + util.GetFileExtensionFromMimeType(contentType)
+	fileHash := common.HashBytes(body)
+	fileKey := fileHash + common.GetFileExtensionFromMimeType(contentType)
 
-	err = h.blob.UploadFileIfNotExists(c.Context(), &s3.Image{
+	err = h.fileStore.UploadFileIfNotExists(c.Context(), model.File{
 		FileName:    fileKey,
 		ContentType: contentType,
 		Body:        body,
@@ -159,7 +155,7 @@ func (h *ImagesHandler) HandleDownloadImage(c *fiber.Ctx) error {
 		}
 	}
 
-	file, err := h.blob.DownloadFile(c.Context(), c.Params("imageKey"))
+	file, err := h.fileStore.DownloadFile(c.Context(), c.Params("imageKey"))
 	if err != nil {
 		return fmt.Errorf("could not download image: %w", err)
 	}

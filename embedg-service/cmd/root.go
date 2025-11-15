@@ -33,7 +33,7 @@ var CLI = cli.App{
 					return fmt.Errorf("failed to setup environment: %w", err)
 				}
 
-				err = server.Run(ctx, env.pg, env.cfg)
+				err = server.Run(ctx, env.pg, env.blob, env.cfg)
 				if err != nil {
 					return fmt.Errorf("failed to run cache server: %w", err)
 				}

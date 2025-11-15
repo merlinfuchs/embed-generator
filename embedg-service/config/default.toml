@@ -1,12 +1,16 @@
+[api]
+host = "127.0.0.1"
+port = 8080
+
 [database.postgres]
 host = "127.0.0.1"
 port = 5432
 user = "postgres"
-db_name = "stateway"
+db_name = "embedg"
 
 [database.s3]
 endpoint = "localhost:9000"
-access_key_id = "nook"
+access_key_id = "embedg"
 secret_access_key = "1234567890"
 
 [broker]

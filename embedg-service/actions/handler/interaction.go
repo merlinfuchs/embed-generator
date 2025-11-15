@@ -112,3 +112,7 @@ func (i *RestInteraction) Respond(data discord.InteractionResponseData, t ...dis
 
 	return msg
 }
+
+type InteractionDispatcher interface {
+	DispatchInteraction(interaction Interaction) error
+}

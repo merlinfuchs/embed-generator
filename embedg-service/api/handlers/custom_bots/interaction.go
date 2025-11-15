@@ -11,10 +11,10 @@ import (
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
-	"github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-service/api/handlers"
+	"github.com/merlinfuchs/embed-generator/embedg-service/embedg/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
 	"github.com/rs/zerolog/log"
 )
@@ -75,7 +75,7 @@ func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 		}
 
 		go func() {
-			client := rest.New(rest.NewClient(customBot.Token))
+			client := rest.NewRestClient(customBot.Token)
 
 			err := h.actionHandler.HandleActionInteraction(client, ri)
 			if err != nil {

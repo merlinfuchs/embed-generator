@@ -4,18 +4,19 @@ import (
 	"context"
 	"errors"
 
-	"github.com/disgoorg/disgo/rest"
+	disrest "github.com/disgoorg/disgo/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
+	"github.com/merlinfuchs/embed-generator/embedg-service/embedg/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-service/model"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
 )
 
 type CustomBotManager struct {
 	store.CustomBotStore
-	rest rest.Rest
+	rest disrest.Rest
 }
 
-func NewCustomBotManager(customBotStore store.CustomBotStore, rest rest.Rest) *CustomBotManager {
+func NewCustomBotManager(customBotStore store.CustomBotStore, rest disrest.Rest) *CustomBotManager {
 	return &CustomBotManager{
 		CustomBotStore: customBotStore,
 		rest:           rest,
@@ -25,7 +26,7 @@ func NewCustomBotManager(customBotStore store.CustomBotStore, rest rest.Rest) *C
 // GetRestForGuild returns the rest client for the given guild.
 // If a custom bot is configured for the guild, the token of the custom bot will be used to create the rest client.
 // Otherwise, the default rest client will be returned.
-func (m *CustomBotManager) GetRestForGuild(ctx context.Context, guildID common.ID) (rest.Rest, *model.CustomBot, error) {
+func (m *CustomBotManager) GetRestForGuild(ctx context.Context, guildID common.ID) (disrest.Rest, *model.CustomBot, error) {
 	customBot, err := m.CustomBotStore.GetCustomBotByGuildID(ctx, guildID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
@@ -38,5 +39,5 @@ func (m *CustomBotManager) GetRestForGuild(ctx context.Context, guildID common.I
 		return m.rest, nil, nil
 	}
 
-	return rest.New(rest.NewClient(customBot.Token)), customBot, nil
+	return rest.NewRestClient(customBot.Token), customBot, nil
 }

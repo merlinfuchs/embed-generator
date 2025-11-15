@@ -6,12 +6,13 @@ import (
 	"io"
 	"strings"
 
+	"github.com/merlinfuchs/embed-generator/embedg-service/model"
 	"github.com/minio/minio-go/v7"
 )
 
 const imagesBucketName = "embedg-files"
 
-func (s *BlobStore) UploadFile(ctx context.Context, image *Image) error {
+func (s *Client) UploadFile(ctx context.Context, image model.File) error {
 	reader := bytes.NewReader(image.Body)
 	_, err := s.client.PutObject(ctx, imagesBucketName, image.FileName, reader, int64(len(image.Body)), minio.PutObjectOptions{
 		ContentType:          image.ContentType,
@@ -24,7 +25,7 @@ func (s *BlobStore) UploadFile(ctx context.Context, image *Image) error {
 	return err
 }
 
-func (s *BlobStore) UploadFileIfNotExists(ctx context.Context, image *Image) error {
+func (s *Client) UploadFileIfNotExists(ctx context.Context, image model.File) error {
 	reader := bytes.NewReader(image.Body)
 
 	exists, err := s.client.StatObject(ctx, imagesBucketName, image.FileName, minio.StatObjectOptions{
@@ -46,7 +47,7 @@ func (s *BlobStore) UploadFileIfNotExists(ctx context.Context, image *Image) err
 	return err
 }
 
-func (s *BlobStore) DownloadFile(ctx context.Context, fileName string) (*Image, error) {
+func (s *Client) DownloadFile(ctx context.Context, fileName string) (*model.File, error) {
 	object, err := s.client.GetObject(ctx, imagesBucketName, fileName, minio.GetObjectOptions{
 		ServerSideEncryption: s.encryption,
 	})
@@ -72,15 +73,9 @@ func (s *BlobStore) DownloadFile(ctx context.Context, fileName string) (*Image, 
 		return nil, err
 	}
 
-	return &Image{
+	return &model.File{
 		FileName:    fileName,
 		ContentType: info.ContentType,
 		Body:        data,
 	}, err
-}
-
-type Image struct {
-	FileName    string
-	ContentType string
-	Body        []byte
 }

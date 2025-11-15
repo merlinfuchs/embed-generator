@@ -8,18 +8,20 @@ import (
 	"github.com/disgoorg/disgo/rest"
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
-	"github.com/spf13/viper"
+	"github.com/merlinfuchs/embed-generator/embedg-service/store"
 )
 
 type AccessManager struct {
-	caches cache.Caches
-	rest   rest.Rest
+	caches     cache.Caches
+	rest       rest.Rest
+	appContext store.AppContext
 }
 
-func New(caches cache.Caches, rest rest.Rest) *AccessManager {
+func New(caches cache.Caches, rest rest.Rest, appContext store.AppContext) *AccessManager {
 	return &AccessManager{
-		caches: caches,
-		rest:   rest,
+		caches:     caches,
+		rest:       rest,
+		appContext: appContext,
 	}
 }
 
@@ -164,12 +166,7 @@ func (m *AccessManager) ComputeUserPermissionsForChannel(userID common.ID, chann
 }
 
 func (m *AccessManager) ComputeBotPermissionsForChannel(channelID common.ID) (discord.Permissions, error) {
-	userID, err := common.ParseID(viper.GetString("discord.client_id"))
-	if err != nil {
-		return 0, fmt.Errorf("Failed to parse bot user ID: %w", err)
-	}
-
-	return m.ComputeUserPermissionsForChannel(userID, channelID)
+	return m.ComputeUserPermissionsForChannel(m.appContext.ApplicationID(), channelID)
 }
 
 func (m *AccessManager) GetGuildMember(guildID common.ID, userID common.ID) (*discord.Member, error) {

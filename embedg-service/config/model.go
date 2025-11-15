@@ -12,11 +12,18 @@ type RootConfig struct {
 	Logging  LoggingConfig  `toml:"logging"`
 	Database DatabaseConfig `toml:"database"`
 	Broker   BrokerConfig   `toml:"broker"`
+	API      APIConfig      `toml:"api"`
+	OpenAI   OpenAIConfig   `toml:"openai"`
 }
 
 func (cfg *RootConfig) Validate() error {
 	validate := validator.New(validator.WithRequiredStructEnabled())
 	return validate.Struct(cfg)
+}
+
+type APIConfig struct {
+	Host string `toml:"host" validate:"required"`
+	Port int    `toml:"port" validate:"required"`
 }
 
 type DiscordConfig struct {
@@ -65,4 +72,8 @@ type BrokerConfig struct {
 
 type NATSConfig struct {
 	URL string `toml:"url" validate:"required"`
+}
+
+type OpenAIConfig struct {
+	APIKey string `toml:"api_key"`
 }

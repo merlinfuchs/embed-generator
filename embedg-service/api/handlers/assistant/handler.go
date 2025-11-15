@@ -16,18 +16,18 @@ import (
 type AssistantHandler struct {
 	am           *access.AccessManager
 	planStore    store.PlanStore
-	openaiAPIKey string
+	openaiClient *openai.Client
 }
 
 func New(
 	am *access.AccessManager,
 	planStore store.PlanStore,
-	openaiAPIKey string,
+	openaiClient *openai.Client,
 ) *AssistantHandler {
 	return &AssistantHandler{
 		am:           am,
 		planStore:    planStore,
-		openaiAPIKey: openaiAPIKey,
+		openaiClient: openaiClient,
 	}
 }
 
@@ -68,8 +68,7 @@ func (h *AssistantHandler) HandleAssistantGenerateMessage(c *fiber.Ctx, req wire
 		}}, messages...)
 	}
 
-	client := openai.NewClient(h.openaiAPIKey)
-	resp, err := client.CreateChatCompletion(
+	resp, err := h.openaiClient.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{
 			FrequencyPenalty: 0,

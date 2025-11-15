@@ -54,14 +54,9 @@ func (s *SessionManager) GetSession(c *fiber.Ctx) (*Session, error) {
 		return nil, err
 	}
 
-	guildIDs := make([]common.ID, len(model.GuildIds))
-	for i, guildID := range model.GuildIds {
-		guildIDs[i] = guildID
-	}
-
 	return &Session{
 		UserID:      model.UserID,
-		GuildIDs:    guildIDs,
+		GuildIDs:    model.GuildIds,
 		AccessToken: model.AccessToken,
 		CreatedAt:   model.CreatedAt,
 		ExpiresAt:   model.ExpiresAt,

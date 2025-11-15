@@ -18,15 +18,23 @@ var requiredBuckets = []string{
 	dbBackupBucket,
 }
 
-type BlobStore struct {
+type ClientConfig struct {
+	Endpoint        string `toml:"endpoint" validate:"required"`
+	AccessKeyID     string `toml:"access_key_id" validate:"required"`
+	SecretAccessKey string `toml:"secret_access_key" validate:"required"`
+	Secure          bool   `toml:"secure"`
+	SSECKey         string `toml:"ssec_key"`
+}
+
+type Client struct {
 	client     *minio.Client
 	encryption encrypt.ServerSide
 }
 
-func New() (*BlobStore, error) {
-	client, err := minio.New(viper.GetString("s3.endpoint"), &minio.Options{
-		Creds:  credentials.NewStaticV4(viper.GetString("s3.access_key_id"), viper.GetString("s3.secret_access_key"), ""),
-		Secure: viper.GetBool("s3.secure"),
+func New(config ClientConfig) (*Client, error) {
+	client, err := minio.New(config.Endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(config.AccessKeyID, config.SecretAccessKey, ""),
+		Secure: config.Secure,
 	})
 	if err != nil {
 		return nil, err
@@ -63,7 +71,7 @@ func New() (*BlobStore, error) {
 		}
 	}
 
-	return &BlobStore{
+	return &Client{
 		client:     client,
 		encryption: encryption,
 	}, nil

@@ -9,7 +9,7 @@ import (
 
 	"github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/discord"
-	"github.com/disgoorg/disgo/rest"
+	disrest "github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-service/access"
@@ -18,6 +18,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-service/api/handlers"
 	"github.com/merlinfuchs/embed-generator/embedg-service/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
+	"github.com/merlinfuchs/embed-generator/embedg-service/embedg/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-service/manager/custom_bot"
 	"github.com/merlinfuchs/embed-generator/embedg-service/model"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
@@ -29,7 +30,7 @@ import (
 type CustomBotsHandler struct {
 	customBotManager   *custom_bot.CustomBotManager
 	customCommandStore store.CustomCommandStore
-	rest               rest.Rest
+	rest               disrest.Rest
 	caches             cache.Caches
 	am                 *access.AccessManager
 	planStore          store.PlanStore
@@ -40,7 +41,7 @@ type CustomBotsHandler struct {
 func New(
 	customBotManager *custom_bot.CustomBotManager,
 	customCommandStore store.CustomCommandStore,
-	rest rest.Rest,
+	rest disrest.Rest,
 	caches cache.Caches,
 	am *access.AccessManager,
 	planStore store.PlanStore,
@@ -78,7 +79,7 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 		return handlers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
 	}
 
-	restClient := rest.New(rest.NewClient(req.Token))
+	restClient := rest.NewRestClient(req.Token)
 
 	app, err := restClient.GetCurrentApplication()
 	if err != nil {

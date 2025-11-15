@@ -4,25 +4,26 @@ import (
 	"bytes"
 	"crypto/ed25519"
 	"encoding/hex"
-	"strings"
 	"time"
 
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
-	"github.com/merlinfuchs/discordgo"
-	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
-	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
-	"github.com/rs/zerolog/log"
+	"github.com/merlinfuchs/embed-generator/embedg-service/actions/handler"
+	"github.com/merlinfuchs/embed-generator/embedg-service/api/handlers"
 	"github.com/spf13/viper"
 )
 
 type InteractionHandler struct {
-	bot *bot.Bot
+	dispatcher handler.InteractionDispatcher
+	rest       rest.Rest
 }
 
-func New(bot *bot.Bot) *InteractionHandler {
+func New(dispatcher handler.InteractionDispatcher, rest rest.Rest) *InteractionHandler {
 	return &InteractionHandler{
-		bot: bot,
+		dispatcher: dispatcher,
+		rest:       rest,
 	}
 }
 
@@ -30,48 +31,30 @@ func (h *InteractionHandler) HandleBotInteraction(c *fiber.Ctx) error {
 	publicKey := viper.GetString("discord.public_key")
 
 	if !verifyInteractionSignaure(c, publicKey) {
-		return helpers.Unauthorized("invalid_signature", "Invalid signature")
+		return handlers.Unauthorized("invalid_signature", "Invalid signature")
 	}
 
-	interaction := &discordgo.InteractionCreate{}
+	interaction := &events.InteractionCreate{}
 	err := c.BodyParser(interaction)
 	if err != nil {
 		return err
 	}
 
-	if interaction.Type == discordgo.InteractionPing {
-		return c.JSON(discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponsePong,
+	if interaction.Type() == discord.InteractionTypePing {
+		return c.JSON(discord.InteractionResponse{
+			Type: discord.InteractionResponseTypePong,
 		})
 	}
 
-	customAction := false
-	switch interaction.Type {
-	case discordgo.InteractionMessageComponent:
-		data := interaction.MessageComponentData()
-		if strings.HasPrefix(data.CustomID, "action:") {
-			customAction = true
-		}
-	}
-
-	respCh := make(chan *discordgo.InteractionResponse)
+	respCh := make(chan *discord.InteractionResponse)
 
 	ri := &handler.RestInteraction{
 		Inner:           interaction.Interaction,
-		Session:         h.bot.Session,
+		Rest:            h.rest,
 		InitialResponse: respCh,
 	}
 
-	go func() {
-		if customAction {
-			err := h.bot.ActionHandler.HandleActionInteraction(h.bot.Session, ri)
-			if err != nil {
-				log.Error().Err(err).Msg("Failed to handle action interaction")
-			}
-		} else {
-			h.bot.HandlerInteraction(h.bot.Session, ri, interaction.Interaction.Data)
-		}
-	}()
+	h.dispatcher.DispatchInteraction(ri)
 
 	select {
 	case resp := <-respCh:

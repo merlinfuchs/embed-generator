@@ -8,6 +8,7 @@ import (
 	"github.com/disgoorg/disgo/bot"
 	discache "github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/rest"
+	"github.com/merlinfuchs/embed-generator/embedg-service/common"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
 	"github.com/merlinfuchs/stateway/stateway-lib/broker"
 	"github.com/merlinfuchs/stateway/stateway-lib/cache"
@@ -107,6 +108,10 @@ func (g *EmbedGenerator) Open(ctx context.Context) error {
 	return g.client.OpenGateway(ctx)
 }
 
-func (g *EmbedGenerator) BotInviteURL() string {
+func (g *EmbedGenerator) AppInviteURL() string {
 	return fmt.Sprintf("https://discord.com/oauth2/authorize?client_id=%s&scope=bot%%20applications.commands&permissions=536945664", g.client.ApplicationID)
+}
+
+func (g *EmbedGenerator) ApplicationID() common.ID {
+	return g.client.ApplicationID
 }

@@ -288,7 +288,7 @@ func (g *EmbedGenerator) handleHelpCommand(e *handler.CommandEvent) error {
 					discord.ButtonComponent{
 						Style: discord.ButtonStyleLink,
 						Label: "Invite Bot",
-						URL:   g.BotInviteURL(),
+						URL:   g.AppInviteURL(),
 					},
 					discord.ButtonComponent{
 						Style: discord.ButtonStyleLink,

@@ -6,12 +6,14 @@ import (
 
 	"github.com/merlinfuchs/embed-generator/embedg-service/config"
 	"github.com/merlinfuchs/embed-generator/embedg-service/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-service/db/s3"
 	"github.com/merlinfuchs/embed-generator/embedg-service/logging"
 )
 
 type env struct {
-	pg  *postgres.Client
-	cfg *config.RootConfig
+	pg   *postgres.Client
+	blob *s3.Client
+	cfg  *config.RootConfig
 }
 
 func setupEnv(ctx context.Context, debug bool) (*env, error) {
@@ -32,8 +34,14 @@ func setupEnv(ctx context.Context, debug bool) (*env, error) {
 		return nil, fmt.Errorf("failed to create postgres client: %w", err)
 	}
 
+	blob, err := s3.New(s3.ClientConfig(cfg.Database.S3))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create blob client: %w", err)
+	}
+
 	return &env{
-		pg:  pg,
-		cfg: cfg,
+		pg:   pg,
+		blob: blob,
+		cfg:  cfg,
 	}, nil
 }

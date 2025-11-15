@@ -10,7 +10,7 @@ import (
 
 const dbBackupBucket = "embedg-db-backups"
 
-func (c *BlobStore) StoreDBBackup(
+func (c *Client) StoreDBBackup(
 	ctx context.Context,
 	database string,
 	key string,

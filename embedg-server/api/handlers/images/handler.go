@@ -21,8 +21,6 @@ import (
 	"gopkg.in/guregu/null.v4"
 )
 
-var appPublicURL *url.URL
-
 type ImagesHandler struct {
 	pg        *postgres.PostgresStore
 	am        *access.AccessManager

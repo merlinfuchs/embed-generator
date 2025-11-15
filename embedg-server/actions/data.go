@@ -3,20 +3,19 @@ package actions
 import (
 	"slices"
 
-	"github.com/disgoorg/disgo/discord"
-	"github.com/merlinfuchs/embed-generator/embedg-service/common"
+	"github.com/merlinfuchs/discordgo"
 )
 
 type MessageWithActions struct {
-	Content         string                   `json:"content,omitempty"`
-	Username        string                   `json:"username,omitempty"`
-	AvatarURL       string                   `json:"avatar_url,omitempty"`
-	TTS             bool                     `json:"tts,omitempty"`
-	Embeds          []discord.Embed          `json:"embeds,omitempty"`
-	AllowedMentions *discord.AllowedMentions `json:"allowed_mentions,omitempty"`
-	Components      []ComponentWithActions   `json:"components,omitempty"`
-	Actions         map[string]ActionSet     `json:"actions,omitempty"`
-	Flags           discord.MessageFlags     `json:"flags,omitempty"`
+	Content         string                            `json:"content,omitempty"`
+	Username        string                            `json:"username,omitempty"`
+	AvatarURL       string                            `json:"avatar_url,omitempty"`
+	TTS             bool                              `json:"tts,omitempty"`
+	Embeds          []*discordgo.MessageEmbed         `json:"embeds,omitempty"`
+	AllowedMentions *discordgo.MessageAllowedMentions `json:"allowed_mentions,omitempty"`
+	Components      []ComponentWithActions            `json:"components,omitempty"`
+	Actions         map[string]ActionSet              `json:"actions,omitempty"`
+	Flags           discordgo.MessageFlags            `json:"flags,omitempty"`
 }
 
 func (m MessageWithActions) ComponentsV2Enabled() bool {
@@ -24,20 +23,20 @@ func (m MessageWithActions) ComponentsV2Enabled() bool {
 }
 
 type ComponentWithActions struct {
-	ID       int                   `json:"id,omitempty"`
-	Type     discord.ComponentType `json:"type"`
-	Disabled bool                  `json:"disabled,omitempty"`
-	Spoiler  bool                  `json:"spoiler,omitempty"`
+	ID       int                     `json:"id,omitempty"`
+	Type     discordgo.ComponentType `json:"type"`
+	Disabled bool                    `json:"disabled,omitempty"`
+	Spoiler  bool                    `json:"spoiler,omitempty"`
 
 	// Action Row & Section & Container
 	Components []ComponentWithActions `json:"components,omitempty"`
 
 	// Button
-	Style       discord.ButtonStyle     `json:"style,omitempty"`
-	Label       string                  `json:"label,omitempty"`
-	Emoji       *discord.ComponentEmoji `json:"emoji,omitempty"`
-	URL         string                  `json:"url,omitempty"`
-	ActionSetID string                  `json:"action_set_id,omitempty"`
+	Style       discordgo.ButtonStyle     `json:"style,omitempty"`
+	Label       string                    `json:"label,omitempty"`
+	Emoji       *discordgo.ComponentEmoji `json:"emoji,omitempty"`
+	URL         string                    `json:"url,omitempty"`
+	ActionSetID string                    `json:"action_set_id,omitempty"`
 
 	// Select Menu
 	Placeholder string                             `json:"placeholder,omitempty"`
@@ -74,11 +73,11 @@ type UnfurledMediaItem struct {
 }
 
 type ComponentSelectOptionWithActions struct {
-	Label       string                  `json:"label"`
-	Description string                  `json:"description"`
-	Emoji       *discord.ComponentEmoji `json:"emoji"`
-	Default     bool                    `json:"default"`
-	ActionSetID string                  `json:"action_set_id"`
+	Label       string                    `json:"label"`
+	Description string                    `json:"description"`
+	Emoji       *discordgo.ComponentEmoji `json:"emoji"`
+	Default     bool                      `json:"default"`
+	ActionSetID string                    `json:"action_set_id"`
 }
 
 type ComponentMediaGalleryItem struct {
@@ -118,25 +117,25 @@ type ActionSet struct {
 }
 
 type ActionDerivedPermissions struct {
-	UserID             common.ID           `json:"user_id"`
-	GuildIsOwner       bool                `json:"guild_is_owner"`
-	GuildPermissions   discord.Permissions `json:"guild_permissions"`
-	ChannelPermissions discord.Permissions `json:"channel_permissions"`
-	AllowedRoleIDs     []common.ID         `json:"lower_role_ids"`
+	UserID             string   `json:"user_id"`
+	GuildIsOwner       bool     `json:"guild_is_owner"`
+	GuildPermissions   int64    `json:"guild_permissions"`
+	ChannelPermissions int64    `json:"channel_permissions"`
+	AllowedRoleIDs     []string `json:"lower_role_ids"`
 }
 
-func (a *ActionDerivedPermissions) HasChannelPermission(permission discord.Permissions) bool {
-	return a.GuildIsOwner || (a.GuildPermissions&discord.PermissionAdministrator) != 0 || (a.ChannelPermissions&permission) != 0
+func (a *ActionDerivedPermissions) HasChannelPermission(permission int64) bool {
+	return a.GuildIsOwner || (a.GuildPermissions&discordgo.PermissionAdministrator) != 0 || (a.ChannelPermissions&permission) != 0
 }
 
-func (a *ActionDerivedPermissions) HasGuildPermission(permission discord.Permissions) bool {
-	return a.GuildIsOwner || (a.GuildPermissions&discord.PermissionAdministrator) != 0 || (a.GuildPermissions&permission) != 0
+func (a *ActionDerivedPermissions) HasGuildPermission(permission int64) bool {
+	return a.GuildIsOwner || (a.GuildPermissions&discordgo.PermissionAdministrator) != 0 || (a.GuildPermissions&permission) != 0
 }
 
-func (a *ActionDerivedPermissions) CanManageRole(roleID common.ID) bool {
+func (a *ActionDerivedPermissions) CanManageRole(roleID string) bool {
 	if a.GuildIsOwner {
 		return true
 	}
 
-	return a.HasGuildPermission(discord.PermissionManageRoles) && slices.Contains(a.AllowedRoleIDs, roleID)
+	return a.HasGuildPermission(discordgo.PermissionManageRoles) && slices.Contains(a.AllowedRoleIDs, roleID)
 }
