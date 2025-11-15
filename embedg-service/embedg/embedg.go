@@ -7,8 +7,9 @@ import (
 	"github.com/disgoorg/disgo"
 	"github.com/disgoorg/disgo/bot"
 	discache "github.com/disgoorg/disgo/cache"
-	"github.com/disgoorg/disgo/rest"
+	disrest "github.com/disgoorg/disgo/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
+	"github.com/merlinfuchs/embed-generator/embedg-service/embedg/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
 	"github.com/merlinfuchs/stateway/stateway-lib/broker"
 	"github.com/merlinfuchs/stateway/stateway-lib/cache"
@@ -54,7 +55,11 @@ func NewEmbedGenerator(
 		},
 	})
 
-	client, err := disgo.New(config.Token, bot.WithGateway(compatGateway))
+	client, err := disgo.New(
+		config.Token,
+		bot.WithGateway(compatGateway),
+		bot.WithRest(rest.NewRestClient(config.Token)),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Discord client: %w", err)
 	}
@@ -88,7 +93,7 @@ func (g *EmbedGenerator) Client() *bot.Client {
 	return g.client
 }
 
-func (g *EmbedGenerator) Rest() rest.Rest {
+func (g *EmbedGenerator) Rest() disrest.Rest {
 	return g.client.Rest
 }
 

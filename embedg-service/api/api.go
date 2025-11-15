@@ -30,7 +30,12 @@ func Serve(ctx context.Context, env *Env, host string, port int) {
 			if errors.As(err, &e) {
 				return c.Status(e.Status).JSON(e)
 			} else {
-				log.Error().Err(err).Msg("Unhandled error in rest endpoint")
+				slog.Error(
+					"Unhandled error in rest endpoint",
+					slog.String("method", c.Method()),
+					slog.String("path", c.Path()),
+					slog.Any("error", err),
+				)
 				return c.Status(fiber.StatusInternalServerError).JSON(wire.Error{
 					Status:  fiber.StatusInternalServerError,
 					Code:    "internal_server_error",

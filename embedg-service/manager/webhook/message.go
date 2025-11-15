@@ -167,12 +167,12 @@ func (m *WebhookManager) findWebhookForChannel(ctx context.Context, channelID co
 	}
 
 	for _, webhook := range webhooks {
-		incomingWebhook, ok := webhook.(*discord.IncomingWebhook)
+		incomingWebhook, ok := webhook.(discord.IncomingWebhook)
 		if !ok {
 			continue
 		}
 		if incomingWebhook.ApplicationID != nil && incomingWebhook.Token != "" {
-			return incomingWebhook, nil
+			return &incomingWebhook, nil
 		}
 	}
 
@@ -206,7 +206,7 @@ func (m *WebhookManager) getWebhookForChannel(ctx context.Context, channelID com
 	}
 
 	// First try to get the webhook with the default rest client
-	webhook, err := m.gerWebhookForChannelWithRestClient(ctx, channelID, webhookID, m.rest)
+	webhook, err := m.getWebhookForChannelWithRestClient(ctx, channelID, webhookID, m.rest)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get webhook: %w", err)
 	}
@@ -224,7 +224,7 @@ func (m *WebhookManager) getWebhookForChannel(ctx context.Context, channelID com
 		}
 
 		if customBot != nil {
-			webhook, err := m.gerWebhookForChannelWithRestClient(ctx, channelID, webhookID, restClient)
+			webhook, err := m.getWebhookForChannelWithRestClient(ctx, channelID, webhookID, restClient)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to get webhook: %w", err)
 			}
@@ -240,7 +240,7 @@ func (m *WebhookManager) getWebhookForChannel(ctx context.Context, channelID com
 	return nil, fmt.Errorf("No webhook found that matches the given ID.")
 }
 
-func (m *WebhookManager) gerWebhookForChannelWithRestClient(ctx context.Context, channelID common.ID, webhookID common.ID, restClient rest.Rest) (*discord.IncomingWebhook, error) {
+func (m *WebhookManager) getWebhookForChannelWithRestClient(ctx context.Context, channelID common.ID, webhookID common.ID, restClient rest.Rest) (*discord.IncomingWebhook, error) {
 	webhooks, err := restClient.GetWebhooks(channelID, rest.WithCtx(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("Failed to list webhooks: %w", err)
@@ -250,7 +250,10 @@ func (m *WebhookManager) gerWebhookForChannelWithRestClient(ctx context.Context,
 
 	for _, w := range webhooks {
 		if w.ID() == webhookID {
-			webhook, _ = w.(*discord.IncomingWebhook)
+			if wh, ok := w.(discord.IncomingWebhook); ok {
+				webhook = &wh
+			}
+			break
 		}
 	}
 

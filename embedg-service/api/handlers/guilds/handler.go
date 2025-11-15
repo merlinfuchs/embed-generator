@@ -65,7 +65,7 @@ func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 
 func (h *GuildsHanlder) HandleGetGuild(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
-	guildID, err := handlers.QueryID(c, "guild_id")
+	guildID, err := handlers.ParamID(c, "guildID")
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func (h *GuildsHanlder) HandleGetGuild(c *fiber.Ctx) error {
 
 func (h *GuildsHanlder) HandleListGuildChannels(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
-	guildID, err := handlers.QueryID(c, "guild_id")
+	guildID, err := handlers.ParamID(c, "guildID")
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,7 @@ func (h *GuildsHanlder) HandleListGuildChannels(c *fiber.Ctx) error {
 }
 
 func (h *GuildsHanlder) HandleListGuildRoles(c *fiber.Ctx) error {
-	guildID, err := handlers.QueryID(c, "guild_id")
+	guildID, err := handlers.ParamID(c, "guildID")
 	if err != nil {
 		return err
 	}
@@ -191,7 +191,7 @@ func (h *GuildsHanlder) HandleListGuildRoles(c *fiber.Ctx) error {
 }
 
 func (h *GuildsHanlder) HandleListGuildEmojis(c *fiber.Ctx) error {
-	guildID, err := handlers.QueryID(c, "guild_id")
+	guildID, err := handlers.ParamID(c, "guildID")
 	if err != nil {
 		return err
 	}
@@ -220,7 +220,7 @@ func (h *GuildsHanlder) HandleListGuildEmojis(c *fiber.Ctx) error {
 }
 
 func (h *GuildsHanlder) HandleListGuildStickers(c *fiber.Ctx) error {
-	guildID, err := handlers.QueryID(c, "guild_id")
+	guildID, err := handlers.ParamID(c, "guildID")
 	if err != nil {
 		return err
 	}
@@ -253,7 +253,7 @@ func (h *GuildsHanlder) HandleListGuildStickers(c *fiber.Ctx) error {
 }
 
 func (h *GuildsHanlder) HandleGetGuildBranding(c *fiber.Ctx) error {
-	guildID, err := handlers.QueryID(c, "guild_id")
+	guildID, err := handlers.ParamID(c, "guildID")
 	if err != nil {
 		return err
 	}

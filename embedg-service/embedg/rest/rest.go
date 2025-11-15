@@ -2,6 +2,7 @@ package rest
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/disgoorg/disgo/discord"
@@ -15,6 +16,10 @@ type RestClient struct {
 	rest.Rest
 
 	memberCache *ttlcache.Cache[string, *discord.Member]
+
+	// Single mutex to protect all pending request maps
+	pendingMutex sync.RWMutex
+	pendingReqs  map[string]*pendingRequest
 }
 
 func NewRestClient(token string, opts ...rest.ConfigOpt) *RestClient {
@@ -26,39 +31,76 @@ func NewRestClient(token string, opts ...rest.ConfigOpt) *RestClient {
 	return &RestClient{
 		Rest:        rest.New(rest.NewClient(token, opts...)),
 		memberCache: memberCache,
+		pendingReqs: make(map[string]*pendingRequest),
 	}
 }
 
 func (c *RestClient) GetMember(guildID snowflake.ID, userID snowflake.ID, opts ...rest.RequestOpt) (*discord.Member, error) {
-	var resErr error
-
 	key := memberCacheKey(guildID, userID)
 
-	loader := func(cache *ttlcache.Cache[string, *discord.Member], key string) *ttlcache.Item[string, *discord.Member] {
+	return getOrSet(c, key, c.memberCache, func() (*discord.Member, error) {
 		member, err := c.Rest.GetMember(guildID, userID, opts...)
 		if err != nil {
-			resErr = err
-			return nil
+			return nil, err
 		}
-
-		return cache.Set(key, member, 0)
-	}
-
-	member := c.memberCache.Get(
-		key,
-		ttlcache.WithLoader(ttlcache.LoaderFunc[string, *discord.Member](loader)),
-	)
-	if resErr != nil {
-		return nil, resErr
-	}
-
-	if member == nil {
-		return nil, resErr
-	}
-
-	return member.Value(), nil
+		return member, nil
+	})
 }
 
 func memberCacheKey(guildID common.ID, userID common.ID) string {
 	return fmt.Sprintf("%s:%s", guildID.String(), userID.String())
+}
+
+// pendingRequest represents an ongoing request for a specific cache key
+type pendingRequest struct {
+	waitGroup sync.WaitGroup
+	result    interface{}
+	err       error
+}
+
+// getOrSet executes a fetch function with concurrency control
+func getOrSet[T any](c *RestClient, cacheKey string, cache *ttlcache.Cache[string, T], fetchFunc func() (T, error)) (T, error) {
+	var zero T
+
+	// Check cache first
+	cacheItem := cache.Get(cacheKey)
+	if cacheItem != nil {
+		return cacheItem.Value(), nil
+	}
+
+	// Check if there's already a pending request
+	c.pendingMutex.Lock()
+	if pending, exists := c.pendingReqs[cacheKey]; exists {
+		c.pendingMutex.Unlock()
+		pending.waitGroup.Wait()
+		if pending.err != nil {
+			return zero, pending.err
+		}
+		return pending.result.(T), nil
+	}
+
+	// Create new pending request
+	pending := &pendingRequest{}
+	pending.waitGroup.Add(1)
+	c.pendingReqs[cacheKey] = pending
+	c.pendingMutex.Unlock()
+
+	// Perform the actual request
+	result, err := fetchFunc()
+
+	// Clean up pending request and set result
+	c.pendingMutex.Lock()
+	delete(c.pendingReqs, cacheKey)
+	c.pendingMutex.Unlock()
+
+	pending.result = result
+	pending.err = err
+	pending.waitGroup.Done()
+
+	if err != nil {
+		return zero, err
+	}
+
+	cache.Set(cacheKey, result, 0)
+	return result, nil
 }

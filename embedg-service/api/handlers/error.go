@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
+	"github.com/merlinfuchs/embed-generator/embedg-service/api/wire"
 )
 
 func NotFound(code string, message string) *wire.Error {

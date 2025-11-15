@@ -21,6 +21,7 @@ type PremiumManager struct {
 	config              Config
 	rest                rest.Rest
 	entitlementStore    store.EntitlementStore
+	appContext          store.AppContext
 	defaultPlanFeatures model.PlanFeatures
 }
 
@@ -28,6 +29,7 @@ func NewPremiumManager(
 	config Config,
 	rest rest.Rest,
 	entitlementStore store.EntitlementStore,
+	appContext store.AppContext,
 ) *PremiumManager {
 	var defaultPlanFeatures model.PlanFeatures
 	for _, plan := range config.Plans {
@@ -40,6 +42,7 @@ func NewPremiumManager(
 		config:              config,
 		rest:                rest,
 		entitlementStore:    entitlementStore,
+		appContext:          appContext,
 		defaultPlanFeatures: defaultPlanFeatures,
 	}
 }

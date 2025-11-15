@@ -57,7 +57,7 @@ func (m *PremiumManager) handleEntitlement(entitlement discord.Entitlement) {
 func (m *PremiumManager) SyncEntitlements(ctx context.Context) error {
 	var after int
 	for {
-		entitlements, err := m.rest.GetEntitlements(0, rest.GetEntitlementsParams{
+		entitlements, err := m.rest.GetEntitlements(m.appContext.ApplicationID(), rest.GetEntitlementsParams{
 			Limit: 100,
 			After: after,
 		}, rest.WithCtx(ctx))

@@ -46,6 +46,8 @@ func (c *ChannelAccess) BotAccess() bool {
 func (m *AccessManager) GetGuildAccessForUser(userID common.ID, guildID common.ID) (GuildAccess, error) {
 	res := GuildAccess{}
 
+	// TODO: Use Stateway MassComputeChannelPermissions
+
 	guild, ok := m.caches.Guild(guildID)
 	if !ok {
 		return res, nil
@@ -140,29 +142,12 @@ func (m *AccessManager) ComputeUserPermissionsForChannel(userID common.ID, chann
 		return 0, nil
 	}
 
-	guild, ok := m.caches.Guild(channel.GuildID())
-	if !ok {
-		return 0, nil
-	}
-
-	roleIterator := m.caches.Roles(channel.GuildID())
-	roles := make([]discord.Role, 0)
-	for role := range roleIterator {
-		roles = append(roles, role)
-	}
-
-	if guild.OwnerID == userID {
-		// Owner has access to all channels
-		return discord.PermissionsAll, nil
-	}
-
-	member, err := m.GetGuildMember(guild.ID, userID)
+	member, err := m.GetGuildMember(channel.GuildID(), userID)
 	if err != nil {
 		return 0, err
 	}
 
-	perms := memberPermissions(&guild, roles, channel, userID, member.RoleIDs)
-	return perms, err
+	return m.caches.MemberPermissionsInChannel(channel, *member), nil
 }
 
 func (m *AccessManager) ComputeBotPermissionsForChannel(channelID common.ID) (discord.Permissions, error) {
