@@ -1,0 +1,1 @@
+ALTER TABLE custom_bots ADD COLUMN token_invalid BOOLEAN NOT NULL DEFAULT false, ADD COLUMN gateway_status TEXT NOT NULL DEFAULT 'online', ADD COLUMN gateway_activity_type SMALLINT, ADD COLUMN gateway_activity_name TEXT, ADD COLUMN gateway_activity_state TEXT, ADD COLUMN gateway_activity_url TEXT;

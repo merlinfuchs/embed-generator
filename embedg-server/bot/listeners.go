@@ -62,6 +62,7 @@ func (b *Bot) onInteractionCreate(_ *discordgo.Session, i *discordgo.Interaction
 }
 
 func (b *Bot) onRawEvent(_ *discordgo.Session, e *discordgo.Event) {
+	// TODO: discordgo.Event is no longer dispatched when using Stateway, so we need to handle entitlements differently.
 	if e.Type == "ENTITLEMENT_CREATE" || e.Type == "ENTITLEMENT_UPDATE" || e.Type == "ENTITLEMENT_DELETE" {
 		entitlement := &Entitlement{}
 		err := json.Unmarshal(e.RawData, entitlement)

@@ -1,0 +1,1 @@
+ALTER TABLE entitlements ADD COLUMN consumed BOOLEAN NOT NULL DEFAULT FALSE, ADD COLUMN consumed_guild_id TEXT;

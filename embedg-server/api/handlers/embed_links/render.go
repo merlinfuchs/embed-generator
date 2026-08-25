@@ -2,7 +2,10 @@ package embed_links
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"html"
+	"net/url"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
@@ -19,7 +22,7 @@ const embedLinkHTML = `
 %s
 
 <script>
-	window.location.replace("%s");
+	window.location.replace(%s);
 </script>
 </head>
 </html> 
@@ -40,10 +43,19 @@ func renderEmbedLinkHTML(c *fiber.Ctx, el pgmodel.EmbedLink) error {
 		metaTags += fmt.Sprintf(`<link type="application/json+oembed" href="%s" />`, oEmbedURL)
 	}
 
-	html := fmt.Sprintf(embedLinkHTML, metaTags, el.Url)
+	html := fmt.Sprintf(embedLinkHTML, metaTags, safeJSURL(el.Url))
 
 	c.Set("Content-Type", "text/html")
 	return c.SendString(html)
+}
+
+func safeJSURL(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+		rawURL = "about:blank"
+	}
+	b, _ := json.Marshal(rawURL)
+	return string(b)
 }
 
 func renderUnknownEmbedLinkHTML(c *fiber.Ctx) error {
@@ -75,7 +87,7 @@ func metaTagsToHTML(metaTags map[string]string) string {
 
 	for key, value := range metaTags {
 		if value != "" {
-			res += `<meta property="` + key + `" content="` + value + `">` + "\n"
+			res += `<meta property="` + key + `" content="` + html.EscapeString(value) + `">` + "\n"
 		}
 	}
 

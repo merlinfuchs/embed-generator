@@ -1,0 +1,31 @@
+[app]
+public_url = "http://localhost:5173/app"
+
+[api]
+host = "127.0.0.1"
+port = 8080
+public_url = "http://localhost:5173/api"
+
+[cdn]
+public_url = "http://localhost:8080/cdn"
+
+[links]
+discord = "https://discord.gg/CpHwbKQKHA"
+source = "https://github.com/merlinfuchs/embed-generator"
+
+[database.postgres]
+host = "127.0.0.1"
+port = 5432
+user = "postgres"
+db_name = "embedg"
+
+[database.s3]
+endpoint = "localhost:9000"
+access_key_id = "embedg"
+secret_access_key = "1234567890"
+
+[broker]
+gateway_count = 1
+
+[broker.nats]
+url = "nats://127.0.0.1:4222"
