@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"strings"
+	"time"
 
 	"log/slog"
 
@@ -17,6 +17,10 @@ var requiredBuckets = []string{
 	imagesBucketName,
 	dbBackupBucket,
 }
+
+// How long we wait for the object storage to respond during startup before
+// giving up and continuing without it.
+const bucketSetupTimeout = 10 * time.Second
 
 type ClientConfig struct {
 	Endpoint        string `toml:"endpoint" validate:"required"`
@@ -40,24 +44,6 @@ func New(config ClientConfig) (*Client, error) {
 		return nil, err
 	}
 
-	for _, bucket := range requiredBuckets {
-		exists, err := client.BucketExists(context.Background(), bucket)
-		if err != nil {
-			if strings.Contains(err.Error(), "connection refused") {
-				slog.Warn(fmt.Sprintf("Failed to check if bucket %s exists, is S3 correctly configured?", bucket))
-				continue
-			}
-			return nil, fmt.Errorf("Failed to check if bucket %s exists: %w", bucket, err)
-		}
-
-		if !exists {
-			err = client.MakeBucket(context.Background(), bucket, minio.MakeBucketOptions{})
-			if err != nil {
-				return nil, fmt.Errorf("Failed to create bucket %s: %w", bucket, err)
-			}
-		}
-	}
-
 	var encryption encrypt.ServerSide
 	if config.SSECKey != "" {
 		key, err := hex.DecodeString(config.SSECKey)
@@ -71,8 +57,40 @@ func New(config ClientConfig) (*Client, error) {
 		}
 	}
 
+	ensureBuckets(client)
+
 	return &Client{
 		client:     client,
 		encryption: encryption,
 	}, nil
+}
+
+// ensureBuckets creates the buckets we need if they don't exist yet. Failures
+// are only logged so that the service still starts when the object storage is
+// unreachable or misconfigured.
+func ensureBuckets(client *minio.Client) {
+	ctx, cancel := context.WithTimeout(context.Background(), bucketSetupTimeout)
+	defer cancel()
+
+	for _, bucket := range requiredBuckets {
+		exists, err := client.BucketExists(ctx, bucket)
+		if err != nil {
+			slog.Warn(
+				"Failed to check if bucket exists, is S3 correctly configured?",
+				"bucket", bucket,
+				"error", err,
+			)
+			continue
+		}
+
+		if !exists {
+			if err := client.MakeBucket(ctx, bucket, minio.MakeBucketOptions{}); err != nil {
+				slog.Warn(
+					"Failed to create bucket, is S3 correctly configured?",
+					"bucket", bucket,
+					"error", err,
+				)
+			}
+		}
+	}
 }
