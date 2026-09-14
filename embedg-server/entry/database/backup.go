@@ -40,7 +40,7 @@ func Backup(ctx context.Context, db string, opts BackupOpts) error {
 
 	slog.Info("Creating database backup", "database", db, "operation", opts.Operation)
 
-	tmpFile, err := os.CreateTemp("", "xvault-pg-backup-*.tar")
+	tmpFile, err := os.CreateTemp("", "embedg-pg-backup-*.tar")
 	if err != nil {
 		return fmt.Errorf("failed to create temporary file: %w", err)
 	}
@@ -73,7 +73,7 @@ func Backup(ctx context.Context, db string, opts BackupOpts) error {
 	slog.Info("Successfully created database dump", "file", tmpFile.Name(), "size", stat.Size())
 
 	// Create a temporary gzipped file
-	gzipFile, err := os.CreateTemp("", "xvault-pg-backup-*.tar.gz")
+	gzipFile, err := os.CreateTemp("", "embedg-pg-backup-*.tar.gz")
 	if err != nil {
 		return fmt.Errorf("failed to create temporary gzip file: %w", err)
 	}

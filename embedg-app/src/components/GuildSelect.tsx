@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useGuildsQuery } from "../api/queries";
 import { guildIconUrl } from "../discord/cdn";
 import ClickOutsideHandler from "./ClickOutsideHandler";
+import { useToasts } from "../util/toasts";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 
 interface Props {
   guildId: string | null;
@@ -12,6 +14,17 @@ interface Props {
 
 export default function GuildSelect({ guildId, onChange }: Props) {
   const { data: guilds, isLoading } = useGuildsQuery();
+  const toast = useToasts((state) => state.create);
+
+  useEffect(() => {
+    if (guilds?.success === false) {
+      toast({
+        title: "Failed to load guilds",
+        message: guilds.error.message,
+        type: "error",
+      });
+    }
+  }, [guilds]);
 
   const guild = useMemo(
     () => guilds?.success && guilds.data.find((g) => g.id === guildId),
@@ -56,7 +69,12 @@ export default function GuildSelect({ guildId, onChange }: Props) {
           role="button"
           className="flex-auto"
         >
-          {guild ? (
+          {!guilds ? (
+            <div className="flex items-center space-x-2">
+              <ArrowPathIcon className="h-5 w-5 text-gray-300 animate-spin" />
+              <div className="text-gray-400">Loading...</div>
+            </div>
+          ) : guild ? (
             <div className="flex items-center space-x-2 cursor-pointer w-full">
               <img
                 src={guildIconUrl(guild)}

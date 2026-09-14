@@ -1,11 +1,13 @@
 import {
+  ArrowPathIcon,
   ChatBubbleLeftRightIcon,
   ChevronDownIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGuildChannelsQuery } from "../api/queries";
 import ClickOutsideHandler from "./ClickOutsideHandler";
+import { useToasts } from "../util/toasts";
 
 interface Props {
   guildId: string | null;
@@ -27,6 +29,7 @@ function canSelectChannelType(type: number) {
 
 export function ChannelSelect({ guildId, channelId, onChange }: Props) {
   const { data } = useGuildChannelsQuery(guildId);
+  const toast = useToasts((state) => state.create);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -48,6 +51,16 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
     setOpen(false);
   }
 
+  useEffect(() => {
+    if (data?.success === false) {
+      toast({
+        title: "Failed to load channels",
+        message: data.error.message,
+        type: "error",
+      });
+    }
+  }, [data]);
+
   const channels = useMemo(() => {
     const rawChannels = data?.success ? data.data : [];
 
@@ -56,6 +69,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
       a.position === b.position && a.type === 4 ? 1 : a.position - b.position
     );
 
+    const added = new Set<string>();
     const res = [];
 
     // This is really inefficient but it should be fine because there are never more than 500 channels
@@ -70,6 +84,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
         rootChannel.type === 15
       ) {
         // text, category, announcement, stage, forum
+        added.add(rootChannel.id);
         res.push({
           ...rootChannel,
           level: 0,
@@ -93,6 +108,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
           childChannel.type === 15
         ) {
           // text, announcement, announcement thread, text thread, stage, forum
+          added.add(childChannel.id);
           res.push({
             ...childChannel,
             level: 1,
@@ -112,6 +128,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
             childThread.type === 12
           ) {
             // announcement thread, text thread
+            added.add(childThread.id);
             res.push({
               ...childThread,
               level: 2,
@@ -123,6 +140,18 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
           }
         }
       }
+    }
+
+    for (const channel of rawChannels) {
+      if (added.has(channel.id)) continue;
+      res.push({
+        ...channel,
+        level: 2,
+        canSelect:
+          channel.user_access &&
+          channel.bot_access &&
+          canSelectChannelType(channel.type),
+      });
     }
 
     return res;
@@ -159,7 +188,12 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
             )}
           />
           <div className={open ? "md:hidden" : ""}>
-            {channel ? (
+            {!data ? (
+              <div className="flex items-center space-x-2">
+                <ArrowPathIcon className="h-5 w-5 text-gray-300 animate-spin" />
+                <div className="text-gray-400">Loading...</div>
+              </div>
+            ) : channel ? (
               <div className="flex items-center space-x-2 cursor-pointer w-full">
                 {channel.type === 15 ? (
                   <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-300" />
