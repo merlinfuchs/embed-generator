@@ -44,6 +44,10 @@ func NewScheduledMessageManager(
 	return m
 }
 
+// How long a due message keeps being retried on transient failures before
+// it is skipped (recurring) or disabled (only once).
+const sendRetryWindow = 30 * time.Minute
+
 func (m *ScheduledMessageManager) lazySendScheduledMessagesTask() {
 	for {
 		time.Sleep(10 * time.Second)
@@ -55,51 +59,63 @@ func (m *ScheduledMessageManager) lazySendScheduledMessagesTask() {
 		}
 
 		for _, scheduledMessage := range scheduledMessages {
-			if scheduledMessage.OnlyOnce {
-				err = m.SendScheduledMessage(context.Background(), scheduledMessage)
-				if err != nil {
-					log.Error().Err(err).Msg("Failed to send scheduled message")
-				}
-
-				_, err := m.pg.Q.UpdateScheduledMessageEnabled(context.Background(), pgmodel.UpdateScheduledMessageEnabledParams{
-					ID:        scheduledMessage.ID,
-					GuildID:   scheduledMessage.GuildID,
-					Enabled:   false,
-					UpdatedAt: time.Now().UTC(),
-				})
-				if err != nil {
-					log.Error().Err(err).Msg("Failed to disable after sending scheduled message")
-					continue
-				}
-			} else {
-				nextAt, err := GetNextCronTick(
-					scheduledMessage.CronExpression.String,
-					time.Now().UTC(),
-					scheduledMessage.CronTimezone.String,
-				)
-				if err != nil {
-					log.Error().Err(err).Str("cron", scheduledMessage.CronExpression.String).Msg("Failed to parse cron expression from scheduled message")
-					continue
-				}
-
-				err = m.SendScheduledMessage(context.Background(), scheduledMessage)
-				if err != nil {
-					log.Error().Err(err).Msg("Failed to send scheduled message")
-				}
-
-				_, err = m.pg.Q.UpdateScheduledMessageNextAt(context.Background(), pgmodel.UpdateScheduledMessageNextAtParams{
-					ID:        scheduledMessage.ID,
-					GuildID:   scheduledMessage.GuildID,
-					NextAt:    nextAt,
-					UpdatedAt: time.Now().UTC(),
-				})
-				if err != nil {
-					log.Error().Err(err).Msg("Failed to update next_at after sending scheduled message")
-					continue
-				}
+			err := m.processScheduledMessage(context.Background(), scheduledMessage)
+			if err != nil {
+				log.Error().Err(err).Str("scheduled_message_id", scheduledMessage.ID).Msg("Failed to process scheduled message")
 			}
 		}
 	}
+}
+
+func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, scheduledMessage pgmodel.ScheduledMessage) error {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	now := time.Now().UTC()
+
+	sendErr := m.SendScheduledMessage(ctx, scheduledMessage)
+	if sendErr != nil {
+		if now.Sub(scheduledMessage.NextAt) < sendRetryWindow {
+			log.Warn().Err(sendErr).Str("scheduled_message_id", scheduledMessage.ID).Msg("Failed to send scheduled message, retrying on next tick")
+			return nil
+		}
+
+		log.Error().Err(sendErr).Str("scheduled_message_id", scheduledMessage.ID).Msg("Giving up on scheduled message after retry window")
+	}
+
+	if scheduledMessage.OnlyOnce {
+		_, err := m.pg.Q.UpdateScheduledMessageEnabled(ctx, pgmodel.UpdateScheduledMessageEnabledParams{
+			ID:        scheduledMessage.ID,
+			GuildID:   scheduledMessage.GuildID,
+			Enabled:   false,
+			UpdatedAt: now,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to disable after sending scheduled message: %w", err)
+		}
+		return nil
+	}
+
+	nextAt, err := GetNextCronTick(
+		scheduledMessage.CronExpression.String,
+		now,
+		scheduledMessage.CronTimezone.String,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to parse cron expression %s from scheduled message: %w", scheduledMessage.CronExpression.String, err)
+	}
+
+	_, err = m.pg.Q.UpdateScheduledMessageNextAt(ctx, pgmodel.UpdateScheduledMessageNextAtParams{
+		ID:        scheduledMessage.ID,
+		GuildID:   scheduledMessage.GuildID,
+		NextAt:    nextAt,
+		UpdatedAt: now,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update next_at after sending scheduled message: %w", err)
+	}
+
+	return nil
 }
 
 func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, scheduledMessage pgmodel.ScheduledMessage) error {
@@ -157,15 +173,16 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		return fmt.Errorf("Failed to send message: %w", err)
 	}
 
+	// The message is out at this point, failures below must not trigger a resend.
 	permContext, err := m.actionParser.DerivePermissionsForActions(scheduledMessage.CreatorID, scheduledMessage.GuildID, scheduledMessage.ChannelID)
 	if err != nil {
-		return fmt.Errorf("Failed to create permission context: %w", err)
+		log.Error().Err(err).Str("scheduled_message_id", scheduledMessage.ID).Msg("Failed to create permission context for scheduled message actions")
+		return nil
 	}
 
 	err = m.actionParser.CreateActionsForMessage(ctx, data.Actions, permContext, msg.ID, false)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to create actions for message")
-		return err
+		log.Error().Err(err).Str("scheduled_message_id", scheduledMessage.ID).Msg("Failed to create actions for scheduled message")
 	}
 
 	return nil

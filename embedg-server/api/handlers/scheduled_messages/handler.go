@@ -202,11 +202,34 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		return helpers.Forbidden("insufficient_plan", "Periodic scheduled messages are not available on your plan.")
 	}
 
+	existing, err := h.pg.Q.GetScheduledMessage(c.Context(), pgmodel.GetScheduledMessageParams{
+		ID:      messageID,
+		GuildID: guildID,
+	})
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return helpers.NotFound("unknown_message", "The scheduled message does not exist.")
+		}
+		log.Error().Err(err).Msg("Failed to get scheduled message")
+		return err
+	}
+
 	if req.EndAt.Valid && req.EndAt.Time.Before(req.StartAt) {
 		return helpers.BadRequest("invalid_end_at", "The end_at field must be after the start_at field.")
 	}
 
-	if req.StartAt.Before(time.Now().UTC()) {
+	// Only recompute the schedule when it actually changed, otherwise e.g. toggling
+	// enabled would reset start_at and shift the next send.
+	scheduleUnchanged := existing.OnlyOnce == req.OnlyOnce &&
+		existing.StartAt.Equal(req.StartAt) &&
+		existing.CronExpression.Valid == req.CronExpression.Valid &&
+		existing.CronExpression.String == req.CronExpression.String &&
+		existing.CronTimezone.Valid == req.CronTimezone.Valid &&
+		existing.CronTimezone.String == req.CronTimezone.String
+
+	if scheduleUnchanged {
+		req.StartAt = existing.StartAt
+	} else if req.StartAt.Before(time.Now().UTC()) {
 		req.StartAt = time.Now().UTC()
 	}
 
@@ -226,6 +249,10 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		if nextNextAt.Sub(nextAt) < time.Minute {
 			return helpers.BadRequest("invalid_cron_expression", "The cron expression is too tight and will trigger too often.")
 		}
+	}
+
+	if scheduleUnchanged && existing.NextAt.After(time.Now().UTC()) {
+		nextAt = existing.NextAt
 	}
 
 	msg, err := h.pg.Q.UpdateScheduledMessage(c.Context(), pgmodel.UpdateScheduledMessageParams{
