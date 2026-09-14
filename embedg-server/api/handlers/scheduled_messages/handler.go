@@ -227,6 +227,12 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		req.CronExpression.Equal(null.NewString(existing.CronExpression.String, existing.CronExpression.Valid)) &&
 		req.CronTimezone.Equal(null.NewString(existing.CronTimezone.String, existing.CronTimezone.Valid))
 
+	// A disabled row with next_at in the past has already fired or was given up on,
+	// so re-enabling it needs a fresh schedule instead of an immediate send.
+	if !existing.Enabled && existing.NextAt.Before(now) {
+		scheduleUnchanged = false
+	}
+
 	var nextAt time.Time
 	if scheduleUnchanged {
 		req.StartAt = existing.StartAt
