@@ -12,6 +12,7 @@ import (
 	"github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/disgo/rest"
 	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions/parser"
@@ -22,6 +23,10 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
 )
 
+// How long a due message keeps being retried on transient failures before
+// it is skipped (recurring) or disabled (only once).
+const sendRetryWindow = 30 * time.Minute
+
 type ScheduledMessageManager struct {
 	scheduledMessageStore store.ScheduledMessageStore
 	savedMessageStore     store.SavedMessageStore
@@ -29,6 +34,7 @@ type ScheduledMessageManager struct {
 	actionParser          *parser.ActionParser
 	webhookManager        *webhook.WebhookManager
 	cache                 cache.Caches
+	rest                  rest.Rest
 	planStore             store.PlanStore
 }
 
@@ -39,6 +45,7 @@ func NewScheduledMessageManager(
 	actionParser *parser.ActionParser,
 	webhookManager *webhook.WebhookManager,
 	cache cache.Caches,
+	rest rest.Rest,
 	planStore store.PlanStore,
 ) *ScheduledMessageManager {
 	m := &ScheduledMessageManager{
@@ -48,6 +55,7 @@ func NewScheduledMessageManager(
 		actionParser:          actionParser,
 		webhookManager:        webhookManager,
 		cache:                 cache,
+		rest:                  rest,
 		planStore:             planStore,
 	}
 
@@ -87,58 +95,83 @@ func (m *ScheduledMessageManager) Run(ctx context.Context) {
 }
 
 func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, scheduledMessage model.ScheduledMessage) error {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	if scheduledMessage.OnlyOnce {
-		err := m.SendScheduledMessage(ctx, scheduledMessage)
-		if err != nil {
-			return fmt.Errorf("failed to send scheduled message: %w", err)
+	now := time.Now().UTC()
+
+	sendErr := m.SendScheduledMessage(ctx, scheduledMessage)
+	if sendErr != nil {
+		if now.Sub(scheduledMessage.NextAt) < sendRetryWindow {
+			slog.Warn(
+				"Failed to send scheduled message, retrying on next tick",
+				slog.Any("error", sendErr),
+				slog.String("scheduled_message_id", scheduledMessage.ID),
+			)
+			return nil
 		}
 
-		err = m.scheduledMessageStore.UpdateScheduledMessageEnabled(ctx, scheduledMessage.GuildID, scheduledMessage.ID, false, time.Now().UTC())
-		if err != nil {
-			return fmt.Errorf("failed to disable after sending scheduled message: %w", err)
-		}
-	} else {
-		nextAt, err := GetNextCronTick(
-			scheduledMessage.CronExpression.String,
-			time.Now().UTC(),
-			scheduledMessage.CronTimezone.String,
+		slog.Error(
+			"Giving up on scheduled message after retry window",
+			slog.Any("error", sendErr),
+			slog.String("scheduled_message_id", scheduledMessage.ID),
 		)
-		if err != nil {
-			return fmt.Errorf("failed to parse cron expression %s from scheduled message: %w", scheduledMessage.CronExpression.String, err)
-		}
+	}
 
-		err = m.SendScheduledMessage(context.Background(), scheduledMessage)
-		if err != nil {
-			return fmt.Errorf("failed to send scheduled message: %w", err)
-		}
+	if scheduledMessage.OnlyOnce {
+		return m.disable(ctx, scheduledMessage, "sent once")
+	}
 
-		err = m.scheduledMessageStore.UpdateScheduledMessageNextAt(ctx, scheduledMessage.GuildID, scheduledMessage.ID, nextAt, time.Now().UTC())
-		if err != nil {
-			return fmt.Errorf("failed to update next_at after sending scheduled message: %w", err)
-		}
+	nextAt, err := GetNextCronTick(
+		scheduledMessage.CronExpression.String,
+		now,
+		scheduledMessage.CronTimezone.String,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to parse cron expression %s from scheduled message: %w", scheduledMessage.CronExpression.String, err)
+	}
+
+	err = m.scheduledMessageStore.UpdateScheduledMessageNextAt(ctx, scheduledMessage.GuildID, scheduledMessage.ID, nextAt, now)
+	if err != nil {
+		return fmt.Errorf("failed to update next_at after sending scheduled message: %w", err)
 	}
 
 	return nil
+}
+
+func (m *ScheduledMessageManager) disable(ctx context.Context, scheduledMessage model.ScheduledMessage, reason string) error {
+	err := m.scheduledMessageStore.UpdateScheduledMessageEnabled(ctx, scheduledMessage.GuildID, scheduledMessage.ID, false, time.Now().UTC())
+	if err != nil {
+		return fmt.Errorf("failed to disable scheduled message (%s): %w", reason, err)
+	}
+
+	slog.Info(
+		"Disabled scheduled message",
+		slog.String("reason", reason),
+		slog.String("scheduled_message_id", scheduledMessage.ID),
+	)
+	return nil
+}
+
+// channelGone checks against the Discord API whether the channel really doesn't exist
+// or is inaccessible. A cache miss alone is not proof: the cache lookup fails on timeouts too.
+func (m *ScheduledMessageManager) channelGone(ctx context.Context, channelID common.ID) bool {
+	_, err := m.rest.GetChannel(channelID, rest.WithCtx(ctx))
+	return common.IsDiscordRestErrorCode(
+		err,
+		discordgo.ErrCodeUnknownChannel,
+		discordgo.ErrCodeUnknownGuild,
+		discordgo.ErrCodeMissingAccess,
+	)
 }
 
 func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, scheduledMessage model.ScheduledMessage) error {
 	savedMsg, err := m.savedMessageStore.GetSavedMessageForGuild(ctx, scheduledMessage.GuildID, scheduledMessage.SavedMessageID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			err := m.scheduledMessageStore.UpdateScheduledMessageEnabled(ctx, scheduledMessage.GuildID, scheduledMessage.ID, false, time.Now().UTC())
-			if err != nil {
-				slog.Error(
-					"Failed to disable scheduled message after failed to get saved message",
-					slog.Any("error", err),
-					slog.String("scheduled_message_id", scheduledMessage.ID),
-				)
-			}
-			return nil
+			return m.disable(ctx, scheduledMessage, "saved message not found")
 		}
-		return fmt.Errorf("Failed to get saved message from scheduled message: %w", err)
+		return fmt.Errorf("failed to get saved message from scheduled message: %w", err)
 	}
 
 	features, err := m.planStore.GetPlanFeaturesForGuild(ctx, scheduledMessage.GuildID)
@@ -160,7 +193,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 	}
 
 	if err := templates.ParseAndExecuteMessage(data); err != nil {
-		return fmt.Errorf("Failed to parse and execute message template: %w", err)
+		return fmt.Errorf("failed to parse and execute message template: %w", err)
 	}
 
 	params := discord.WebhookMessageCreate{
@@ -176,44 +209,49 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 
 	params.Components, err = m.actionParser.ParseMessageComponents(data.Components, features.ComponentTypes)
 	if err != nil {
-		return fmt.Errorf("Failed to parse message components: %w", err)
+		return fmt.Errorf("failed to parse message components: %w", err)
 	}
 
 	msg, err := m.webhookManager.SendMessageToChannel(ctx, scheduledMessage.ChannelID, params)
 	if err != nil {
-		if errors.Is(err, webhook.ErrChannelNotFound) ||
-			common.IsDiscordRestErrorCode(
-				err,
-				discordgo.ErrCodeUnknownChannel,
-				discordgo.ErrCodeUnknownGuild,
-				discordgo.ErrCodeUnknownMessage,
-				discordgo.ErrCodeMissingAccess,
-				discordgo.ErrCodeInvalidFormBody,
-				discordgo.ErrCodeMissingPermissions,
-				discordgo.ErrCodeMissingAccess,
-				discordgo.ErrCodeCannotSendEmptyMessage,
-			) {
-			err := m.scheduledMessageStore.UpdateScheduledMessageEnabled(ctx, scheduledMessage.GuildID, scheduledMessage.ID, false, time.Now().UTC())
-			if err != nil {
-				slog.Error(
-					"Failed to disable scheduled message after channel not found",
-					slog.Any("error", err),
-					slog.String("scheduled_message_id", scheduledMessage.ID),
-				)
+		if errors.Is(err, webhook.ErrChannelNotFound) {
+			if m.channelGone(ctx, scheduledMessage.ChannelID) {
+				return m.disable(ctx, scheduledMessage, "channel not found")
 			}
-			return nil
+			return fmt.Errorf("channel not in cache: %w", err)
 		}
+
+		if common.IsDiscordRestErrorCode(
+			err,
+			discordgo.ErrCodeUnknownChannel,
+			discordgo.ErrCodeUnknownGuild,
+			discordgo.ErrCodeMissingAccess,
+			discordgo.ErrCodeMissingPermissions,
+		) {
+			return m.disable(ctx, scheduledMessage, "channel inaccessible")
+		}
+
 		return fmt.Errorf("failed to send message: %w", err)
 	}
 
+	// The message is out at this point, failures below must not trigger a resend.
 	permContext, err := m.actionParser.DerivePermissionsForActions(scheduledMessage.CreatorID, scheduledMessage.GuildID, scheduledMessage.ChannelID)
 	if err != nil {
-		return fmt.Errorf("Failed to create permission context: %w", err)
+		slog.Error(
+			"Failed to create permission context for scheduled message actions",
+			slog.Any("error", err),
+			slog.String("scheduled_message_id", scheduledMessage.ID),
+		)
+		return nil
 	}
 
 	err = m.actionParser.CreateActionsForMessage(ctx, data.Actions, permContext, msg.ID, false)
 	if err != nil {
-		return fmt.Errorf("failed to create actions for message: %w", err)
+		slog.Error(
+			"Failed to create actions for scheduled message",
+			slog.Any("error", err),
+			slog.String("scheduled_message_id", scheduledMessage.ID),
+		)
 	}
 
 	return nil

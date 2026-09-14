@@ -202,29 +202,61 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		return helpers.Forbidden("insufficient_plan", "Periodic scheduled messages are not available on your plan.")
 	}
 
+	existing, err := h.pg.Q.GetScheduledMessage(c.Context(), pgmodel.GetScheduledMessageParams{
+		ID:      messageID,
+		GuildID: guildID,
+	})
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return helpers.NotFound("unknown_message", "The scheduled message does not exist.")
+		}
+		log.Error().Err(err).Msg("Failed to get scheduled message")
+		return err
+	}
+
 	if req.EndAt.Valid && req.EndAt.Time.Before(req.StartAt) {
 		return helpers.BadRequest("invalid_end_at", "The end_at field must be after the start_at field.")
 	}
 
-	if req.StartAt.Before(time.Now().UTC()) {
-		req.StartAt = time.Now().UTC()
+	now := time.Now().UTC()
+
+	// Only recompute the schedule when it actually changed, otherwise e.g. toggling
+	// enabled would reset start_at and drop a pending send.
+	scheduleUnchanged := existing.OnlyOnce == req.OnlyOnce &&
+		existing.StartAt.Equal(req.StartAt) &&
+		req.CronExpression.Equal(null.NewString(existing.CronExpression.String, existing.CronExpression.Valid)) &&
+		req.CronTimezone.Equal(null.NewString(existing.CronTimezone.String, existing.CronTimezone.Valid))
+
+	// A disabled row with next_at in the past has already fired or was given up on,
+	// so re-enabling it needs a fresh schedule instead of an immediate send.
+	if !existing.Enabled && existing.NextAt.Before(now) {
+		scheduleUnchanged = false
 	}
 
-	nextAt := req.StartAt
-	if !req.OnlyOnce {
-		var err error
-		nextAt, err = scheduled_messages.GetFirstCronTick(req.CronExpression.String, req.StartAt, req.CronTimezone.String)
-		if err != nil {
-			return helpers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
+	var nextAt time.Time
+	if scheduleUnchanged {
+		req.StartAt = existing.StartAt
+		nextAt = existing.NextAt
+	} else {
+		if req.StartAt.Before(now) {
+			req.StartAt = now
 		}
 
-		nextNextAt, err := scheduled_messages.GetNextCronTick(req.CronExpression.String, nextAt, req.CronTimezone.String)
-		if err != nil {
-			return helpers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
-		}
+		nextAt = req.StartAt
+		if !req.OnlyOnce {
+			nextAt, err = scheduled_messages.GetFirstCronTick(req.CronExpression.String, req.StartAt, req.CronTimezone.String)
+			if err != nil {
+				return helpers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
+			}
 
-		if nextNextAt.Sub(nextAt) < time.Minute {
-			return helpers.BadRequest("invalid_cron_expression", "The cron expression is too tight and will trigger too often.")
+			nextNextAt, err := scheduled_messages.GetNextCronTick(req.CronExpression.String, nextAt, req.CronTimezone.String)
+			if err != nil {
+				return helpers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
+			}
+
+			if nextNextAt.Sub(nextAt) < time.Minute {
+				return helpers.BadRequest("invalid_cron_expression", "The cron expression is too tight and will trigger too often.")
+			}
 		}
 	}
 
