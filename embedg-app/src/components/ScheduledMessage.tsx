@@ -101,7 +101,11 @@ export default function ScheduledMessage({
           thread_name: threadName,
           saved_message_id: savedMessageId,
           cron_expression: cronExpression,
-          cron_timezone: getCurrentTimezone(),
+          // keep the stored timezone unless the schedule itself was edited
+          cron_timezone:
+            cronExpression !== msg.cron_expression
+              ? getCurrentTimezone()
+              : msg.cron_timezone ?? getCurrentTimezone(),
           start_at: startAt,
           end_at: endAt ?? null,
           only_once: onlyOnce,

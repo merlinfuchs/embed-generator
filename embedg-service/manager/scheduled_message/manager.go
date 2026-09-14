@@ -27,10 +27,6 @@ import (
 // it is skipped (recurring) or disabled (only once).
 const sendRetryWindow = 30 * time.Minute
 
-// errSkip signals that the message can't be sent right now but the schedule
-// should not be advanced or disabled, so it gets retried on the next tick.
-var errSkip = errors.New("scheduled message skipped")
-
 type ScheduledMessageManager struct {
 	scheduledMessageStore store.ScheduledMessageStore
 	savedMessageStore     store.SavedMessageStore
@@ -86,7 +82,7 @@ func (m *ScheduledMessageManager) Run(ctx context.Context) {
 
 			for _, scheduledMessage := range scheduledMessages {
 				err = m.processScheduledMessage(context.Background(), scheduledMessage)
-				if err != nil && !errors.Is(err, errSkip) {
+				if err != nil {
 					slog.Error(
 						"Failed to process scheduled message",
 						slog.Any("error", err),
@@ -112,7 +108,7 @@ func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, s
 				slog.Any("error", sendErr),
 				slog.String("scheduled_message_id", scheduledMessage.ID),
 			)
-			return errSkip
+			return nil
 		}
 
 		slog.Error(
@@ -123,11 +119,7 @@ func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, s
 	}
 
 	if scheduledMessage.OnlyOnce {
-		err := m.scheduledMessageStore.UpdateScheduledMessageEnabled(ctx, scheduledMessage.GuildID, scheduledMessage.ID, false, now)
-		if err != nil {
-			return fmt.Errorf("failed to disable after sending scheduled message: %w", err)
-		}
-		return nil
+		return m.disable(ctx, scheduledMessage, "sent once")
 	}
 
 	nextAt, err := GetNextCronTick(
@@ -147,16 +139,10 @@ func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, s
 	return nil
 }
 
-func (m *ScheduledMessageManager) disable(ctx context.Context, scheduledMessage model.ScheduledMessage, reason string) {
+func (m *ScheduledMessageManager) disable(ctx context.Context, scheduledMessage model.ScheduledMessage, reason string) error {
 	err := m.scheduledMessageStore.UpdateScheduledMessageEnabled(ctx, scheduledMessage.GuildID, scheduledMessage.ID, false, time.Now().UTC())
 	if err != nil {
-		slog.Error(
-			"Failed to disable scheduled message",
-			slog.Any("error", err),
-			slog.String("reason", reason),
-			slog.String("scheduled_message_id", scheduledMessage.ID),
-		)
-		return
+		return fmt.Errorf("failed to disable scheduled message (%s): %w", reason, err)
 	}
 
 	slog.Info(
@@ -164,6 +150,7 @@ func (m *ScheduledMessageManager) disable(ctx context.Context, scheduledMessage 
 		slog.String("reason", reason),
 		slog.String("scheduled_message_id", scheduledMessage.ID),
 	)
+	return nil
 }
 
 // channelGone checks against the Discord API whether the channel really doesn't exist
@@ -182,8 +169,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 	savedMsg, err := m.savedMessageStore.GetSavedMessageForGuild(ctx, scheduledMessage.GuildID, scheduledMessage.SavedMessageID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			m.disable(ctx, scheduledMessage, "saved message not found")
-			return nil
+			return m.disable(ctx, scheduledMessage, "saved message not found")
 		}
 		return fmt.Errorf("failed to get saved message from scheduled message: %w", err)
 	}
@@ -230,8 +216,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 	if err != nil {
 		if errors.Is(err, webhook.ErrChannelNotFound) {
 			if m.channelGone(ctx, scheduledMessage.ChannelID) {
-				m.disable(ctx, scheduledMessage, "channel not found")
-				return nil
+				return m.disable(ctx, scheduledMessage, "channel not found")
 			}
 			return fmt.Errorf("channel not in cache: %w", err)
 		}
@@ -243,8 +228,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 			discordgo.ErrCodeMissingAccess,
 			discordgo.ErrCodeMissingPermissions,
 		) {
-			m.disable(ctx, scheduledMessage, "channel inaccessible")
-			return nil
+			return m.disable(ctx, scheduledMessage, "channel inaccessible")
 		}
 
 		return fmt.Errorf("failed to send message: %w", err)

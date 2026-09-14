@@ -204,39 +204,40 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		return handlers.BadRequest("invalid_end_at", "The end_at field must be after the start_at field.")
 	}
 
+	now := time.Now().UTC()
+
 	// Only recompute the schedule when it actually changed, otherwise e.g. toggling
-	// enabled would reset start_at and shift the next send.
+	// enabled would reset start_at and drop a pending send.
 	scheduleUnchanged := existing.OnlyOnce == req.OnlyOnce &&
 		existing.StartAt.Equal(req.StartAt) &&
-		existing.CronExpression == req.CronExpression &&
-		existing.CronTimezone == req.CronTimezone
+		existing.CronExpression.Equal(req.CronExpression) &&
+		existing.CronTimezone.Equal(req.CronTimezone)
 
+	var nextAt time.Time
 	if scheduleUnchanged {
 		req.StartAt = existing.StartAt
-	} else if req.StartAt.Before(time.Now().UTC()) {
-		req.StartAt = time.Now().UTC()
-	}
-
-	nextAt := req.StartAt
-	if !req.OnlyOnce {
-		var err error
-		nextAt, err = scheduled_messages.GetFirstCronTick(req.CronExpression.String, req.StartAt, req.CronTimezone.String)
-		if err != nil {
-			return handlers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
-		}
-
-		nextNextAt, err := scheduled_messages.GetNextCronTick(req.CronExpression.String, nextAt, req.CronTimezone.String)
-		if err != nil {
-			return handlers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
-		}
-
-		if nextNextAt.Sub(nextAt) < time.Minute {
-			return handlers.BadRequest("invalid_cron_expression", "The cron expression is too tight and will trigger too often.")
-		}
-	}
-
-	if scheduleUnchanged && existing.NextAt.After(time.Now().UTC()) {
 		nextAt = existing.NextAt
+	} else {
+		if req.StartAt.Before(now) {
+			req.StartAt = now
+		}
+
+		nextAt = req.StartAt
+		if !req.OnlyOnce {
+			nextAt, err = scheduled_messages.GetFirstCronTick(req.CronExpression.String, req.StartAt, req.CronTimezone.String)
+			if err != nil {
+				return handlers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
+			}
+
+			nextNextAt, err := scheduled_messages.GetNextCronTick(req.CronExpression.String, nextAt, req.CronTimezone.String)
+			if err != nil {
+				return handlers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
+			}
+
+			if nextNextAt.Sub(nextAt) < time.Minute {
+				return handlers.BadRequest("invalid_cron_expression", "The cron expression is too tight and will trigger too often.")
+			}
+		}
 	}
 
 	msg, err := h.scheduledMessageStore.UpdateScheduledMessage(c.Context(), model.ScheduledMessage{
