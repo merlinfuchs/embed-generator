@@ -84,6 +84,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		actionParser,
 		webhookManager,
 		embedg.Caches(),
+		embedg.Rest(),
 		premiumManager,
 	)
 	embedg.Client().AddEventListeners(scheduledMessageManager)

@@ -191,11 +191,29 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		return handlers.Forbidden("insufficient_plan", "Periodic scheduled messages are not available on your plan.")
 	}
 
+	existing, err := h.scheduledMessageStore.GetScheduledMessage(c.Context(), guildID, messageID)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return handlers.NotFound("unknown_message", "The scheduled message does not exist.")
+		}
+		slog.Error("Failed to get scheduled message", slog.Any("error", err))
+		return err
+	}
+
 	if req.EndAt.Valid && req.EndAt.Time.Before(req.StartAt) {
 		return handlers.BadRequest("invalid_end_at", "The end_at field must be after the start_at field.")
 	}
 
-	if req.StartAt.Before(time.Now().UTC()) {
+	// Only recompute the schedule when it actually changed, otherwise e.g. toggling
+	// enabled would reset start_at and shift the next send.
+	scheduleUnchanged := existing.OnlyOnce == req.OnlyOnce &&
+		existing.StartAt.Equal(req.StartAt) &&
+		existing.CronExpression == req.CronExpression &&
+		existing.CronTimezone == req.CronTimezone
+
+	if scheduleUnchanged {
+		req.StartAt = existing.StartAt
+	} else if req.StartAt.Before(time.Now().UTC()) {
 		req.StartAt = time.Now().UTC()
 	}
 
@@ -215,6 +233,10 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		if nextNextAt.Sub(nextAt) < time.Minute {
 			return handlers.BadRequest("invalid_cron_expression", "The cron expression is too tight and will trigger too often.")
 		}
+	}
+
+	if scheduleUnchanged && existing.NextAt.After(time.Now().UTC()) {
+		nextAt = existing.NextAt
 	}
 
 	msg, err := h.scheduledMessageStore.UpdateScheduledMessage(c.Context(), model.ScheduledMessage{
