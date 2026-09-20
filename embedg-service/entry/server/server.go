@@ -16,6 +16,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-service/db/s3"
 	"github.com/merlinfuchs/embed-generator/embedg-service/embedg"
 	"github.com/merlinfuchs/embed-generator/embedg-service/embedg/rest"
+	"github.com/merlinfuchs/embed-generator/embedg-service/guildstate"
 	"github.com/merlinfuchs/embed-generator/embedg-service/manager/custom_bot"
 	"github.com/merlinfuchs/embed-generator/embedg-service/manager/guild"
 	"github.com/merlinfuchs/embed-generator/embedg-service/manager/premium"
@@ -74,6 +75,9 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		DiscordLink: cfg.Links.Discord,
 	}, embedg, embedg.Rest(), embedg.Caches(), pg, actionHandler)
 	embedg.Client().AddEventListeners(handler)
+
+	guildState := guildstate.New(embedg.Rest())
+	embedg.Client().AddEventListeners(guildState)
 
 	guildTracker := guild.NewGuildTracker(pg)
 	embedg.Client().AddEventListeners(guildTracker)
