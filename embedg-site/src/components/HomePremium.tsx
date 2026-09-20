@@ -12,7 +12,7 @@ const perks = [
 
 export default function HomePremium(): JSX.Element {
   return (
-    <section className="mx-auto max-w-7xl px-5 pt-16 md:px-8 lg:pt-24">
+    <section className="mx-auto max-w-7xl px-5 py-16 md:px-8 lg:py-24">
       <div className="grid gap-10 rounded-3xl border border-solid border-white/10 bg-[linear-gradient(135deg,#182238_0%,#111A2E_55%,#1E1A2E_100%)] px-6 py-12 md:px-12 lg:grid-cols-2 lg:items-center lg:px-16 lg:py-16">
         <div>
           <h2 className="mb-4 text-3xl font-bold tracking-tight text-mist-100 sm:text-4xl">
