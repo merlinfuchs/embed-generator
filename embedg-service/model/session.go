@@ -7,10 +7,13 @@ import (
 )
 
 type Session struct {
-	TokenHash   string
-	UserID      common.ID
-	GuildIds    []common.ID
-	AccessToken string
-	CreatedAt   time.Time
-	ExpiresAt   time.Time
+	TokenHash      string
+	UserID         common.ID
+	GuildIds       []common.ID
+	AccessToken    string
+	RefreshToken   string
+	TokenExpiresAt time.Time
+	Scopes         []string
+	CreatedAt      time.Time
+	ExpiresAt      time.Time
 }

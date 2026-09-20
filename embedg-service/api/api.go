@@ -36,10 +36,8 @@ type APIConfig struct {
 	DiscordLink string
 	SourceLink  string
 
-	DiscordClientID     string
-	DiscordClientSecret string
-	DiscordPublicKey    string
-	InsecureCookies     bool
+	DiscordPublicKey string
+	InsecureCookies  bool
 }
 
 func Serve(ctx context.Context, env *Env, config APIConfig) {

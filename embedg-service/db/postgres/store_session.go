@@ -21,14 +21,26 @@ func (c *Client) CreateSession(ctx context.Context, session model.Session) error
 	}
 
 	_, err := c.Q.InsertSession(ctx, pgmodel.InsertSessionParams{
-		TokenHash:   session.TokenHash,
-		UserID:      session.UserID.String(),
-		GuildIds:    guildIds,
-		AccessToken: session.AccessToken,
-		CreatedAt:   pgtype.Timestamp{Time: session.CreatedAt, Valid: true},
-		ExpiresAt:   pgtype.Timestamp{Time: session.ExpiresAt, Valid: true},
+		TokenHash:      session.TokenHash,
+		UserID:         session.UserID.String(),
+		GuildIds:       guildIds,
+		AccessToken:    session.AccessToken,
+		RefreshToken:   session.RefreshToken,
+		TokenExpiresAt: pgtype.Timestamp{Time: session.TokenExpiresAt, Valid: true},
+		Scopes:         session.Scopes,
+		CreatedAt:      pgtype.Timestamp{Time: session.CreatedAt, Valid: true},
+		ExpiresAt:      pgtype.Timestamp{Time: session.ExpiresAt, Valid: true},
 	})
 	return err
+}
+
+func (c *Client) UpdateSessionTokens(ctx context.Context, params store.UpdateSessionTokensParams) error {
+	return c.Q.UpdateSessionTokens(ctx, pgmodel.UpdateSessionTokensParams{
+		TokenHash:      params.TokenHash,
+		AccessToken:    params.AccessToken,
+		RefreshToken:   params.RefreshToken,
+		TokenExpiresAt: pgtype.Timestamp{Time: params.TokenExpiresAt, Valid: true},
+	})
 }
 
 func (c *Client) GetSession(ctx context.Context, tokenHash string) (*model.Session, error) {
@@ -70,11 +82,14 @@ func rowToSession(row pgmodel.Session) *model.Session {
 	}
 
 	return &model.Session{
-		TokenHash:   row.TokenHash,
-		UserID:      common.DefinitelyID(row.UserID),
-		GuildIds:    guildIds,
-		AccessToken: row.AccessToken,
-		CreatedAt:   row.CreatedAt.Time,
-		ExpiresAt:   row.ExpiresAt.Time,
+		TokenHash:      row.TokenHash,
+		UserID:         common.DefinitelyID(row.UserID),
+		GuildIds:       guildIds,
+		AccessToken:    row.AccessToken,
+		RefreshToken:   row.RefreshToken,
+		TokenExpiresAt: row.TokenExpiresAt.Time,
+		Scopes:         row.Scopes,
+		CreatedAt:      row.CreatedAt.Time,
+		ExpiresAt:      row.ExpiresAt.Time,
 	}
 }

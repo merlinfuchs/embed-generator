@@ -76,6 +76,9 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 
 	sessionManager := session.New(session.SessionManagerConfig{
 		InsecureCookies: cfg.API.InsecureCookies,
+		APIPublicURL:    cfg.API.PublicURL,
+		ClientID:        cfg.Discord.ClientID,
+		ClientSecret:    cfg.Discord.ClientSecret,
 	}, pg)
 	scheduledMessageManager := scheduled_messages.NewScheduledMessageManager(
 		pg,
@@ -124,17 +127,15 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		AppContext:            embedg,
 		EventDispatcher:       embedg,
 	}, api.APIConfig{
-		Host:                cfg.API.Host,
-		Port:                cfg.API.Port,
-		AppPublicURL:        cfg.App.PublicURL,
-		APIPublicURL:        cfg.API.PublicURL,
-		CDNPublicURL:        cfg.CDN.PublicURL,
-		DiscordLink:         cfg.Links.Discord,
-		SourceLink:          cfg.Links.Source,
-		DiscordClientID:     cfg.Discord.ClientID,
-		DiscordClientSecret: cfg.Discord.ClientSecret,
-		DiscordPublicKey:    cfg.Discord.PublicKey,
-		InsecureCookies:     cfg.API.InsecureCookies,
+		Host:             cfg.API.Host,
+		Port:             cfg.API.Port,
+		AppPublicURL:     cfg.App.PublicURL,
+		APIPublicURL:     cfg.API.PublicURL,
+		CDNPublicURL:     cfg.CDN.PublicURL,
+		DiscordLink:      cfg.Links.Discord,
+		SourceLink:       cfg.Links.Source,
+		DiscordPublicKey: cfg.Discord.PublicKey,
+		InsecureCookies:  cfg.API.InsecureCookies,
 	})
 
 	return nil

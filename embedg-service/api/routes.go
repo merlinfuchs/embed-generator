@@ -32,10 +32,7 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	healthGroup.Get("/", healthHandler.HandleHealth)
 
 	authHandler := auth.New(auth.AuthHandlerConfig{
-		APIPublicURL:    config.APIPublicURL,
 		AppPublicURL:    config.AppPublicURL,
-		ClientID:        config.DiscordClientID,
-		ClientSecret:    config.DiscordClientSecret,
 		InsecureCookies: config.InsecureCookies,
 	}, env.UserStore, env.SessionManager)
 	app.Get("/api/auth/login", authHandler.HandleAuthRedirect)

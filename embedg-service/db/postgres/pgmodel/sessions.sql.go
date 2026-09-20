@@ -21,7 +21,7 @@ func (q *Queries) DeleteSession(ctx context.Context, tokenHash string) error {
 }
 
 const getSession = `-- name: GetSession :one
-SELECT token_hash, user_id, guild_ids, access_token, created_at, expires_at FROM sessions WHERE token_hash = $1
+SELECT token_hash, user_id, guild_ids, access_token, created_at, expires_at, refresh_token, token_expires_at, scopes FROM sessions WHERE token_hash = $1
 `
 
 func (q *Queries) GetSession(ctx context.Context, tokenHash string) (Session, error) {
@@ -34,12 +34,15 @@ func (q *Queries) GetSession(ctx context.Context, tokenHash string) (Session, er
 		&i.AccessToken,
 		&i.CreatedAt,
 		&i.ExpiresAt,
+		&i.RefreshToken,
+		&i.TokenExpiresAt,
+		&i.Scopes,
 	)
 	return i, err
 }
 
 const getSessionsForUser = `-- name: GetSessionsForUser :many
-SELECT token_hash, user_id, guild_ids, access_token, created_at, expires_at FROM sessions WHERE user_id = $1
+SELECT token_hash, user_id, guild_ids, access_token, created_at, expires_at, refresh_token, token_expires_at, scopes FROM sessions WHERE user_id = $1
 `
 
 func (q *Queries) GetSessionsForUser(ctx context.Context, userID string) ([]Session, error) {
@@ -58,6 +61,9 @@ func (q *Queries) GetSessionsForUser(ctx context.Context, userID string) ([]Sess
 			&i.AccessToken,
 			&i.CreatedAt,
 			&i.ExpiresAt,
+			&i.RefreshToken,
+			&i.TokenExpiresAt,
+			&i.Scopes,
 		); err != nil {
 			return nil, err
 		}
@@ -70,16 +76,29 @@ func (q *Queries) GetSessionsForUser(ctx context.Context, userID string) ([]Sess
 }
 
 const insertSession = `-- name: InsertSession :one
-INSERT INTO sessions (token_hash, user_id, guild_ids, access_token, created_at, expires_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING token_hash, user_id, guild_ids, access_token, created_at, expires_at
+INSERT INTO sessions (
+    token_hash,
+    user_id,
+    guild_ids,
+    access_token,
+    refresh_token,
+    token_expires_at,
+    scopes,
+    created_at,
+    expires_at
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING token_hash, user_id, guild_ids, access_token, created_at, expires_at, refresh_token, token_expires_at, scopes
 `
 
 type InsertSessionParams struct {
-	TokenHash   string
-	UserID      string
-	GuildIds    []string
-	AccessToken string
-	CreatedAt   pgtype.Timestamp
-	ExpiresAt   pgtype.Timestamp
+	TokenHash      string
+	UserID         string
+	GuildIds       []string
+	AccessToken    string
+	RefreshToken   string
+	TokenExpiresAt pgtype.Timestamp
+	Scopes         []string
+	CreatedAt      pgtype.Timestamp
+	ExpiresAt      pgtype.Timestamp
 }
 
 func (q *Queries) InsertSession(ctx context.Context, arg InsertSessionParams) (Session, error) {
@@ -88,6 +107,9 @@ func (q *Queries) InsertSession(ctx context.Context, arg InsertSessionParams) (S
 		arg.UserID,
 		arg.GuildIds,
 		arg.AccessToken,
+		arg.RefreshToken,
+		arg.TokenExpiresAt,
+		arg.Scopes,
 		arg.CreatedAt,
 		arg.ExpiresAt,
 	)
@@ -99,6 +121,30 @@ func (q *Queries) InsertSession(ctx context.Context, arg InsertSessionParams) (S
 		&i.AccessToken,
 		&i.CreatedAt,
 		&i.ExpiresAt,
+		&i.RefreshToken,
+		&i.TokenExpiresAt,
+		&i.Scopes,
 	)
 	return i, err
+}
+
+const updateSessionTokens = `-- name: UpdateSessionTokens :exec
+UPDATE sessions SET access_token = $2, refresh_token = $3, token_expires_at = $4 WHERE token_hash = $1
+`
+
+type UpdateSessionTokensParams struct {
+	TokenHash      string
+	AccessToken    string
+	RefreshToken   string
+	TokenExpiresAt pgtype.Timestamp
+}
+
+func (q *Queries) UpdateSessionTokens(ctx context.Context, arg UpdateSessionTokensParams) error {
+	_, err := q.db.Exec(ctx, updateSessionTokens,
+		arg.TokenHash,
+		arg.AccessToken,
+		arg.RefreshToken,
+		arg.TokenExpiresAt,
+	)
+	return err
 }
