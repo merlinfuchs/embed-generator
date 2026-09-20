@@ -89,6 +89,15 @@ const componentsV2Message = parse({
         },
         { type: 13, file: { url: "attachment://file.txt" } },
         { type: 14, divider: true, spacing: 2 },
+        {
+          type: 1,
+          components: [{ type: 2, style: 2, label: "In container" }],
+        },
+        {
+          type: 9,
+          components: [{ type: 10, content: "With a button accessory" }],
+          accessory: { type: 2, style: 1, label: "Accessory" },
+        },
       ],
     },
   ],
