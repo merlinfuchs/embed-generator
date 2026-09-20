@@ -83,7 +83,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 	}, embedg, embedg.Rest(), pg, actionHandler)
 	embedg.Client().AddEventListeners(handler)
 
-	guildTracker := guild.NewGuildTracker(pg)
+	guildTracker := guild.NewGuildTracker(pg, shards)
 	embedg.Client().AddEventListeners(guildTracker)
 	go guildTracker.Run(ctx)
 

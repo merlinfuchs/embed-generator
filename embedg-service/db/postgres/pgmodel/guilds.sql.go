@@ -56,3 +56,30 @@ func (q *Queries) MarkGuildLeft(ctx context.Context, arg MarkGuildLeftParams) er
 	_, err := q.db.Exec(ctx, markGuildLeft, arg.ID, arg.LeftAt)
 	return err
 }
+
+const markGuildsLeftOnShard = `-- name: MarkGuildsLeftOnShard :exec
+UPDATE guilds SET left_at = $1, updated_at = $1
+WHERE left_at IS NULL
+  AND (id >> 22) % $2::bigint = $3::bigint
+  AND updated_at < $1
+  AND NOT (id = ANY($4::bigint[]))
+`
+
+type MarkGuildsLeftOnShardParams struct {
+	Now        pgtype.Timestamp
+	ShardCount int64
+	ShardID    int64
+	KeepIds    []int64
+}
+
+// Marks every guild on the shard that isn't in keep_ids as left. Rows written since the ready
+// time are guilds joined while this ran, so they are skipped.
+func (q *Queries) MarkGuildsLeftOnShard(ctx context.Context, arg MarkGuildsLeftOnShardParams) error {
+	_, err := q.db.Exec(ctx, markGuildsLeftOnShard,
+		arg.Now,
+		arg.ShardCount,
+		arg.ShardID,
+		arg.KeepIds,
+	)
+	return err
+}

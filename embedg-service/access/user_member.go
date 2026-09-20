@@ -11,8 +11,9 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
 )
 
-// GetMemberForUser fetches the session user's own member in guildID with their OAuth token,
-// which keeps these requests on a per-user rate limit bucket instead of the bot's.
+// GetMemberForUser fetches the session user's own member in guildID with their OAuth token, so
+// the bot needs no member cache. Discord limits these calls per user, but disgo's rate limiter
+// keys buckets on the route alone, so on this instance all users still queue behind one bucket.
 // Returns store.ErrNotFound if the user is not in the guild.
 func (m *AccessManager) GetMemberForUser(ctx context.Context, sess *session.Session, guildID common.ID) (*discord.Member, error) {
 	key := fmt.Sprintf("%s:%s", sess.TokenHash, guildID)
@@ -27,6 +28,10 @@ func (m *AccessManager) GetMemberForUser(ctx context.Context, sess *session.Sess
 		if err != nil {
 			if common.IsDiscordRestStatusCode(err, http.StatusNotFound, http.StatusForbidden) {
 				return nil, store.ErrNotFound
+			}
+			if common.IsDiscordRestStatusCode(err, http.StatusUnauthorized) {
+				// The token was revoked between the refresh and now, or Discord dropped it.
+				return nil, m.sessionManager.InvalidateSession(ctx, sess)
 			}
 			return nil, fmt.Errorf("failed to get member for user: %w", err)
 		}
@@ -48,6 +53,9 @@ func (m *AccessManager) GetGuildsForUser(ctx context.Context, sess *session.Sess
 
 		guilds, err := m.rest.GetCurrentUserGuilds(token, 0, 0, 200, false)
 		if err != nil {
+			if common.IsDiscordRestStatusCode(err, http.StatusUnauthorized) {
+				return nil, m.sessionManager.InvalidateSession(ctx, sess)
+			}
 			return nil, fmt.Errorf("failed to get guilds for user: %w", err)
 		}
 		return guilds, nil

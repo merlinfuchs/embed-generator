@@ -24,21 +24,25 @@ const (
 // GuildTracker keeps the guilds table in sync with the gateway. Guild creates arrive in bulk on
 // every (re)connect, one per guild the bot is in, so they are buffered and written in batches.
 type GuildTracker struct {
-	store store.GuildStore
+	store  store.GuildStore
+	shards common.Shards
 
 	mutex  sync.Mutex
 	buffer map[common.ID]model.Guild
 }
 
-func NewGuildTracker(store store.GuildStore) *GuildTracker {
+func NewGuildTracker(store store.GuildStore, shards common.Shards) *GuildTracker {
 	return &GuildTracker{
 		store:  store,
+		shards: shards,
 		buffer: make(map[common.ID]model.Guild),
 	}
 }
 
 func (t *GuildTracker) OnEvent(event bot.Event) {
 	switch e := event.(type) {
+	case *events.Ready:
+		t.reconcile(e.ShardID(), e.Guilds)
 	case *events.GuildReady:
 		t.enqueue(e.Guild.Guild)
 	case *events.GuildJoin:
@@ -116,6 +120,26 @@ func (t *GuildTracker) flush(ctx context.Context) bool {
 	}
 
 	return more
+}
+
+// reconcile marks the guilds the bot left while this shard was offline. Discord never sends a
+// GUILD_DELETE for those; the only signal is their absence from the shard's READY guild list.
+func (t *GuildTracker) reconcile(shardID int, guilds []discord.UnavailableGuild) {
+	keep := make([]common.ID, len(guilds))
+	for i, guild := range guilds {
+		keep[i] = guild.ID
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), writeTimeout)
+	defer cancel()
+
+	if err := t.store.MarkGuildsLeftOnShard(ctx, shardID, t.shards.Count, keep, time.Now().UTC()); err != nil {
+		slog.Error(
+			"Failed to reconcile guilds for shard",
+			slog.Int("shard_id", shardID),
+			slog.Any("error", err),
+		)
+	}
 }
 
 func (t *GuildTracker) markLeft(guildID common.ID) {

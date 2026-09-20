@@ -119,11 +119,11 @@ func (m *CustomBotManager) syncCustomBots(ctx context.Context) error {
 		}
 		wanted[customBot.ApplicationID] = struct{}{}
 
-		running := m.runningBot(customBot.ApplicationID)
+		running, ok := m.runningBot(customBot.ApplicationID)
 		presence := presenceConfigFromCustomBot(&customBot)
 
 		switch {
-		case running == nil:
+		case !ok:
 			group.Go(func() error {
 				m.startBot(ctx, customBot)
 				return nil
@@ -136,7 +136,7 @@ func (m *CustomBotManager) syncCustomBots(ctx context.Context) error {
 			})
 		case running.presence != presence:
 			group.Go(func() error {
-				m.updatePresence(running, presence)
+				m.updatePresence(customBot.ApplicationID, running.gateway, presence)
 				return nil
 			})
 		}
@@ -209,18 +209,21 @@ func (m *CustomBotManager) stopAll() {
 	group.Wait()
 }
 
-func (m *CustomBotManager) updatePresence(bot *runningBot, presence presenceConfig) {
+func (m *CustomBotManager) updatePresence(applicationID common.ID, gw gateway.Gateway, presence presenceConfig) {
 	ctx, cancel := context.WithTimeout(context.Background(), gatewayTimeout)
 	defer cancel()
 
-	if err := bot.gateway.Send(ctx, gateway.OpcodePresenceUpdate, presence.data()); err != nil {
+	if err := gw.Send(ctx, gateway.OpcodePresenceUpdate, presence.data()); err != nil {
 		slog.Error("Failed to update custom bot presence", slog.Any("error", err))
 		return
 	}
 
 	m.botsMu.Lock()
 	defer m.botsMu.Unlock()
-	bot.presence = presence
+	// The connection may have been replaced while we were sending; don't stamp the new one.
+	if bot, ok := m.bots[applicationID]; ok && bot.gateway == gw {
+		bot.presence = presence
+	}
 }
 
 // onGatewayClose runs when a connection died in a way it can't recover from on its own. disgo
@@ -249,10 +252,16 @@ func (m *CustomBotManager) markTokenInvalid(ref botRef) {
 	}
 }
 
-func (m *CustomBotManager) runningBot(applicationID common.ID) *runningBot {
+// runningBot returns a copy taken under the lock, so callers compare a consistent snapshot
+// rather than racing updatePresence.
+func (m *CustomBotManager) runningBot(applicationID common.ID) (runningBot, bool) {
 	m.botsMu.Lock()
 	defer m.botsMu.Unlock()
-	return m.bots[applicationID]
+	bot, ok := m.bots[applicationID]
+	if !ok {
+		return runningBot{}, false
+	}
+	return *bot, true
 }
 
 func (m *CustomBotManager) runningIDs() []common.ID {
