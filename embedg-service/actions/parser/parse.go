@@ -187,13 +187,10 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions, 
 			Spoiler: data.Spoiler,
 		}, nil
 	case discord.ComponentTypeSeparator:
-		var divider *bool
-		if data.Divider {
-			divider = &data.Divider
-		}
-
 		return discord.SeparatorComponent{
-			Divider: divider,
+			// Passed through as a pointer so that an explicit false isn't lost,
+			// Discord defaults the divider to true when it's missing.
+			Divider: data.Divider,
 			Spacing: discord.SeparatorSpacingSize(data.Spacing),
 		}, nil
 	case discord.ComponentTypeContainer:
@@ -338,14 +335,9 @@ func (m *ActionParser) UnparseMessageComponent(data discord.Component) (actions.
 			Spoiler: c.Spoiler,
 		}, nil
 	case discord.SeparatorComponent:
-		var divider bool
-		if c.Divider != nil {
-			divider = *c.Divider
-		}
-
 		return actions.ComponentWithActions{
 			Type:    discord.ComponentTypeSeparator,
-			Divider: divider,
+			Divider: c.Divider,
 			Spacing: int(c.Spacing),
 		}, nil
 	case discord.ContainerComponent:

@@ -28,3 +28,5 @@ jobs:
         working-directory: embedg-app
       - run: ./node_modules/.bin/biome ci .
         working-directory: embedg-app
+      - run: ./node_modules/.bin/vitest run
+        working-directory: embedg-app

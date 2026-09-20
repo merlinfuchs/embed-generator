@@ -342,7 +342,7 @@ export type MessageComponentAccessory = z.infer<
 export const componentSectionSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
   type: z.literal(9),
-  components: z.array(componentTextDisplaySchema).min(1).max(5),
+  components: z.array(componentTextDisplaySchema).min(1).max(3),
   accessory: componentAccessorySchema,
 });
 
