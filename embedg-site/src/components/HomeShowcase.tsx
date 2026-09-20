@@ -175,8 +175,8 @@ function Embed({
 }
 
 const server = <Avatar src="/img/logo.svg" />;
-const sarah = <Avatar initial="S" color="bg-[#EB459E]" />;
-const tom = <Avatar initial="T" color="bg-[#57C271]" />;
+const sarah = <Avatar src="/img/avatars/default-5.png" />;
+const tom = <Avatar src="/img/avatars/default-2.png" />;
 
 // Feature list on the left, chat log on the right in the same order. Hovering a feature lights up
 // the messages it produced and scrolls the log to the first one.
@@ -398,7 +398,7 @@ export default function HomeShowcase(): JSX.Element {
                 id="patch"
                 active={active}
                 ids={["branding", "save"]}
-                avatar={<Avatar initial="P" color="bg-[#57C271]" />}
+                avatar={<Avatar src="/img/avatars/patch-bot.svg" />}
                 name="Patch Bot"
                 app
                 time="6:30 PM"
@@ -436,7 +436,7 @@ export default function HomeShowcase(): JSX.Element {
                 id="welcome"
                 active={active}
                 ids={["variables", "branding"]}
-                avatar={<Avatar initial="W" color="bg-[#2F8BFF]" />}
+                avatar={<Avatar src="/img/avatars/welcome-bot.svg" />}
                 name="Welcome Bot"
                 app
                 time="11:02 AM"
@@ -455,7 +455,7 @@ export default function HomeShowcase(): JSX.Element {
                 active={active}
                 ids={["v2", "components"]}
                 avatar={server}
-                name="Your Server"
+                name="Embed Generator"
                 app
                 time="6:31 PM"
               >
@@ -488,7 +488,7 @@ export default function HomeShowcase(): JSX.Element {
                 active={active}
                 ids={["scheduled"]}
                 avatar={server}
-                name="Your Server"
+                name="Embed Generator"
                 app
                 time="9:00 AM"
               >
@@ -519,7 +519,7 @@ export default function HomeShowcase(): JSX.Element {
                 id="giveaway"
                 active={active}
                 ids={["commands", "whitelabel", "components"]}
-                avatar={<Avatar initial="G" color="bg-[#F5B544]" />}
+                avatar={<Avatar src="/img/avatars/giveaway-bot.svg" />}
                 name="Giveaway Bot"
                 app
                 time="2:14 PM"
@@ -563,7 +563,7 @@ export default function HomeShowcase(): JSX.Element {
                 active={active}
                 ids={["ai"]}
                 avatar={server}
-                name="Your Server"
+                name="Embed Generator"
                 app
                 time="7:45 PM"
               >
