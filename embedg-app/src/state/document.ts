@@ -210,6 +210,7 @@ export interface DocumentStore extends DocumentData {
     node: NewNode,
   ): NodeId;
   remove(id: NodeId): void;
+  removeChildren(parentId: NodeId, slot: ChildSlot): void;
   move(id: NodeId, delta: -1 | 1): void;
   duplicate(id: NodeId): NodeId;
   replaceAll(message: Message): void;
@@ -331,6 +332,16 @@ export const createDocumentStore = (key: string) =>
               set((state) => {
                 if (id === state.rootId) return;
                 removeSubtree(state, id);
+              }),
+
+            removeChildren: (parentId, slot) =>
+              set((state) => {
+                const parent = state.nodes[parentId];
+                if (!parent) return;
+
+                for (const childId of [...childIds(parent, slot)]) {
+                  removeSubtree(state, childId);
+                }
               }),
 
             move: (id, delta) =>
@@ -478,7 +489,17 @@ function copySubtree(
   return copyId;
 }
 
-export const useDocumentStore = createDocumentStore("current-document");
+export const DOCUMENT_STORE_KEY = "current-document";
+
+/**
+ * Read before the store is created, because the persist middleware writes the
+ * key as soon as it rehydrates.
+ */
+export const hadPersistedDocument =
+  typeof localStorage !== "undefined" &&
+  localStorage.getItem(DOCUMENT_STORE_KEY) !== null;
+
+export const useDocumentStore = createDocumentStore(DOCUMENT_STORE_KEY);
 
 /** The undo stack only tracks the document itself, not the store actions. */
 export const useDocumentUndoStore = <T>(
@@ -490,3 +511,36 @@ export const useNode = <T extends Node>(id: NodeId) =>
 
 export const useChildIds = (id: NodeId, slot: ChildSlot) =>
   useDocumentStore((state) => childIds(state.nodes[id], slot), shallow);
+
+/** The zod issue path of a node, e.g. `embeds.0.fields.2`. */
+function nodePath(nodes: Record<NodeId, Node>, id: NodeId): string | null {
+  const node = nodes[id];
+  if (!node) return null;
+  if (!node.parentId) return "";
+
+  const parent = nodes[node.parentId];
+  const slot = parent && slotOfChild(parent, id);
+  if (!parent || !slot) return null;
+
+  const parentPath = nodePath(nodes, parent.id);
+  if (parentPath === null) return null;
+
+  const index = childIds(parent, slot).indexOf(id);
+  const segment = slot === "accessory" ? slot : `${slot}.${index}`;
+
+  return parentPath ? `${parentPath}.${segment}` : segment;
+}
+
+export const useNodePath = (id: NodeId) =>
+  useDocumentStore((state) => nodePath(state.nodes, id));
+
+/** Position of a node among its siblings, for move and duplicate buttons. */
+export const useNodeIndex = (id: NodeId) =>
+  useDocumentStore((state) => {
+    const node = state.nodes[id];
+    const parent = node?.parentId ? state.nodes[node.parentId] : undefined;
+    const slot = parent && slotOfChild(parent, id);
+    const ids = slot ? childIds(parent, slot) : [];
+
+    return { index: ids.indexOf(id), count: ids.length };
+  }, shallow);

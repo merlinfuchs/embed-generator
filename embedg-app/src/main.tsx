@@ -7,6 +7,9 @@ import queryClient from "./api/client";
 import { BrowserRouter } from "react-router-dom";
 import { baseUrl } from "./util/url";
 import AnalyticsProvider from "./components/AnalyticsProvider";
+import { seedDocumentStore } from "./state/currentMessage";
+
+seedDocumentStore();
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

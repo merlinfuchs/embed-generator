@@ -1,12 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import ConfirmModal from "../../components/ConfirmModal";
-import { defaultMessage, useCurrentMessageStore } from "../../state/message";
+import { clearCurrentMessage } from "../../state/currentMessage";
 
 export default function ClearView() {
   const navigate = useNavigate();
 
   function clear() {
-    useCurrentMessageStore.setState(defaultMessage);
+    clearCurrentMessage();
     navigate("/editor");
   }
 

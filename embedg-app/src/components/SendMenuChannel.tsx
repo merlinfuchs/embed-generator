@@ -1,6 +1,5 @@
 import { useSendMessageToChannelMutation } from "../api/mutations";
 import { useGuildChannelsQuery, useUserQuery } from "../api/queries";
-import { useCurrentMessageStore } from "../state/message";
 import { ChannelSelect } from "./ChannelSelect";
 import GuildSelect from "./GuildSelect";
 import LoginSuggest from "./LoginSuggest";
@@ -12,6 +11,7 @@ import { shallow } from "zustand/shallow";
 import { messageUrlRegex } from "../discord/util";
 import MessageRestoreButton from "./MessageRestoreButton";
 import { useToasts } from "../util/toasts";
+import { getCurrentMessage } from "../state/currentMessage";
 
 export default function SendMenuChannel() {
   const validationError = useValidationErrorStore((state) =>
@@ -80,7 +80,7 @@ export default function SendMenuChannel() {
         channel_id: selectedChannnelId,
         thread_name: selectedChannel?.type === 15 ? threadName : null,
         message_id: edit ? messageId : null,
-        data: useCurrentMessageStore.getState(),
+        data: getCurrentMessage(),
         attachments: useCurrentAttachmentsStore.getState().attachments,
       },
       {

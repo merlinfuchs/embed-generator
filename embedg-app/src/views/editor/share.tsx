@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import Modal from "../../components/Modal";
-import { useCurrentMessageStore } from "../../state/message";
 import { useSharedMessageCreateMutation } from "../../api/mutations";
 import { useEffect, useRef, useState } from "react";
 import { useToasts } from "../../util/toasts";
+import { getCurrentMessage } from "../../state/currentMessage";
 
 export default function ShareView() {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ export default function ShareView() {
   useEffect(() => {
     shareCreateMutation.mutate(
       {
-        data: useCurrentMessageStore.getState(),
+        data: getCurrentMessage(),
       },
       {
         onSuccess: (resp) => {

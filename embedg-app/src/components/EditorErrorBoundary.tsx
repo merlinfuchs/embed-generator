@@ -1,16 +1,14 @@
 import type { ReactNode } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { useCurrentMessageStore } from "../state/message";
+import { clearCurrentMessage } from "../state/currentMessage";
 
 export default function EditorErrorBoundary({
   children,
 }: {
   children: ReactNode;
 }) {
-  const clearMessage = useCurrentMessageStore((s) => s.clear);
-
   return (
-    <ErrorBoundary fallbackRender={ErrorFallback} onReset={clearMessage}>
+    <ErrorBoundary fallbackRender={ErrorFallback} onReset={clearCurrentMessage}>
       {children}
     </ErrorBoundary>
   );
