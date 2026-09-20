@@ -1,11 +1,22 @@
 import React from "react";
-import { Avatar, DiscordButton, Reactions, Typing } from "./discord";
+import {
+  GiftIcon,
+  HandRaisedIcon,
+  WrenchIcon,
+} from "@heroicons/react/24/solid";
+import {
+  Avatar,
+  AvatarSpec,
+  DiscordButton,
+  Reactions,
+  Typing,
+} from "./discord";
 
-const avatars = [
-  "/img/avatars/welcome-bot.svg",
-  "/img/avatars/giveaway-bot.svg",
-  "/img/avatars/patch-bot.svg",
-  "/img/logo.svg",
+const avatars: AvatarSpec[] = [
+  { icon: HandRaisedIcon, color: "bg-azure-500" },
+  { icon: GiftIcon, color: "bg-amber-400" },
+  { icon: WrenchIcon, color: "bg-[#2FA85C]" },
+  { src: "/img/logo.svg" },
 ];
 
 const swatches = [
@@ -101,7 +112,7 @@ export default function HeroPreview(): JSX.Element {
             onClick={() => setAvatar((a) => (a + 1) % avatars.length)}
             className="h-10 w-10 flex-none cursor-pointer rounded-full border-0 bg-transparent p-0 ring-azure-400/60 hover:ring-2"
           >
-            <Avatar src={avatars[avatar]} />
+            <Avatar {...avatars[avatar]} />
           </button>
           <div className="min-w-0 flex-1">
             <div className="mb-1 flex items-center gap-2 text-sm">

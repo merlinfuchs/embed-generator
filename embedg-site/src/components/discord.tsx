@@ -2,14 +2,18 @@ import React from "react";
 
 // Small building blocks shared by the message mockups on the landing page.
 
+export type AvatarSpec =
+  | { src: string }
+  | { icon: React.ComponentType<React.SVGProps<SVGSVGElement>>; color: string };
+
 export function Avatar({
   src,
-  initial,
+  icon: Icon,
   color,
   size = "h-10 w-10",
 }: {
   src?: string;
-  initial?: string;
+  icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   color?: string;
   size?: string;
 }): JSX.Element {
@@ -18,9 +22,9 @@ export function Avatar({
   }
   return (
     <div
-      className={`${size} ${color} flex flex-none items-center justify-center rounded-full text-sm font-bold text-white`}
+      className={`${size} ${color} flex flex-none items-center justify-center rounded-full text-white`}
     >
-      {initial}
+      {Icon && <Icon className="h-[55%] w-[55%]" />}
     </div>
   );
 }

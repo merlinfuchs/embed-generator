@@ -10,6 +10,11 @@ import {
   Squares2X2Icon,
   VariableIcon,
 } from "@heroicons/react/24/outline";
+import {
+  GiftIcon,
+  HandRaisedIcon,
+  WrenchIcon,
+} from "@heroicons/react/24/solid";
 import { Avatar, DiscordButton, Reactions, Typing } from "./discord";
 
 type FeatureId =
@@ -281,7 +286,7 @@ export default function HomeShowcase(): JSX.Element {
     ),
     branding: (
       <Message
-        avatar={<Avatar src="/img/avatars/patch-bot.svg" />}
+        avatar={<Avatar icon={WrenchIcon} color="bg-[#2FA85C]" />}
         name="Patch Bot"
         app
         time="6:30 PM"
@@ -332,7 +337,7 @@ export default function HomeShowcase(): JSX.Element {
     ),
     variables: (
       <Message
-        avatar={<Avatar src="/img/avatars/welcome-bot.svg" />}
+        avatar={<Avatar icon={HandRaisedIcon} color="bg-azure-500" />}
         name="Welcome Bot"
         app
         time="11:02 AM"
@@ -437,7 +442,7 @@ export default function HomeShowcase(): JSX.Element {
     ),
     whitelabel: (
       <Message
-        avatar={<Avatar src="/img/avatars/giveaway-bot.svg" />}
+        avatar={<Avatar icon={GiftIcon} color="bg-amber-400" />}
         name="Giveaway Bot"
         app
         time="Sun 6:00 PM"
