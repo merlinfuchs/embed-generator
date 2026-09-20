@@ -552,13 +552,13 @@ export default function HomeShowcase(): JSX.Element {
             ))}
           </div>
 
-          <div className="relative overflow-hidden rounded-2xl border border-solid border-white/10 bg-ink-800 shadow-card">
+          <div className="relative">
             <div
               ref={trackRef}
               onScroll={onScroll}
               onWheel={() => setTouched(true)}
               onTouchMove={() => setTouched(true)}
-              className="relative h-[520px] snap-y snap-mandatory overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="relative h-[520px] snap-y snap-mandatory overflow-y-auto [mask-image:linear-gradient(to_bottom,transparent,black_12%,black_88%,transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               <div aria-hidden className="h-40" />
               {features.map((f, i) => (
@@ -566,7 +566,7 @@ export default function HomeShowcase(): JSX.Element {
                   key={f.id}
                   data-slide
                   className={[
-                    "snap-center px-5 py-6 transition-opacity duration-500 sm:px-8",
+                    "snap-center py-6 transition-opacity duration-500",
                     index === i ? "opacity-100" : "opacity-25",
                   ].join(" ")}
                 >
@@ -575,15 +575,7 @@ export default function HomeShowcase(): JSX.Element {
               ))}
               <div aria-hidden className="h-40" />
             </div>
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-ink-800 to-transparent"
-            />
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-ink-800 to-transparent"
-            />
-            <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-5 py-3 text-xs sm:px-8">
+            <div className="flex items-center justify-between border-0 border-t border-solid border-white/5 pt-3 text-xs">
               <a
                 href={features[index].href}
                 className="font-medium text-azure-400 hover:text-azure-300"
