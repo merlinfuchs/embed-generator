@@ -32,12 +32,25 @@ const features: {
   premium?: boolean;
 }[] = [
   {
-    id: "scheduled",
-    name: "Scheduled messages",
-    blurb: "Send once, or every hour, day or week.",
-    href: "/docs/guides/scheduled-messages",
-    icon: ClockIcon,
-    premium: true,
+    id: "components",
+    name: "Buttons & select menus",
+    blurb: "Hand out roles, reply, or link somewhere.",
+    href: "/docs/features/interactive-components",
+    icon: CursorArrowRippleIcon,
+  },
+  {
+    id: "branding",
+    name: "Custom name & avatar",
+    blurb: "Every message looks like it's from your server.",
+    href: "/docs/features/custom-branding",
+    icon: EyeDropperIcon,
+  },
+  {
+    id: "save",
+    name: "Saved messages",
+    blurb: "Keep templates and reuse them anywhere.",
+    href: "/docs/features/save-messages",
+    icon: CloudIcon,
   },
   {
     id: "variables",
@@ -47,11 +60,19 @@ const features: {
     icon: VariableIcon,
   },
   {
-    id: "branding",
-    name: "Custom name & avatar",
-    blurb: "Every message looks like it's from your server.",
-    href: "/docs/features/custom-branding",
-    icon: EyeDropperIcon,
+    id: "v2",
+    name: "Components V2",
+    blurb: "Sections, thumbnails, separators. New layouts.",
+    href: "/docs/features/components-v2",
+    icon: Squares2X2Icon,
+  },
+  {
+    id: "scheduled",
+    name: "Scheduled messages",
+    blurb: "Send once, or every hour, day or week.",
+    href: "/docs/guides/scheduled-messages",
+    icon: ClockIcon,
+    premium: true,
   },
   {
     id: "commands",
@@ -70,33 +91,12 @@ const features: {
     premium: true,
   },
   {
-    id: "components",
-    name: "Buttons & select menus",
-    blurb: "Hand out roles, reply, or link somewhere.",
-    href: "/docs/features/interactive-components",
-    icon: CursorArrowRippleIcon,
-  },
-  {
     id: "ai",
     name: "AI assistant",
     blurb: "Draft a message from a sentence.",
     href: "/docs/features/ai-assistant",
     icon: SparklesIcon,
     premium: true,
-  },
-  {
-    id: "save",
-    name: "Saved messages",
-    blurb: "Keep templates and reuse them anywhere.",
-    href: "/docs/features/save-messages",
-    icon: CloudIcon,
-  },
-  {
-    id: "v2",
-    name: "Components V2",
-    blurb: "Sections, thumbnails, separators. New layouts.",
-    href: "/docs/features/components-v2",
-    icon: Squares2X2Icon,
   },
 ];
 
@@ -178,7 +178,7 @@ const server = <Avatar src="/img/logo.svg" />;
 const sarah = <Avatar initial="S" color="bg-[#EB459E]" />;
 const tom = <Avatar initial="T" color="bg-[#57C271]" />;
 
-// Feature list on the left (ordered like the chat), chat log on the right. Hovering a feature lights up
+// Feature list on the left, chat log on the right in the same order. Hovering a feature lights up
 // the messages it produced and scrolls the log to the first one.
 export default function HomeShowcase(): JSX.Element {
   // Click selects (sticks), hover previews on top of the selection.
@@ -186,6 +186,9 @@ export default function HomeShowcase(): JSX.Element {
   const [hovered, setHovered] = React.useState<FeatureId | null>(null);
   const active = hovered ?? selected;
   const [entered, setEntered] = React.useState(false);
+  const [roles, setRoles] = React.useState<string[]>([]);
+  const toggleRole = (r: string) =>
+    setRoles((cur) => (cur.includes(r) ? cur.filter((x) => x !== r) : [...cur, r]));
   const logRef = React.useRef<HTMLDivElement>(null);
   const sectionRef = React.useRef<HTMLElement>(null);
   const [touched, setTouched] = React.useState(false);
@@ -193,15 +196,15 @@ export default function HomeShowcase(): JSX.Element {
 
   // First message per feature, used as scroll target.
   const firstMsg: Record<FeatureId, string> = {
+    components: "roles",
+    branding: "roles",
+    save: "patch",
     variables: "welcome",
-    branding: "welcome",
+    v2: "event",
     scheduled: "morning",
     commands: "giveaway-cmd",
     whitelabel: "giveaway",
-    components: "giveaway",
-    ai: "patch",
-    save: "patch",
-    v2: "event",
+    ai: "halloween",
   };
 
   React.useEffect(() => {
@@ -329,20 +332,105 @@ export default function HomeShowcase(): JSX.Element {
               <Divider label="Monday" />
 
               <Message
-                id="morning"
+                id="roles"
                 active={active}
-                ids={["scheduled"]}
+                ids={["components", "branding"]}
+                avatar={<Avatar initial="R" color="bg-[#57C271]" />}
+                name="Role Bot"
+                app
+                time="10:12 AM"
+              >
+                <div className="text-sm text-mist-300">
+                  Pick your roles. Click again to remove one.
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {["🎮 Gamer", "🎨 Artist", "📅 Events"].map((r) => (
+                    <DiscordButton
+                      key={r}
+                      style={roles.includes(r) ? "success" : "secondary"}
+                      onClick={() => toggleRole(r)}
+                    >
+                      {r}
+                      {roles.includes(r) ? " ✓" : ""}
+                    </DiscordButton>
+                  ))}
+                </div>
+                {roles.length > 0 && (
+                  <div className="mt-2 text-xs text-mist-500">
+                    Only you can see this. You now have {roles.length}{" "}
+                    {roles.length === 1 ? "role" : "roles"}.
+                  </div>
+                )}
+              </Message>
+
+              <Message
+                id="tom-role"
+                active={active}
+                ids={["components"]}
+                avatar={tom}
+                name="tom"
+                time="10:15 AM"
+              >
+                <div className="text-sm text-mist-300">
+                  wait how do I get the{" "}
+                  <span className="rounded bg-[#57C271]/20 px-1 text-[#8EE0A5]">
+                    @Gamer
+                  </span>{" "}
+                  role
+                </div>
+              </Message>
+
+              <Message
+                id="sarah-role"
+                active={active}
+                ids={["components"]}
+                avatar={sarah}
+                name="sarah"
+                time="10:15 AM"
+              >
+                <div className="text-sm text-mist-300">
+                  it's the button right above you lol
+                </div>
+                <Reactions items={[{ emoji: "😅", count: 3 }]} />
+              </Message>
+
+              <Message
+                id="patch"
+                active={active}
+                ids={["save"]}
                 avatar={server}
                 name="Your Server"
                 app
-                time="9:00 AM"
+                time="6:30 PM"
               >
-                <div className="text-sm text-mist-300">
-                  ☀️ Morning everyone! Voice hangout tonight at 8, bring
-                  snacks.
+                <Embed color="#2F8BFF">
+                  <div className="mb-1 text-base font-semibold text-mist-100">
+                    Patch notes 1.4
+                  </div>
+                  <div className="text-sm leading-relaxed text-mist-300">
+                    • Ranked queue is back
+                    <br />• Fixed the bug where the map wouldn't load on
+                    Sundays
+                    <br />• New emotes in the shop
+                  </div>
+                  <div className="mt-3 text-xs text-mist-500">
+                    Sent from the saved "Patch notes" template
+                  </div>
+                </Embed>
+                <div className="mt-2 flex gap-2">
+                  <DiscordButton style="secondary" href="/docs">
+                    Changelog
+                  </DiscordButton>
                 </div>
-                <Reactions items={[{ emoji: "☀️", count: 23 }]} />
+                <Reactions
+                  items={[
+                    { emoji: "🔥", count: 58 },
+                    { emoji: "🎮", count: 31 },
+                  ]}
+                />
               </Message>
+
+              <Divider label="Tuesday" />
 
               <Message
                 id="welcome"
@@ -356,10 +444,59 @@ export default function HomeShowcase(): JSX.Element {
                 <div className="text-sm text-mist-300">
                   Welcome{" "}
                   <span className="rounded bg-azure-500/20 px-1 text-azure-300">
-                    @tom
+                    @lena
                   </span>
                   ! You're member #12,481. Say hi 👋
                 </div>
+              </Message>
+
+              <Message
+                id="event"
+                active={active}
+                ids={["v2", "components"]}
+                avatar={server}
+                name="Your Server"
+                app
+                time="6:31 PM"
+              >
+                <div className="mt-1 max-w-lg rounded-md border border-solid border-white/10 bg-ink-700 p-4">
+                  <div className="flex items-start gap-4">
+                    <div className="flex-1 text-sm text-mist-300">
+                      <div className="mb-1 font-semibold text-mist-100">
+                        Weekend event
+                      </div>
+                      Saturday tournament, 16 slots. Sign-ups open now.
+                    </div>
+                    <img
+                      src="/img/logo.svg"
+                      alt=""
+                      className="h-16 w-16 rounded-lg"
+                    />
+                  </div>
+                  <div className="my-3 h-px bg-white/10" />
+                  <div className="flex items-center justify-between gap-3 text-sm text-mist-300">
+                    <span>3 of 16 slots taken</span>
+                    <DiscordButton style="primary">Sign up</DiscordButton>
+                  </div>
+                </div>
+              </Message>
+
+              <Divider label="Wednesday" />
+
+              <Message
+                id="morning"
+                active={active}
+                ids={["scheduled"]}
+                avatar={server}
+                name="Your Server"
+                app
+                time="9:00 AM"
+              >
+                <div className="text-sm text-mist-300">
+                  ☀️ Morning everyone! Voice hangout tonight at 8, bring
+                  snacks.
+                </div>
+                <Reactions items={[{ emoji: "☀️", count: 23 }]} />
               </Message>
 
               <Message
@@ -422,103 +559,33 @@ export default function HomeShowcase(): JSX.Element {
               </Message>
 
               <Message
-                id="tom-role"
+                id="halloween"
                 active={active}
-                ids={["components"]}
-                avatar={tom}
-                name="tom"
-                time="2:15 PM"
-              >
-                <div className="text-sm text-mist-300">
-                  wait how do I get the{" "}
-                  <span className="rounded bg-[#57C271]/20 px-1 text-[#8EE0A5]">
-                    @Gamer
-                  </span>{" "}
-                  role
-                </div>
-              </Message>
-
-              <Message
-                id="sarah-role"
-                active={active}
-                ids={["components"]}
-                avatar={sarah}
-                name="sarah"
-                time="2:15 PM"
-              >
-                <div className="text-sm text-mist-300">
-                  click the button in #roles lol
-                </div>
-                <Reactions items={[{ emoji: "😅", count: 3 }]} />
-              </Message>
-
-              <Divider label="Tuesday" />
-
-              <Message
-                id="patch"
-                active={active}
-                ids={["ai", "save"]}
+                ids={["ai"]}
                 avatar={server}
                 name="Your Server"
                 app
-                time="6:30 PM"
+                time="7:45 PM"
               >
-                <Embed color="#2F8BFF">
+                <Embed color="#EB459E">
                   <div className="mb-1 text-base font-semibold text-mist-100">
-                    Patch notes 1.4
+                    🎃 Spooky Movie Night
                   </div>
                   <div className="text-sm leading-relaxed text-mist-300">
-                    • Ranked queue is back
-                    <br />• Fixed the bug where the map wouldn't load on
-                    Sundays
-                    <br />• New emotes in the shop
+                    Friday at 9 PM in the Movie voice channel. Vote for the
+                    film below, costumes optional but encouraged.
                   </div>
                   <div className="mt-3 text-xs text-mist-500">
-                    Full changelog on the website
+                    Drafted with the AI assistant from "movie night friday,
+                    halloween theme"
                   </div>
                 </Embed>
-                <div className="mt-2 flex gap-2">
-                  <DiscordButton style="secondary" href="/docs">
-                    Changelog
-                  </DiscordButton>
-                </div>
                 <Reactions
                   items={[
-                    { emoji: "🔥", count: 58 },
-                    { emoji: "🎮", count: 31 },
+                    { emoji: "🎃", count: 19 },
+                    { emoji: "🍿", count: 12 },
                   ]}
                 />
-              </Message>
-
-              <Message
-                id="event"
-                active={active}
-                ids={["v2", "components"]}
-                avatar={server}
-                name="Your Server"
-                app
-                time="6:31 PM"
-              >
-                <div className="mt-1 max-w-lg rounded-md border border-solid border-white/10 bg-ink-700 p-4">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-1 text-sm text-mist-300">
-                      <div className="mb-1 font-semibold text-mist-100">
-                        Weekend event
-                      </div>
-                      Saturday tournament, 16 slots. Sign-ups open now.
-                    </div>
-                    <img
-                      src="/img/logo.svg"
-                      alt=""
-                      className="h-16 w-16 rounded-lg"
-                    />
-                  </div>
-                  <div className="my-3 h-px bg-white/10" />
-                  <div className="flex items-center justify-between gap-3 text-sm text-mist-300">
-                    <span>3 of 16 slots taken</span>
-                    <DiscordButton style="primary">Sign up</DiscordButton>
-                  </div>
-                </div>
               </Message>
 
               <div className="px-4 pt-2 sm:px-6">
