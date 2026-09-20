@@ -3,6 +3,7 @@ import {
   ArrowUturnRightIcon,
 } from "@heroicons/react/20/solid";
 import { useEffect } from "react";
+import { useDocumentStore, useDocumentUndoStore } from "../state/document";
 import {
   useCurrentMessageStore,
   useCurrentMessageUndoStore,
@@ -13,41 +14,56 @@ import EditorIconButton from "./EditorIconButton";
 export default function EditorUndoButtons() {
   const historyEnabled = useSettingsStore((s) => s.editHistoryEnabled);
 
-  const { undo, redo, pause, resume } =
-    useCurrentMessageStore.temporal.getState();
+  const messageHistory = useCurrentMessageStore.temporal.getState();
+  const documentHistory = useDocumentStore.temporal.getState();
 
   const isTracking = useCurrentMessageUndoStore((s) => s.isTracking);
-  const hasPastStates = useCurrentMessageUndoStore(
-    (s) => s.pastStates.length !== 0,
-  );
-  const hasFutureStates = useCurrentMessageUndoStore(
-    (s) => s.futureStates.length !== 0,
-  );
+
+  // Embeds live in the document store while everything else is still in the
+  // message store, so both histories move together.
+  const hasPastStates =
+    useCurrentMessageUndoStore((s) => s.pastStates.length !== 0) ||
+    useDocumentUndoStore((s) => s.pastStates.length !== 0);
+  const hasFutureStates =
+    useCurrentMessageUndoStore((s) => s.futureStates.length !== 0) ||
+    useDocumentUndoStore((s) => s.futureStates.length !== 0);
 
   useEffect(() => {
+    function undo() {
+      messageHistory.undo(1);
+      documentHistory.undo(1);
+    }
+
+    function redo() {
+      messageHistory.redo(1);
+      documentHistory.redo(1);
+    }
+
     function onKeyDown(e: KeyboardEvent) {
       if (!e.ctrlKey) return;
 
       if (e.key === "z" || e.key === "Z") {
         e.preventDefault();
-        e.shiftKey ? redo(1) : undo(1);
+        e.shiftKey ? redo() : undo();
       } else if (e.key === "y") {
         e.preventDefault();
-        redo(1);
+        redo();
       }
     }
 
     if (historyEnabled) {
-      resume();
+      messageHistory.resume();
+      documentHistory.resume();
       document.addEventListener("keydown", onKeyDown);
     } else {
-      pause();
+      messageHistory.pause();
+      documentHistory.pause();
     }
 
     return () => {
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [historyEnabled, pause, resume, undo, redo]);
+  }, [historyEnabled, messageHistory, documentHistory]);
 
   if (!isTracking) {
     return null;
@@ -56,14 +72,20 @@ export default function EditorUndoButtons() {
   return (
     <>
       <EditorIconButton
-        onClick={() => undo(1)}
+        onClick={() => {
+          messageHistory.undo(1);
+          documentHistory.undo(1);
+        }}
         label="Undo"
         disabled={!hasPastStates}
       >
         <ArrowUturnLeftIcon />
       </EditorIconButton>
       <EditorIconButton
-        onClick={() => redo(1)}
+        onClick={() => {
+          messageHistory.redo(1);
+          documentHistory.redo(1);
+        }}
         label="Redo"
         disabled={!hasFutureStates}
       >

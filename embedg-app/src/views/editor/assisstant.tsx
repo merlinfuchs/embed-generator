@@ -5,7 +5,10 @@ import { useAssistantGenerateMessageMutation } from "../../api/mutations";
 import Modal from "../../components/Modal";
 import MessagePreview from "../../components/MessagePreview";
 import { parseMessageWithAction } from "../../discord/restoreSchema";
-import { useCurrentMessageStore } from "../../state/message";
+import {
+  getCurrentMessage,
+  setCurrentMessage,
+} from "../../state/currentMessage";
 import { useSendSettingsStore } from "../../state/sendSettings";
 import { SparklesIcon } from "@heroicons/react/24/solid";
 import { useToasts } from "../../util/toasts";
@@ -44,8 +47,8 @@ export default function AssistantView() {
   }, [data]);
 
   useEffect(() => {
-    setBaseData(JSON.stringify(useCurrentMessageStore.getState()));
-    setOutput(useCurrentMessageStore.getState());
+    setBaseData(JSON.stringify(getCurrentMessage()));
+    setOutput(getCurrentMessage());
   }, []);
 
   function generate() {
@@ -76,13 +79,13 @@ export default function AssistantView() {
   }
 
   function reset() {
-    setBaseData(JSON.stringify(useCurrentMessageStore.getState()));
-    setOutput(useCurrentMessageStore.getState());
+    setBaseData(JSON.stringify(getCurrentMessage()));
+    setOutput(getCurrentMessage());
   }
 
   function save() {
     if (output) {
-      useCurrentMessageStore.setState(output);
+      setCurrentMessage(output);
       navigate("/editor");
     }
   }

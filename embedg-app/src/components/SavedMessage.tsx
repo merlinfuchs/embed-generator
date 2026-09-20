@@ -13,10 +13,10 @@ import {
 import { useToasts } from "../util/toasts";
 import { useNavigate } from "react-router-dom";
 import { parseMessageWithAction } from "../discord/restoreSchema";
-import { useCurrentMessageStore } from "../state/message";
 import { useState } from "react";
 import { useQueryClient } from "react-query";
 import ConfirmModal from "./ConfirmModal";
+import { getCurrentMessage, setCurrentMessage } from "../state/currentMessage";
 
 function formatUpdatedAt(updatedAt: string): string {
   return parseISO(updatedAt).toLocaleString();
@@ -44,7 +44,7 @@ export default function SavedMessage({
         req: {
           name: message.name,
           description: message.description,
-          data: useCurrentMessageStore.getState(),
+          data: getCurrentMessage(),
         },
       },
       {
@@ -69,7 +69,7 @@ export default function SavedMessage({
   function restoreMessageConfirm() {
     try {
       const data = parseMessageWithAction(message.data);
-      useCurrentMessageStore.setState(data);
+      setCurrentMessage(data);
       setRestoreModal(false);
       navigate("/editor");
     } catch (e) {

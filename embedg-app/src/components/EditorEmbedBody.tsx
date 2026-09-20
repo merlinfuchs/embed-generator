@@ -1,85 +1,74 @@
-import { shallow } from "zustand/shallow";
-import { useCurrentMessageStore } from "../state/message";
+import {
+  type EmbedNode,
+  type NodeId,
+  useDocumentStore,
+  useNode,
+  useNodePath,
+} from "../state/document";
 import Collapsable from "./Collapsable";
 import ColorPicker from "./ColorPicker";
 import EditorInput from "./EditorInput";
 import ValidationError from "./ValidationError";
 
 interface Props {
-  embedIndex: number;
-  embedId: number;
+  id: NodeId;
 }
 
-export default function EditorEmbedBody({ embedIndex, embedId }: Props) {
-  const [description, setDescription] = useCurrentMessageStore(
-    (state) => [
-      state.embeds[embedIndex]?.description,
-      state.setEmbedDescription,
-    ],
-    shallow,
-  );
-  const [title, setTitle] = useCurrentMessageStore(
-    (state) => [state.embeds[embedIndex]?.title, state.setEmbedTitle],
-    shallow,
-  );
-  const [url, setUrl] = useCurrentMessageStore(
-    (state) => [state.embeds[embedIndex]?.url, state.setEmbedUrl],
-    shallow,
-  );
+export default function EditorEmbedBody({ id }: Props) {
+  const embed = useNode<EmbedNode>(id);
+  const path = useNodePath(id);
+  const update = useDocumentStore((state) => state.update);
 
-  const [color, setColor] = useCurrentMessageStore(
-    (state) => [state.embeds[embedIndex]?.color, state.setEmbedColor],
-    shallow,
-  );
-
-  console.log("render body", embedIndex);
+  if (!embed) return null;
 
   return (
     <Collapsable
-      id={`embeds.${embedId}.content`}
+      id={`embeds.${id}.content`}
       title="Body"
       validationPathPrefix={[
-        `embeds.${embedIndex}.title`,
-        `embeds.${embedIndex}.description`,
-        `embeds.${embedIndex}.url`,
-        `embeds.${embedIndex}.color`,
+        `${path}.title`,
+        `${path}.description`,
+        `${path}.url`,
+        `${path}.color`,
       ]}
     >
       <div className="space-y-3">
         <EditorInput
           label="Title"
-          value={title || ""}
-          onChange={(v) => setTitle(embedIndex, v || undefined)}
+          value={embed.title || ""}
+          onChange={(v) => update<EmbedNode>(id, { title: v || undefined })}
           maxLength={256}
-          validationPath={`embeds.${embedIndex}.title`}
+          validationPath={`${path}.title`}
         />
         <EditorInput
           type="textarea"
           label="Description"
-          value={description || ""}
-          onChange={(v) => setDescription(embedIndex, v || undefined)}
+          value={embed.description || ""}
+          onChange={(v) =>
+            update<EmbedNode>(id, { description: v || undefined })
+          }
           maxLength={4096}
-          validationPath={`embeds.${embedIndex}.description`}
+          validationPath={`${path}.description`}
           controls={true}
         />
         <div className="flex space-x-3">
           <EditorInput
             type="url"
             label="URL"
-            value={url || ""}
-            onChange={(v) => setUrl(embedIndex, v || undefined)}
+            value={embed.url || ""}
+            onChange={(v) => update<EmbedNode>(id, { url: v || undefined })}
             className="w-full"
-            validationPath={`embeds.${embedIndex}.url`}
+            validationPath={`${path}.url`}
           />
           <div>
             <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
               Color
             </div>
             <ColorPicker
-              value={color}
-              onChange={(v) => setColor(embedIndex, v)}
+              value={embed.color}
+              onChange={(v) => update<EmbedNode>(id, { color: v })}
             />
-            <ValidationError path={`embeds.${embedIndex}.color`} />
+            <ValidationError path={`${path}.color`} />
           </div>
         </div>
       </div>

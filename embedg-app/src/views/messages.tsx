@@ -5,7 +5,6 @@ import EditorInput from "../components/EditorInput";
 import clsx from "clsx";
 import LoginSuggest from "../components/LoginSuggest";
 import { useCreatedSavedMessageMutation } from "../api/mutations";
-import { useCurrentMessageStore } from "../state/message";
 import MessageExportImport from "../components/MessageExportImport";
 import { useToasts } from "../util/toasts";
 import {
@@ -14,6 +13,7 @@ import {
 } from "../util/premium";
 import { useSendSettingsStore } from "../state/sendSettings";
 import SavedMessage from "../components/SavedMessage";
+import { getCurrentMessage } from "../state/currentMessage";
 
 export default function MessagesView() {
   const selectedGuildId = useSendSettingsStore((s) => s.guildId);
@@ -66,7 +66,7 @@ export default function MessagesView() {
         req: {
           name: newMessageName,
           description: "",
-          data: useCurrentMessageStore.getState(),
+          data: getCurrentMessage(),
         },
       },
       {

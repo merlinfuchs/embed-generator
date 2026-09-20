@@ -1,11 +1,11 @@
 import { useNavigate, useParams } from "react-router-dom";
 import Modal from "../../components/Modal";
-import { useCurrentMessageStore } from "../../state/message";
 import MessagePreview from "../../components/MessagePreview";
 import { useSharedMessageQuery } from "../../api/queries";
 import { useMemo } from "react";
 import { useToasts } from "../../util/toasts";
 import { parseMessageWithAction } from "../../discord/restoreSchema";
+import { setCurrentMessage } from "../../state/currentMessage";
 
 export default function ShareRestoreView() {
   const { sharedMessageId } = useParams();
@@ -46,7 +46,7 @@ export default function ShareRestoreView() {
 
   function save() {
     if (parsedData) {
-      useCurrentMessageStore.setState(parsedData);
+      setCurrentMessage(parsedData);
       navigate("/editor");
     }
   }

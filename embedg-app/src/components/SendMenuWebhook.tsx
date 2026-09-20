@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { useSendMessageToWebhookMutation } from "../api/mutations";
-import { useCurrentMessageStore } from "../state/message";
 import { useValidationErrorStore } from "../state/validationError";
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import { useCurrentAttachmentsStore } from "../state/attachments";
@@ -9,6 +8,7 @@ import { shallow } from "zustand/shallow";
 import { messageUrlRegex, parseWebhookUrl } from "../discord/util";
 import MessageRestoreButton from "./MessageRestoreButton";
 import { useToasts } from "../util/toasts";
+import { getCurrentMessage } from "../state/currentMessage";
 
 export default function SendMenuWebhook() {
   const validationError = useValidationErrorStore((state) =>
@@ -61,7 +61,7 @@ export default function SendMenuWebhook() {
         webhook_token: webhookInfo.token,
         message_id: edit ? messageId : null,
         thread_id: threadId,
-        data: useCurrentMessageStore.getState(),
+        data: getCurrentMessage(),
         attachments: useCurrentAttachmentsStore.getState().attachments,
       },
       {

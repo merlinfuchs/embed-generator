@@ -23,6 +23,7 @@ import {
   childSlots,
   fromMessage,
   setChildIds,
+  toMessage,
 } from "./documentConvert";
 import { defaultMessage } from "./message";
 
@@ -478,7 +479,17 @@ function copySubtree(
   return copyId;
 }
 
-export const useDocumentStore = createDocumentStore("current-document");
+export const DOCUMENT_STORE_KEY = "current-document";
+
+/**
+ * Read before the store is created, because the persist middleware writes the
+ * key as soon as it rehydrates.
+ */
+export const hadPersistedDocument =
+  typeof localStorage !== "undefined" &&
+  localStorage.getItem(DOCUMENT_STORE_KEY) !== null;
+
+export const useDocumentStore = createDocumentStore(DOCUMENT_STORE_KEY);
 
 /** The undo stack only tracks the document itself, not the store actions. */
 export const useDocumentUndoStore = <T>(
@@ -490,3 +501,7 @@ export const useNode = <T extends Node>(id: NodeId) =>
 
 export const useChildIds = (id: NodeId, slot: ChildSlot) =>
   useDocumentStore((state) => childIds(state.nodes[id], slot), shallow);
+
+/** The zod issue path of a node, e.g. `embeds.0.fields.2`. */
+export const useNodePath = (id: NodeId) =>
+  useDocumentStore((state) => toMessage(state).idToPath.get(id) ?? "");

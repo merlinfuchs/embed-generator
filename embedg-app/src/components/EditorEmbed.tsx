@@ -5,8 +5,14 @@ import {
   TrashIcon,
 } from "@heroicons/react/20/solid";
 import { useMemo } from "react";
-import { shallow } from "zustand/shallow";
-import { useCurrentMessageStore } from "../state/message";
+import {
+  type EmbedNode,
+  type NodeId,
+  useChildIds,
+  useDocumentStore,
+  useNode,
+  useNodePath,
+} from "../state/document";
 import { colorIntToHex } from "../util/discord";
 import Collapsable from "./Collapsable";
 import EditorEmbedAuthor from "./EditorEmbedAuthor";
@@ -16,39 +22,29 @@ import EditorEmbedFooter from "./EditorEmbedFooter";
 import EditorEmbedImages from "./EditorEmbedImages";
 
 interface Props {
-  embedIndex: number;
-  embedId: number;
+  id: NodeId;
 }
 
-export default function EditorEmbed({ embedIndex, embedId }: Props) {
-  const embedName = useCurrentMessageStore((state) => {
-    const embed = state.embeds[embedIndex];
-    return embed.author?.name || embed.title;
-  });
-  const embedCount = useCurrentMessageStore((state) => state.embeds.length);
+export default function EditorEmbed({ id }: Props) {
+  const embed = useNode<EmbedNode>(id);
+  const path = useNodePath(id);
 
-  const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
-    (state) => [
-      state.moveEmbedUp,
-      state.moveEmbedDown,
-      state.duplicateEmbed,
-      state.deleteEmbed,
-    ],
-    shallow,
-  );
+  const rootId = useDocumentStore((state) => state.rootId);
+  const embedIds = useChildIds(rootId, "embeds");
+  const move = useDocumentStore((state) => state.move);
+  const duplicate = useDocumentStore((state) => state.duplicate);
+  const remove = useDocumentStore((state) => state.remove);
 
-  const color = useCurrentMessageStore(
-    (state) => state.embeds[embedIndex]?.color,
-  );
+  const index = embedIds.indexOf(id);
 
   const hexColor = useMemo(
-    () => (color !== undefined ? colorIntToHex(color) : "#1f2225"),
-    [color],
+    () => (embed?.color !== undefined ? colorIntToHex(embed.color) : "#1f2225"),
+    [embed?.color],
   );
 
-  function wrappedRemove() {
-    remove(embedIndex);
-  }
+  if (!embed) return null;
+
+  const name = embed.author?.name || embed.title;
 
   return (
     <div
@@ -56,56 +52,56 @@ export default function EditorEmbed({ embedIndex, embedId }: Props) {
       style={{ borderColor: hexColor }}
     >
       <Collapsable
-        title={`Embed ${embedIndex + 1}`}
-        id={`embeds.${embedId}`}
-        validationPathPrefix={`embeds.${embedIndex}`}
+        title={`Embed ${index + 1}`}
+        id={`embeds.${id}`}
+        validationPathPrefix={path}
         size="large"
         defaultCollapsed={true}
         extra={
-          embedName && (
+          name && (
             <div className="text-gray-500 truncate flex space-x-2 pl-2">
               <div>-</div>
-              <div className="truncate">{embedName}</div>
+              <div className="truncate">{name}</div>
             </div>
           )
         }
         buttons={
           <div className="flex-none text-gray-300 flex items-center space-x-2">
-            {embedIndex > 0 && (
+            {index > 0 && (
               <ChevronUpIcon
                 className="h-6 w-6 flex-none"
                 role="button"
-                onClick={() => moveUp(embedIndex)}
+                onClick={() => move(id, -1)}
               />
             )}
-            {embedIndex < embedCount - 1 && (
+            {index < embedIds.length - 1 && (
               <ChevronDownIcon
                 className="h-6 w-6 flex-none"
                 role="button"
-                onClick={() => moveDown(embedIndex)}
+                onClick={() => move(id, 1)}
               />
             )}
-            {embedCount < 10 && (
+            {embedIds.length < 10 && (
               <DocumentDuplicateIcon
                 className="h-5 w-5 flex-none"
                 role="button"
-                onClick={() => duplicate(embedIndex)}
+                onClick={() => duplicate(id)}
               />
             )}
             <TrashIcon
               className="h-5 w-5 flex-none"
               role="button"
-              onClick={wrappedRemove}
+              onClick={() => remove(id)}
             />
           </div>
         }
       >
         <div className="space-y-4">
-          <EditorEmbedAuthor embedIndex={embedIndex} embedId={embedId} />
-          <EditorEmbedBody embedIndex={embedIndex} embedId={embedId} />
-          <EditorEmbedImages embedIndex={embedIndex} embedId={embedId} />
-          <EditorEmbedFooter embedIndex={embedIndex} embedId={embedId} />
-          <EditorEmbedFields embedIndex={embedIndex} embedId={embedId} />
+          <EditorEmbedAuthor id={id} />
+          <EditorEmbedBody id={id} />
+          <EditorEmbedImages id={id} />
+          <EditorEmbedFooter id={id} />
+          <EditorEmbedFields id={id} />
         </div>
       </Collapsable>
     </div>

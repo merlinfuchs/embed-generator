@@ -7,11 +7,11 @@ import {
 } from "../api/mutations";
 import type { MessageRestoreResponseDataWire } from "../api/wire";
 import { parseMessageWithAction } from "../discord/restoreSchema";
-import { useCurrentMessageStore } from "../state/message";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import { getUniqueId } from "../util";
 import { useToasts } from "../util/toasts";
 import { parseWebhookUrl } from "../discord/util";
+import { setCurrentMessage } from "../state/currentMessage";
 
 export default function MessageRestoreButton() {
   const [mode, webhookUrl, messageId, threadId, guildId, channelId] =
@@ -40,7 +40,7 @@ export default function MessageRestoreButton() {
   function restoreData(data: MessageRestoreResponseDataWire) {
     try {
       const parsedData = parseMessageWithAction(data.data);
-      useCurrentMessageStore.getState().replace(parsedData);
+      setCurrentMessage(parsedData);
 
       if (data.attachments) {
         useCurrentAttachmentsStore.getState().replaceAttachments(

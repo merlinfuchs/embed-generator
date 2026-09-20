@@ -1,6 +1,6 @@
 import { DocumentMagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { debounce } from "debounce";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { Drawer } from "vaul";
 import EditorAttachments from "../../components/EditorAttachments";
@@ -12,6 +12,7 @@ import EditorMessagePreview from "../../components/EditorMessagePreview";
 import EditorWebhookFields from "../../components/EditorWebhookFields";
 import SendMenu from "../../components/SendMenu";
 import { type Message, messageSchema } from "../../discord/schema";
+import { useCurrentMessage } from "../../state/currentMessage";
 import { useCurrentMessageStore } from "../../state/message";
 import { useValidationErrorStore } from "../../state/validationError";
 import EditorErrorBoundary from "../../components/EditorErrorBoundary";
@@ -27,10 +28,11 @@ export default function EditorView() {
     setValidationError(res.success ? null : res.error);
   }, 250);
 
-  useCurrentMessageStore((state) => {
-    debouncedSetValidationError(state);
-    return null;
-  });
+  const message = useCurrentMessage();
+
+  useEffect(() => {
+    debouncedSetValidationError(message);
+  }, [message]);
 
   const componentsV2Enabled = useCurrentMessageStore((s) =>
     s.getComponentsV2Enabled(),

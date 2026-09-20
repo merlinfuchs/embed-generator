@@ -1,7 +1,10 @@
 import ReactCodeMirror from "@uiw/react-codemirror";
 import { useEffect, useState } from "react";
 import Modal from "../../components/Modal";
-import { useCurrentMessageStore } from "../../state/message";
+import {
+  setCurrentMessage,
+  useCurrentMessage,
+} from "../../state/currentMessage";
 import { json, jsonParseLinter } from "@codemirror/lang-json";
 import { githubDark } from "@uiw/codemirror-theme-github";
 import { linter, lintGutter } from "@codemirror/lint";
@@ -13,7 +16,7 @@ export default function JsonView() {
   const navigate = useNavigate();
   const createToast = useToasts((s) => s.create);
 
-  const msg = useCurrentMessageStore();
+  const msg = useCurrentMessage();
 
   const [raw, setRaw] = useState("{}");
 
@@ -26,7 +29,7 @@ export default function JsonView() {
       const data = JSON.parse(raw);
       const parsedData = parseMessageWithAction(data);
 
-      msg.replace(parsedData);
+      setCurrentMessage(parsedData);
       navigate("/editor");
     } catch (e) {
       console.error(e);
