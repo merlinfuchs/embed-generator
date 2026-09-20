@@ -1,0 +1,86 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    "includes": ["**", "!package-lock.json", "!src/api/wire.ts"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2
+  },
+  "css": {
+    "parser": { "tailwindDirectives": true }
+  },
+  "javascript": {
+    "formatter": { "quoteStyle": "double" }
+  },
+  "assist": {
+    "actions": { "source": { "organizeImports": "off" } }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "a11y": {
+        "noAmbiguousAnchorText": "off",
+        "noStaticElementInteractions": "off",
+        "noSvgWithoutTitle": "off",
+        "useAltText": "off",
+        "useAnchorContent": "off",
+        "useAriaPropsSupportedByRole": "off",
+        "useButtonType": "off",
+        "useFocusableInteractive": "off",
+        "useKeyWithClickEvents": "off",
+        "useSemanticElements": "off",
+        "useValidAnchor": "off"
+      },
+      "complexity": {
+        "noBannedTypes": "off",
+        "noImportantStyles": "off",
+        "noExtraBooleanCast": "off",
+        "noUselessFragments": "off",
+        "useArrowFunction": "off",
+        "useLiteralKeys": "off",
+        "useOptionalChain": "off",
+        "useRegexLiterals": "off"
+      },
+      "correctness": {
+        "noChildrenProp": "off",
+        "noEmptyCharacterClassInRegex": "off",
+        "noSelfAssign": "off",
+        "noUnusedFunctionParameters": "off",
+        "noUnusedImports": "off",
+        "noUnusedVariables": "off",
+        "useExhaustiveDependencies": "off",
+        "useHookAtTopLevel": "off",
+        "useJsxKeyInIterable": "off",
+        "useParseIntRadix": "off"
+      },
+      "security": {
+        "noBlankTarget": "off",
+        "noDangerouslySetInnerHtml": "off"
+      },
+      "style": {
+        "noDescendingSpecificity": "off",
+        "noNonNullAssertion": "off",
+        "useConst": "off",
+        "useImportType": "off",
+        "useNodejsImportProtocol": "off",
+        "useTemplate": "off"
+      },
+      "suspicious": {
+        "noArrayIndexKey": "off",
+        "noAssignInExpressions": "off",
+        "noDoubleEquals": "off",
+        "noDuplicateProperties": "off",
+        "noEmptyInterface": "off",
+        "noExplicitAny": "off",
+        "noGlobalIsNan": "off",
+        "noPrototypeBuiltins": "off",
+        "noTsIgnore": "off",
+        "noUnknownAtRules": "off"
+      }
+    }
+  }
+}
