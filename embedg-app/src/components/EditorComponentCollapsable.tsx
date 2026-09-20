@@ -4,11 +4,12 @@ import {
   DocumentDuplicateIcon,
   TrashIcon,
 } from "@heroicons/react/20/solid";
+import type { ValidationScope } from "../state/validationError";
 import Collapsable from "./Collapsable";
 
 interface Props {
   id: string;
-  validationPathPrefix?: string | string[];
+  validationPathPrefix?: ValidationScope;
   title: string;
   extra?: React.ReactNode;
   className?: string;

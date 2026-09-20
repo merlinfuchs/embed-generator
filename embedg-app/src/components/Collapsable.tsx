@@ -2,6 +2,7 @@ import { ChevronRightIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
 import type { ReactNode } from "react";
 import { useCollapsedState } from "../state/collapsed";
+import type { ValidationScope } from "../state/validationError";
 import { AutoAnimate } from "../util/autoAnimate";
 import ValidationErrorIndicator from "./ValidationErrorIndicator";
 
@@ -12,7 +13,7 @@ interface Props {
   extra?: ReactNode;
   buttons?: ReactNode;
   size?: "medium" | "large";
-  validationPathPrefix?: string | string[];
+  validationPathPrefix?: ValidationScope;
   defaultCollapsed?: boolean;
 }
 
@@ -23,7 +24,7 @@ export default function Collapsable({
   size = "medium",
   extra,
   buttons,
-  validationPathPrefix: valiationPathPrefix,
+  validationPathPrefix,
   defaultCollapsed,
 }: Props) {
   const [collapsed, toggleCollapsed] = useCollapsedState(id, defaultCollapsed);
@@ -46,9 +47,9 @@ export default function Collapsable({
           <div className={clsx("flex-none", size === "large" && "text-lg")}>
             {title}
           </div>
-          {valiationPathPrefix && (
+          {validationPathPrefix !== undefined && (
             <div className="flex-none">
-              <ValidationErrorIndicator pathPrefix={valiationPathPrefix} />
+              <ValidationErrorIndicator scope={validationPathPrefix} />
             </div>
           )}
           {extra}

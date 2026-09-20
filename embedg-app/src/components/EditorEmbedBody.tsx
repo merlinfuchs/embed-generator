@@ -3,12 +3,13 @@ import {
   type NodeId,
   useDocumentStore,
   useNode,
-  useNodePath,
 } from "../state/document";
 import Collapsable from "./Collapsable";
 import ColorPicker from "./ColorPicker";
 import EditorInput from "./EditorInput";
 import ValidationError from "./ValidationError";
+
+const BODY_FIELDS = ["title", "description", "url", "color"];
 
 interface Props {
   id: NodeId;
@@ -16,7 +17,6 @@ interface Props {
 
 export default function EditorEmbedBody({ id }: Props) {
   const embed = useNode<EmbedNode>(id);
-  const path = useNodePath(id);
   const { update } = useDocumentStore.getState();
 
   if (!embed) return null;
@@ -25,12 +25,7 @@ export default function EditorEmbedBody({ id }: Props) {
     <Collapsable
       id={`embeds.${id}.content`}
       title="Body"
-      validationPathPrefix={[
-        `${path}.title`,
-        `${path}.description`,
-        `${path}.url`,
-        `${path}.color`,
-      ]}
+      validationPathPrefix={{ nodeId: id, fields: BODY_FIELDS }}
     >
       <div className="space-y-3">
         <EditorInput
@@ -38,7 +33,7 @@ export default function EditorEmbedBody({ id }: Props) {
           value={embed.title || ""}
           onChange={(v) => update<EmbedNode>(id, { title: v || undefined })}
           maxLength={256}
-          validationPath={`${path}.title`}
+          validationPath={{ nodeId: id, field: "title" }}
         />
         <EditorInput
           type="textarea"
@@ -48,7 +43,7 @@ export default function EditorEmbedBody({ id }: Props) {
             update<EmbedNode>(id, { description: v || undefined })
           }
           maxLength={4096}
-          validationPath={`${path}.description`}
+          validationPath={{ nodeId: id, field: "description" }}
           controls={true}
         />
         <div className="flex space-x-3">
@@ -58,7 +53,7 @@ export default function EditorEmbedBody({ id }: Props) {
             value={embed.url || ""}
             onChange={(v) => update<EmbedNode>(id, { url: v || undefined })}
             className="w-full"
-            validationPath={`${path}.url`}
+            validationPath={{ nodeId: id, field: "url" }}
           />
           <div>
             <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
@@ -68,7 +63,7 @@ export default function EditorEmbedBody({ id }: Props) {
               value={embed.color}
               onChange={(v) => update<EmbedNode>(id, { color: v })}
             />
-            <ValidationError path={`${path}.color`} />
+            <ValidationError target={{ nodeId: id, field: "color" }} />
           </div>
         </div>
       </div>

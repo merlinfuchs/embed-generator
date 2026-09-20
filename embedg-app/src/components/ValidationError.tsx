@@ -1,13 +1,17 @@
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
-import { useValidationErrorStore } from "../state/validationError";
+import {
+  type ValidationTarget,
+  useValidationErrorStore,
+} from "../state/validationError";
 
 interface Props {
-  path: string;
+  /** A path string, or `{ nodeId, field }` for the document store. */
+  target?: ValidationTarget;
 }
 
-export default function ValidationError({ path }: Props) {
-  const issue = useValidationErrorStore(
-    (state) => state.getIssueByPath(path)?.message,
+export default function ValidationError({ target }: Props) {
+  const issue = useValidationErrorStore((state) =>
+    target === undefined ? undefined : state.getIssue(target)?.message,
   );
 
   if (issue) {

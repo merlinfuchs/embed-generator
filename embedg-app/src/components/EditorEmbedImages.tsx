@@ -3,10 +3,11 @@ import {
   type NodeId,
   useDocumentStore,
   useNode,
-  useNodePath,
 } from "../state/document";
 import Collapsable from "./Collapsable";
 import EditorInput from "./EditorInput";
+
+const IMAGE_FIELDS = ["image", "thumbnail"];
 
 interface Props {
   id: NodeId;
@@ -14,7 +15,6 @@ interface Props {
 
 export default function EditorEmbedImages({ id }: Props) {
   const embed = useNode<EmbedNode>(id);
-  const path = useNodePath(id);
   const { update } = useDocumentStore.getState();
 
   if (!embed) return null;
@@ -23,7 +23,7 @@ export default function EditorEmbedImages({ id }: Props) {
     <Collapsable
       title="Images"
       id={`embeds.${id}.images`}
-      validationPathPrefix={[`${path}.image`, `${path}.thumbnail`]}
+      validationPathPrefix={{ nodeId: id, fields: IMAGE_FIELDS }}
     >
       <div className="space-y-3">
         <EditorInput
@@ -33,7 +33,7 @@ export default function EditorEmbedImages({ id }: Props) {
           onChange={(v) =>
             update<EmbedNode>(id, { image: v ? { url: v } : undefined })
           }
-          validationPath={`${path}.image.url`}
+          validationPath={{ nodeId: id, field: "image.url" }}
           imageUpload={true}
         />
         <EditorInput
@@ -43,7 +43,7 @@ export default function EditorEmbedImages({ id }: Props) {
           onChange={(v) =>
             update<EmbedNode>(id, { thumbnail: v ? { url: v } : undefined })
           }
-          validationPath={`${path}.thumbnail.url`}
+          validationPath={{ nodeId: id, field: "thumbnail.url" }}
           imageUpload={true}
         />
       </div>

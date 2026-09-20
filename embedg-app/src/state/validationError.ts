@@ -1,40 +1,110 @@
 import type { ZodError, ZodIssue } from "zod";
 import { create } from "zustand";
+import type { NodeId } from "./document";
+
+/** A single field, addressed by node or by path. */
+export type ValidationTarget = { nodeId: NodeId; field?: string } | string;
+
+/** Anything with issues below it, addressed by node or by path. */
+export type ValidationScope =
+  | { nodeId: NodeId; fields?: string[] }
+  | string
+  | string[];
+
+/**
+ * Issues indexed by the path they sit at, plus every path that has an issue
+ * somewhere below it, so that a lookup is a map hit instead of a scan over
+ * every issue.
+ */
+interface ValidationIndex {
+  issues: Map<string, ZodIssue>;
+  prefixes: Set<string>;
+}
+
+function buildIndex(error: ZodError | null): ValidationIndex {
+  const index: ValidationIndex = { issues: new Map(), prefixes: new Set() };
+  if (!error) return index;
+
+  for (const issue of error.issues) {
+    let path = "";
+    for (let i = 0; i < issue.path.length; i++) {
+      path = i === 0 ? String(issue.path[i]) : `${path}.${issue.path[i]}`;
+      index.prefixes.add(path);
+    }
+
+    // The first issue at a path wins, matching what the UI showed before.
+    if (!index.issues.has(path)) {
+      index.issues.set(path, issue);
+    }
+  }
+
+  return index;
+}
+
+function join(path: string, field?: string) {
+  if (!field) return path;
+
+  return path ? `${path}.${field}` : field;
+}
 
 export interface ValidationErrorStore {
-  error: ZodError | null;
-  setError(error: ZodError | null): void;
-  getIssueByPath(path: string): ZodIssue | null;
-  checkIssueByPathPrefix(path: string): boolean;
+  index: ValidationIndex;
+  /** Node ids to zod issue paths, from the conversion that was validated. */
+  idToPath: Map<NodeId, string>;
+  setError(error: ZodError | null, idToPath: Map<NodeId, string>): void;
+  getIssue(target: ValidationTarget): ZodIssue | null;
+  hasIssue(scope: ValidationScope): boolean;
+  hasAnyIssue(): boolean;
 }
 
 export const useValidationErrorStore = create<ValidationErrorStore>()(
   (set, get) => ({
-    error: null,
-    setError: (error) => {
-      set({ error });
-    },
-    getIssueByPath: (path) => {
+    index: buildIndex(null),
+    idToPath: new Map(),
+    setError: (error, idToPath) => {
       const state = get();
-      if (!state.error) return null;
 
-      for (const issue of state.error.issues) {
-        if (issue.path?.join(".") === path) {
-          return issue;
-        }
+      // A message that stays valid is the common case, and republishing the
+      // index there would wake every subscriber for the same empty result.
+      if (
+        !error &&
+        state.index.issues.size === 0 &&
+        state.idToPath === idToPath
+      ) {
+        return;
       }
-      return null;
+
+      set({ index: buildIndex(error), idToPath });
     },
-    checkIssueByPathPrefix: (path) => {
+    getIssue: (target) => {
       const state = get();
-      if (!state.error) return false;
 
-      for (const issue of state.error.issues) {
-        if (issue.path?.join(".").startsWith(path)) {
-          return true;
-        }
+      if (typeof target === "string") {
+        return state.index.issues.get(target) ?? null;
       }
-      return false;
+
+      const path = state.idToPath.get(target.nodeId);
+      if (path === undefined) return null;
+
+      return state.index.issues.get(join(path, target.field)) ?? null;
     },
+    hasIssue: (scope) => {
+      const state = get();
+
+      if (typeof scope === "string") return state.index.prefixes.has(scope);
+      if (Array.isArray(scope)) {
+        return scope.some((prefix) => state.index.prefixes.has(prefix));
+      }
+
+      const path = state.idToPath.get(scope.nodeId);
+      if (path === undefined) return false;
+
+      return scope.fields
+        ? scope.fields.some((field) =>
+            state.index.prefixes.has(join(path, field)),
+          )
+        : state.index.prefixes.has(path);
+    },
+    hasAnyIssue: () => get().index.issues.size > 0,
   }),
 );

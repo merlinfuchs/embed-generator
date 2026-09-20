@@ -512,28 +512,6 @@ export const useNode = <T extends Node>(id: NodeId) =>
 export const useChildIds = (id: NodeId, slot: ChildSlot) =>
   useDocumentStore((state) => childIds(state.nodes[id], slot), shallow);
 
-/** The zod issue path of a node, e.g. `embeds.0.fields.2`. */
-function nodePath(nodes: Record<NodeId, Node>, id: NodeId): string | null {
-  const node = nodes[id];
-  if (!node) return null;
-  if (!node.parentId) return "";
-
-  const parent = nodes[node.parentId];
-  const slot = parent && slotOfChild(parent, id);
-  if (!parent || !slot) return null;
-
-  const parentPath = nodePath(nodes, parent.id);
-  if (parentPath === null) return null;
-
-  const index = childIds(parent, slot).indexOf(id);
-  const segment = slot === "accessory" ? slot : `${slot}.${index}`;
-
-  return parentPath ? `${parentPath}.${segment}` : segment;
-}
-
-export const useNodePath = (id: NodeId) =>
-  useDocumentStore((state) => nodePath(state.nodes, id));
-
 /** Position of a node among its siblings, for move and duplicate buttons. */
 export const useNodeIndex = (id: NodeId) =>
   useDocumentStore((state) => {

@@ -200,7 +200,9 @@ export default function EditorComponentBaseContainer({
                   })
                 }
               />
-              <ValidationError path={`${validationPathPrefix}.accent_color`} />
+              <ValidationError
+                target={`${validationPathPrefix}.accent_color`}
+              />
             </div>
             <div className="flex-none">
               <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">

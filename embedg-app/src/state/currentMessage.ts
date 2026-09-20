@@ -1,7 +1,11 @@
 import debounce from "just-debounce-it";
 import { useEffect, useMemo, useState } from "react";
 import type { Message } from "../discord/schema";
-import { hadPersistedDocument, useDocumentStore } from "./document";
+import {
+  hadPersistedDocument,
+  type NodeId,
+  useDocumentStore,
+} from "./document";
 import { toMessage } from "./documentConvert";
 import { defaultMessage, useCurrentMessageStore } from "./message";
 
@@ -10,24 +14,44 @@ import { defaultMessage, useCurrentMessageStore } from "./message";
  * Both halves are merged here until the remaining fields move over.
  */
 export function getCurrentMessage(): Message {
+  return getCurrentDocument().message;
+}
+
+/** The merged message together with the node ids of its embeds. */
+export function getCurrentDocument(): {
+  message: Message;
+  idToPath: Map<NodeId, string>;
+} {
+  const converted = toMessage(useDocumentStore.getState());
+
   return {
-    ...useCurrentMessageStore.getState(),
-    embeds: toMessage(useDocumentStore.getState()).message.embeds,
+    message: {
+      ...useCurrentMessageStore.getState(),
+      embeds: converted.message.embeds,
+    },
+    idToPath: converted.idToPath,
   };
 }
 
 /**
- * The merged message, at most once per `wait` milliseconds. Subscribing instead
- * of selecting keeps a keystroke from re-rendering everything that reads the
- * message, and keeps one debounce timer across a typing burst.
+ * The merged message and its node ids, at most once per `wait` milliseconds.
+ * Subscribing instead of selecting keeps a keystroke from re-rendering
+ * everything that reads the message, and both halves come from one conversion
+ * so the ids always describe the message that was validated.
  */
-export function useDebouncedCurrentMessage(wait: number): Message | undefined {
-  const [message, setMessage] = useState<Message>();
+export function useDebouncedCurrentDocument(wait: number) {
+  const [document, setDocument] = useState<ReturnType<
+    typeof getCurrentDocument
+  > | null>(null);
 
-  const debouncedSetMessage = useMemo(() => debounce(setMessage, wait), [wait]);
+  // Debouncing the work rather than the value keeps a typing burst from
+  // converting the whole document once per keystroke.
+  const update = useMemo(
+    () => debounce(() => setDocument(getCurrentDocument()), wait),
+    [wait],
+  );
 
   useEffect(() => {
-    const update = () => debouncedSetMessage(getCurrentMessage());
     update();
 
     const unsubscribers = [
@@ -38,9 +62,9 @@ export function useDebouncedCurrentMessage(wait: number): Message | undefined {
     return () => {
       for (const unsubscribe of unsubscribers) unsubscribe();
     };
-  }, [debouncedSetMessage]);
+  }, [update]);
 
-  return message;
+  return document;
 }
 
 /** Writes a whole message back into both stores. */
