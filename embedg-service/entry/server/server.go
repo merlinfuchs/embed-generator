@@ -76,7 +76,6 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 	go customBotManager.Run(ctx)
 
 	webhookManager := webhook.NewWebhookManager(embedg.Rest(), guildState, customBotManager)
-	embedg.Client().AddEventListeners(webhookManager)
 
 	handler := NewEventHandler(EventHandlerConfig{
 		DiscordLink: cfg.Links.Discord,

@@ -70,9 +70,44 @@ func (t *GuildTracker) Run(ctx context.Context) {
 	}
 }
 
-// drain writes the buffer out in batches until nothing is left.
+// drain takes everything buffered since the last run and writes it in batches, so one statement
+// can't grow to the whole reconnect burst. The buffer is swapped out rather than scanned under
+// the lock: enqueue runs on the event path for every guild of a reconnect, and it should never
+// wait on more than a pointer swap.
 func (t *GuildTracker) drain(ctx context.Context) {
-	for t.flush(ctx) {
+	t.mutex.Lock()
+	buffer := t.buffer
+	t.buffer = make(map[common.ID]model.Guild)
+	t.mutex.Unlock()
+
+	if len(buffer) == 0 {
+		return
+	}
+
+	guilds := make([]model.Guild, 0, min(len(buffer), batchSize))
+	for _, guild := range buffer {
+		guilds = append(guilds, guild)
+		if len(guilds) == batchSize {
+			t.write(ctx, guilds)
+			guilds = guilds[:0]
+		}
+	}
+
+	if len(guilds) != 0 {
+		t.write(ctx, guilds)
+	}
+}
+
+func (t *GuildTracker) write(ctx context.Context, guilds []model.Guild) {
+	ctx, cancel := context.WithTimeout(ctx, writeTimeout)
+	defer cancel()
+
+	if err := t.store.UpsertGuilds(ctx, guilds, time.Now().UTC()); err != nil {
+		slog.Error(
+			"Failed to upsert guilds",
+			slog.Int("count", len(guilds)),
+			slog.Any("error", err),
+		)
 	}
 }
 
@@ -86,40 +121,6 @@ func (t *GuildTracker) enqueue(guild discord.Guild) {
 		Icon:    null.StringFromPtr(guild.Icon),
 		OwnerID: guild.OwnerID,
 	}
-}
-
-// flush writes at most batchSize guilds and reports whether the buffer still holds more.
-// A reconnect fills the buffer faster than postgres drains it, so the cap keeps one statement
-// from growing to the full 250k guilds.
-func (t *GuildTracker) flush(ctx context.Context) bool {
-	t.mutex.Lock()
-	guilds := make([]model.Guild, 0, min(len(t.buffer), batchSize))
-	for id, guild := range t.buffer {
-		if len(guilds) == batchSize {
-			break
-		}
-		guilds = append(guilds, guild)
-		delete(t.buffer, id)
-	}
-	more := len(t.buffer) != 0
-	t.mutex.Unlock()
-
-	if len(guilds) == 0 {
-		return false
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, writeTimeout)
-	defer cancel()
-
-	if err := t.store.UpsertGuilds(ctx, guilds, time.Now().UTC()); err != nil {
-		slog.Error(
-			"Failed to upsert guilds",
-			slog.Int("count", len(guilds)),
-			slog.Any("error", err),
-		)
-	}
-
-	return more
 }
 
 // reconcile marks the guilds the bot left while this shard was offline. Discord never sends a

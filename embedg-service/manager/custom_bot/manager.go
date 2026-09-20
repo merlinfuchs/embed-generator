@@ -162,7 +162,9 @@ func (m *CustomBotManager) startBot(ctx context.Context, customBot model.CustomB
 		m.onGatewayClose(ref, gw, err)
 	})
 	if err != nil {
-		if isAuthenticationFailure(err) {
+		if errors.Is(err, context.Canceled) {
+			// Shutting down mid connect, not a failure.
+		} else if isAuthenticationFailure(err) {
 			m.markTokenInvalid(ref)
 		} else {
 			slog.Error(
