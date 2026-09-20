@@ -106,18 +106,18 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
 
   return (
     <div>
-      <AutoAnimate className="bg-dark-3 rounded">
+      <AutoAnimate className="bg-ink-700 rounded-lg">
         {manage ? (
           <div className="px-5 py-4" key="1">
             <div className="flex justify-between items-start">
               <div className="flex items-center space-x-2 truncate text-lg mb-5">
                 <div className="text-white truncate">
-                  <span className="font-bold text-gray-500 text-xl">/</span>{" "}
+                  <span className="font-bold text-mist-500 text-xl">/</span>{" "}
                   {cmd.name}
                 </div>
               </div>
               <div
-                className="flex items-center text-white cursor-pointer bg-blurple hover:bg-blurple-dark rounded px-2 py-1"
+                className="flex items-center text-white cursor-pointer bg-azure-500 hover:bg-azure-400 rounded-lg px-2 py-1"
                 role="button"
                 onClick={save}
               >
@@ -157,17 +157,17 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
             <div className="flex-auto truncate">
               <div className="flex items-center space-x-2 truncate text-lg mb-1">
                 <div className="text-white truncate">
-                  <span className="font-bold text-gray-500 text-xl">/</span>{" "}
+                  <span className="font-bold text-mist-500 text-xl">/</span>{" "}
                   {cmd.name}
                 </div>
               </div>
-              <div className="text-gray-400 text-sm font-light whitespace-normal">
+              <div className="text-mist-400 text-sm font-light whitespace-normal">
                 {cmd.description}
               </div>
             </div>
             <div className="flex flex-none items-center space-x-4 md:space-x-3">
               <div
-                className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
+                className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
                 role="button"
                 onClick={() => setDeleteModal(true)}
               >
@@ -177,7 +177,7 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
                 <div className="hidden md:block ml-2">Delete</div>
               </div>
               <div
-                className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
+                className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
                 role="button"
                 onClick={() => setManage(true)}
               >

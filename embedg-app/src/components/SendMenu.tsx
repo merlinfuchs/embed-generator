@@ -22,21 +22,21 @@ export default function SendMenu() {
     <div>
       <div className="flex mb-5">
         <button
-          className="flex bg-dark-2 p-1 rounded text-white"
+          className="flex bg-ink-900 p-1 rounded-lg border border-white/10 text-sm font-medium text-mist-400"
           onClick={toggleMode}
         >
           <div
             className={clsx(
-              "py-1 px-2 rounded transition-colors",
-              mode === "webhook" && "bg-dark-3",
+              "py-1 px-3 rounded-md transition-colors",
+              mode === "webhook" && "bg-ink-700 text-mist-100",
             )}
           >
             Webhook
           </div>
           <div
             className={clsx(
-              "py-1 px-2 rounded transition-colors",
-              mode === "channel" && "bg-dark-3",
+              "py-1 px-3 rounded-md transition-colors",
+              mode === "channel" && "bg-ink-700 text-mist-100",
             )}
           >
             Channel

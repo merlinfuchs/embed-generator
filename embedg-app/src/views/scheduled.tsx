@@ -35,11 +35,11 @@ export default function ScheduledMessagesView() {
         <div className="mb-10">
           <div className="text-white font-medium mb-3 flex items-center space-x-3">
             <div className="text-2xl">Scheduled Messages</div>
-            <div className="font-light italic text-gray-400 flex-none">
+            <div className="font-light italic text-mist-400 flex-none">
               {messageCount} / {maxMessages}
             </div>
           </div>
-          <div className="text-gray-400 font-light text-sm">
+          <div className="text-mist-400 font-light text-sm">
             You can create scheduled messages to send a message at a specific
             time and date or periodically. This can be useful for announcements,
             reminders and a lot more.
@@ -61,10 +61,10 @@ export default function ScheduledMessagesView() {
             <div className="flex space-x-3 justify-end">
               <button
                 className={clsx(
-                  "px-3 py-2 rounded border-2 text-white",
+                  "px-3 py-2 rounded-lg border-2",
                   messageCount < maxMessages
-                    ? "border-dark-7 hover:bg-dark-6 cursor-pointer"
-                    : "border-dark-6 text-gray-300 cursor-not-allowed",
+                    ? "border-white/15 hover:bg-white/5 hover:border-white/30 cursor-pointer"
+                    : "border-white/10 text-mist-500 cursor-not-allowed",
                 )}
                 onClick={() => messageCount < maxMessages && setCreate(true)}
               >

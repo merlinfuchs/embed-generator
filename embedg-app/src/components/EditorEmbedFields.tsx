@@ -24,7 +24,7 @@ export default function EditorEmbedFields({ id }: Props) {
       validationPathPrefix={slotScope(id, "fields")}
       title="Fields"
       extra={
-        <div className="text-sm italic font-light text-gray-400">
+        <div className="text-sm italic font-light text-mist-400">
           {fieldIds.length} / {slotLimit("embed", "fields")}
         </div>
       }

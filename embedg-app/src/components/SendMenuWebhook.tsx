@@ -89,12 +89,12 @@ export default function SendMenuWebhook() {
     <div className="space-y-5">
       <div className="flex">
         <div className="flex-auto">
-          <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+          <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
             Webhook URL
           </div>
           <input
             type="url"
-            className="bg-dark-2 px-3 py-2 rounded w-full focus:outline-none text-white"
+            className="bg-ink-900 px-3 py-2 rounded-lg w-full focus:outline-none text-white"
             onChange={(e) => setWebhookUrl(e.target.value || null)}
             value={webhookUrl || ""}
           />
@@ -102,23 +102,23 @@ export default function SendMenuWebhook() {
       </div>
       <div className="flex space-x-3">
         <div className="flex-auto">
-          <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+          <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
             Thread ID
           </div>
           <input
             type="text"
-            className="bg-dark-2 px-3 py-2 rounded w-full focus:outline-none text-white"
+            className="bg-ink-900 px-3 py-2 rounded-lg w-full focus:outline-none text-white"
             onChange={(e) => setThreadId(e.target.value || null)}
             value={threadId ?? ""}
           />
         </div>
         <div className="flex-auto">
-          <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+          <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
             Message ID or URL
           </div>
           <input
             type="text"
-            className="bg-dark-2 px-3 py-2 rounded w-full focus:outline-none text-white"
+            className="bg-ink-900 px-3 py-2 rounded-lg w-full focus:outline-none text-white"
             onChange={(e) => handleMessageId(e.target.value)}
             value={messageId ?? ""}
           />
@@ -144,12 +144,12 @@ export default function SendMenuWebhook() {
         <div className="flex items-center space-x-2">
           {messageId && (
             <div
-              className={`px-3 py-2 rounded text-white flex items-center space-x-3 ${
+              className={`px-3 py-2 rounded-lg text-white flex items-center space-x-3 ${
                 validationError ||
                 !webhookInfo ||
                 webhookInfo.type !== "discord"
-                  ? "cursor-not-allowed bg-dark-2"
-                  : "bg-blurple hover:bg-blurple-dark cursor-pointer"
+                  ? "cursor-not-allowed bg-ink-900"
+                  : "bg-azure-500 hover:bg-azure-400 cursor-pointer"
               }`}
               role="button"
               onClick={() => send(true)}
@@ -161,10 +161,10 @@ export default function SendMenuWebhook() {
             </div>
           )}
           <div
-            className={`px-3 py-2 rounded text-white flex items-center space-x-3 ${
+            className={`px-3 py-2 rounded-lg text-white flex items-center space-x-3 ${
               validationError || !webhookInfo
-                ? "cursor-not-allowed bg-dark-2"
-                : "bg-blurple hover:bg-blurple-dark cursor-pointer"
+                ? "cursor-not-allowed bg-ink-900"
+                : "bg-azure-500 hover:bg-azure-400 cursor-pointer"
             }`}
             role="button"
             onClick={() => send(false)}

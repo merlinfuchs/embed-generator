@@ -21,11 +21,11 @@ interface Props {
 }
 
 const buttonBorderColors = {
-  1: "border-blurple",
-  2: "border-dark-7",
+  1: "border-azure-500",
+  2: "border-ink-500",
   3: "border-green",
   4: "border-red",
-  5: "border-dark-7",
+  5: "border-ink-500",
 };
 
 export default function EditorComponentButton({
@@ -55,12 +55,12 @@ export default function EditorComponentButton({
           <div className="flex space-x-3">
             <div className="flex-auto">
               <div className="mb-1.5 flex">
-                <div className="uppercase text-gray-300 text-sm font-medium">
+                <div className="uppercase text-mist-300 text-sm font-medium">
                   Style
                 </div>
               </div>
               <select
-                className="bg-dark-2 rounded p-2 w-full font-light cursor-pointer text-white"
+                className="bg-ink-900 rounded-lg p-2 w-full font-light cursor-pointer text-white"
                 value={data.style.toString()}
                 onChange={(v) =>
                   update<ButtonNode>(id, {
@@ -76,7 +76,7 @@ export default function EditorComponentButton({
               </select>
             </div>
             <div className="flex-none">
-              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+              <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
                 Disabled
               </div>
               <CheckBox

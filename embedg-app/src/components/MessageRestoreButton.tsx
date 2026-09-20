@@ -120,10 +120,10 @@ export default function MessageRestoreButton() {
 
   return (
     <div
-      className={`px-3 py-2 rounded border-2 ${
+      className={`px-3 py-2 rounded-lg border-2 ${
         canRestore
-          ? "border-dark-7 hover:bg-dark-6 cursor-pointer text-white"
-          : "cursor-not-allowed text-gray-300 border-dark-6"
+          ? "border-white/15 hover:bg-white/5 hover:border-white/30 cursor-pointer text-mist-100"
+          : "cursor-not-allowed text-mist-500 border-white/10"
       }`}
       role="button"
       onClick={restoreMessage}

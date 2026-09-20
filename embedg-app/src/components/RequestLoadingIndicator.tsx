@@ -8,6 +8,6 @@ export default function RequestLoadingIndicator() {
   }
 
   return (
-    <div className="fixed bottom-8 right-8 bg-blurple animate-ping rounded-full h-4 w-4 z-50"></div>
+    <div className="fixed bottom-8 right-8 bg-azure-500 animate-ping rounded-full h-4 w-4 z-50"></div>
   );
 }

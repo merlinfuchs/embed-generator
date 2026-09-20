@@ -61,7 +61,7 @@ export default function GuildSelect({ guildId, onChange }: Props) {
 
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
-      <div className="px-3 rounded bg-dark-2 relative flex items-center h-10 select-none">
+      <div className="px-3 rounded-lg bg-ink-900 relative flex items-center h-10 select-none">
         <div
           onClick={() => setOpen((prev) => !prev)}
           role="button"
@@ -69,8 +69,8 @@ export default function GuildSelect({ guildId, onChange }: Props) {
         >
           {!guilds ? (
             <div className="flex items-center space-x-2">
-              <ArrowPathIcon className="h-5 w-5 text-gray-300 animate-spin" />
-              <div className="text-gray-400">Loading...</div>
+              <ArrowPathIcon className="h-5 w-5 text-mist-300 animate-spin" />
+              <div className="text-mist-400">Loading...</div>
             </div>
           ) : guild ? (
             <div className="flex items-center space-x-2 cursor-pointer w-full">
@@ -79,7 +79,7 @@ export default function GuildSelect({ guildId, onChange }: Props) {
                 src={guildIconUrl(guild)}
                 className="guild icon url w-7 h-7 rounded-full flex-none"
               />
-              <div className="text-lg text-gray-300 flex-auto truncate">
+              <div className="text-lg text-mist-300 flex-auto truncate">
                 {guild.name}
               </div>
               <ChevronDownIcon
@@ -90,16 +90,16 @@ export default function GuildSelect({ guildId, onChange }: Props) {
               />
             </div>
           ) : (
-            <div className="text-gray-300">Select server</div>
+            <div className="text-mist-300">Select server</div>
           )}
         </div>
         {open && (
-          <div className="absolute bg-dark-2 top-14 left-0 rounded shadow-lg w-full border-2 border-dark-2 z-10">
+          <div className="absolute bg-ink-900 top-14 left-0 rounded-lg shadow-lg w-full border-2 border-white/10 z-10">
             {guilds?.success &&
               guilds.data.map((g) => (
                 <div
                   key={g.id}
-                  className="py-2 flex space-x-2 items-center rounded px-3 hover:bg-dark-3 cursor-pointer"
+                  className="py-2 flex space-x-2 items-center rounded-lg px-3 hover:bg-ink-700 cursor-pointer"
                   role="button"
                   onClick={() => selectGuild(g.id)}
                 >
@@ -108,16 +108,16 @@ export default function GuildSelect({ guildId, onChange }: Props) {
                     alt="icon"
                     className="h-7 w-7 rounded-full"
                   />
-                  <div className="text-gray-300">{g.name}</div>
+                  <div className="text-mist-300">{g.name}</div>
                 </div>
               ))}
             <a
-              className="py-2 flex space-x-2 items-center hover:bg-dark-3 rounded cursor-pointer px-3"
+              className="py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg cursor-pointer px-3"
               role="button"
               href="/invite"
             >
-              <PlusCircleIcon className="w-7 h-7 text-gray-300" />
-              <div className="text-gray-300">Invite the bot</div>
+              <PlusCircleIcon className="w-7 h-7 text-mist-300" />
+              <div className="text-mist-300">Invite the bot</div>
             </a>
           </div>
         )}

@@ -1,5 +1,4 @@
-import clsx from "clsx";
-import { NESTED_CARD, PADDED } from "./editorCard";
+import { NESTED_CARD, ACCENT_CARD } from "./editorCard";
 import { useMemo } from "react";
 import {
   type ContainerNode,
@@ -46,10 +45,7 @@ export default function EditorComponentContainer({
   if (!data) return null;
 
   return (
-    <div
-      className={clsx(PADDED, "border-l-4")}
-      style={{ borderColor: hexColor }}
-    >
+    <div className={ACCENT_CARD} style={{ borderColor: hexColor }}>
       <EditorComponentCollapsable
         id={id}
         validationPathPrefix={nodeScope<ContainerNode>(id)}
@@ -61,7 +57,7 @@ export default function EditorComponentContainer({
         <div className="space-y-4 mb-4">
           <div className="flex space-x-3">
             <div className="flex-auto">
-              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+              <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
                 Color
               </div>
               <ColorPicker
@@ -73,7 +69,7 @@ export default function EditorComponentContainer({
               />
             </div>
             <div className="flex-none">
-              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+              <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
                 Spoiler
               </div>
               <CheckBox
@@ -90,7 +86,7 @@ export default function EditorComponentContainer({
           validationPathPrefix={slotScope(id, "components")}
           title="Components"
           extra={
-            <div className="text-sm italic font-light text-gray-400">
+            <div className="text-sm italic font-light text-mist-400">
               {childIds.length} / {slotLimit("container", "components")}
             </div>
           }
@@ -112,7 +108,7 @@ export default function EditorComponentContainer({
                 />
                 <button
                   type="button"
-                  className="px-3 py-2 rounded border-2 border-red hover:bg-red transition-colors text-white"
+                  className="px-3 py-2 rounded-lg border-2 border-red/70 hover:bg-red hover:border-red transition-colors text-white"
                   onClick={() => removeChildren(id, "components")}
                 >
                   Clear Components

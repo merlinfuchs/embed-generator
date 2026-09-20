@@ -31,7 +31,7 @@ export default function Collapsable({
 
   return (
     <div>
-      <div className="flex items-center text-gray-300 cursor-pointer truncate space-x-3">
+      <div className="flex items-center text-mist-300 cursor-pointer truncate space-x-3">
         <div
           className="flex items-center flex-auto truncate space-x-1"
           onClick={() => toggleCollapsed()}

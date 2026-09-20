@@ -20,7 +20,7 @@ export default function EditorComponentsV2Toggle() {
     <div>
       <div className="flex">
         <button
-          className="flex bg-dark-2 p-1 rounded text-white"
+          className="flex bg-ink-900 p-1 rounded-lg border border-white/10 text-sm font-medium text-mist-400"
           onClick={() => {
             if (componentsV2Enabled) {
               setComponentsV2DisableModal(true);
@@ -31,16 +31,16 @@ export default function EditorComponentsV2Toggle() {
         >
           <div
             className={clsx(
-              "py-1 px-2 rounded transition-colors",
-              !componentsV2Enabled && "bg-dark-3",
+              "py-1 px-3 rounded-md transition-colors",
+              !componentsV2Enabled && "bg-ink-700 text-mist-100",
             )}
           >
             Embeds V1
           </div>
           <div
             className={clsx(
-              "py-1 px-2 rounded transition-colors",
-              componentsV2Enabled && "bg-dark-3",
+              "py-1 px-3 rounded-md transition-colors",
+              componentsV2Enabled && "bg-ink-700 text-mist-100",
             )}
           >
             Components V2

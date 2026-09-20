@@ -55,7 +55,7 @@ export default function EditorEmbedFooter({ id }: Props) {
           />
           <div className="md:w-1/2">
             <div className="mb-1.5 flex">
-              <div className="uppercase text-gray-300 text-sm font-medium">
+              <div className="uppercase text-mist-300 text-sm font-medium">
                 Timestamp
               </div>
             </div>

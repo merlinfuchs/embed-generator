@@ -1,19 +1,44 @@
 @import "tailwindcss";
 
 @theme {
+  /* Brand palette shared with embedg-site: navy/azure accent, neutrals
+     close to Discord's own dark theme. */
+  --color-ink-950: #111214;
+  --color-ink-900: #1e1f22;
+  --color-ink-800: #2b2d31;
+  --color-ink-700: #313338;
+  --color-ink-600: #404249;
+  --color-ink-500: #4e5058;
+
+  --color-azure-300: #a3b6ff;
+  --color-azure-400: #6f8cff;
+  --color-azure-500: #4e6ef2;
+  --color-azure-600: #3f5bd9;
+  --color-azure-700: #3349b3;
+
+  --color-amber-300: #ffd27a;
+  --color-amber-400: #f5b544;
+  --color-amber-500: #e09b1f;
+
+  --color-mist-100: #f2f3f5;
+  --color-mist-300: #dbdee1;
+  --color-mist-400: #b5bac1;
+  --color-mist-500: #949ba4;
+
+  /* Discord semantics, for things that should look like Discord. */
   --color-blurple: #5865f2;
-  --color-blurple-dark: #4650c7;
   --color-green: #57f287;
   --color-yellow: #fee75c;
   --color-fuchsia: #eb459e;
   --color-red: #ed4245;
-  --color-dark-1: #18191c;
-  --color-dark-2: #1f2225;
-  --color-dark-3: #2e3136;
-  --color-dark-4: #36393e;
-  --color-dark-5: #3e4247;
-  --color-dark-6: #45494f;
-  --color-dark-7: #71757d;
+
+  --font-sans:
+    "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, sans-serif;
+
+  --shadow-card:
+    0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
+    0 20px 40px -24px rgba(0, 0, 0, 0.6);
 
   --height-128: 32rem;
   --height-160: 40rem;
@@ -35,6 +60,25 @@
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
+  }
+
+  body {
+    @apply bg-ink-800 font-sans text-mist-100 antialiased;
+  }
+
+  /* Sunken inputs with a hairline border and an azure focus ring. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not(
+    [type="file"]
+  ),
+  textarea,
+  select {
+    @apply border border-white/10 transition-colors placeholder:text-mist-500;
+  }
+
+  input:focus,
+  textarea:focus,
+  select:focus {
+    @apply border-azure-500/70 outline-none;
   }
 }
 

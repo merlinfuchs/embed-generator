@@ -65,13 +65,13 @@ export default function EditorAttachments() {
       validationPathPrefix="attachments"
       extra={
         <div className="flex space-x-2">
-          <div className="text-sm italic font-light text-gray-400">
+          <div className="text-sm italic font-light text-mist-400">
             {attachments.length} / 10
           </div>
           <div
             className={clsx(
               "text-sm italic font-light",
-              totalBytes < 25 * 1024 * 1024 ? "text-gray-400" : "text-red",
+              totalBytes < 25 * 1024 * 1024 ? "text-mist-400" : "text-red",
             )}
           >
             {Math.round(totalBytes / 10_000) / 100} / 25MB
@@ -79,7 +79,7 @@ export default function EditorAttachments() {
         </div>
       }
     >
-      <div className="text-gray-400 mb-3">
+      <div className="text-mist-400 mb-3">
         {componentsV2Enabled
           ? "Attachments do not directly appear in the message. Instead, you can use them in File components."
           : "Attachments do currently not appear in the preview."}
@@ -92,17 +92,17 @@ export default function EditorAttachments() {
       <div className="space-x-3">
         <button
           className={clsx(
-            "px-3 py-2 rounded text-white",
+            "px-3 py-2 rounded-lg text-white",
             attachments.length < 10
-              ? "bg-blurple hover:bg-blurple-dark"
-              : "bg-dark-3 cursor-not-allowed",
+              ? "bg-azure-500 hover:bg-azure-400"
+              : "bg-ink-700 cursor-not-allowed",
           )}
           onClick={handleAddAttachment}
         >
           Add Attachment
         </button>
         <button
-          className="px-3 py-2 rounded text-white border-red border-2 hover:bg-red"
+          className="px-3 py-2 rounded-lg text-white border-2 border-red/70 hover:bg-red hover:border-red transition-colors"
           onClick={clearAttachments}
         >
           Clear Attachments

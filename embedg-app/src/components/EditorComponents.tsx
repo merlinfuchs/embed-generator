@@ -26,10 +26,10 @@ export default function EditorComponents({
       validationPathPrefix={slotScope(rootId, "components")}
       extra={
         <div className="flex space-x-2">
-          <div className="text-sm italic font-light text-gray-400">
+          <div className="text-sm italic font-light text-mist-400">
             {components.length} / {slotLimit("message", "components")}
           </div>
-          <div className="bg-blurple px-1 rounded text-white text-xs items-center flex font-bold">
+          <div className="bg-azure-500 px-1 rounded-lg text-white text-xs items-center flex font-bold">
             ADVANCED
           </div>
         </div>
@@ -57,7 +57,7 @@ export default function EditorComponents({
         />
 
         <button
-          className="px-3 py-2.5 rounded text-white border-red border-2 hover:bg-red"
+          className="px-3 py-2.5 rounded-lg text-white border-2 border-red/70 hover:bg-red hover:border-red transition-colors"
           onClick={() => removeChildren(rootId, "components")}
         >
           Clear Components

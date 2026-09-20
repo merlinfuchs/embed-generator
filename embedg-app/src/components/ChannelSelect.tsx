@@ -182,7 +182,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
 
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
-      <div className="px-3 h-10 flex items-center rounded bg-dark-2 relative select-none">
+      <div className="px-3 h-10 flex items-center rounded-lg bg-ink-900 relative select-none">
         <div role="button" onClick={() => setOpen(!open)} className="flex-auto">
           <input
             type="text"
@@ -190,39 +190,39 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className={clsx(
-              "text-gray-300 flex-auto bg-dark-2 focus:outline-none",
+              "text-mist-300 flex-auto bg-ink-900 focus:outline-none",
               open ? "hidden md:block" : "hidden",
             )}
           />
           <div className={open ? "md:hidden" : ""}>
             {!data ? (
               <div className="flex items-center space-x-2">
-                <ArrowPathIcon className="h-5 w-5 text-gray-300 animate-spin" />
-                <div className="text-gray-400">Loading...</div>
+                <ArrowPathIcon className="h-5 w-5 text-mist-300 animate-spin" />
+                <div className="text-mist-400">Loading...</div>
               </div>
             ) : channel ? (
               <div className="flex items-center space-x-2 cursor-pointer w-full">
                 {channel.type === 15 ? (
-                  <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-300" />
+                  <ChatBubbleLeftRightIcon className="h-5 w-5 text-mist-300" />
                 ) : (
-                  <div className="text-xl italic text-gray-400 font-light pl-1">
+                  <div className="text-xl italic text-mist-400 font-light pl-1">
                     #
                   </div>
                 )}
-                <div className="text-gray-300 flex-auto truncate">
+                <div className="text-mist-300 flex-auto truncate">
                   {channel.name}
                 </div>
                 <ChevronDownIcon className="text-white w-5 h-5 flex-none transition-transform" />
               </div>
             ) : (
-              <div className="text-gray-300">Select channel</div>
+              <div className="text-mist-300">Select channel</div>
             )}
           </div>
         </div>
         {open && (
-          <div className="absolute bg-dark-2 top-14 left-0 rounded shadow-lg w-full border-2 border-dark-2 z-10 max-h-48 overflow-y-auto overflow-x-none">
+          <div className="absolute bg-ink-900 top-14 left-0 rounded-lg shadow-lg w-full border-2 border-white/10 z-10 max-h-48 overflow-y-auto overflow-x-none">
             {botHasNoAccess && (
-              <div className="p-2 text-gray-400 text-sm">
+              <div className="p-2 text-mist-400 text-sm">
                 The bot can't post in any channel in this server. Give it the
                 Manage Webhooks permission.
               </div>
@@ -232,7 +232,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
                 <div
                   key={c.id}
                   className={clsx(
-                    "py-2 flex space-x-2 items-center hover:bg-dark-3 rounded pr-3",
+                    "py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg pr-3",
                     c.level === 0 ? "pl-2" : c.level === 1 ? "pl-4" : "pl-6",
                     c.canSelect ? "cursor-pointer" : "cursor-not-allowed",
                   )}
@@ -240,18 +240,18 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
                   onClick={() => c.canSelect && selectChannel(c.id)}
                 >
                   {c.type === 4 ? (
-                    <ChevronDownIcon className="h-5 w-5 text-gray-300" />
+                    <ChevronDownIcon className="h-5 w-5 text-mist-300" />
                   ) : c.type === 15 ? (
-                    <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-300" />
+                    <ChatBubbleLeftRightIcon className="h-5 w-5 text-mist-300" />
                   ) : (
-                    <div className="text-xl italic text-gray-400 font-light pl-1">
+                    <div className="text-xl italic text-mist-400 font-light pl-1">
                       #
                     </div>
                   )}
                   <div
                     className={clsx(
                       "truncate",
-                      c.canSelect ? "text-gray-300" : "text-gray-400",
+                      c.canSelect ? "text-mist-300" : "text-mist-400",
                     )}
                   >
                     {c.name}
@@ -259,7 +259,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
                 </div>
               ))
             ) : (
-              <div className="p-2 text-gray-300">No channels found</div>
+              <div className="p-2 text-mist-300">No channels found</div>
             )}
           </div>
         )}

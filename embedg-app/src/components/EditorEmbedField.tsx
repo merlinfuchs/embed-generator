@@ -29,7 +29,7 @@ export default function EditorEmbedField({ id }: Props) {
       id={`embeds.fields.${id}`}
       validationPathPrefix={nodeScope<EmbedFieldNode>(id)}
       title={`Field ${index + 1}`}
-      className="border-2 border-dark-6 rounded-md p-3"
+      className="border-2 border-white/10 rounded-xl p-3"
       subtitle={field.name}
       {...actions}
     >
@@ -44,7 +44,7 @@ export default function EditorEmbedField({ id }: Props) {
             validationPath={nodeField<EmbedFieldNode>(id, "name")}
           />
           <div>
-            <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+            <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
               Inline
             </div>
             <CheckBox

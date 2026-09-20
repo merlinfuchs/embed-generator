@@ -117,11 +117,11 @@ export default function EditorComponentAddDropdown({
       <div className="relative">
         <button
           className={clsx(
-            "rounded text-white flex items-center space-x-2",
+            "rounded-lg text-white flex items-center space-x-2",
             size === "large" ? "py-3 px-3" : "py-2 px-2",
             disabled
-              ? "bg-dark-3 cursor-not-allowed"
-              : "bg-blurple hover:bg-blurple-dark",
+              ? "bg-ink-700 cursor-not-allowed"
+              : "bg-azure-500 hover:bg-azure-400",
           )}
           onClick={() => {
             if (disabled) return;
@@ -133,13 +133,13 @@ export default function EditorComponentAddDropdown({
           <ChevronUpIcon className="w-5 h-5" />
         </button>
         {open && (
-          <div className="absolute bg-dark-2 bottom-full mb-1 left-0 rounded shadow-lg border-2 border-dark-2 z-10 text-white">
+          <div className="absolute bg-ink-900 bottom-full mb-1 left-0 rounded-lg shadow-lg border-2 border-white/10 z-10 text-white">
             {componentTypes.map((componentType) => (
               <button
                 key={componentType.type}
                 type="button"
                 aria-label={componentType.label}
-                className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left flex items-center gap-2"
+                className="px-3 py-2 rounded-lg text-white hover:bg-ink-700 w-full text-left flex items-center gap-2"
                 onClick={() => {
                   if (allowedComponentTypes.includes(componentType.type)) {
                     if (componentType.handler) {
@@ -153,7 +153,7 @@ export default function EditorComponentAddDropdown({
                 }}
               >
                 {!allowedComponentTypes.includes(componentType.type) && (
-                  <div className="text-yellow">
+                  <div className="text-amber-300">
                     <StarIcon className="w-4 h-4" />
                   </div>
                 )}

@@ -108,7 +108,7 @@ export default function SendMenuChannel() {
     <div className="space-y-5">
       <div className="flex">
         <div className="flex-auto">
-          <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+          <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
             Server
           </div>
           <GuildSelect
@@ -119,7 +119,7 @@ export default function SendMenuChannel() {
       </div>
       <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
         <div className="flex-auto sm:w-1/2">
-          <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+          <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
             Channel
           </div>
           <ChannelSelect
@@ -132,17 +132,17 @@ export default function SendMenuChannel() {
         {selectedChannel?.type === 15 ? (
           <div className="flex-auto sm:w-1/2">
             <div className="flex-auto">
-              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+              <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
                 Thread Name
               </div>
               <input
                 type="text"
                 maxLength={100}
-                className="bg-dark-2 px-3 py-2 rounded w-full focus:outline-none text-white"
+                className="bg-ink-900 px-3 py-2 rounded-lg w-full focus:outline-none text-white"
                 value={threadName ?? ""}
                 onChange={(e) => setThreadName(e.target.value || null)}
               />
-              <div className="mt-2 text-gray-400 text-sm font-light">
+              <div className="mt-2 text-mist-400 text-sm font-light">
                 When sending to a Forum Channel you have to set a name for the
                 thread that is being created.
               </div>
@@ -150,12 +150,12 @@ export default function SendMenuChannel() {
           </div>
         ) : (
           <div className="flex-auto sm:w-1/2">
-            <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+            <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
               Message ID or URL
             </div>
             <input
               type="text"
-              className="bg-dark-2 px-3 py-2 rounded w-full focus:outline-none text-white"
+              className="bg-ink-900 px-3 py-2 rounded-lg w-full focus:outline-none text-white"
               value={messageId ?? ""}
               onChange={(e) => handleMessageId(e.target.value)}
             />
@@ -178,12 +178,12 @@ export default function SendMenuChannel() {
         <div className="flex items-center space-x-2">
           {messageId && (
             <div
-              className={`px-3 py-2 rounded text-white flex items-center space-x-3 ${
+              className={`px-3 py-2 rounded-lg text-white flex items-center space-x-3 ${
                 validationError ||
                 !selectedChannnelId ||
                 selectedChannel?.type === 15
-                  ? "cursor-not-allowed bg-dark-2"
-                  : "bg-blurple hover:bg-blurple-dark cursor-pointer"
+                  ? "cursor-not-allowed bg-ink-900"
+                  : "bg-azure-500 hover:bg-azure-400 cursor-pointer"
               }`}
               role="button"
               onClick={() => send(true)}
@@ -195,12 +195,12 @@ export default function SendMenuChannel() {
             </div>
           )}
           <div
-            className={`px-3 py-2 rounded text-white flex items-center space-x-3 ${
+            className={`px-3 py-2 rounded-lg text-white flex items-center space-x-3 ${
               validationError ||
               !selectedChannnelId ||
               (selectedChannel?.type === 15 && !threadName)
-                ? "cursor-not-allowed bg-dark-2"
-                : "bg-blurple hover:bg-blurple-dark cursor-pointer"
+                ? "cursor-not-allowed bg-ink-900"
+                : "bg-azure-500 hover:bg-azure-400 cursor-pointer"
             }`}
             role="button"
             onClick={() => send(false)}

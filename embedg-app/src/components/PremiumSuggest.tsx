@@ -63,39 +63,43 @@ export default function PremiumSuggest({ alwaysExpanded }: Props) {
   }, [consumableEntitlementId, guildId]);
 
   return (
-    <AutoAnimate className="p-3 bg-dark-2 rounded select-none">
+    <AutoAnimate className="relative overflow-hidden p-3 rounded-2xl border border-amber-400/10 bg-[linear-gradient(135deg,#2B2D31_0%,#2F2E2C_65%,#3A3222_100%)] select-none">
       <div
-        className="flex items-center px-3 py-3 space-x-3 group cursor-pointer"
+        aria-hidden
+        className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-amber-400/15 blur-[90px]"
+      />
+      <div
+        className="relative flex items-center px-3 py-3 space-x-3 group cursor-pointer"
         onClick={() => !alwaysExpanded && setCollapsed(!collapsed)}
       >
-        <SparklesIcon className="text-yellow h-14 w-14 flex-none" />
+        <SparklesIcon className="text-amber-300 h-12 w-12 flex-none" />
         <div className="flex-auto">
           <div className="text-base font-bold text-white">
-            Get Premium for <span className="text-yellow">all features</span>
+            Get Premium for <span className="text-amber-300">all features</span>
           </div>
-          <div className="text-light text-sm text-gray-400 max-w-lg">
+          <div className="text-light text-sm text-mist-400 max-w-lg">
             By subscribing to Embed Generator Premium you get access to all
             features and support the development of Embed Generator.
           </div>
         </div>
         {!alwaysExpanded && (
-          <InformationCircleIcon className="w-8 h-8 text-gray-400 group-hover:text-gray-100 flex-none" />
+          <InformationCircleIcon className="w-8 h-8 text-mist-400 group-hover:text-mist-100 flex-none" />
         )}
       </div>
       {!collapsed && (
-        <div className="mt-8">
+        <div className="relative mt-6">
           <PremiumFeatures />
           <div className="flex justify-end pt-5">
             {consumableEntitlementId ? (
               <button
-                className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white w-full text-center"
+                className="bg-amber-400 px-4 py-2.5 rounded-lg transition-colors hover:bg-amber-300 text-ink-900 font-semibold w-full text-center"
                 onClick={activatePremium}
               >
                 <div>Activate Premium</div>
               </button>
             ) : (
               <a
-                className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white w-full text-center"
+                className="bg-amber-400 px-4 py-2.5 rounded-lg transition-colors hover:bg-amber-300 text-ink-900 font-semibold w-full text-center"
                 href="/premium"
                 target="_blank"
                 rel="noopener"

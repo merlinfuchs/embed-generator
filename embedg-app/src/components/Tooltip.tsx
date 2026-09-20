@@ -62,7 +62,7 @@ export default function Tooltip({ text, children }: Props) {
         >
           <div
             className={clsx(
-              "rounded bg-black text-white py-1 px-2 flex-none block text-center",
+              "rounded-lg bg-black text-white py-1 px-2 flex-none block text-center",
             )}
           >
             {text}

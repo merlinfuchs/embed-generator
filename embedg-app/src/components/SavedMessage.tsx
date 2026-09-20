@@ -112,22 +112,22 @@ export default function SavedMessage({
     <div>
       <div
         key={message.id}
-        className="bg-dark-3 p-3 rounded flex justify-between truncate space-x-3"
+        className="bg-ink-700 p-3 rounded-lg flex justify-between truncate space-x-3"
       >
         <div className="flex-auto truncate">
           <div className="flex items-center space-x-1 truncate">
             <div className="text-white truncate">{message.name}</div>
-            <div className="text-gray-500 text-xs hidden md:block">
+            <div className="text-mist-500 text-xs hidden md:block">
               {message.id}
             </div>
           </div>
-          <div className="text-gray-400 text-sm">
+          <div className="text-mist-400 text-sm">
             {formatUpdatedAt(message.updated_at)}
           </div>
         </div>
         <div className="flex flex-none items-center space-x-4 md:space-x-3">
           <div
-            className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
+            className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
             role="button"
             onClick={() => setRestoreModal(true)}
           >
@@ -138,7 +138,7 @@ export default function SavedMessage({
           </div>
 
           <div
-            className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
+            className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
             role="button"
             onClick={() => setUpdateModal(true)}
           >
@@ -149,7 +149,7 @@ export default function SavedMessage({
           </div>
 
           <div
-            className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
+            className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
             role="button"
             onClick={() => setDeleteModal(true)}
           >

@@ -22,10 +22,10 @@ export default function EditorSlotButtons({
         type="button"
         disabled={!canAdd}
         className={clsx(
-          "px-3 py-2 rounded transition-colors",
+          "px-3 py-2 rounded-lg transition-colors",
           canAdd
-            ? "bg-blurple hover:bg-blurple-dark text-white"
-            : "bg-dark-2 cursor-not-allowed text-gray-300",
+            ? "bg-azure-500 hover:bg-azure-400 text-white"
+            : "bg-ink-900 cursor-not-allowed text-mist-300",
         )}
         onClick={() => canAdd && onAdd()}
       >
@@ -33,7 +33,7 @@ export default function EditorSlotButtons({
       </button>
       <button
         type="button"
-        className="px-3 py-2 rounded border-2 border-red hover:bg-red transition-colors text-white"
+        className="px-3 py-2 rounded-lg border-2 border-red/70 hover:bg-red hover:border-red transition-colors text-white"
         onClick={onClear}
       >
         {clearLabel}

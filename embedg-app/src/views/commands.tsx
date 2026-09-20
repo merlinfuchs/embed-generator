@@ -76,13 +76,13 @@ export default function CommandsView() {
       <div className="flex flex-col max-w-5xl mx-auto px-4 w-full my-5 lg:my-20">
         <div className="mb-10">
           <div className="text-white font-medium mb-3 flex items-center space-x-3">
-            <SparklesIcon className="h-7 w-7 text-yellow" />
+            <SparklesIcon className="h-7 w-7 text-amber-300" />
             <div className="text-2xl">Custom Commands</div>
-            <div className="font-light italic text-gray-400 flex-none">
+            <div className="font-light italic text-mist-400 flex-none">
               {commandCount} / {maxCommands}
             </div>
           </div>
-          <div className="text-gray-400 font-light text-sm">
+          <div className="text-mist-400 font-light text-sm">
             You can create custom commands to add more functionality to your
             custom bot. You need to configure a custom bot first which is
             available to servers with premium in the settings.
@@ -105,10 +105,10 @@ export default function CommandsView() {
               <div className="flex space-x-3 justify-end">
                 <button
                   className={clsx(
-                    "px-3 py-2 rounded text-white",
+                    "px-3 py-2 rounded-lg text-white",
                     hasUndeployedChanges
-                      ? "bg-blurple hover:bg-blurple-dark"
-                      : "bg-dark-2 cursor-not-allowed",
+                      ? "bg-azure-500 hover:bg-azure-400"
+                      : "bg-ink-900 cursor-not-allowed",
                   )}
                   onClick={deploy}
                 >
@@ -116,10 +116,10 @@ export default function CommandsView() {
                 </button>
                 <button
                   className={clsx(
-                    "px-3 py-2 rounded border-2 text-white",
+                    "px-3 py-2 rounded-lg border-2",
                     commands.length < maxCommands
-                      ? "border-dark-7 hover:bg-dark-6 cursor-pointer"
-                      : "border-dark-6 text-gray-300 cursor-not-allowed",
+                      ? "border-white/15 hover:bg-white/5 hover:border-white/30 cursor-pointer"
+                      : "border-white/10 text-mist-500 cursor-not-allowed",
                   )}
                   onClick={() =>
                     commands.length < maxCommands && setCreate(true)

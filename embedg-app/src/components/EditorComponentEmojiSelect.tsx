@@ -27,17 +27,17 @@ export default function EditorComponentEmojiSelect({ emoji, onChange }: Props) {
   return (
     <div className="flex-none">
       <div className="mb-1.5 flex">
-        <div className="uppercase text-gray-300 text-sm font-medium">Emoji</div>
+        <div className="uppercase text-mist-300 text-sm font-medium">Emoji</div>
       </div>
       <div className="flex">
-        <div className="bg-dark-2 rounded flex">
+        <div className="bg-ink-900 rounded-lg flex">
           <EmojiPicker
             guildId={guildId}
             onEmojiSelect={onEmojiSelect}
             align="left"
           >
             <div
-              className="h-9 w-9 flex items-center justify-center cursor-pointer text-gray-300 hover:text-white"
+              className="h-9 w-9 flex items-center justify-center cursor-pointer text-mist-300 hover:text-white"
               role="button"
             >
               {emoji ? (
@@ -59,7 +59,7 @@ export default function EditorComponentEmojiSelect({ emoji, onChange }: Props) {
           </EmojiPicker>
           {emoji && (
             <div
-              className="flex items-center cursor-pointer pr-1 text-gray-400 hover:text-white"
+              className="flex items-center cursor-pointer pr-1 text-mist-400 hover:text-white"
               onClick={() => onChange(undefined)}
             >
               <XMarkIcon className="h-5 w-5" />

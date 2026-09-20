@@ -130,7 +130,7 @@ export default function MessageExportImport({ messages, guildId }: Props) {
   return (
     <div className="flex space-x-3 justify-end flex-none">
       <button
-        className="px-3 py-2 rounded text-white flex-none border-2 border-dark-7 hover:bg-dark-6"
+        className="px-3 py-2 rounded-lg text-white flex-none border-2 border-white/15 hover:bg-white/5 hover:border-white/30 transition-colors"
         onClick={() => importInputRef.current?.click()}
       >
         Import
@@ -144,7 +144,7 @@ export default function MessageExportImport({ messages, guildId }: Props) {
         />
       </button>
       <button
-        className="px-3 py-2 rounded text-white flex-none border-2 border-dark-7 hover:bg-dark-6"
+        className="px-3 py-2 rounded-lg text-white flex-none border-2 border-white/15 hover:bg-white/5 hover:border-white/30 transition-colors"
         onClick={handleExport}
       >
         Export All

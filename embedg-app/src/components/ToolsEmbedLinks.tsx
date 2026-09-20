@@ -148,13 +148,13 @@ export default function ToolsEmbedLinks() {
           <div className="flex items-center">
             <input
               type="text"
-              className="bg-dark-2 rounded-l px-3 py-2 text-gray-100 w-full focus:outline-none"
+              className="bg-ink-900 rounded-l-lg px-3 py-2 text-mist-100 w-full focus:outline-none"
               value={newLinkUrl}
               readOnly
               ref={inputRef}
             />
             <button
-              className="px-3 py-2 rounded-r bg-blurple hover:bg-blurple-dark text-white flex-none"
+              className="px-3 py-2 rounded-r-lg bg-azure-500 hover:bg-azure-400 text-white flex-none"
               onClick={copy}
             >
               Copy Link
@@ -162,7 +162,7 @@ export default function ToolsEmbedLinks() {
           </div>
           <div className="flex">
             <button
-              className="px-3 py-2 rounded border-2 border-dark-7 hover:bg-dark-6 cursor-pointer text-white"
+              className="px-3 py-2 rounded-lg border-2 border-white/15 hover:bg-white/5 hover:border-white/30 transition-colors cursor-pointer text-white"
               onClick={() => setNewLinkUrl("")}
             >
               Create New
@@ -186,7 +186,7 @@ export default function ToolsEmbedLinks() {
               maxLength={256}
             />
             <div>
-              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+              <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
                 Color
               </div>
               <ColorPicker value={color} onChange={setColor} />
@@ -227,7 +227,7 @@ export default function ToolsEmbedLinks() {
           />
           <div className="flex space-x-3">
             <div>
-              <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+              <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
                 Large
               </div>
               <CheckBox
@@ -248,7 +248,7 @@ export default function ToolsEmbedLinks() {
           </div>
           <div className="flex justify-end pt-3">
             <button
-              className="px-3 py-2 rounded text-white bg-blurple hover:bg-blurple-dark"
+              className="px-3 py-2 rounded-lg text-white bg-azure-500 hover:bg-azure-400"
               onClick={createEmbedLink}
             >
               Create Link

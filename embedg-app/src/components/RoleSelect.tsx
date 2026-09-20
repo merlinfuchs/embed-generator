@@ -34,7 +34,7 @@ export function RoleSelect({ guildId, roleId, onChange }: Props) {
 
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
-      <div className="px-3 h-10 flex items-center rounded bg-dark-2 relative select-none">
+      <div className="px-3 h-10 flex items-center rounded-lg bg-ink-900 relative select-none">
         <div
           role="button"
           onClick={() => setOpen((prev) => !prev)}
@@ -46,7 +46,7 @@ export function RoleSelect({ guildId, roleId, onChange }: Props) {
                 className="h-4 w-4 rounded-full"
                 style={{ backgroundColor: colorIntToHex(role.color) }}
               ></div>
-              <div className="text-gray-300 flex-auto truncate">
+              <div className="text-mist-300 flex-auto truncate">
                 {role.name}
               </div>
               <ChevronDownIcon
@@ -57,16 +57,16 @@ export function RoleSelect({ guildId, roleId, onChange }: Props) {
               />
             </div>
           ) : (
-            <div className="text-gray-300">Select role</div>
+            <div className="text-mist-300">Select role</div>
           )}
         </div>
         {open && (
-          <div className="absolute bg-dark-2 top-14 left-0 rounded shadow-lg w-full border-2 border-dark-2 z-10 max-h-48 overflow-y-auto overflow-x-none">
+          <div className="absolute bg-ink-900 top-14 left-0 rounded-lg shadow-lg w-full border-2 border-white/10 z-10 max-h-48 overflow-y-auto overflow-x-none">
             {roles?.success && roles.data.length ? (
               roles.data.map((r) => (
                 <div
                   key={r.id}
-                  className="py-2 flex space-x-2 items-center hover:bg-dark-3 rounded cursor-pointer px-3"
+                  className="py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg cursor-pointer px-3"
                   role="button"
                   onClick={() => selectRole(r.id)}
                 >
@@ -74,11 +74,11 @@ export function RoleSelect({ guildId, roleId, onChange }: Props) {
                     className="h-4 w-4 rounded-full"
                     style={{ backgroundColor: colorIntToHex(r.color) }}
                   ></div>
-                  <div className="text-gray-300 truncate">{r.name}</div>
+                  <div className="text-mist-300 truncate">{r.name}</div>
                 </div>
               ))
             ) : (
-              <div className="p-2 text-gray-300">No roles found</div>
+              <div className="p-2 text-mist-300">No roles found</div>
             )}
           </div>
         )}

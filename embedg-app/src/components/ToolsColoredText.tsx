@@ -136,7 +136,7 @@ export default function ToolsColoredText() {
                 <button
                   key={style}
                   className={clsx(
-                    "h-8 w-10 rounded-md cursor-pointer bg-dark-2 mr-2 mb-2",
+                    "h-8 w-10 rounded-xl cursor-pointer bg-ink-900 mr-2 mb-2",
                     styles[`ansi${style}`],
                   )}
                   onClick={() => handleStyleChange(style)}
@@ -152,7 +152,7 @@ export default function ToolsColoredText() {
                 <button
                   key={style}
                   className={clsx(
-                    "h-8 w-10 rounded-md cursor-pointer text-white mr-2 mb-2",
+                    "h-8 w-10 rounded-xl cursor-pointer text-white mr-2 mb-2",
                     styles[`ansi${style}`],
                   )}
                   onClick={() => handleStyleChange(style)}
@@ -161,21 +161,21 @@ export default function ToolsColoredText() {
             </div>
           </div>
         </div>
-        <div className="flex space-x-3 text-gray-100 mb-2">
+        <div className="flex space-x-3 text-mist-100 mb-2">
           <button
-            className="bg-dark-6 hover:bg-dark-7 px-2 py-1 rounded"
+            className="bg-ink-600 hover:bg-ink-500 px-2 py-1 rounded-lg"
             onClick={() => handleStyleChange(0)}
           >
             Reset All
           </button>
           <button
-            className="bg-dark-6 hover:bg-dark-7 px-2 py-1 rounded"
+            className="bg-ink-600 hover:bg-ink-500 px-2 py-1 rounded-lg"
             onClick={() => handleStyleChange(1)}
           >
             Bold
           </button>
           <button
-            className="bg-dark-6 hover:bg-dark-7 px-2 py-1 rounded"
+            className="bg-ink-600 hover:bg-ink-500 px-2 py-1 rounded-lg"
             onClick={() => handleStyleChange(4)}
           >
             Underline
@@ -184,7 +184,7 @@ export default function ToolsColoredText() {
       </div>
       <div
         className={clsx(
-          "rounded-md bg-dark-2 px-3 py-2 focus:outline-none text-gray-100 min-h-64 mb-5",
+          "rounded-xl bg-ink-900 px-3 py-2 focus:outline-none text-mist-100 min-h-64 mb-5",
           styles.editor,
         )}
         ref={editorRef}
@@ -214,7 +214,7 @@ export default function ToolsColoredText() {
         !
       </div>
       <button
-        className="px-3 py-2 rounded border-2 text-white border-dark-7 hover:bg-dark-6 cursor-pointer"
+        className="px-3 py-2 rounded-lg border-2 border-white/15 text-mist-100 hover:bg-white/5 hover:border-white/30 transition-colors cursor-pointer"
         onClick={copyText}
       >
         {copyButtonText}

@@ -26,7 +26,7 @@ export default function CronExpressionBuilder({ value, onChange }: Props) {
   return (
     <div>
       <div className="mb-3 flex">
-        <div className="uppercase text-gray-300 text-sm font-medium">
+        <div className="uppercase text-mist-300 text-sm font-medium">
           Schedule
         </div>
       </div>

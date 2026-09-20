@@ -87,7 +87,7 @@ export default function PermissionsSelect({ permissions, onChange }: Props) {
 
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
-      <div className="px-3 h-10 flex items-center rounded bg-dark-2 relative select-none">
+      <div className="px-3 h-10 flex items-center rounded-lg bg-ink-900 relative select-none">
         <div
           role="button"
           onClick={() => setOpen((prev) => !prev)}
@@ -96,12 +96,12 @@ export default function PermissionsSelect({ permissions, onChange }: Props) {
           {activeFlags.length ? (
             <div className="flex items-center space-x-2 cursor-pointer w-full">
               <div className="flex-auto flex space-x-2 items-center">
-                <ShieldExclamationIcon className="h-5 w-5 text-gray-500" />
-                <div className="text-gray-300 truncate">
+                <ShieldExclamationIcon className="h-5 w-5 text-mist-500" />
+                <div className="text-mist-300 truncate">
                   {activeFlags[0].replaceAll("_", " ")}
                 </div>
                 {activeFlags.length > 1 && (
-                  <div className="text-gray-400 font-light">
+                  <div className="text-mist-400 font-light">
                     + {activeFlags.length - 1} others
                   </div>
                 )}
@@ -114,27 +114,27 @@ export default function PermissionsSelect({ permissions, onChange }: Props) {
               />
             </div>
           ) : (
-            <div className="text-gray-300">Select permissions</div>
+            <div className="text-mist-300">Select permissions</div>
           )}
         </div>
         {open && (
-          <div className="absolute bg-dark-2 top-14 left-0 rounded shadow-lg w-full border-2 border-dark-2 z-10 max-h-48 overflow-y-auto overflow-x-none">
+          <div className="absolute bg-ink-900 top-14 left-0 rounded-lg shadow-lg w-full border-2 border-white/10 z-10 max-h-48 overflow-y-auto overflow-x-none">
             {Object.keys(permissionFlags).map((f) => (
               <div
                 key={f}
                 className={clsx(
-                  "py-2 flex space-x-2 items-center hover:bg-dark-3 rounded cursor-pointer px-3",
-                  activeFlags.includes(f) && "bg-dark-3/50",
+                  "py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg cursor-pointer px-3",
+                  activeFlags.includes(f) && "bg-ink-700/50",
                 )}
                 role="button"
                 onClick={() => togglePermission(f)}
               >
-                <ShieldExclamationIcon className="h-5 w-5 text-gray-500" />
-                <div className="text-gray-300 truncate flex-auto">
+                <ShieldExclamationIcon className="h-5 w-5 text-mist-500" />
+                <div className="text-mist-300 truncate flex-auto">
                   {f.replaceAll("_", " ")}
                 </div>
                 {activeFlags.includes(f) && (
-                  <CheckIcon className="h-5 w-5 text-gray-300" />
+                  <CheckIcon className="h-5 w-5 text-mist-300" />
                 )}
               </div>
             ))}

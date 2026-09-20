@@ -9,10 +9,10 @@ export default function ColoredTextToolView() {
         <div>
           <div className="mb-10">
             <h1 className="text-white font-medium mb-3 text-2xl">
-              <span className="text-blurple">Colored</span>{" "}
+              <span className="text-azure-400">Colored</span>{" "}
               <span>Text Generator</span>
             </h1>
-            <h2 className="text-gray-400 font-light text-sm">
+            <h2 className="text-mist-400 font-light text-sm">
               Discord supports colored text via ANSI color codes in code blocks.
               This tool makes it very simple to generate colored text that you
               can then use in your Discord message.

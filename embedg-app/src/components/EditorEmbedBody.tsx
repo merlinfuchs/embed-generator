@@ -63,7 +63,7 @@ export default function EditorEmbedBody({ id }: Props) {
             validationPath={nodeField<EmbedNode>(id, "url")}
           />
           <div>
-            <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+            <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
               Color
             </div>
             <ColorPicker

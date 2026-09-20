@@ -94,8 +94,8 @@ export default function AssistantView() {
     <Modal height="full" onClose={() => navigate("/editor")}>
       <div className="flex h-full">
         <div className="w-1/2 p-5 overflow-y-hidden flex flex-col">
-          <div className="text-2xl font-medium text-gray-200 mb-5 flex items-center space-x-3">
-            <SparklesIcon className="h-7 w-7 text-yellow" />
+          <div className="text-2xl font-medium text-mist-100 mb-5 flex items-center space-x-3">
+            <SparklesIcon className="h-7 w-7 text-amber-300" />
             <div>AI Assistant</div>
           </div>
           <div className="flex-auto space-y-3 overflow-y-auto mb-5">
@@ -103,7 +103,7 @@ export default function AssistantView() {
               <div
                 // biome-ignore lint/suspicious/noArrayIndexKey: history is append-only
                 key={i}
-                className="text-gray-300 px-3 py-2 rounded-md bg-dark-2 whitespace-pre-line"
+                className="text-mist-300 px-3 py-2 rounded-xl bg-ink-800 whitespace-pre-line"
               >
                 {h}
               </div>
@@ -112,19 +112,19 @@ export default function AssistantView() {
           <div className="flex-none">
             <div className="flex justify-end space-x-3 mb-3">
               <button
-                className="text-white px-3 py-2 rounded border-2 border-red hover:bg-red"
+                className="text-white px-3 py-2 rounded-lg border-2 border-red/70 hover:bg-red hover:border-red transition-colors"
                 onClick={reset}
               >
                 Restart
               </button>
               <button
-                className="text-white px-3 py-2 rounded border-2 border-red hover:bg-red"
+                className="text-white px-3 py-2 rounded-lg border-2 border-red/70 hover:bg-red hover:border-red transition-colors"
                 onClick={clear}
               >
                 Clear All
               </button>
               <button
-                className="text-white px-3 py-2 rounded border-2 border-green hover:bg-green"
+                className="text-white px-3 py-2 rounded-lg border-2 border-green/70 hover:bg-green hover:border-green hover:text-ink-900 transition-colors"
                 onClick={save}
               >
                 Save to Editor
@@ -133,21 +133,21 @@ export default function AssistantView() {
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              className="bg-dark-2 px-3 py-2 rounded w-full text-white focus:outline-none h-32 mt-0 mb-3"
+              className="bg-ink-800 px-3 py-2 rounded-lg w-full text-white focus:outline-none h-32 mt-0 mb-3"
               placeholder="Enter a prompt..."
             />
             <div className="flex justify-end space-x-3">
               <button
                 className={clsx(
-                  "text-white px-3 py-2 rounded flex items-center space-x-3",
-                  isPending ? "bg-dark-5 cursor-not-allowed " : "bg-blurple",
+                  "text-white px-3 py-2 rounded-lg flex items-center space-x-3",
+                  isPending ? "bg-ink-600 cursor-not-allowed " : "bg-azure-500",
                 )}
                 onClick={generate}
               >
                 {isPending && (
                   <div className="relative">
-                    <div className="h-4 w-4 rounded-full bg-blurple"></div>
-                    <div className="h-4 w-4 rounded-full bg-blurple animate-ping absolute inset-0"></div>
+                    <div className="h-4 w-4 rounded-full bg-azure-500"></div>
+                    <div className="h-4 w-4 rounded-full bg-azure-500 animate-ping absolute inset-0"></div>
                   </div>
                 )}
                 <div>Submit</div>
@@ -155,10 +155,10 @@ export default function AssistantView() {
             </div>
           </div>
         </div>
-        <div className="w-1/2 rounded-r-xl bg-dark-4 overflow-y-auto">
+        <div className="w-1/2 rounded-r-xl bg-ink-800 overflow-y-auto">
           <div
             className={clsx(
-              "rounded text-white h-full px-5 py-3",
+              "rounded-lg text-white h-full px-5 py-3",
               isPending && "animate-pulse",
             )}
           >

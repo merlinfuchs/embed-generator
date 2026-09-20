@@ -41,12 +41,12 @@ export default function ColorPicker({ value, onChange }: Props) {
   return (
     <div className="flex space-x-2">
       <div className="flex">
-        <div className="bg-dark-1 rounded-l flex items-center px-2 text-gray-300">
+        <div className="bg-ink-900 rounded-l-lg flex items-center px-2 text-mist-300">
           #
         </div>
         <input
           type="text"
-          className="bg-dark-2 rounded-r p-2 w-full font-light text-white focus:outline-none"
+          className="bg-ink-900 rounded-r-lg p-2 w-full font-light text-white focus:outline-none"
           value={hexColor}
           onChange={(e) => setHexColor(e.target.value)}
           placeholder="rrggbb"
@@ -57,7 +57,7 @@ export default function ColorPicker({ value, onChange }: Props) {
         className="relative"
       >
         <div
-          className="w-12 h-full rounded cursor-pointer relative bg-dark-5"
+          className="w-12 h-full rounded-lg cursor-pointer relative bg-ink-600"
           style={{ backgroundColor: displayColor }}
           role="button"
           onClick={() => setShow(!show)}

@@ -26,11 +26,11 @@ export default function EditorIconButton({
       {href ? (
         <Link
           className={clsx(
-            "rounded-full p-2 block",
-            highlight ? "text-yellow" : "text-white",
+            "rounded-lg p-2 block transition-colors",
+            highlight ? "text-amber-300" : "text-mist-300 hover:text-mist-100",
             disabled
-              ? "bg-dark-3 cursor-default"
-              : "bg-dark-2 cursor-pointer hover:bg-dark-1",
+              ? "bg-white/5 text-mist-500 cursor-default"
+              : "bg-white/5 cursor-pointer hover:bg-white/10",
             className,
           )}
           to={href}
@@ -43,11 +43,11 @@ export default function EditorIconButton({
           aria-label={label}
           disabled={disabled}
           className={clsx(
-            "rounded-full p-2 block",
-            highlight ? "text-yellow" : "text-white",
+            "rounded-lg p-2 block transition-colors",
+            highlight ? "text-amber-300" : "text-mist-300 hover:text-mist-100",
             disabled
-              ? "bg-dark-3 cursor-default"
-              : "bg-dark-2 cursor-pointer hover:bg-dark-1",
+              ? "bg-white/5 text-mist-500 cursor-default"
+              : "bg-white/5 cursor-pointer hover:bg-white/10",
             className,
           )}
           onClick={() => !disabled && onClick?.()}
