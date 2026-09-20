@@ -10,6 +10,7 @@ const columns = [
       { label: "Blog", href: "/blog" },
       { label: "Colored Text Generator", href: "/app/tools/colored-text" },
       { label: "Embed Links", href: "/app/tools/embed-links" },
+      { label: "Webhook Info", href: "/app/tools/webhook-info" },
     ],
   },
   {

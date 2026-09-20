@@ -8,7 +8,7 @@ const steps = [
   },
   {
     n: "2",
-    title: "Send it with a webhook or the bot",
+    title: "Send it with a Discord webhook or the bot",
     text: "Paste a webhook URL for plain messages, or add the Embed Generator bot to your server when you want buttons that hand out roles, reply, or open links.",
   },
   {

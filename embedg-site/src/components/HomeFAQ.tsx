@@ -10,6 +10,10 @@ export const faq = [
     a: "A webhook is enough for plain messages and embeds. Buttons that hand out roles, select menus, scheduled messages and slash commands need the Embed Generator bot on your server, which takes one click to add.",
   },
   {
+    q: "How do I send an embed with a Discord webhook?",
+    a: "In Discord, open the channel settings, go to Integrations, create a webhook and copy its URL. In Embed Generator, build your message, pick Webhook as the target, paste the URL and hit send. The message shows up with the name and avatar you set.",
+  },
+  {
     q: "Does it support Discord Components V2?",
     a: "Yes. You can switch a message to Components V2 in the editor to use sections, separators, media galleries and thumbnails.",
   },
