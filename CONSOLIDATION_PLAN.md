@@ -1,0 +1,595 @@
+# Consolidation plan
+
+Goal: one Go service (`embedg-service`) that owns the Discord gateway itself via disgo, can run as N instances over disjoint shard ranges without talking to each other, and a frontend editor built on a flat store. `embedg-server` and Stateway go away.
+
+Base branch: `origin/service`. Work branch: `merlin/consolidate`. Do not touch `main` until step B10.
+
+Conventions for whoever executes this:
+
+- One PR per step. Every step compiles and is deployable on its own. Run `cd embedg-service && go build ./... && go vet ./...` before opening a PR. Run `cd embedg-app && ./node_modules/.bin/tsc --noEmit` if the frontend changed.
+- sqlc regenerates `embedg-service/db/postgres/pgmodel`. After editing `db/postgres/queries/*.sql` or adding a migration run `cd embedg-service && sqlc generate`. Commit the generated files.
+- Migrations live in `embedg-service/db/postgres/migrations/`, numbered `NNN_name.up.sql` and `.down.sql`. Next free number is `019`.
+- Store pattern: interface in `embedg-service/store/<entity>.go`, implementation in `embedg-service/db/postgres/store_<entity>.go`, model struct in `embedg-service/model/<entity>.go`. `store.ErrNotFound` is the sentinel.
+- IDs are `common.ID` which is `snowflake.ID` from disgo. Postgres columns for IDs are `bigint`.
+- Logging is `log/slog`. Config is koanf, TOML file plus env vars.
+- Commit messages: short, plain, no prefixes like `feat:`.
+- Do not "clean up" unrelated code in these PRs. Scope creep makes review impossible.
+
+Terms used below:
+
+- Owner instance: the process whose shard range contains `(guild_id >> 22) % shard_count` for a guild.
+- Leader: the instance whose `discord.shard_ids` contains `0`.
+
+---
+
+## Part B: backend
+
+### B1. CI and branch hygiene
+
+Files: `.github/workflows/ci.yaml` (new).
+
+```yaml
+name: CI
+on: [pull_request]
+jobs:
+  service:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version-file: embedg-service/go.mod }
+      - run: go build ./... && go vet ./...
+        working-directory: embedg-service
+  app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: corepack enable && yarn install --frozen-lockfile && ./node_modules/.bin/tsc --noEmit
+        working-directory: embedg-app
+```
+
+Also in this PR: fix the env prefix in `embedg-service/config/config.go` line 65. It reads `XENEX_` and must be `EMBEDG_`. Keep the `__` to `.` delimiter mapping.
+
+Delete remote branch `merlin/scheduled-messages-fixes` (already squash-merged as #210, diff against service is empty).
+
+Done when: CI green on the PR, `EMBEDG_DATABASE__POSTGRES__HOST=x` overrides the TOML value.
+
+### B2. Guilds table
+
+Purpose: any instance can answer "is the bot in guild X" without gateway state. This replaces Stateway's `CheckGuildsExist`.
+
+Migration `019_create_guilds_table`:
+
+```sql
+-- up
+CREATE TABLE guilds (
+    id BIGINT PRIMARY KEY,
+    shard_id INT NOT NULL,
+    joined_at TIMESTAMP NOT NULL,
+    left_at TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL
+);
+CREATE INDEX guilds_left_at_idx ON guilds (left_at) WHERE left_at IS NULL;
+-- down
+DROP TABLE guilds;
+```
+
+Queries `db/postgres/queries/guilds.sql`:
+
+```sql
+-- name: UpsertGuild :exec
+INSERT INTO guilds (id, shard_id, joined_at, left_at, updated_at)
+VALUES ($1, $2, $3, NULL, $3)
+ON CONFLICT (id) DO UPDATE SET shard_id = EXCLUDED.shard_id, left_at = NULL, updated_at = EXCLUDED.updated_at;
+
+-- name: MarkGuildLeft :exec
+UPDATE guilds SET left_at = $2, updated_at = $2 WHERE id = $1;
+
+-- name: GetExistingGuildIDs :many
+SELECT id FROM guilds WHERE id = ANY($1::bigint[]) AND left_at IS NULL;
+```
+
+Store interface `store/guild.go`:
+
+```go
+type GuildStore interface {
+    UpsertGuild(ctx context.Context, guildID common.ID, shardID int, now time.Time) error
+    MarkGuildLeft(ctx context.Context, guildID common.ID, now time.Time) error
+    GetExistingGuildIDs(ctx context.Context, guildIDs []common.ID) ([]common.ID, error)
+}
+```
+
+Implementation `db/postgres/store_guild.go` following `store_custom_bot.go` as the template.
+
+Listener: add cases to `EventHandler.OnEvent` in `entry/server/handler.go`. `EventHandler` gets a `guildStore store.GuildStore` field wired in `entry/server/server.go`.
+
+```go
+case *events.GuildReady:      // sent for each guild after Ready
+    g.guildStore.UpsertGuild(ctx, e.Guild.ID, e.ShardID(), now)
+case *events.GuildJoin:       // bot added to a guild
+    g.guildStore.UpsertGuild(ctx, e.Guild.ID, e.ShardID(), now)
+case *events.GuildLeave:      // bot removed. e.Guild.Unavailable is false here
+    g.guildStore.MarkGuildLeft(ctx, e.Guild.ID, now)
+```
+
+Do not handle `GuildUnavailable`. That is an outage, not a leave. `ShardID()` comes from `GenericEvent`. Use a 5 second context timeout per write. Log and continue on error.
+
+Nothing reads the table in this PR.
+
+Done when: after a restart, `SELECT count(*) FROM guilds WHERE left_at IS NULL` matches the bot's guild count. Kick the test bot from a guild, `left_at` gets set.
+
+### B3. User-token member fetch
+
+Purpose: dashboard permission checks fetch the user's own member with the user's OAuth token instead of the bot token. Per-user rate limit bucket, works on any instance.
+
+**Scope.** `api/handlers/auth/handler.go` `New()`: add `discord.ScopeGuildsMembersRead` to `Scopes`.
+
+**Session storage.** Migration `020_add_session_oauth_fields`:
+
+```sql
+-- up
+ALTER TABLE sessions
+    ADD COLUMN refresh_token TEXT NOT NULL DEFAULT '',
+    ADD COLUMN token_expires_at TIMESTAMP,
+    ADD COLUMN scopes TEXT[] NOT NULL DEFAULT '{}';
+-- down
+ALTER TABLE sessions DROP COLUMN refresh_token, DROP COLUMN token_expires_at, DROP COLUMN scopes;
+```
+
+Update `queries/sessions.sql` `InsertSession` to write the three columns, add:
+
+```sql
+-- name: UpdateSessionTokens :exec
+UPDATE sessions SET access_token = $2, refresh_token = $3, token_expires_at = $4 WHERE token_hash = $1;
+```
+
+`model.Session` gets `RefreshToken string`, `TokenExpiresAt time.Time`, `Scopes []string`. `store.SessionStore` gets `UpdateSessionTokens`. `session.SessionManager.CreateSession` signature grows to accept the `*oauth2.Token` and scopes. `authenticateWithCode` in the auth handler passes `tokenData` through; the granted scopes are in `tokenData.Extra("scope")` as a space-separated string.
+
+**Scope check in middleware.** In `api/session/middleware.go` `SessionRequired`: if the session's `Scopes` does not contain `guilds.members.read`, return `handlers.Unauthorized("scope_missing", "Please log in again")`. The frontend already redirects to login on 401 with `invalid_session`; make sure it does the same for `scope_missing` (check `embedg-app/src/api/client.ts`).
+
+**Token refresh.** New method on `SessionManager`:
+
+```go
+// UserToken returns a valid access token, refreshing via oauth2 if it expires within 5 minutes.
+func (s *SessionManager) UserToken(ctx context.Context, sess *Session) (string, error)
+```
+
+Uses `oauth2.Config.TokenSource(ctx, &oauth2.Token{...}).Token()`. On success with a new token, call `UpdateSessionTokens`. The `oauth2.Config` currently lives only in the auth handler; move its construction into `SessionManager` (it already receives config for cookies) and have the auth handler take it from there.
+
+**Member fetch.** New file `access/user_member.go`:
+
+```go
+// GetMemberForUser fetches the session user's member in guildID using the user's own OAuth token.
+// Cached per (session token hash, guild) for 60s. Returns store.ErrNotFound if the user is not in the guild.
+func (m *AccessManager) GetMemberForUser(ctx context.Context, sess *session.Session, guildID common.ID) (*discord.Member, error)
+```
+
+Endpoint: `GET https://discord.com/api/v10/users/@me/guilds/{guildID}/member` with `Authorization: Bearer <token>`. Use disgo's `rest.NewClient` with a bearer token if it supports it, otherwise plain `net/http`. Decode into `discord.Member`. 404 maps to `store.ErrNotFound`. Cache: `ttlcache` keyed by `tokenHash + ":" + guildID.String()`, TTL 60s, plus the singleflight `getOrSet` helper copied from `embedg/rest/rest.go` (generalize it into `common/singleflight.go` so both callers use it).
+
+`AccessManager` needs the `*session.SessionManager` to call `UserToken`. Wire it in `entry/server/server.go`; note `sessionManager` is currently created after `accessManager`, reorder.
+
+**Call sites.** `GetGuildAccessForUser(userID, guildID)` and `GetChannelAccessForUser(userID, channelID)` change signature to take `sess *session.Session` instead of `userID`. Callers are in `api/handlers/guilds/handler.go`, `api/handlers/send_message/handler.go`, `api/handlers/custom_bots/handler.go`, `api/handlers/scheduled_messages/handler.go`, `api/handlers/saved_messages/handler.go`, and `actions/parser/permissions.go` (see B4 for that one). Every handler already has `session := c.Locals("session").(*session.Session)`.
+
+Inside, replace `m.GetGuildMember(guildID, userID)` for the user with `m.GetMemberForUser(ctx, sess, guildID)`. Keep `GetGuildMember` for the bot's own member only.
+
+Done when: log in fresh, guild picker and channel list work, bot-token `GetMember` calls for dashboard users are gone (grep `GetGuildMember(` and confirm remaining calls pass `m.appContext.ApplicationID()`). Old session gets a 401 and is sent to login once.
+
+### B4. Interaction permissions from payload
+
+Purpose: runtime action handling does zero member fetches.
+
+`actions/parser/permissions.go` has two functions. Both are called from two contexts:
+
+- Save time from the dashboard: `CheckPermissionsForActionSets` and `DerivePermissionsForActions` called by `api/handlers/saved_messages`, `send_message`, `scheduled_messages`. These get the `*session.Session` per B3 and use `GetMemberForUser`.
+- Runtime from an interaction: called from `actions/handler/handle.go` when a "saved response" action creates new actions. Here the interaction carries `Member.Permissions` (channel-level, resolved by Discord) and `AppPermissions()`.
+
+Change: add a `MemberInfo` struct to the parser package:
+
+```go
+type MemberInfo struct {
+    UserID      common.ID
+    RoleIDs     []common.ID
+    Permissions discord.Permissions // channel-resolved permissions if known, else 0
+}
+```
+
+Both functions take `MemberInfo` instead of `userID`. Dashboard callers build it from `GetMemberForUser` plus `ComputeUserPermissionsForChannel`. Runtime caller in `handle.go` builds it from `interaction.Member()` which has `RoleIDs` and `Permissions` already, no fetch. In `handle.go` grep for `DerivePermissionsForActions` and `CheckPermissionsForActionSets` to find the sites.
+
+`ComputeBotPermissionsForChannel` at runtime should use `interaction.AppPermissions()` when the interaction is available. Add an optional `botPermissions *discord.Permissions` parameter or a second entry point.
+
+Done when: grep `GetGuildMember(` in `actions/` returns nothing.
+
+### B5. Access manager off Stateway
+
+Purpose: `access/access.go` no longer imports `stateway-lib`. Works on owner and non-owner instances.
+
+**Guild state helper.** New file `access/guild_state.go`:
+
+```go
+type guildState struct {
+    Guild    discord.Guild
+    Channels []discord.GuildChannel
+    Roles    []discord.Role
+}
+
+// getGuildState returns guild, channels and roles from the local disgo cache if the guild is cached,
+// otherwise from REST (GetGuild, GetGuildChannels, GetRoles) with a 2 minute TTL and singleflight.
+func (m *AccessManager) getGuildState(ctx context.Context, guildID common.ID) (*guildState, error)
+```
+
+Local path: `m.caches.Guild(guildID)`, `m.caches.ChannelsForGuild(guildID)` (iterator, collect), `m.caches.Roles(guildID)` (iterator, collect). REST path: `m.rest.GetGuild(guildID, false)` returns `*discord.RestGuild`, take `.Guild`; `m.rest.GetGuildChannels`, `m.rest.GetRoles`. Cache the struct in a `ttlcache.Cache[common.ID, *guildState]` on the manager.
+
+**CheckGuildsKnown.** Replace body with `m.guildStore.GetExistingGuildIDs(ctx, guildIDs)` and map back to `[]bool` in input order. Add `guildStore store.GuildStore` to `AccessManager`.
+
+**GetGuildAccessForUser.** Replace the two `m.cache.GetGuildWithPermissions` calls with a local function:
+
+```go
+// maxChannelPermissions ORs memberPermissions() over every channel in gs. Returns early once
+// all bits of stopAt are set. This mirrors stateway's MaxChannelPermissions with abortAtPermissions.
+func maxChannelPermissions(gs *guildState, userID common.ID, roleIDs []common.ID, stopAt discord.Permissions) discord.Permissions
+```
+
+using the existing `memberPermissions` in `access/helpers.go` (signature `memberPermissions(guild *discord.Guild, roles []discord.Role, channel discord.GuildChannel, userID, roleIDs)`). Skip channels of type category when iterating, they don't matter for sending. Bot member: `GetGuildMember(guildID, m.appContext.ApplicationID())`. User member: `GetMemberForUser` from B3.
+
+**ComputeUserPermissionsForChannel.** Currently requires the channel in the local cache. Change to: get the channel from `m.caches.Channel(channelID)`; if missing, call `m.rest.GetChannel(channelID)` (2 minute TTL via the same singleflight helper), then `getGuildState(channel.GuildID())` and `memberPermissions(...)`. Drop the `m.caches.MemberPermissionsInChannel` call, it only works on cached data.
+
+**GetGuildMember.** Keep for the bot's own member. Order: `m.caches.Member(guildID, userID)` then `m.rest.GetMember`. The `RestClient` in `embedg/rest/rest.go` already caches members 5 minutes with singleflight, so no extra cache here.
+
+**Remove** the `cache cache.Cache` field, the `stateway-lib/cache` import, and the `discordgo` import (replace `discordgo.ErrCodeUnknownMember` etc. with disgo's `discord.JSONErrorCode` constants; `common.IsDiscordRestErrorCode` may need adjusting, check `common/discord.go`).
+
+**Guild handlers.** `api/handlers/guilds/handler.go` `HandleListGuildChannels`, `HandleListGuildRoles`, `HandleListGuildEmojis`, `HandleListGuildStickers`, `HandleGetGuild` read from `env.Caches` directly. Route them through `getGuildState` (export a method `GuildState(ctx, guildID)`) so they work on non-owner instances. Emojis and stickers: REST with the same TTL helper, they aren't in the cache flags we'll enable.
+
+`actions/parser/permissions.go` also reads `m.caches.Channel`, `m.caches.Guild`, `m.caches.Role`, `m.caches.Roles`. Route through `AccessManager.GuildState` and `AccessManager.Channel(ctx, id)`.
+
+Stateway still runs in this step and still feeds the compat caches, so the local path is exercised in prod; the REST path is exercised only when a guild is not cached. Test the REST path locally by starting with `bot.WithCacheConfigOpts(cache.WithCaches(0))` temporarily.
+
+Done when: `grep -r stateway-lib embedg-service/access embedg-service/actions embedg-service/api/handlers/guilds` is empty. Guild picker, channel list, role list, and save-with-actions all work.
+
+### B6. Custom bots in-process
+
+Purpose: custom bots (under 100, presence only) run as disgo clients inside the service. Replaces Stateway's `UpsertApp`, `DeleteApp`, `GetApp`, `GetApps`.
+
+New file `manager/custom_bot/client.go`:
+
+```go
+type runningBot struct {
+    client *bot.Client
+    token  string // to detect token changes
+}
+
+type clientPool struct {
+    mu   sync.Mutex
+    bots map[common.ID]*runningBot // keyed by ApplicationID
+}
+
+func (p *clientPool) start(ctx context.Context, cb *model.CustomBot, onInteraction bot.EventListener) error
+func (p *clientPool) stop(appID common.ID)
+func (p *clientPool) status(appID common.ID) (connected bool, ok bool)
+```
+
+`start` builds:
+
+```go
+disgo.New(cb.Token,
+    bot.WithDefaultShardManager(),
+    bot.WithShardManagerConfigOpts(sharding.WithShardCount(1), sharding.WithShardIDs(0)),
+    bot.WithGatewayConfigOpts(
+        gateway.WithIntents(0),
+        gateway.WithPresenceOpts(presenceOptsFromCustomBot(cb)...),
+    ),
+    bot.WithCacheConfigOpts(cache.WithCaches(0)),
+    bot.WithRest(rest.NewRestClient(cb.Token)),
+    bot.WithEventListeners(onInteraction),
+)
+```
+
+then `client.OpenGateway(ctx)`. `presenceOptsFromCustomBot` maps `GatewayStatus` to `gateway.WithOnlineStatus` and `GatewayActivityType` (0 playing, 1 streaming, 2 listening, 3 watching, 4 custom, 5 competing) to the matching `gateway.With*Activity` option using `GatewayActivityName`, `GatewayActivityState`, `GatewayActivityUrl`. If the token is empty or `TokenInvalid`, do not start.
+
+If `OpenGateway` fails with an authentication error (disgo returns a close code 4004), set `TokenInvalid = true` on the custom bot via the store and log at warn.
+
+`CustomBotManager` gains a `pool *clientPool` and `SyncCustomBots` becomes reconciliation:
+
+1. Load all custom bots from the store.
+2. For each: if not running and token valid, start. If running and token differs, stop then start. 
+3. For each running app id not in the store, stop.
+
+The ticker in `Run` is commented out. Uncomment it, interval 5 minutes, and call `SyncCustomBots` once at startup too. In B7 the reconciliation gets the shard range filter.
+
+Interaction listener: reuse the `EventHandler` in `entry/server/handler.go` but the `rest` used to respond must be the custom bot's. Simplest: make the listener a closure per bot that wraps `handler.GatewayInteraction` with that bot's rest client. Look at `onComponentInteractionCreate` for the shape.
+
+`api/handlers/custom_bots/handler.go`: replace
+
+- `h.gateway.UpsertApp(...)` after create and after update with `h.customBotManager.Start(ctx, customBot)`.
+- `h.gateway.DeleteApp(...)` with `h.customBotManager.Stop(customBot.ApplicationID)`.
+- `h.gateway.GetApp(...)` in the get handler with `h.customBotManager.Status(customBot.ApplicationID)`. Fill `Disabled` with `!connected`, `DisabledCode` with `"gateway_disconnected"` or `""`, `DisabledMessage` empty.
+
+`api/handlers/custom_bots/interaction.go`: the `RestInteraction` has `Rest: h.rest` with a TODO. Pass `rest.NewRestClient(customBot.Token)`, which is already built two lines below for the handler call. Build it once and use it for both.
+
+Remove the `gateway` field from `CustomBotsHandler` and `CustomBotManager`. Delete `manager/custom_bot/gateway.go`. Stateway still runs its own copy of the custom bots at this point; that's fine, two connections for a week is harmless. Actually no: two gateway connections with the same token from different apps both work, Discord allows it, presence is whichever connected last. Acceptable for the transition.
+
+Done when: create a custom bot in the dashboard, it shows online in Discord with the configured presence; change the token, it reconnects; delete it, it goes offline; a slash command on the custom bot invokes an action.
+
+### B7. The switch
+
+Purpose: embedg-service owns the gateway. Stateway is gone. Multi-instance by shard range works.
+
+**Config** `config/model.go`:
+
+- Delete `BrokerConfig`, `NATSConfig`, and `RootConfig.Broker`.
+- `DiscordConfig` gains `ShardCount int \`toml:"shard_count"\`` and `ShardIDs []int \`toml:"shard_ids"\``. Both optional. Empty means "auto count, all shards".
+- `default.toml`: delete `[broker]` and `[broker.nats]`.
+
+Add a helper:
+
+```go
+func (c DiscordConfig) IsLeader() bool  // ShardIDs empty (single instance) or contains 0
+func (c DiscordConfig) OwnsGuild(guildID common.ID) bool // (guildID >> 22) % ShardCount in ShardIDs; true if ShardIDs empty
+```
+
+**Gateway** `embedg/embedg.go`. Replace the constructor body:
+
+```go
+opts := []bot.ConfigOpt{
+    bot.WithDefaultShardManager(),
+    bot.WithGatewayConfigOpts(gateway.WithIntents(
+        gateway.IntentGuilds | gateway.IntentGuildMessages | gateway.IntentGuildWebhooks,
+    )),
+    bot.WithCacheConfigOpts(
+        cache.WithCaches(cache.FlagGuilds|cache.FlagChannels|cache.FlagRoles|cache.FlagMembers),
+        cache.WithMemberCachePolicy(func(m discord.Member) bool { return m.User.ID == selfID }),
+    ),
+    bot.WithEventManagerConfigOpts(bot.WithAsyncEventsEnabled()),
+    bot.WithRest(rest.NewRestClient(config.Token)),
+}
+if config.ShardCount > 0 {
+    opts = append(opts, bot.WithShardManagerConfigOpts(
+        sharding.WithShardCount(config.ShardCount),
+        sharding.WithShardIDs(config.ShardIDs...),
+    ))
+}
+client, err := disgo.New(config.Token, opts...)
+```
+
+`selfID` is the application id, which disgo derives from the token before the client exists (`bot.IDFromToken`), so the member policy can capture it. If the message content intent is needed for restore-by-id, add `gateway.IntentMessageContent`; check `api/handlers/send_message/restore.go` first, it may use REST which doesn't need the intent.
+
+Delete fields `cache`, `gateway`, `compatCaches`, `broker` and their accessors. `Caches()` returns `g.client.Caches`. Delete `EmbedGeneratorConfig.BrokerURL` and `GatewayCount`. Add `ShardCount`, `ShardIDs`. Add:
+
+```go
+func (g *EmbedGenerator) ShardManager() sharding.ShardManager { return g.client.ShardManager }
+```
+
+**Wiring** `entry/server/server.go` and `api/api.go`: remove `Gateway` from `api.Env` and the `embedg.Gateway()` argument. Pass `cfg.Discord` (for `IsLeader`/`OwnsGuild`) to the scheduled message manager, custom bot manager, premium manager, and command handler.
+
+**Shard range filters.**
+
+- `manager/scheduled_message/manager.go` `Run`: after `GetDueScheduledMessages`, skip messages where `!cfg.OwnsGuild(msg.GuildID)`. Do the filter in Go, not SQL, so the query stays simple. Under 100k rows this is fine; if it ever isn't, add `WHERE (guild_id >> 22) % $2 = ANY($3)`.
+- `manager/custom_bot/manager.go` `SyncCustomBots`: only start bots where `cfg.OwnsGuild(cb.GuildID)`; stop any running bot whose guild is no longer owned.
+
+**Leader gate.** Only when `cfg.IsLeader()`:
+
+- `command.SyncCommands` at startup (find the call in `entry/server/server.go`).
+- `premiumManager.SyncEntitlements` at startup. The entitlement events listener can stay registered everywhere, Discord only delivers them to shard 0 anyway.
+- DB backup cron if one runs inside the server process (check `entry/database/backup.go` and where it's invoked).
+
+**Health** `api/handlers/health/handler.go`: `New(shardManager sharding.ShardManager)`. Add:
+
+```go
+// GET /api/health/shard-list
+func (h *HealthHandler) HandleShardList(c *fiber.Ctx) error
+// returns [{"id": 0, "status": "Ready", "latency_ms": 42}, ...] from shardManager.Shards()
+```
+
+`gateway.Gateway` has `ShardID()`, `Status()`, `Latency()`. Register the route in `api/routes.go` next to the existing health route. `HandleHealth` should return 503 if any owned shard is not `StatusReady`.
+
+**Stateway removal.** `go get github.com/merlinfuchs/stateway/stateway-lib@none && go mod tidy`. `grep -r stateway embedg-service` must be empty. Update `embedg-service/README.md` to drop the Stateway sentence. Delete `cmd/root.go` references to `stateway-gateway` (the CLI app name is wrong there anyway, make it `embedg`).
+
+**Deploy.** Big bang, single instance, no `shard_ids` set. Rollback is the previous image; no migration in this step.
+
+**Manual verification checklist** (run all, on prod after deploy):
+
+1. Log in fresh. Guild picker lists correct guilds.
+2. Open a guild. Channels and roles lists populate.
+3. Send a message via bot to a channel. Send via webhook URL.
+4. Edit a sent message. Restore a message by id.
+5. Save a message, load it, share it, open the share link.
+6. Create an embed link and open it.
+7. Upload an image.
+8. Create a scheduled message for 2 minutes ahead, confirm it sends. Create a cron one, confirm `next_at` advances.
+9. Custom bot: create, verify online with presence, run a custom command, click an action button, change token, delete.
+10. Action button on a normal bot message responds.
+11. Trigger an entitlement (test SKU) and confirm premium status updates.
+12. `/api/health/shard-list` shows all shards Ready.
+13. Memory after 1 hour compared to the Stateway deployment.
+
+### B8. Build and docs
+
+- `Dockerfile`: replace `cd embedg-server && go build --tags "embedapp embedsite"` with the same in `embedg-service`. Check `embedg-service` has the `embed.go`/`noembed.go` build-tag files like `embedg-app` and `embedg-site` do; if the service imports the app/site packages unconditionally, no tags are needed. `COPY --from=builder /root/embedg-service/embedg-service .` and `CMD ./embedg-service migrate up; ./embedg-service server` (check the exact subcommand names in `cmd/`). Drop `build-essential` from the runtime stage, it's not needed to run a static Go binary.
+- `.github/workflows/release.yaml`: `workdir: embedg-service`. Move `.goreleaser.yaml` from `embedg-server` to `embedg-service` and fix the binary name.
+- `.github/workflows/docker-push.yaml`: check it builds from the root Dockerfile; usually no change.
+- `go.work`: remove `./embedg-server`.
+- `tygo.yaml`: `path: "github.com/merlinfuchs/embed-generator/embedg-service/api/wire"`. Run `tygo generate` and confirm `embedg-app/src/api/wire.ts` diff is empty or trivial.
+- `README.md` self-hosting section: replace the YAML config block with the TOML equivalent (copy `default.toml` and add the required `discord.*` and `database.*` keys). Add a short "Migrating from embedg-server" note: config is now TOML at `config.toml`, env vars are `EMBEDG_SECTION__KEY`, the database schema is unchanged, run the migrate command once.
+- `docker-compose.yaml`: env var names to the new format.
+
+Done when: `docker build .` succeeds and the container serves the app on 8080 against the compose Postgres.
+
+### B9. Removal
+
+- `git rm -r embedg-server`.
+- Delete remote branches: `disgo`, `stateway`, `stability`, `componentsv2`, `next`, `oauth-member-scope`, `refactor-access`, `scheduled-messages`, `image-cdn`, `scripting`, `component-emojis`, `custom-commands`, `custom-bot`, `navigation-rework`, `old-main`, `docs`, `features/actions-frontend`, `saving-messages`.
+- `grep -r embedg-server .` outside `.git` must return only the README migration note.
+
+### B10. Merge to main
+
+Squash or merge `merlin/consolidate` into `main`. Tag a release. Release note: link the README migration section.
+
+### Later: scale out
+
+Not part of this plan, listed so the design constraints make sense.
+
+1. Deploy a REST rate limit proxy (NIRN or twilight-http-proxy). Set `discord.rest_url` on every instance.
+2. Run N instances with the same `discord.shard_count` and disjoint `discord.shard_ids`. Exactly one has `0`.
+3. Caddy or Nginx round robin in front of `/api`. No stickiness needed.
+
+---
+
+## Part F: frontend
+
+Separate branch `merlin/flat-editor` from the same base. Independent of Part B.
+
+Current state: `embedg-app/src/state/message.ts` is a 2166 line zustand store holding the raw Discord `Message` shape with 131 hand-written setters. Components pass 20 to 40 callbacks down through `EditorComponentBase*` props. Validation is zod on the whole message with path strings like `embeds.0.fields.2.value` looked up via `useValidationErrorStore.getIssueByPath`.
+
+Target: a normalized store. UI components subscribe to one node by id. The Discord `Message` shape is produced on demand.
+
+### F1. Biome and CI
+
+Add `biome.json` to `embedg-app` with the recommended ruleset, formatter enabled, 2 space indent, double quotes (matches the existing code). Run `biome check --write .` in one commit titled "format with biome". Add `biome ci .` to the app job in `.github/workflows/ci.yaml`. No rule fixes beyond formatting in this PR; disable rules that produce more than a handful of errors and note them.
+
+### F2. Document store
+
+New file `src/state/document.ts`. Nothing imports it in this PR.
+
+Node types (discriminated union on `type`):
+
+```ts
+type NodeId = string;
+
+interface BaseNode { id: NodeId; parentId: NodeId | null; }
+
+type MessageNode = BaseNode & { type: "message"; content: string; username?: string; avatar_url?: string;
+  tts: boolean; thread_name?: string; flags: number; allowed_mentions?: AllowedMentions;
+  embedIds: NodeId[]; componentIds: NodeId[]; }
+type EmbedNode = BaseNode & { type: "embed"; title?: string; description?: string; url?: string; color?: number;
+  timestamp?: string; author?: EmbedAuthor; footer?: EmbedFooter; image?: EmbedImage; thumbnail?: EmbedThumbnail;
+  fieldIds: NodeId[]; }
+type EmbedFieldNode = BaseNode & { type: "embedField"; name: string; value: string; inline?: boolean; }
+type ActionRowNode = BaseNode & { type: "actionRow"; childIds: NodeId[]; }
+type ButtonNode = BaseNode & { type: "button"; style: number; label?: string; emoji?: Emoji; url?: string;
+  disabled?: boolean; actionSetId: string; }
+type SelectMenuNode = BaseNode & { type: "selectMenu"; placeholder?: string; disabled?: boolean;
+  optionIds: NodeId[]; actionSetId: string; }
+type SelectOptionNode = BaseNode & { type: "selectOption"; label: string; description?: string; emoji?: Emoji;
+  actionSetId: string; }
+type ContainerNode = BaseNode & { type: "container"; accent_color?: number; spoiler?: boolean; childIds: NodeId[]; }
+type SectionNode = BaseNode & { type: "section"; childIds: NodeId[]; accessoryId: NodeId | null; }
+type TextDisplayNode = BaseNode & { type: "textDisplay"; content: string; }
+type ThumbnailNode = BaseNode & { type: "thumbnail"; media: UnfurledMediaItem; description?: string; spoiler?: boolean; }
+type MediaGalleryNode = BaseNode & { type: "mediaGallery"; itemIds: NodeId[]; }
+type MediaGalleryItemNode = BaseNode & { type: "mediaGalleryItem"; media: UnfurledMediaItem; description?: string; spoiler?: boolean; }
+type FileNode = BaseNode & { type: "file"; file: UnfurledMediaItem; spoiler?: boolean; }
+type SeparatorNode = BaseNode & { type: "separator"; divider?: boolean; spacing?: number; }
+```
+
+Field names on nodes match the Discord JSON field names so `toMessage` is mostly spreading. Check each against the zod schemas in `src/discord/schema.ts` lines 174 to 530 and use exactly the same optionality.
+
+Store:
+
+```ts
+interface DocumentState {
+  nodes: Record<NodeId, Node>;
+  rootId: NodeId;              // the single MessageNode
+  actions: Record<string, MessageActionSet>;  // unchanged from today, keyed by action set id
+}
+
+interface DocumentActions {
+  update<T extends Node>(id: NodeId, patch: Partial<Omit<T, "id" | "type" | "parentId">>): void;
+  insert(parentId: NodeId, slot: ChildSlot, index: number | "end", node: Omit<Node, "id" | "parentId">): NodeId;
+  remove(id: NodeId): void;                   // recursive
+  move(id: NodeId, delta: -1 | 1): void;
+  duplicate(id: NodeId): NodeId;              // deep copy with fresh ids, inserted after the original
+  replaceAll(message: Message): void;         // fromMessage
+  clear(): void;
+  setComponentsV2(enabled: boolean): void;    // toggles flag bit 15 on the root
+}
+```
+
+`ChildSlot` names which array on the parent: `"embeds" | "components" | "fields" | "children" | "options" | "items" | "accessory"`. `insert`, `remove`, `move`, `duplicate` are the only functions that touch the child arrays, so ordering logic lives in one place.
+
+Middleware stack, same as today: `immer`, `persist` with `name: "current-message", version: 1`, `temporal` from zundo with `partialize: (s) => ({ nodes: s.nodes, rootId: s.rootId, actions: s.actions })`, `limit: 10`, debounced `handleSet` as in the existing store.
+
+Selectors, in the same file:
+
+```ts
+export const useNode = <T extends Node>(id: NodeId) => useDocumentStore((s) => s.nodes[id] as T);
+export const useChildIds = (id: NodeId, slot: ChildSlot) => useDocumentStore((s) => childIds(s.nodes[id], slot), shallow);
+```
+
+Conversion, new file `src/state/documentConvert.ts`:
+
+```ts
+export function fromMessage(message: Message): { nodes: Record<NodeId, Node>; rootId: NodeId; actions: ... }
+export function toMessage(state: DocumentState): { message: Message; pathToId: Map<string, NodeId> }
+```
+
+`toMessage` walks from the root and, while building each array element, records `pathToId.set("embeds.0", embedId)`, `pathToId.set("embeds.0.fields.2", fieldId)`, `pathToId.set("components.1.components.0", buttonId)`, and so on. Memoize on `nodes` identity (a module-level `WeakMap<nodes, result>` is enough since immer produces a new object on every change).
+
+Ids: use the existing `getUniqueId()` from `src/util` but as a string. Discord components need numeric `id` fields for V2; keep those as a separate `discordId?: number` on the node, generated in `toMessage` if missing. Don't conflate them.
+
+Tests: add vitest (`yarn add -D vitest`) and `src/state/documentConvert.test.ts` with:
+
+- `toMessage(fromMessage(m))` deep-equals `m` for: empty message, message with 2 embeds and fields, V1 action row with button and select with options, V2 container with section, text display, thumbnail accessory, media gallery, file, separator. Take fixture messages from `src/discord/schema.ts` tests if any exist, otherwise write them by hand from the schema.
+- `pathToId` has an entry for every array element in the fixture.
+- `remove` of a container removes all descendants from `nodes`.
+- `duplicate` produces no shared ids with the original.
+
+Done when: tests pass, `tsc` passes, nothing else changed.
+
+### F3. Embeds on the new store
+
+Files: `EditorEmbeds.tsx`, `EditorEmbed.tsx`, `EditorEmbedBody.tsx`, `EditorEmbedAuthor.tsx`, `EditorEmbedFooter.tsx`, `EditorEmbedImages.tsx`, `EditorEmbedFields.tsx`, `EditorEmbedField.tsx`.
+
+Pattern for every component: take `id: NodeId` as the only data prop. Read with `useNode<EmbedNode>(id)`. Write with `update(id, { title })`. Structural ops with `move(id, -1)`, `remove(id)`, `duplicate(id)`, `insert(parentId, "fields", "end", { type: "embedField", name: "", value: "" })`.
+
+`EditorEmbeds` reads `useChildIds(rootId, "embeds")` and renders `<EditorEmbed id={id} />` per entry. No index props anywhere.
+
+Validation: components currently pass `validationPathPrefix="embeds.0"` strings. Replace `useValidationErrorStore.getIssueByPath(path)` with a new `getIssueForNode(id, field?)` that looks up `pathToId` from the memoized `toMessage` result in reverse (build `idToPath` at the same time). The validation runner in `views/editor/editor.tsx` calls `messageSchema.safeParse(toMessage(state).message)` instead of parsing the store state directly.
+
+`EditorMessagePreview`, `MessagePreview`, JSON view (`views/editor/json.tsx`), export (`MessageExportImport.tsx`), send (`api/mutations.ts` wherever it reads `useCurrentMessageStore.getState()`), share, and the AI assistant all read the message. Switch them to `toMessage(useDocumentStore.getState()).message` or a `useMessage()` hook that memoizes. Do this in F3 since the preview must show embeds from the new store.
+
+The old `message.ts` store must still exist for components (V1 and V2) at this point. Both stores hold state, so `replaceAll` on the document store and `replace` on the old store both need to be called by restore, import, clear, and load-saved-message paths. Find them with `grep -rn "\.replace(" src`. This dual-write is temporary until F4.
+
+Delete every `setEmbed*`, `addEmbed`, `moveEmbed*`, `duplicateEmbed`, `deleteEmbed`, `clearEmbeds`, `*EmbedField*` action from `message.ts` and its interface.
+
+Done when: the embed editor is fully functional against the new store, undo works, preview updates, validation errors show on the right field, saved message load and restore populate embeds.
+
+### F4. Components on the new store
+
+Files: everything named `EditorComponent*.tsx` (27 files) and `EditorComponentEntry.tsx`, `EditorAction*.tsx` if they read component ids.
+
+Same pattern as F3. The `EditorComponentBase*` files exist because the same UI is used at different nesting depths with different callback sets. With id-based access there is no difference between depths, so merge each `Base` file into its non-Base counterpart:
+
+- `EditorComponentBaseButton` + `EditorComponentActionRowButton` -> `EditorComponentButton`
+- `EditorComponentBaseSelectMenu` + `EditorComponentActionRowSelectMenu` -> `EditorComponentSelectMenu`
+- `EditorComponentBaseActionRow` + `EditorComponentActionRow` -> `EditorComponentActionRow`
+- `EditorComponentBaseContainer` + `EditorComponentContainer` -> `EditorComponentContainer`
+- likewise for Section, TextDisplay, Separator, File, MediaGallery, MediaGalleryItem, Thumbnail, SelectMenuOption.
+
+`EditorComponentEntry` becomes a switch on `node.type` rendering the matching component with `id`. `EditorComponentAddDropdown` takes `parentId` and `slot` and calls `insert`.
+
+Action sets: buttons and select options reference `actionSetId`. `state/actions.ts` is a separate store today with a TODO to merge; leave it alone in this PR, just keep the `actionSetId` linkage identical to what `message.ts` does now (grep `actions[` in `message.ts` to see how ids are created on add and cleaned on remove; replicate in `insert` and `remove`).
+
+Delete the remaining component actions from `message.ts`. After this PR `message.ts` should contain only `content`, `username`, `avatar_url`, `tts`, `thread_name`, `flags`, `allowed_mentions` and their setters.
+
+Done when: V1 action rows and V2 containers are fully editable, nested add/move/remove/duplicate work at every depth, 5 root component limit and per-container limits still enforced (limits live in the zod schema, they just need to surface through validation).
+
+### F5. Finish
+
+- Move the remaining root fields into the `MessageNode`. `EditorWebhookFields.tsx`, `EditorMessageContentField.tsx`, `EditorComponentsV2Toggle.tsx`, `EditorMenuBar.tsx` switch to `useNode(rootId)` and `update(rootId, ...)`.
+- Delete `src/state/message.ts`. Grep for `useCurrentMessageStore` and `useCurrentMessageUndoStore` and fix every remaining import. `EditorUndoButtons.tsx` uses the temporal store; point it at `useDocumentStore.temporal`.
+- Persist migration: the old key `current-message` version 0 held a raw `Message`. In the document store's `persist` config add `migrate: (persisted, version) => version === 0 ? fromMessage(persisted as Message) : persisted`. Keep `name: "current-message"` so the migration actually fires.
+- Fold `src/discord/restoreSchema.ts` into `schema.ts`. `restoreSchema` is the lenient parser used when importing arbitrary Discord JSON. Replace it with `messageSchema` plus `.catch()` defaults on the fields that differ, or a `preprocess` step, and make `fromMessage` accept the output. Grep for `restoreSchema` imports and switch them. Delete the file.
+- Remove `immer` from `package.json` dependencies (zustand's middleware brings its own). Remove `just-debounce-it` or `debounce`, whichever has fewer imports, and switch the callers.
+
+Done when: `grep -rn "message.ts\|restoreSchema\|useCurrentMessageStore" src` is empty, a draft saved under the old store version loads after deploy, all F2 tests pass, `tsc` and biome are clean.
+
+---
+
+## Things deliberately not in this plan
+
+- Merging `state/actions.ts` into the document store. Separate later PR.
+- Dependency bumps (react-query v3 to tanstack v5, vite 4 to 7, tailwind 3 to 4). Separate later PRs, one each.
+- Any change to `embedg-site`.
+- Any change to the sqlc handler layer beyond what the steps above require.
+- Splitting `actions/template/func.go` (1202 lines). Works, leave it.
