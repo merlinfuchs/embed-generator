@@ -1,3 +1,15 @@
+/**
+ * The lenient half of the message schema, used wherever a message arrives from
+ * outside the editor: a Discord restore, a pasted JSON blob, a saved message,
+ * the AI assistant.
+ *
+ * It deliberately mirrors `schema.ts` rather than reusing it. Discord sends
+ * nulls where the editor expects absent fields, and a pasted message may carry
+ * a value the editor would reject, so parsing here coerces and defaults
+ * instead of failing: an import should land in the editor and be flagged by
+ * validation, not be refused at the door. `schema.ts` is the strict half that
+ * decides whether a message can be sent.
+ */
 import { z } from "zod";
 import { getUniqueId } from "../util";
 

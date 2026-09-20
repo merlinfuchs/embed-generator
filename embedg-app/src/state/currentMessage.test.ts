@@ -43,7 +43,7 @@ const draft = {
 
 async function documentAt(version: number, message: unknown) {
   const { fromMessage } = await import("./documentConvert");
-  const { parseMessageWithAction } = await import("../discord/restoreSchema");
+  const { parseMessageWithAction } = await import("../discord/importSchema");
 
   return JSON.stringify({
     state: fromMessage(parseMessageWithAction(message)),

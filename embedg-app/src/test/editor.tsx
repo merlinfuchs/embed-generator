@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { MemoryRouter } from "react-router-dom";
-import { parseMessageWithAction } from "../discord/restoreSchema";
+import { parseMessageWithAction } from "../discord/importSchema";
 import { setCurrentMessage } from "../state/currentMessage";
 import { useDocumentStore } from "../state/document";
 import { toMessage } from "../state/documentConvert";

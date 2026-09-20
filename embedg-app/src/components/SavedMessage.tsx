@@ -12,7 +12,7 @@ import {
 } from "../api/mutations";
 import { useToasts } from "../util/toasts";
 import { useNavigate } from "react-router-dom";
-import { parseMessageWithAction } from "../discord/restoreSchema";
+import { parseMessageWithAction } from "../discord/importSchema";
 import { useState } from "react";
 import { useQueryClient } from "react-query";
 import ConfirmModal from "./ConfirmModal";

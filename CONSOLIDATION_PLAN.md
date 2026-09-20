@@ -641,10 +641,10 @@ Done when: V1 action rows and V2 containers are fully editable, nested add/move/
 - Move the remaining root fields into the `MessageNode`. `EditorWebhookFields.tsx`, `EditorMessageContentField.tsx`, `EditorComponentsV2Toggle.tsx`, `EditorMenuBar.tsx` switch to `useNode(rootId)` and `update(rootId, ...)`.
 - Delete `src/state/message.ts`. Grep for `useCurrentMessageStore` and `useCurrentMessageUndoStore` and fix every remaining import. `EditorUndoButtons.tsx` uses the temporal store; point it at `useDocumentStore.temporal`.
 - Persist migration: the old key `current-message` version 0 held a raw `Message`. In the document store's `persist` config add `migrate: (persisted, version) => version === 0 ? fromMessage(persisted as Message) : persisted`. Keep `name: "current-message"` so the migration actually fires.
-- Fold `src/discord/restoreSchema.ts` into `schema.ts`. `restoreSchema` is the lenient parser used when importing arbitrary Discord JSON. Replace it with `messageSchema` plus `.catch()` defaults on the fields that differ, or a `preprocess` step, and make `fromMessage` accept the output. Grep for `restoreSchema` imports and switch them. Delete the file.
+- ~~Fold `src/discord/restoreSchema.ts` into `schema.ts`.~~ Not done, deliberately. The two schemas are the import boundary and the send boundary: the lenient one coerces Discord's nulls and keeps values the editor would reject, so an import lands in the editor and gets flagged by validation instead of being refused. Folding it into `messageSchema` with `.catch()` would either drop those values or fail the import, both regressions. The file is now `importSchema.ts`, carries a header explaining the split, and its behaviour is pinned by `importSchema.test.ts`.
 - Remove `immer` from `package.json` dependencies (zustand's middleware brings its own). Remove `just-debounce-it` or `debounce`, whichever has fewer imports, and switch the callers.
 
-Done when: `grep -rn "message.ts\|restoreSchema\|useCurrentMessageStore" src` is empty, a draft saved under the old store version loads after deploy, all F2 tests pass, `tsc` and biome are clean.
+Done when: `grep -rn "message.ts\|useCurrentMessageStore" src` is empty, a draft saved under the old store version loads after deploy, all F2 tests pass, `tsc` and biome are clean.
 
 ---
 

@@ -1,5 +1,5 @@
 import { type ChangeEvent, useRef } from "react";
-import { messageSchema } from "../discord/restoreSchema";
+import { messageSchema } from "../discord/importSchema";
 import { z } from "zod";
 import { useToasts } from "../util/toasts";
 import type { SavedMessageWire } from "../api/wire";

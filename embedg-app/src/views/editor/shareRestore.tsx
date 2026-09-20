@@ -4,7 +4,7 @@ import MessagePreview from "../../components/MessagePreview";
 import { useSharedMessageQuery } from "../../api/queries";
 import { useMemo } from "react";
 import { useToasts } from "../../util/toasts";
-import { parseMessageWithAction } from "../../discord/restoreSchema";
+import { parseMessageWithAction } from "../../discord/importSchema";
 import { setCurrentMessage } from "../../state/currentMessage";
 
 export default function ShareRestoreView() {

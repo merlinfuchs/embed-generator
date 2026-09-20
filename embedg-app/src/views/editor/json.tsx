@@ -8,7 +8,7 @@ import {
 import { json, jsonParseLinter } from "@codemirror/lang-json";
 import { githubDark } from "@uiw/codemirror-theme-github";
 import { linter, lintGutter } from "@codemirror/lint";
-import { parseMessageWithAction } from "../../discord/restoreSchema";
+import { parseMessageWithAction } from "../../discord/importSchema";
 import { useNavigate } from "react-router-dom";
 import { useToasts } from "../../util/toasts";
 
