@@ -24,7 +24,7 @@ func (m *AccessManager) GetMemberForUser(ctx context.Context, sess *session.Sess
 			return nil, fmt.Errorf("failed to get user token: %w", err)
 		}
 
-		member, err := m.userRest.get(sess.TokenHash).GetCurrentMember(token, guildID, rest.WithCtx(ctx))
+		member, err := m.userRest.GetCurrentMember(token, guildID, rest.WithCtx(withRateLimitKey(ctx, sess.TokenHash)))
 		if err != nil {
 			if common.IsDiscordRestStatusCode(err, http.StatusNotFound, http.StatusForbidden) {
 				return nil, store.ErrNotFound
@@ -51,7 +51,7 @@ func (m *AccessManager) GetGuildsForUser(ctx context.Context, sess *session.Sess
 			return nil, fmt.Errorf("failed to get user token: %w", err)
 		}
 
-		guilds, err := m.userRest.get(sess.TokenHash).GetCurrentUserGuilds(token, 0, 0, 200, false, rest.WithCtx(ctx))
+		guilds, err := m.userRest.GetCurrentUserGuilds(token, 0, 0, 200, false, rest.WithCtx(withRateLimitKey(ctx, sess.TokenHash)))
 		if err != nil {
 			if common.IsDiscordRestStatusCode(err, http.StatusUnauthorized) {
 				return nil, m.sessionManager.InvalidateSession(ctx, sess)

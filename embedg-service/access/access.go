@@ -28,7 +28,7 @@ type AccessManager struct {
 	singleFlight    singleflight.Group
 	userMemberCache *ttlcache.Cache[string, *discord.Member]
 	userGuildsCache *ttlcache.Cache[string, []discord.OAuth2Guild]
-	userRest        *userRestClients
+	userRest        rest.Rest
 }
 
 func New(
@@ -52,7 +52,7 @@ func New(
 		sessionManager:  sessionManager,
 		userMemberCache: userMemberCache,
 		userGuildsCache: userGuildsCache,
-		userRest:        newUserRestClients(),
+		userRest:        newUserRest(),
 	}
 }
 
