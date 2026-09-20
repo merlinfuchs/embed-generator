@@ -433,7 +433,7 @@ Two of B9's stray legacy imports had to come along, because they are what stoppe
 
 **Manual verification checklist** (run all, on prod after deploy):
 
-1. Log in fresh. Guild picker lists correct guilds.
+1. Log in fresh. Guild picker lists correct guilds. An existing session from before the scope change gets one 401 and is sent back to log in, rather than erroring on every request.
 2. Open a guild. Channels and roles lists populate.
 3. Send a message via bot to a channel. Send via webhook URL.
 4. Edit a sent message. Restore a message by id.
@@ -444,9 +444,9 @@ Two of B9's stray legacy imports had to come along, because they are what stoppe
 9. Custom bot: create, verify online with presence, run a custom command, click an action button, change token, delete.
 10. Action button on a normal bot message responds.
 11. Trigger an entitlement (test SKU) and confirm premium status updates.
-12. `/api/health/shard-list` shows all shards Ready.
+12. `/api/health/shards` shows every shard Ready and returns 200 rather than 503.
 13. Memory after 1 hour compared to the Stateway deployment. Should be flat and well under 1 GB; if it grows with time, something is caching guild payloads.
-14. Boot: time from start until `/api/health` returns 200, and Postgres statement rate during that window.
+14. Boot: `/api/health` answers 200 as soon as the port binds now, so the number that matters is how long `/api/health/shards` takes to go all Ready, and the Postgres statement rate while the guild tracker drains the GuildReady burst.
 
 ### B8. Build and docs
 
