@@ -9,7 +9,6 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/jellydator/ttlcache/v3"
-	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-service/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
 	"github.com/merlinfuchs/embed-generator/embedg-service/guildstate"
@@ -89,9 +88,9 @@ func (m *AccessManager) GetGuildAccessForSession(ctx context.Context, sess *sess
 	if err != nil {
 		if common.IsDiscordRestErrorCode(
 			err,
-			discordgo.ErrCodeMissingAccess,
-			discordgo.ErrCodeUnknownGuild,
-			discordgo.ErrCodeUnknownMember,
+			rest.JSONErrorCodeMissingAccess,
+			rest.JSONErrorCodeUnknownGuild,
+			rest.JSONErrorCodeUnknownMember,
 		) {
 			// The bot is not in the server, so we can't compute the permissions
 			return res, nil, nil

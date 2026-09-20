@@ -12,17 +12,47 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
+	"github.com/merlinfuchs/embed-generator/embedg-service/store"
 )
 
-var ErrChannelNotFound = errors.New("channel not found in cache")
+var ErrChannelNotFound = errors.New("channel not found")
+
+// channel resolves a channel, reporting a channel the bot can no longer see as ErrChannelNotFound
+// so callers can tell that apart from a failed request.
+func (m *WebhookManager) channel(ctx context.Context, channelID common.ID) (discord.GuildChannel, error) {
+	channel, err := m.guildState.Channel(ctx, channelID)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return nil, ErrChannelNotFound
+		}
+		return nil, err
+	}
+
+	return channel, nil
+}
+
+// webhookChannel resolves the channel a webhook has to live on. Threads can't own webhooks, so
+// messages to a thread go through the parent's webhook with a thread id.
+func (m *WebhookManager) webhookChannel(ctx context.Context, channel discord.GuildChannel) (discord.GuildChannel, error) {
+	if _, ok := channel.(discord.GuildThread); !ok {
+		return channel, nil
+	}
+
+	parentID := channel.ParentID()
+	if parentID == nil {
+		return nil, fmt.Errorf("thread %s has no parent channel", channel.ID())
+	}
+
+	return m.channel(ctx, *parentID)
+}
 
 //go:embed logo-512.png
 var logoFile []byte
 
 func (m *WebhookManager) SendMessageToChannel(ctx context.Context, channelID common.ID, params discord.WebhookMessageCreate) (*discord.Message, error) {
-	channel, ok := m.caches.Channel(channelID)
-	if !ok {
-		return nil, ErrChannelNotFound
+	channel, err := m.channel(ctx, channelID)
+	if err != nil {
+		return nil, err
 	}
 
 	useCustomBot := false
@@ -56,7 +86,7 @@ func (m *WebhookManager) SendMessageToChannel(ctx context.Context, channelID com
 			return nil, fmt.Errorf("Failed to send message: %w", err)
 		}
 	} else {
-		webhook, err := m.findWebhookForChannel(ctx, channelID)
+		webhook, err := m.findWebhookForChannel(ctx, channel)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to find webhook: %w", err)
 		}
@@ -81,9 +111,9 @@ func (m *WebhookManager) SendMessageToChannel(ctx context.Context, channelID com
 }
 
 func (m *WebhookManager) UpdateMessageInChannel(ctx context.Context, channelID common.ID, messageID common.ID, params discord.WebhookMessageUpdate) (*discord.Message, error) {
-	channel, ok := m.caches.Channel(channelID)
-	if !ok {
-		return nil, ErrChannelNotFound
+	channel, err := m.channel(ctx, channelID)
+	if err != nil {
+		return nil, err
 	}
 
 	useCustomBot := false
@@ -120,7 +150,7 @@ func (m *WebhookManager) UpdateMessageInChannel(ctx context.Context, channelID c
 			return nil, fmt.Errorf("Failed to edt message: %w", err)
 		}
 	} else {
-		webhook, err := m.getWebhookForChannel(ctx, channelID, *msg.WebhookID)
+		webhook, err := m.getWebhookForChannel(ctx, channel, *msg.WebhookID)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get the webhook that was used to create the message: %w", err)
 		}
@@ -143,17 +173,10 @@ func (m *WebhookManager) UpdateMessageInChannel(ctx context.Context, channelID c
 	return newMessage, nil
 }
 
-func (m *WebhookManager) findWebhookForChannel(ctx context.Context, channelID common.ID) (*discord.IncomingWebhook, error) {
-	channel, ok := m.caches.Channel(channelID)
-	if !ok {
-		return nil, ErrChannelNotFound
-	}
-
-	if channel.Type() == discord.ChannelTypeGuildNewsThread || channel.Type() == discord.ChannelTypeGuildPublicThread || channel.Type() == discord.ChannelTypeGuildPrivateThread {
-		channel, ok = m.caches.Channel(*channel.ParentID())
-		if !ok {
-			return nil, fmt.Errorf("parent channel not found in cache")
-		}
+func (m *WebhookManager) findWebhookForChannel(ctx context.Context, target discord.GuildChannel) (*discord.IncomingWebhook, error) {
+	channel, err := m.webhookChannel(ctx, target)
+	if err != nil {
+		return nil, err
 	}
 
 	restClient, customBot, err := m.customBotManager.GetRestForGuild(ctx, channel.GuildID())
@@ -192,17 +215,10 @@ func (m *WebhookManager) findWebhookForChannel(ctx context.Context, channelID co
 	return webhook, nil
 }
 
-func (m *WebhookManager) getWebhookForChannel(ctx context.Context, channelID common.ID, webhookID common.ID) (*discord.IncomingWebhook, error) {
-	channel, ok := m.caches.Channel(channelID)
-	if !ok {
-		return nil, ErrChannelNotFound
-	}
-
-	if channel.Type() == discord.ChannelTypeGuildNewsThread || channel.Type() == discord.ChannelTypeGuildPublicThread || channel.Type() == discord.ChannelTypeGuildPrivateThread {
-		channel, ok = m.caches.Channel(*channel.ParentID())
-		if !ok {
-			return nil, fmt.Errorf("parent channel not found in cache")
-		}
+func (m *WebhookManager) getWebhookForChannel(ctx context.Context, target discord.GuildChannel, webhookID common.ID) (*discord.IncomingWebhook, error) {
+	channel, err := m.webhookChannel(ctx, target)
+	if err != nil {
+		return nil, err
 	}
 
 	// First try to get the webhook with the default rest client

@@ -8,11 +8,11 @@ import (
 	"github.com/disgoorg/disgo/rest"
 )
 
-func IsDiscordRestErrorCode(err error, codes ...int) bool {
+func IsDiscordRestErrorCode(err error, codes ...rest.JSONErrorCode) bool {
 	var httpErr *rest.Error
 	if errors.As(err, &httpErr) {
 		for _, code := range codes {
-			if int(httpErr.Code) == code {
+			if httpErr.Code == code {
 				return true
 			}
 		}

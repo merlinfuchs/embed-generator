@@ -63,7 +63,7 @@ type ComponentWithActions struct {
 
 	// Separator
 	Divider *bool `json:"divider,omitempty"`
-	Spacing int  `json:"spacing,omitempty"`
+	Spacing int   `json:"spacing,omitempty"`
 
 	// Container
 	AccentColor int `json:"accent_color,omitempty"`
