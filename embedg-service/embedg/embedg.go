@@ -21,6 +21,8 @@ type EmbedGeneratorConfig struct {
 	// IdentifyConcurrency caps how many shards identify per five second window. 0 leaves it at
 	// what Discord granted, which is the most it will allow.
 	IdentifyConcurrency int
+	// ActivityName is shown as "Watching <name>". Empty identifies without a presence.
+	ActivityName string
 	// Shards is empty for the admin CLI, which only needs the rest client. Asking for a shard
 	// manager costs a GetGatewayBot round trip even when nothing ever opens it.
 	Shards common.Shards
@@ -52,6 +54,17 @@ func NewEmbedGenerator(config EmbedGeneratorConfig) (*EmbedGenerator, error) {
 				// sweep instead.
 				gateway.WithIntents(gateway.IntentGuilds),
 			),
+		}
+
+		if config.ActivityName != "" {
+			// Part of the identify payload, so shards are never briefly online without it.
+			shardOpts = append(shardOpts, sharding.WithGatewayConfigOpts(
+				gateway.WithPresenceOpts(
+					gateway.WithWatchingActivity(config.ActivityName),
+					// The activity helpers leave the status empty, which identify rejects.
+					gateway.WithOnlineStatus(discord.OnlineStatusOnline),
+				),
+			))
 		}
 
 		// Left alone, disgo uses the concurrency Discord granted. Lowering it spreads the guild

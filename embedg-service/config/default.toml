@@ -25,6 +25,7 @@ access_key_id = "embedg"
 secret_access_key = "1234567890"
 
 [discord]
+activity_name = "message.style"
 # 0 asks Discord what to use. Pin both once you run more than one instance.
 shard_count = 0
 identify_concurrency = 0
