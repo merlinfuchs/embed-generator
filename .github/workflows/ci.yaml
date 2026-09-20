@@ -1,0 +1,29 @@
+name: CI
+
+on: [pull_request]
+
+jobs:
+  service:
+    name: embedg-service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: embedg-service/go.mod
+      - run: go build ./... && go vet ./...
+        working-directory: embedg-service
+
+  app:
+    name: embedg-app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: corepack enable
+      - run: yarn install --frozen-lockfile
+        working-directory: embedg-app
+      - run: ./node_modules/.bin/tsc --noEmit
+        working-directory: embedg-app

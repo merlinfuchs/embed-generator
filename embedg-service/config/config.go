@@ -62,9 +62,9 @@ func loadBase(basePath string) (*koanf.Koanf, error) {
 		}
 	}
 
-	envProvider := env.Provider("XENEX_", ".", func(s string) string {
+	envProvider := env.Provider("EMBEDG_", ".", func(s string) string {
 		return strings.Replace(strings.ToLower(
-			strings.TrimPrefix(s, "XENEX_")), "__", ".", -1)
+			strings.TrimPrefix(s, "EMBEDG_")), "__", ".", -1)
 	})
 	if err := k.Load(envProvider, nil); err != nil {
 		return nil, fmt.Errorf("Failed to load env config: %v", err)
