@@ -254,6 +254,10 @@ func NewCommandOptionData(src Source, guildID common.ID, c discord.SlashCommandI
 		return UserData{u: discord.User{ID: userID}}
 	case discord.ApplicationCommandOptionTypeChannel:
 		channelID := o.Snowflake()
+		resolved, ok := c.Resolved.Channels[channelID]
+		if ok {
+			return NewResolvedChannelData(src, resolved)
+		}
 		return NewChannelData(src, channelID, nil)
 	case discord.ApplicationCommandOptionTypeRole:
 		roleID := o.Snowflake()
@@ -413,6 +417,8 @@ type ChannelData struct {
 	src       Source
 	channelID common.ID
 	channel   discord.GuildChannel
+	// name is set when we only have an interaction's resolved channel, which carries no topic.
+	name string
 }
 
 func NewChannelData(src Source, channelID common.ID, c discord.GuildChannel) *ChannelData {
@@ -420,6 +426,16 @@ func NewChannelData(src Source, channelID common.ID, c discord.GuildChannel) *Ch
 		src:       src,
 		channelID: channelID,
 		channel:   c,
+	}
+}
+
+// NewResolvedChannelData builds channel data from the resolved data Discord sends along with an
+// interaction. It isn't a full channel, so only a template that reads the topic costs a fetch.
+func NewResolvedChannelData(src Source, c discord.ResolvedChannel) *ChannelData {
+	return &ChannelData{
+		src:       src,
+		channelID: c.ID,
+		name:      c.Name,
 	}
 }
 
@@ -446,6 +462,10 @@ func (d *ChannelData) ID() string {
 }
 
 func (d *ChannelData) Name() (string, error) {
+	if d.name != "" {
+		return d.name, nil
+	}
+
 	if err := d.ensureChannel(); err != nil {
 		return "", err
 	}

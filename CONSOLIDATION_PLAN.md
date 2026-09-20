@@ -148,7 +148,7 @@ UPDATE sessions SET access_token = $2, refresh_token = $3, token_expires_at = $4
 
 `model.Session` gets `RefreshToken string`, `TokenExpiresAt time.Time`, `Scopes []string`. `store.SessionStore` gets `UpdateSessionTokens`. `session.SessionManager.CreateSession` signature grows to accept the `*oauth2.Token` and scopes. `authenticateWithCode` in the auth handler passes `tokenData` through; the granted scopes are in `tokenData.Extra("scope")` as a space-separated string.
 
-**Scope check in middleware.** Still open. `SessionRequired` never grew the check, so `Scopes` is written on every session and read by nothing. The gap is narrow because B4 truncated the sessions table, so every live session was minted with the scope; a session that somehow lacks it gets an opaque Discord 401 out of `GetMemberForUser` instead of a clean "log in again". The fix is still: in `api/session/middleware.go` `SessionRequired`, if `Scopes` does not contain `guilds.members.read`, return `handlers.Unauthorized("scope_missing", "Please log in again")`. Nothing is needed on the frontend, `client.ts` suppresses toasts for every 401 by status, not by code.
+**Scope check in middleware.** `SessionRequired` rejects a session whose `Scopes` lack `guilds.members.read` with `scope_missing`, which is what makes storing the column worth anything. Without it the user gets an opaque Discord 401 out of `GetMemberForUser` instead of being sent back to log in. Nothing is needed on the frontend, `client.ts` suppresses toasts for every 401 by status, not by code.
 
 **Token refresh.** New method on `SessionManager`:
 
@@ -258,7 +258,7 @@ Both caches are capacity bounded and evict least recently used: uncapped, a traf
 **Payload before REST.** Interactions already carry most of what the templates and handlers read from the cache. Use it before touching the provider:
 
 - `actions/template/provider.go` `InteractionProvider.ProvideData` calls `NewChannelData(caches, id, nil)`. Pass `p.interaction.Channel()` instead; it's a partial channel with id, type, name, parent id, which covers the common template fields. Only fall back to the provider for fields the partial lacks.
-- `actions/template/data.go` `NewCommandOptionData` resolved channel, role and member options from the cache. User, role and attachment options now read `Resolved` and cost nothing. The channel option is the one left, and not by oversight: `Resolved.Channels` is a `discord.ResolvedChannel` (id, name, type, permissions, thread metadata, parent id), not a `discord.GuildChannel`, so `NewChannelData` can't take it without a shim that adapts the partial. Worth doing, it just isn't the one-liner the rest were.
+- `actions/template/data.go` `NewCommandOptionData` resolved channel, role and member options from the cache. All of them read `Resolved` now. The channel option needed a shim rather than the one-liner the others were: `Resolved.Channels` holds a `discord.ResolvedChannel` (id, name, type, permissions, thread metadata, parent id), not a `discord.GuildChannel`, so `NewResolvedChannelData` keeps the name on the side. `{{Channel.Name}}` and `{{Channel.Mention}}` cost nothing; `{{Channel.Topic}}` still fetches, because the resolved payload has no topic to give.
 - `GuildData`, `ChannelData`, `RoleData`, `MemberData.Roles()` stay lazy as they are today. They must call the provider only inside `ensure*()`, never in the constructor, so a template that doesn't reference `{{Guild...}}` costs nothing. Those types take a `template.Source`, which carries the provider and a context: `text/template` calls these methods with no way to pass one.
 
 Note `actions/handler/handle.go` passed `nil` caches with a `TODO: Fix caches access`, so every guild, channel and role field in an action response template was failing. Wiring the provider in fixes it.
@@ -466,7 +466,7 @@ Done when: `docker build .` succeeds and the container serves the app on 8080 ag
 
 ### B10. Merge to main
 
-Open before this: the B3 scope check above, the `Resolved.Channels` shim, and every manual checklist in B5 through B8, none of which can run without a live bot and prod credentials.
+Everything in Part B is written. What is left before this step is testing: the manual checklists in B5 through B8, none of which can run without a live bot and prod credentials.
 
 Squash or merge `merlin/consolidate` into `main`. Tag a release. Release note: link the README migration section.
 
@@ -625,7 +625,7 @@ Done when: V1 action rows and V2 containers are fully editable, nested add/move/
 - Delete `src/state/message.ts`. Grep for `useCurrentMessageStore` and `useCurrentMessageUndoStore` and fix every remaining import. `EditorUndoButtons.tsx` uses the temporal store; point it at `useDocumentStore.temporal`.
 - Persist migration: the old key `current-message` version 0 held a raw `Message`. In the document store's `persist` config add `migrate: (persisted, version) => version === 0 ? fromMessage(persisted as Message) : persisted`. Keep `name: "current-message"` so the migration actually fires.
 - ~~Fold `src/discord/restoreSchema.ts` into `schema.ts`.~~ Not done, deliberately. The two schemas are the import boundary and the send boundary: the lenient one coerces Discord's nulls and keeps values the editor would reject, so an import lands in the editor and gets flagged by validation instead of being refused. Folding it into `messageSchema` with `.catch()` would either drop those values or fail the import, both regressions. The file is now `importSchema.ts`, carries a header explaining the split, and its behaviour is pinned by `importSchema.test.ts`.
-- ~~Remove `immer` from `package.json` dependencies (zustand's middleware brings its own).~~ Wrong: zustand declares `immer: ">=9.0"` as a peer dependency, and three stores use `zustand/middleware/immer`, so removing it breaks them. `immer` stays. What is actually orphaned is `@types/debounce`, types for a `debounce` package that isn't installed; the two debounce callers both use `just-debounce-it`.
+- ~~Remove `immer` from `package.json` dependencies (zustand's middleware brings its own).~~ Wrong: zustand declares `immer: ">=9.0"` as a peer dependency, and three stores use `zustand/middleware/immer`, so removing it breaks them. `immer` stays. `@types/debounce` was the actually orphaned one, types for a `debounce` package that isn't installed while both callers use `just-debounce-it`; dropped, along with its `yarn.lock` entry so `--frozen-lockfile` still passes.
 
 Done when: `grep -rn "message.ts\|useCurrentMessageStore" src` is empty, a draft saved under the old store version loads after deploy, all F2 tests pass, `tsc` and biome are clean.
 
