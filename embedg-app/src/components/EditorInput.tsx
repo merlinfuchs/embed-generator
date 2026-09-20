@@ -86,6 +86,7 @@ export default function EditorInput({
           />
         ) : (
           <input
+            aria-label={label}
             type={type || "text"}
             className="bg-dark-2 px-3 py-2 rounded w-full text-white ring-0 border-transparent focus:outline-none"
             value={value}

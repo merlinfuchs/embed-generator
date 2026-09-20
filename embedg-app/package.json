@@ -52,9 +52,14 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.14",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^14",
+    "@testing-library/user-event": "^14.6.7",
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
     "@vitejs/plugin-react-swc": "^3.0.0",
+    "jsdom": "^24",
     "typescript": "^5.8.3",
     "vite": "^4.2.0",
     "vitest": "^3"

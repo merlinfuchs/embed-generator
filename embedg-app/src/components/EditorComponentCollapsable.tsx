@@ -62,32 +62,24 @@ export default function EditorComponentCollapsable({
         buttons={
           <div className="flex-none text-gray-300 flex items-center space-x-2">
             {moveUp && (
-              <ChevronUpIcon
-                className="h-6 w-6 flex-none"
-                role="button"
-                onClick={moveUp}
-              />
+              <button type="button" aria-label="Move up" onClick={moveUp}>
+                <ChevronUpIcon className="h-6 w-6 flex-none" />
+              </button>
             )}
             {moveDown && (
-              <ChevronDownIcon
-                className="h-6 w-6 flex-none"
-                role="button"
-                onClick={moveDown}
-              />
+              <button type="button" aria-label="Move down" onClick={moveDown}>
+                <ChevronDownIcon className="h-6 w-6 flex-none" />
+              </button>
             )}
             {duplicate && (
-              <DocumentDuplicateIcon
-                className="h-5 w-5 flex-none"
-                role="button"
-                onClick={duplicate}
-              />
+              <button type="button" aria-label="Duplicate" onClick={duplicate}>
+                <DocumentDuplicateIcon className="h-5 w-5 flex-none" />
+              </button>
             )}
             {remove && (
-              <TrashIcon
-                className="h-5 w-5 flex-none"
-                role="button"
-                onClick={remove}
-              />
+              <button type="button" aria-label="Remove" onClick={remove}>
+                <TrashIcon className="h-5 w-5 flex-none" />
+              </button>
             )}
           </div>
         }

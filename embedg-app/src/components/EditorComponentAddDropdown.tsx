@@ -135,6 +135,8 @@ export default function EditorComponentAddDropdown({
             {componentTypes.map((componentType) => (
               <button
                 key={componentType.type}
+                type="button"
+                aria-label={componentType.label}
                 className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left flex items-center gap-2"
                 onClick={() => {
                   if (allowedComponentTypes.includes(componentType.type)) {
