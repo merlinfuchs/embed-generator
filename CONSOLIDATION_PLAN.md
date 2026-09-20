@@ -675,12 +675,11 @@ id into `custom_id: "action:<id>"`), so nothing changes for the server.
 
 ### What it buys
 
-The four special cases, and the duplication between `EditorActionSet` /
-`EditorAction` and their `CommandActionSet` / `CommandAction` twins, which
-differ by about four lines each once both sides address actions the same way.
-`createActionSetSlice` in `state/actionSetSlice.ts` exists because both stores
-need the same reducers; a node-shaped version would leave only the custom
-command store needing it.
+The four special cases. Not the twins: `EditorActionSet` / `EditorAction` and
+`CommandActionSet` / `CommandAction` already differ only in which store they
+read and what the id prop is called, since `createActionSetSlice` in
+`state/actionSetSlice.ts` gives both stores the same reducers. Merging them is
+a prop away today and does not wait on this.
 
 ### What it costs
 
