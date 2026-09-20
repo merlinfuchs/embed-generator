@@ -80,6 +80,7 @@ export default function EditorComponentButton({
                 Disabled
               </div>
               <CheckBox
+                label="Disabled"
                 checked={data.disabled ?? false}
                 onChange={(v) =>
                   update<ButtonNode>(id, {

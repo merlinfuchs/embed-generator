@@ -56,6 +56,7 @@ export default function EditorComponentThumbnail({
               Spoiler
             </div>
             <CheckBox
+              label="Spoiler"
               checked={data.spoiler ?? false}
               onChange={(v) =>
                 update<ThumbnailNode>(id, {

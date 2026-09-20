@@ -43,6 +43,7 @@ export default function EditorComponentSelectMenu({ id }: Props) {
             Disabled
           </div>
           <CheckBox
+            label="Disabled"
             checked={data.disabled ?? false}
             onChange={(v) => update<SelectMenuNode>(id, { disabled: v })}
           />

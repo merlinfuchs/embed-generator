@@ -61,6 +61,7 @@ export default function EditorComponentSeparator({
               Divider
             </div>
             <CheckBox
+              label="Divider"
               checked={data.divider ?? false}
               onChange={(v) =>
                 update<SeparatorNode>(id, {

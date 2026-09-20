@@ -36,6 +36,7 @@ export default function SettingsGeneral() {
           <CheckBox
             checked={editHistoryEnabled}
             onChange={setEditHistoryEnabled}
+            label="Edit History"
           />
           <div>
             <div className="text-white font-medium text-lg ml-3">
@@ -51,6 +52,7 @@ export default function SettingsGeneral() {
           <CheckBox
             checked={alwaysCollapseSidebar}
             onChange={setAlwaysCollapseSidebar}
+            label="Keep Sidebar Collapsed"
           />
           <div>
             <div className="text-white font-medium text-lg ml-3">
@@ -63,7 +65,11 @@ export default function SettingsGeneral() {
           </div>
         </div>
         <div className="flex items-center">
-          <CheckBox checked={confirmOnExit} onChange={setConfirmOnExit} />
+          <CheckBox
+            checked={confirmOnExit}
+            onChange={setConfirmOnExit}
+            label="Confirm On Exit"
+          />
           <div>
             <div className="text-white font-medium text-lg ml-3">
               Confirm On Exit

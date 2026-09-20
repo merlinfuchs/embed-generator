@@ -258,7 +258,11 @@ export default function Action({
                       Public
                     </div>
                   </div>
-                  <CheckBox checked={action.public} onChange={setPublic} />
+                  <CheckBox
+                    label="Public"
+                    checked={action.public}
+                    onChange={setPublic}
+                  />
                 </div>
               )}
               {(action.type === 1 || action.type === 5) && (
@@ -269,6 +273,7 @@ export default function Action({
                     </div>
                   </div>
                   <CheckBox
+                    label="Ping Roles"
                     checked={action.allow_role_mentions}
                     onChange={(v) => setAllowRoleMentions(v)}
                   />
@@ -285,6 +290,7 @@ export default function Action({
                     </div>
                   </div>
                   <CheckBox
+                    label="Default Response"
                     checked={!action.disable_default_response}
                     onChange={(v) => setDisableDefaultResponse(!v)}
                   />

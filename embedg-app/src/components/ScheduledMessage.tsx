@@ -196,6 +196,7 @@ export default function ScheduledMessage({
                     Enabled
                   </div>
                   <CheckBox
+                    label="Enabled"
                     checked={enabled}
                     onChange={setEnabled}
                     height={10}
