@@ -77,6 +77,7 @@ export default function EditorComponentContainer({
                 Spoiler
               </div>
               <CheckBox
+                label="Spoiler"
                 checked={data.spoiler ?? false}
                 onChange={(v) => update<ContainerNode>(id, { spoiler: v })}
               />

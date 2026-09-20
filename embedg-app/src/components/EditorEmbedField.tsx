@@ -48,6 +48,7 @@ export default function EditorEmbedField({ id }: Props) {
               Inline
             </div>
             <CheckBox
+              label="Inline"
               checked={field.inline ?? false}
               height={10}
               onChange={(v) => update<EmbedFieldNode>(id, { inline: v })}

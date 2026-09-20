@@ -231,6 +231,7 @@ export default function ToolsEmbedLinks() {
                 Large
               </div>
               <CheckBox
+                label="Large"
                 checked={!twitterCard}
                 onChange={setTwitterCard}
                 height={10}

@@ -70,6 +70,7 @@ export default function EditorComponentFile({
               Spoiler
             </div>
             <CheckBox
+              label="Spoiler"
               checked={data.spoiler ?? false}
               onChange={(v) =>
                 update<FileNode>(id, {

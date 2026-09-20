@@ -24,6 +24,10 @@ export function loadMessage(raw: unknown) {
   useDocumentStore.temporal.getState().resume();
 }
 
+export function currentMessage() {
+  return toMessage(useDocumentStore.getState()).message;
+}
+
 export function currentComponents() {
   return toMessage(useDocumentStore.getState()).message.components;
 }
