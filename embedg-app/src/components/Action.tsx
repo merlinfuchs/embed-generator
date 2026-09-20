@@ -215,7 +215,7 @@ export default function Action({
                 </div>
                 <select
                   aria-label="Type"
-                  className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
+                  className="bg-dark-2 rounded p-2 w-full font-light cursor-pointer text-white"
                   value={actionTypeGroup}
                   onChange={(v) => setActionTypeGroup(v.target.value)}
                 >
@@ -239,7 +239,7 @@ export default function Action({
                   </div>
                   <select
                     aria-label="Target"
-                    className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
+                    className="bg-dark-2 rounded p-2 w-full font-light cursor-pointer text-white"
                     value={responseStyle}
                     onChange={(v) => setResponseStyle(v.target.value)}
                   >

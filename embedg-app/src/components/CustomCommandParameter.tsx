@@ -137,7 +137,7 @@ export default function CustomCommandParameter({
                 </div>
               </div>
               <select
-                className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
+                className="bg-dark-2 rounded p-2 w-full font-light cursor-pointer text-white"
                 value={parameter.type.toString()}
                 onChange={(v) => setType(v.target.value)}
               >

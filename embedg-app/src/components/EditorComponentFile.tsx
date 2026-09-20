@@ -47,7 +47,7 @@ export default function EditorComponentFile({
             </div>
             <select
               aria-label="Attachment"
-              className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
+              className="bg-dark-2 rounded p-2 w-full font-light cursor-pointer text-white"
               value={data.file.url}
               onChange={(e) =>
                 update<FileNode>(id, { file: { url: e.target.value } })

@@ -8,7 +8,7 @@ import {
 import { nodeField, nodeScope } from "../state/validationError";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
 import EditorInput from "./EditorInput";
-import EditorComponentActions from "./EditorActionSet";
+import EditorActionSet from "./EditorActionSet";
 import EditorComponentEmojiSelect from "./EditorComponentEmojiSelect";
 
 interface Props {
@@ -60,7 +60,7 @@ export default function EditorComponentSelectMenuOption({
           className="flex-auto"
           validationPath={nodeField<SelectOptionNode>(id, "description")}
         />
-        <EditorComponentActions setId={data.action_set_id} />
+        <EditorActionSet setId={data.action_set_id} />
       </div>
     </EditorComponentCollapsable>
   );

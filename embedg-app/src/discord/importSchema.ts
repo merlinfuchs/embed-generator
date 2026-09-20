@@ -177,12 +177,12 @@ export const embedFieldSchema = z.object({
 
 export type EmbedField = z.infer<typeof embedFieldSchema>;
 
-export const embedtitleSchema = z.preprocess(
+export const embedTitleSchema = z.preprocess(
   (d) => d ?? undefined,
   z.optional(z.string()),
 );
 
-export type EmbedTitle = z.infer<typeof embedtitleSchema>;
+export type EmbedTitle = z.infer<typeof embedTitleSchema>;
 
 export const embedDescriptionSchema = z.preprocess(
   (d) => d ?? undefined,
@@ -214,7 +214,7 @@ export type EmbedColor = z.infer<typeof embedColor>;
 
 export const embedSchema = z.object({
   id: uniqueIdSchema,
-  title: embedtitleSchema,
+  title: embedTitleSchema,
   description: embedDescriptionSchema,
   url: embedUrlSchema,
   timestamp: embedTimestampSchema,

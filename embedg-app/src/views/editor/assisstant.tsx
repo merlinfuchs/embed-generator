@@ -35,7 +35,7 @@ export default function AssistantView() {
         setOutput(parsed);
         setBaseData(data.data.data);
       } catch (e) {
-        console.log(e);
+        console.error(e);
         createToast({
           title: "Something went wrong",
           message:

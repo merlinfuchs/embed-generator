@@ -33,7 +33,7 @@ export default function EditorAttachment({ index }: Props) {
           type="text"
           value={name}
           readOnly
-          className="bg-dark-2 w-full no-ring rounded py-1 px-2 flex-auto text-white focus:outline-none"
+          className="bg-dark-2 w-full rounded py-1 px-2 flex-auto text-white focus:outline-none"
         />
         <TrashIcon
           className="w-5 h-5 flex-none cursor-pointer text-gray-300"

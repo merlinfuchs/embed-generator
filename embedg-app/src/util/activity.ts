@@ -44,10 +44,9 @@ async function setupSdk() {
 
   setLocalSessionToken(tokenData.data.session_token);
 
-  const auth = await discordSdk.commands.authenticate({
+  await discordSdk.commands.authenticate({
     access_token: tokenData.data.access_token,
   });
-  console.log("Authenticated", auth);
 
   await queryClient.invalidateQueries();
 }

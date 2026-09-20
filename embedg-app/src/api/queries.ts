@@ -10,7 +10,6 @@ import type {
   SavedMessageListResponseWire,
   SharedMessageGetResponseWire,
   UserResponseWire,
-  CustomCommandGetResponseWire,
   ListEmojisResponseWire,
   GetGuildBrandingResponseWire,
   ScheduledMessageListResponseWire,
@@ -26,8 +25,6 @@ export class APIError extends Error {
     super(message);
   }
 }
-
-const _silentErrorCodes = new Set(["invalid_session"]);
 
 export function handleApiResponse<T extends APIResponse<any>>(
   resp: Promise<T>,
@@ -150,17 +147,6 @@ export function usePremiumGuildFeaturesQuery(guildId?: string | null) {
   });
 }
 
-export function usePremiumGuildEntitlementsQuery(guildId?: string | null) {
-  return useQuery<ListPremiumEntitlementsResponseWire>({
-    queryKey: ["premium", "entitlements", guildId],
-    queryFn: () =>
-      fetchApi(`/api/premium/entitlements?guild_id=${guildId}`).then((res) =>
-        handleApiResponse(res.json()),
-      ),
-    enabled: !!guildId,
-  });
-}
-
 export function usePremiumUserEntitlementsQuery() {
   return useQuery<ListPremiumEntitlementsResponseWire>({
     queryKey: ["premium", "entitlements", "user"],
@@ -200,20 +186,6 @@ export function useCustomCmmandsQuery(guildId: string | null) {
         handleApiResponse(res.json()),
       ),
     enabled: !!guildId,
-  });
-}
-
-export function useCustomCmmandQuery(
-  guildId: string | null,
-  commandId: string | null,
-) {
-  return useQuery<CustomCommandGetResponseWire>({
-    queryKey: ["custom-bot", guildId, "commands", commandId],
-    queryFn: () =>
-      fetchApi(
-        `/api/custom-bot/commands/${commandId}?guild_id=${guildId}`,
-      ).then((res) => handleApiResponse(res.json())),
-    enabled: !!guildId && !!commandId,
   });
 }
 

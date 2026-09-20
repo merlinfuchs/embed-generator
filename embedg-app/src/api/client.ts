@@ -16,7 +16,7 @@ const queryClient = new QueryClient({
       } else {
         useToasts.getState().create({
           type: "error",
-          title: "Unexpect API error",
+          title: "Unexpected API error",
           message: `${err}`,
         });
       }
