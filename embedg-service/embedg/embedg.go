@@ -39,11 +39,18 @@ func NewEmbedGenerator(config EmbedGeneratorConfig) (*EmbedGenerator, error) {
 		opts = append(opts, bot.WithShardManagerConfigOpts(
 			sharding.WithShardCount(config.Shards.Count),
 			sharding.WithShardIDs(config.Shards.IDs...),
-			sharding.WithGatewayConfigOpts(gateway.WithIntents(
-				// Guilds covers the guild, channel and role events the guild table and the guild
-				// state provider are kept fresh by; GuildMessages is only for message deletes.
-				gateway.IntentGuilds|gateway.IntentGuildMessages,
-			)),
+			sharding.WithGatewayConfigOpts(
+				// disgo's compressed transports close their decoder without clearing the pointer,
+				// so the next read reuses a closed one and the shard can never reconnect
+				// ("decoder used after Close"). Both zstd-stream and zlib-stream have it, and
+				// zstd-stream is the default. Uncompressed costs bandwidth, not stability.
+				gateway.WithCompression(gateway.CompressionNone),
+				gateway.WithIntents(
+					// Guilds covers the guild, channel and role events the guild table and the guild
+					// state provider are kept fresh by; GuildMessages is only for message deletes.
+					gateway.IntentGuilds|gateway.IntentGuildMessages,
+				),
+			),
 		))
 	}
 
