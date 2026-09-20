@@ -17,11 +17,11 @@ module.exports = {
         },
         // Accent between the logo azure and Discord blurple.
         azure: {
-          300: "#A9BDFF",
-          400: "#7E9BFF",
-          500: "#5B7CF7",
-          600: "#4A6AE3",
-          700: "#3B55BF",
+          300: "#A3B6FF",
+          400: "#6F8CFF",
+          500: "#4E6EF2",
+          600: "#3F5BD9",
+          700: "#3349B3",
         },
         amber: {
           300: "#FFD27A",

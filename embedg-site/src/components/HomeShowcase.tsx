@@ -312,7 +312,7 @@ export default function HomeShowcase(): JSX.Element {
     ),
     save: (
       <Message avatar={eg} name="Embed Generator" app time="3:02 PM">
-        <Embed color="#5B7CF7">
+        <Embed color="#4E6EF2">
           <div className="mb-1 text-base font-semibold text-mist-100">
             📌 Server rules
           </div>

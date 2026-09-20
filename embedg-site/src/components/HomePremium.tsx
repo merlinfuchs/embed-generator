@@ -13,10 +13,10 @@ const perks = [
 export default function HomePremium(): JSX.Element {
   return (
     <section className="mx-auto max-w-7xl px-5 py-16 md:px-8 lg:py-24">
-      <div className="relative grid gap-10 overflow-hidden rounded-3xl border border-solid border-amber-400/10 bg-[linear-gradient(135deg,#2B2D31_0%,#2F2E2C_65%,#3A3222_100%)] px-6 py-12 md:px-12 lg:grid-cols-2 lg:items-center lg:gap-y-10 lg:px-16 lg:py-14">
+      <div className="relative grid gap-10 overflow-hidden rounded-3xl border border-solid border-amber-400/15 bg-[linear-gradient(135deg,#2B2D31_0%,#31302B_60%,#42341E_100%)] px-6 py-12 md:px-12 lg:grid-cols-2 lg:items-center lg:gap-y-10 lg:px-16 lg:py-14">
         <div
           aria-hidden
-          className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-amber-400/15 blur-[110px]"
+          className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-amber-400/20 blur-[110px]"
         />
         <div className="relative">
           <h2 className="mb-4 text-3xl font-bold tracking-tight text-mist-100 sm:text-4xl">

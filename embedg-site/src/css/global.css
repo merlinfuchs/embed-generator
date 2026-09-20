@@ -3,13 +3,13 @@
 /* Docs/blog theme (Infima). Same navy/azure palette as the landing page.
    Selectors use html[data-theme] so they outrank Infima's own dark overrides. */
 :root {
-  --ifm-color-primary: #4a6ae3;
-  --ifm-color-primary-dark: #3f5fd0;
-  --ifm-color-primary-darker: #3b58c2;
-  --ifm-color-primary-darkest: #31489f;
-  --ifm-color-primary-light: #5b7cf7;
-  --ifm-color-primary-lighter: #6a8bff;
-  --ifm-color-primary-lightest: #8ea8ff;
+  --ifm-color-primary: #3f5bd9;
+  --ifm-color-primary-dark: #3652c9;
+  --ifm-color-primary-darker: #334dbb;
+  --ifm-color-primary-darkest: #2b4099;
+  --ifm-color-primary-light: #4e6ef2;
+  --ifm-color-primary-lighter: #5d7cf7;
+  --ifm-color-primary-lightest: #8199ff;
   --ifm-code-font-size: 95%;
   --ifm-font-family-base: "Inter Variable", "Inter", ui-sans-serif, system-ui,
     -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -19,13 +19,13 @@
 }
 
 html[data-theme="dark"] {
-  --ifm-color-primary: #7e9bff;
-  --ifm-color-primary-dark: #6a8bff;
-  --ifm-color-primary-darker: #5b7cf7;
-  --ifm-color-primary-darkest: #4a6ae3;
-  --ifm-color-primary-light: #8ea8ff;
-  --ifm-color-primary-lighter: #9bb2ff;
-  --ifm-color-primary-lightest: #c3d0ff;
+  --ifm-color-primary: #6f8cff;
+  --ifm-color-primary-dark: #5d7cf7;
+  --ifm-color-primary-darker: #4e6ef2;
+  --ifm-color-primary-darkest: #3f5bd9;
+  --ifm-color-primary-light: #8199ff;
+  --ifm-color-primary-lighter: #8fa5ff;
+  --ifm-color-primary-lightest: #bccaff;
 
   --ifm-background-color: #1e1f22;
   --ifm-background-surface-color: #2b2d31;
@@ -50,17 +50,17 @@ html[data-theme="dark"] {
 
   --ifm-toc-border-color: #3f4147;
   --ifm-menu-color: #dbdee1;
-  --ifm-menu-color-background-active: rgba(91, 124, 247, 0.12);
+  --ifm-menu-color-background-active: rgba(78, 110, 242, 0.12);
   --ifm-menu-color-background-hover: rgba(255, 255, 255, 0.04);
-  --ifm-breadcrumb-item-background-active: rgba(91, 124, 247, 0.12);
+  --ifm-breadcrumb-item-background-active: rgba(78, 110, 242, 0.12);
   --ifm-code-background: #313338;
   --ifm-pre-background: #2b2d31;
   --ifm-card-background-color: #2b2d31;
   --ifm-hr-background-color: #3f4147;
   --ifm-table-stripe-background: rgba(255, 255, 255, 0.02);
   --ifm-table-border-color: #3f4147;
-  --ifm-blockquote-border-color: #5b7cf7;
-  --docusaurus-highlighted-code-line-bg: rgba(91, 124, 247, 0.12);
+  --ifm-blockquote-border-color: #4e6ef2;
+  --docusaurus-highlighted-code-line-bg: rgba(78, 110, 242, 0.12);
 }
 
 html[data-theme="dark"] .navbar {
@@ -79,7 +79,7 @@ html[data-theme="dark"] .theme-doc-sidebar-container {
 }
 
 html[data-theme="dark"] .menu__link--active:not(.menu__link--sublist) {
-  color: #a9bdff;
+  color: #a3b6ff;
 }
 
 html[data-theme="dark"] .pagination-nav__link,
@@ -89,7 +89,7 @@ html[data-theme="dark"] .card {
 }
 html[data-theme="dark"] .pagination-nav__link:hover,
 html[data-theme="dark"] .card:hover {
-  border-color: rgba(91, 124, 247, 0.5);
+  border-color: rgba(78, 110, 242, 0.5);
 }
 
 html[data-theme="dark"] .theme-code-block,
@@ -116,12 +116,12 @@ html[data-theme="dark"] .tag_node_modules-\@docusaurus-theme-classic-lib-theme-T
   margin-left: 0.5rem;
   padding: 0.4rem 0.9rem;
   border-radius: 0.5rem;
-  background: #5b7cf7;
+  background: #4e6ef2;
   color: #fff !important;
   font-weight: 600;
 }
 .navbar__item--cta:hover {
-  background: #7e9bff;
+  background: #6f8cff;
 }
 .navbar__item--cta svg {
   display: none;
