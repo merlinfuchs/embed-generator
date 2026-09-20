@@ -109,11 +109,12 @@ func (m *CustomBotManager) syncCustomBots(ctx context.Context) error {
 	wanted := make(map[common.ID]struct{}, len(customBots))
 	for i := range customBots {
 		customBot := customBots[i]
-		if !customBot.TokenUsable() || !m.shards.Owns(customBot.GuildID) {
+		// Partitioned on the application rather than the guild: two guilds can be configured with
+		// the same bot, and hashing the guild would put one connection on each of two instances.
+		if !customBot.TokenUsable() || !m.shards.Owns(customBot.ApplicationID) {
 			continue
 		}
 		if _, ok := wanted[customBot.ApplicationID]; ok {
-			// Two guilds can be configured with the same bot, which still needs one connection.
 			continue
 		}
 		wanted[customBot.ApplicationID] = struct{}{}

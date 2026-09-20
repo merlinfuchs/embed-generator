@@ -254,6 +254,10 @@ func NewCommandOptionData(src Source, guildID common.ID, c discord.SlashCommandI
 		return UserData{u: discord.User{ID: userID}}
 	case discord.ApplicationCommandOptionTypeChannel:
 		channelID := o.Snowflake()
+		resolved, ok := c.Resolved.Channels[channelID]
+		if ok {
+			return NewResolvedChannelData(src, resolved)
+		}
 		return NewChannelData(src, channelID, nil)
 	case discord.ApplicationCommandOptionTypeRole:
 		roleID := o.Snowflake()
@@ -413,6 +417,9 @@ type ChannelData struct {
 	src       Source
 	channelID common.ID
 	channel   discord.GuildChannel
+	// resolved is what Discord sent along with the interaction. It's a partial, so a field it
+	// doesn't carry still falls through to ensureChannel.
+	resolved *discord.ResolvedChannel
 }
 
 func NewChannelData(src Source, channelID common.ID, c discord.GuildChannel) *ChannelData {
@@ -420,6 +427,16 @@ func NewChannelData(src Source, channelID common.ID, c discord.GuildChannel) *Ch
 		src:       src,
 		channelID: channelID,
 		channel:   c,
+	}
+}
+
+// NewResolvedChannelData builds channel data from the resolved data Discord sends along with an
+// interaction. It isn't a full channel, so only a template that reads the topic costs a fetch.
+func NewResolvedChannelData(src Source, c discord.ResolvedChannel) *ChannelData {
+	return &ChannelData{
+		src:       src,
+		channelID: c.ID,
+		resolved:  &c,
 	}
 }
 
@@ -446,6 +463,10 @@ func (d *ChannelData) ID() string {
 }
 
 func (d *ChannelData) Name() (string, error) {
+	if d.resolved != nil {
+		return d.resolved.Name, nil
+	}
+
 	if err := d.ensureChannel(); err != nil {
 		return "", err
 	}

@@ -85,13 +85,13 @@ func (g *CommandHandler) handleMessageDumpCommand(e *handler.CommandEvent) error
 		return fmt.Errorf("failed to dump message: %w", err)
 	}
 
-	paste, err := common.CreateVaultBinPaste(e.Ctx, string(messageDump), "json")
+	pasteURL, err := common.CreateVaultBinPaste(e.Ctx, string(messageDump))
 	if err != nil {
 		return fmt.Errorf("failed to create vaultb.in paste: %w", err)
 	}
 
 	return e.CreateMessage(discord.MessageCreate{
-		Content: fmt.Sprintf("You can find the JSON code here: <%s>", paste.URL()),
+		Content: fmt.Sprintf("You can find the JSON code here: <%s>", pasteURL),
 		Flags:   discord.MessageFlagEphemeral,
 	})
 }
@@ -105,13 +105,13 @@ func (g *CommandHandler) handleMessageDumpContextCommand(e *handler.CommandEvent
 		return fmt.Errorf("failed to dump message: %w", err)
 	}
 
-	paste, err := common.CreateVaultBinPaste(e.Ctx, string(messageDump), "json")
+	pasteURL, err := common.CreateVaultBinPaste(e.Ctx, string(messageDump))
 	if err != nil {
 		return fmt.Errorf("failed to create vaultb.in paste: %w", err)
 	}
 
 	return e.CreateMessage(discord.MessageCreate{
-		Content: fmt.Sprintf("You can find the JSON code here: <%s>", paste.URL()),
+		Content: fmt.Sprintf("You can find the JSON code here: <%s>", pasteURL),
 		Flags:   discord.MessageFlagEphemeral,
 	})
 }

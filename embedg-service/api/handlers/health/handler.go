@@ -34,12 +34,11 @@ func (h *HealthHandler) HandleHealth(c *fiber.Ctx) error {
 // is not ready. Don't restart on it: shards take minutes to identify after a deploy.
 func (h *HealthHandler) HandleShardHealth(c *fiber.Ctx) error {
 	shards := make([]shardWire, 0)
-	ready := true
 
 	for shard := range h.shardManager.Shards() {
 		status := shard.Status()
 		if status != gateway.StatusReady {
-			ready = false
+			c.Status(http.StatusServiceUnavailable)
 		}
 
 		shards = append(shards, shardWire{
@@ -47,10 +46,6 @@ func (h *HealthHandler) HandleShardHealth(c *fiber.Ctx) error {
 			Status:    status.String(),
 			LatencyMS: shard.Latency().Milliseconds(),
 		})
-	}
-
-	if !ready {
-		c.Status(http.StatusServiceUnavailable)
 	}
 
 	return c.JSON(shards)

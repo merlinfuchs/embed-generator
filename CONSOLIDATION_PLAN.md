@@ -148,7 +148,7 @@ UPDATE sessions SET access_token = $2, refresh_token = $3, token_expires_at = $4
 
 `model.Session` gets `RefreshToken string`, `TokenExpiresAt time.Time`, `Scopes []string`. `store.SessionStore` gets `UpdateSessionTokens`. `session.SessionManager.CreateSession` signature grows to accept the `*oauth2.Token` and scopes. `authenticateWithCode` in the auth handler passes `tokenData` through; the granted scopes are in `tokenData.Extra("scope")` as a space-separated string.
 
-**Scope check in middleware.** Still open. `SessionRequired` never grew the check, so `Scopes` is written on every session and read by nothing. The gap is narrow because B4 truncated the sessions table, so every live session was minted with the scope; a session that somehow lacks it gets an opaque Discord 401 out of `GetMemberForUser` instead of a clean "log in again". The fix is still: in `api/session/middleware.go` `SessionRequired`, if `Scopes` does not contain `guilds.members.read`, return `handlers.Unauthorized("scope_missing", "Please log in again")`. Nothing is needed on the frontend, `client.ts` suppresses toasts for every 401 by status, not by code.
+**Scope check in middleware.** `SessionRequired` rejects a session whose `Scopes` lack `guilds.members.read` with `scope_missing`, which is what makes storing the column worth anything. Without it the user gets an opaque Discord 401 out of `GetMemberForUser` instead of being sent back to log in. Nothing is needed on the frontend, `client.ts` suppresses toasts for every 401 by status, not by code.
 
 **Token refresh.** New method on `SessionManager`:
 
@@ -258,7 +258,7 @@ Both caches are capacity bounded and evict least recently used: uncapped, a traf
 **Payload before REST.** Interactions already carry most of what the templates and handlers read from the cache. Use it before touching the provider:
 
 - `actions/template/provider.go` `InteractionProvider.ProvideData` calls `NewChannelData(caches, id, nil)`. Pass `p.interaction.Channel()` instead; it's a partial channel with id, type, name, parent id, which covers the common template fields. Only fall back to the provider for fields the partial lacks.
-- `actions/template/data.go` `NewCommandOptionData` resolved channel, role and member options from the cache. User, role and attachment options now read `Resolved` and cost nothing. The channel option is the one left, and not by oversight: `Resolved.Channels` is a `discord.ResolvedChannel` (id, name, type, permissions, thread metadata, parent id), not a `discord.GuildChannel`, so `NewChannelData` can't take it without a shim that adapts the partial. Worth doing, it just isn't the one-liner the rest were.
+- `actions/template/data.go` `NewCommandOptionData` resolved channel, role and member options from the cache. All of them read `Resolved` now. The channel option needed a shim rather than the one-liner the others were: `Resolved.Channels` holds a `discord.ResolvedChannel` (id, name, type, permissions, thread metadata, parent id), not a `discord.GuildChannel`, so `NewResolvedChannelData` keeps the name on the side. `{{Channel.Name}}` and `{{Channel.Mention}}` cost nothing; `{{Channel.Topic}}` still fetches, because the resolved payload has no topic to give.
 - `GuildData`, `ChannelData`, `RoleData`, `MemberData.Roles()` stay lazy as they are today. They must call the provider only inside `ensure*()`, never in the constructor, so a template that doesn't reference `{{Guild...}}` costs nothing. Those types take a `template.Source`, which carries the provider and a context: `text/template` calls these methods with no way to pass one.
 
 Note `actions/handler/handle.go` passed `nil` caches with a `TODO: Fix caches access`, so every guild, channel and role field in an action response template was failing. Wiring the provider in fixes it.
@@ -362,13 +362,15 @@ Purpose: embedg-service owns the gateway. Stateway is gone. Multi-instance by sh
 - `DiscordConfig` gains `ShardCount int \`toml:"shard_count" validate:"min=1"\`` and `ShardIDs []int \`toml:"shard_ids"\``. Every instance of a deployment has to agree on the count; at 250k guilds it's around 250. Empty `ShardIDs` means "all shards of this count", which is the single-instance deployment.
 - `default.toml`: delete `[broker]` and `[broker.nats]`, add `shard_count = 1` so self hosting doesn't have to think about sharding at all. Production has to set it: one shard for 250k guilds gets refused at identify with a 4011, which fails the boot loudly rather than silently degrading.
 
-The ownership rule lives in `common.Shards{Count, IDs}` rather than on `DiscordConfig`, with `DiscordConfig.Shards()` building it. Managers take the value, so nothing under `manager/` has to import `config`, and the arithmetic is unit tested:
+The ownership rule lives in `common.Shards{Count, IDs}` rather than on `DiscordConfig`, with `DiscordConfig.Shards()` building it. Managers take the value, so nothing under `manager/` has to import `config`. `NewShards` expands an empty id list to every shard of the count up front, so "no ids means all of them" is stated once instead of in each method, and the shard arithmetic is disgo's `sharding.ShardIDByGuild` rather than a second copy of `(id >> 22) % count`:
 
 ```go
-func (s Shards) All() []int              // IDs, or every shard of Count for a single instance
-func (s Shards) Owns(guildID ID) bool    // (guildID >> 22) % Count in IDs; true if IDs is empty
-func (s Shards) IsLeader() bool          // IDs empty or contains 0
+func NewShards(count int, ids []int) Shards
+func (s Shards) Owns(guildID ID) bool    // false when nothing is configured, as in the admin CLI
+func (s Shards) IsLeader() bool          // IDs contains 0
 ```
+
+`Owns` fails closed. Owning everything when unconfigured would have every instance duplicate every job, which is the failure you don't notice. `RootConfig.Validate` rejects shard ids outside the count or repeated, both of which the arithmetic would otherwise swallow: an out of range id owns nothing, so nobody serves those guilds.
 
 **Gateway** `embedg/embedg.go`. The compat gateway, the NATS broker and the stateway imports all go; the constructor body becomes:
 
@@ -407,7 +409,7 @@ func (g *EmbedGenerator) ShardManager() sharding.ShardManager { return g.client.
 **Shard range filters.**
 
 - `manager/scheduled_message/manager.go` `Run`: after `GetDueScheduledMessages`, skip messages where `!cfg.OwnsGuild(msg.GuildID)`. Do the filter in Go, not SQL, so the query stays simple. Under 100k rows this is fine; if it ever isn't, add `WHERE (guild_id >> 22) % $2 = ANY($3)`.
-- `manager/custom_bot/manager.go` `syncCustomBots`: only start bots where `cfg.OwnsGuild(customBot.GuildID)`; a guild this instance doesn't own drops out of the wanted set and gets stopped by the existing reconcile step.
+- `manager/custom_bot/manager.go` `syncCustomBots`: partition on `customBot.ApplicationID`, not the guild. The pool is keyed by application because two guilds can be configured with the same bot, and hashing the guild would hand one connection to each of two instances, which is the duplicate presence B6 only accepted as a transition.
 
 **Leader gate.** `PremiumManager.Run` returns immediately unless `shards.IsLeader()`. Both of its tickers (entitlements and premium roles) sweep everything rather than a shard range, so running them on every instance would be N copies of the same work. The entitlement event listener stays registered everywhere; Discord only delivers those to shard 0 anyway, and the per-request plan lookups are unaffected.
 
@@ -427,7 +429,7 @@ Two of B9's stray legacy imports had to come along, because they are what stoppe
 
 **Intents.** `IntentGuilds` for the guild, channel and role events the guild table and the state provider live on, plus `IntentGuildMessages` for the message deletes that clean up action sets. Not `IntentGuildWebhooks`: `WebhookManager.OnEvent` is empty, nothing subscribes to webhook updates. Not `IntentMessageContent` either, restore-by-id goes through REST.
 
-**Deploy.** Big bang, single instance, `shard_count` set, no `shard_ids`. Expect boot to take one to two minutes for all shards to identify. Rollback is the previous image; no migration in this step.
+**Deploy.** Big bang, single instance, `shard_count` set, no `shard_ids`. Expect one to two minutes for all shards to identify. `ShardManager.Open` blocks until every shard is ready, so `entry/server/server.go` opens the gateway in a goroutine and serves the API immediately; otherwise the port isn't even bound for that whole window and a load balancer gets connection refused rather than the 503 the health split exists to give it. A failed open cancels the server context and `Run` returns the error. Rollback is the previous image; no migration in this step.
 
 **Manual verification checklist** (run all, on prod after deploy):
 
@@ -466,7 +468,7 @@ Done when: `docker build .` succeeds and the container serves the app on 8080 ag
 
 ### B10. Merge to main
 
-Open before this: the B3 scope check above, the `Resolved.Channels` shim, and every manual checklist in B5 through B8, none of which can run without a live bot and prod credentials.
+Everything in Part B is written. What is left before this step is testing: the manual checklists in B5 through B8, none of which can run without a live bot and prod credentials.
 
 Squash or merge `merlin/consolidate` into `main`. Tag a release. Release note: link the README migration section.
 
@@ -625,7 +627,7 @@ Done when: V1 action rows and V2 containers are fully editable, nested add/move/
 - Delete `src/state/message.ts`. Grep for `useCurrentMessageStore` and `useCurrentMessageUndoStore` and fix every remaining import. `EditorUndoButtons.tsx` uses the temporal store; point it at `useDocumentStore.temporal`.
 - Persist migration: the old key `current-message` version 0 held a raw `Message`. In the document store's `persist` config add `migrate: (persisted, version) => version === 0 ? fromMessage(persisted as Message) : persisted`. Keep `name: "current-message"` so the migration actually fires.
 - ~~Fold `src/discord/restoreSchema.ts` into `schema.ts`.~~ Not done, deliberately. The two schemas are the import boundary and the send boundary: the lenient one coerces Discord's nulls and keeps values the editor would reject, so an import lands in the editor and gets flagged by validation instead of being refused. Folding it into `messageSchema` with `.catch()` would either drop those values or fail the import, both regressions. The file is now `importSchema.ts`, carries a header explaining the split, and its behaviour is pinned by `importSchema.test.ts`.
-- ~~Remove `immer` from `package.json` dependencies (zustand's middleware brings its own).~~ Wrong: zustand declares `immer: ">=9.0"` as a peer dependency, and three stores use `zustand/middleware/immer`, so removing it breaks them. `immer` stays. What is actually orphaned is `@types/debounce`, types for a `debounce` package that isn't installed; the two debounce callers both use `just-debounce-it`.
+- ~~Remove `immer` from `package.json` dependencies (zustand's middleware brings its own).~~ Wrong: zustand declares `immer: ">=9.0"` as a peer dependency, and three stores use `zustand/middleware/immer`, so removing it breaks them. `immer` stays. `@types/debounce` was the actually orphaned one, types for a `debounce` package that isn't installed while both callers use `just-debounce-it`; dropped, along with its `yarn.lock` entry so `--frozen-lockfile` still passes.
 
 Done when: `grep -rn "message.ts\|useCurrentMessageStore" src` is empty, a draft saved under the old store version loads after deploy, all F2 tests pass, `tsc` and biome are clean.
 

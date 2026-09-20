@@ -26,6 +26,8 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
+const gatewayCloseTimeout = 10 * time.Second
+
 func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.RootConfig) error {
 	if cfg.Discord.RestURL != "" {
 		slog.Info("Using custom Discord REST URL", "url", cfg.Discord.RestURL)
@@ -34,10 +36,9 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 
 	shards := cfg.Discord.Shards()
 
-	embedg, err := embedg.NewEmbedGenerator(ctx, embedg.EmbedGeneratorConfig{
-		Token:       cfg.Discord.Token,
-		Shards:      shards,
-		DiscordLink: cfg.Links.Discord,
+	embedg, err := embedg.NewEmbedGenerator(embedg.EmbedGeneratorConfig{
+		Token:  cfg.Discord.Token,
+		Shards: shards,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create embedg: %w", err)
@@ -108,14 +109,23 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 
 	slog.Info("Starting Embed Generator")
 
-	err = embedg.Open(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to run embedg: %w", err)
-	}
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	defer func() {
-		closeCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		closeCtx, cancel := context.WithTimeout(context.Background(), gatewayCloseTimeout)
 		defer cancel()
 		embedg.Close(closeCtx)
+	}()
+
+	// Opening blocks until every shard has identified, which takes minutes at a few hundred
+	// shards, so the API serves while that happens. /api/health/shards reports the progress.
+	gatewayErr := make(chan error, 1)
+	go func() {
+		if err := embedg.Open(ctx); err != nil {
+			gatewayErr <- err
+			cancel()
+		}
 	}()
 
 	api.Serve(ctx, &api.Env{
@@ -157,5 +167,10 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		InsecureCookies:  cfg.API.InsecureCookies,
 	})
 
-	return nil
+	select {
+	case err := <-gatewayErr:
+		return fmt.Errorf("failed to open the Discord gateway: %w", err)
+	default:
+		return nil
+	}
 }
