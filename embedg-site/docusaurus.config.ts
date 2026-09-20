@@ -150,7 +150,15 @@ const config: Config = {
               },
               {
                 label: "Privacy Policy",
-                href: "/privacy",
+                to: "/privacy",
+              },
+              {
+                label: "Cookies",
+                to: "/cookies",
+              },
+              {
+                label: "Imprint",
+                to: "/imprint",
               },
             ],
           },
