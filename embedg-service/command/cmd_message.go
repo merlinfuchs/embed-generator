@@ -11,7 +11,6 @@ import (
 	"github.com/disgoorg/disgo/handler"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
-	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
@@ -131,8 +130,8 @@ func (g *CommandHandler) getMessageFromCommand(e *handler.CommandEvent) (*discor
 		channelID, _ = snowflake.Parse(match[1])
 		messageID, _ = snowflake.Parse(match[2])
 
-		channel, ok := g.caches.Channel(channelID)
-		if !ok {
+		channel, err := g.guildState.Channel(e.Ctx, channelID)
+		if err != nil {
 			return nil, e.CreateMessage(discord.MessageCreate{
 				Content: "The message belongs to a channel that the bot doesn't have access to.",
 				Flags:   discord.MessageFlagEphemeral,
@@ -155,7 +154,7 @@ func (g *CommandHandler) getMessageFromCommand(e *handler.CommandEvent) (*discor
 
 	message, err := g.rest.GetMessage(channelID, messageID, rest.WithCtx(e.Ctx))
 	if err != nil {
-		if common.IsDiscordRestErrorCode(err, discordgo.ErrCodeUnknownMessage) {
+		if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeUnknownMessage) {
 			return nil, e.CreateMessage(discord.MessageCreate{
 				Content: "Message not found.",
 				Flags:   discord.MessageFlagEphemeral,

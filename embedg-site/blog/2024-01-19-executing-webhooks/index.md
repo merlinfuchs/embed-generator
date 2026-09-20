@@ -1,8 +1,11 @@
 ---
 slug: executing-webhooks
-title: Executing Discord Webhooks
+title: How to Send a Discord Webhook Message Without Code
+description: Create a Discord webhook, paste the URL into Embed Generator and send embeds, buttons and Components V2 messages to any channel. No coding, no bot required.
 authors: [merlin]
 tags: [discord, webhook, embed, api]
+last_update:
+  date: 2026-09-20
 ---
 
 Discord Webhooks are a powerful feature which allows Discord server administrators to generate a unique URL which can be used by third party services to send messages to a Discord channel.
@@ -11,26 +14,26 @@ Discord is not the only platform that supports webhooks. They are commonly used 
 
 Webhooks on Discord are unique in the sense that they are not only used programmatically by third party services to send updates. Many people use Discord webhooks to send out messages by hand instead of sending them with their own Discord account because webhook messages have way more formatting options than normal messages.
 
-This is why there are tools like [Embed Generator](https://message.style) that can help you sending messages through Discord webhooks.
+This is why there are tools like [Embed Generator](https://message.style) that work as a Discord webhook generator and sender: you design the message in a visual editor, paste in the webhook URL, and send. This guide walks through the whole thing.
 
 <!--truncate-->
 
 ## Creating a Webhook
 
 Creating a Webhook is pretty easy as long as you have the "Manage Webhooks" permissions in the channel that you want to create a Webhook for. Just go into the channel settings and select "Integrations" on the left and click on "Create Webhook".  
-Click on the newly created Webhook to change it's name, set and avatar and copy the webhook URL. **Anyone that has the URL can send a message to the channel**, so keep it secret!
+Click on the newly created Webhook to change it's name, set an avatar and copy the webhook URL. **Anyone that has the URL can send a message to the channel**, so keep it secret!
 
 ![Creating a Webhook](./webhooks.png)
 
 ## Getting Information about Webhook
 
-Sometimes you might have the URL for a Webhook but don't actually know where it comes from or which Webhook it belongs to. This is way it can be handy to know how to extract information from a Webhook URL.
+Sometimes you might have the URL for a Webhook but don't actually know where it comes from or which Webhook it belongs to. This is why it can be handy to know how to extract information from a Webhook URL.
 
 To get information about a Webhook you can simply paste its URL into our free [Webhook Info tool](https://message.style/app/tools/webhook-info). It will show you the Webhook name, avatar and who created the Webhook!
 
 ![Webhook Info](./webhook-info.png)
 
-## Sending a Webhok Message
+## Sending a Webhook Message
 
 Now the interesting part, how do we actually send a message with a Webhook?  
 Usually sending a Webhook message requires programming skills or at least some technology knowledge. Luckily there are tools like [Embed Generator](https://message.style) that make it trivial to send a Webhook message without programming skills!

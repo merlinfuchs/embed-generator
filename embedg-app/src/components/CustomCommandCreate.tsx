@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useCustomCommandCreateMutation } from "../api/mutations";
 import { useSendSettingsStore } from "../state/sendSettings";
-import { useQueryClient } from "react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useToasts } from "../util/toasts";
 import EditorInput from "./EditorInput";
 import CommandActionSet from "./CommandActionSet";
@@ -51,7 +51,9 @@ export default function CustomCommandCreate({
             setName("");
             setDescription("");
             setCreate(false);
-            queryClient.invalidateQueries(["custom-bot", guildId, "commands"]);
+            queryClient.invalidateQueries({
+              queryKey: ["custom-bot", guildId, "commands"],
+            });
           } else {
             createToast({
               title: "Failed to create command",

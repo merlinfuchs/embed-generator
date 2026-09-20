@@ -259,7 +259,7 @@ function NavigationButton({
 }
 
 function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
-  const { data: guilds, isLoading } = useGuildsQuery();
+  const { data: guilds, isPending } = useGuildsQuery();
   useEffect(() => {
     if (guilds?.success) {
       guilds.data.sort((a, b) => a.name.localeCompare(b.name));
@@ -284,12 +284,12 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
           setGuildId(defaultGuild.id);
         }
       }
-    } else if (!isLoading) {
+    } else if (!isPending) {
       if (!guilds?.success || !guilds.data.find((g) => g.id === guildId)) {
         setGuildId(null);
       }
     }
-  }, [guilds, guildId, isLoading]);
+  }, [guilds, guildId, isPending]);
 
   function selectGuild(guildId: string) {
     setGuildId(guildId);

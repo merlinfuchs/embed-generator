@@ -4,7 +4,7 @@ import { z } from "zod";
 import { useToasts } from "../util/toasts";
 import type { SavedMessageWire } from "../api/wire";
 import { useImportSavedMessagesMutation } from "../api/mutations";
-import { useQueryClient } from "react-query";
+import { useQueryClient } from "@tanstack/react-query";
 
 const messageExportSchema = z
   .object({
@@ -78,7 +78,9 @@ export default function MessageExportImport({ messages, guildId }: Props) {
               },
               {
                 onSuccess: () => {
-                  queryClient.invalidateQueries(["saved-messages", guildId]);
+                  queryClient.invalidateQueries({
+                    queryKey: ["saved-messages", guildId],
+                  });
                 },
               },
             );

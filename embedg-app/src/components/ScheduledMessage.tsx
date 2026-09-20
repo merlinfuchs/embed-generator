@@ -16,7 +16,7 @@ import {
   useScheduledMessageUpdateMutation,
 } from "../api/mutations";
 import { useSendSettingsStore } from "../state/sendSettings";
-import { useQueryClient } from "react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useToasts } from "../util/toasts";
 import EditorInput from "./EditorInput";
 import ConfirmModal from "./ConfirmModal";
@@ -116,7 +116,9 @@ export default function ScheduledMessage({
         onSuccess(res) {
           if (res.success) {
             setManage(false);
-            queryClient.invalidateQueries(["scheduled-messages", guildId]);
+            queryClient.invalidateQueries({
+              queryKey: ["scheduled-messages", guildId],
+            });
           } else {
             createToast({
               title: "Failed to update scheduled message",
@@ -141,7 +143,9 @@ export default function ScheduledMessage({
       {
         onSuccess: (resp) => {
           if (resp.success) {
-            queryClient.invalidateQueries(["scheduled-messages", guildId]);
+            queryClient.invalidateQueries({
+              queryKey: ["scheduled-messages", guildId],
+            });
           } else {
             createToast({
               title: "Failed to delete scheduled message",

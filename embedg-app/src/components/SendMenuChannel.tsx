@@ -188,7 +188,7 @@ export default function SendMenuChannel() {
               role="button"
               onClick={() => send(true)}
             >
-              {sendToChannelMutation.isLoading && (
+              {sendToChannelMutation.isPending && (
                 <div className="h-2 w-2 bg-white rounded-full animate-ping"></div>
               )}
               <div>Edit Message</div>
@@ -205,7 +205,7 @@ export default function SendMenuChannel() {
             role="button"
             onClick={() => send(false)}
           >
-            {sendToChannelMutation.isLoading && (
+            {sendToChannelMutation.isPending && (
               <div className="h-2 w-2 bg-white rounded-full animate-ping"></div>
             )}
             <div>Send Message</div>

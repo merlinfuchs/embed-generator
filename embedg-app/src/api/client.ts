@@ -1,4 +1,4 @@
-import { QueryCache, QueryClient } from "react-query";
+import { QueryCache, QueryClient } from "@tanstack/react-query";
 import { useToasts } from "../util/toasts";
 import { APIError } from "./queries";
 

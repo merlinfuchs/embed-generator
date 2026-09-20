@@ -6,7 +6,6 @@ import (
 	"log/slog"
 
 	"github.com/disgoorg/disgo/rest"
-	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
 )
 
@@ -29,7 +28,7 @@ func (m *PremiumManager) assignPremiumRoles(ctx context.Context) error {
 
 		member, err := m.rest.GetMember(m.config.BeneficialGuildID, userID, rest.WithCtx(ctx))
 		if err != nil {
-			if common.IsDiscordRestErrorCode(err, discordgo.ErrCodeUnknownMember) {
+			if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeUnknownMember) {
 				continue
 			}
 

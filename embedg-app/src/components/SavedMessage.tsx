@@ -14,7 +14,7 @@ import { useToasts } from "../util/toasts";
 import { useNavigate } from "react-router-dom";
 import { parseMessageWithAction } from "../discord/importSchema";
 import { useState } from "react";
-import { useQueryClient } from "react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import ConfirmModal from "./ConfirmModal";
 import { getCurrentMessage, setCurrentMessage } from "../state/currentMessage";
 
@@ -50,7 +50,9 @@ export default function SavedMessage({
       {
         onSuccess: (resp) => {
           if (resp.success) {
-            queryClient.invalidateQueries(["saved-messages", guildId]);
+            queryClient.invalidateQueries({
+              queryKey: ["saved-messages", guildId],
+            });
             setUpdateModal(false);
           } else {
             createToast({
@@ -90,7 +92,9 @@ export default function SavedMessage({
       {
         onSuccess: (resp) => {
           if (resp.success) {
-            queryClient.invalidateQueries(["saved-messages", guildId]);
+            queryClient.invalidateQueries({
+              queryKey: ["saved-messages", guildId],
+            });
           } else {
             createToast({
               title: "Failed to delete message",

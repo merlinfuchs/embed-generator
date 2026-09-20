@@ -14,11 +14,11 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
-	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions/template"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
+	"github.com/merlinfuchs/embed-generator/embedg-service/guildstate"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
 )
 
@@ -32,6 +32,7 @@ type ActionHandler struct {
 	kvEntryStore       store.KVEntryStore
 	parser             *parser.ActionParser
 	planStore          store.PlanStore
+	guildState         *guildstate.Provider
 }
 
 func New(
@@ -41,6 +42,7 @@ func New(
 	kvEntryStore store.KVEntryStore,
 	parser *parser.ActionParser,
 	planStore store.PlanStore,
+	guildState *guildstate.Provider,
 ) *ActionHandler {
 	return &ActionHandler{
 		customCommandStore: customCommandStore,
@@ -49,6 +51,7 @@ func New(
 		kvEntryStore:       kvEntryStore,
 		parser:             parser,
 		planStore:          planStore,
+		guildState:         guildState,
 	}
 }
 
@@ -134,7 +137,7 @@ func (m *ActionHandler) HandleActionInteraction(restClient rest.Rest, i Interact
 
 	templates := template.NewContext(
 		"HANDLE_ACTION", features.MaxTemplateOps,
-		template.NewInteractionProvider(nil, interaction), // TODO: Fix caches access
+		template.NewInteractionProvider(template.NewSource(context.TODO(), m.guildState), interaction),
 		template.NewKVProvider(*interaction.GuildID(), m.kvEntryStore, features.MaxKVKeys),
 	)
 
@@ -385,7 +388,7 @@ func (m *ActionHandler) HandleActionInteraction(restClient rest.Rest, i Interact
 				Content: action.Text,
 			}, rest.WithCtx(context.TODO()))
 			if err != nil {
-				if common.IsDiscordRestErrorCode(err, discordgo.ErrCodeCannotSendMessagesToThisUser) {
+				if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeCannotSendMessagesToThisUser) {
 					i.Respond(discord.MessageCreate{
 						Content: "You have blocked the bot from sending you DMs. Please allow DMs from server members in your privacy settings.",
 						Flags:   discord.MessageFlagEphemeral,

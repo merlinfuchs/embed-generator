@@ -15,7 +15,7 @@ export default function SavedMessageSelect({
   messageId,
   onChange,
 }: Props) {
-  const { data: messages, isLoading } = useSavedMessagesQuery(guildId);
+  const { data: messages, isPending } = useSavedMessagesQuery(guildId);
 
   const message = useMemo(
     () => messages?.success && messages.data.find((m) => m.id === messageId),
@@ -23,7 +23,7 @@ export default function SavedMessageSelect({
   );
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!isPending) {
       if (
         !messages?.success ||
         !messages.data.find((m) => m.id === messageId)
@@ -31,7 +31,7 @@ export default function SavedMessageSelect({
         onChange(null);
       }
     }
-  }, [messages, messageId, isLoading]);
+  }, [messages, messageId, isPending]);
 
   function selectMessage(messageId: string) {
     onChange(messageId);

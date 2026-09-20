@@ -9,15 +9,14 @@ import (
 	"time"
 
 	"github.com/disgoorg/disgo/bot"
-	"github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/rest"
-	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions/template"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
+	"github.com/merlinfuchs/embed-generator/embedg-service/guildstate"
 	"github.com/merlinfuchs/embed-generator/embedg-service/manager/webhook"
 	"github.com/merlinfuchs/embed-generator/embedg-service/model"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
@@ -33,7 +32,7 @@ type ScheduledMessageManager struct {
 	kvEntryStore          store.KVEntryStore
 	actionParser          *parser.ActionParser
 	webhookManager        *webhook.WebhookManager
-	cache                 cache.Caches
+	guildState            *guildstate.Provider
 	rest                  rest.Rest
 	planStore             store.PlanStore
 }
@@ -44,7 +43,7 @@ func NewScheduledMessageManager(
 	kvEntryStore store.KVEntryStore,
 	actionParser *parser.ActionParser,
 	webhookManager *webhook.WebhookManager,
-	cache cache.Caches,
+	guildState *guildstate.Provider,
 	rest rest.Rest,
 	planStore store.PlanStore,
 ) *ScheduledMessageManager {
@@ -54,7 +53,7 @@ func NewScheduledMessageManager(
 		kvEntryStore:          kvEntryStore,
 		actionParser:          actionParser,
 		webhookManager:        webhookManager,
-		cache:                 cache,
+		guildState:            guildState,
 		rest:                  rest,
 		planStore:             planStore,
 	}
@@ -159,9 +158,9 @@ func (m *ScheduledMessageManager) channelGone(ctx context.Context, channelID com
 	_, err := m.rest.GetChannel(channelID, rest.WithCtx(ctx))
 	return common.IsDiscordRestErrorCode(
 		err,
-		discordgo.ErrCodeUnknownChannel,
-		discordgo.ErrCodeUnknownGuild,
-		discordgo.ErrCodeMissingAccess,
+		rest.JSONErrorCodeUnknownChannel,
+		rest.JSONErrorCodeUnknownGuild,
+		rest.JSONErrorCodeMissingAccess,
 	)
 }
 
@@ -179,10 +178,11 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		return fmt.Errorf("could not get plan features: %w", err)
 	}
 
+	templateSource := template.NewSource(ctx, m.guildState)
 	templates := template.NewContext(
 		"SCHEDULED_MESSAGE", features.MaxTemplateOps,
-		template.NewGuildProvider(m.cache, scheduledMessage.GuildID, nil),
-		template.NewChannelProvider(m.cache, scheduledMessage.ChannelID, nil),
+		template.NewGuildProvider(templateSource, scheduledMessage.GuildID, nil),
+		template.NewChannelProvider(templateSource, scheduledMessage.ChannelID, nil),
 		template.NewKVProvider(scheduledMessage.GuildID, m.kvEntryStore, features.MaxKVKeys),
 	)
 
@@ -222,9 +222,9 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		if err != nil {
 			if common.IsDiscordRestErrorCode(
 				err,
-				discordgo.ErrCodeUnknownMember,
-				discordgo.ErrCodeUnknownGuild,
-				discordgo.ErrCodeMissingAccess,
+				rest.JSONErrorCodeUnknownMember,
+				rest.JSONErrorCodeUnknownGuild,
+				rest.JSONErrorCodeMissingAccess,
 			) {
 				return m.disable(ctx, scheduledMessage, "creator is no longer a member of the server")
 			}
@@ -243,10 +243,10 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 
 		if common.IsDiscordRestErrorCode(
 			err,
-			discordgo.ErrCodeUnknownChannel,
-			discordgo.ErrCodeUnknownGuild,
-			discordgo.ErrCodeMissingAccess,
-			discordgo.ErrCodeMissingPermissions,
+			rest.JSONErrorCodeUnknownChannel,
+			rest.JSONErrorCodeUnknownGuild,
+			rest.JSONErrorCodeMissingAccess,
+			rest.JSONErrorCodeLackPermissionsToPerformAction,
 		) {
 			return m.disable(ctx, scheduledMessage, "channel inaccessible")
 		}
