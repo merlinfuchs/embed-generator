@@ -43,6 +43,24 @@ export default function HomePremium(): JSX.Element {
             </li>
           ))}
         </ul>
+        <div className="flex items-start gap-4 border-0 border-t border-solid border-white/5 pt-8 lg:col-span-2">
+          <img
+            src="/img/merlin.webp"
+            alt="Merlin"
+            className="h-11 w-11 flex-none rounded-full"
+          />
+          <p className="m-0 max-w-3xl text-sm leading-relaxed text-mist-400">
+            Embed Generator is a side project I maintain in my free time,
+            together with a few contributors, and the whole thing is open
+            source. Premium is what pays for hosting and keeps it free for
+            everyone else. If you have questions or ideas, the{" "}
+            <a href="/discord" className="text-azure-400 hover:text-azure-300">
+              Discord server
+            </a>{" "}
+            is where I hang out.
+            <span className="mt-1 block text-mist-500">— Merlin</span>
+          </p>
+        </div>
       </div>
     </section>
   );

@@ -3,7 +3,6 @@ import HomeHero from "../components/HomeHero";
 import HomeHeader from "../components/HomeHeader";
 import HomeShowcase from "../components/HomeShowcase";
 import HomePremium from "../components/HomePremium";
-import HomeNote from "../components/HomeNote";
 import HomeFooter from "../components/HomeFooter";
 
 import "../css/tailwind.css";
@@ -16,7 +15,6 @@ export default function Home(): JSX.Element {
         <HomeHero />
         <HomeShowcase />
         <HomePremium />
-        <HomeNote />
       </main>
       <HomeFooter />
     </div>
