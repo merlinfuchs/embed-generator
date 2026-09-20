@@ -17,51 +17,30 @@ interface Props {
 const PADDED = "bg-dark-3 p-3 rounded-md";
 const CARD = "bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow";
 
+/** The editor for each component type, and its card styling at the top level. */
+const EDITORS = {
+  actionRow: [EditorComponentBaseActionRow, PADDED],
+  section: [EditorComponentBaseSection, PADDED],
+  mediaGallery: [EditorComponentBaseMediaGallery, PADDED],
+  textDisplay: [EditorComponentBaseTextDisplay, CARD],
+  separator: [EditorComponentBaseSeparator, CARD],
+  file: [EditorComponentBaseFile, CARD],
+  // A container brings its own card, accent bar included.
+  container: [EditorComponentBaseContainer, null],
+} as const;
+
 export default function EditorComponentEntry({ id, root }: Props) {
   const node = useNode(id);
+  const editor = node && EDITORS[node.type as keyof typeof EDITORS];
 
   if (!node) return null;
+  if (!editor) return <div>Unknown component type: {node.type}</div>;
 
-  switch (node.type) {
-    case "actionRow":
-      return (
-        <div className={clsx(root && PADDED)}>
-          <EditorComponentBaseActionRow id={id} />
-        </div>
-      );
-    case "section":
-      return (
-        <div className={clsx(root && PADDED)}>
-          <EditorComponentBaseSection id={id} />
-        </div>
-      );
-    case "mediaGallery":
-      return (
-        <div className={clsx(root && PADDED)}>
-          <EditorComponentBaseMediaGallery id={id} />
-        </div>
-      );
-    case "textDisplay":
-      return (
-        <div className={clsx(root && CARD)}>
-          <EditorComponentBaseTextDisplay id={id} />
-        </div>
-      );
-    case "separator":
-      return (
-        <div className={clsx(root && CARD)}>
-          <EditorComponentBaseSeparator id={id} />
-        </div>
-      );
-    case "file":
-      return (
-        <div className={clsx(root && CARD)}>
-          <EditorComponentBaseFile id={id} />
-        </div>
-      );
-    case "container":
-      return <EditorComponentBaseContainer id={id} />;
-    default:
-      return <div>Unknown component type: {node.type}</div>;
-  }
+  const [Editor, cardClassName] = editor;
+
+  return (
+    <div className={clsx(root && cardClassName)}>
+      <Editor id={id} />
+    </div>
+  );
 }

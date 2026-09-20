@@ -1,14 +1,13 @@
 import {
-  type MediaGalleryNode,
   type NodeId,
   useChildIds,
   useDocumentStore,
+  useNodeActions,
 } from "../state/document";
 import { slotScope } from "../state/validationError";
 import { AutoAnimate } from "../util/autoAnimate";
 import EditorComponentBaseMediaGalleryItem from "./EditorComponentBaseMediaGalleryItem";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
-import { useNodeActions } from "./useNodeActions";
 
 interface Props {
   id: NodeId;

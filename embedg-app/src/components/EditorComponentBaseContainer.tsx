@@ -5,6 +5,7 @@ import {
   useChildIds,
   useDocumentStore,
   useNode,
+  useNodeActions,
 } from "../state/document";
 import { nodeField, nodeScope, slotScope } from "../state/validationError";
 import { AutoAnimate } from "../util/autoAnimate";
@@ -16,7 +17,6 @@ import EditorComponentAddDropdown from "./EditorComponentAddDropdown";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
 import EditorComponentEntry from "./EditorComponentEntry";
 import ValidationError from "./ValidationError";
-import { useNodeActions } from "./useNodeActions";
 
 interface Props {
   id: NodeId;

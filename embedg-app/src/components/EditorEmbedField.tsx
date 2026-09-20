@@ -3,6 +3,7 @@ import {
   type NodeId,
   useDocumentStore,
   useNode,
+  useNodeActions,
   useNodeIndex,
 } from "../state/document";
 import CheckBox from "./CheckBox";
@@ -16,9 +17,10 @@ interface Props {
 
 export default function EditorEmbedField({ id }: Props) {
   const field = useNode<EmbedFieldNode>(id);
-  const { index, count } = useNodeIndex(id);
+  const { index } = useNodeIndex(id);
+  const actions = useNodeActions(id, 25);
 
-  const { move, duplicate, remove, update } = useDocumentStore.getState();
+  const { update } = useDocumentStore.getState();
 
   if (!field) return null;
 
@@ -36,10 +38,7 @@ export default function EditorEmbedField({ id }: Props) {
           </div>
         )
       }
-      moveUp={index > 0 ? () => move(id, -1) : undefined}
-      moveDown={index < count - 1 ? () => move(id, 1) : undefined}
-      duplicate={count < 25 ? () => duplicate(id) : undefined}
-      remove={() => remove(id)}
+      {...actions}
     >
       <div className="space-y-3">
         <div className="flex space-x-3">

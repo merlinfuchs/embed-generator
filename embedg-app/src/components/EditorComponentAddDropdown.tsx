@@ -1,6 +1,6 @@
 import { ChevronUpIcon, StarIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
-import { type NodeId, useDocumentStore } from "../state/document";
+import { type NewNode, type NodeId, useDocumentStore } from "../state/document";
 import { useCurrentMessageStore } from "../state/message";
 import { useState } from "react";
 import ClickOutsideHandler from "./ClickOutsideHandler";
@@ -24,9 +24,9 @@ export default function EditorComponentAddDropdown({
 
   const { insert } = useDocumentStore.getState();
 
-  function addComponent(node: Parameters<typeof insert>[3]) {
-    setOpen(false);
+  function addComponent(node: NewNode) {
     insert(parentId, "components", "end", node);
+    setOpen(false);
   }
 
   const navigate = useNavigate();
@@ -37,10 +37,6 @@ export default function EditorComponentAddDropdown({
 
   const features = usePremiumGuildFeatures();
   const allowedComponentTypes = features?.component_types ?? [];
-
-  function addButtonRow() {
-    addComponent({ type: "actionRow" });
-  }
 
   function addSelectMenuRow() {
     const rowId = insert(parentId, "components", "end", { type: "actionRow" });
@@ -59,31 +55,11 @@ export default function EditorComponentAddDropdown({
     setOpen(false);
   }
 
-  function addTextDisplay() {
-    addComponent({ type: "textDisplay", content: "" });
-  }
-
-  function addMediaGallery() {
-    addComponent({ type: "mediaGallery" });
-  }
-
-  function addSeparator() {
-    addComponent({ type: "separator", spacing: 1, divider: true });
-  }
-
-  function addFile() {
-    addComponent({ type: "file", file: { url: "" } });
-  }
-
-  function addContainer() {
-    addComponent({ type: "container" });
-  }
-
   const componentTypes = [
     {
       label: "Button Row",
       type: 1,
-      handler: addButtonRow,
+      node: { type: "actionRow" } as NewNode,
     },
     {
       label: "Select Menu",
@@ -100,32 +76,32 @@ export default function EditorComponentAddDropdown({
       label: "Text Display",
       type: 10,
       v2Only: true,
-      handler: addTextDisplay,
+      node: { type: "textDisplay", content: "" } as NewNode,
     },
     {
       label: "Media Gallery",
       type: 12,
       v2Only: true,
-      handler: addMediaGallery,
+      node: { type: "mediaGallery" } as NewNode,
     },
     {
       label: "File",
       type: 13,
       v2Only: true,
-      handler: addFile,
+      node: { type: "file", file: { url: "" } } as NewNode,
     },
     {
       label: "Separator",
       type: 14,
       v2Only: true,
-      handler: addSeparator,
+      node: { type: "separator", spacing: 1, divider: true } as NewNode,
     },
     {
       label: "Container",
       type: 17,
       v2Only: true,
       rootOnly: true,
-      handler: addContainer,
+      node: { type: "container" } as NewNode,
     },
   ].filter((c) => {
     if (c.v2Only && !componentsV2Enabled) return false;
@@ -162,7 +138,11 @@ export default function EditorComponentAddDropdown({
                 className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left flex items-center gap-2"
                 onClick={() => {
                   if (allowedComponentTypes.includes(componentType.type)) {
-                    componentType.handler();
+                    if (componentType.handler) {
+                      componentType.handler();
+                    } else if (componentType.node) {
+                      addComponent(componentType.node);
+                    }
                   } else {
                     navigate("/premium");
                   }

@@ -3,9 +3,9 @@ import {
   type NodeId,
   useDocumentStore,
   useNode,
+  useNodeActions,
 } from "../state/document";
 import { nodeField, nodeScope } from "../state/validationError";
-import { useNodeActions } from "./useNodeActions";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import CheckBox from "./CheckBox";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
@@ -25,10 +25,9 @@ export default function EditorComponentBaseFile({
   const data = useNode<FileNode>(id);
   const actions = useNodeActions(id);
   const { update } = useDocumentStore.getState();
+  const attachments = useCurrentAttachmentsStore((state) => state.attachments);
 
   if (!data) return null;
-
-  const attachments = useCurrentAttachmentsStore((state) => state.attachments);
 
   return (
     <EditorComponentCollapsable

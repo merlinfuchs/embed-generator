@@ -1,14 +1,10 @@
 import debounce from "just-debounce-it";
 import { useEffect, useMemo, useState } from "react";
+import { defaultMessage } from "../discord/defaultMessage";
 import type { Message } from "../discord/schema";
-import {
-  DOCUMENT_VERSION,
-  type NodeId,
-  persistedDocumentVersion,
-  useDocumentStore,
-} from "./document";
+import { type NodeId, persistedDocument, useDocumentStore } from "./document";
 import { toMessage } from "./documentConvert";
-import { defaultMessage, useCurrentMessageStore } from "./message";
+import { useCurrentMessageStore } from "./message";
 
 /**
  * Embeds, components and their action sets live in the document store; the
@@ -25,10 +21,17 @@ export function getCurrentDocument(): {
   idToPath: Map<NodeId, string>;
 } {
   const converted = toMessage(useDocumentStore.getState());
+  const root = useCurrentMessageStore.getState();
 
   return {
     message: {
-      ...useCurrentMessageStore.getState(),
+      content: root.content,
+      username: root.username,
+      avatar_url: root.avatar_url,
+      tts: root.tts,
+      thread_name: root.thread_name,
+      flags: root.flags,
+      allowed_mentions: root.allowed_mentions,
       embeds: converted.message.embeds,
       components: converted.message.components,
       actions: converted.message.actions,
@@ -98,19 +101,14 @@ export function setComponentsV2Enabled(enabled: boolean) {
  * state is the parsed draft by now.
  */
 export function seedDocumentStore() {
-  if (persistedDocumentVersion === DOCUMENT_VERSION) return;
+  const persisted = persistedDocument();
+  if (persisted === "current") return;
 
+  // Version 1 owns the embeds, so they are the one part of the draft in the
+  // message store that is stale. Anything older owns nothing.
   const draft = useCurrentMessageStore.getState();
+  const embeds =
+    persisted === "none" ? draft.embeds : getCurrentDocument().message.embeds;
 
-  if (persistedDocumentVersion === null) {
-    useDocumentStore.getState().replaceAll(draft);
-    return;
-  }
-
-  const { message } = getCurrentDocument();
-  useDocumentStore.getState().replaceAll({
-    ...message,
-    components: draft.components,
-    actions: draft.actions,
-  });
+  useDocumentStore.getState().replaceAll({ ...draft, embeds });
 }

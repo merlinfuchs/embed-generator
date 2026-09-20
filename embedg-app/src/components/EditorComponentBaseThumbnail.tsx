@@ -3,9 +3,9 @@ import {
   type NodeId,
   useDocumentStore,
   useNode,
+  useNodeActions,
 } from "../state/document";
 import { nodeField, nodeScope } from "../state/validationError";
-import { useNodeActions } from "./useNodeActions";
 import CheckBox from "./CheckBox";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
 import EditorInput from "./EditorInput";

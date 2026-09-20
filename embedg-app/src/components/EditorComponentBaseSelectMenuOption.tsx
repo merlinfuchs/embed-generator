@@ -3,9 +3,9 @@ import {
   type NodeId,
   useDocumentStore,
   useNode,
+  useNodeActions,
 } from "../state/document";
 import { nodeField, nodeScope } from "../state/validationError";
-import { useNodeActions } from "./useNodeActions";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
 import EditorInput from "./EditorInput";
 import EditorComponentActions from "./EditorActionSet";
@@ -14,13 +14,11 @@ import EditorComponentEmojiSelect from "./EditorComponentEmojiSelect";
 interface Props {
   id: NodeId;
   title?: string;
-  size?: "medium" | "large";
 }
 
 export default function EditorComponentBaseSelectMenuOption({
   id,
   title = "Option",
-  size = "medium",
 }: Props) {
   const data = useNode<SelectOptionNode>(id);
   const actions = useNodeActions(id, 25);

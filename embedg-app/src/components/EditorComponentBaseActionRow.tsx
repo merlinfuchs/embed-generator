@@ -1,16 +1,15 @@
-import { shallow } from "zustand/shallow";
 import {
   type ActionRowNode,
   type NodeId,
   useChildIds,
   useDocumentStore,
+  useNodeActions,
 } from "../state/document";
 import { nodeScope } from "../state/validationError";
 import { AutoAnimate } from "../util/autoAnimate";
 import EditorComponentBaseButton from "./EditorComponentBaseButton";
 import EditorComponentBaseSelectMenu from "./EditorComponentBaseSelectMenu";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
-import { useNodeActions } from "./useNodeActions";
 
 interface Props {
   id: NodeId;
@@ -24,12 +23,10 @@ export default function EditorComponentBaseActionRow({
   const childIds = useChildIds(id, "components");
   const actions = useNodeActions(id);
   const { insert, removeChildren } = useDocumentStore.getState();
-  const childTypes = useDocumentStore(
-    (state) => childIds.map((childId) => state.nodes[childId]?.type),
-    shallow,
+  // A row holds either buttons or a single select menu, never both.
+  const isButtonRow = useDocumentStore(
+    (state) => state.nodes[childIds[0]]?.type !== "selectMenu",
   );
-
-  const isButtonRow = childTypes.every((type) => type === "button");
 
   return (
     <EditorComponentCollapsable
@@ -48,8 +45,8 @@ export default function EditorComponentBaseActionRow({
       }
     >
       <AutoAnimate>
-        {childIds.map((childId, i) =>
-          childTypes[i] === "button" ? (
+        {childIds.map((childId) =>
+          isButtonRow ? (
             <EditorComponentBaseButton key={childId} id={childId} />
           ) : (
             <EditorComponentBaseSelectMenu key={childId} id={childId} />

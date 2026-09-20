@@ -12,12 +12,13 @@ import type {
   EmbedThumbnail,
   Emoji,
   Message,
-  MessageAction,
   MessageActionSet,
   MessageComponentButtonStyle,
   UnfurledMediaItem,
 } from "../discord/schema";
+import { defaultMessage } from "../discord/defaultMessage";
 import { getUniqueId } from "../util";
+import { type ActionSetActions, createActionSetSlice } from "./actionSetSlice";
 import {
   type ChildSlot,
   childIds,
@@ -25,7 +26,6 @@ import {
   fromMessage,
   setChildIds,
 } from "./documentConvert";
-import { defaultMessage } from "./message";
 
 export type NodeId = string;
 
@@ -217,7 +217,7 @@ export interface DocumentData {
   actions: Record<string, MessageActionSet>;
 }
 
-export interface DocumentStore extends DocumentData {
+export interface DocumentStore extends DocumentData, ActionSetActions {
   update<T extends Node>(
     id: NodeId,
     patch: Partial<Omit<T, "id" | "type" | "parentId">>,
@@ -232,24 +232,6 @@ export interface DocumentStore extends DocumentData {
   removeChildren(parentId: NodeId, slot: ChildSlot): void;
   move(id: NodeId, delta: -1 | 1): void;
   duplicate(id: NodeId): NodeId;
-  addAction: (id: string, action: MessageAction) => void;
-  clearActions: (id: string) => void;
-  deleteAction: (id: string, i: number) => void;
-  moveActionUp: (id: string, i: number) => void;
-  moveActionDown: (id: string, i: number) => void;
-  duplicateAction: (id: string, i: number) => void;
-  setActionType: (id: string, i: number, type: number) => void;
-  setActionText: (id: string, i: number, text: string) => void;
-  setActionTargetId: (id: string, i: number, target: string) => void;
-  setActionPublic: (id: string, i: number, val: boolean) => void;
-  setActionAllowRoleMentions: (id: string, i: number, val: boolean) => void;
-  setActionDisableDefaultResponse: (
-    id: string,
-    i: number,
-    val: boolean,
-  ) => void;
-  setActionPermissions: (id: string, i: number, val: string) => void;
-  setActionRoleIds: (id: string, i: number, val: string[]) => void;
   replaceAll(message: Message): void;
   clear(): void;
   setComponentsV2(enabled: boolean): void;
@@ -261,6 +243,13 @@ export const DOCUMENT_STORE_KEY = "current-document";
 
 /** 2 is the first version that owns components and their action sets. */
 export const DOCUMENT_VERSION = 2;
+
+const hadPersistedDocument =
+  typeof localStorage !== "undefined" &&
+  localStorage.getItem(DOCUMENT_STORE_KEY) !== null;
+
+/** Set by `migrate` when an older document is loaded. */
+let migratedFrom: number | null = null;
 
 function freshId(nodes: Record<NodeId, Node>): NodeId {
   let id = getUniqueId().toString();
@@ -435,187 +424,7 @@ export const createDocumentStore = (key: string) =>
               return copied ? copyId : id;
             },
 
-            addAction: (id: string, action: MessageAction) =>
-              set((state) => {
-                const actionSet = state.actions[id];
-                if (actionSet) {
-                  actionSet.actions.push(action);
-                } else {
-                  state.actions[id] = { actions: [action] };
-                }
-              }),
-            clearActions: (id: string) =>
-              set((state) => {
-                const actionSet = state.actions[id];
-                if (actionSet) {
-                  actionSet.actions = [];
-                }
-              }),
-            deleteAction: (id: string, i: number) =>
-              set((state) => {
-                const actionSet = state.actions[id];
-                if (actionSet) {
-                  actionSet.actions.splice(i, 1);
-                }
-              }),
-            moveActionUp: (id: string, i: number) =>
-              set((state) => {
-                const actionSet = state.actions[id];
-                if (actionSet) {
-                  const action = actionSet.actions[i];
-                  if (action) {
-                    actionSet.actions.splice(i, 1);
-                    actionSet.actions.splice(i - 1, 0, action);
-                  }
-                }
-              }),
-            moveActionDown: (id: string, i: number) => {
-              set((state) => {
-                const actionSet = state.actions[id];
-                if (actionSet) {
-                  const action = actionSet.actions[i];
-                  if (action) {
-                    actionSet.actions.splice(i, 1);
-                    actionSet.actions.splice(i + 1, 0, action);
-                  }
-                }
-              });
-            },
-            duplicateAction: (id: string, i: number) => {
-              set((state) => {
-                const actionSet = state.actions[id];
-                if (actionSet) {
-                  const action = actionSet.actions[i];
-                  if (action) {
-                    actionSet.actions.splice(i + 1, 0, {
-                      ...action,
-                      id: getUniqueId(),
-                    });
-                  }
-                }
-              });
-            },
-            setActionType: (id: string, i: number, type: number) =>
-              set((state) => {
-                const actionSet = state.actions[id];
-                const action = actionSet.actions[i];
-
-                if (type === 1 || type === 6 || type === 8) {
-                  actionSet.actions[i] = {
-                    type,
-                    id: action.id,
-                    text: "",
-                    public: false,
-                    allow_role_mentions: false,
-                  };
-                } else if (type === 5 || type === 7 || type === 9) {
-                  actionSet.actions[i] = {
-                    type,
-                    id: action.id,
-                    target_id: "",
-                    public: false,
-                    allow_role_mentions: false,
-                  };
-                } else if (type === 2 || type === 3 || type === 4) {
-                  actionSet.actions[i] = {
-                    type,
-                    id: action.id,
-                    target_id: "",
-                    public: false,
-                    disable_default_response: false,
-                    allow_role_mentions: false,
-                  };
-                } else if (type === 10) {
-                  actionSet.actions[i] = {
-                    type,
-                    id: action.id,
-                    permissions: "0",
-                    role_ids: [],
-                    disable_default_response: false,
-                  };
-                }
-              }),
-            setActionText: (id: string, i: number, text: string) =>
-              set((state) => {
-                const actionSet = state.actions[id];
-                const action = actionSet.actions[i];
-                if (
-                  action.type === 1 ||
-                  action.type === 6 ||
-                  action.type === 8
-                ) {
-                  action.text = text;
-                } else if (
-                  action.type === 10 &&
-                  action.disable_default_response
-                ) {
-                  action.text = text;
-                }
-              }),
-            setActionTargetId: (id: string, i: number, target: string) =>
-              set((state) => {
-                const actionSet = state.actions[id];
-                const action = actionSet.actions[i];
-                if (
-                  action.type === 2 ||
-                  action.type === 3 ||
-                  action.type === 4 ||
-                  action.type === 5 ||
-                  action.type === 7 ||
-                  action.type === 9
-                ) {
-                  action.target_id = target;
-                }
-              }),
-            setActionPublic: (id: string, i: number, val: boolean) =>
-              set((state) => {
-                const actionSet = state.actions[id];
-                const action = actionSet.actions[i];
-                if (action.type !== 10) {
-                  action.public = val;
-                }
-              }),
-            setActionAllowRoleMentions: (id: string, i: number, val: boolean) =>
-              set((state) => {
-                const actionSet = state.actions[id];
-                const action = actionSet.actions[i];
-                if (action.type !== 10) {
-                  action.allow_role_mentions = val;
-                }
-              }),
-            setActionDisableDefaultResponse: (
-              id: string,
-              i: number,
-              val: boolean,
-            ) =>
-              set((state) => {
-                const actionSet = state.actions[id];
-                const action = actionSet.actions[i];
-                if (
-                  action.type === 2 ||
-                  action.type === 3 ||
-                  action.type === 4 ||
-                  action.type === 10
-                ) {
-                  action.disable_default_response = val;
-                }
-              }),
-            setActionPermissions: (id: string, i: number, val: string) =>
-              set((state) => {
-                const actionSet = state.actions[id];
-                const action = actionSet.actions[i];
-                if (action.type === 10) {
-                  action.permissions = val;
-                }
-              }),
-            setActionRoleIds: (id: string, i: number, val: string[]) =>
-              set((state) => {
-                const actionSet = state.actions[id];
-                const action = actionSet.actions[i];
-                if (action.type === 10) {
-                  action.role_ids = val;
-                }
-              }),
+            ...createActionSetSlice<DocumentStore>(set),
 
             replaceAll: (message) => set(fromMessage(message)),
 
@@ -648,7 +457,10 @@ export const createDocumentStore = (key: string) =>
           // The node tree itself is unchanged between versions; what a version
           // says is which parts of the message this store owns, which
           // `seedDocumentStore` reconciles once both stores have rehydrated.
-          migrate: (persisted) => persisted as DocumentStore,
+          migrate: (persisted, version) => {
+            migratedFrom = version;
+            return persisted as DocumentStore;
+          },
         },
       ),
     ),
@@ -721,21 +533,17 @@ function copySubtree(
 }
 
 /**
- * Read before the store is created, because the persist middleware writes the
- * key as soon as it rehydrates.
+ * What was in storage before this store rehydrated: no document at all, one
+ * written by an older version, or one this version already owns. The key has
+ * to be read before the store is created, because the persist middleware
+ * writes it as soon as it rehydrates; the version comes from `migrate`, which
+ * only runs when there is something older to upgrade.
  */
-export const persistedDocumentVersion = ((): number | null => {
-  if (typeof localStorage === "undefined") return null;
+export function persistedDocument(): "none" | "current" | number {
+  if (!hadPersistedDocument) return "none";
 
-  const raw = localStorage.getItem(DOCUMENT_STORE_KEY);
-  if (!raw) return null;
-
-  try {
-    return JSON.parse(raw).version ?? 0;
-  } catch {
-    return 0;
-  }
-})();
+  return migratedFrom ?? "current";
+}
 
 export const useDocumentStore = createDocumentStore(DOCUMENT_STORE_KEY);
 
@@ -760,3 +568,20 @@ export const useNodeIndex = (id: NodeId) =>
 
     return { index: ids.indexOf(id), count: ids.length };
   }, shallow);
+
+/**
+ * The move, duplicate and remove buttons of a node, hidden at the ends of its
+ * slot and once `max` siblings exist.
+ */
+export function useNodeActions(id: NodeId, max?: number) {
+  const { index, count } = useNodeIndex(id);
+  const { move, duplicate, remove } = useDocumentStore.getState();
+
+  return {
+    moveUp: index > 0 ? () => move(id, -1) : undefined,
+    moveDown: index < count - 1 ? () => move(id, 1) : undefined,
+    duplicate:
+      max === undefined || count < max ? () => duplicate(id) : undefined,
+    remove: () => remove(id),
+  };
+}

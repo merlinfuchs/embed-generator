@@ -135,7 +135,7 @@ test("seeding without a draft keeps the default message", async () => {
   const { seedDocumentStore, getCurrentMessage } = await import(
     "./currentMessage"
   );
-  const { defaultMessage } = await import("./message");
+  const { defaultMessage } = await import("../discord/defaultMessage");
   seedDocumentStore();
 
   expect(getCurrentMessage().embeds).toEqual(defaultMessage.embeds);

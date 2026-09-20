@@ -4,6 +4,7 @@ import {
   useChildIds,
   useDocumentStore,
   useNode,
+  useNodeActions,
 } from "../state/document";
 import { nodeScope, slotScope } from "../state/validationError";
 import { AutoAnimate } from "../util/autoAnimate";
@@ -12,7 +13,6 @@ import EditorComponentBaseButton from "./EditorComponentBaseButton";
 import EditorComponentBaseTextDisplay from "./EditorComponentBaseTextDisplay";
 import EditorComponentBaseThumbnail from "./EditorComponentBaseThumbnail";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
-import { useNodeActions } from "./useNodeActions";
 
 interface Props {
   id: NodeId;
@@ -28,9 +28,11 @@ export default function EditorComponentBaseSection({
   const data = useNode<SectionNode>(id);
   const childIds = useChildIds(id, "components");
   const actions = useNodeActions(id);
-  const { insert } = useDocumentStore.getState();
+  const { insert, removeChildren } = useDocumentStore.getState();
 
-  const accessory = useNode(data?.accessoryId ?? "");
+  const accessoryType = useDocumentStore(
+    (state) => state.nodes[data?.accessoryId ?? ""]?.type,
+  );
 
   if (!data) return null;
 
@@ -72,7 +74,7 @@ export default function EditorComponentBaseSection({
           </div>
           <select
             className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
-            value={accessory?.type === "button" ? "2" : "11"}
+            value={accessoryType === "button" ? "2" : "11"}
             onChange={(v) => setAccessoryType(parseInt(v.target.value, 10))}
           >
             <option value="11">Thumbnail</option>
@@ -81,7 +83,7 @@ export default function EditorComponentBaseSection({
         </div>
         <div>
           {data.accessoryId &&
-            (accessory?.type === "button" ? (
+            (accessoryType === "button" ? (
               <EditorComponentBaseButton
                 id={data.accessoryId}
                 title="Accessory"
@@ -142,9 +144,7 @@ export default function EditorComponentBaseSection({
                 <button
                   type="button"
                   className="px-3 py-2 rounded border-2 border-red hover:bg-red transition-colors text-white"
-                  onClick={() =>
-                    useDocumentStore.getState().removeChildren(id, "components")
-                  }
+                  onClick={() => removeChildren(id, "components")}
                 >
                   Clear Texts
                 </button>
