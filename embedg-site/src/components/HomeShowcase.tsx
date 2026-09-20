@@ -224,6 +224,52 @@ export default function HomeShowcase(): JSX.Element {
   const indexRef = React.useRef(0);
   indexRef.current = index;
 
+  // Scroll hijack: once the section sits at the top of the viewport, wheel
+  // gestures step through features instead of scrolling the page. Released
+  // past the last feature (or before the first). Touch devices keep native scroll.
+  React.useEffect(() => {
+    if (window.matchMedia("(hover: none)").matches) return;
+    const HEADER = 60;
+    const acc = { v: 0, until: 0 };
+    const onWheel = (e: WheelEvent) => {
+      const el = sectionRef.current;
+      if (!el) return;
+      const top = el.getBoundingClientRect().top - HEADER;
+      const down = e.deltaY > 0;
+      const engaged = Math.abs(top) < 4;
+      const approaching = down ? top > 0 && top < 240 : top < 0 && top > -240;
+
+      if (!engaged && approaching) {
+        e.preventDefault();
+        setTouched(true);
+        window.scrollBy({ top, behavior: "smooth" });
+        acc.until = Date.now() + 700;
+        return;
+      }
+      if (!engaged) return;
+
+      const i = indexRef.current;
+      const atEdge = down ? i === features.length - 1 : i === 0;
+      if (atEdge) {
+        // The snapping track would swallow this, so move the page ourselves.
+        e.preventDefault();
+        window.scrollBy({ top: e.deltaY });
+        return;
+      }
+
+      e.preventDefault();
+      if (Date.now() < acc.until) return;
+      acc.v += e.deltaY;
+      if (Math.abs(acc.v) < 40) return;
+      acc.v = 0;
+      acc.until = Date.now() + 650;
+      setTouched(true);
+      go(i + (down ? 1 : -1));
+    };
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => window.removeEventListener("wheel", onWheel);
+  }, []);
+
   const onScroll = () => {
     if (Date.now() < lockUntil.current) return;
     const track = trackRef.current;
@@ -560,7 +606,7 @@ export default function HomeShowcase(): JSX.Element {
               onScroll={onScroll}
               onWheel={() => setTouched(true)}
               onTouchMove={() => setTouched(true)}
-              className="relative h-[520px] snap-y snap-mandatory overflow-y-auto [mask-image:linear-gradient(to_bottom,transparent,black_12%,black_88%,transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="relative h-[520px] overflow-hidden [@media(hover:none)]:snap-y [@media(hover:none)]:snap-mandatory [@media(hover:none)]:overflow-y-auto [mask-image:linear-gradient(to_bottom,transparent,black_12%,black_88%,transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               <div aria-hidden className="h-24" />
               <div className="py-6 opacity-25">
