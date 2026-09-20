@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Modal from "../../components/Modal";
 import {
   setCurrentMessage,
-  useCurrentMessage,
+  useDebouncedCurrentMessage,
 } from "../../state/currentMessage";
 import { json, jsonParseLinter } from "@codemirror/lang-json";
 import { githubDark } from "@uiw/codemirror-theme-github";
@@ -16,7 +16,7 @@ export default function JsonView() {
   const navigate = useNavigate();
   const createToast = useToasts((s) => s.create);
 
-  const msg = useCurrentMessage();
+  const msg = useDebouncedCurrentMessage(250);
 
   const [raw, setRaw] = useState("{}");
 

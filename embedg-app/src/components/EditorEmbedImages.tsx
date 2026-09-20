@@ -15,7 +15,7 @@ interface Props {
 export default function EditorEmbedImages({ id }: Props) {
   const embed = useNode<EmbedNode>(id);
   const path = useNodePath(id);
-  const update = useDocumentStore((state) => state.update);
+  const { update } = useDocumentStore.getState();
 
   if (!embed) return null;
 

@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { setCurrentMessage } from "../state/currentMessage";
-import { defaultMessage } from "../state/message";
+import { clearCurrentMessage } from "../state/currentMessage";
 
 export default function EditorErrorBoundary({
   children,
@@ -9,10 +8,7 @@ export default function EditorErrorBoundary({
   children: ReactNode;
 }) {
   return (
-    <ErrorBoundary
-      fallbackRender={ErrorFallback}
-      onReset={() => setCurrentMessage(defaultMessage)}
-    >
+    <ErrorBoundary fallbackRender={ErrorFallback} onReset={clearCurrentMessage}>
       {children}
     </ErrorBoundary>
   );

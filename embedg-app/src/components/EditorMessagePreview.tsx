@@ -1,21 +1,11 @@
-import { debounce } from "debounce";
-import { lazy, Suspense, useEffect, useState } from "react";
-import type { Message } from "../discord/schema";
-import { useCurrentMessage } from "../state/currentMessage";
+import { lazy, Suspense } from "react";
+import { useDebouncedCurrentMessage } from "../state/currentMessage";
 
 const LazyMessagePreview = lazy(() => import("./MessagePreview"));
 
 export default function EditorMessagePreview() {
-  const [msg, setMsg] = useState<Message>();
-
-  const debouncedSetMessage = debounce(setMsg, 250);
-
-  const message = useCurrentMessage();
-
   // We debounce the message preview to prevent it from updating too often.
-  useEffect(() => {
-    debouncedSetMessage(message);
-  }, [message]);
+  const msg = useDebouncedCurrentMessage(250);
 
   if (msg) {
     if (msg.flags && (msg.flags & (1 << 15)) !== 0) {

@@ -1,9 +1,9 @@
-import { useMemo } from "react";
-import { parseMessageWithAction } from "../discord/restoreSchema";
+import debounce from "just-debounce-it";
+import { useEffect, useMemo, useState } from "react";
 import type { Message } from "../discord/schema";
 import { hadPersistedDocument, useDocumentStore } from "./document";
 import { toMessage } from "./documentConvert";
-import { persistedMessage, useCurrentMessageStore } from "./message";
+import { defaultMessage, useCurrentMessageStore } from "./message";
 
 /**
  * Embeds live in the document store, everything else is still in `message.ts`.
@@ -16,11 +16,31 @@ export function getCurrentMessage(): Message {
   };
 }
 
-export function useCurrentMessage(): Message {
-  const base = useCurrentMessageStore((state) => state);
-  const embeds = useDocumentStore((state) => toMessage(state).message.embeds);
+/**
+ * The merged message, at most once per `wait` milliseconds. Subscribing instead
+ * of selecting keeps a keystroke from re-rendering everything that reads the
+ * message, and keeps one debounce timer across a typing burst.
+ */
+export function useDebouncedCurrentMessage(wait: number): Message | undefined {
+  const [message, setMessage] = useState<Message>();
 
-  return useMemo(() => ({ ...base, embeds }), [base, embeds]);
+  const debouncedSetMessage = useMemo(() => debounce(setMessage, wait), [wait]);
+
+  useEffect(() => {
+    const update = () => debouncedSetMessage(getCurrentMessage());
+    update();
+
+    const unsubscribers = [
+      useCurrentMessageStore.subscribe(update),
+      useDocumentStore.subscribe(update),
+    ];
+
+    return () => {
+      for (const unsubscribe of unsubscribers) unsubscribe();
+    };
+  }, [debouncedSetMessage]);
+
+  return message;
 }
 
 /** Writes a whole message back into both stores. */
@@ -29,22 +49,26 @@ export function setCurrentMessage(message: Message) {
   useDocumentStore.getState().replaceAll(message);
 }
 
+export function clearCurrentMessage() {
+  setCurrentMessage(defaultMessage);
+}
+
+/**
+ * The Components V2 toggle replaces the message rather than editing it, so the
+ * document store has to follow the message store instead of keeping its embeds.
+ */
+export function setComponentsV2Enabled(enabled: boolean) {
+  useCurrentMessageStore.getState().setComponentsV2Enabled(enabled);
+  useDocumentStore.getState().replaceAll(useCurrentMessageStore.getState());
+}
+
 /**
  * Drafts predate the document store, so the first time it runs it takes over
- * the embeds of the draft that is already in the message store.
+ * the embeds of the draft that is already in the message store, which the
+ * persist middleware has rehydrated synchronously by now.
  */
 export function seedDocumentStore() {
   if (hadPersistedDocument) return;
 
-  if (!persistedMessage) return;
-
-  try {
-    const { state } = JSON.parse(persistedMessage);
-    useDocumentStore.getState().replaceAll(parseMessageWithAction(state));
-  } catch (e) {
-    console.error(
-      "failed to seed the document store from the current draft",
-      e,
-    );
-  }
+  useDocumentStore.getState().replaceAll(useCurrentMessageStore.getState());
 }

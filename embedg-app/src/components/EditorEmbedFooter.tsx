@@ -17,14 +17,14 @@ interface Props {
 export default function EditorEmbedFooter({ id }: Props) {
   const embed = useNode<EmbedNode>(id);
   const path = useNodePath(id);
-  const update = useDocumentStore((state) => state.update);
+  const { update } = useDocumentStore.getState();
 
   if (!embed) return null;
 
   const footer = embed.footer;
 
   function patchFooter(patch: Partial<NonNullable<EmbedNode["footer"]>>) {
-    update<EmbedNode>(id, { footer: patchGroup({ ...footer }, patch) });
+    update<EmbedNode>(id, { footer: patchGroup(footer, patch) });
   }
 
   return (

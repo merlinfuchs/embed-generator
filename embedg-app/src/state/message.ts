@@ -4,7 +4,6 @@ import { create, useStore } from "zustand";
 import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import type {
-  EmbedField,
   Message,
   MessageAction,
   MessageComponent,
@@ -21,7 +20,6 @@ import type {
   MessageComponentSelectMenuOption,
   MessageComponentSeparator,
   MessageComponentTextDisplay,
-  MessageEmbed,
 } from "../discord/schema";
 import { getUniqueId } from "../util";
 
@@ -1788,15 +1786,6 @@ export const createMessageStore = (key: string) =>
   );
 
 export const MESSAGE_STORE_KEY = "current-message";
-
-/**
- * Read before the store is created, because the persist middleware writes the
- * key as soon as it rehydrates.
- */
-export const persistedMessage =
-  typeof localStorage !== "undefined"
-    ? localStorage.getItem(MESSAGE_STORE_KEY)
-    : null;
 
 export const useCurrentMessageStore = createMessageStore(MESSAGE_STORE_KEY);
 

@@ -1,5 +1,4 @@
 import { DocumentMagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { debounce } from "debounce";
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { Drawer } from "vaul";
@@ -11,8 +10,8 @@ import EditorMessageContentField from "../../components/EditorMessageContentFiel
 import EditorMessagePreview from "../../components/EditorMessagePreview";
 import EditorWebhookFields from "../../components/EditorWebhookFields";
 import SendMenu from "../../components/SendMenu";
-import { type Message, messageSchema } from "../../discord/schema";
-import { useCurrentMessage } from "../../state/currentMessage";
+import { messageSchema } from "../../discord/schema";
+import { useDebouncedCurrentMessage } from "../../state/currentMessage";
 import { useCurrentMessageStore } from "../../state/message";
 import { useValidationErrorStore } from "../../state/validationError";
 import EditorErrorBoundary from "../../components/EditorErrorBoundary";
@@ -20,19 +19,14 @@ import EditorErrorBoundary from "../../components/EditorErrorBoundary";
 export default function EditorView() {
   const setValidationError = useValidationErrorStore((state) => state.setError);
 
-  const debouncedSetValidationError = debounce((msg: Message) => {
-    const res = messageSchema.safeParse(msg);
-    if (!res.success) {
-      console.log(res.error);
-    }
-    setValidationError(res.success ? null : res.error);
-  }, 250);
-
-  const message = useCurrentMessage();
+  const message = useDebouncedCurrentMessage(250);
 
   useEffect(() => {
-    debouncedSetValidationError(message);
-  }, [message]);
+    if (!message) return;
+
+    const res = messageSchema.safeParse(message);
+    setValidationError(res.success ? null : res.error);
+  }, [message, setValidationError]);
 
   const componentsV2Enabled = useCurrentMessageStore((s) =>
     s.getComponentsV2Enabled(),

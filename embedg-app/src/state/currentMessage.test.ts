@@ -73,16 +73,16 @@ test("seeding leaves an existing document alone", async () => {
   ]);
 });
 
-test("seeding does nothing without a draft", async () => {
+test("seeding without a draft keeps the default message", async () => {
   vi.stubGlobal("localStorage", fakeStorage());
 
-  const { seedDocumentStore } = await import("./currentMessage");
-  const { useDocumentStore } = await import("./document");
-  const before = useDocumentStore.getState().nodes;
-
+  const { seedDocumentStore, getCurrentMessage } = await import(
+    "./currentMessage"
+  );
+  const { defaultMessage } = await import("./message");
   seedDocumentStore();
 
-  expect(useDocumentStore.getState().nodes).toBe(before);
+  expect(getCurrentMessage().embeds).toEqual(defaultMessage.embeds);
 });
 
 test("the merged message takes embeds from the document store", async () => {

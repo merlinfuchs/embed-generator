@@ -16,7 +16,7 @@ interface Props {
 export default function EditorEmbedAuthor({ id }: Props) {
   const embed = useNode<EmbedNode>(id);
   const path = useNodePath(id);
-  const update = useDocumentStore((state) => state.update);
+  const { update } = useDocumentStore.getState();
 
   if (!embed) return null;
 
@@ -24,7 +24,7 @@ export default function EditorEmbedAuthor({ id }: Props) {
 
   function patchAuthor(patch: Partial<NonNullable<EmbedNode["author"]>>) {
     update<EmbedNode>(id, {
-      author: patchGroup({ name: "", ...author }, patch),
+      author: patchGroup(author ?? { name: "" }, patch),
     });
   }
 

@@ -7,14 +7,7 @@ import EditorEmbed from "./EditorEmbed";
 export default function EditorEmbeds() {
   const rootId = useDocumentStore((state) => state.rootId);
   const embedIds = useChildIds(rootId, "embeds");
-  const insert = useDocumentStore((state) => state.insert);
-
-  function clearEmbeds() {
-    const { remove } = useDocumentStore.getState();
-    for (const id of embedIds) {
-      remove(id);
-    }
-  }
+  const { insert, removeChildren } = useDocumentStore.getState();
 
   return (
     <Collapsable
@@ -57,7 +50,7 @@ export default function EditorEmbeds() {
         <button
           type="button"
           className="px-3 py-2 rounded text-white border-red border-2 hover:bg-red"
-          onClick={clearEmbeds}
+          onClick={() => removeChildren(rootId, "embeds")}
         >
           Clear Embeds
         </button>

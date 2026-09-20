@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { useState } from "react";
+import { setComponentsV2Enabled } from "../state/currentMessage";
 import { useCurrentMessageStore } from "../state/message";
 import ConfirmModal from "./ConfirmModal";
 
@@ -7,10 +8,6 @@ export default function EditorComponentsV2Toggle() {
   const componentsV2Enabled = useCurrentMessageStore((s) =>
     s.getComponentsV2Enabled(),
   );
-  const setComponentV2Enabled = useCurrentMessageStore(
-    (s) => s.setComponentsV2Enabled,
-  );
-
   const [componentsV2EnableModal, setComponentsV2EnableModal] = useState(false);
   const [componentsV2DisableModal, setComponentsV2DisableModal] =
     useState(false);
@@ -19,11 +16,7 @@ export default function EditorComponentsV2Toggle() {
     setComponentsV2DisableModal(false);
     setComponentsV2EnableModal(false);
 
-    if (componentsV2Enabled) {
-      setComponentV2Enabled(false);
-    } else {
-      setComponentV2Enabled(true);
-    }
+    setComponentsV2Enabled(!componentsV2Enabled);
   };
 
   return (

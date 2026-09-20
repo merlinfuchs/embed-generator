@@ -8,16 +8,18 @@ import Collapsable from "./Collapsable";
 
 interface Props {
   id: string;
-  validationPathPrefix: string;
+  validationPathPrefix?: string | string[];
   title: string;
   extra?: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
   children: React.ReactNode;
   duplicate?: () => void;
   moveUp?: () => void;
   moveDown?: () => void;
   remove?: () => void;
   size?: "medium" | "large";
+  defaultCollapsed?: boolean;
 }
 
 export default function EditorComponentCollapsable({
@@ -30,17 +32,20 @@ export default function EditorComponentCollapsable({
   title,
   extra,
   className,
+  style,
   children,
   size = "medium",
+  defaultCollapsed,
 }: Props) {
   return (
-    <div className={className}>
+    <div className={className} style={style}>
       <Collapsable
         id={id}
         validationPathPrefix={validationPathPrefix}
         title={title}
         extra={extra}
         size={size}
+        defaultCollapsed={defaultCollapsed}
         buttons={
           <div className="flex-none text-gray-300 flex items-center space-x-2">
             {moveUp && (

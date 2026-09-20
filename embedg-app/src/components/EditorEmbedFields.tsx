@@ -16,19 +16,12 @@ interface Props {
 export default function EditorEmbedFields({ id }: Props) {
   const path = useNodePath(id);
   const fieldIds = useChildIds(id, "fields");
-  const insert = useDocumentStore((state) => state.insert);
-
-  function clearFields() {
-    const { remove } = useDocumentStore.getState();
-    for (const fieldId of fieldIds) {
-      remove(fieldId);
-    }
-  }
+  const { insert, removeChildren } = useDocumentStore.getState();
 
   return (
     <Collapsable
       id={`embeds.${id}.fields`}
-      validationPathPrefix={`${path}.fields`}
+      validationPathPrefix={path ? `${path}.fields` : undefined}
       title="Fields"
       extra={
         <div className="text-sm italic font-light text-gray-400">
@@ -65,7 +58,7 @@ export default function EditorEmbedFields({ id }: Props) {
           <button
             type="button"
             className="px-3 py-2 rounded text-white border-red border-2 hover:bg-red"
-            onClick={clearFields}
+            onClick={() => removeChildren(id, "fields")}
           >
             Clear Fields
           </button>
