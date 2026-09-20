@@ -32,7 +32,7 @@ interface Props {
   deleteSubComponent: (index: number) => void;
   onSubComponentChange: (
     index: number,
-    data: Partial<MessageComponentTextDisplay>
+    data: Partial<MessageComponentTextDisplay>,
   ) => void;
   duplicateSubComponent: (index: number) => void;
 }

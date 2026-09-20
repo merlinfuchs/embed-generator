@@ -25,7 +25,7 @@ interface Props {
   deleteItem: (index: number) => void;
   onItemChange: (
     index: number,
-    data: Partial<MessageComponentMediaGalleryItem>
+    data: Partial<MessageComponentMediaGalleryItem>,
   ) => void;
   duplicateItem: (index: number) => void;
 }

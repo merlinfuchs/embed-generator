@@ -5,20 +5,20 @@ import CheckBox from "./CheckBox";
 export default function SettingsGeneral() {
   const [editHistoryEnabled, setEditHistoryEnabled] = useSettingsStore(
     (s) => [s.editHistoryEnabled, s.setEditHistoryEnabled],
-    shallow
+    shallow,
   );
   const [alwaysCollapseSidebar, setAlwaysCollapseSidebar] = useSettingsStore(
     (s) => [s.alwaysCollapseSidebar, s.setAlwaysCollapseSidebar],
-    shallow
+    shallow,
   );
   const [confirmOnExit, setConfirmOnExit] = useSettingsStore(
     (s) => [s.confirmOnExit, s.setConfirmOnExit],
-    shallow
+    shallow,
   );
 
   function clearAll() {
     const ok = confirm(
-      "Are you sure you want to clear all local data? The message editor and all your app settings will be cleared. Your saved messages, scheduled messages, and custom commands will not be affected."
+      "Are you sure you want to clear all local data? The message editor and all your app settings will be cleared. Your saved messages, scheduled messages, and custom commands will not be affected.",
     );
     if (ok) {
       localStorage.clear();

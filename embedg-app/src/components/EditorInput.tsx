@@ -41,7 +41,7 @@ export default function EditorInput({
       <div
         className={clsx(
           "flex justify-between items-end",
-          !description && "mb-1.5"
+          !description && "mb-1.5",
         )}
       >
         <div className="flex">

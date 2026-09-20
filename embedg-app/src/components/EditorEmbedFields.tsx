@@ -14,7 +14,7 @@ interface Props {
 export default function EditorEmbedFields({ embedIndex, embedId }: Props) {
   const fields = useCurrentMessageStore(
     (state) => state.embeds[embedIndex].fields.map((e) => e.id),
-    shallow
+    shallow,
   );
 
   const [addField, clearFields] = useCurrentMessageStore((state) => [
@@ -51,7 +51,7 @@ export default function EditorEmbedFields({ embedIndex, embedId }: Props) {
               "px-3 py-2 rounded text-white",
               fields.length < 25
                 ? "bg-blurple hover:bg-blurple-dark"
-                : "bg-dark-3 cursor-not-allowed"
+                : "bg-dark-3 cursor-not-allowed",
             )}
             onClick={() =>
               fields.length < 25 &&

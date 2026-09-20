@@ -28,6 +28,6 @@ export const useSettingsStore = create<SettingsStore>()(
         set({ alwaysCollapseSidebar: enabled }),
       setConfirmOnExit: (enabled) => set({ confirmOnExit: enabled }),
     }),
-    { name: "settings" }
-  )
+    { name: "settings" },
+  ),
 );

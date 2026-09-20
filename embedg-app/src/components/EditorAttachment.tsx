@@ -16,12 +16,12 @@ export default function EditorAttachment({ index, id }: Props) {
       state.attachments[index].name,
       state.attachments[index].data_url,
     ],
-    shallow
+    shallow,
   );
 
   const [removeAttachment] = useCurrentAttachmentsStore(
     (state) => [state.removeAttachment],
-    shallow
+    shallow,
   );
 
   const isImage = isImageRegex.test(dataUrl);

@@ -40,11 +40,11 @@ export default function EditorAction({ cmdId, actionIndex }: Props) {
 
   const action = useCommandActionsStore(
     (state) => state.actions[cmdId]?.actions[actionIndex],
-    shallow
+    shallow,
   );
 
   const actionCount = useCommandActionsStore(
-    (state) => state.actions[cmdId]?.actions?.length || 0
+    (state) => state.actions[cmdId]?.actions?.length || 0,
   );
 
   const [moveUp, moveDown, duplicate, remove] = useCommandActionsStore(
@@ -54,7 +54,7 @@ export default function EditorAction({ cmdId, actionIndex }: Props) {
       state.duplicateAction,
       state.deleteAction,
     ],
-    shallow
+    shallow,
   );
 
   const [
@@ -77,7 +77,7 @@ export default function EditorAction({ cmdId, actionIndex }: Props) {
       state.setActionRoleIds,
       state.setActionPermissions,
     ],
-    shallow
+    shallow,
   );
 
   return (

@@ -54,13 +54,13 @@ export default function EmojiPicker({
         <div
           className={clsx(
             "absolute top-10 z-20",
-            align === "left" ? "left-0" : align === "right" ? "right-0" : ""
+            align === "left" ? "left-0" : align === "right" ? "right-0" : "",
           )}
         >
           <Picker
             data={async () => {
               const response = await fetch(
-                "https://cdn.jsdelivr.net/npm/@emoji-mart/data/sets/15/twitter.json"
+                "https://cdn.jsdelivr.net/npm/@emoji-mart/data/sets/15/twitter.json",
               );
               return response.json();
             }}

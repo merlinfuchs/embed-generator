@@ -35,15 +35,15 @@ export const useCollapsedStatesStore = create<CollapsedStatesStore>()(
       }
       set({ states });
     },
-  })
+  }),
 );
 
 export const useCollapsedState = (key: string, def: boolean = false) => {
   const collapsed = useCollapsedStatesStore((state) =>
-    state.getCollapsed(key, def)
+    state.getCollapsed(key, def),
   );
   const toggleCollapsed = useCollapsedStatesStore(
-    (state) => state.toggleCollapsed
+    (state) => state.toggleCollapsed,
   );
   const wrappedToggleCollapsed = () => toggleCollapsed(key, def);
 

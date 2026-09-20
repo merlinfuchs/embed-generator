@@ -15,12 +15,12 @@ import { useToasts } from "../util/toasts";
 
 export default function SendMenuWebhook() {
   const validationError = useValidationErrorStore((state) =>
-    state.checkIssueByPathPrefix("")
+    state.checkIssueByPathPrefix(""),
   );
 
   const [webhookUrl, setWebhookUrl] = useSendSettingsStore(
     (state) => [state.webhookUrl, state.setWebhookUrl],
-    shallow
+    shallow,
   );
   const webhookInfo = useMemo(() => {
     if (!webhookUrl) return null;
@@ -29,11 +29,11 @@ export default function SendMenuWebhook() {
 
   const [messageId, setMessageId] = useSendSettingsStore(
     (state) => [state.messageId, state.setMessageId],
-    shallow
+    shallow,
   );
   const [threadId, setThreadId] = useSendSettingsStore(
     (state) => [state.threadId, state.setThreadId],
-    shallow
+    shallow,
   );
 
   const sendToWebhookMutation = useSendMessageToWebhookMutation();
@@ -84,7 +84,7 @@ export default function SendMenuWebhook() {
             });
           }
         },
-      }
+      },
     );
   }
 

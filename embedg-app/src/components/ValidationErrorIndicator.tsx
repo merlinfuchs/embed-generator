@@ -9,7 +9,7 @@ export default function ValidationErrorIndicator({ pathPrefix }: Props) {
   const error = useValidationErrorStore((state) =>
     typeof pathPrefix === "string"
       ? state.checkIssueByPathPrefix(pathPrefix)
-      : pathPrefix.some((prefix) => state.checkIssueByPathPrefix(prefix))
+      : pathPrefix.some((prefix) => state.checkIssueByPathPrefix(prefix)),
   );
 
   if (error) {

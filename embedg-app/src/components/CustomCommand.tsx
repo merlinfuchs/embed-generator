@@ -72,7 +72,7 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
             });
           }
         },
-      }
+      },
     );
   }
 
@@ -97,7 +97,7 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
             });
           }
         },
-      }
+      },
     );
   }
 

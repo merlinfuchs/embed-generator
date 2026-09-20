@@ -36,5 +36,5 @@ export const useValidationErrorStore = create<ValidationErrorStore>()(
       }
       return false;
     },
-  })
+  }),
 );

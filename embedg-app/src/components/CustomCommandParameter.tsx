@@ -36,7 +36,7 @@ export default function CustomCommandParameter({
     newParameters.splice(
       parameterIndex - 1,
       0,
-      newParameters.splice(parameterIndex, 1)[0]
+      newParameters.splice(parameterIndex, 1)[0],
     );
     setParameters(newParameters);
   }
@@ -46,7 +46,7 @@ export default function CustomCommandParameter({
     newParameters.splice(
       parameterIndex + 1,
       0,
-      newParameters.splice(parameterIndex, 1)[0]
+      newParameters.splice(parameterIndex, 1)[0],
     );
     setParameters(newParameters);
   }

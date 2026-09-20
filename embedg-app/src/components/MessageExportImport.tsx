@@ -13,7 +13,7 @@ const messageExportSchema = z
         name: z.string(),
         description: z.string().nullable(),
         data: messageSchema,
-      })
+      }),
     ),
   })
   .or(
@@ -25,9 +25,9 @@ const messageExportSchema = z
             messages: z.array(
               z.object({
                 data: messageSchema,
-              })
+              }),
             ),
-          })
+          }),
         ),
       })
       .transform((data) => ({
@@ -36,9 +36,9 @@ const messageExportSchema = z
             name: b.name,
             description: null,
             data: m.data,
-          }))
+          })),
         ),
-      }))
+      })),
   );
 
 type MessageExport = z.infer<typeof messageExportSchema>;
@@ -81,7 +81,7 @@ export default function MessageExportImport({ messages, guildId }: Props) {
                 onSuccess: () => {
                   queryClient.invalidateQueries(["saved-messages", guildId]);
                 },
-              }
+              },
             );
           } else {
             console.log(parsed.error);
@@ -116,7 +116,7 @@ export default function MessageExportImport({ messages, guildId }: Props) {
     const data = JSON.stringify(exportData, null, 2);
 
     const dataUrl = window.URL.createObjectURL(
-      new Blob([data], { type: "application/json" })
+      new Blob([data], { type: "application/json" }),
     );
 
     if (exportAnchorRef.current) {

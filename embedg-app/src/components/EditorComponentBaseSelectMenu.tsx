@@ -22,7 +22,7 @@ interface Props {
   clearOptions: () => void;
   onOptionChange: (
     o: number,
-    data: Partial<MessageComponentSelectMenuOption>
+    data: Partial<MessageComponentSelectMenuOption>,
   ) => void;
 }
 

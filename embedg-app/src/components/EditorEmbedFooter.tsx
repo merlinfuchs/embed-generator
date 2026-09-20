@@ -15,7 +15,7 @@ export default function EditorEmbedFooter({ embedIndex, embedId }: Props) {
       state.embeds[embedIndex]?.footer?.text,
       state.setEmbedFooterText,
     ],
-    shallow
+    shallow,
   );
 
   const [footerIconUrl, setFooterIconUrl] = useCurrentMessageStore(
@@ -23,12 +23,12 @@ export default function EditorEmbedFooter({ embedIndex, embedId }: Props) {
       state.embeds[embedIndex]?.footer?.icon_url,
       state.setEmbedFooterIconUrl,
     ],
-    shallow
+    shallow,
   );
 
   const [timestamp, setTimestamp] = useCurrentMessageStore(
     (state) => [state.embeds[embedIndex]?.timestamp, state.setEmbedTimestamp],
-    shallow
+    shallow,
   );
 
   console.log("render footer", embedIndex);

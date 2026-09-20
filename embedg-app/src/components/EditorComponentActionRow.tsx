@@ -10,7 +10,7 @@ interface Props {
 
 export default function EditorComponentActionRow({ rootIndex, rootId }: Props) {
   const componentCount = useCurrentMessageStore(
-    (state) => state.components.length
+    (state) => state.components.length,
   );
   const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
     (state) => [
@@ -19,12 +19,12 @@ export default function EditorComponentActionRow({ rootIndex, rootId }: Props) {
       state.duplicateComponent,
       state.deleteComponent,
     ],
-    shallow
+    shallow,
   );
 
   const [addSubComponent, clearSubComponents] = useCurrentMessageStore(
     (state) => [state.addActionRowComponent, state.clearActionRowComponents],
-    shallow
+    shallow,
   );
 
   const [
@@ -55,12 +55,12 @@ export default function EditorComponentActionRow({ rootIndex, rootId }: Props) {
       state.deleteActionRowSelectMenuOption,
       state.clearActionRowSelectMenuOptions,
     ],
-    shallow
+    shallow,
   );
 
   const actionRow = useCurrentMessageStore(
     (state) => state.getActionRow(rootIndex),
-    shallow
+    shallow,
   );
 
   if (!actionRow) {

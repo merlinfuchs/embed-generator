@@ -64,7 +64,7 @@ export default function ScheduledMessagesView() {
                   "px-3 py-2 rounded border-2 text-white",
                   messageCount < maxMessages
                     ? "border-dark-7 hover:bg-dark-6 cursor-pointer"
-                    : "border-dark-6 text-gray-300 cursor-not-allowed"
+                    : "border-dark-6 text-gray-300 cursor-not-allowed",
                 )}
                 onClick={() => messageCount < maxMessages && setCreate(true)}
               >

@@ -10,7 +10,7 @@ interface Props {
 
 export default function EditorComponentGallery({ rootIndex, rootId }: Props) {
   const componentCount = useCurrentMessageStore(
-    (state) => state.components.length
+    (state) => state.components.length,
   );
 
   const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
@@ -20,7 +20,7 @@ export default function EditorComponentGallery({ rootIndex, rootId }: Props) {
       state.duplicateComponent,
       state.deleteComponent,
     ],
-    shallow
+    shallow,
   );
 
   const [
@@ -41,12 +41,12 @@ export default function EditorComponentGallery({ rootIndex, rootId }: Props) {
       state.updateGalleryItem,
       state.duplicateGalleryItem,
     ],
-    shallow
+    shallow,
   );
 
   const gallery = useCurrentMessageStore(
     (state) => state.getGallery(rootIndex),
-    shallow
+    shallow,
   );
 
   if (!gallery) {

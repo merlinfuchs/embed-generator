@@ -16,17 +16,17 @@ export default function EditorComponentActionRowButton({
   childId,
 }: Props) {
   const buttonCount = useCurrentMessageStore(
-    (state) => state.getActionRow(rootIndex)?.components.length || 0
+    (state) => state.getActionRow(rootIndex)?.components.length || 0,
   );
 
   const button = useCurrentMessageStore(
     (state) => state.getActionRowButton(rootIndex, childIndex),
-    shallow
+    shallow,
   );
 
   const updateButton = useCurrentMessageStore(
     (state) => state.updateActionRowComponent,
-    shallow
+    shallow,
   );
 
   const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
@@ -36,7 +36,7 @@ export default function EditorComponentActionRowButton({
       state.duplicateActionRowComponent,
       state.deleteActionRowComponent,
     ],
-    shallow
+    shallow,
   );
 
   if (!button) {

@@ -40,11 +40,11 @@ export default function EditorAction({ setId, actionIndex }: Props) {
 
   const action = useCurrentMessageStore(
     (state) => state.actions[setId]?.actions[actionIndex],
-    shallow
+    shallow,
   );
 
   const actionCount = useCurrentMessageStore(
-    (state) => state.actions[setId]?.actions?.length || 0
+    (state) => state.actions[setId]?.actions?.length || 0,
   );
 
   const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
@@ -54,7 +54,7 @@ export default function EditorAction({ setId, actionIndex }: Props) {
       state.duplicateAction,
       state.deleteAction,
     ],
-    shallow
+    shallow,
   );
 
   const [
@@ -77,7 +77,7 @@ export default function EditorAction({ setId, actionIndex }: Props) {
       state.setActionRoleIds,
       state.setActionPermissions,
     ],
-    shallow
+    shallow,
   );
 
   return (

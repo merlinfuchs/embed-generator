@@ -48,7 +48,7 @@ export function setLocalSessionToken(token: string) {
 
 export function fetchApi(
   input: RequestInfo,
-  init?: RequestInit
+  init?: RequestInit,
 ): Promise<Response> {
   const headers = (init?.headers || {}) as Record<string, string>;
   if (localSessionToken) {

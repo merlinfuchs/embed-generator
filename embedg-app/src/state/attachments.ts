@@ -54,5 +54,5 @@ export const useCurrentAttachmentsStore = create<AttachmentsStore>()(
         state.attachments.splice(i, 1);
         state.attachments.splice(i + 1, 0, attachment);
       }),
-  }))
+  })),
 );

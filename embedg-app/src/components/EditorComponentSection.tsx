@@ -12,12 +12,12 @@ export default function EditorComponentRootSection({
   rootId,
 }: Props) {
   const componentCount = useCurrentMessageStore(
-    (state) => state.components.length
+    (state) => state.components.length,
   );
 
   const section = useCurrentMessageStore(
     (state) => state.getSection(rootIndex),
-    shallow
+    shallow,
   );
   const updateSection = useCurrentMessageStore((state) => state.updateSection);
 
@@ -28,7 +28,7 @@ export default function EditorComponentRootSection({
       state.duplicateComponent,
       state.deleteComponent,
     ],
-    shallow
+    shallow,
   );
 
   const [
@@ -51,7 +51,7 @@ export default function EditorComponentRootSection({
       state.updateSectionComponent,
       state.duplicateSectionComponent,
     ],
-    shallow
+    shallow,
   );
 
   if (!section) {

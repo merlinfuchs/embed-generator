@@ -29,15 +29,15 @@ export default function ({
           width === "xl"
             ? "max-w-7xl"
             : width == "lg"
-            ? "max-w-5xl"
-            : width === "md"
-            ? "max-w-3xl"
-            : width === "sm"
-            ? "max-w-xl"
-            : width === "xs"
-            ? "max-w-md"
-            : "",
-          height === "full" && "h-full"
+              ? "max-w-5xl"
+              : width === "md"
+                ? "max-w-3xl"
+                : width === "sm"
+                  ? "max-w-xl"
+                  : width === "xs"
+                    ? "max-w-md"
+                    : "",
+          height === "full" && "h-full",
         )}
       >
         {closeButton !== false && (

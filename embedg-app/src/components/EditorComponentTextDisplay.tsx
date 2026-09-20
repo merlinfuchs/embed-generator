@@ -12,15 +12,15 @@ export default function EditorComponentTextDisplay({
   rootId,
 }: Props) {
   const componentCount = useCurrentMessageStore(
-    (state) => state.components.length
+    (state) => state.components.length,
   );
 
   const textDisplay = useCurrentMessageStore(
     (state) => state.getTextDisplay(rootIndex),
-    shallow
+    shallow,
   );
   const updateTextDisplay = useCurrentMessageStore(
-    (state) => state.updateComponent
+    (state) => state.updateComponent,
   );
 
   const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
@@ -30,7 +30,7 @@ export default function EditorComponentTextDisplay({
       state.duplicateComponent,
       state.deleteComponent,
     ],
-    shallow
+    shallow,
   );
 
   if (!textDisplay) {

@@ -60,7 +60,7 @@ export default function SavedMessage({
             });
           }
         },
-      }
+      },
     );
   }
 
@@ -100,7 +100,7 @@ export default function SavedMessage({
           }
           setDeleteModal(false);
         },
-      }
+      },
     );
   }
 

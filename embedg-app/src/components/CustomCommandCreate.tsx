@@ -24,7 +24,7 @@ export default function CustomCommandCreate({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [parameters, setParameters] = useState<CustomCommandParameterWire[]>(
-    []
+    [],
   );
 
   const queryClient = useQueryClient();
@@ -60,7 +60,7 @@ export default function CustomCommandCreate({
             });
           }
         },
-      }
+      },
     );
   }
 

@@ -16,20 +16,20 @@ export default function EditorEmbedBody({ embedIndex, embedId }: Props) {
       state.embeds[embedIndex]?.description,
       state.setEmbedDescription,
     ],
-    shallow
+    shallow,
   );
   const [title, setTitle] = useCurrentMessageStore(
     (state) => [state.embeds[embedIndex]?.title, state.setEmbedTitle],
-    shallow
+    shallow,
   );
   const [url, setUrl] = useCurrentMessageStore(
     (state) => [state.embeds[embedIndex]?.url, state.setEmbedUrl],
-    shallow
+    shallow,
   );
 
   const [color, setColor] = useCurrentMessageStore(
     (state) => [state.embeds[embedIndex]?.color, state.setEmbedColor],
-    shallow
+    shallow,
   );
 
   console.log("render body", embedIndex);

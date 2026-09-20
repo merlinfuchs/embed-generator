@@ -35,7 +35,7 @@ async function setupSdk() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ code }),
-    }
+    },
   ).then((res) => res.json());
   if (!tokenData || !tokenData.success) {
     console.error("Failed to exchange code for token");

@@ -66,7 +66,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
 
     // Sort channels by position, this is important for the next steps
     rawChannels.sort((a, b) =>
-      a.position === b.position && a.type === 4 ? 1 : a.position - b.position
+      a.position === b.position && a.type === 4 ? 1 : a.position - b.position,
     );
 
     const added = new Set<string>();
@@ -164,13 +164,13 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
     if (!q) return channels;
 
     return channels.filter(
-      (c) => c.id === q || c.name.toLowerCase().includes(q)
+      (c) => c.id === q || c.name.toLowerCase().includes(q),
     );
   }, [channels, query]);
 
   const channel = useMemo(
     () => channels.find((c) => c.id === channelId),
-    [channels, channelId]
+    [channels, channelId],
   );
 
   return (
@@ -184,7 +184,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
             onChange={(e) => setQuery(e.target.value)}
             className={clsx(
               "text-gray-300 flex-auto bg-dark-2 focus:outline-none",
-              open ? "hidden md:block" : "hidden"
+              open ? "hidden md:block" : "hidden",
             )}
           />
           <div className={open ? "md:hidden" : ""}>
@@ -221,7 +221,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
                   className={clsx(
                     "py-2 flex space-x-2 items-center hover:bg-dark-3 rounded pr-3",
                     c.level === 0 ? "pl-2" : c.level === 1 ? "pl-4" : "pl-6",
-                    c.canSelect ? "cursor-pointer" : "cursor-not-allowed"
+                    c.canSelect ? "cursor-pointer" : "cursor-not-allowed",
                   )}
                   role="button"
                   onClick={() => c.canSelect && selectChannel(c.id)}
@@ -238,7 +238,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
                   <div
                     className={clsx(
                       "truncate",
-                      c.canSelect ? "text-gray-300" : "text-gray-400"
+                      c.canSelect ? "text-gray-300" : "text-gray-400",
                     )}
                   >
                     {c.name}

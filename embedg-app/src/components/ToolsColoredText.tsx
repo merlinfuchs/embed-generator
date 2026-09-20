@@ -7,7 +7,7 @@ const backgroundColors = [40, 41, 42, 43, 44, 45, 46, 47];
 
 function nodesToANSI(
   nodes: NodeListOf<ChildNode>,
-  states: Record<string, number>[]
+  states: Record<string, number>[],
 ) {
   let text = "";
   for (const node of nodes) {
@@ -120,7 +120,7 @@ export default function ToolsColoredText() {
         setTimeout(() => {
           setCopyButtonText("Copy Format");
         }, 1000);
-      }
+      },
     );
   }
 
@@ -135,7 +135,7 @@ export default function ToolsColoredText() {
                   key={style}
                   className={clsx(
                     "h-8 w-10 rounded-md cursor-pointer bg-dark-2 mr-2 mb-2",
-                    styles[`ansi${style}`]
+                    styles[`ansi${style}`],
                   )}
                   onClick={() => handleStyleChange(style)}
                 >
@@ -151,7 +151,7 @@ export default function ToolsColoredText() {
                   key={style}
                   className={clsx(
                     "h-8 w-10 rounded-md cursor-pointer text-white mr-2 mb-2",
-                    styles[`ansi${style}`]
+                    styles[`ansi${style}`],
                   )}
                   onClick={() => handleStyleChange(style)}
                 ></button>
@@ -183,7 +183,7 @@ export default function ToolsColoredText() {
       <div
         className={clsx(
           "rounded-md bg-dark-2 px-3 py-2 focus:outline-none text-gray-100 min-h-64 mb-5",
-          styles.editor
+          styles.editor,
         )}
         ref={editorRef}
         contentEditable={true}

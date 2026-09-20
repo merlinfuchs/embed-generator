@@ -16,7 +16,7 @@ export default function InputControlBar({ value, onChange, inputRef }: Props) {
   function surroundSelection(
     prefix: string,
     suffix: string,
-    placeholder: string
+    placeholder: string,
   ) {
     if (!inputRef.current) return;
 
@@ -61,7 +61,7 @@ export default function InputControlBar({ value, onChange, inputRef }: Props) {
       insertAtCursor(emoji.native);
     } else {
       insertAtCursor(
-        `<${emoji.src.endsWith(".gif") ? "a" : ""}:${emoji.name}:${emoji.id}>`
+        `<${emoji.src.endsWith(".gif") ? "a" : ""}:${emoji.name}:${emoji.id}>`,
       );
     }
   }

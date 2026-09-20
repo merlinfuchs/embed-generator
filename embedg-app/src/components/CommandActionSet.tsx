@@ -16,12 +16,12 @@ export default function ActionSet({ cmdId }: Props) {
 
   const actions = useCommandActionsStore(
     (state) => state.actions[cmdId]?.actions.map((a) => a.id) || [],
-    shallow
+    shallow,
   );
 
   const [addAction, clearActions] = useCommandActionsStore(
     (state) => [state.addAction, state.clearActions],
-    shallow
+    shallow,
   );
 
   function add() {

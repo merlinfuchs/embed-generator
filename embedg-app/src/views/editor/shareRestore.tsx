@@ -13,7 +13,7 @@ export default function ShareRestoreView() {
   const navigate = useNavigate();
 
   const { data: sharedMessage } = useSharedMessageQuery(
-    sharedMessageId || null
+    sharedMessageId || null,
   );
 
   const createToast = useToasts((state) => state.create);

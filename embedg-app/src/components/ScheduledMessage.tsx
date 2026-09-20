@@ -50,11 +50,11 @@ export default function ScheduledMessage({
   const [onlyOnce, setOnlyOnce] = useState(msg.only_once);
   const [startAt, setStartAt] = useState<string | undefined>(msg.start_at);
   const [endAt, setEndAt] = useState<string | undefined>(
-    msg.end_at || undefined
+    msg.end_at || undefined,
   );
   const [cronExpression, setCronExpression] = useState(msg.cron_expression);
   const [savedMessageId, setSavedMessageId] = useState<string | null>(
-    msg.saved_message_id
+    msg.saved_message_id,
   );
   const [channelId, setChannelId] = useState<string | null>(msg.channel_id);
   const [threadName, setThreadName] = useState<string | null>(msg.thread_name);
@@ -66,7 +66,7 @@ export default function ScheduledMessage({
   const selectedChannel = useMemo(
     () =>
       channels?.success ? channels.data.find((c) => c.id === channelId) : null,
-    [channels, channelId]
+    [channels, channelId],
   );
 
   const queryClient = useQueryClient();
@@ -105,7 +105,7 @@ export default function ScheduledMessage({
           cron_timezone:
             cronExpression !== msg.cron_expression
               ? getCurrentTimezone()
-              : msg.cron_timezone ?? getCurrentTimezone(),
+              : (msg.cron_timezone ?? getCurrentTimezone()),
           start_at: startAt,
           end_at: endAt ?? null,
           only_once: onlyOnce,
@@ -125,7 +125,7 @@ export default function ScheduledMessage({
             });
           }
         },
-      }
+      },
     );
   }
 
@@ -150,7 +150,7 @@ export default function ScheduledMessage({
             });
           }
         },
-      }
+      },
     );
   }
 
@@ -253,7 +253,7 @@ export default function ScheduledMessage({
                   <div
                     className={clsx(
                       "py-1 px-2 rounded transition-colors",
-                      onlyOnce && "bg-dark-3"
+                      onlyOnce && "bg-dark-3",
                     )}
                   >
                     Send Once
@@ -261,7 +261,7 @@ export default function ScheduledMessage({
                   <div
                     className={clsx(
                       "py-1 px-2 rounded transition-colors",
-                      !onlyOnce && "bg-dark-3"
+                      !onlyOnce && "bg-dark-3",
                     )}
                   >
                     Send Periodically

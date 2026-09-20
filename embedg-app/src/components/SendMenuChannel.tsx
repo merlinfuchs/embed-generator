@@ -16,27 +16,27 @@ import { useToasts } from "../util/toasts";
 
 export default function SendMenuChannel() {
   const validationError = useValidationErrorStore((state) =>
-    state.checkIssueByPathPrefix("")
+    state.checkIssueByPathPrefix(""),
   );
 
   const [selectedGuildId, setSelectedGuildId] = useSendSettingsStore(
     (state) => [state.guildId, state.setGuildId],
-    shallow
+    shallow,
   );
 
   const [selectedChannnelId, setSelectedChannelId] = useSendSettingsStore(
     (state) => [state.channelId, state.setChannelId],
-    shallow
+    shallow,
   );
 
   const [messageId, setMessageId] = useSendSettingsStore(
     (state) => [state.messageId, state.setMessageId],
-    shallow
+    shallow,
   );
 
   const [threadName, setThreadName] = useSendSettingsStore(
     (state) => [state.threadName, state.setThreadName],
-    shallow
+    shallow,
   );
 
   const { data: channels } = useGuildChannelsQuery(selectedGuildId);
@@ -101,7 +101,7 @@ export default function SendMenuChannel() {
             });
           }
         },
-      }
+      },
     );
   }
 

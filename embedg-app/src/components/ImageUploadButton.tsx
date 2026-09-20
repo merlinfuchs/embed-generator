@@ -37,7 +37,7 @@ export default function ImageUploadButton({ onChange }: Props) {
             });
           }
         },
-      }
+      },
     );
   }
 

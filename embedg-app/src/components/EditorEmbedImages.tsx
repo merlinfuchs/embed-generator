@@ -11,7 +11,7 @@ interface Props {
 export default function EditorEmbedImages({ embedIndex, embedId }: Props) {
   const [imageUrl, setImageUrl] = useCurrentMessageStore(
     (state) => [state.embeds[embedIndex]?.image?.url, state.setEmbedImageUrl],
-    shallow
+    shallow,
   );
 
   const [thumbnailUrl, setThumbnailUrl] = useCurrentMessageStore(
@@ -19,7 +19,7 @@ export default function EditorEmbedImages({ embedIndex, embedId }: Props) {
       state.embeds[embedIndex]?.thumbnail?.url,
       state.setEmbedThumbnailUrl,
     ],
-    shallow
+    shallow,
   );
 
   return (

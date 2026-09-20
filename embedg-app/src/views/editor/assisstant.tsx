@@ -136,7 +136,7 @@ export default function AssistantView() {
               <button
                 className={clsx(
                   "text-white px-3 py-2 rounded flex items-center space-x-3",
-                  isLoading ? "bg-dark-5 cursor-not-allowed " : "bg-blurple"
+                  isLoading ? "bg-dark-5 cursor-not-allowed " : "bg-blurple",
                 )}
                 onClick={generate}
               >
@@ -155,7 +155,7 @@ export default function AssistantView() {
           <div
             className={clsx(
               "rounded text-white h-full px-5 py-3",
-              isLoading && "animate-pulse"
+              isLoading && "animate-pulse",
             )}
           >
             {output && <MessagePreview msg={output} />}

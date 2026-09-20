@@ -6,7 +6,7 @@ export default function LoginLink(props: any) {
 
   const href = useMemo(
     () => `/api/auth/login?redirect=${encodeURIComponent(location.pathname)}`,
-    [location.pathname]
+    [location.pathname],
   );
 
   return <a href={href} {...props}></a>;

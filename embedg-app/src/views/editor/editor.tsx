@@ -33,7 +33,7 @@ export default function EditorView() {
   });
 
   const componentsV2Enabled = useCurrentMessageStore((s) =>
-    s.getComponentsV2Enabled()
+    s.getComponentsV2Enabled(),
   );
 
   // TODO: also validate actions stores

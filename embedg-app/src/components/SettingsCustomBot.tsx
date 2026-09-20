@@ -29,7 +29,7 @@ export default function SettingsCustomBot() {
   const [token, setToken] = useState("");
 
   const [status, setStatus] = useState<"online" | "dnd" | "invisible">(
-    "online"
+    "online",
   );
   const [customStatus, setCustomStatus] = useState<string | null>(null);
 
@@ -65,7 +65,7 @@ export default function SettingsCustomBot() {
             });
           }
         },
-      }
+      },
     );
   }
 
@@ -86,7 +86,7 @@ export default function SettingsCustomBot() {
             });
           }
         },
-      }
+      },
     );
   }
 
@@ -124,7 +124,7 @@ export default function SettingsCustomBot() {
             });
           }
         },
-      }
+      },
     );
   }
 
@@ -187,8 +187,8 @@ export default function SettingsCustomBot() {
                         status === "online"
                           ? "bg-green"
                           : status === "dnd"
-                          ? "bg-red"
-                          : "bg-gray-500"
+                            ? "bg-red"
+                            : "bg-gray-500",
                       )}
                     ></div>
                   </div>

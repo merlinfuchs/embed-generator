@@ -351,7 +351,7 @@ export default function MessagePreview({ msg }: { msg: Message }) {
                                   ></path>
                                 </svg>
                               </div>
-                            ) : undefined
+                            ) : undefined,
                           )}
                         </div>
                       ))}

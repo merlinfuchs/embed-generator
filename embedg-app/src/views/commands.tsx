@@ -36,7 +36,8 @@ export default function CommandsView() {
     commandsQuery.data?.success &&
     commandsQuery.data.data.some(
       (cmd) =>
-        !cmd.deployed_at || parseISO(cmd.updated_at) > parseISO(cmd.deployed_at)
+        !cmd.deployed_at ||
+        parseISO(cmd.updated_at) > parseISO(cmd.deployed_at),
     );
 
   function deploy() {
@@ -58,7 +59,7 @@ export default function CommandsView() {
             });
           }
         },
-      }
+      },
     );
   }
 
@@ -107,7 +108,7 @@ export default function CommandsView() {
                     "px-3 py-2 rounded text-white",
                     hasUndeployedChanges
                       ? "bg-blurple hover:bg-blurple-dark"
-                      : "bg-dark-2 cursor-not-allowed"
+                      : "bg-dark-2 cursor-not-allowed",
                   )}
                   onClick={deploy}
                 >
@@ -118,7 +119,7 @@ export default function CommandsView() {
                     "px-3 py-2 rounded border-2 text-white",
                     commands.length < maxCommands
                       ? "border-dark-7 hover:bg-dark-6 cursor-pointer"
-                      : "border-dark-6 text-gray-300 cursor-not-allowed"
+                      : "border-dark-6 text-gray-300 cursor-not-allowed",
                   )}
                   onClick={() =>
                     commands.length < maxCommands && setCreate(true)

@@ -24,7 +24,7 @@ export default function Modal({
     <div
       className={clsx(
         "fixed h-[100dvh] w-[100vw] bg-black bg-opacity-70 flex flex-col items-center justify-center px-2 py-20 sm:px-5 md:px-10 lg:px-20 xl:px-32 z-30 top-0 left-0",
-        !allowOverflow && "overflow-hidden"
+        !allowOverflow && "overflow-hidden",
       )}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
@@ -37,15 +37,15 @@ export default function Modal({
           width === "xl"
             ? "max-w-7xl"
             : width == "lg"
-            ? "max-w-5xl"
-            : width === "md"
-            ? "max-w-3xl"
-            : width === "sm"
-            ? "max-w-xl"
-            : width === "xs"
-            ? "max-w-md"
-            : "",
-          height === "full" && "h-full"
+              ? "max-w-5xl"
+              : width === "md"
+                ? "max-w-3xl"
+                : width === "sm"
+                  ? "max-w-xl"
+                  : width === "xs"
+                    ? "max-w-md"
+                    : "",
+          height === "full" && "h-full",
         )}
       >
         {closeButton !== false && (

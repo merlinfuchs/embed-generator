@@ -14,7 +14,7 @@ export default function EditorEmbedAuthor({ embedIndex, embedId }: Props) {
       state.embeds[embedIndex]?.author?.name,
       state.setEmbedAuthorName,
     ],
-    shallow
+    shallow,
   );
 
   const [authorIconUrl, setAuthorIconUrl] = useCurrentMessageStore(
@@ -22,12 +22,12 @@ export default function EditorEmbedAuthor({ embedIndex, embedId }: Props) {
       state.embeds[embedIndex]?.author?.icon_url,
       state.setEmbedAuthorIconUrl,
     ],
-    shallow
+    shallow,
   );
 
   const [authorUrl, setAuthorUrl] = useCurrentMessageStore(
     (state) => [state.embeds[embedIndex]?.author?.url, state.setEmbedAuthorUrl],
-    shallow
+    shallow,
   );
 
   console.log("render author", embedIndex);

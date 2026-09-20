@@ -1,6 +1,6 @@
 export function userAvatarUrl(
   user: { id: string; discriminator: string; avatar: string | null },
-  size: number = 128
+  size: number = 128,
 ) {
   if (user.avatar) {
     return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=${size}`;
@@ -16,7 +16,7 @@ export function userAvatarUrl(
 
 export function guildIconUrl(
   guild: { id: string; icon: string | null },
-  size: number = 128
+  size: number = 128,
 ) {
   if (guild.icon) {
     return `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=${size}`;

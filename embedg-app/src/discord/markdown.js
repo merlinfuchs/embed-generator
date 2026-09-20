@@ -27,7 +27,7 @@ function htmlTag(tagName, content, attributes, isClosed = true, state = {}) {
       attributes[attr]
     )
       attributeString += ` ${markdown.sanitizeText(
-        attr
+        attr,
       )}="${markdown.sanitizeText(attributes[attr])}"`;
   }
 
@@ -46,7 +46,7 @@ const titleRules = {
       const parsed = markdown.defaultRules.em.parse(
         capture,
         parse,
-        Object.assign({}, state, { inEmphasis: true })
+        Object.assign({}, state, { inEmphasis: true }),
       );
       return state.inEmphasis ? parsed.content : parsed;
     },
@@ -64,7 +64,7 @@ const titleRules = {
         "code",
         markdown.sanitizeText(node.content.trim()),
         null,
-        state
+        state,
       );
     },
   }),
@@ -106,7 +106,7 @@ const titleRules = {
         "span",
         output(node.content, state),
         { class: "discord-spoiler" },
-        state
+        state,
       );
     },
   },
@@ -136,12 +136,12 @@ const titleRules = {
             alt: `:${node.name}:`,
           },
           false,
-          state
+          state,
         ),
         {
           class: "discord-custom-emoji",
         },
-        state
+        state,
       );
     },
   },
@@ -159,7 +159,7 @@ const titleRules = {
         "span",
         output(node.content, state),
         { class: "message-variable" },
-        state
+        state,
       );
     },
   },
@@ -189,7 +189,7 @@ const bodyRules = {
         htmlTag("div", "", { class: "discord-quote-divider" }, state) +
           htmlTag("blockquote", output(node.content, state), {}, state),
         { class: "discord-quote-container" },
-        state
+        state,
       );
     },
   }),
@@ -220,8 +220,8 @@ const bodyRules = {
               m
                 .split(" ")
                 .map((cl) => state.cssModuleNames[cl] || cl)
-                .join(" ")
-            )
+                .join(" "),
+            ),
         );
 
       return htmlTag(
@@ -233,10 +233,10 @@ const bodyRules = {
             class: `hljs${code ? " " + code.language : ""}`,
             style: "padding: 8px;",
           },
-          state
+          state,
         ),
         { style: "background-color: #2f3136; margin-top: 6px" },
-        state
+        state,
       );
     },
   }),
@@ -268,7 +268,7 @@ const bodyRules = {
         "a",
         output(node.content, state),
         { href: markdown.sanitizeUrl(node.target), target: "_blank" },
-        state
+        state,
       );
     },
   }),
@@ -289,7 +289,7 @@ const bodyRules = {
         "a",
         output(node.content, state),
         { href: markdown.sanitizeUrl(node.target), target: "_blank" },
-        state
+        state,
       );
     },
   }),
@@ -307,14 +307,17 @@ const bodyRules = {
   }),
   subtext: {
     order: markdown.defaultRules.heading.order,
-    match: (source, state) => state.prevCapture === null ||
-      state.prevCapture[state.prevCapture.length - 1] === "\n" ? /^ *-# +((?!(-#)+)[^\n]+?) *(\n|$)/.exec(source) : null,
-    parse: function(capture) {
+    match: (source, state) =>
+      state.prevCapture === null ||
+      state.prevCapture[state.prevCapture.length - 1] === "\n"
+        ? /^ *-# +((?!(-#)+)[^\n]+?) *(\n|$)/.exec(source)
+        : null,
+    parse: function (capture) {
       return {
         content: capture[1].trim(),
       };
     },
-    html: function(node) {
+    html: function (node) {
       return htmlTag("small", node.content);
     },
   },
@@ -338,7 +341,7 @@ const bodyRules = {
         "span",
         state.discordCallback.user(node),
         { class: "discord-mention discord-user-mention" },
-        state
+        state,
       );
     },
   },
@@ -355,7 +358,7 @@ const bodyRules = {
         "span",
         state.discordCallback.channel(node),
         { class: "discord-mention" },
-        state
+        state,
       );
     },
   },
@@ -372,7 +375,7 @@ const bodyRules = {
         "span",
         state.discordCallback.role(node),
         { class: "discord-mention discord-role-mention" },
-        state
+        state,
       );
     },
   },
@@ -387,7 +390,7 @@ const bodyRules = {
         "span",
         state.discordCallback.everyone(node),
         { class: "discord-mention discord-role-mention" },
-        state
+        state,
       );
     },
   },
@@ -402,7 +405,7 @@ const bodyRules = {
         "span",
         state.discordCallback.here(node),
         { class: "discord-mention discord-role-mention" },
-        state
+        state,
       );
     },
   },
@@ -419,11 +422,39 @@ const bodyRules = {
       const date = new Date(node.timestamp * 1000);
       const options = {
         t: date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        T: date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-        d: date.toLocaleDateString([], { year: "numeric", month: "2-digit", day: "2-digit" }),
-        D: date.toLocaleDateString([], { weekday: "long", year: "numeric", month: "long", day: "numeric" }),
-        f: date.toLocaleString([], { weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }),
-        F: date.toLocaleString([], { weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+        T: date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }),
+        d: date.toLocaleDateString([], {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }),
+        D: date.toLocaleDateString([], {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }),
+        f: date.toLocaleString([], {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        F: date.toLocaleString([], {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }),
         R: formatDistanceToNow(date, { addSuffix: true }),
       };
       const formattedDate = options[node.format] || options.f;
@@ -431,7 +462,7 @@ const bodyRules = {
         "span",
         formattedDate,
         { class: "discord-timestamp" },
-        state
+        state,
       );
     },
   },
@@ -464,7 +495,7 @@ export function toHTML(source, options) {
       isTitle: false,
       discordCallback: {},
     },
-    options || {}
+    options || {},
   );
 
   let _parser = parseBody;
@@ -483,7 +514,7 @@ export function toHTML(source, options) {
     discordCallback: Object.assign(
       {},
       discordCallbackDefaults,
-      options.discordCallback
+      options.discordCallback,
     ),
   };
 

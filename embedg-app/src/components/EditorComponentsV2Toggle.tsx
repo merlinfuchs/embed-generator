@@ -6,10 +6,10 @@ import { useSendSettingsStore } from "../state/sendSettings";
 
 export default function EditorComponentsV2Toggle() {
   const componentsV2Enabled = useCurrentMessageStore((s) =>
-    s.getComponentsV2Enabled()
+    s.getComponentsV2Enabled(),
   );
   const setComponentV2Enabled = useCurrentMessageStore(
-    (s) => s.setComponentsV2Enabled
+    (s) => s.setComponentsV2Enabled,
   );
 
   const [componentsV2EnableModal, setComponentsV2EnableModal] = useState(false);
@@ -43,7 +43,7 @@ export default function EditorComponentsV2Toggle() {
           <div
             className={clsx(
               "py-1 px-2 rounded transition-colors",
-              !componentsV2Enabled && "bg-dark-3"
+              !componentsV2Enabled && "bg-dark-3",
             )}
           >
             Embeds V1
@@ -51,7 +51,7 @@ export default function EditorComponentsV2Toggle() {
           <div
             className={clsx(
               "py-1 px-2 rounded transition-colors",
-              componentsV2Enabled && "bg-dark-3"
+              componentsV2Enabled && "bg-dark-3",
             )}
           >
             Components V2

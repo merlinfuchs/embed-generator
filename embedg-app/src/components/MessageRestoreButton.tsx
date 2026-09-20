@@ -24,7 +24,7 @@ export default function MessageRestoreButton() {
         state.guildId,
         state.channelId,
       ],
-      shallow
+      shallow,
     );
 
   const webhookInfo = useMemo(() => {
@@ -49,7 +49,7 @@ export default function MessageRestoreButton() {
             .map((a) => ({
               id: getUniqueId(),
               ...a!,
-            }))
+            })),
         );
       }
     } catch (e) {
@@ -83,7 +83,7 @@ export default function MessageRestoreButton() {
               });
             }
           },
-        }
+        },
       );
     } else {
       if (!webhookInfo || !messageId) return;
@@ -107,7 +107,7 @@ export default function MessageRestoreButton() {
               });
             }
           },
-        }
+        },
       );
     }
   }

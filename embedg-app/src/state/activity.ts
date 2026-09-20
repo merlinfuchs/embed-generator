@@ -17,5 +17,5 @@ export const useActivityStateStore = create<ActivityStateStore>()(
     setLoading: (loading) => {
       set({ loading });
     },
-  })
+  }),
 );

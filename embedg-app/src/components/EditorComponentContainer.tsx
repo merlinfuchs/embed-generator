@@ -13,15 +13,15 @@ export default function EditorComponentRootContainer({
   rootId,
 }: Props) {
   const componentCount = useCurrentMessageStore(
-    (state) => state.components.length
+    (state) => state.components.length,
   );
 
   const container = useCurrentMessageStore(
     (state) => state.getContainer(rootIndex),
-    shallow
+    shallow,
   );
   const updateContainer = useCurrentMessageStore(
-    (state) => state.updateContainer
+    (state) => state.updateContainer,
   );
 
   const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
@@ -31,7 +31,7 @@ export default function EditorComponentRootContainer({
       state.duplicateComponent,
       state.deleteComponent,
     ],
-    shallow
+    shallow,
   );
 
   const [
@@ -116,7 +116,7 @@ export default function EditorComponentRootContainer({
       state.updateContainerMediaGalleryItem,
       state.duplicateContainerMediaGalleryItem,
     ],
-    shallow
+    shallow,
   );
 
   if (!container) {
@@ -172,14 +172,14 @@ export default function EditorComponentRootContainer({
         index,
         childIndex,
         optionIndex,
-        data
+        data,
       ) =>
         actionRowOnSelectMenuOptionChange(
           rootIndex,
           index,
           childIndex,
           optionIndex,
-          data
+          data,
         )
       }
       actionRowDuplicateSelectMenuOption={(a, k, o) =>
