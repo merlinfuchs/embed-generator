@@ -18,6 +18,17 @@ const config: Config = {
   organizationName: "merlinfuchs", // Usually your GitHub org/user name.
   projectName: "embed-generator", // Usually your repo name.
 
+  headTags: [
+    {
+      tagName: "link",
+      attributes: { rel: "preconnect", href: "https://rsms.me/" },
+    },
+    {
+      tagName: "link",
+      attributes: { rel: "stylesheet", href: "https://rsms.me/inter/inter.css" },
+    },
+  ],
+
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
 
@@ -75,11 +86,11 @@ const config: Config = {
         },
         {
           name: "twitter:card",
-          content: "summary",
+          content: "summary_large_image",
         },
         {
           name: "theme-color",
-          content: "#237feb",
+          content: "#0b1120",
         },
       ],
 

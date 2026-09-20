@@ -1,30 +1,30 @@
-/**
- * Any CSS included here will be global. The classic template
- * bundles Infima by default. Infima is a CSS framework designed to
- * work well for content-centric websites.
- */
-
-/* You can override the default Infima variables here. */
+/* Docs/blog theme (Infima). Primary matches the logo azure. */
 :root {
   --ifm-color-primary: #237feb;
-  --ifm-color-primary-dark: #29784c;
-  --ifm-color-primary-darker: #277148;
-  --ifm-color-primary-darkest: #205d3b;
-  --ifm-color-primary-light: #33925d;
-  --ifm-color-primary-lighter: #359962;
-  --ifm-color-primary-lightest: #3cad6e;
+  --ifm-color-primary-dark: #1b6fd6;
+  --ifm-color-primary-darker: #1a69ca;
+  --ifm-color-primary-darkest: #1556a6;
+  --ifm-color-primary-light: #3a8dee;
+  --ifm-color-primary-lighter: #4694ef;
+  --ifm-color-primary-lightest: #6caaf3;
   --ifm-code-font-size: 95%;
+  --ifm-font-family-base: "Inter Variable", "Inter", ui-sans-serif, system-ui,
+    -apple-system, "Segoe UI", Roboto, sans-serif;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
 }
 
-/* For readability concerns, you should choose a lighter palette in dark mode. */
 [data-theme="dark"] {
-  --ifm-color-primary: #237feb;
-  --ifm-color-primary-dark: #21af90;
-  --ifm-color-primary-darker: #1fa588;
-  --ifm-color-primary-darkest: #1a8870;
-  --ifm-color-primary-light: #29d5b0;
-  --ifm-color-primary-lighter: #32d8b4;
-  --ifm-color-primary-lightest: #4fddbf;
+  --ifm-color-primary: #5ba4ff;
+  --ifm-color-primary-dark: #3d93ff;
+  --ifm-color-primary-darker: #2f8bff;
+  --ifm-color-primary-darkest: #0a71f5;
+  --ifm-color-primary-light: #79b5ff;
+  --ifm-color-primary-lighter: #87bdff;
+  --ifm-color-primary-lightest: #b3d5ff;
+  --ifm-background-color: #0b1120;
+  --ifm-background-surface-color: #111a2e;
+  --ifm-navbar-background-color: #0b1120;
+  --ifm-footer-background-color: #070b14;
+  --ifm-toc-border-color: #233049;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }

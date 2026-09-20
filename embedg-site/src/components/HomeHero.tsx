@@ -1,32 +1,46 @@
-import { SparklesIcon } from "@heroicons/react/24/solid";
 import React from "react";
+import { SparklesIcon } from "@heroicons/react/24/solid";
+import HeroPreview from "./HeroPreview";
 
 export default function HomeHero(): JSX.Element {
   return (
-    <div className="bg-blurple md:px-16">
-      <div className="flex max-w-7xl mx-auto py-20 flex-col lg:flex-row-reverse items-center">
-        <div className="lg:w-1/2 px-6 lg:pr-0 lg:pl-12 xl:pl-20 mb-10 lg:mb-0">
-          <img src="/img/example.jpg" alt="" className="rounded-lg shadow-lg" />
-        </div>
-        <div className="lg:w-1/2 px-12">
-          <h1 className="text-gray-100 font-bold text-6xl leading-tight mb-6">
-            The best way to create Discord embeds!
+    <section className="relative overflow-hidden">
+      <div
+        aria-hidden
+        className="absolute left-1/2 top-0 h-[520px] w-[1100px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-azure-600/20 blur-[140px]"
+      />
+      <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-5 pb-20 pt-16 md:px-8 lg:grid-cols-2 lg:gap-12 lg:pb-28 lg:pt-24">
+        <div>
+          <h1 className="mb-5 text-4xl font-bold leading-[1.1] tracking-tight text-mist-100 sm:text-5xl lg:text-6xl">
+            Good-looking{" "}
+            <span className="text-azure-400">Discord messages</span>, without
+            the hassle.
           </h1>
-          <h2 className="text-gray-300 font-light text-lg mb-8">
-            Create embed messages for your Discord server with ease and give
-            them your own branding using webhooks.
-          </h2>
-          <div className="flex items-center">
+          <p className="mb-8 max-w-lg text-lg leading-relaxed text-mist-400">
+            Design embeds, buttons and select menus in a visual editor and send
+            them straight to your server. No coding needed.
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
             <a
-              className="px-5 py-3 text-xl rounded-md border-2 border-solid border-gray-300 flex items-center text-gray-200 space-x-3 hover:text-white hover:border-white hover:bg-white/20 transition-colors hover:no-underline flex-none"
               href="/app"
+              className="flex items-center gap-2 rounded-lg bg-azure-500 px-5 py-3 text-base font-semibold text-white transition-colors hover:bg-azure-400 hover:text-white hover:no-underline"
             >
               <SparklesIcon className="h-5 w-5" />
-              <div className="text-white">Open App</div>
+              Open App
+            </a>
+            <a
+              href="/docs"
+              className="flex items-center gap-2 rounded-lg border border-solid border-white/10 px-5 py-3 text-base font-semibold text-mist-100 transition-colors hover:border-white/20 hover:bg-white/5 hover:text-white hover:no-underline"
+            >
+              Read the docs
             </a>
           </div>
+          <p className="mt-6 text-sm text-mist-500">
+            Free and open source. No account needed to get started.
+          </p>
         </div>
+        <HeroPreview />
       </div>
-    </div>
+    </section>
   );
 }

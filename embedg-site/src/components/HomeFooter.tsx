@@ -1,51 +1,71 @@
 import React from "react";
 
+const columns = [
+  {
+    title: "Product",
+    links: [
+      { label: "Open App", href: "/app" },
+      { label: "Premium", href: "/premium" },
+      { label: "Documentation", href: "/docs" },
+      { label: "Blog", href: "/blog" },
+    ],
+  },
+  {
+    title: "Community",
+    links: [
+      { label: "Discord", href: "/discord", external: true },
+      { label: "GitHub", href: "/source", external: true },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { label: "Terms of Service", href: "/terms" },
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Cookies", href: "/cookies" },
+    ],
+  },
+];
+
 export default function HomeFooter(): JSX.Element {
   return (
-    <div className="bg-dark-1 px-16 text-white">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 py-12">
-          <div className="space-y-3">
-            <div className="text-lg font-medium">Docs</div>
-            <div className="space-y-2 flex flex-col">
-              <a href="/docs" className="text-gray-300 hover:text-white">
-                Tutorial
-              </a>
+    <footer className="border-0 border-t border-solid border-white/5 bg-ink-950">
+      <div className="mx-auto max-w-7xl px-5 py-14 md:px-8">
+        <div className="grid grid-cols-2 gap-10 md:grid-cols-5">
+          <div className="col-span-2">
+            <div className="mb-3 flex items-center gap-3 text-mist-100">
+              <img src="/img/logo.svg" alt="" className="h-8 w-8 rounded-lg" />
+              <span className="font-semibold">Embed Generator</span>
             </div>
+            <p className="max-w-xs text-sm text-mist-500">
+              The visual editor for Discord messages. Free and open source.
+            </p>
           </div>
-          <div className="space-y-3">
-            <div className="text-lg font-medium">Community</div>
-            <div className="space-y-2 flex flex-col">
-              <a
-                href="/source"
-                target="_blank"
-                className="text-gray-300 hover:text-white"
-              >
-                GitHub
-              </a>
-              <a
-                href="/discord"
-                target="_blank"
-                className="text-gray-300 hover:text-white"
-              >
-                Discord
-              </a>
+          {columns.map((c) => (
+            <div key={c.title}>
+              <div className="mb-3 text-sm font-semibold text-mist-100">
+                {c.title}
+              </div>
+              <div className="flex flex-col gap-2">
+                {c.links.map((l) => (
+                  <a
+                    key={l.href}
+                    href={l.href}
+                    target={l.external ? "_blank" : undefined}
+                    rel={l.external ? "noreferrer" : undefined}
+                    className="text-sm text-mist-400 hover:text-mist-100"
+                  >
+                    {l.label}
+                  </a>
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="space-y-3">
-            <div className="text-lg font-medium">Legal</div>
-            <div className="space-y-2 flex flex-col">
-              <a href="/terms" className="text-gray-300 hover:text-white">
-                Terms of Service
-              </a>
-              <a href="/privacy" className="text-gray-300 hover:text-white">
-                Privacy Policy
-              </a>
-            </div>
-          </div>
+          ))}
         </div>
-        <div className="text-center text-gray-400 pb-6">{`Copyright © ${new Date().getFullYear()} Merlin Fuchs & Contributors | Not affiliated with or endorsed by Discord Inc.`}</div>
+        <div className="mt-12 border-0 border-t border-solid border-white/5 pt-6 text-xs text-mist-500">
+          {`© ${new Date().getFullYear()} Merlin Fuchs & Contributors. Not affiliated with or endorsed by Discord Inc.`}
+        </div>
       </div>
-    </div>
+    </footer>
   );
 }

@@ -1,5 +1,4 @@
 import React from "react";
-
 import {
   CloudIcon,
   CommandLineIcon,
@@ -7,52 +6,68 @@ import {
   EyeDropperIcon,
   SparklesIcon,
   TagIcon,
-} from "@heroicons/react/24/solid";
-import clsx from "clsx";
+  ClockIcon,
+  Squares2X2Icon,
+} from "@heroicons/react/24/outline";
 
 const features = [
   {
-    name: "Save Messages",
+    name: "Visual editor with live preview",
     description:
-      "Save your messages in the cloud and have them available on all your devices. You can also share them with your friends!",
-    href: "/docs/save-messages",
+      "See exactly what your message will look like while you build it. Embeds, fields, images, buttons and select menus, all in one place.",
+    href: "/docs",
+    icon: Squares2X2Icon,
+  },
+  {
+    name: "Save messages",
+    description:
+      "Keep your messages in the cloud, available on all your devices, and share them with your team.",
+    href: "/docs/features/save-messages",
     icon: CloudIcon,
   },
   {
-    name: "Custom Branding",
+    name: "Custom branding",
     description:
-      "Customize your embeds with your own branding. You can even change the username and avatar of the message to your liking!",
-    href: "/docs/custom-branding",
+      "Change the username and avatar of every message so it looks like it came from your own server.",
+    href: "/docs/features/custom-branding",
     icon: EyeDropperIcon,
   },
   {
-    name: "Interactive Components",
+    name: "Interactive components",
     description:
-      "Add interactivity to your messages with buttons and select menus. You can hand out roles or send custom responses to your users!",
-    href: "/docs/interactive-components",
+      "Hand out roles, send responses or open links with buttons and select menus, no code required.",
+    href: "/docs/features/interactive-components",
     icon: CursorArrowRippleIcon,
   },
   {
-    name: "White Label",
+    name: "Scheduled messages",
     description:
-      "Integrate your own bot into Embed Generator to change the username and avatar of responses to buttons, and select menus!",
-    href: "/docs/white-label",
+      "Send a message once at a specific time or repeat it every hour, day or week.",
+    href: "/docs/guides/scheduled-messages",
+    icon: ClockIcon,
+    premium: true,
+  },
+  {
+    name: "White label",
+    description:
+      "Bring your own bot so interaction responses use your name and avatar instead of ours.",
+    href: "/docs/features/white-label",
     icon: TagIcon,
     premium: true,
   },
   {
-    name: "Custom Commands",
+    name: "Custom commands",
     description:
-      "Add your own commands with custom logic and responses to Embed Generator that your server members can use!",
-    href: "/docs/custom-commands",
+      "Add slash commands with custom logic and responses that your members can use.",
+    href: "/docs/features/custom-commands",
     icon: CommandLineIcon,
     premium: true,
   },
   {
-    name: "AI Assistant",
+    name: "AI assistant",
     description:
-      "Use our powerful AI assistant to quickly draft new messages and boost your creativity!",
-    href: "/docs/ai-assistant",
+      "Draft a message from a short prompt and refine it until it fits.",
+    href: "/docs/features/ai-assistant",
     icon: SparklesIcon,
     premium: true,
   },
@@ -60,42 +75,53 @@ const features = [
 
 export default function HomeFeatures(): JSX.Element {
   return (
-    <div className="bg-dark-2 px-16">
-      <div className="max-w-7xl mx-auto text-white py-20 lg:py-32">
-        <div className="mx-auto max-w-2xl lg:max-w-none">
-          <div className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-32 lg:max-w-none lg:grid-cols-3">
-            {features.map((feature) => (
-              <div key={feature.name} className="flex flex-col">
-                <div className="text-base font-semibold leading-7 text-white">
-                  <div
-                    className={clsx(
-                      "mb-6 flex h-10 w-10 items-center justify-center rounded-lg",
-                      feature.premium ? "bg-orange-400" : "bg-blurple"
-                    )}
-                  >
-                    <feature.icon
-                      className="h-6 w-6 text-white"
-                      aria-hidden="true"
-                    />
-                  </div>
-                  <h3 className="text-base mb-1">{feature.name}</h3>
+    <section className="border-0 border-t border-solid border-white/5 bg-ink-950/40">
+      <div className="mx-auto max-w-7xl px-5 py-20 md:px-8 lg:py-28">
+        <div className="mb-14 max-w-2xl">
+          <h2 className="mb-4 text-3xl font-bold tracking-tight text-mist-100 sm:text-4xl">
+            Build the message once, send it anywhere.
+          </h2>
+          <p className="text-lg text-mist-400">
+            Works with webhooks or with our bot. Add the bot when you want
+            buttons, roles and scheduling.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {features.map((f) => (
+            <a
+              key={f.name}
+              href={f.href}
+              className="group flex flex-col rounded-2xl border border-solid border-white/5 bg-ink-800/60 p-6 shadow-card transition-colors hover:border-azure-500/40 hover:bg-ink-800 hover:no-underline"
+            >
+              <div className="mb-5 flex items-center justify-between">
+                <div
+                  className={
+                    f.premium
+                      ? "flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400/15 text-amber-300"
+                      : "flex h-10 w-10 items-center justify-center rounded-xl bg-azure-500/15 text-azure-300"
+                  }
+                >
+                  <f.icon className="h-5 w-5" aria-hidden="true" />
                 </div>
-                <div className="mt-1 flex flex-auto flex-col text-base leading-7 text-gray-300">
-                  <p className="flex-auto ml-0">{feature.description}</p>
-                  <p>
-                    <a
-                      href={feature.href}
-                      className="text-sm font-semibold leading-6 text-indigo-400"
-                    >
-                      Learn more <span aria-hidden="true">→</span>
-                    </a>
-                  </p>
-                </div>
+                {f.premium && (
+                  <span className="rounded-full border border-solid border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-300">
+                    Premium
+                  </span>
+                )}
               </div>
-            ))}
-          </div>
+              <h3 className="mb-2 text-base font-semibold text-mist-100">
+                {f.name}
+              </h3>
+              <p className="mb-0 flex-auto text-sm leading-relaxed text-mist-400">
+                {f.description}
+              </p>
+              <div className="mt-4 text-sm font-medium text-azure-400 opacity-0 transition-opacity group-hover:opacity-100">
+                Learn more →
+              </div>
+            </a>
+          ))}
         </div>
       </div>
-    </div>
+    </section>
   );
 }
