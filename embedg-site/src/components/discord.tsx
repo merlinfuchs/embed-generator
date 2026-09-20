@@ -55,7 +55,7 @@ export function Reactions({
           className={[
             "flex cursor-pointer items-center gap-1.5 rounded-md border border-solid px-2 py-0.5 text-sm transition-colors",
             r.mine
-              ? "border-azure-500 bg-azure-500/20 text-mist-100"
+              ? "border-discord-button bg-discord-button/25 text-mist-100"
               : "border-white/10 bg-white/5 text-mist-300 hover:border-white/20",
           ].join(" ")}
         >

@@ -116,7 +116,7 @@ export default function HeroPreview(): JSX.Element {
                 onChange={setName}
                 className="font-medium text-mist-100"
               />
-              <span className="rounded bg-azure-500 px-1.5 py-px text-[10px] font-semibold uppercase leading-4 text-white">
+              <span className="rounded bg-discord-button px-1.5 py-px text-[10px] font-semibold uppercase leading-4 text-white">
                 App
               </span>
               <span className="text-xs text-mist-500">Today at 9:41</span>
@@ -187,11 +187,11 @@ export default function HeroPreview(): JSX.Element {
 
             {roleGiven && (
               <div className="mt-3 flex items-center gap-2 text-sm text-mist-300">
-                <span className="rounded bg-azure-500/20 px-1.5 py-0.5 text-xs text-azure-300">
+                <span className="rounded bg-discord-button/30 px-1.5 py-0.5 text-xs text-[#C9CDFB]">
                   Only you can see this
                 </span>
                 You now have the{" "}
-                <span className="rounded bg-azure-500/20 px-1 text-azure-300">
+                <span className="rounded bg-discord-button/30 px-1 text-[#C9CDFB]">
                   @Member
                 </span>{" "}
                 role.

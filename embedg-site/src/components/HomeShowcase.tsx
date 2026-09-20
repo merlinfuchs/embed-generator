@@ -125,7 +125,7 @@ function Message({
         <div className="mb-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
           <span className="font-medium text-mist-100">{name}</span>
           {app && (
-            <span className="rounded bg-azure-500 px-1.5 py-px text-[10px] font-semibold uppercase leading-4 text-white">
+            <span className="rounded bg-discord-button px-1.5 py-px text-[10px] font-semibold uppercase leading-4 text-white">
               App
             </span>
           )}
@@ -339,7 +339,7 @@ export default function HomeShowcase(): JSX.Element {
       >
         <div className="text-sm text-mist-300">
           Welcome{" "}
-          <span className="rounded bg-azure-500/20 px-1 text-azure-300">
+          <span className="rounded bg-discord-button/30 px-1 text-[#C9CDFB]">
             @lena
           </span>
           ! You're member #12,481. Say hi 👋
@@ -397,7 +397,7 @@ export default function HomeShowcase(): JSX.Element {
         <Message avatar={sarah} name="sarah" time="2:14 PM">
           <div className="text-sm text-mist-500">
             sarah used{" "}
-            <span className="rounded bg-azure-500/20 px-1 text-azure-300">
+            <span className="rounded bg-discord-button/30 px-1 text-[#C9CDFB]">
               /giveaway
             </span>
           </div>
