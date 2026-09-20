@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAssistantGenerateMessageMutation } from "../../api/mutations";
 import Modal from "../../components/Modal";
 import MessagePreview from "../../components/MessagePreview";
-import { parseMessageWithAction } from "../../discord/restoreSchema";
+import { parseMessageWithAction } from "../../discord/importSchema";
 import {
   getCurrentMessage,
   setCurrentMessage,

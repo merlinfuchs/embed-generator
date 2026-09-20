@@ -6,7 +6,7 @@ import {
   useRestoreMessageFromWebhookMutation,
 } from "../api/mutations";
 import type { MessageRestoreResponseDataWire } from "../api/wire";
-import { parseMessageWithAction } from "../discord/restoreSchema";
+import { parseMessageWithAction } from "../discord/importSchema";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import { getUniqueId } from "../util";
 import { useToasts } from "../util/toasts";

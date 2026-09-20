@@ -1,7 +1,7 @@
 import debounce from "just-debounce-it";
 import { useEffect, useMemo, useState } from "react";
 import { defaultMessage } from "../discord/defaultMessage";
-import { parseMessageWithAction } from "../discord/restoreSchema";
+import { parseMessageWithAction } from "../discord/importSchema";
 import type { Message } from "../discord/schema";
 import {
   MESSAGE_STORE_KEY,

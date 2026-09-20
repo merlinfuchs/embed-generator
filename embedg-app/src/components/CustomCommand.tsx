@@ -18,7 +18,7 @@ import EditorInput from "./EditorInput";
 import CommandActionSet from "./CommandActionSet";
 import CustomCommandParameters from "./CustomCommandParameters";
 import { useCommandActionsStore } from "../state/actions";
-import { messageActionSetSchema } from "../discord/restoreSchema";
+import { messageActionSetSchema } from "../discord/importSchema";
 import ConfirmModal from "./ConfirmModal";
 
 export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
