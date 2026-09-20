@@ -47,7 +47,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 20 }
+        with: { node-version: 24 }
       - run: corepack enable && yarn install --frozen-lockfile && ./node_modules/.bin/tsc --noEmit
         working-directory: embedg-app
 ```

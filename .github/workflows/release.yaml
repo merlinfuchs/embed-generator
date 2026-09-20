@@ -14,9 +14,9 @@ jobs:
         with:
           fetch-depth: 0
       - name: Set up Node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "24"
       - name: Build Site
         run: npm install -g yarn && yarn install && yarn build
         working-directory: ./embedg-site
