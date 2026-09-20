@@ -1,41 +1,67 @@
-import { useCurrentMessageStore } from "../state/message";
-import EditorComponentRootActionRow from "./EditorComponentActionRow";
-import EditorComponentSection from "./EditorComponentSection";
-import EditorComponentSeparator from "./EditorComponentSeparator";
-import EditorComponentTextDisplay from "./EditorComponentTextDisplay";
-import EditorComponentFile from "./EditorComponentFile";
-import EditorComponentGallery from "./EditorComponentGallery";
-import EditorComponentContainer from "./EditorComponentContainer";
+import clsx from "clsx";
+import { type NodeId, useNode } from "../state/document";
+import EditorComponentBaseActionRow from "./EditorComponentBaseActionRow";
+import EditorComponentBaseContainer from "./EditorComponentBaseContainer";
+import EditorComponentBaseFile from "./EditorComponentBaseFile";
+import EditorComponentBaseMediaGallery from "./EditorComponentBaseMediaGallery";
+import EditorComponentBaseSection from "./EditorComponentBaseSection";
+import EditorComponentBaseSeparator from "./EditorComponentBaseSeparator";
+import EditorComponentBaseTextDisplay from "./EditorComponentBaseTextDisplay";
 
 interface Props {
-  rootIndex: number;
-  rootId: number;
+  id: NodeId;
+  /** Top level components carry their own card styling. */
+  root?: boolean;
 }
 
-export default function EditorComponentEntry({ rootIndex, rootId }: Props) {
-  const root = useCurrentMessageStore((state) => state.components[rootIndex]);
+const PADDED = "bg-dark-3 p-3 rounded-md";
+const CARD = "bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow";
 
-  if (!root) {
-    return null;
-  }
+export default function EditorComponentEntry({ id, root }: Props) {
+  const node = useNode(id);
 
-  if (root.type === 1) {
-    return (
-      <EditorComponentRootActionRow rootIndex={rootIndex} rootId={rootId} />
-    );
-  } else if (root.type === 9) {
-    return <EditorComponentSection rootIndex={rootIndex} rootId={rootId} />;
-  } else if (root.type === 10) {
-    return <EditorComponentTextDisplay rootIndex={rootIndex} rootId={rootId} />;
-  } else if (root.type === 12) {
-    return <EditorComponentGallery rootIndex={rootIndex} rootId={rootId} />;
-  } else if (root.type === 13) {
-    return <EditorComponentFile rootIndex={rootIndex} rootId={rootId} />;
-  } else if (root.type === 14) {
-    return <EditorComponentSeparator rootIndex={rootIndex} rootId={rootId} />;
-  } else if (root.type === 17) {
-    return <EditorComponentContainer rootIndex={rootIndex} rootId={rootId} />;
-  } else {
-    return <div>Unknown root component type: {root.type}</div>;
+  if (!node) return null;
+
+  switch (node.type) {
+    case "actionRow":
+      return (
+        <div className={clsx(root && PADDED)}>
+          <EditorComponentBaseActionRow id={id} />
+        </div>
+      );
+    case "section":
+      return (
+        <div className={clsx(root && PADDED)}>
+          <EditorComponentBaseSection id={id} />
+        </div>
+      );
+    case "mediaGallery":
+      return (
+        <div className={clsx(root && PADDED)}>
+          <EditorComponentBaseMediaGallery id={id} />
+        </div>
+      );
+    case "textDisplay":
+      return (
+        <div className={clsx(root && CARD)}>
+          <EditorComponentBaseTextDisplay id={id} />
+        </div>
+      );
+    case "separator":
+      return (
+        <div className={clsx(root && CARD)}>
+          <EditorComponentBaseSeparator id={id} />
+        </div>
+      );
+    case "file":
+      return (
+        <div className={clsx(root && CARD)}>
+          <EditorComponentBaseFile id={id} />
+        </div>
+      );
+    case "container":
+      return <EditorComponentBaseContainer id={id} />;
+    default:
+      return <div>Unknown component type: {node.type}</div>;
   }
 }

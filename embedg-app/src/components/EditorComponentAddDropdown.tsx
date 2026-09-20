@@ -1,27 +1,33 @@
 import { ChevronUpIcon, StarIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
+import { type NodeId, useDocumentStore } from "../state/document";
 import { useCurrentMessageStore } from "../state/message";
-import { getUniqueId } from "../util";
 import { useState } from "react";
 import ClickOutsideHandler from "./ClickOutsideHandler";
-import type { MessageComponent } from "../discord/schema";
 import { usePremiumGuildFeatures } from "../util/premium";
 import { useNavigate } from "react-router-dom";
 
 interface Props {
   context: "root" | "container";
-  addComponent: (component: MessageComponent) => void;
+  parentId: NodeId;
   disabled?: boolean;
   size?: "small" | "large";
 }
 
 export default function EditorComponentAddDropdown({
   context,
-  addComponent,
+  parentId,
   disabled,
   size = "small",
 }: Props) {
   const [open, setOpen] = useState(false);
+
+  const { insert } = useDocumentStore.getState();
+
+  function addComponent(node: Parameters<typeof insert>[3]) {
+    setOpen(false);
+    insert(parentId, "components", "end", node);
+  }
 
   const navigate = useNavigate();
 
@@ -33,91 +39,44 @@ export default function EditorComponentAddDropdown({
   const allowedComponentTypes = features?.component_types ?? [];
 
   function addButtonRow() {
-    setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 1,
-      components: [],
-    });
+    addComponent({ type: "actionRow" });
   }
 
   function addSelectMenuRow() {
+    const rowId = insert(parentId, "components", "end", { type: "actionRow" });
+    insert(rowId, "components", "end", { type: "selectMenu" });
     setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 1,
-      components: [
-        {
-          id: getUniqueId(),
-          type: 3,
-          options: [],
-        },
-      ],
-    });
   }
 
   function addSection() {
-    setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 9,
-      components: [],
-      accessory: {
-        id: getUniqueId(),
-        type: 11,
-        media: {
-          url: "",
-        },
-      },
+    const sectionId = insert(parentId, "components", "end", {
+      type: "section",
     });
+    insert(sectionId, "accessory", "end", {
+      type: "thumbnail",
+      media: { url: "" },
+    });
+    setOpen(false);
   }
 
   function addTextDisplay() {
-    setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 10,
-      content: "",
-    });
+    addComponent({ type: "textDisplay", content: "" });
   }
 
   function addMediaGallery() {
-    setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 12,
-      items: [],
-    });
+    addComponent({ type: "mediaGallery" });
   }
 
   function addSeparator() {
-    setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 14,
-      spacing: 1,
-      divider: true,
-    });
+    addComponent({ type: "separator", spacing: 1, divider: true });
   }
 
   function addFile() {
-    setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 13,
-      file: {
-        url: "",
-      },
-    });
+    addComponent({ type: "file", file: { url: "" } });
   }
 
   function addContainer() {
-    setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 17,
-      components: [],
-    });
+    addComponent({ type: "container" });
   }
 
   const componentTypes = [

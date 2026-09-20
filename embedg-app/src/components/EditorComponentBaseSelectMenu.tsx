@@ -1,7 +1,11 @@
-import type {
-  MessageComponentSelectMenu,
-  MessageComponentSelectMenuOption,
-} from "../discord/schema";
+import {
+  type NodeId,
+  type SelectMenuNode,
+  useChildIds,
+  useDocumentStore,
+  useNode,
+} from "../state/document";
+import { nodeField, slotScope } from "../state/validationError";
 import { AutoAnimate } from "../util/autoAnimate";
 import CheckBox from "./CheckBox";
 import Collapsable from "./Collapsable";
@@ -9,35 +13,16 @@ import EditorComponentBaseSelectMenuOption from "./EditorComponentBaseSelectMenu
 import EditorInput from "./EditorInput";
 
 interface Props {
-  id: string;
-  validationPathPrefix: string;
-  data: MessageComponentSelectMenu;
-  onChange: (data: Partial<MessageComponentSelectMenu>) => void;
-
-  addOption: () => void;
-  moveOptionUp: (o: number) => void;
-  moveOptionDown: (o: number) => void;
-  duplicateOption: (o: number) => void;
-  removeOption: (o: number) => void;
-  clearOptions: () => void;
-  onOptionChange: (
-    o: number,
-    data: Partial<MessageComponentSelectMenuOption>,
-  ) => void;
+  id: NodeId;
 }
 
-export default function EditorComponentBaseSelectMenu({
-  validationPathPrefix,
-  data,
-  onChange,
-  addOption,
-  onOptionChange,
-  moveOptionUp,
-  moveOptionDown,
-  duplicateOption,
-  removeOption,
-  clearOptions,
-}: Props) {
+export default function EditorComponentBaseSelectMenu({ id }: Props) {
+  const data = useNode<SelectMenuNode>(id);
+  const optionIds = useChildIds(id, "options");
+  const { update, insert, removeChildren } = useDocumentStore.getState();
+
+  if (!data) return null;
+
   return (
     <div className="space-y-4">
       <div className="flex space-x-3">
@@ -46,11 +31,10 @@ export default function EditorComponentBaseSelectMenu({
           maxLength={150}
           value={data.placeholder || ""}
           onChange={(v) =>
-            onChange({
-              placeholder: v || undefined,
-            })
+            update<SelectMenuNode>(id, { placeholder: v || undefined })
           }
           className="flex-auto"
+          validationPath={nodeField<SelectMenuNode>(id, "placeholder")}
         />
         <div className="flex-none">
           <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
@@ -58,53 +42,42 @@ export default function EditorComponentBaseSelectMenu({
           </div>
           <CheckBox
             checked={data.disabled ?? false}
-            onChange={(v) =>
-              onChange({
-                disabled: v,
-              })
-            }
+            onChange={(v) => update<SelectMenuNode>(id, { disabled: v })}
           />
         </div>
       </div>
       <Collapsable
-        id={`${validationPathPrefix}.options`}
-        validationPathPrefix={`${validationPathPrefix}.options`}
+        id={`${id}.options`}
+        validationPathPrefix={slotScope(id, "options")}
         title="Options"
       >
         <AutoAnimate className="space-y-2">
-          {data.options.map((option, i) => (
-            <div key={option.id}>
+          {optionIds.map((optionId, i) => (
+            <div key={optionId}>
               <EditorComponentBaseSelectMenuOption
-                validationPathPrefix={`${validationPathPrefix}.options.${i}`}
+                id={optionId}
                 title={`Option ${i + 1}`}
-                data={option}
-                onChange={(v) => onOptionChange(i, v)}
-                moveUp={i > 0 ? () => moveOptionUp(i) : undefined}
-                moveDown={
-                  i < data.options.length - 1
-                    ? () => moveOptionDown(i)
-                    : undefined
-                }
-                duplicate={
-                  data.options.length < 25
-                    ? () => duplicateOption(i)
-                    : undefined
-                }
-                remove={() => removeOption(i)}
               />
             </div>
           ))}
         </AutoAnimate>
         <div className="space-x-3 mt-3">
-          {data.options.length < 25 ? (
+          {optionIds.length < 25 ? (
             <button
+              type="button"
               className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white"
-              onClick={addOption}
+              onClick={() =>
+                insert(id, "options", "end", {
+                  type: "selectOption",
+                  label: "",
+                })
+              }
             >
               Add Option
             </button>
           ) : (
             <button
+              type="button"
               disabled
               className="bg-dark-2 px-3 py-2 rounded transition-colors cursor-not-allowed text-gray-300"
             >
@@ -112,8 +85,9 @@ export default function EditorComponentBaseSelectMenu({
             </button>
           )}
           <button
+            type="button"
             className="px-3 py-2 rounded border-2 border-red hover:bg-red transition-colors text-white"
-            onClick={clearOptions}
+            onClick={() => removeChildren(id, "options")}
           >
             Clear Options
           </button>

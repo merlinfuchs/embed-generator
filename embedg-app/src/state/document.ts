@@ -12,6 +12,7 @@ import type {
   EmbedThumbnail,
   Emoji,
   Message,
+  MessageAction,
   MessageActionSet,
   MessageComponentButtonStyle,
   UnfurledMediaItem,
@@ -231,12 +232,35 @@ export interface DocumentStore extends DocumentData {
   removeChildren(parentId: NodeId, slot: ChildSlot): void;
   move(id: NodeId, delta: -1 | 1): void;
   duplicate(id: NodeId): NodeId;
+  addAction: (id: string, action: MessageAction) => void;
+  clearActions: (id: string) => void;
+  deleteAction: (id: string, i: number) => void;
+  moveActionUp: (id: string, i: number) => void;
+  moveActionDown: (id: string, i: number) => void;
+  duplicateAction: (id: string, i: number) => void;
+  setActionType: (id: string, i: number, type: number) => void;
+  setActionText: (id: string, i: number, text: string) => void;
+  setActionTargetId: (id: string, i: number, target: string) => void;
+  setActionPublic: (id: string, i: number, val: boolean) => void;
+  setActionAllowRoleMentions: (id: string, i: number, val: boolean) => void;
+  setActionDisableDefaultResponse: (
+    id: string,
+    i: number,
+    val: boolean,
+  ) => void;
+  setActionPermissions: (id: string, i: number, val: string) => void;
+  setActionRoleIds: (id: string, i: number, val: string[]) => void;
   replaceAll(message: Message): void;
   clear(): void;
   setComponentsV2(enabled: boolean): void;
 }
 
 export const COMPONENTS_V2_FLAG = 1 << 15;
+
+export const DOCUMENT_STORE_KEY = "current-document";
+
+/** 2 is the first version that owns components and their action sets. */
+export const DOCUMENT_VERSION = 2;
 
 function freshId(nodes: Record<NodeId, Node>): NodeId {
   let id = getUniqueId().toString();
@@ -411,6 +435,188 @@ export const createDocumentStore = (key: string) =>
               return copied ? copyId : id;
             },
 
+            addAction: (id: string, action: MessageAction) =>
+              set((state) => {
+                const actionSet = state.actions[id];
+                if (actionSet) {
+                  actionSet.actions.push(action);
+                } else {
+                  state.actions[id] = { actions: [action] };
+                }
+              }),
+            clearActions: (id: string) =>
+              set((state) => {
+                const actionSet = state.actions[id];
+                if (actionSet) {
+                  actionSet.actions = [];
+                }
+              }),
+            deleteAction: (id: string, i: number) =>
+              set((state) => {
+                const actionSet = state.actions[id];
+                if (actionSet) {
+                  actionSet.actions.splice(i, 1);
+                }
+              }),
+            moveActionUp: (id: string, i: number) =>
+              set((state) => {
+                const actionSet = state.actions[id];
+                if (actionSet) {
+                  const action = actionSet.actions[i];
+                  if (action) {
+                    actionSet.actions.splice(i, 1);
+                    actionSet.actions.splice(i - 1, 0, action);
+                  }
+                }
+              }),
+            moveActionDown: (id: string, i: number) => {
+              set((state) => {
+                const actionSet = state.actions[id];
+                if (actionSet) {
+                  const action = actionSet.actions[i];
+                  if (action) {
+                    actionSet.actions.splice(i, 1);
+                    actionSet.actions.splice(i + 1, 0, action);
+                  }
+                }
+              });
+            },
+            duplicateAction: (id: string, i: number) => {
+              set((state) => {
+                const actionSet = state.actions[id];
+                if (actionSet) {
+                  const action = actionSet.actions[i];
+                  if (action) {
+                    actionSet.actions.splice(i + 1, 0, {
+                      ...action,
+                      id: getUniqueId(),
+                    });
+                  }
+                }
+              });
+            },
+            setActionType: (id: string, i: number, type: number) =>
+              set((state) => {
+                const actionSet = state.actions[id];
+                const action = actionSet.actions[i];
+
+                if (type === 1 || type === 6 || type === 8) {
+                  actionSet.actions[i] = {
+                    type,
+                    id: action.id,
+                    text: "",
+                    public: false,
+                    allow_role_mentions: false,
+                  };
+                } else if (type === 5 || type === 7 || type === 9) {
+                  actionSet.actions[i] = {
+                    type,
+                    id: action.id,
+                    target_id: "",
+                    public: false,
+                    allow_role_mentions: false,
+                  };
+                } else if (type === 2 || type === 3 || type === 4) {
+                  actionSet.actions[i] = {
+                    type,
+                    id: action.id,
+                    target_id: "",
+                    public: false,
+                    disable_default_response: false,
+                    allow_role_mentions: false,
+                  };
+                } else if (type === 10) {
+                  actionSet.actions[i] = {
+                    type,
+                    id: action.id,
+                    permissions: "0",
+                    role_ids: [],
+                    disable_default_response: false,
+                  };
+                }
+              }),
+            setActionText: (id: string, i: number, text: string) =>
+              set((state) => {
+                const actionSet = state.actions[id];
+                const action = actionSet.actions[i];
+                if (
+                  action.type === 1 ||
+                  action.type === 6 ||
+                  action.type === 8
+                ) {
+                  action.text = text;
+                } else if (
+                  action.type === 10 &&
+                  action.disable_default_response
+                ) {
+                  action.text = text;
+                }
+              }),
+            setActionTargetId: (id: string, i: number, target: string) =>
+              set((state) => {
+                const actionSet = state.actions[id];
+                const action = actionSet.actions[i];
+                if (
+                  action.type === 2 ||
+                  action.type === 3 ||
+                  action.type === 4 ||
+                  action.type === 5 ||
+                  action.type === 7 ||
+                  action.type === 9
+                ) {
+                  action.target_id = target;
+                }
+              }),
+            setActionPublic: (id: string, i: number, val: boolean) =>
+              set((state) => {
+                const actionSet = state.actions[id];
+                const action = actionSet.actions[i];
+                if (action.type !== 10) {
+                  action.public = val;
+                }
+              }),
+            setActionAllowRoleMentions: (id: string, i: number, val: boolean) =>
+              set((state) => {
+                const actionSet = state.actions[id];
+                const action = actionSet.actions[i];
+                if (action.type !== 10) {
+                  action.allow_role_mentions = val;
+                }
+              }),
+            setActionDisableDefaultResponse: (
+              id: string,
+              i: number,
+              val: boolean,
+            ) =>
+              set((state) => {
+                const actionSet = state.actions[id];
+                const action = actionSet.actions[i];
+                if (
+                  action.type === 2 ||
+                  action.type === 3 ||
+                  action.type === 4 ||
+                  action.type === 10
+                ) {
+                  action.disable_default_response = val;
+                }
+              }),
+            setActionPermissions: (id: string, i: number, val: string) =>
+              set((state) => {
+                const actionSet = state.actions[id];
+                const action = actionSet.actions[i];
+                if (action.type === 10) {
+                  action.permissions = val;
+                }
+              }),
+            setActionRoleIds: (id: string, i: number, val: string[]) =>
+              set((state) => {
+                const actionSet = state.actions[id];
+                const action = actionSet.actions[i];
+                if (action.type === 10) {
+                  action.role_ids = val;
+                }
+              }),
+
             replaceAll: (message) => set(fromMessage(message)),
 
             clear: () => set(fromMessage(defaultMessage)),
@@ -436,7 +642,14 @@ export const createDocumentStore = (key: string) =>
             }),
           },
         ),
-        { name: key, version: 1 },
+        {
+          name: key,
+          version: DOCUMENT_VERSION,
+          // The node tree itself is unchanged between versions; what a version
+          // says is which parts of the message this store owns, which
+          // `seedDocumentStore` reconciles once both stores have rehydrated.
+          migrate: (persisted) => persisted as DocumentStore,
+        },
       ),
     ),
   );
@@ -507,15 +720,22 @@ function copySubtree(
   return copyId;
 }
 
-export const DOCUMENT_STORE_KEY = "current-document";
-
 /**
  * Read before the store is created, because the persist middleware writes the
  * key as soon as it rehydrates.
  */
-export const hadPersistedDocument =
-  typeof localStorage !== "undefined" &&
-  localStorage.getItem(DOCUMENT_STORE_KEY) !== null;
+export const persistedDocumentVersion = ((): number | null => {
+  if (typeof localStorage === "undefined") return null;
+
+  const raw = localStorage.getItem(DOCUMENT_STORE_KEY);
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw).version ?? 0;
+  } catch {
+    return 0;
+  }
+})();
 
 export const useDocumentStore = createDocumentStore(DOCUMENT_STORE_KEY);
 

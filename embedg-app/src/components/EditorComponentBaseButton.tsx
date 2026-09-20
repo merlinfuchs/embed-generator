@@ -1,4 +1,11 @@
-import type { MessageComponentButton } from "../discord/schema";
+import {
+  type ButtonNode,
+  type NodeId,
+  useDocumentStore,
+  useNode,
+} from "../state/document";
+import { nodeField, nodeScope } from "../state/validationError";
+import { useNodeActions } from "./useNodeActions";
 import CheckBox from "./CheckBox";
 import EditorActionSet from "./EditorActionSet";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
@@ -6,17 +13,9 @@ import EditorComponentEmojiSelect from "./EditorComponentEmojiSelect";
 import EditorInput from "./EditorInput";
 
 interface Props {
-  id: string;
-  validationPathPrefix: string;
+  id: NodeId;
   title?: string;
-  data: MessageComponentButton;
   size?: "medium" | "large";
-  onChange: (data: Partial<MessageComponentButton>) => void;
-
-  duplicate?: () => void;
-  moveUp?: () => void;
-  moveDown?: () => void;
-  remove?: () => void;
 }
 
 const buttonBorderColors = {
@@ -29,16 +28,15 @@ const buttonBorderColors = {
 
 export default function EditorComponentBaseButton({
   id,
-  validationPathPrefix,
   title = "Button",
   size = "medium",
-  data,
-  onChange,
-  duplicate,
-  moveUp,
-  moveDown,
-  remove,
 }: Props) {
+  const data = useNode<ButtonNode>(id);
+  const actions = useNodeActions(id, 5);
+  const { update } = useDocumentStore.getState();
+
+  if (!data) return null;
+
   const borderColor = buttonBorderColors[data.style];
 
   return (
@@ -47,7 +45,7 @@ export default function EditorComponentBaseButton({
     >
       <EditorComponentCollapsable
         id={id}
-        validationPathPrefix={validationPathPrefix}
+        validationPathPrefix={nodeScope<ButtonNode>(id)}
         title={title}
         extra={
           data.label && (
@@ -58,10 +56,7 @@ export default function EditorComponentBaseButton({
           )
         }
         size={size}
-        duplicate={duplicate}
-        moveUp={moveUp}
-        moveDown={moveDown}
-        remove={remove}
+        {...actions}
       >
         <div className="space-y-4">
           <div className="flex space-x-3">
@@ -75,7 +70,7 @@ export default function EditorComponentBaseButton({
                 className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
                 value={data.style.toString()}
                 onChange={(v) =>
-                  onChange({
+                  update<ButtonNode>(id, {
                     style: parseInt(v.target.value, 10) as any,
                   })
                 }
@@ -94,7 +89,7 @@ export default function EditorComponentBaseButton({
               <CheckBox
                 checked={data.disabled ?? false}
                 onChange={(v) =>
-                  onChange({
+                  update<ButtonNode>(id, {
                     disabled: v,
                   })
                 }
@@ -105,7 +100,7 @@ export default function EditorComponentBaseButton({
             <EditorComponentEmojiSelect
               emoji={data.emoji ?? undefined}
               onChange={(v) =>
-                onChange({
+                update<ButtonNode>(id, {
                   emoji: v,
                 })
               }
@@ -115,25 +110,25 @@ export default function EditorComponentBaseButton({
               maxLength={80}
               value={data.label}
               onChange={(v) =>
-                onChange({
+                update<ButtonNode>(id, {
                   label: v,
                 })
               }
               className="flex-auto"
-              validationPath={`${validationPathPrefix}.label`}
+              validationPath={nodeField<ButtonNode>(id, "label")}
             />
           </div>
           {data.style === 5 ? (
             <EditorInput
               label="URL"
               type="url"
-              value={data.url}
+              value={data.url ?? ""}
               onChange={(v) =>
-                onChange({
+                update<ButtonNode>(id, {
                   url: v,
                 })
               }
-              validationPath={`${validationPathPrefix}.url`}
+              validationPath={nodeField<ButtonNode>(id, "url")}
             />
           ) : (
             <EditorActionSet setId={data.action_set_id} />

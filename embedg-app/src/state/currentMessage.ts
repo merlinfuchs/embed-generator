@@ -2,16 +2,18 @@ import debounce from "just-debounce-it";
 import { useEffect, useMemo, useState } from "react";
 import type { Message } from "../discord/schema";
 import {
-  hadPersistedDocument,
+  DOCUMENT_VERSION,
   type NodeId,
+  persistedDocumentVersion,
   useDocumentStore,
 } from "./document";
 import { toMessage } from "./documentConvert";
 import { defaultMessage, useCurrentMessageStore } from "./message";
 
 /**
- * Embeds live in the document store, everything else is still in `message.ts`.
- * Both halves are merged here until the remaining fields move over.
+ * Embeds, components and their action sets live in the document store; the
+ * root fields are still in `message.ts`. Both halves are merged here until the
+ * rest moves over.
  */
 export function getCurrentMessage(): Message {
   return getCurrentDocument().message;
@@ -28,6 +30,8 @@ export function getCurrentDocument(): {
     message: {
       ...useCurrentMessageStore.getState(),
       embeds: converted.message.embeds,
+      components: converted.message.components,
+      actions: converted.message.actions,
     },
     idToPath: converted.idToPath,
   };
@@ -87,12 +91,26 @@ export function setComponentsV2Enabled(enabled: boolean) {
 }
 
 /**
- * Drafts predate the document store, so the first time it runs it takes over
- * the embeds of the draft that is already in the message store, which the
- * persist middleware has rehydrated synchronously by now.
+ * Hands a draft over to the document store as it takes ownership of more of
+ * the message. Version 0 predates the store entirely; version 1 owned the
+ * embeds but left components and action sets to the message store, so its
+ * copy of those is stale. The message store rehydrates synchronously, so its
+ * state is the parsed draft by now.
  */
 export function seedDocumentStore() {
-  if (hadPersistedDocument) return;
+  if (persistedDocumentVersion === DOCUMENT_VERSION) return;
 
-  useDocumentStore.getState().replaceAll(useCurrentMessageStore.getState());
+  const draft = useCurrentMessageStore.getState();
+
+  if (persistedDocumentVersion === null) {
+    useDocumentStore.getState().replaceAll(draft);
+    return;
+  }
+
+  const { message } = getCurrentDocument();
+  useDocumentStore.getState().replaceAll({
+    ...message,
+    components: draft.components,
+    actions: draft.actions,
+  });
 }

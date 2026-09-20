@@ -1,5 +1,5 @@
-import { shallow } from "zustand/shallow";
-import { useCurrentMessageStore } from "../state/message";
+import { useChildIds, useDocumentStore } from "../state/document";
+import { slotScope } from "../state/validationError";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";
@@ -11,14 +11,9 @@ export default function EditorComponents({
 }: {
   defaultCollapsed?: boolean;
 }) {
-  const components = useCurrentMessageStore(
-    (state) => state.components.map((e) => e.id),
-    shallow,
-  );
-  const [clearComponents, addComponent] = useCurrentMessageStore(
-    (state) => [state.clearComponents, state.addComponent],
-    shallow,
-  );
+  const rootId = useDocumentStore((state) => state.rootId);
+  const components = useChildIds(rootId, "components");
+  const { removeChildren } = useDocumentStore.getState();
 
   const sendMode = useSendSettingsStore((state) => state.mode);
 
@@ -28,7 +23,7 @@ export default function EditorComponents({
       title="Components"
       size="large"
       defaultCollapsed={defaultCollapsed}
-      validationPathPrefix="components"
+      validationPathPrefix={slotScope(rootId, "components")}
       extra={
         <div className="flex space-x-2">
           <div className="text-sm italic font-light text-gray-400">
@@ -47,9 +42,9 @@ export default function EditorComponents({
         </div>
       )}
       <AutoAnimate className="space-y-3 mb-3">
-        {components.map((id, i) => (
+        {components.map((id) => (
           <div key={id}>
-            <EditorComponentEntry rootIndex={i} rootId={id} />
+            <EditorComponentEntry id={id} root={true} />
           </div>
         ))}
       </AutoAnimate>
@@ -57,13 +52,13 @@ export default function EditorComponents({
         <EditorComponentAddDropdown
           context="root"
           size="large"
-          addComponent={addComponent}
+          parentId={rootId}
           disabled={components.length >= 5}
         />
 
         <button
           className="px-3 py-2.5 rounded text-white border-red border-2 hover:bg-red"
-          onClick={clearComponents}
+          onClick={() => removeChildren(rootId, "components")}
         >
           Clear Components
         </button>

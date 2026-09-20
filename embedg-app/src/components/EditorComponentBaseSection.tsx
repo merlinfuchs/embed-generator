@@ -1,75 +1,50 @@
-import type {
-  MessageComponentAccessory,
-  MessageComponentSection,
-  MessageComponentTextDisplay,
-} from "../discord/schema";
-import { getUniqueId } from "../util";
+import {
+  type NodeId,
+  type SectionNode,
+  useChildIds,
+  useDocumentStore,
+  useNode,
+} from "../state/document";
+import { nodeScope, slotScope } from "../state/validationError";
 import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";
 import EditorComponentBaseButton from "./EditorComponentBaseButton";
 import EditorComponentBaseTextDisplay from "./EditorComponentBaseTextDisplay";
-import EditorComponentBaseThumbnail from "./EditorcomponentBaseThumbnail";
+import EditorComponentBaseThumbnail from "./EditorComponentBaseThumbnail";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
+import { useNodeActions } from "./useNodeActions";
 
 interface Props {
-  id: string;
-  validationPathPrefix: string;
+  id: NodeId;
   title?: string;
   size?: "medium" | "large";
-  data: MessageComponentSection;
-  onChange: (data: Partial<MessageComponentSection>) => void;
-  duplicate?: () => void;
-  moveUp?: () => void;
-  moveDown?: () => void;
-  remove?: () => void;
-  onAccessoryChange: (data: Partial<MessageComponentAccessory>) => void;
-  addSubComponent: (component: MessageComponentTextDisplay) => void;
-  clearSubComponents: () => void;
-  moveSubComponentUp: (index: number) => void;
-  moveSubComponentDown: (index: number) => void;
-  deleteSubComponent: (index: number) => void;
-  onSubComponentChange: (
-    index: number,
-    data: Partial<MessageComponentTextDisplay>,
-  ) => void;
-  duplicateSubComponent: (index: number) => void;
 }
 
 export default function EditorComponentBaseSection({
   id,
-  validationPathPrefix,
   title = "Section",
   size = "medium",
-  data,
-  duplicate,
-  moveUp,
-  moveDown,
-  remove,
-  onAccessoryChange,
-  addSubComponent,
-  clearSubComponents,
-  moveSubComponentUp,
-  moveSubComponentDown,
-  deleteSubComponent,
-  onSubComponentChange,
-  duplicateSubComponent,
 }: Props) {
-  function onAccessoryTypeChange(type: number) {
+  const data = useNode<SectionNode>(id);
+  const childIds = useChildIds(id, "components");
+  const actions = useNodeActions(id);
+  const { insert } = useDocumentStore.getState();
+
+  const accessory = useNode(data?.accessoryId ?? "");
+
+  if (!data) return null;
+
+  function setAccessoryType(type: number) {
     if (type === 11) {
-      onAccessoryChange({
-        id: getUniqueId(),
-        type: 11,
-        media: {
-          url: "",
-        },
+      insert(id, "accessory", "end", {
+        type: "thumbnail",
+        media: { url: "" },
       });
     } else if (type === 2) {
-      onAccessoryChange({
-        id: getUniqueId(),
-        type: 2,
+      insert(id, "accessory", "end", {
+        type: "button",
         label: "",
         style: 1,
-        action_set_id: getUniqueId().toString(),
       });
     }
   }
@@ -77,13 +52,10 @@ export default function EditorComponentBaseSection({
   return (
     <EditorComponentCollapsable
       id={id}
-      validationPathPrefix={validationPathPrefix}
+      validationPathPrefix={nodeScope<SectionNode>(id)}
       title={title}
       size={size}
-      moveUp={moveUp}
-      moveDown={moveDown}
-      duplicate={duplicate}
-      remove={remove}
+      {...actions}
       extra={
         <div className="text-gray-500 truncate flex space-x-2 pl-1">
           <div>-</div>
@@ -100,82 +72,58 @@ export default function EditorComponentBaseSection({
           </div>
           <select
             className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
-            value={data.accessory.type.toString()}
-            onChange={(v) =>
-              onAccessoryTypeChange(parseInt(v.target.value, 10))
-            }
+            value={accessory?.type === "button" ? "2" : "11"}
+            onChange={(v) => setAccessoryType(parseInt(v.target.value, 10))}
           >
             <option value="11">Thumbnail</option>
             <option value="2">Button</option>
           </select>
         </div>
         <div>
-          {data.accessory.type === 11 ? (
-            <div className="bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow border-2 border-dark-5">
-              <EditorComponentBaseThumbnail
-                id={`${id}.accessory`}
+          {data.accessoryId &&
+            (accessory?.type === "button" ? (
+              <EditorComponentBaseButton
+                id={data.accessoryId}
                 title="Accessory"
-                validationPathPrefix={`${validationPathPrefix}.accessory`}
-                data={data.accessory}
-                onChange={(data) => onAccessoryChange(data)}
               />
-            </div>
-          ) : (
-            <EditorComponentBaseButton
-              id={`${id}.accessory`}
-              title="Accessory"
-              validationPathPrefix={`${validationPathPrefix}.accessory`}
-              data={data.accessory}
-              onChange={(data) => onAccessoryChange(data)}
-            />
-          )}
+            ) : (
+              <div className="bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow border-2 border-dark-5">
+                <EditorComponentBaseThumbnail
+                  id={data.accessoryId}
+                  title="Accessory"
+                />
+              </div>
+            ))}
         </div>
 
         <Collapsable
           id={`${id}.components`}
-          validationPathPrefix={`${validationPathPrefix}.components`}
+          validationPathPrefix={slotScope(id, "components")}
           title="Components"
           extra={
             <div className="text-sm italic font-light text-gray-400">
-              {data.components.length} / 3
+              {childIds.length} / 3
             </div>
           }
         >
           <AutoAnimate>
-            {data.components.map((child, i) => (
+            {childIds.map((childId) => (
               <div
                 className="bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow border-2 border-dark-5"
-                key={child.id}
+                key={childId}
               >
-                <EditorComponentBaseTextDisplay
-                  id={`${id}.components.${child.id}`}
-                  validationPathPrefix={`${validationPathPrefix}.components.${i}`}
-                  data={child}
-                  onChange={(data) => onSubComponentChange(i, data)}
-                  duplicate={
-                    data.components.length < 3
-                      ? () => duplicateSubComponent(i)
-                      : undefined
-                  }
-                  moveUp={i > 0 ? () => moveSubComponentUp(i) : undefined}
-                  moveDown={
-                    i < data.components.length - 1
-                      ? () => moveSubComponentDown(i)
-                      : undefined
-                  }
-                  remove={() => deleteSubComponent(i)}
-                />
+                <EditorComponentBaseTextDisplay id={childId} />
               </div>
             ))}
             <div>
               <div className="space-x-3 mt-3">
-                {data.components.length < 3 ? (
+                {childIds.length < 3 ? (
                   <button
+                    type="button"
                     className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white"
                     onClick={() =>
-                      addSubComponent({
-                        id: getUniqueId(),
-                        type: 10,
+                      insert(id, "components", "end", {
+                        type: "textDisplay",
                         content: "",
                       })
                     }
@@ -184,6 +132,7 @@ export default function EditorComponentBaseSection({
                   </button>
                 ) : (
                   <button
+                    type="button"
                     disabled
                     className="bg-dark-2 px-3 py-2 rounded transition-colors cursor-not-allowed text-gray-300"
                   >
@@ -191,8 +140,11 @@ export default function EditorComponentBaseSection({
                   </button>
                 )}
                 <button
+                  type="button"
                   className="px-3 py-2 rounded border-2 border-red hover:bg-red transition-colors text-white"
-                  onClick={clearSubComponents}
+                  onClick={() =>
+                    useDocumentStore.getState().removeChildren(id, "components")
+                  }
                 >
                   Clear Texts
                 </button>

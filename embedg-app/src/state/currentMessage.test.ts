@@ -44,6 +44,62 @@ test("seeding takes over the embeds of an existing draft", async () => {
   expect(getCurrentMessage().embeds).toMatchObject([{ title: "Draft embed" }]);
 });
 
+test("a version 1 document keeps its embeds but takes the draft components", async () => {
+  const { fromMessage } = await import("./documentConvert");
+  const { messageSchema } = await import("../discord/schema");
+
+  const v1 = fromMessage(
+    messageSchema.parse({
+      content: "",
+      embeds: [{ title: "Document embed", fields: [] }],
+      components: [],
+    }),
+  );
+
+  vi.stubGlobal(
+    "localStorage",
+    fakeStorage({
+      "current-message": JSON.stringify({
+        state: {
+          content: "",
+          tts: false,
+          embeds: [],
+          components: [
+            {
+              type: 1,
+              id: 1,
+              components: [
+                {
+                  type: 2,
+                  id: 2,
+                  style: 1,
+                  label: "Kept",
+                  action_set_id: "set-1",
+                },
+              ],
+            },
+          ],
+          actions: { "set-1": { actions: [] } },
+        },
+        version: 0,
+      }),
+      "current-document": JSON.stringify({ state: v1, version: 1 }),
+    }),
+  );
+
+  const { seedDocumentStore, getCurrentMessage } = await import(
+    "./currentMessage"
+  );
+  seedDocumentStore();
+
+  const message = getCurrentMessage();
+  expect(message.embeds).toMatchObject([{ title: "Document embed" }]);
+  expect(message.components).toMatchObject([
+    { type: 1, components: [{ label: "Kept" }] },
+  ]);
+  expect(message.actions).toHaveProperty("set-1");
+});
+
 test("seeding leaves an existing document alone", async () => {
   const { fromMessage } = await import("./documentConvert");
   const { messageSchema } = await import("../discord/schema");
@@ -59,7 +115,7 @@ test("seeding leaves an existing document alone", async () => {
     "localStorage",
     fakeStorage({
       "current-message": JSON.stringify(draft),
-      "current-document": JSON.stringify({ state: existing, version: 1 }),
+      "current-document": JSON.stringify({ state: existing, version: 2 }),
     }),
   );
 
