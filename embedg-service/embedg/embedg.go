@@ -26,7 +26,6 @@ type EmbedGeneratorConfig struct {
 
 type EmbedGenerator struct {
 	client       *bot.Client
-	cache        cache.Cache
 	gateway      gateway.Gateway
 	compatCaches discache.Caches
 	broker       broker.Broker
@@ -82,7 +81,6 @@ func NewEmbedGenerator(
 
 	embedg := &EmbedGenerator{
 		client:       client,
-		cache:        cache,
 		gateway:      gateway,
 		compatCaches: compatCaches,
 		broker:       br,
@@ -98,10 +96,6 @@ func (g *EmbedGenerator) Client() *bot.Client {
 
 func (g *EmbedGenerator) Rest() disrest.Rest {
 	return g.client.Rest
-}
-
-func (g *EmbedGenerator) Cache() cache.Cache {
-	return g.cache
 }
 
 func (g *EmbedGenerator) Gateway() gateway.Gateway {

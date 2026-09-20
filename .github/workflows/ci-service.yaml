@@ -24,5 +24,5 @@ jobs:
           cache-dependency-path: |
             embedg-service/go.sum
             go.work.sum
-      - run: go build ./... && go vet ./...
+      - run: go build ./... && go vet ./... && go test ./...
         working-directory: embedg-service

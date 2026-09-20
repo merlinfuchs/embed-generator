@@ -49,13 +49,16 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 	embedg.Client().AddEventListeners(premiumManager)
 	go premiumManager.Run(ctx)
 
+	guildState := guildstate.New(embedg.Rest())
+	embedg.Client().AddEventListeners(guildState)
+
 	sessionManager := session.New(session.SessionManagerConfig{
 		InsecureCookies: cfg.API.InsecureCookies,
 		APIPublicURL:    cfg.API.PublicURL,
 		ClientID:        cfg.Discord.ClientID,
 		ClientSecret:    cfg.Discord.ClientSecret,
 	}, pg)
-	accessManager := access.New(embedg.Cache(), embedg.Caches(), embedg.Rest(), embedg, sessionManager)
+	accessManager := access.New(guildState, pg, embedg.Rest(), embedg, sessionManager)
 	actionParser := parser.New(accessManager, pg, pg, embedg.Caches())
 	actionHandler := handler.New(
 		pg,
@@ -75,9 +78,6 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		DiscordLink: cfg.Links.Discord,
 	}, embedg, embedg.Rest(), embedg.Caches(), pg, actionHandler)
 	embedg.Client().AddEventListeners(handler)
-
-	guildState := guildstate.New(embedg.Rest())
-	embedg.Client().AddEventListeners(guildState)
 
 	guildTracker := guild.NewGuildTracker(pg)
 	embedg.Client().AddEventListeners(guildTracker)

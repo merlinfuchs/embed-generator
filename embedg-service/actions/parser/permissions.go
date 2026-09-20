@@ -38,7 +38,7 @@ func (m *ActionParser) DerivePermissionsForActions(ctx context.Context, member d
 	res.GuildIsOwner = guild.OwnerID == userID
 
 	if channelID != 0 {
-		channelPermissions, err := m.accessManager.ComputeMemberPermissionsForChannel(member, channelID)
+		channelPermissions, err := m.accessManager.ComputeMemberPermissionsForChannel(ctx, member, channelID)
 		if err != nil {
 			return res, err
 		}
