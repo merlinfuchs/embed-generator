@@ -10,7 +10,7 @@ import {
   Squares2X2Icon,
   VariableIcon,
 } from "@heroicons/react/24/outline";
-import { Avatar, DiscordButton, Reactions } from "./discord";
+import { Avatar, DiscordButton, Reactions, Typing } from "./discord";
 
 type FeatureId =
   | "components"
@@ -204,7 +204,10 @@ export default function HomeShowcase(): JSX.Element {
     if (!track || !el) return;
     lockUntil.current = Date.now() + 800;
     setIndex(i);
-    track.scrollTo({ top: el.offsetTop, behavior: "smooth" });
+    track.scrollTo({
+      top: el.offsetTop - (track.clientHeight - el.offsetHeight) / 2,
+      behavior: "smooth",
+    });
   };
 
   React.useEffect(() => {
@@ -220,11 +223,11 @@ export default function HomeShowcase(): JSX.Element {
     if (Date.now() < lockUntil.current) return;
     const track = trackRef.current;
     if (!track) return;
-    const top = track.scrollTop + 40;
+    const mid = track.scrollTop + track.clientHeight / 2;
     let best = 0;
     let bestDist = Infinity;
     slideEls().forEach((el, i) => {
-      const d = Math.abs(el.offsetTop - top);
+      const d = Math.abs(el.offsetTop + el.offsetHeight / 2 - mid);
       if (d < bestDist) {
         bestDist = d;
         best = i;
@@ -555,21 +558,37 @@ export default function HomeShowcase(): JSX.Element {
               onScroll={onScroll}
               onWheel={() => setTouched(true)}
               onTouchMove={() => setTouched(true)}
-              className="relative h-[560px] snap-y snap-mandatory overflow-y-auto [mask-image:linear-gradient(to_bottom,black_80%,transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="relative h-[520px] snap-y snap-mandatory overflow-y-auto [mask-image:linear-gradient(to_bottom,transparent,black_12%,black_88%,transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
+              <div aria-hidden className="h-24" />
+              <div className="py-6 opacity-25">
+                <Message avatar={sarah} name="sarah" time="10:08 AM">
+                  <div className="text-sm text-mist-300">
+                    anyone up for a match tonight?
+                  </div>
+                </Message>
+                <Message avatar={tom} name="tom" time="10:09 AM">
+                  <div className="text-sm text-mist-300">
+                    once I figure out these roles
+                  </div>
+                </Message>
+              </div>
               {features.map((f, i) => (
                 <div
                   key={f.id}
                   data-slide
                   className={[
-                    "snap-start pb-10 pt-1 transition-opacity duration-500",
+                    "snap-center py-6 transition-opacity duration-500",
                     index === i ? "opacity-100" : "opacity-25",
                   ].join(" ")}
                 >
                   {slides[f.id]}
                 </div>
               ))}
-              <div aria-hidden className="h-[400px]" />
+              <div className="py-6 opacity-25">
+                <Typing who="tom" />
+              </div>
+              <div aria-hidden className="h-24" />
             </div>
             <div className="flex items-center justify-between border-0 border-t border-solid border-white/5 pt-3 text-xs">
               <a
