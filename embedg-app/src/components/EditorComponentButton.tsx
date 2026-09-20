@@ -7,7 +7,7 @@ import {
   useNodeActions,
   useDocumentStoreApi,
 } from "../state/document";
-import { useEditorMode } from "../state/editorMode";
+import { useEditorCapabilities } from "../state/editorCapabilities";
 import { nodeField, nodeScope } from "../state/validationError";
 import CheckBox from "./CheckBox";
 import EditorActionSet from "./EditorActionSet";
@@ -37,7 +37,7 @@ export default function EditorComponentButton({
   const data = useNode<ButtonNode>(id);
   const actions = useNodeActions(id);
   const { update } = useDocumentStoreApi().getState();
-  const linkOnly = useEditorMode() === "componentEmbed";
+  const { linkButtonsOnly } = useEditorCapabilities();
 
   if (!data) return null;
 
@@ -55,7 +55,7 @@ export default function EditorComponentButton({
       >
         <div className="space-y-4">
           <div className="flex space-x-3">
-            <div className={clsx("flex-auto", linkOnly && "hidden")}>
+            <div className={clsx("flex-auto", linkButtonsOnly && "hidden")}>
               <div className="mb-1.5 flex">
                 <div className="uppercase text-mist-300 text-sm font-medium">
                   Style
@@ -114,7 +114,7 @@ export default function EditorComponentButton({
               validationPath={nodeField<ButtonNode>(id, "label")}
             />
           </div>
-          {linkOnly || data.style === 5 ? (
+          {linkButtonsOnly || data.style === 5 ? (
             <EditorInput
               label="URL"
               type="url"

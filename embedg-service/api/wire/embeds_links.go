@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/merlinfuchs/embed-generator/embedg-service/model"
 	"gopkg.in/guregu/null.v4"
 )
 
@@ -25,17 +24,9 @@ type EmbedLinkCreateRequestWire struct {
 }
 
 func (req EmbedLinkCreateRequestWire) Validate() error {
+	// The component embed is parsed by the handler, which needs the value.
 	return validation.ValidateStruct(&req,
 		validation.Field(&req.Url, validation.Required),
-		validation.Field(&req.ComponentEmbed, validation.By(func(value any) error {
-			raw, _ := value.(json.RawMessage)
-			if len(raw) == 0 {
-				return nil
-			}
-
-			_, err := model.ParseComponentEmbed(raw)
-			return err
-		})),
 	)
 }
 

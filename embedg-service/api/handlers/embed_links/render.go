@@ -1,6 +1,7 @@
 package embed_links
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"html"
@@ -52,29 +53,25 @@ func (h *EmbedLinksHandler) renderEmbedLinkHTML(c *fiber.Ctx, el *model.EmbedLin
 }
 
 // The payload Discord renders instead of the meta tags, which stay as the
-// fallback for everywhere else. Marshaling it again rather than writing out
-// the stored bytes keeps `<`, `>` and `&` escaped, so no string in it can
-// close the script element.
+// fallback for everywhere else. The column is jsonb, which normalizes away the
+// escaping json.Marshal did when the link was created, so `<`, `>` and `&` are
+// escaped again here: nothing in the payload may close the script element.
 func componentEmbedToHTML(raw []byte) string {
 	if len(raw) == 0 {
 		return ""
 	}
 
-	embed, err := model.ParseComponentEmbed(raw)
-	if err != nil {
-		slog.Error("failed to parse stored component embed", slog.String("error", err.Error()))
+	if !json.Valid(raw) {
+		slog.Error("stored component embed is not valid json")
 		return ""
 	}
 
-	payload, err := json.Marshal(embed)
-	if err != nil {
-		slog.Error("failed to marshal component embed", slog.String("error", err.Error()))
-		return ""
-	}
+	var payload bytes.Buffer
+	json.HTMLEscape(&payload, raw)
 
 	return fmt.Sprintf(
 		"<script id=\"discord:component-embed\" type=\"application/json\">%s</script>\n",
-		payload,
+		payload.String(),
 	)
 }
 

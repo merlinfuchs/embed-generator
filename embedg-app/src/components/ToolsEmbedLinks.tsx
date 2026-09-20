@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import MessagePreview from "./MessagePreview";
 import EditorInput from "./EditorInput";
 import type { Message } from "../discord/schema";
@@ -8,15 +8,8 @@ import { useEmbedLinkCreateMutation } from "../api/mutations";
 import { useToasts } from "../util/toasts";
 import { colorIntToHex } from "../util/discord";
 import CheckBox from "./CheckBox";
-import EditorComponentContainer from "./EditorComponentContainer";
-import {
-  componentEmbedPayload,
-  componentEmbedStore,
-  ensureComponentEmbedContainer,
-  useComponentEmbedContainerId,
-} from "../state/componentEmbed";
-import { DocumentStoreContext } from "../state/document";
-import { EditorModeContext } from "../state/editorMode";
+import ComponentEmbedEditor from "./ComponentEmbedEditor";
+import { componentEmbedPayload } from "../state/componentEmbed";
 
 export default function ToolsEmbedLinks() {
   const [title, setTitle] = useState("");
@@ -34,13 +27,6 @@ export default function ToolsEmbedLinks() {
   const [twitterCard, setTwitterCard] = useState(true);
 
   const [componentEmbed, setComponentEmbed] = useState(false);
-  const componentEmbedContainerId = useComponentEmbedContainerId();
-
-  useEffect(() => {
-    if (componentEmbed && !componentEmbedContainerId) {
-      ensureComponentEmbedContainer();
-    }
-  }, [componentEmbed, componentEmbedContainerId]);
 
   const previewMsg = useMemo(() => {
     return {
@@ -298,15 +284,8 @@ export default function ToolsEmbedLinks() {
                 fields above stay as the fallback.
               </div>
             </div>
-            {componentEmbed && componentEmbedContainerId && (
-              <DocumentStoreContext.Provider value={componentEmbedStore}>
-                <EditorModeContext.Provider value="componentEmbed">
-                  <EditorComponentContainer
-                    id={componentEmbedContainerId}
-                    title="Custom Component"
-                  />
-                </EditorModeContext.Provider>
-              </DocumentStoreContext.Provider>
+            {componentEmbed && (
+              <ComponentEmbedEditor title="Custom Component" />
             )}
           </div>
           <div className="flex justify-end pt-3">

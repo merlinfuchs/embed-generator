@@ -9,7 +9,7 @@ import {
   slotLimit,
   useDocumentStoreApi,
 } from "../state/document";
-import { useEditorMode } from "../state/editorMode";
+import { useEditorCapabilities } from "../state/editorCapabilities";
 import { nodeField, nodeScope, slotScope } from "../state/validationError";
 import { AutoAnimate } from "../util/autoAnimate";
 import { colorIntToHex } from "../util/discord";
@@ -35,7 +35,7 @@ export default function EditorComponentContainer({
   const nodeActions = useNodeActions(id);
   // The container is the whole payload of a component embed, so it can't be
   // moved, duplicated or removed there.
-  const actions = useEditorMode() === "componentEmbed" ? {} : nodeActions;
+  const actions = useEditorCapabilities().rootNodeActions ? nodeActions : {};
   const { update, removeChildren } = useDocumentStoreApi().getState();
 
   const hexColor = useMemo(

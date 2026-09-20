@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"slices"
 	"unicode/utf8"
 )
 
@@ -95,30 +96,44 @@ func ParseComponentEmbed(raw []byte) (*ComponentEmbed, error) {
 	}
 
 	count := 0
-	if err := validateComponentEmbedComponent(embed.Component, componentEmbedRoot, &count); err != nil {
+	if err := validateComponentEmbedComponent(embed.Component, componentEmbedRootTypes, &count); err != nil {
 		return nil, err
 	}
 
 	return &embed, nil
 }
 
-type componentEmbedContext int
-
-const (
-	componentEmbedRoot componentEmbedContext = iota
-	componentEmbedContainerChild
-	componentEmbedActionRowChild
-	componentEmbedSectionChild
-	componentEmbedAccessory
+// What each component type may hold, keyed by the parent it sits in. A type
+// missing from its parent's list invalidates the payload.
+var (
+	componentEmbedRootTypes      = []int{17}
+	componentEmbedContainerTypes = []int{1, 9, 10, 12, 14}
+	componentEmbedActionRowTypes = []int{2}
+	componentEmbedSectionTypes   = []int{10}
+	componentEmbedAccessoryTypes = []int{2, 11}
 )
 
-func validateComponentEmbedComponent(c ComponentEmbedComponent, ctx componentEmbedContext, count *int) error {
+// The keys each component type may carry. Discord drops a payload that holds
+// anything else, so a field belonging to another type is rejected rather than
+// silently dropped when the payload is written out again.
+var componentEmbedFields = map[int][]string{
+	1:  {"components"},
+	2:  {"style", "label", "url", "emoji", "disabled"},
+	9:  {"components", "accessory"},
+	10: {"content"},
+	11: {"media", "description", "spoiler"},
+	12: {"items"},
+	14: {"divider", "spacing"},
+	17: {"components", "accent_color", "spoiler"},
+}
+
+func validateComponentEmbedComponent(c ComponentEmbedComponent, allowedTypes []int, count *int) error {
 	*count++
 	if *count > componentEmbedMaxComponents {
 		return fmt.Errorf("component embed has more than %d components", componentEmbedMaxComponents)
 	}
 
-	if !componentEmbedTypeAllowed(c.Type, ctx) {
+	if !slices.Contains(allowedTypes, c.Type) {
 		return fmt.Errorf("component type %d is not allowed here", c.Type)
 	}
 
@@ -131,7 +146,7 @@ func validateComponentEmbedComponent(c ComponentEmbedComponent, ctx componentEmb
 			return fmt.Errorf("accent color is out of range")
 		}
 		for _, child := range c.Components {
-			if err := validateComponentEmbedComponent(child, componentEmbedContainerChild, count); err != nil {
+			if err := validateComponentEmbedComponent(child, componentEmbedContainerTypes, count); err != nil {
 				return err
 			}
 		}
@@ -140,7 +155,7 @@ func validateComponentEmbedComponent(c ComponentEmbedComponent, ctx componentEmb
 			return fmt.Errorf("button row must have between 1 and 5 buttons")
 		}
 		for _, child := range c.Components {
-			if err := validateComponentEmbedComponent(child, componentEmbedActionRowChild, count); err != nil {
+			if err := validateComponentEmbedComponent(child, componentEmbedActionRowTypes, count); err != nil {
 				return err
 			}
 		}
@@ -149,14 +164,14 @@ func validateComponentEmbedComponent(c ComponentEmbedComponent, ctx componentEmb
 			return fmt.Errorf("section must have between 1 and 3 text displays")
 		}
 		for _, child := range c.Components {
-			if err := validateComponentEmbedComponent(child, componentEmbedSectionChild, count); err != nil {
+			if err := validateComponentEmbedComponent(child, componentEmbedSectionTypes, count); err != nil {
 				return err
 			}
 		}
 		if c.Accessory == nil {
 			return fmt.Errorf("section must have an accessory")
 		}
-		if err := validateComponentEmbedComponent(*c.Accessory, componentEmbedAccessory, count); err != nil {
+		if err := validateComponentEmbedComponent(*c.Accessory, componentEmbedAccessoryTypes, count); err != nil {
 			return err
 		}
 	case 2: // button
@@ -201,76 +216,31 @@ func validateComponentEmbedComponent(c ComponentEmbedComponent, ctx componentEmb
 	return componentEmbedUnusedFields(c)
 }
 
-func componentEmbedTypeAllowed(componentType int, ctx componentEmbedContext) bool {
-	switch ctx {
-	case componentEmbedRoot:
-		return componentType == 17
-	case componentEmbedContainerChild:
-		// A container only ever sits at the root of the payload.
-		return componentType == 1 || componentType == 9 || componentType == 10 ||
-			componentType == 12 || componentType == 14
-	case componentEmbedActionRowChild:
-		return componentType == 2
-	case componentEmbedSectionChild:
-		return componentType == 10
-	case componentEmbedAccessory:
-		return componentType == 2 || componentType == 11
-	}
-	return false
-}
-
-// Fields belonging to another component type invalidate the payload, so they
-// are rejected rather than silently dropped when the payload is built again.
 func componentEmbedUnusedFields(c ComponentEmbedComponent) error {
-	used := map[string]bool{}
-	switch c.Type {
-	case 1, 17:
-		used["components"] = true
-		used["accent_color"] = c.Type == 17
-		used["spoiler"] = c.Type == 17
-	case 2:
-		used["style"] = true
-		used["label"] = true
-		used["url"] = true
-		used["emoji"] = true
-		used["disabled"] = true
-	case 9:
-		used["components"] = true
-		used["accessory"] = true
-	case 10:
-		used["content"] = true
-	case 11:
-		used["media"] = true
-		used["description"] = true
-		used["spoiler"] = true
-	case 12:
-		used["items"] = true
-	case 14:
-		used["divider"] = true
-		used["spacing"] = true
-	}
+	allowed := componentEmbedFields[c.Type]
 
-	set := map[string]bool{
-		"components":   len(c.Components) != 0,
-		"style":        c.Style != 0,
-		"label":        c.Label != "",
-		"url":          c.URL != "",
-		"emoji":        c.Emoji != nil,
-		"disabled":     c.Disabled,
-		"accessory":    c.Accessory != nil,
-		"content":      c.Content != "",
-		"media":        c.Media != nil,
-		"description":  c.Description != "",
-		"spoiler":      c.Spoiler,
-		"items":        len(c.Items) != 0,
-		"divider":      c.Divider != nil,
-		"spacing":      c.Spacing != 0,
-		"accent_color": c.AccentColor != nil,
-	}
-
-	for field, isSet := range set {
-		if isSet && !used[field] {
-			return fmt.Errorf("component type %d does not allow %q", c.Type, field)
+	for _, field := range [...]struct {
+		name string
+		set  bool
+	}{
+		{"components", len(c.Components) != 0},
+		{"style", c.Style != 0},
+		{"label", c.Label != ""},
+		{"url", c.URL != ""},
+		{"emoji", c.Emoji != nil},
+		{"disabled", c.Disabled},
+		{"accessory", c.Accessory != nil},
+		{"content", c.Content != ""},
+		{"media", c.Media != nil},
+		{"description", c.Description != ""},
+		{"spoiler", c.Spoiler},
+		{"items", len(c.Items) != 0},
+		{"divider", c.Divider != nil},
+		{"spacing", c.Spacing != 0},
+		{"accent_color", c.AccentColor != nil},
+	} {
+		if field.set && !slices.Contains(allowed, field.name) {
+			return fmt.Errorf("component type %d does not allow %q", c.Type, field.name)
 		}
 	}
 

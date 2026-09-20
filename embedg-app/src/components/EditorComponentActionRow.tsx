@@ -7,6 +7,7 @@ import {
   useDocumentStoreApi,
   useDocument,
 } from "../state/document";
+import { useEditorCapabilities } from "../state/editorCapabilities";
 import { nodeScope } from "../state/validationError";
 import { AutoAnimate } from "../util/autoAnimate";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
@@ -25,6 +26,7 @@ export default function EditorComponentActionRow({
   const childIds = useChildIds(id, "components");
   const actions = useNodeActions(id);
   const { insert, removeChildren } = useDocumentStoreApi().getState();
+  const { linkButtonsOnly } = useEditorCapabilities();
   // A row holds either buttons or a single select menu, never both.
   const isButtonRow = useDocument(
     (state) => state.nodes[childIds[0]]?.type !== "selectMenu",
@@ -51,7 +53,7 @@ export default function EditorComponentActionRow({
             onAdd={() =>
               insert(id, "components", "end", {
                 type: "button",
-                style: 2,
+                style: linkButtonsOnly ? 5 : 2,
                 label: "",
               })
             }

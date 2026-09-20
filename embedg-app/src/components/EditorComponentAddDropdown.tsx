@@ -7,7 +7,7 @@ import {
   useDocumentStoreApi,
 } from "../state/document";
 import { useState } from "react";
-import { COMPONENT_EMBED_TYPES, useEditorMode } from "../state/editorMode";
+import { useEditorCapabilities } from "../state/editorCapabilities";
 import ClickOutsideHandler from "./ClickOutsideHandler";
 import { usePremiumGuildFeatures } from "../util/premium";
 import { useNavigate } from "react-router-dom";
@@ -37,15 +37,12 @@ export default function EditorComponentAddDropdown({
   const navigate = useNavigate();
 
   const componentsV2Enabled = useComponentsV2Enabled();
-  const editorMode = useEditorMode();
+  const { componentTypes: allowedComponentTypes } = useEditorCapabilities();
 
   const features = usePremiumGuildFeatures();
-  // Component embeds live on a link instead of in a message, so they aren't
-  // part of what a plan unlocks.
-  const allowedComponentTypes =
-    editorMode === "componentEmbed"
-      ? COMPONENT_EMBED_TYPES
-      : (features?.component_types ?? []);
+  // A surface with its own component types isn't part of what a plan unlocks.
+  const unlockedComponentTypes =
+    allowedComponentTypes ?? features?.component_types ?? [];
 
   function addSelectMenuRow() {
     const rowId = insert(parentId, "components", "end", { type: "actionRow" });
@@ -115,10 +112,7 @@ export default function EditorComponentAddDropdown({
   ].filter((c) => {
     if (c.v2Only && !componentsV2Enabled) return false;
     if (c.rootOnly && context !== "root") return false;
-    if (
-      editorMode === "componentEmbed" &&
-      !COMPONENT_EMBED_TYPES.includes(c.type)
-    )
+    if (allowedComponentTypes && !allowedComponentTypes.includes(c.type))
       return false;
 
     return true;
@@ -153,7 +147,7 @@ export default function EditorComponentAddDropdown({
                 aria-label={componentType.label}
                 className="px-3 py-2 rounded-lg text-white hover:bg-ink-700 w-full text-left flex items-center gap-2"
                 onClick={() => {
-                  if (allowedComponentTypes.includes(componentType.type)) {
+                  if (unlockedComponentTypes.includes(componentType.type)) {
                     if (componentType.handler) {
                       componentType.handler();
                     } else if (componentType.node) {
@@ -164,7 +158,7 @@ export default function EditorComponentAddDropdown({
                   }
                 }}
               >
-                {!allowedComponentTypes.includes(componentType.type) && (
+                {!unlockedComponentTypes.includes(componentType.type) && (
                   <div className="text-amber-300">
                     <StarIcon className="w-4 h-4" />
                   </div>

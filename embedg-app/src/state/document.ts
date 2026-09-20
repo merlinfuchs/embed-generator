@@ -346,13 +346,16 @@ function slotOfChild(parent: Node, childId: NodeId): ChildSlot | null {
   return null;
 }
 
-export const createDocumentStore = (key: string) =>
+export const createDocumentStore = (
+  key: string,
+  initialMessage: Message = defaultMessage,
+) =>
   create<DocumentStore>()(
     immer(
       persist(
         temporal(
           (set, get) => ({
-            ...fromMessage(defaultMessage),
+            ...fromMessage(initialMessage),
 
             update: (id, patch) =>
               set((state) => {
@@ -469,7 +472,7 @@ export const createDocumentStore = (key: string) =>
 
             replaceAll: (message) => set(fromMessage(message)),
 
-            clear: () => set(fromMessage(defaultMessage)),
+            clear: () => set(fromMessage(initialMessage)),
 
             // The two modes cannot hold each other's content, so the toggle
             // replaces the message rather than editing it.
@@ -595,12 +598,11 @@ export const messageDocumentStore = createDocumentStore(DOCUMENT_STORE_KEY);
  * message, so only a surface that edits something else - the component embed
  * of a link - has to provide a store.
  */
-export const DocumentStoreContext = createContext<DocumentStoreApi | null>(
-  null,
-);
+export const DocumentStoreContext =
+  createContext<DocumentStoreApi>(messageDocumentStore);
 
 export const useDocumentStoreApi = (): DocumentStoreApi =>
-  useContext(DocumentStoreContext) ?? messageDocumentStore;
+  useContext(DocumentStoreContext);
 
 export function useDocument<T>(selector: (state: DocumentStore) => T): T {
   return useStore(useDocumentStoreApi(), selector);
