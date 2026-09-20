@@ -1,1 +1,0 @@
-DROP TABLE IF EXISTS message_action_sets;

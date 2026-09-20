@@ -460,9 +460,9 @@ Done when: `docker build .` succeeds and the container serves the app on 8080 ag
 
 ### B9. Removal
 
-- `git rm -r embedg-server`.
+- `git rm -r embedg-server`. Checked first that the service covers it: the handler packages match one for one and the registered routes are identical apart from `/api/health/shard-list`, which became `/api/health/shards`.
 - Delete remote branches: `disgo`, `stateway`, `stability`, `componentsv2`, `next`, `oauth-member-scope`, `refactor-access`, `scheduled-messages`, `image-cdn`, `scripting`, `component-emojis`, `custom-commands`, `custom-bot`, `navigation-rework`, `old-main`, `docs`, `features/actions-frontend`, `saving-messages`.
-- `grep -r embedg-server .` outside `.git` must return only the README migration note.
+- `grep -r embedg-server .` outside `.git` must return only the README migration note. It does.
 
 ### B10. Merge to main
 
