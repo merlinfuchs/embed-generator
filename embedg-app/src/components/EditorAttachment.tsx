@@ -27,16 +27,16 @@ export default function EditorAttachment({ index }: Props) {
   const isImage = isImageRegex.test(dataUrl);
 
   return (
-    <div className="bg-dark-3 w-56 mr-3 mb-3 rounded space-y-2 p-2 overflow-none">
+    <div className="bg-ink-700 w-56 mr-3 mb-3 rounded-lg space-y-2 p-2 overflow-none">
       <div className="flex items-center space-x-2">
         <input
           type="text"
           value={name}
           readOnly
-          className="bg-dark-2 w-full rounded py-1 px-2 flex-auto text-white focus:outline-none"
+          className="bg-ink-900 w-full rounded-lg py-1 px-2 flex-auto text-white focus:outline-none"
         />
         <TrashIcon
-          className="w-5 h-5 flex-none cursor-pointer text-gray-300"
+          className="w-5 h-5 flex-none cursor-pointer text-mist-300"
           onClick={() => removeAttachment(index)}
         />
       </div>
@@ -44,11 +44,11 @@ export default function EditorAttachment({ index }: Props) {
         {isImage ? (
           <img
             src={dataUrl}
-            className="rounded h-full w-full max-h-56"
+            className="rounded-lg h-full w-full max-h-56"
             alt=""
           />
         ) : (
-          <DocumentIcon className="text-dark-7" />
+          <DocumentIcon className="text-ink-500" />
         )}
       </div>
     </div>

@@ -38,13 +38,13 @@ export default function EditorComponentSeparator({
         <div className="flex space-x-3">
           <div className="flex-auto">
             <div className="mb-1.5 flex">
-              <div className="uppercase text-gray-300 text-sm font-medium">
+              <div className="uppercase text-mist-300 text-sm font-medium">
                 Spacing
               </div>
             </div>
             <select
               aria-label="Spacing"
-              className="bg-dark-2 rounded p-2 w-full font-light cursor-pointer text-white"
+              className="bg-ink-900 rounded-lg p-2 w-full font-light cursor-pointer text-white"
               value={data.spacing.toString()}
               onChange={(v) =>
                 update<SeparatorNode>(id, {
@@ -57,7 +57,7 @@ export default function EditorComponentSeparator({
             </select>
           </div>
           <div className="flex-none">
-            <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+            <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
               Divider
             </div>
             <CheckBox

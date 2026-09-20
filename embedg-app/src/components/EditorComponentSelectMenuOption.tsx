@@ -29,7 +29,7 @@ export default function EditorComponentSelectMenuOption({
   return (
     <EditorComponentCollapsable
       id={id}
-      className="p-3 border-2 border-dark-6 rounded-md"
+      className="p-3 border-2 border-white/10 rounded-xl"
       validationPathPrefix={nodeScope<SelectOptionNode>(id)}
       title={title}
       subtitle={data.label}

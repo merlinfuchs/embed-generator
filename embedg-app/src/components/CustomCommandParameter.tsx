@@ -85,12 +85,12 @@ export default function CustomCommandParameter({
   }
 
   return (
-    <div className="p-3 border-2 border-dark-6 rounded-md">
+    <div className="p-3 border-2 border-white/10 rounded-xl">
       <Collapsable
         id={`command.${cmdId}.parameters.${parameter.id}`}
         title={`Argument ${parameterIndex + 1}`}
         buttons={
-          <div className="flex-none text-gray-300 flex items-center space-x-2">
+          <div className="flex-none text-mist-300 flex items-center space-x-2">
             {parameterIndex > 0 && (
               <ChevronUpIcon
                 className="h-6 w-6 flex-none"
@@ -121,7 +121,7 @@ export default function CustomCommandParameter({
         }
         extra={
           parameter.name ? (
-            <div className="text-gray-500 truncate flex space-x-2 pl-2">
+            <div className="text-mist-500 truncate flex space-x-2 pl-2">
               <div>-</div>
               <div className="truncate">{parameter.name}</div>
             </div>
@@ -132,12 +132,12 @@ export default function CustomCommandParameter({
           <div className="flex flex-col space-y-3 lg:flex-row lg:space-x-3 lg:space-y-0">
             <div className="flex-none">
               <div className="mb-1.5 flex">
-                <div className="uppercase text-gray-300 text-sm font-medium">
+                <div className="uppercase text-mist-300 text-sm font-medium">
                   Type
                 </div>
               </div>
               <select
-                className="bg-dark-2 rounded p-2 w-full font-light cursor-pointer text-white"
+                className="bg-ink-900 rounded-lg p-2 w-full font-light cursor-pointer text-white"
                 value={parameter.type.toString()}
                 onChange={(v) => setType(v.target.value)}
               >

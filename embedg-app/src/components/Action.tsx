@@ -170,13 +170,13 @@ export default function Action({
   }
 
   return (
-    <div className="p-3 border-2 border-dark-6 rounded-md">
+    <div className="p-3 border-2 border-white/10 rounded-xl">
       <Collapsable
         id={collapsableId}
         validationPathPrefix={valiationPathPrefix}
         title={`Action ${actionIndex + 1}`}
         buttons={
-          <div className="flex-none text-gray-300 flex items-center space-x-2">
+          <div className="flex-none text-mist-300 flex items-center space-x-2">
             {actionIndex > 0 && (
               <button type="button" aria-label="Move up" onClick={moveUp}>
                 <ChevronUpIcon className="h-6 w-6 flex-none" />
@@ -198,7 +198,7 @@ export default function Action({
           </div>
         }
         extra={
-          <div className="text-gray-500 truncate flex space-x-2 pl-1">
+          <div className="text-mist-500 truncate flex space-x-2 pl-1">
             <div>-</div>
             <div className="truncate">{actionTypes[action.type]}</div>
           </div>
@@ -209,13 +209,13 @@ export default function Action({
             <div className="flex flex-col space-y-3 lg:flex-row lg:space-x-3 lg:space-y-0">
               <div className="flex-none">
                 <div className="mb-1.5 flex">
-                  <div className="uppercase text-gray-300 text-sm font-medium">
+                  <div className="uppercase text-mist-300 text-sm font-medium">
                     Type
                   </div>
                 </div>
                 <select
                   aria-label="Type"
-                  className="bg-dark-2 rounded p-2 w-full font-light cursor-pointer text-white"
+                  className="bg-ink-900 rounded-lg p-2 w-full font-light cursor-pointer text-white"
                   value={actionTypeGroup}
                   onChange={(v) => setActionTypeGroup(v.target.value)}
                 >
@@ -233,13 +233,13 @@ export default function Action({
                 actionTypeGroup === "saved_message_response") && (
                 <div className="flex-none">
                   <div className="mb-1.5 flex">
-                    <div className="uppercase text-gray-300 text-sm font-medium">
+                    <div className="uppercase text-mist-300 text-sm font-medium">
                       Target
                     </div>
                   </div>
                   <select
                     aria-label="Target"
-                    className="bg-dark-2 rounded p-2 w-full font-light cursor-pointer text-white"
+                    className="bg-ink-900 rounded-lg p-2 w-full font-light cursor-pointer text-white"
                     value={responseStyle}
                     onChange={(v) => setResponseStyle(v.target.value)}
                   >
@@ -254,7 +254,7 @@ export default function Action({
               {(action.type === 1 || action.type === 5) && (
                 <div className="flex-none">
                   <div className="mb-1.5 flex">
-                    <div className="uppercase text-gray-300 text-sm font-medium">
+                    <div className="uppercase text-mist-300 text-sm font-medium">
                       Public
                     </div>
                   </div>
@@ -268,7 +268,7 @@ export default function Action({
               {(action.type === 1 || action.type === 5) && (
                 <div className="flex-none">
                   <div className="mb-1.5 flex">
-                    <div className="uppercase text-gray-300 text-sm font-medium">
+                    <div className="uppercase text-mist-300 text-sm font-medium">
                       Ping Roles
                     </div>
                   </div>
@@ -285,7 +285,7 @@ export default function Action({
                 action.type === 10) && (
                 <div className="flex-none">
                   <div className="mb-1.5 flex">
-                    <div className="uppercase text-gray-300 text-sm font-medium">
+                    <div className="uppercase text-mist-300 text-sm font-medium">
                       Default Response
                     </div>
                   </div>
@@ -322,7 +322,7 @@ export default function Action({
             <>
               <div className="flex-none">
                 <div className="mb-1.5 flex">
-                  <div className="uppercase text-gray-300 text-sm font-medium">
+                  <div className="uppercase text-mist-300 text-sm font-medium">
                     Required Permissions
                   </div>
                 </div>
@@ -333,7 +333,7 @@ export default function Action({
               </div>
               <div className="flex-none">
                 <div className="mb-1.5 flex">
-                  <div className="uppercase text-gray-300 text-sm font-medium">
+                  <div className="uppercase text-mist-300 text-sm font-medium">
                     Required Roles
                   </div>
                 </div>
@@ -355,7 +355,7 @@ export default function Action({
             </>
           ) : null}
 
-          <div className="text-gray-500 text-sm whitespace-normal">
+          <div className="text-mist-500 text-sm whitespace-normal">
             {actionDescriptions[action.type]}
           </div>
         </div>

@@ -15,6 +15,7 @@ import {
   WrenchScrewdriverIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
+import logo from "../assets/logo.svg";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 import ClickOutsideHandler from "./ClickOutsideHandler";
@@ -54,7 +55,7 @@ export default function SideNav() {
     <>
       <div
         className={clsx(
-          "h-full bg-dark-3 flex-none transition-all fixed z-30 shadow",
+          "h-full bg-ink-900 border-r border-white/5 flex-none transition-all fixed z-30",
           collapsed ? "w-16" : "w-64",
           hidden && "hidden xl:relative xl:block",
         )}
@@ -63,18 +64,36 @@ export default function SideNav() {
           <div
             className={clsx("flex flex-col py-5", collapsed && "items-center")}
           >
-            <div className="justify-end px-3 hidden xl:flex">
-              <div
-                className="mb-5 cursor-pointer text-gray-300 hover:text-white"
-                role="button"
+            <div
+              className={clsx(
+                "flex items-center mb-6 px-3",
+                collapsed ? "flex-col gap-3" : "justify-between",
+              )}
+            >
+              <a href="/" className="flex items-center gap-3 min-w-0">
+                <img
+                  src={logo}
+                  alt=""
+                  className="h-9 w-9 rounded-xl flex-none"
+                />
+                {!collapsed && (
+                  <span className="font-semibold tracking-tight text-mist-100 truncate">
+                    Embed Generator
+                  </span>
+                )}
+              </a>
+              <button
+                type="button"
+                className="hidden xl:block flex-none rounded-md p-1 text-mist-500 hover:bg-white/5 hover:text-mist-100 transition-colors"
                 onClick={() => setCollapsed((h) => !h)}
+                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
                 {collapsed ? (
-                  <ChevronDoubleRightIcon className="h-6 w-6" />
+                  <ChevronDoubleRightIcon className="h-5 w-5" />
                 ) : (
-                  <ChevronDoubleLeftIcon className="h-6 w-6" />
+                  <ChevronDoubleLeftIcon className="h-5 w-5" />
                 )}
-              </div>
+              </button>
             </div>
             <div className="mb-7">
               {user && user.success ? (
@@ -82,17 +101,17 @@ export default function SideNav() {
               ) : (
                 <LoginLink
                   className={clsx(
-                    "bg-dark-2 flex items-center mx-3 group",
-                    collapsed ? "rounded-full p-2" : "rounded p-2",
+                    "bg-ink-800 border border-white/5 flex items-center mx-3 group transition-colors hover:border-white/15",
+                    collapsed ? "rounded-full p-2" : "rounded-xl p-3",
                   )}
                 >
-                  <ArrowRightOnRectangleIcon className="h-8 w-8 flex-none text-gray-300 group-hover:text-white" />
+                  <ArrowRightOnRectangleIcon className="h-7 w-7 flex-none text-azure-400" />
                   {!collapsed && (
-                    <div className="ml-5">
-                      <div className="text-gray-300 group-hover:text-white mb-1">
+                    <div className="ml-4">
+                      <div className="text-sm font-medium text-mist-100 mb-0.5">
                         Login
                       </div>
-                      <div className="text-xs text-gray-400">
+                      <div className="text-xs text-mist-500">
                         Many features are only available after loggin in with
                         your Discord account!
                       </div>
@@ -103,8 +122,8 @@ export default function SideNav() {
             </div>
             <div
               className={clsx(
-                "h-0.5 bg-dark-4 rounded-full mb-7",
-                collapsed ? "w-12" : "w-52 mx-auto",
+                "h-px bg-white/5 mb-5",
+                collapsed ? "w-10" : "mx-3",
               )}
             ></div>
             <div className="flex flex-col space-y-4">
@@ -160,13 +179,9 @@ export default function SideNav() {
                   collapsed ? "px-4" : "px-5",
                 )}
               >
-                <ArrowLeftOnRectangleIcon className="h-8 w-8 flex-none text-gray-300 group-hover:text-white" />
+                <ArrowLeftOnRectangleIcon className="h-8 w-8 flex-none text-mist-400 group-hover:text-mist-100" />
                 {!collapsed && (
-                  <div
-                    className={clsx(
-                      "ml-5 text-gray-300 group-hover:text-white",
-                    )}
-                  >
+                  <div className="ml-5 text-mist-400 group-hover:text-mist-100">
                     Logout
                   </div>
                 )}
@@ -190,11 +205,11 @@ export default function SideNav() {
         ></div>
       )}
       <div
-        className="xl:hidden fixed w-12 h-12 rounded-full bg-blurple bottom-3 left-3 flex items-center justify-center cursor-pointer z-10"
+        className="xl:hidden fixed w-12 h-12 rounded-full bg-azure-500 hover:bg-azure-400 shadow-lg bottom-3 left-3 flex items-center justify-center cursor-pointer z-10 transition-colors"
         onClick={() => setHidden((h) => !h)}
         role="button"
       >
-        <Bars3Icon className="text-gray-200 h-10 w-10" />
+        <Bars3Icon className="text-white h-7 w-7" />
       </div>
     </>
   );
@@ -225,8 +240,8 @@ function NavigationButton({
         <>
           <div
             className={clsx(
-              "w-1 rounded-r h-12",
-              isActive && "bg-blurple",
+              "w-1 rounded-r-lg h-12",
+              isActive && "bg-azure-500",
               collapsed ? "mr-3" : "mr-4",
             )}
           ></div>
@@ -234,8 +249,8 @@ function NavigationButton({
             className={clsx(
               "h-8 w-8 flex-none",
               isActive
-                ? "text-blurple"
-                : "text-gray-300 group-hover:text-white",
+                ? "text-azure-400"
+                : "text-mist-400 group-hover:text-mist-100",
             )}
             aria-label={label}
             title={label}
@@ -245,8 +260,8 @@ function NavigationButton({
               className={clsx(
                 "ml-5 truncate",
                 isActive
-                  ? "text-blurple"
-                  : "text-gray-300 group-hover:text-white",
+                  ? "text-azure-400"
+                  : "text-mist-400 group-hover:text-mist-100",
               )}
             >
               {label}
@@ -306,7 +321,9 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
       <div
         className={clsx(
           "relative flex items-center cursor-pointer",
-          collapsed ? "group" : "bg-dark-2 mx-3 rounded px-2 py-1",
+          collapsed
+            ? "group"
+            : "bg-ink-800 border border-white/5 hover:border-white/15 transition-colors mx-3 rounded-xl px-2 py-1.5",
         )}
         role="button"
         onClick={() => setOpen((prev) => !prev)}
@@ -316,7 +333,7 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
             src={guildIconUrl(guild)}
             className={clsx(
               "rounded-full flex-none",
-              collapsed ? "h-12 w-12 border border-dark-2 shadow" : "h-10 w-10",
+              collapsed ? "h-12 w-12 border border-white/10" : "h-10 w-10",
             )}
             alt=""
           />
@@ -325,24 +342,24 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
             className={clsx(
               "rounded-full flex-none flex items-center justify-center",
               collapsed
-                ? "h-12 w-12 border border-dark-2 shadow bg-dark-2"
+                ? "h-12 w-12 border border-white/10 bg-ink-800"
                 : "h-10 w-10",
             )}
           >
-            <ChevronDownIcon className="text-gray-300 h-8 w-8 flex-none" />
+            <ChevronDownIcon className="text-mist-300 h-8 w-8 flex-none" />
           </div>
         ) : null}
         {!collapsed && (
           <>
-            <div className="ml-3 text-gray-300 truncate flex-auto">
+            <div className="ml-3 text-mist-300 truncate flex-auto">
               {guild ? guild.name : "Select a server"}
             </div>
-            <ChevronDownIcon className="text-gray-300 h-5 w-5 flex-none ml-2" />
+            <ChevronDownIcon className="text-mist-300 h-5 w-5 flex-none ml-2" />
           </>
         )}
         {collapsed && (
           <div className="hidden group-hover:flex absolute cursor-pointer inset-0 bg-black/30 rounded-full items-center justify-center">
-            <ChevronDownIcon className="text-gray-300 h-8 w-8" />
+            <ChevronDownIcon className="text-mist-300 h-8 w-8" />
           </div>
         )}
       </div>
@@ -350,7 +367,7 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
       {open && (
         <div
           className={clsx(
-            "absolute bg-dark-2 rounded shadow-lg w-64 max-h-128 overflow-y-auto border-2 border-dark-2 z-10",
+            "absolute bg-ink-800 rounded-xl shadow-card w-64 max-h-128 overflow-y-auto border border-white/10 p-1 z-10",
             collapsed ? "top-14 left-0" : "top-16 left-3",
           )}
         >
@@ -358,7 +375,7 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
             guilds.data.map((g) => (
               <div
                 key={g.id}
-                className="py-2 flex space-x-2 items-center rounded px-3 hover:bg-dark-3 cursor-pointer"
+                className="py-2 flex space-x-2 items-center rounded-lg px-3 hover:bg-ink-800 cursor-pointer"
                 role="button"
                 onClick={() => selectGuild(g.id)}
               >
@@ -367,16 +384,16 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
                   alt="icon"
                   className="h-7 w-7 rounded-full flex-none"
                 />
-                <div className="text-gray-300 truncate">{g.name}</div>
+                <div className="text-mist-300 truncate">{g.name}</div>
               </div>
             ))}
           <a
-            className="py-2 flex space-x-2 items-center hover:bg-dark-3 rounded cursor-pointer px-3"
+            className="py-2 flex space-x-2 items-center hover:bg-ink-800 rounded-lg cursor-pointer px-3"
             role="button"
             href="/invite"
           >
-            <PlusCircleIcon className="w-7 h-7 text-gray-300" />
-            <div className="text-gray-300">Invite the bot</div>
+            <PlusCircleIcon className="w-7 h-7 text-mist-300" />
+            <div className="text-mist-300">Invite the bot</div>
           </a>
         </div>
       )}

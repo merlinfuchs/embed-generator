@@ -37,7 +37,7 @@ export default function EditorMentionPicker({
         <Modal height="auto" width="sm" onClose={() => setOpen(false)}>
           <div className="p-4">
             <div className="text-lg text-white mb-1">Add a mention</div>
-            <div className="text-gray-400 mb-6">
+            <div className="text-mist-400 mb-6">
               Mention a channel, role, or user in your message.
             </div>
             <div className="mb-6 space-y-3">
@@ -52,7 +52,7 @@ export default function EditorMentionPicker({
                   ) : (
                     <input
                       type="text"
-                      className="px-3 py-2 bg-dark-2 rounded w-full focus:outline-none text-white"
+                      className="px-3 py-2 bg-ink-900 rounded-lg w-full focus:outline-none text-white"
                       placeholder="channel id"
                       value={channelId}
                       onChange={(e) =>
@@ -62,7 +62,7 @@ export default function EditorMentionPicker({
                   )}
                 </div>
                 <button
-                  className="px-3 py-2 rounded text-white bg-blurple hover:bg-blurple-dark flex-none"
+                  className="px-3 py-2 rounded-lg text-white bg-azure-500 hover:bg-azure-400 flex-none"
                   onClick={() => mention("#", channelId)}
                 >
                   Mention channel
@@ -79,7 +79,7 @@ export default function EditorMentionPicker({
                   ) : (
                     <input
                       type="text"
-                      className="px-3 py-2 bg-dark-2 rounded w-full focus:outline-none text-white"
+                      className="px-3 py-2 bg-ink-900 rounded-lg w-full focus:outline-none text-white"
                       placeholder="role id"
                       value={roleId}
                       onChange={(e) =>
@@ -89,7 +89,7 @@ export default function EditorMentionPicker({
                   )}
                 </div>
                 <button
-                  className="px-3 py-2 rounded text-white bg-blurple hover:bg-blurple-dark flex-none"
+                  className="px-3 py-2 rounded-lg text-white bg-azure-500 hover:bg-azure-400 flex-none"
                   onClick={() => mention("@&", roleId)}
                 >
                   Mention Role
@@ -98,13 +98,13 @@ export default function EditorMentionPicker({
               <div className="flex space-x-2">
                 <input
                   type="text"
-                  className="px-3 py-2 bg-dark-2 rounded w-full focus:outline-none text-white"
+                  className="px-3 py-2 bg-ink-900 rounded-lg w-full focus:outline-none text-white"
                   placeholder="enter a user id"
                   value={userId}
                   onChange={(e) => setUserId(removeNonDigits(e.target.value))}
                 />
                 <button
-                  className="px-3 py-2 rounded text-white bg-blurple hover:bg-blurple-dark flex-none"
+                  className="px-3 py-2 rounded-lg text-white bg-azure-500 hover:bg-azure-400 flex-none"
                   onClick={() => mention("@", userId)}
                 >
                   Mention User
@@ -113,7 +113,7 @@ export default function EditorMentionPicker({
             </div>
             <div className="flex justify-end">
               <button
-                className="px-3 py-2 rounded text-white bg-dark-6 hover:bg-dark-7"
+                className="px-3 py-2 rounded-lg text-white bg-ink-600 hover:bg-ink-500"
                 onClick={() => setOpen(false)}
               >
                 Cancel

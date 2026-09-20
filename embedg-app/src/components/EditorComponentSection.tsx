@@ -66,13 +66,13 @@ export default function EditorComponentSection({
       <div className="space-y-4">
         <div>
           <div className="mb-1.5 flex">
-            <div className="uppercase text-gray-300 text-sm font-medium">
+            <div className="uppercase text-mist-300 text-sm font-medium">
               Accessory Type
             </div>
           </div>
           <select
             aria-label="Accessory Type"
-            className="bg-dark-2 rounded p-2 w-full font-light cursor-pointer text-white"
+            className="bg-ink-900 rounded-lg p-2 w-full font-light cursor-pointer text-white"
             value={accessoryType === "button" ? "2" : "11"}
             onChange={(v) => setAccessoryType(parseInt(v.target.value, 10))}
           >
@@ -93,7 +93,7 @@ export default function EditorComponentSection({
           validationPathPrefix={slotScope(id, "components")}
           title="Components"
           extra={
-            <div className="text-sm italic font-light text-gray-400">
+            <div className="text-sm italic font-light text-mist-400">
               {childIds.length} / {slotLimit("section", "components")}
             </div>
           }

@@ -40,7 +40,7 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
 
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
-      <div className="px-3 rounded bg-dark-2 relative flex items-center h-12 select-none">
+      <div className="px-3 rounded-lg bg-ink-900 relative flex items-center h-12 select-none">
         <div
           onClick={() => setOpen((prev) => !prev)}
           role="button"
@@ -53,7 +53,7 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
                 src={userAvatarUrl(user.data)}
                 className="guild icon url w-8 h-8 rounded-full flex-none"
               />
-              <div className="text-lg text-gray-300 flex-auto truncate">
+              <div className="text-lg text-mist-300 flex-auto truncate">
                 {user.data.name}
               </div>
               <ChevronDownIcon
@@ -70,7 +70,7 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
                 src={guildIconUrl(guild)}
                 className="guild icon url w-8 h-8 rounded-full flex-none"
               />
-              <div className="text-lg text-gray-300 flex-auto truncate">
+              <div className="text-lg text-mist-300 flex-auto truncate">
                 {guild.name}
               </div>
               <ChevronDownIcon
@@ -81,14 +81,14 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
               />
             </div>
           ) : (
-            <div className="text-gray-300">Select guild</div>
+            <div className="text-mist-300">Select guild</div>
           )}
         </div>
         {open && (
-          <div className="absolute bg-dark-2 top-14 left-0 rounded shadow-lg w-full border-2 border-dark-2 z-10">
+          <div className="absolute bg-ink-900 top-14 left-0 rounded-lg shadow-lg w-full border-2 border-white/10 z-10">
             {user?.success && (
               <div
-                className="py-2 flex space-x-2 items-center hover:bg-dark-3 rounded cursor-pointer px-3"
+                className="py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg cursor-pointer px-3"
                 role="button"
                 onClick={() => selectValue("user")}
               >
@@ -98,10 +98,10 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
                   className="h-8 w-8 rounded-full"
                 />
                 <div>
-                  <div className="text-gray-300 leading-tight">
+                  <div className="text-mist-300 leading-tight">
                     {user.data.name}
                   </div>
-                  <div className="text-gray-400 text-xs leading-tight">
+                  <div className="text-mist-400 text-xs leading-tight">
                     your personal account
                   </div>
                 </div>
@@ -111,7 +111,7 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
               guilds.data.map((g) => (
                 <div
                   key={g.id}
-                  className="py-2 flex space-x-2 items-center rounded px-3 hover:bg-dark-3 cursor-pointer"
+                  className="py-2 flex space-x-2 items-center rounded-lg px-3 hover:bg-ink-700 cursor-pointer"
                   role="button"
                   onClick={() => selectValue(g.id)}
                 >
@@ -120,11 +120,11 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
                     alt="icon"
                     className="h-8 w-8 rounded-full"
                   />
-                  <div className="text-gray-300">{g.name}</div>
+                  <div className="text-mist-300">{g.name}</div>
                 </div>
               ))
             ) : (
-              <div className="p-2 text-gray-300">No servers found</div>
+              <div className="p-2 text-mist-300">No servers found</div>
             )}
           </div>
         )}

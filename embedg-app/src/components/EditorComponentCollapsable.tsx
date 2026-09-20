@@ -49,7 +49,7 @@ export default function EditorComponentCollapsable({
         title={title}
         extra={
           subtitle ? (
-            <div className="text-gray-500 truncate flex space-x-2 pl-1">
+            <div className="text-mist-500 truncate flex space-x-2 pl-1">
               <div>-</div>
               <div className="truncate">{subtitle}</div>
             </div>
@@ -60,7 +60,7 @@ export default function EditorComponentCollapsable({
         size={size}
         defaultCollapsed={defaultCollapsed}
         buttons={
-          <div className="flex-none text-gray-300 flex items-center space-x-2">
+          <div className="flex-none text-mist-300 flex items-center space-x-2">
             {moveUp && (
               <button type="button" aria-label="Move up" onClick={moveUp}>
                 <ChevronUpIcon className="h-6 w-6 flex-none" />

@@ -25,18 +25,18 @@ export default function Modal({
 }: Props) {
   return (
     <div
-      className="fixed h-[100dvh] w-[100vw] bg-black/70 flex flex-col items-center justify-center px-2 py-20 sm:px-5 md:px-10 lg:px-20 xl:px-32 z-30 top-0 left-0 overflow-hidden"
+      className="fixed h-[100dvh] w-[100vw] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center px-2 py-20 sm:px-5 md:px-10 lg:px-20 xl:px-32 z-30 top-0 left-0 overflow-hidden"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
         className={clsx(
-          "bg-dark-3 w-full rounded-xl flex-shrink overflow-y-hidden",
+          "bg-ink-700 border border-white/10 shadow-card w-full rounded-2xl flex-shrink overflow-y-hidden",
           maxWidths[width],
           height === "full" && "h-full",
         )}
       >
         <XMarkIcon
-          className="text-gray-400 h-8 w-8 cursor-pointer absolute top-2 right-2"
+          className="text-mist-400 hover:text-mist-100 h-7 w-7 cursor-pointer absolute top-3 right-3"
           role="button"
           onClick={onClose}
         />

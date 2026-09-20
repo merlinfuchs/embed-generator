@@ -17,7 +17,7 @@ export default function EditorEmbeds() {
       size="large"
       validationPathPrefix={slotScope(rootId, "embeds")}
       extra={
-        <div className="text-sm italic font-light text-gray-400">
+        <div className="text-sm italic font-light text-mist-400">
           {embedIds.length} / {slotLimit("message", "embeds")}
         </div>
       }

@@ -874,12 +874,11 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
 
 .discord-messages {
   color: #fff;
-  background-color: #36393e;
+  background-color: transparent;
   display: block;
   font-size: 16px;
   font-family: Whitney, Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
   line-height: 170%;
-  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 .discord-message .discord-message-body .discord-quote-container {
   display: flex;

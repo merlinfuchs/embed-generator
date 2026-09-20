@@ -46,11 +46,11 @@ export default function EditorInput({
         )}
       >
         <div className="flex">
-          <div className="uppercase text-gray-300 text-sm font-medium">
+          <div className="text-xs font-semibold uppercase tracking-wide text-mist-400">
             {label}
           </div>
           {maxLength && (
-            <div className="text-sm italic font-light text-gray-400 ml-2">
+            <div className="text-sm italic font-light text-mist-400 ml-2">
               {value.length} / {maxLength}
             </div>
           )}
@@ -67,7 +67,7 @@ export default function EditorInput({
       </div>
 
       {description && (
-        <div className="mb-1.5 text-gray-400 text-sm font-light">
+        <div className="mb-1.5 text-mist-400 text-sm font-light">
           {description}
         </div>
       )}
@@ -76,7 +76,7 @@ export default function EditorInput({
         {type === "textarea" ? (
           <TextareaAutosize
             aria-label={label}
-            className="bg-dark-2 px-3 py-2 rounded w-full text-white ring-0 border-transparent focus:outline-none"
+            className="bg-ink-900 px-3 py-2 rounded-lg w-full text-white"
             value={value}
             onChange={(e) => onChange(e.target.value)}
             maxLength={maxLength}
@@ -89,7 +89,7 @@ export default function EditorInput({
           <input
             aria-label={label}
             type={type || "text"}
-            className="bg-dark-2 px-3 py-2 rounded w-full text-white ring-0 border-transparent focus:outline-none"
+            className="bg-ink-900 px-3 py-2 rounded-lg w-full text-white"
             value={value}
             onChange={(e) => onChange(e.target.value)}
             maxLength={maxLength}

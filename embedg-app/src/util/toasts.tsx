@@ -50,18 +50,18 @@ export function ToastContainer() {
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className="bg-dark-2 rounded-md py-3 pl-3 pr-5 shadow-lg text-white flex space-x-3 items-center"
+          className="bg-ink-700 border border-white/10 rounded-xl py-3 pl-3 pr-5 shadow-card text-white flex space-x-3 items-center"
         >
           {toast.type === "success" ? (
             <CheckCircleIcon className="w-7 h-7 text-green flex-none" />
           ) : toast.type === "error" ? (
             <ExclamationCircleIcon className="w-7 h-7 text-red flex-none" />
           ) : (
-            <InformationCircleIcon className="w-7 h-7 text-blurple flex-none" />
+            <InformationCircleIcon className="w-7 h-7 text-azure-400 flex-none" />
           )}
           <div>
-            <div className="text-gray-200 mb-1">{toast.title}</div>
-            <div className="text-gray-300 text-sm">{toast.message}</div>
+            <div className="text-mist-100 mb-1">{toast.title}</div>
+            <div className="text-mist-300 text-sm">{toast.message}</div>
           </div>
         </div>
       ))}

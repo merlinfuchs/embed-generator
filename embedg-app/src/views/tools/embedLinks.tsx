@@ -11,7 +11,7 @@ export default function EmbedLinksToolView() {
             <h1 className="text-white font-medium mb-3 text-2xl">
               Embed Links
             </h1>
-            <h2 className="text-gray-400 font-light text-sm">
+            <h2 className="text-mist-400 font-light text-sm">
               Embed links are a way to share rich embeds with others without
               needing to send the actual embed. They only support a subset of
               the features of the actual embeds but can be send anywhere.

@@ -46,7 +46,7 @@ export default function JsonView() {
     <Modal height="full" onClose={() => navigate("/editor")}>
       <div className="h-full flex flex-col p-1.5 md:p-3">
         <ReactCodeMirror
-          className="flex-1 rounded overflow-hidden"
+          className="flex-1 rounded-lg overflow-hidden"
           height="100%"
           width="100%"
           value={raw}
@@ -61,13 +61,13 @@ export default function JsonView() {
         />
         <div className="mt-3 flex justify-end space-x-2">
           <button
-            className="border-2 border-dark-7 hover:bg-dark-5 px-3 py-2 rounded text-white"
+            className="border-2 border-white/15 hover:bg-white/5 hover:border-white/30 transition-colors px-3 py-2 rounded-lg text-white"
             onClick={() => navigate("/editor")}
           >
             Cancel
           </button>
           <button
-            className="bg-blurple hover:bg-blurple-dark px-3 py-2 rounded text-white"
+            className="bg-azure-500 hover:bg-azure-400 px-3 py-2 rounded-lg text-white"
             onClick={save}
           >
             Save

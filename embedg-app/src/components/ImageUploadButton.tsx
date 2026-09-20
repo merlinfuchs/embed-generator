@@ -51,7 +51,7 @@ export default function ImageUploadButton({ onChange }: Props) {
         accept="image/*"
       />
       <button
-        className="h-10 w-10 bg-dark-2 rounded flex items-center justify-center text-gray-300 hover:text-white"
+        className="h-10 w-10 bg-ink-900 rounded-lg flex items-center justify-center text-mist-300 hover:text-white"
         onClick={() => inputRef.current?.click()}
       >
         <DocumentArrowUpIcon className="h-6 w-6" />

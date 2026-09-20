@@ -160,20 +160,20 @@ export default function ScheduledMessage({
 
   return (
     <div>
-      <AutoAnimate className="bg-dark-3 rounded">
+      <AutoAnimate className="bg-ink-700 rounded-lg">
         {manage ? (
           <div className="px-5 py-4" key="1">
             <div className="flex justify-between items-start">
               <div className="flex items-center space-x-2 truncate text-lg mb-5">
                 {onlyOnce ? (
-                  <CalendarDaysIcon className="text-gray-500 h-6 w-6" />
+                  <CalendarDaysIcon className="text-mist-500 h-6 w-6" />
                 ) : (
-                  <ClockIcon className="text-gray-500 h-6 w-6" />
+                  <ClockIcon className="text-mist-500 h-6 w-6" />
                 )}
                 <div className="text-white truncate">{msg.name}</div>
               </div>
               <div
-                className="flex items-center text-white cursor-pointer bg-blurple hover:bg-blurple-dark rounded px-2 py-1"
+                className="flex items-center text-white cursor-pointer bg-azure-500 hover:bg-azure-400 rounded-lg px-2 py-1"
                 role="button"
                 onClick={save}
               >
@@ -196,7 +196,7 @@ export default function ScheduledMessage({
                   className="flex-auto"
                 />
                 <div>
-                  <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+                  <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
                     Enabled
                   </div>
                   <CheckBox
@@ -210,7 +210,7 @@ export default function ScheduledMessage({
               <div className="flex space-x-3 pb-3 items-end">
                 <div className="flex-auto w-1/2">
                   <div className="mb-1.5 flex">
-                    <div className="uppercase text-gray-300 text-sm font-medium">
+                    <div className="uppercase text-mist-300 text-sm font-medium">
                       Saved Message
                     </div>
                   </div>
@@ -221,11 +221,11 @@ export default function ScheduledMessage({
                   />
                 </div>
                 <div className="flex-none pb-2">
-                  <ArrowRightIcon className="h-5 w-5 text-gray-300" />
+                  <ArrowRightIcon className="h-5 w-5 text-mist-300" />
                 </div>
                 <div className="flex-auto w-1/2">
                   <div className="mb-1.5 flex">
-                    <div className="uppercase text-gray-300 text-sm font-medium">
+                    <div className="uppercase text-mist-300 text-sm font-medium">
                       Channel
                     </div>
                   </div>
@@ -244,7 +244,7 @@ export default function ScheduledMessage({
                     value={threadName ?? ""}
                     onChange={(v) => setThreadName(v || null)}
                   />
-                  <div className="mt-2 text-gray-400 text-sm font-light">
+                  <div className="mt-2 text-mist-400 text-sm font-light">
                     When sending to a Forum Channel you have to set a name for
                     the thread that is being created.
                   </div>
@@ -252,21 +252,21 @@ export default function ScheduledMessage({
               )}
               <div className="flex">
                 <button
-                  className="flex bg-dark-2 p-1 rounded text-white"
+                  className="flex bg-ink-900 p-1 rounded-lg text-white"
                   onClick={() => setOnlyOnce((v) => !v)}
                 >
                   <div
                     className={clsx(
-                      "py-1 px-2 rounded transition-colors",
-                      onlyOnce && "bg-dark-3",
+                      "py-1 px-2 rounded-lg transition-colors",
+                      onlyOnce && "bg-ink-700",
                     )}
                   >
                     Send Once
                   </div>
                   <div
                     className={clsx(
-                      "py-1 px-2 rounded transition-colors",
-                      !onlyOnce && "bg-dark-3",
+                      "py-1 px-2 rounded-lg transition-colors",
+                      !onlyOnce && "bg-ink-700",
                     )}
                   >
                     Send Periodically
@@ -277,7 +277,7 @@ export default function ScheduledMessage({
                 <div>
                   <div>
                     <div className="mb-1.5 flex">
-                      <div className="uppercase text-gray-300 text-sm font-medium">
+                      <div className="uppercase text-mist-300 text-sm font-medium">
                         Send at
                       </div>
                     </div>
@@ -293,7 +293,7 @@ export default function ScheduledMessage({
                   <div className="flex flex-col md:flex-row md:space-x-3 space-y-5 md:space-y-0">
                     <div className="flex-auto">
                       <div className="mb-1.5 flex">
-                        <div className="uppercase text-gray-300 text-sm font-medium">
+                        <div className="uppercase text-mist-300 text-sm font-medium">
                           Start at
                         </div>
                       </div>
@@ -305,7 +305,7 @@ export default function ScheduledMessage({
                     </div>
                     <div className="flex-auto">
                       <div className="mb-1.5 flex">
-                        <div className="uppercase text-gray-300 text-sm font-medium">
+                        <div className="uppercase text-mist-300 text-sm font-medium">
                           End at
                         </div>
                       </div>
@@ -334,14 +334,14 @@ export default function ScheduledMessage({
               <div className="flex items-center space-x-2 truncate text-lg mb-1">
                 <div className="text-white truncate flex space-x-2 items-center">
                   {onlyOnce ? (
-                    <CalendarDaysIcon className="text-gray-500 h-6 w-6" />
+                    <CalendarDaysIcon className="text-mist-500 h-6 w-6" />
                   ) : (
-                    <ClockIcon className="text-gray-500 h-6 w-6" />
+                    <ClockIcon className="text-mist-500 h-6 w-6" />
                   )}
                   <div>{msg.name}</div>
                 </div>
               </div>
-              <div className="text-gray-400 text-sm font-light whitespace-normal">
+              <div className="text-mist-400 text-sm font-light whitespace-normal">
                 {!msg.only_once
                   ? cronToString(msg.cron_expression)
                   : formatDateTime(msg.start_at)}
@@ -349,7 +349,7 @@ export default function ScheduledMessage({
             </div>
             <div className="flex flex-none items-center space-x-4 md:space-x-3">
               <div
-                className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
+                className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
                 role="button"
                 onClick={() => setDeleteModal(true)}
               >
@@ -359,7 +359,7 @@ export default function ScheduledMessage({
                 <div className="hidden md:block ml-2">Delete</div>
               </div>
               <div
-                className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
+                className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
                 role="button"
                 onClick={() => setManage(true)}
               >

@@ -39,7 +39,7 @@ export default function EditorComponentSelectMenu({ id }: Props) {
           validationPath={nodeField<SelectMenuNode>(id, "placeholder")}
         />
         <div className="flex-none">
-          <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+          <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
             Disabled
           </div>
           <CheckBox

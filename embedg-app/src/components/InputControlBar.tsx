@@ -123,28 +123,28 @@ export default function InputControlBar({ onChange, inputRef }: Props) {
   return (
     <div className="flex space-x-2">
       <div
-        className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
+        className="h-7 w-7 flex items-center justify-center bg-ink-900 rounded-lg cursor-pointer text-mist-300 hover:text-white"
         role="button"
         onClick={onBold}
       >
         <div className="font-bold">B</div>
       </div>
       <div
-        className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
+        className="h-7 w-7 flex items-center justify-center bg-ink-900 rounded-lg cursor-pointer text-mist-300 hover:text-white"
         role="button"
         onClick={onItalic}
       >
         <div className="italic">I</div>
       </div>
       <div
-        className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
+        className="h-7 w-7 flex items-center justify-center bg-ink-900 rounded-lg cursor-pointer text-mist-300 hover:text-white"
         role="button"
         onClick={onUnderline}
       >
         <div className="underline">U</div>
       </div>
       <div
-        className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
+        className="h-7 w-7 flex items-center justify-center bg-ink-900 rounded-lg cursor-pointer text-mist-300 hover:text-white"
         role="button"
         onClick={onStrikethrough}
       >
@@ -152,7 +152,7 @@ export default function InputControlBar({ onChange, inputRef }: Props) {
       </div>
       <EditorMentionPicker onMentionInsert={onMentionInsert} guildId={guildId}>
         <div
-          className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
+          className="h-7 w-7 flex items-center justify-center bg-ink-900 rounded-lg cursor-pointer text-mist-300 hover:text-white"
           role="button"
         >
           <AtSymbolIcon className="h-5 w-5" />
@@ -164,7 +164,7 @@ export default function InputControlBar({ onChange, inputRef }: Props) {
         align="right"
       >
         <div
-          className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
+          className="h-7 w-7 flex items-center justify-center bg-ink-900 rounded-lg cursor-pointer text-mist-300 hover:text-white"
           role="button"
         >
           <FaceSmileIcon className="h-5 w-5" />

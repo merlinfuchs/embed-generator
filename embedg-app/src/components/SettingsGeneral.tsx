@@ -27,7 +27,7 @@ export default function SettingsGeneral() {
   }
 
   return (
-    <div className="bg-dark-3 rounded-lg p-5">
+    <div className="bg-ink-700 rounded-lg p-5">
       <div className="text-white text-2xl font-medium mb-10">
         <div>App Settings</div>
       </div>
@@ -42,7 +42,7 @@ export default function SettingsGeneral() {
             <div className="text-white font-medium text-lg ml-3">
               Edit History
             </div>
-            <div className="text-gray-400 font-light text-sm ml-3">
+            <div className="text-mist-400 font-light text-sm ml-3">
               Edit history allows you undo and redo the last 10 changes to a
               message. Disabling this may reduce the memory usage of the app.
             </div>
@@ -58,7 +58,7 @@ export default function SettingsGeneral() {
             <div className="text-white font-medium text-lg ml-3">
               Keep Sidebar Collapsed
             </div>
-            <div className="text-gray-400 font-light text-sm ml-3">
+            <div className="text-mist-400 font-light text-sm ml-3">
               This will keep the sidebar collapsed across page reloads even on
               large screens.
             </div>
@@ -74,7 +74,7 @@ export default function SettingsGeneral() {
             <div className="text-white font-medium text-lg ml-3">
               Confirm On Exit
             </div>
-            <div className="text-gray-400 font-light text-sm ml-3">
+            <div className="text-mist-400 font-light text-sm ml-3">
               This will show a confirmation dialog when you try to leave the
               app.
             </div>
@@ -84,7 +84,7 @@ export default function SettingsGeneral() {
 
       <div className="flex justify-end">
         <button
-          className="px-3 py-2 rounded text-white border-red border-2 hover:bg-red"
+          className="px-3 py-2 rounded-lg text-white border-2 border-red/70 hover:bg-red hover:border-red transition-colors"
           onClick={clearAll}
         >
           Clear Local Data

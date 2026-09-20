@@ -1,5 +1,4 @@
-import { PADDED } from "./editorCard";
-import clsx from "clsx";
+import { ACCENT_CARD } from "./editorCard";
 import { useMemo } from "react";
 import {
   type EmbedNode,
@@ -42,7 +41,7 @@ export default function EditorEmbed({ id }: Props) {
       title={`Embed ${index + 1}`}
       size="large"
       defaultCollapsed={true}
-      className={clsx(PADDED, "border-l-4")}
+      className={ACCENT_CARD}
       style={{ borderColor: hexColor }}
       subtitle={name}
       {...actions}

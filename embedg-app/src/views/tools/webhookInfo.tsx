@@ -11,7 +11,7 @@ export default function WebhookInfoToolView() {
             <h1 className="text-white font-medium mb-3 text-2xl">
               Webhook Info
             </h1>
-            <h2 className="text-gray-400 font-light text-sm">
+            <h2 className="text-mist-400 font-light text-sm">
               Discord webhooks are a great way to send messages to Discord
               channels without a bot. This tool lets you easily inspect and get
               information about a webhook.
