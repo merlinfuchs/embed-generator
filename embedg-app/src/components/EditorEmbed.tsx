@@ -7,6 +7,7 @@ import {
   useNodeIndex,
 } from "../state/document";
 import { colorIntToHex } from "../util/discord";
+import { nodeScope } from "../state/validationError";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
 import EditorEmbedAuthor from "./EditorEmbedAuthor";
 import EditorEmbedBody from "./EditorEmbedBody";
@@ -36,7 +37,7 @@ export default function EditorEmbed({ id }: Props) {
   return (
     <EditorComponentCollapsable
       id={`embeds.${id}`}
-      validationPathPrefix={{ nodeId: id }}
+      validationPathPrefix={nodeScope<EmbedNode>(id)}
       title={`Embed ${index + 1}`}
       size="large"
       defaultCollapsed={true}

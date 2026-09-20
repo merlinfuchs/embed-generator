@@ -172,6 +172,24 @@ export type Node =
 
 export type NodeType = Node["type"];
 
+type Primitive = string | number | boolean | bigint | symbol;
+
+/** Bookkeeping that is never addressed by validation. */
+type Bookkeeping = "id" | "parentId" | "discordId" | "type";
+
+/**
+ * The fields of a node as zod issue paths, e.g. `"author.name"`. Keeps a typo
+ * from compiling into a lookup that silently matches nothing. Two levels deep,
+ * which is as far as the message schema nests inside a node.
+ */
+export type FieldPath<T> = {
+  [K in keyof Omit<T, Bookkeeping> & string]: NonNullable<T[K]> extends
+    | Primitive
+    | readonly unknown[]
+    ? K
+    : K | `${K}.${keyof NonNullable<T[K]> & string}`;
+}[keyof Omit<T, Bookkeeping> & string];
+
 type DistributiveOmit<T, K extends keyof never> = T extends unknown
   ? Omit<T, K>
   : never;

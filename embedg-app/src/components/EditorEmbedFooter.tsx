@@ -1,15 +1,17 @@
 import {
   type EmbedNode,
+  type FieldPath,
   type NodeId,
   useDocumentStore,
   useNode,
 } from "../state/document";
 import { patchGroup } from "../util/patch";
+import { nodeField, nodeScope } from "../state/validationError";
 import Collapsable from "./Collapsable";
 import DateTimePicker from "./DateTimePicker";
 import EditorInput from "./EditorInput";
 
-const FOOTER_FIELDS = ["footer", "timestamp"];
+const FOOTER_FIELDS: FieldPath<EmbedNode>[] = ["footer", "timestamp"];
 
 interface Props {
   id: NodeId;
@@ -31,7 +33,7 @@ export default function EditorEmbedFooter({ id }: Props) {
     <Collapsable
       title="Footer"
       id={`embeds.${id}.footer`}
-      validationPathPrefix={{ nodeId: id, fields: FOOTER_FIELDS }}
+      validationPathPrefix={nodeScope<EmbedNode>(id, FOOTER_FIELDS)}
     >
       <div className="space-y-3">
         <EditorInput
@@ -39,7 +41,7 @@ export default function EditorEmbedFooter({ id }: Props) {
           value={footer?.text || ""}
           onChange={(v) => patchFooter({ text: v || undefined })}
           maxLength={2048}
-          validationPath={{ nodeId: id, field: "footer.text" }}
+          validationPath={nodeField<EmbedNode>(id, "footer.text")}
         />
         <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3">
           <EditorInput
@@ -48,7 +50,7 @@ export default function EditorEmbedFooter({ id }: Props) {
             value={footer?.icon_url || ""}
             onChange={(v) => patchFooter({ icon_url: v || undefined })}
             className="md:w-1/2"
-            validationPath={{ nodeId: id, field: "footer.icon_url" }}
+            validationPath={nodeField<EmbedNode>(id, "footer.icon_url")}
             imageUpload={true}
           />
           <div className="md:w-1/2">

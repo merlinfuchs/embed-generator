@@ -1,10 +1,9 @@
 import clsx from "clsx";
 import { useChildIds, useDocumentStore } from "../state/document";
 import { AutoAnimate } from "../util/autoAnimate";
+import { slotScope } from "../state/validationError";
 import Collapsable from "./Collapsable";
 import EditorEmbed from "./EditorEmbed";
-
-const EMBED_FIELDS = ["embeds"];
 
 export default function EditorEmbeds() {
   const rootId = useDocumentStore((state) => state.rootId);
@@ -16,7 +15,7 @@ export default function EditorEmbeds() {
       id="embeds"
       title="Embeds"
       size="large"
-      validationPathPrefix={{ nodeId: rootId, fields: EMBED_FIELDS }}
+      validationPathPrefix={slotScope(rootId, "embeds")}
       extra={
         <div className="text-sm italic font-light text-gray-400">
           {embedIds.length} / 10
