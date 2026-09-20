@@ -146,12 +146,15 @@ type ScheduledMessage struct {
 }
 
 type Session struct {
-	TokenHash   string
-	UserID      string
-	GuildIds    []string
-	AccessToken string
-	CreatedAt   pgtype.Timestamp
-	ExpiresAt   pgtype.Timestamp
+	TokenHash      string
+	UserID         string
+	GuildIds       []string
+	AccessToken    string
+	CreatedAt      pgtype.Timestamp
+	ExpiresAt      pgtype.Timestamp
+	RefreshToken   string
+	TokenExpiresAt pgtype.Timestamp
+	Scopes         []string
 }
 
 type SharedMessage struct {

@@ -24,7 +24,7 @@ async function setupSdk() {
     response_type: "code",
     state: "",
     prompt: "none",
-    scope: ["identify", "guilds"],
+    scope: ["identify", "guilds", "guilds.members.read"],
   });
 
   const tokenData: AuthExchangeResponseWire = await fetch(

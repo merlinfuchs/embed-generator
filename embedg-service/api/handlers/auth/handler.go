@@ -16,16 +16,12 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
 	"github.com/merlinfuchs/embed-generator/embedg-service/model"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
-	"github.com/ravener/discord-oauth2"
 	"golang.org/x/oauth2"
 	"gopkg.in/guregu/null.v4"
 )
 
 type AuthHandlerConfig struct {
-	APIPublicURL    string
 	AppPublicURL    string
-	ClientID        string
-	ClientSecret    string
 	InsecureCookies bool
 }
 
@@ -37,19 +33,11 @@ type AuthHandler struct {
 }
 
 func New(config AuthHandlerConfig, userStore store.UserStore, sessionManager *session.SessionManager) *AuthHandler {
-	conf := &oauth2.Config{
-		RedirectURL:  fmt.Sprintf("%s/auth/callback", config.APIPublicURL),
-		ClientID:     config.ClientID,
-		ClientSecret: config.ClientSecret,
-		Scopes:       []string{discord.ScopeIdentify, discord.ScopeGuilds},
-		Endpoint:     discord.Endpoint,
-	}
-
 	return &AuthHandler{
 		config:         config,
 		userStore:      userStore,
 		sessionManager: sessionManager,
-		oauth2Config:   conf,
+		oauth2Config:   sessionManager.OAuth2Config(),
 	}
 }
 
@@ -163,7 +151,7 @@ func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.T
 		guildIDs[i] = guild.ID
 	}
 
-	token, err := h.sessionManager.CreateSession(c.Context(), user.ID, guildIDs, tokenData.AccessToken)
+	token, err := h.sessionManager.CreateSession(c.Context(), user.ID, guildIDs, tokenData)
 	if err != nil {
 		return nil, "", err
 	}

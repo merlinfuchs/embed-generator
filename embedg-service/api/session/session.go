@@ -7,6 +7,7 @@ import (
 	"encoding/base32"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"log/slog"
@@ -16,30 +17,54 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
 	"github.com/merlinfuchs/embed-generator/embedg-service/model"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
+	"github.com/ravener/discord-oauth2"
+	"golang.org/x/oauth2"
 )
 
+// scopeGuildsMembersRead lets us fetch the session user's own member object with their token.
+const scopeGuildsMembersRead = "guilds.members.read"
+
 type Session struct {
-	UserID      common.ID
-	GuildIDs    []common.ID
-	AccessToken string
-	CreatedAt   time.Time
-	ExpiresAt   time.Time
+	TokenHash      string
+	UserID         common.ID
+	GuildIDs       []common.ID
+	AccessToken    string
+	RefreshToken   string
+	TokenExpiresAt time.Time
+	Scopes         []string
+	CreatedAt      time.Time
+	ExpiresAt      time.Time
 }
 
 type SessionManagerConfig struct {
 	InsecureCookies bool
+	APIPublicURL    string
+	ClientID        string
+	ClientSecret    string
 }
 
 type SessionManager struct {
 	config       SessionManagerConfig
 	sessionStore store.SessionStore
+	oauth2Config *oauth2.Config
 }
 
 func New(config SessionManagerConfig, sessionStore store.SessionStore) *SessionManager {
 	return &SessionManager{
 		config:       config,
 		sessionStore: sessionStore,
+		oauth2Config: &oauth2.Config{
+			RedirectURL:  fmt.Sprintf("%s/auth/callback", config.APIPublicURL),
+			ClientID:     config.ClientID,
+			ClientSecret: config.ClientSecret,
+			Scopes:       []string{discord.ScopeIdentify, discord.ScopeGuilds, scopeGuildsMembersRead},
+			Endpoint:     discord.Endpoint,
+		},
 	}
+}
+
+func (s *SessionManager) OAuth2Config() *oauth2.Config {
+	return s.oauth2Config
 }
 
 func (s *SessionManager) GetSession(c *fiber.Ctx) (*Session, error) {
@@ -62,15 +87,19 @@ func (s *SessionManager) GetSession(c *fiber.Ctx) (*Session, error) {
 	}
 
 	return &Session{
-		UserID:      model.UserID,
-		GuildIDs:    model.GuildIds,
-		AccessToken: model.AccessToken,
-		CreatedAt:   model.CreatedAt,
-		ExpiresAt:   model.ExpiresAt,
+		TokenHash:      model.TokenHash,
+		UserID:         model.UserID,
+		GuildIDs:       model.GuildIds,
+		AccessToken:    model.AccessToken,
+		RefreshToken:   model.RefreshToken,
+		TokenExpiresAt: model.TokenExpiresAt,
+		Scopes:         model.Scopes,
+		CreatedAt:      model.CreatedAt,
+		ExpiresAt:      model.ExpiresAt,
 	}, nil
 }
 
-func (s *SessionManager) CreateSession(ctx context.Context, userID common.ID, guildIDs []common.ID, accessToken string) (string, error) {
+func (s *SessionManager) CreateSession(ctx context.Context, userID common.ID, guildIDs []common.ID, tokenData *oauth2.Token) (string, error) {
 	token := generateSessionToken()
 
 	tokenHash, err := hashSessionToken(token)
@@ -79,18 +108,54 @@ func (s *SessionManager) CreateSession(ctx context.Context, userID common.ID, gu
 	}
 
 	err = s.sessionStore.CreateSession(ctx, model.Session{
-		TokenHash:   tokenHash,
-		UserID:      userID,
-		GuildIds:    guildIDs,
-		AccessToken: accessToken,
-		CreatedAt:   time.Now().UTC(),
-		ExpiresAt:   time.Now().UTC().Add(30 * 24 * time.Hour),
+		TokenHash:      tokenHash,
+		UserID:         userID,
+		GuildIds:       guildIDs,
+		AccessToken:    tokenData.AccessToken,
+		RefreshToken:   tokenData.RefreshToken,
+		TokenExpiresAt: tokenData.Expiry,
+		Scopes:         grantedScopes(tokenData),
+		CreatedAt:      time.Now().UTC(),
+		ExpiresAt:      time.Now().UTC().Add(30 * 24 * time.Hour),
 	})
 	if err != nil {
 		return "", err
 	}
 
 	return token, nil
+}
+
+// UserToken returns a valid access token for the session, refreshing it if it expires within 5 minutes.
+func (s *SessionManager) UserToken(ctx context.Context, sess *Session) (string, error) {
+	if time.Until(sess.TokenExpiresAt) > 5*time.Minute {
+		return sess.AccessToken, nil
+	}
+
+	tokenData, err := s.oauth2Config.TokenSource(ctx, &oauth2.Token{
+		AccessToken:  sess.AccessToken,
+		RefreshToken: sess.RefreshToken,
+		Expiry:       sess.TokenExpiresAt,
+		TokenType:    "Bearer",
+	}).Token()
+	if err != nil {
+		return "", fmt.Errorf("failed to refresh access token: %w", err)
+	}
+
+	err = s.sessionStore.UpdateSessionTokens(ctx, store.UpdateSessionTokensParams{
+		TokenHash:      sess.TokenHash,
+		AccessToken:    tokenData.AccessToken,
+		RefreshToken:   tokenData.RefreshToken,
+		TokenExpiresAt: tokenData.Expiry,
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to store refreshed access token: %w", err)
+	}
+
+	sess.AccessToken = tokenData.AccessToken
+	sess.RefreshToken = tokenData.RefreshToken
+	sess.TokenExpiresAt = tokenData.Expiry
+
+	return tokenData.AccessToken, nil
 }
 
 func (s *SessionManager) CreateSessionCookie(c *fiber.Ctx, token string) {
@@ -118,6 +183,12 @@ func (s *SessionManager) DeleteSession(c *fiber.Ctx) error {
 	}
 
 	return s.sessionStore.DeleteSession(c.Context(), tokenHash)
+}
+
+// grantedScopes reads the scopes Discord actually granted, which can differ from the ones we asked for.
+func grantedScopes(tokenData *oauth2.Token) []string {
+	scope, _ := tokenData.Extra("scope").(string)
+	return strings.Fields(scope)
 }
 
 func generateSessionToken() string {
