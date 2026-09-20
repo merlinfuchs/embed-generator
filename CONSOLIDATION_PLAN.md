@@ -571,7 +571,7 @@ export function toMessage(state: DocumentState): { message: Message; pathToId: M
 
 Ids: use the existing `getUniqueId()` from `src/util` but as a string. Discord components need numeric `id` fields for V2; keep those as a separate `discordId?: number` on the node, generated in `toMessage` if missing. Don't conflate them.
 
-Tests: add vitest (`yarn add -D vitest`) and `src/state/documentConvert.test.ts` with:
+Tests: add vitest (`pnpm add -D vitest`) and `src/state/documentConvert.test.ts` with:
 
 - `toMessage(fromMessage(m))` deep-equals `m` for: empty message, message with 2 embeds and fields, V1 action row with button and select with options, V2 container with section, text display, thumbnail accessory, media gallery, file, separator. Take fixture messages from `src/discord/schema.ts` tests if any exist, otherwise write them by hand from the schema.
 - `pathToId` has an entry for every array element in the fixture.

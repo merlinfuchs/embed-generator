@@ -184,17 +184,17 @@ You can download NodeJS and NPM from [nodejs.org](https://nodejs.org/en/download
 # Switch to the embedg-app directory
 cd embedg-app
 
-# Install yarn globally
-npm install -g yarn
+# Enable pnpm (Corepack ships with NodeJS)
+corepack enable
 
 # Install dependencies
-yarn install
+pnpm install
 
 # Start the development server (optional)
-yarn dev
+pnpm dev
 
 # Build for production use
-yarn build
+pnpm build
 ```
 
 #### Build the site (home page & docs)
@@ -203,17 +203,17 @@ yarn build
 # Switch to the embedg-app directory
 cd embedg-site
 
-# Install yarn globally
-npm install -g yarn
+# Enable pnpm (Corepack ships with NodeJS)
+corepack enable
 
 # Install dependencies
-yarn install
+pnpm install
 
 # Start the development server (optional)
-yarn start
+pnpm start
 
 # Build for production use
-yarn build
+pnpm build
 ```
 
 #### Build the server (backend)

@@ -1,0 +1,6 @@
+# pnpm reads settings from this file, not package.json. embedg-site isn't a
+# workspace root, it just needs somewhere to decide on the build scripts pnpm
+# blocks by default. core-js only prints a donation banner.
+allowBuilds:
+  core-js: false
+  core-js-pure: false
