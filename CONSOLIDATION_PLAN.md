@@ -650,8 +650,59 @@ Done when: `grep -rn "message.ts\|restoreSchema\|useCurrentMessageStore" src` is
 
 ## Things deliberately not in this plan
 
-- Merging `state/actions.ts` into the document store. Separate later PR.
+- Making message action sets nodes in the document tree. Sketched below under "Action sets as nodes" so the reasoning is not lost, but not scheduled.
 - Dependency bumps (react-query v3 to tanstack v5, vite 4 to 7, tailwind 3 to 4). Separate later PRs, one each.
 - Any change to `embedg-site`.
 - Any change to the sqlc handler layer beyond what the steps above require.
 - Splitting `actions/template/func.go` (1202 lines). Works, leave it.
+
+---
+
+## Action sets as nodes
+
+Not scheduled. Written down because the shape keeps coming up in review and the
+reasoning is easy to lose.
+
+### Where it stands after F5
+
+Message action sets live in `DocumentData.actions`, a `Record<string,
+MessageActionSet>` keyed by `action_set_id`, next to the node map rather than
+inside it. Buttons and select options reference a set by id. `partialize` and
+`temporal` cover the map, so persistence and undo already behave.
+
+Because the map sits outside the tree, the tree has to know about it by hand,
+in four places in `state/document.ts`:
+
+- `usesActionSet(node)` names the two node types that own a set
+- `insert` mints a set for a new button or option
+- `removeSubtree` deletes the sets of everything it removes
+- `copySubtree` clones a set rather than sharing it, which is the behaviour the
+  old store got wrong
+
+`action_set_id` is also listed in `DerivedKeys`, so `insert` fills it in.
+
+### The shape
+
+An `actionSet` node in an `"actions"` slot under `button` and `selectOption`,
+holding the actions as its own children, and `action_set_id` becomes the child
+node's id. `insert`, `remove`, `move`, `duplicate` then own action set lifetime
+the way they own every other child, and the four special cases above go away.
+`toMessage` keeps emitting `actions` keyed by id, because that is the wire
+format the backend parses (`embedg-service/actions/parser/parse.go` turns the
+id into `custom_id: "action:<id>"`), so nothing changes for the server.
+
+### What it buys
+
+The four special cases, and the duplication between `EditorActionSet` /
+`EditorAction` and their `CommandActionSet` / `CommandAction` twins, which
+differ by about four lines each once both sides address actions the same way.
+`createActionSetSlice` in `state/actionSetSlice.ts` exists because both stores
+need the same reducers; a node-shaped version would leave only the custom
+command store needing it.
+
+### What it costs
+
+A fourth persisted document version and its migration, for a change no user can
+see. `state/actions.ts` still serves custom commands, which are not part of the
+document, so the slice stays either way. The side map is not hurting anything
+today, which is why this is written down rather than done.
