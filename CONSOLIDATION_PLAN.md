@@ -217,34 +217,36 @@ This replaces `session.GuildIDs`, which is captured at login and never refreshed
 
 **Call sites.** `GetGuildAccessForUser(userID, guildID)` and `GetChannelAccessForUser(userID, channelID)` change signature to take `sess *session.Session` instead of `userID`. Callers are in `api/handlers/guilds/handler.go`, `api/handlers/send_message/handler.go`, `api/handlers/custom_bots/handler.go`, `api/handlers/scheduled_messages/handler.go`, `api/handlers/saved_messages/handler.go`, and `actions/parser/permissions.go` (see B4 for that one). Every handler already has `session := c.Locals("session").(*session.Session)`.
 
-Inside, replace `m.GetGuildMember(guildID, userID)` for the user with `m.GetMemberForUser(ctx, sess, guildID)`. Keep `GetGuildMember` for the bot's own member only.
+Inside, replace `m.GetGuildMember(guildID, userID)` for the user with `m.GetMemberForUser(ctx, sess, guildID)`. Keep `GetGuildMember` for the bot's own member and for the scheduled message sender (B4), which has no session.
 
-Done when: log in fresh, guild picker and channel list work, bot-token `GetMember` calls for dashboard users are gone (grep `GetGuildMember(` and confirm remaining calls pass `m.appContext.ApplicationID()`). Old session gets a 401 and is sent to login once.
+Done when: log in fresh, guild picker and channel list work, bot-token `GetMember` calls for dashboard users are gone (grep `GetGuildMember(` and confirm remaining calls pass `m.appContext.ApplicationID()` or a scheduled message creator id). Old session gets a 401 and is sent to login once.
 
-### B4. Interaction permissions from payload
+### B4. Parser permission functions take the member from the caller
 
-Purpose: runtime action handling does zero member fetches.
+Purpose: `actions/parser/permissions.go` stops fetching members itself, so dashboard callers can supply the user-token member from B3 and the scheduled sender keeps using a bot-token fetch of the creator.
 
-`actions/parser/permissions.go` has two functions. Both are called from two contexts:
+Background, so nobody "fixes" the wrong thing: at runtime `actions/handler/handle.go` never fetches members. It reads `DerivedPermissions` stored on the action set (the creator's authority, computed at save time) and, for the permission-check action type, reads `interaction.Member().Permissions` straight from the payload. Leave the runtime path alone.
 
-- Save time from the dashboard: `CheckPermissionsForActionSets` and `DerivePermissionsForActions` called by `api/handlers/saved_messages`, `send_message`, `scheduled_messages`. These get the `*session.Session` per B3 and use `GetMemberForUser`.
-- Runtime from an interaction: called from `actions/handler/handle.go` when a "saved response" action creates new actions. Here the interaction carries `Member.Permissions` (channel-level, resolved by Discord) and `AppPermissions()`.
+Callers of `DerivePermissionsForActions` and `CheckPermissionsForActionSets`:
 
-Change: add a `MemberInfo` struct to the parser package:
+- `api/handlers/send_message/handler.go:143`, `api/handlers/custom_bots/commands.go:140` and `:209`. Dashboard, have a session, use `GetMemberForUser` from B3.
+- `manager/scheduled_message/manager.go:238`. Background, no session. Fetch the creator with the bot token via `AccessManager.GetGuildMember(guildID, creatorID)`. If that returns unknown member or missing access, call the manager's existing `disable(ctx, msg, "creator is no longer a member of the server")` and skip the send instead of sending with empty permissions.
+
+Change both parser functions to:
 
 ```go
 type MemberInfo struct {
-    UserID      common.ID
-    RoleIDs     []common.ID
-    Permissions discord.Permissions // channel-resolved permissions if known, else 0
+    UserID  common.ID
+    RoleIDs []common.ID
 }
+
+func (m *ActionParser) CheckPermissionsForActionSets(ctx context.Context, actionSets map[string]actions.ActionSet, member MemberInfo, guildID, channelID common.ID) error
+func (m *ActionParser) DerivePermissionsForActions(ctx context.Context, member MemberInfo, guildID, channelID common.ID) (actions.ActionDerivedPermissions, error)
 ```
 
-Both functions take `MemberInfo` instead of `userID`. Dashboard callers build it from `GetMemberForUser` plus `ComputeUserPermissionsForChannel`. Runtime caller in `handle.go` builds it from `interaction.Member()` which has `RoleIDs` and `Permissions` already, no fetch. In `handle.go` grep for `DerivePermissionsForActions` and `CheckPermissionsForActionSets` to find the sites.
+Remove the internal `m.accessManager.GetGuildMember` calls. Channel-level permissions inside these functions come from `AccessManager.ComputeUserPermissionsForChannel`, which also needs to accept the member instead of a user id (B5 rewrites that function; in B4 add a variant taking `*discord.Member` and keep the old one until B5 deletes it).
 
-`ComputeBotPermissionsForChannel` at runtime should use `interaction.AppPermissions()` when the interaction is available. Add an optional `botPermissions *discord.Permissions` parameter or a second entry point.
-
-Done when: grep `GetGuildMember(` in `actions/` returns nothing.
+Done when: grep `GetGuildMember(` in `actions/` returns nothing, saving a message with actions from the dashboard works, a scheduled message whose creator left the guild gets disabled with a visible reason.
 
 ### B5. Access manager off Stateway
 
