@@ -178,31 +178,23 @@ export default function Action({
         buttons={
           <div className="flex-none text-gray-300 flex items-center space-x-2">
             {actionIndex > 0 && (
-              <ChevronUpIcon
-                className="h-6 w-6 flex-none"
-                role="button"
-                onClick={moveUp}
-              />
+              <button type="button" aria-label="Move up" onClick={moveUp}>
+                <ChevronUpIcon className="h-6 w-6 flex-none" />
+              </button>
             )}
             {actionIndex < actionCount - 1 && (
-              <ChevronDownIcon
-                className="h-6 w-6 flex-none"
-                role="button"
-                onClick={moveDown}
-              />
+              <button type="button" aria-label="Move down" onClick={moveDown}>
+                <ChevronDownIcon className="h-6 w-6 flex-none" />
+              </button>
             )}
             {actionCount < maxActions && (
-              <DocumentDuplicateIcon
-                className="h-5 w-5 flex-none"
-                role="button"
-                onClick={duplicate}
-              />
+              <button type="button" aria-label="Duplicate" onClick={duplicate}>
+                <DocumentDuplicateIcon className="h-5 w-5 flex-none" />
+              </button>
             )}
-            <TrashIcon
-              className="h-5 w-5 flex-none"
-              role="button"
-              onClick={remove}
-            />
+            <button type="button" aria-label="Remove" onClick={remove}>
+              <TrashIcon className="h-5 w-5 flex-none" />
+            </button>
           </div>
         }
         extra={
@@ -222,6 +214,7 @@ export default function Action({
                   </div>
                 </div>
                 <select
+                  aria-label="Type"
                   className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
                   value={actionTypeGroup}
                   onChange={(v) => setActionTypeGroup(v.target.value)}
@@ -245,6 +238,7 @@ export default function Action({
                     </div>
                   </div>
                   <select
+                    aria-label="Target"
                     className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
                     value={responseStyle}
                     onChange={(v) => setResponseStyle(v.target.value)}

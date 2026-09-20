@@ -71,6 +71,7 @@ export default function EditorComponentSection({
             </div>
           </div>
           <select
+            aria-label="Accessory Type"
             className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
             value={accessoryType === "button" ? "2" : "11"}
             onChange={(v) => setAccessoryType(parseInt(v.target.value, 10))}
