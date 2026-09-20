@@ -49,6 +49,7 @@ export default function EditorComponentMediaGalleryItem({
               })
             }
             className="flex-auto"
+            imageUpload={true}
             validationPath={nodeField<MediaGalleryItemNode>(id, "media.url")}
           />
           <div className="flex-none">
