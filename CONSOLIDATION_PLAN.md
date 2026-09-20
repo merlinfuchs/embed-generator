@@ -15,6 +15,8 @@ Conventions for whoever executes this:
 - Commit messages: short, plain, no prefixes like `feat:`.
 - Do not "clean up" unrelated code in these PRs. Scope creep makes review impossible.
 
+Scale that drives the design: the main bot is in about 250k guilds. A full in-process guild/channel/role cache would be roughly 9 GB, so the service runs with **no gateway cache**. Guild membership comes from Postgres (B2), everything else guild-scoped comes from REST with a short TTL (B5). Instances never need each other.
+
 Terms used below:
 
 - Owner instance: the process whose shard range contains `(guild_id >> 22) % shard_count` for a guild.
@@ -56,96 +58,64 @@ Delete remote branch `merlin/scheduled-messages-fixes` (already squash-merged as
 
 Done when: CI green on the PR, `EMBEDG_DATABASE__POSTGRES__HOST=x` overrides the TOML value.
 
-### B2. Guilds table
+### B2. Guilds table (merged as #213)
 
 Purpose: any instance can answer "is the bot in guild X" without gateway state. This replaces Stateway's `CheckGuildsExist`.
 
-Migration `019_create_guilds_table`:
+Implemented: migration `019_create_guilds_table` (id, name, icon, owner_id, joined_at, left_at, updated_at), `store.GuildStore` with `UpsertGuild`, `MarkGuildLeft`, `GetGuilds`, listener cases in `entry/server/handler.go` for `GuildReady`, `GuildJoin`, `GuildUpdate`, `GuildLeave`. Until B7 the events come through Stateway, so `compat.DisgoGatewayConfig.EventTypes` in `embedg/embedg.go` carries `guild.create`, `guild.update`, `guild.delete`. `GuildLeave.Guild` is read from the disgo cache, which we don't populate, so the listener uses `e.GuildID`.
+
+Do not handle `GuildUnavailable`. That is an outage, not a leave. Do not store channels, roles, or member counts. Do not store a shard id: it is `(id >> 22) % shard_count` and goes stale on resharding.
+
+### B2b. Batch guild writes
+
+Purpose: #213 does one upsert per event. On every restart the gateway replays about 250k `GuildReady` events within a minute or two, so that's 250k statements per boot, and later with N instances it's 250k across all of them every rolling deploy. Batch it before B7 makes the service own the gateway.
+
+Replace `UpsertGuild` in `db/postgres/queries/guilds.sql` with:
 
 ```sql
--- up
-CREATE TABLE guilds (
-    id BIGINT PRIMARY KEY,
-    name TEXT NOT NULL,
-    icon TEXT,
-    owner_id BIGINT NOT NULL,
-    joined_at TIMESTAMP NOT NULL,
-    left_at TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL
-);
-CREATE INDEX guilds_left_at_idx ON guilds (left_at) WHERE left_at IS NULL;
--- down
-DROP TABLE guilds;
-```
-
-Queries `db/postgres/queries/guilds.sql`:
-
-```sql
--- name: UpsertGuild :exec
+-- name: UpsertGuilds :exec
 INSERT INTO guilds (id, name, icon, owner_id, joined_at, left_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, NULL, $5)
+SELECT id, name, icon, owner_id, $5, NULL, $5
+FROM unnest($1::bigint[], $2::text[], $3::text[], $4::bigint[]) AS t(id, name, icon, owner_id)
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
     owner_id = EXCLUDED.owner_id,
     left_at = NULL,
-    updated_at = EXCLUDED.updated_at;
-
--- name: MarkGuildLeft :exec
-UPDATE guilds SET left_at = $2, updated_at = $2 WHERE id = $1;
-
--- name: GetGuilds :many
-SELECT * FROM guilds WHERE id = ANY($1::bigint[]) AND left_at IS NULL;
+    updated_at = EXCLUDED.updated_at
+WHERE guilds.name IS DISTINCT FROM EXCLUDED.name
+   OR guilds.icon IS DISTINCT FROM EXCLUDED.icon
+   OR guilds.owner_id IS DISTINCT FROM EXCLUDED.owner_id
+   OR guilds.left_at IS NOT NULL;
 ```
 
-Store interface `store/guild.go`:
+`icon` is nullable; pass it as `[]*string` or use `sqlc.narg`. `store.GuildStore.UpsertGuild(ctx, model.Guild)` becomes `UpsertGuilds(ctx, []model.Guild)`. The `WHERE` clause makes unchanged rows a no-op so a restart mostly touches nothing; `joined_at` is refreshed on rejoin via the `left_at IS NOT NULL` branch.
+
+Move the guild cases out of `EventHandler` into a new `manager/guild/tracker.go`:
 
 ```go
-type GuildStore interface {
-    UpsertGuild(ctx context.Context, guild model.Guild) error
-    MarkGuildLeft(ctx context.Context, guildID common.ID, now time.Time) error
-    GetGuilds(ctx context.Context, guildIDs []common.ID) ([]model.Guild, error) // only guilds the bot is still in
+type GuildTracker struct {
+    store store.GuildStore
+    mu    sync.Mutex
+    buf   map[common.ID]model.Guild // dedup within a batch, last write wins
 }
-```
 
-Model `model/guild.go`:
-
-```go
-type Guild struct {
-    ID        common.ID
-    Name      string
-    Icon      null.String
-    OwnerID   common.ID
-    JoinedAt  time.Time
-    LeftAt    null.Time
-    UpdatedAt time.Time
+func (t *GuildTracker) OnEvent(event bot.Event) {
+    switch e := event.(type) {
+    case *events.GuildReady:  t.enqueue(guildFromEvent(e.Guild.Guild))
+    case *events.GuildJoin:   t.enqueue(guildFromEvent(e.Guild.Guild))
+    case *events.GuildUpdate: t.enqueue(guildFromEvent(e.Guild))
+    case *events.GuildLeave:  t.store.MarkGuildLeft(ctx, e.GuildID, now) // rare, write directly
+    }
 }
+
+// Run flushes buf every 2 seconds or when it reaches 1000 entries, whichever first. Flush on ctx.Done too.
+func (t *GuildTracker) Run(ctx context.Context)
 ```
 
-Implementation `db/postgres/store_guild.go` following `store_custom_bot.go` as the template.
+Register with `embedg.Client().AddEventListeners(tracker)` and `go tracker.Run(ctx)` in `entry/server/server.go`. Remove `guildStore` from `EventHandler`.
 
-Listener: add cases to `EventHandler.OnEvent` in `entry/server/handler.go`. `EventHandler` gets a `guildStore store.GuildStore` field wired in `entry/server/server.go`.
-
-```go
-case *events.GuildReady:      // sent for each guild after Ready
-    g.guildStore.UpsertGuild(ctx, guildFromEvent(e.Guild, now))
-case *events.GuildJoin:       // bot added to a guild
-    g.guildStore.UpsertGuild(ctx, guildFromEvent(e.Guild, now))
-case *events.GuildUpdate:     // name, icon, or owner changed
-    g.guildStore.UpsertGuild(ctx, guildFromEvent(e.Guild, now))
-case *events.GuildLeave:      // bot removed. e.Guild.Unavailable is false here
-    g.guildStore.MarkGuildLeft(ctx, e.GuildID, now)
-```
-
-`guildFromEvent` copies `ID`, `Name`, `Icon`, `OwnerID` from `discord.Guild`. On `GuildUpdate` the upsert overwrites `joined_at` with `now`; that's acceptable, or split into a second `UpdateGuildMeta` query if you want `joined_at` exact.
-
-Do not handle `GuildUnavailable`. That is an outage, not a leave. Do not store channels, roles, or member counts. Those churn and are served by the cache-or-REST path in B5. Do not store a shard id: it is `(id >> 22) % shard_count` and goes stale on resharding; compute it in SQL if ever needed. Use a 5 second context timeout per write. Log and continue on error.
-
-Nothing reads the table in this PR.
-
-Until B7 the events come through Stateway, so `compat.DisgoGatewayConfig.EventTypes` in `embedg/embedg.go` needs `guild.create`, `guild.update` and `guild.delete` (subjects are the Discord event name lowercased with `_` replaced by `.`). The table only backfills when the Stateway gateway re-identifies; it invalidates its stored session on shard close, so a normal restart is enough. `GuildLeave.Guild` is read from the disgo cache, which we don't populate, so use `e.GuildID`.
-
-Done when: after a restart, `SELECT count(*) FROM guilds WHERE left_at IS NULL` matches the bot's guild count and names match Discord. Rename a test guild, the row updates. Kick the test bot from a guild, `left_at` gets set.
+Done when: restart the service and watch `pg_stat_statements` or the Postgres log: guild upserts are in the low hundreds of statements for the whole boot, not 250k. Rename a test guild, the row updates within a few seconds.
 
 ### B3. User-token member fetch
 
@@ -251,21 +221,30 @@ Done when: grep `GetGuildMember(` in `actions/` returns nothing, saving a messag
 
 Purpose: `access/access.go` no longer imports `stateway-lib`. Works on owner and non-owner instances.
 
-**Guild state helper.** New file `access/guild_state.go`:
+**Guild state provider.** New package `embedg-service/guildstate`:
 
 ```go
-type guildState struct {
+type Provider struct {
+    rest   rest.Rest
+    guilds *ttlcache.Cache[common.ID, *State]          // 2 min TTL
+    chans  *ttlcache.Cache[common.ID, discord.GuildChannel] // 2 min TTL, for lookups by channel id
+    sf     singleflight                                 // from common/singleflight.go (B3)
+}
+
+type State struct {
     Guild    discord.Guild
     Channels []discord.GuildChannel
     Roles    []discord.Role
 }
 
-// getGuildState returns guild, channels and roles from the local disgo cache if the guild is cached,
-// otherwise from REST (GetGuild, GetGuildChannels, GetRoles) with a 2 minute TTL and singleflight.
-func (m *AccessManager) getGuildState(ctx context.Context, guildID common.ID) (*guildState, error)
+func (p *Provider) Guild(ctx context.Context, guildID common.ID) (*State, error)          // GetGuild + GetGuildChannels + GetRoles, one singleflight key
+func (p *Provider) Channel(ctx context.Context, channelID common.ID) (discord.GuildChannel, error) // GetChannel, 404 -> store.ErrNotFound
+func (p *Provider) Invalidate(guildID common.ID)
 ```
 
-Local path: `m.caches.Guild(guildID)`, `m.caches.ChannelsForGuild(guildID)` (iterator, collect), `m.caches.Roles(guildID)` (iterator, collect). REST path: `m.rest.GetGuild(guildID, false)` returns `*discord.RestGuild`, take `.Guild`; `m.rest.GetGuildChannels`, `m.rest.GetRoles`. Cache the struct in a `ttlcache.Cache[common.ID, *guildState]` on the manager.
+There is no gateway cache to consult. Every read is REST behind the TTL cache. `Invalidate` is called from the event listener on `GuildChannelCreate/Update/Delete`, `GuildRoleCreate/Update/Delete`, and `GuildUpdate` for guilds this instance owns, so the owner instance sees changes immediately and others within two minutes.
+
+Replace all 30 `caches.X(...)` read sites in the service with the provider. They are in `actions/parser/permissions.go` (10), `manager/webhook/message.go` (6), `actions/template/data.go` (3), `access/access.go` (3), `api/handlers/guilds/handler.go` (2), `api/handlers/custom_bots/handler.go` (2), `command/cmd_message.go` (1), `api/handlers/send_message/handler.go` (1). Every one of them currently treats a cache miss as an error or as "no permissions"; with the provider a miss is a real REST error or 404 and should be handled as such. Remove `cache.Caches` from every constructor that only used it for these reads.
 
 **CheckGuildsKnown.** Replace body with `m.guildStore.GetGuilds(ctx, guildIDs)` and map back to `[]bool` in input order. Add `guildStore store.GuildStore` to `AccessManager`.
 
@@ -283,26 +262,24 @@ Check `wire.GuildWire` for fields the frontend expects beyond these and source t
 **GetGuildAccessForUser.** Replace the two `m.cache.GetGuildWithPermissions` calls with a local function:
 
 ```go
-// maxChannelPermissions ORs memberPermissions() over every channel in gs. Returns early once
+// maxChannelPermissions ORs memberPermissions() over every channel in st. Returns early once
 // all bits of stopAt are set. This mirrors stateway's MaxChannelPermissions with abortAtPermissions.
-func maxChannelPermissions(gs *guildState, userID common.ID, roleIDs []common.ID, stopAt discord.Permissions) discord.Permissions
+func maxChannelPermissions(st *guildstate.State, userID common.ID, roleIDs []common.ID, stopAt discord.Permissions) discord.Permissions
 ```
 
 using the existing `memberPermissions` in `access/helpers.go` (signature `memberPermissions(guild *discord.Guild, roles []discord.Role, channel discord.GuildChannel, userID, roleIDs)`). Skip channels of type category when iterating, they don't matter for sending. Bot member: `GetGuildMember(guildID, m.appContext.ApplicationID())`. User member: `GetMemberForUser` from B3.
 
-**ComputeUserPermissionsForChannel.** Currently requires the channel in the local cache. Change to: get the channel from `m.caches.Channel(channelID)`; if missing, call `m.rest.GetChannel(channelID)` (2 minute TTL via the same singleflight helper), then `getGuildState(channel.GuildID())` and `memberPermissions(...)`. Drop the `m.caches.MemberPermissionsInChannel` call, it only works on cached data.
+**ComputeUserPermissionsForChannel.** Takes a `*discord.Member` (B4). `provider.Channel(channelID)`, then `provider.Guild(channel.GuildID())`, then `memberPermissions(...)`. Drop the `m.caches.MemberPermissionsInChannel` call, it only works on cached data.
 
-**GetGuildMember.** Keep for the bot's own member. Order: `m.caches.Member(guildID, userID)` then `m.rest.GetMember`. The `RestClient` in `embedg/rest/rest.go` already caches members 5 minutes with singleflight, so no extra cache here.
+**GetGuildMember.** Keep for the bot's own member and for scheduled message creators. Plain `m.rest.GetMember`; the `RestClient` in `embedg/rest/rest.go` already caches members 5 minutes with singleflight. Drop the `m.caches.Member` lookup.
 
 **Remove** the `cache cache.Cache` field, the `stateway-lib/cache` import, and the `discordgo` import (replace `discordgo.ErrCodeUnknownMember` etc. with disgo's `discord.JSONErrorCode` constants; `common.IsDiscordRestErrorCode` may need adjusting, check `common/discord.go`).
 
-**Guild handlers.** `api/handlers/guilds/handler.go` `HandleListGuildChannels`, `HandleListGuildRoles`, `HandleListGuildEmojis`, `HandleListGuildStickers`, `HandleGetGuild` read from `env.Caches` directly. Route them through `getGuildState` (export a method `GuildState(ctx, guildID)`) so they work on non-owner instances. Emojis and stickers: REST with the same TTL helper, they aren't in the cache flags we'll enable.
+**Guild handlers.** `HandleListGuildChannels`, `HandleListGuildRoles`, `HandleGetGuild` use the provider. Emojis and stickers: REST through the same TTL and singleflight helper, separate cache keys.
 
-`actions/parser/permissions.go` also reads `m.caches.Channel`, `m.caches.Guild`, `m.caches.Role`, `m.caches.Roles`. Route through `AccessManager.GuildState` and `AccessManager.Channel(ctx, id)`.
+Stateway still runs in this step but nothing reads its caches anymore, so prod exercises the REST path fully before the switch in B7. Watch the rate limit headers in logs for a day.
 
-Stateway still runs in this step and still feeds the compat caches, so the local path is exercised in prod; the REST path is exercised only when a guild is not cached. Test the REST path locally by starting with `bot.WithCacheConfigOpts(cache.WithCaches(0))` temporarily.
-
-Done when: `grep -r stateway-lib embedg-service/access embedg-service/actions embedg-service/api/handlers/guilds` is empty. Guild picker, channel list, role list, and save-with-actions all work.
+Done when: `grep -rn "caches\." embedg-service` returns nothing outside `embedg/embedg.go`, and `grep -r stateway-lib embedg-service/access embedg-service/actions embedg-service/api/handlers` is empty. Guild picker, channel list, role list, save-with-actions, sending, and scheduled sends all work.
 
 ### B6. Custom bots in-process
 
@@ -375,7 +352,7 @@ Purpose: embedg-service owns the gateway. Stateway is gone. Multi-instance by sh
 **Config** `config/model.go`:
 
 - Delete `BrokerConfig`, `NATSConfig`, and `RootConfig.Broker`.
-- `DiscordConfig` gains `ShardCount int \`toml:"shard_count"\`` and `ShardIDs []int \`toml:"shard_ids"\``. Both optional. Empty means "auto count, all shards".
+- `DiscordConfig` gains `ShardCount int \`toml:"shard_count" validate:"required"\`` and `ShardIDs []int \`toml:"shard_ids"\``. Shard count is required and explicit so every instance agrees on it; at 250k guilds it's around 250. Empty `ShardIDs` means "all shards of this count", which is the single-instance deployment.
 - `default.toml`: delete `[broker]` and `[broker.nats]`.
 
 Add a helper:
@@ -393,23 +370,23 @@ opts := []bot.ConfigOpt{
     bot.WithGatewayConfigOpts(gateway.WithIntents(
         gateway.IntentGuilds | gateway.IntentGuildMessages | gateway.IntentGuildWebhooks,
     )),
-    bot.WithCacheConfigOpts(
-        cache.WithCaches(cache.FlagGuilds|cache.FlagChannels|cache.FlagRoles|cache.FlagMembers),
-        cache.WithMemberCachePolicy(func(m discord.Member) bool { return m.User.ID == selfID }),
-    ),
+    // No guild/channel/role cache: 250k guilds would be ~9 GB. See B5.
+    bot.WithCacheConfigOpts(cache.WithCaches(0)),
     bot.WithEventManagerConfigOpts(bot.WithAsyncEventsEnabled()),
     bot.WithRest(rest.NewRestClient(config.Token)),
 }
-if config.ShardCount > 0 {
-    opts = append(opts, bot.WithShardManagerConfigOpts(
-        sharding.WithShardCount(config.ShardCount),
-        sharding.WithShardIDs(config.ShardIDs...),
-    ))
+shardIDs := config.ShardIDs
+if len(shardIDs) == 0 {
+    for i := 0; i < config.ShardCount; i++ { shardIDs = append(shardIDs, i) }
 }
+opts = append(opts, bot.WithShardManagerConfigOpts(
+    sharding.WithShardCount(config.ShardCount),
+    sharding.WithShardIDs(shardIDs...),
+))
 client, err := disgo.New(config.Token, opts...)
 ```
 
-`selfID` is the application id, which disgo derives from the token before the client exists (`bot.IDFromToken`), so the member policy can capture it. If the message content intent is needed for restore-by-id, add `gateway.IntentMessageContent`; check `api/handlers/send_message/restore.go` first, it may use REST which doesn't need the intent.
+If the message content intent is needed for restore-by-id, add `gateway.IntentMessageContent`; check `api/handlers/send_message/restore.go` first, it may use REST which doesn't need the intent.
 
 Delete fields `cache`, `gateway`, `compatCaches`, `broker` and their accessors. `Caches()` returns `g.client.Caches`. Delete `EmbedGeneratorConfig.BrokerURL` and `GatewayCount`. Add `ShardCount`, `ShardIDs`. Add:
 
@@ -442,7 +419,9 @@ func (h *HealthHandler) HandleShardList(c *fiber.Ctx) error
 
 **Stateway removal.** `go get github.com/merlinfuchs/stateway/stateway-lib@none && go mod tidy`. `grep -r stateway embedg-service` must be empty. Update `embedg-service/README.md` to drop the Stateway sentence. Delete `cmd/root.go` references to `stateway-gateway` (the CLI app name is wrong there anyway, make it `embedg`).
 
-**Deploy.** Big bang, single instance, no `shard_ids` set. Rollback is the previous image; no migration in this step.
+**Event invalidation.** The `GuildTracker` from B2 (or a sibling listener) calls `guildstate.Provider.Invalidate(guildID)` on `GuildChannelCreate`, `GuildChannelUpdate`, `GuildChannelDelete`, `GuildRoleCreate`, `GuildRoleUpdate`, `GuildRoleDelete`, `GuildUpdate`. All covered by the Guilds intent.
+
+**Deploy.** Big bang, single instance, `shard_count` set, no `shard_ids`. Expect boot to take one to two minutes for all shards to identify. Rollback is the previous image; no migration in this step.
 
 **Manual verification checklist** (run all, on prod after deploy):
 
@@ -458,7 +437,8 @@ func (h *HealthHandler) HandleShardList(c *fiber.Ctx) error
 10. Action button on a normal bot message responds.
 11. Trigger an entitlement (test SKU) and confirm premium status updates.
 12. `/api/health/shard-list` shows all shards Ready.
-13. Memory after 1 hour compared to the Stateway deployment.
+13. Memory after 1 hour compared to the Stateway deployment. Should be flat and well under 1 GB; if it grows with time, something is caching guild payloads.
+14. Boot: time from start until `/api/health` returns 200, and Postgres statement rate during that window.
 
 ### B8. Build and docs
 
