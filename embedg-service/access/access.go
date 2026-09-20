@@ -126,6 +126,70 @@ func (m *AccessManager) GetGuildAccessForSession(ctx context.Context, sess *sess
 	return res, &state.Guild, nil
 }
 
+// GuildChannelAccess pairs a channel with what the user and the bot may do in it.
+type GuildChannelAccess struct {
+	Channel discord.GuildChannel
+	Access  ChannelAccess
+}
+
+// ChannelAccessForGuild computes access for every channel and active thread in one pass. Resolving
+// each channel on its own would be a REST call per channel; this is one guild state fetch and two
+// member fetches for the whole list.
+func (m *AccessManager) ChannelAccessForGuild(ctx context.Context, sess *session.Session, guildID common.ID) ([]GuildChannelAccess, error) {
+	state, err := m.guildState.Guild(ctx, guildID)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	botMember, err := m.GetGuildMember(ctx, guildID, m.appContext.ApplicationID())
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get bot member: %w", err)
+	}
+
+	userMember, err := m.GetMemberForUser(ctx, sess, guildID)
+	if err != nil && !errors.Is(err, store.ErrNotFound) {
+		return nil, fmt.Errorf("Failed to get guild member: %w", err)
+	}
+
+	threads, err := m.guildState.Threads(ctx, guildID)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get threads: %w", err)
+	}
+
+	res := make([]GuildChannelAccess, 0, len(state.Channels)+len(threads))
+
+	for _, channel := range state.Channels {
+		res = append(res, GuildChannelAccess{
+			Channel: channel,
+			Access:  m.channelAccess(state, channel, userMember, botMember),
+		})
+	}
+
+	for _, thread := range threads {
+		res = append(res, GuildChannelAccess{
+			Channel: thread,
+			Access:  m.channelAccess(state, thread, userMember, botMember),
+		})
+	}
+
+	return res, nil
+}
+
+func (m *AccessManager) channelAccess(state *guildstate.State, channel discord.GuildChannel, userMember *discord.Member, botMember *discord.Member) ChannelAccess {
+	source := permissionSource(channel, state)
+
+	res := ChannelAccess{
+		BotPermissions: memberPermissions(&state.Guild, state.Roles, source, botMember.User.ID, botMember.RoleIDs),
+	}
+	if userMember != nil {
+		res.UserPermissions = memberPermissions(&state.Guild, state.Roles, source, userMember.User.ID, userMember.RoleIDs)
+	}
+	return res
+}
+
 // GetChannelAccessForSession resolves the user's member with their own OAuth token.
 func (m *AccessManager) GetChannelAccessForSession(ctx context.Context, sess *session.Session, channelID common.ID) (ChannelAccess, error) {
 	res := ChannelAccess{}
@@ -185,7 +249,7 @@ func (m *AccessManager) memberPermissionsInChannel(ctx context.Context, member d
 		return 0, err
 	}
 
-	return memberPermissions(&state.Guild, state.Roles, channel, member.User.ID, member.RoleIDs), nil
+	return memberPermissions(&state.Guild, state.Roles, permissionSource(channel, state), member.User.ID, member.RoleIDs), nil
 }
 
 func (m *AccessManager) ComputeBotPermissionsForChannel(ctx context.Context, channelID common.ID) (discord.Permissions, error) {

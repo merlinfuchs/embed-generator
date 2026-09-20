@@ -298,7 +298,9 @@ using the existing `memberPermissions` in `access/helpers.go`. Skip channels of 
 
 **Remove** the `cache cache.Cache` field, the `stateway-lib/cache` import, and the `discordgo` import (replace `discordgo.ErrCodeUnknownMember` etc. with disgo's `discord.JSONErrorCode` constants; `common.IsDiscordRestErrorCode` may need adjusting, check `common/discord.go`).
 
-**Guild handlers.** `HandleListGuildChannels`, `HandleListGuildRoles`, `HandleGetGuild` use the provider. Emojis and stickers: REST through the same TTL and singleflight helper, separate cache keys.
+**Guild handlers.** `GET /guilds/{id}` returns roles, emojis and stickers in the same payload as the guild (`discord.RestGuild`), so `State` carries all three from one call. Do not add `GetRoles`, `GetEmojis` or `GetStickers` calls; the guild fetch is two requests, guild and channels.
+
+Channels need care. `GetChannelAccessForSession` resolves one channel at a time, so calling it per channel is a REST call per channel. Add `AccessManager.ChannelAccessForGuild(ctx, sess, guildID)`, which fetches the guild state and both members once and computes every channel from that. It also has to include active threads: `GetGuildChannels` doesn't return them, they are selectable in the picker, and `Provider.Threads` fetches them separately. Threads carry no overwrites of their own — disgo returns none for them — so `permissionSource` resolves a thread to its parent before computing permissions. Both the guild wide path and the single channel path go through it: `send_message`, `restore` and `scheduled_messages` all gate on a channel id that can be a thread, and without it a thread's permissions ignore everything the parent allows or denies.
 
 Stateway still runs in this step but nothing reads its caches anymore, so prod exercises the REST path fully before the switch in B7. Watch the rate limit headers in logs for a day.
 

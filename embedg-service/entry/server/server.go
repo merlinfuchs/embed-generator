@@ -117,6 +117,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		ScheduledMessageStore: pg,
 		CustomBotStore:        pg,
 		GuildStore:            pg,
+		GuildState:            guildState,
 		CustomCommandStore:    pg,
 		ImageStore:            pg,
 		EmbedLinkStore:        pg,

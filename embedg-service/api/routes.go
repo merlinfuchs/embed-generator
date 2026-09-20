@@ -64,7 +64,7 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	assistantHandler := assistant.New(env.AccessManager, env.PremiumManager, env.OpenAIClient)
 	app.Post("/api/assistant/message", sessionMiddleware.SessionRequired(), handlers.WithRequestBody(assistantHandler.HandleAssistantGenerateMessage))
 
-	guildsHanlder := guilds.New(env.CustomBotStore, env.GuildStore, env.Caches, env.AccessManager, env.PremiumManager)
+	guildsHanlder := guilds.New(env.CustomBotStore, env.GuildStore, env.GuildState, env.AccessManager, env.PremiumManager)
 	guildsGroup := app.Group("/api/guilds", sessionMiddleware.SessionRequired())
 	guildsGroup.Get("/", guildsHanlder.HandleListGuilds)
 	guildsGroup.Get("/:guildID", guildsHanlder.HandleGetGuild)

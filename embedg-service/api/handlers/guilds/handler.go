@@ -6,13 +6,13 @@ import (
 
 	"log/slog"
 
-	"github.com/disgoorg/disgo/cache"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-service/access"
 	"github.com/merlinfuchs/embed-generator/embedg-service/api/handlers"
 	"github.com/merlinfuchs/embed-generator/embedg-service/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-service/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
+	"github.com/merlinfuchs/embed-generator/embedg-service/guildstate"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
 	"gopkg.in/guregu/null.v4"
 )
@@ -20,16 +20,16 @@ import (
 type GuildsHanlder struct {
 	customBotStore store.CustomBotStore
 	guildStore     store.GuildStore
-	caches         cache.Caches
+	guildState     *guildstate.Provider
 	am             *access.AccessManager
 	planStore      store.PlanStore
 }
 
-func New(customBotStore store.CustomBotStore, guildStore store.GuildStore, caches cache.Caches, am *access.AccessManager, planStore store.PlanStore) *GuildsHanlder {
+func New(customBotStore store.CustomBotStore, guildStore store.GuildStore, guildState *guildstate.Provider, am *access.AccessManager, planStore store.PlanStore) *GuildsHanlder {
 	return &GuildsHanlder{
 		customBotStore: customBotStore,
 		guildStore:     guildStore,
-		caches:         caches,
+		guildState:     guildState,
 		am:             am,
 		planStore:      planStore,
 	}
@@ -117,27 +117,24 @@ func (h *GuildsHanlder) HandleListGuildChannels(c *fiber.Ctx) error {
 		return err
 	}
 
-	channels := h.caches.ChannelsForGuild(guildID)
+	channels, err := h.am.ChannelAccessForGuild(c.Context(), session, guildID)
+	if err != nil {
+		slog.Error("Failed to check channel access", slog.Any("error", err))
+		return err
+	}
 
-	res := make([]wire.GuildChannelWire, 0)
-
-	for channel := range channels {
-		access, err := h.am.GetChannelAccessForSession(c.Context(), session, channel.ID())
-		if err != nil {
-			slog.Error("Failed to check channel access", slog.Any("error", err))
-			return err
-		}
-
+	res := make([]wire.GuildChannelWire, 0, len(channels))
+	for _, channel := range channels {
 		res = append(res, wire.GuildChannelWire{
-			ID:              channel.ID(),
-			Name:            channel.Name(),
-			Position:        channel.Position(),
-			ParentID:        common.NullIDFromPtr(channel.ParentID()),
-			Type:            int(channel.Type()),
-			UserAccess:      access.UserAccess(),
-			UserPermissions: fmt.Sprintf("%d", access.UserPermissions),
-			BotAccess:       access.BotAccess(),
-			BotPermissions:  fmt.Sprintf("%d", access.BotPermissions),
+			ID:              channel.Channel.ID(),
+			Name:            channel.Channel.Name(),
+			Position:        channel.Channel.Position(),
+			ParentID:        common.NullIDFromPtr(channel.Channel.ParentID()),
+			Type:            int(channel.Channel.Type()),
+			UserAccess:      channel.Access.UserAccess(),
+			UserPermissions: fmt.Sprintf("%d", channel.Access.UserPermissions),
+			BotAccess:       channel.Access.BotAccess(),
+			BotPermissions:  fmt.Sprintf("%d", channel.Access.BotPermissions),
 		})
 	}
 
@@ -157,10 +154,15 @@ func (h *GuildsHanlder) HandleListGuildRoles(c *fiber.Ctx) error {
 		return err
 	}
 
-	roles := h.caches.Roles(guildID)
+	state, err := h.guildState.Guild(c.Context(), guildID)
+	if err != nil {
+		slog.Error("Failed to get guild state", slog.Any("error", err))
+		return err
+	}
+	roles := state.Roles
 
 	res := make([]wire.GuildRoleWire, 0)
-	for role := range roles {
+	for _, role := range roles {
 		res = append(res, wire.GuildRoleWire{
 			ID:       role.ID,
 			Name:     role.Name,
@@ -186,10 +188,15 @@ func (h *GuildsHanlder) HandleListGuildEmojis(c *fiber.Ctx) error {
 		return err
 	}
 
-	emojis := h.caches.Emojis(guildID)
+	state, err := h.guildState.Guild(c.Context(), guildID)
+	if err != nil {
+		slog.Error("Failed to get guild state", slog.Any("error", err))
+		return err
+	}
+	emojis := state.Emojis
 
 	res := make([]wire.GuildEmojiWire, 0)
-	for emoji := range emojis {
+	for _, emoji := range emojis {
 		res = append(res, wire.GuildEmojiWire{
 			ID:        emoji.ID,
 			Name:      emoji.Name,
@@ -215,10 +222,15 @@ func (h *GuildsHanlder) HandleListGuildStickers(c *fiber.Ctx) error {
 		return err
 	}
 
-	stickers := h.caches.Stickers(guildID)
+	state, err := h.guildState.Guild(c.Context(), guildID)
+	if err != nil {
+		slog.Error("Failed to get guild state", slog.Any("error", err))
+		return err
+	}
+	stickers := state.Stickers
 
 	res := make([]wire.GuildStickerWire, 0)
-	for sticker := range stickers {
+	for _, sticker := range stickers {
 		var available bool
 		if sticker.Available != nil {
 			available = *sticker.Available
