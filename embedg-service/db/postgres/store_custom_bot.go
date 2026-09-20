@@ -69,9 +69,7 @@ func (c *Client) UpdateCustomBotUser(ctx context.Context, params store.UpdateCus
 }
 
 func (c *Client) UpdateCustomBotTokenInvalid(ctx context.Context, guildID common.ID) (*model.CustomBot, error) {
-	row, err := c.Q.UpdateCustomBotTokenInvalid(ctx, pgmodel.UpdateCustomBotTokenInvalidParams{
-		GuildID: guildID.String(),
-	})
+	row, err := c.Q.UpdateCustomBotTokenInvalid(ctx, guildID.String())
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, store.ErrNotFound

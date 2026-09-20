@@ -12,7 +12,6 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-service/embedg/rest"
 	"github.com/merlinfuchs/stateway/stateway-lib/broker"
 	"github.com/merlinfuchs/stateway/stateway-lib/compat"
-	"github.com/merlinfuchs/stateway/stateway-lib/gateway"
 )
 
 type EmbedGeneratorConfig struct {
@@ -23,10 +22,9 @@ type EmbedGeneratorConfig struct {
 }
 
 type EmbedGenerator struct {
-	client  *bot.Client
-	gateway gateway.Gateway
-	broker  broker.Broker
-	config  EmbedGeneratorConfig
+	client *bot.Client
+	broker broker.Broker
+	config EmbedGeneratorConfig
 }
 
 func NewEmbedGenerator(
@@ -71,13 +69,10 @@ func NewEmbedGenerator(
 
 	compatGateway.EventHandlerFunc = client.EventManager.HandleGatewayEvent
 
-	gateway := gateway.NewGatewayClient(br)
-
 	embedg := &EmbedGenerator{
-		client:  client,
-		gateway: gateway,
-		broker:  br,
-		config:  config,
+		client: client,
+		broker: br,
+		config: config,
 	}
 
 	return embedg, nil
@@ -89,10 +84,6 @@ func (g *EmbedGenerator) Client() *bot.Client {
 
 func (g *EmbedGenerator) Rest() disrest.Rest {
 	return g.client.Rest
-}
-
-func (g *EmbedGenerator) Gateway() gateway.Gateway {
-	return g.gateway
 }
 
 func (g *EmbedGenerator) Open(ctx context.Context) error {

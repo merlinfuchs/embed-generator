@@ -312,67 +312,45 @@ Done when: `grep -rn "caches\." embedg-service` returns nothing outside `embedg/
 
 ### B6. Custom bots in-process
 
-Purpose: custom bots (under 100, presence only) run as disgo clients inside the service. Replaces Stateway's `UpsertApp`, `DeleteApp`, `GetApp`, `GetApps`.
+Purpose: custom bots (under 100, presence only) run as disgo gateway connections inside the service. Replaces Stateway's `UpsertApp`, `DeleteApp`, `GetApp`, `GetApps`.
 
-New file `manager/custom_bot/client.go`:
+A custom bot is a presence and nothing else. The compat gateway only ever subscribed to the `default` group, so custom bot events were already being dropped; their interactions arrive over HTTP on the interaction endpoint. So each one is a bare `gateway.Gateway` with no intents, no event handler and no `bot.Client` around it, not a second disgo client.
+
+New file `manager/custom_bot/client.go` holds the per-bot connection and the presence mapping:
 
 ```go
 type runningBot struct {
-    client *bot.Client
-    token  string // to detect token changes
+    gateway  gateway.Gateway
+    token    string          // to detect token changes
+    presence presenceConfig  // to detect presence changes
 }
 
-type clientPool struct {
-    mu   sync.Mutex
-    bots map[common.ID]*runningBot // keyed by ApplicationID
-}
+type presenceConfig struct{ status, activityName, activityState, activityURL string; activityType int64 }
 
-func (p *clientPool) start(ctx context.Context, cb *model.CustomBot, onInteraction bot.EventListener) error
-func (p *clientPool) stop(appID common.ID)
-func (p *clientPool) status(appID common.ID) (connected bool, ok bool)
+func (p presenceConfig) opts() []gateway.PresenceOpt              // identify payload
+func (p presenceConfig) data() gateway.MessageDataPresenceUpdate  // live update, same mapping
+func openGateway(ctx, customBot, presence, closeHandler) (gateway.Gateway, error)
 ```
 
-`start` builds:
+`GatewayActivityType` maps 0 playing, 1 streaming, 2 listening, 3 watching, 4 custom, 5 competing onto the matching `gateway.With*Activity` option; a type with no name (or a custom status with no state) means no activity at all. `Open` blocks until the connection is ready, so it gets a 30 second budget and the initial catch-up runs ten at a time.
 
-```go
-disgo.New(cb.Token,
-    bot.WithDefaultShardManager(),
-    bot.WithShardManagerConfigOpts(sharding.WithShardCount(1), sharding.WithShardIDs(0)),
-    bot.WithGatewayConfigOpts(
-        gateway.WithIntents(0),
-        gateway.WithPresenceOpts(presenceOptsFromCustomBot(cb)...),
-    ),
-    bot.WithCacheConfigOpts(cache.WithCaches(0)),
-    bot.WithRest(rest.NewRestClient(cb.Token)),
-    bot.WithEventListeners(onInteraction),
-)
-```
+`CustomBotManager` owns the pool and is the only writer to it; the mutex is for `Status` readers. `Run` reconciles on a 5 minute ticker and on demand:
 
-then `client.OpenGateway(ctx)`. `presenceOptsFromCustomBot` maps `GatewayStatus` to `gateway.WithOnlineStatus` and `GatewayActivityType` (0 playing, 1 streaming, 2 listening, 3 watching, 4 custom, 5 competing) to the matching `gateway.With*Activity` option using `GatewayActivityName`, `GatewayActivityState`, `GatewayActivityUrl`. If the token is empty or `TokenInvalid`, do not start.
+1. Load all custom bots from the store, skipping empty and invalid tokens.
+2. Not running: start. Running with a different token: stop, then start. Running with a different presence: send `OpcodePresenceUpdate` on the live connection, no reconnect.
+3. Running but no longer in the store: stop.
 
-If `OpenGateway` fails with an authentication error (disgo returns a close code 4004), set `TokenInvalid = true` on the custom bot via the store and log at warn.
+Handlers don't start or stop bots themselves. `CustomBotManager` embeds `store.CustomBotStore` and overrides the three writes that change which bots should be running, asking for a reconcile after each one, so the invariant is structural rather than something every future call site has to remember. The request never waits on it: the ask is a non-blocking send to a one-slot channel, which matters because `Open` can take 30 seconds.
 
-`CustomBotManager` gains a `pool *clientPool` and `SyncCustomBots` becomes reconciliation:
+That trigger is single-instance only. Once B7 spreads guilds across instances, the request lands on whichever instance served it and the owning instance only catches up on the next tick. Either accept 5 minutes there, shorten the tick, or give the manager a cross-instance trigger (Postgres `LISTEN/NOTIFY` is the only pubsub left once NATS goes).
 
-1. Load all custom bots from the store.
-2. For each: if not running and token valid, start. If running and token differs, stop then start. 
-3. For each running app id not in the store, stop.
+A gateway close that disgo won't retry drops the bot from the pool so the next sync reconnects it. If the close was a 4004 the token is marked invalid instead, via `UpdateCustomBotTokenInvalid`. That query took the new value as a parameter, so its one generated caller had to remember to pass true and the zero value quietly meant "mark valid"; it now writes `token_invalid = true` in SQL and takes only the guild id. Nothing cleared the flag through it anyway, `UpsertCustomBot` does that on conflict.
 
-The ticker in `Run` is commented out. Uncomment it, interval 5 minutes, and call `SyncCustomBots` once at startup too. In B7 the reconciliation gets the shard range filter.
+`api/handlers/custom_bots/handler.go`: the `UpsertApp`/`DeleteApp`/`GetApp` calls all go away. `Disabled`, `DisabledCode` and `DisabledMessage` go with them, off the wire type too: they were Stateway's vocabulary for an administratively disabled app, the dashboard never read them (`wire.ts` is generated from `embedg-server`, which doesn't have them), and mapping them onto a live connection check would have meant a bot reads as disabled for the 30 seconds it takes to connect. If the dashboard should show connection state it wants its own field next to `token_valid`, not this one. The `gateway` field is gone from both the handler and the manager, the handler's unused `rest` client with it, `manager/custom_bot/gateway.go` is deleted, and `embedg.Gateway()` with it since nothing reads the Stateway gateway client anymore. `api/handlers/custom_bots/interaction.go` builds the custom bot's rest client once and uses it for the `RestInteraction` too, which is the TODO that made interaction responses go out over the main bot's token.
 
-Interaction listener: reuse the `EventHandler` in `entry/server/handler.go` but the `rest` used to respond must be the custom bot's. Simplest: make the listener a closure per bot that wraps `handler.GatewayInteraction` with that bot's rest client. Look at `onComponentInteractionCreate` for the shape.
+Stateway still runs its own copy of the custom bots at this point. Two connections with the same token both work, presence is whichever connected last, and B7 removes the Stateway side.
 
-`api/handlers/custom_bots/handler.go`: replace
-
-- `h.gateway.UpsertApp(...)` after create and after update with `h.customBotManager.Start(ctx, customBot)`.
-- `h.gateway.DeleteApp(...)` with `h.customBotManager.Stop(customBot.ApplicationID)`.
-- `h.gateway.GetApp(...)` in the get handler with `h.customBotManager.Status(customBot.ApplicationID)`. Fill `Disabled` with `!connected`, `DisabledCode` with `"gateway_disconnected"` or `""`, `DisabledMessage` empty.
-
-`api/handlers/custom_bots/interaction.go`: the `RestInteraction` has `Rest: h.rest` with a TODO. Pass `rest.NewRestClient(customBot.Token)`, which is already built two lines below for the handler call. Build it once and use it for both.
-
-Remove the `gateway` field from `CustomBotsHandler` and `CustomBotManager`. Delete `manager/custom_bot/gateway.go`. Stateway still runs its own copy of the custom bots at this point; that's fine, two connections for a week is harmless. Actually no: two gateway connections with the same token from different apps both work, Discord allows it, presence is whichever connected last. Acceptable for the transition.
-
-Done when: create a custom bot in the dashboard, it shows online in Discord with the configured presence; change the token, it reconnects; delete it, it goes offline; a slash command on the custom bot invokes an action.
+Done when: create a custom bot in the dashboard, it shows online in Discord with the configured presence; change the presence, it updates without going offline; change the token, it reconnects; delete it, it goes offline; a slash command on the custom bot invokes an action.
 
 ### B7. The switch
 
@@ -417,7 +395,7 @@ client, err := disgo.New(config.Token, opts...)
 
 If the message content intent is needed for restore-by-id, add `gateway.IntentMessageContent`; check `api/handlers/send_message/restore.go` first, it may use REST which doesn't need the intent.
 
-Delete fields `cache`, `gateway`, `compatCaches`, `broker` and their accessors. `Caches()` returns `g.client.Caches`. Delete `EmbedGeneratorConfig.BrokerURL` and `GatewayCount`. Add `ShardCount`, `ShardIDs`. Add:
+Delete the `broker` field and its accessor; `gateway`, `cache` and `compatCaches` went in B5 and B6. `Caches()` returns `g.client.Caches`. Delete `EmbedGeneratorConfig.BrokerURL` and `GatewayCount`. Add `ShardCount`, `ShardIDs`. Add:
 
 ```go
 func (g *EmbedGenerator) ShardManager() sharding.ShardManager { return g.client.ShardManager }
@@ -428,7 +406,7 @@ func (g *EmbedGenerator) ShardManager() sharding.ShardManager { return g.client.
 **Shard range filters.**
 
 - `manager/scheduled_message/manager.go` `Run`: after `GetDueScheduledMessages`, skip messages where `!cfg.OwnsGuild(msg.GuildID)`. Do the filter in Go, not SQL, so the query stays simple. Under 100k rows this is fine; if it ever isn't, add `WHERE (guild_id >> 22) % $2 = ANY($3)`.
-- `manager/custom_bot/manager.go` `SyncCustomBots`: only start bots where `cfg.OwnsGuild(cb.GuildID)`; stop any running bot whose guild is no longer owned.
+- `manager/custom_bot/manager.go` `syncCustomBots`: only start bots where `cfg.OwnsGuild(customBot.GuildID)`; a guild this instance doesn't own drops out of the wanted set and gets stopped by the existing reconcile step.
 
 **Leader gate.** Only when `cfg.IsLeader()`:
 

@@ -26,3 +26,9 @@ type CustomBot struct {
 	GatewayActivityState    null.String
 	GatewayActivityUrl      null.String
 }
+
+// TokenUsable reports whether the bot token can still be used. A token Discord rejected stays on
+// the row until the user replaces it.
+func (c CustomBot) TokenUsable() bool {
+	return c.Token != "" && !c.TokenInvalid
+}

@@ -195,16 +195,11 @@ func (q *Queries) UpdateCustomBotPresence(ctx context.Context, arg UpdateCustomB
 }
 
 const updateCustomBotTokenInvalid = `-- name: UpdateCustomBotTokenInvalid :one
-UPDATE custom_bots SET token_invalid = $2 WHERE guild_id = $1 RETURNING id, guild_id, application_id, token, public_key, user_id, user_name, user_discriminator, user_avatar, handled_first_interaction, created_at, token_invalid, gateway_status, gateway_activity_type, gateway_activity_name, gateway_activity_state, gateway_activity_url
+UPDATE custom_bots SET token_invalid = true WHERE guild_id = $1 RETURNING id, guild_id, application_id, token, public_key, user_id, user_name, user_discriminator, user_avatar, handled_first_interaction, created_at, token_invalid, gateway_status, gateway_activity_type, gateway_activity_name, gateway_activity_state, gateway_activity_url
 `
 
-type UpdateCustomBotTokenInvalidParams struct {
-	GuildID      string
-	TokenInvalid bool
-}
-
-func (q *Queries) UpdateCustomBotTokenInvalid(ctx context.Context, arg UpdateCustomBotTokenInvalidParams) (CustomBot, error) {
-	row := q.db.QueryRow(ctx, updateCustomBotTokenInvalid, arg.GuildID, arg.TokenInvalid)
+func (q *Queries) UpdateCustomBotTokenInvalid(ctx context.Context, guildID string) (CustomBot, error) {
+	row := q.db.QueryRow(ctx, updateCustomBotTokenInvalid, guildID)
 	var i CustomBot
 	err := row.Scan(
 		&i.ID,

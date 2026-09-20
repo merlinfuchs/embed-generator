@@ -99,13 +99,11 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 		},
 		env.CustomBotManager,
 		env.CustomCommandStore,
-		env.Rest,
 		env.GuildState,
 		env.AccessManager,
 		env.PremiumManager,
 		env.ActionParser,
 		env.ActionHandler,
-		env.Gateway,
 	)
 	app.Post("/api/custom-bot", sessionMiddleware.SessionRequired(), handlers.WithRequestBodyValidated(customBotHandler.HandleConfigureCustomBot))
 	app.Put("/api/custom-bot/presence", sessionMiddleware.SessionRequired(), handlers.WithRequestBodyValidated(customBotHandler.HandleUpdateCustomBotPresence))

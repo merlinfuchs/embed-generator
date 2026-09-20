@@ -21,7 +21,6 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-service/manager/premium"
 	"github.com/merlinfuchs/embed-generator/embedg-service/manager/webhook"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
-	"github.com/merlinfuchs/stateway/stateway-lib/gateway"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -105,7 +104,6 @@ type Env struct {
 	AccessManager         *access.AccessManager
 	ActionParser          *parser.ActionParser
 	ActionHandler         *handler.ActionHandler
-	Gateway               gateway.Gateway
 	Rest                  rest.Rest
 	OpenAIClient          *openai.Client
 	FileStore             store.FileStore

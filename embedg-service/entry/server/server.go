@@ -69,7 +69,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		premiumManager,
 		guildState,
 	)
-	customBotManager := custom_bot.NewCustomBotManager(pg, embedg.Rest(), embedg.Gateway())
+	customBotManager := custom_bot.NewCustomBotManager(pg, embedg.Rest())
 	go customBotManager.Run(ctx)
 
 	webhookManager := webhook.NewWebhookManager(embedg.Rest(), guildState, customBotManager)
@@ -131,7 +131,6 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		AccessManager:         accessManager,
 		ActionParser:          actionParser,
 		ActionHandler:         actionHandler,
-		Gateway:               embedg.Gateway(),
 		Rest:                  embedg.Rest(),
 		OpenAIClient:          openai.NewClient(cfg.OpenAI.APIKey),
 		FileStore:             blob,
