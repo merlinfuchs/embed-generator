@@ -13,7 +13,7 @@ import {
 import {
   GiftIcon,
   HandRaisedIcon,
-  WrenchIcon,
+  ShieldCheckIcon,
 } from "@heroicons/react/24/solid";
 import { Avatar, DiscordButton, Reactions, Typing } from "./discord";
 
@@ -249,7 +249,7 @@ export default function HomeShowcase(): JSX.Element {
             Pick your roles. Click again to remove one.
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
-            {["🎮 Gamer", "🎨 Artist", "📅 Events"].map((r) => (
+            {["🔔 Announcements", "🎉 Events", "🎮 Gaming"].map((r) => (
               <DiscordButton
                 key={r}
                 style={roles.includes(r) ? "success" : "secondary"}
@@ -271,7 +271,7 @@ export default function HomeShowcase(): JSX.Element {
           <div className="text-sm text-mist-300">
             wait how do I get the{" "}
             <span className="rounded bg-[#57C271]/20 px-1 text-[#8EE0A5]">
-              @Gamer
+              @Gaming
             </span>{" "}
             role
           </div>
@@ -286,33 +286,28 @@ export default function HomeShowcase(): JSX.Element {
     ),
     branding: (
       <Message
-        avatar={<Avatar icon={WrenchIcon} color="bg-[#2FA85C]" />}
-        name="Patch Bot"
+        avatar={<Avatar icon={ShieldCheckIcon} color="bg-[#2FA85C]" />}
+        name="Mod Team"
         app
         time="6:30 PM"
       >
         <Embed color="#2FA85C">
           <div className="mb-1 text-base font-semibold text-mist-100">
-            Patch notes 1.4
+            📢 A few changes this week
           </div>
           <div className="text-sm leading-relaxed text-mist-300">
-            • Ranked queue is back
-            <br />• Fixed the bug where the map wouldn't load on Sundays
-            <br />• New emotes in the shop
+            • New #memes channel, go wild
+            <br />• Voice channels got renamed, same rooms though
+            <br />• 12 new emojis, thanks to everyone who submitted
           </div>
         </Embed>
-        <div className="mt-2 flex gap-2">
-          <DiscordButton style="secondary" href="/docs">
-            Changelog
-          </DiscordButton>
-        </div>
         <Reactions
           items={[
             { emoji: "🔥", count: 58 },
-            { emoji: "🎮", count: 31 },
+            { emoji: "🙌", count: 31 },
           ]}
         />
-        <Note>Same webhook, but with the name and avatar you picked.</Note>
+        <Note>Same tool, but with the name and avatar you picked.</Note>
       </Message>
     ),
     save: (
@@ -364,16 +359,16 @@ export default function HomeShowcase(): JSX.Element {
           <div className="flex items-start gap-4">
             <div className="flex-1 text-sm text-mist-300">
               <div className="mb-1 font-semibold text-mist-100">
-                Weekend event
+                Saturday game night
               </div>
-              Saturday tournament, 16 slots. Sign-ups open now.
+              Among Us and Jackbox, 8 PM in the Games voice channel.
             </div>
             <img src="/img/logo.svg" alt="" className="h-16 w-16 rounded-lg" />
           </div>
           <div className="my-3 h-px bg-white/10" />
           <div className="flex items-center justify-between gap-3 text-sm text-mist-300">
-            <span>3 of 16 slots taken</span>
-            <DiscordButton style="primary">Sign up</DiscordButton>
+            <span>9 people are in</span>
+            <DiscordButton style="primary">Count me in</DiscordButton>
           </div>
         </div>
       </Message>
@@ -382,17 +377,19 @@ export default function HomeShowcase(): JSX.Element {
       <>
         <Message avatar={eg} name="Embed Generator" app time="Mon 9:00 AM">
           <div className="text-sm text-mist-300">
-            ☀️ Morning everyone! Voice hangout tonight at 8, bring snacks.
+            ☀️ Good morning! Question of the day: what are you playing this
+            week?
           </div>
           <Reactions items={[{ emoji: "☀️", count: 23 }]} />
         </Message>
         <Message avatar={eg} name="Embed Generator" app time="Tue 9:00 AM">
           <div className="text-sm text-mist-300">
-            ☀️ Morning everyone! Voice hangout tonight at 8, bring snacks.
+            ☀️ Good morning! Question of the day: best snack for a long
+            session?
           </div>
           <Reactions items={[{ emoji: "☀️", count: 19 }]} />
         </Message>
-        <Note>Repeats every day at 9:00. Set it once, forget about it.</Note>
+        <Note>Posts every day at 9:00 on its own. Set it up once.</Note>
       </>
     ),
     commands: (
@@ -569,7 +566,7 @@ export default function HomeShowcase(): JSX.Element {
               <div className="py-6 opacity-25">
                 <Message avatar={sarah} name="sarah" time="10:08 AM">
                   <div className="text-sm text-mist-300">
-                    anyone up for a match tonight?
+                    anyone up for game night on saturday?
                   </div>
                 </Message>
                 <Message avatar={tom} name="tom" time="10:09 AM">

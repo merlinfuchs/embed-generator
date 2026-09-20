@@ -2,7 +2,7 @@ import React from "react";
 import {
   GiftIcon,
   HandRaisedIcon,
-  WrenchIcon,
+  ShieldCheckIcon,
 } from "@heroicons/react/24/solid";
 import {
   Avatar,
@@ -15,7 +15,7 @@ import {
 const avatars: AvatarSpec[] = [
   { icon: HandRaisedIcon, color: "bg-azure-500" },
   { icon: GiftIcon, color: "bg-amber-400" },
-  { icon: WrenchIcon, color: "bg-[#2FA85C]" },
+  { icon: ShieldCheckIcon, color: "bg-[#2FA85C]" },
   { src: "/img/logo.svg" },
 ];
 
