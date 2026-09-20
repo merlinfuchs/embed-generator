@@ -66,7 +66,6 @@ Migration `019_create_guilds_table`:
 -- up
 CREATE TABLE guilds (
     id BIGINT PRIMARY KEY,
-    shard_id INT NOT NULL,
     name TEXT NOT NULL,
     icon TEXT,
     owner_id BIGINT NOT NULL,
@@ -83,10 +82,9 @@ Queries `db/postgres/queries/guilds.sql`:
 
 ```sql
 -- name: UpsertGuild :exec
-INSERT INTO guilds (id, shard_id, name, icon, owner_id, joined_at, left_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, NULL, $6)
+INSERT INTO guilds (id, name, icon, owner_id, joined_at, left_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, NULL, $5)
 ON CONFLICT (id) DO UPDATE SET
-    shard_id = EXCLUDED.shard_id,
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
     owner_id = EXCLUDED.owner_id,
@@ -115,7 +113,6 @@ Model `model/guild.go`:
 ```go
 type Guild struct {
     ID        common.ID
-    ShardID   int
     Name      string
     Icon      null.String
     OwnerID   common.ID
@@ -131,18 +128,18 @@ Listener: add cases to `EventHandler.OnEvent` in `entry/server/handler.go`. `Eve
 
 ```go
 case *events.GuildReady:      // sent for each guild after Ready
-    g.guildStore.UpsertGuild(ctx, guildFromEvent(e.Guild, e.ShardID(), now))
+    g.guildStore.UpsertGuild(ctx, guildFromEvent(e.Guild, now))
 case *events.GuildJoin:       // bot added to a guild
-    g.guildStore.UpsertGuild(ctx, guildFromEvent(e.Guild, e.ShardID(), now))
+    g.guildStore.UpsertGuild(ctx, guildFromEvent(e.Guild, now))
 case *events.GuildUpdate:     // name, icon, or owner changed
-    g.guildStore.UpsertGuild(ctx, guildFromEvent(e.Guild, e.ShardID(), now))
+    g.guildStore.UpsertGuild(ctx, guildFromEvent(e.Guild, now))
 case *events.GuildLeave:      // bot removed. e.Guild.Unavailable is false here
     g.guildStore.MarkGuildLeft(ctx, e.Guild.ID, now)
 ```
 
 `guildFromEvent` copies `ID`, `Name`, `Icon`, `OwnerID` from `discord.Guild`. On `GuildUpdate` the upsert overwrites `joined_at` with `now`; that's acceptable, or split into a second `UpdateGuildMeta` query if you want `joined_at` exact.
 
-Do not handle `GuildUnavailable`. That is an outage, not a leave. Do not store channels, roles, or member counts. Those churn and are served by the cache-or-REST path in B5. `ShardID()` comes from `GenericEvent`. Use a 5 second context timeout per write. Log and continue on error.
+Do not handle `GuildUnavailable`. That is an outage, not a leave. Do not store channels, roles, or member counts. Those churn and are served by the cache-or-REST path in B5. Do not store a shard id: it is `(id >> 22) % shard_count` and goes stale on resharding; compute it in SQL if ever needed. Use a 5 second context timeout per write. Log and continue on error.
 
 Nothing reads the table in this PR.
 
