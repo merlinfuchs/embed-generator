@@ -19,14 +19,16 @@ import (
 
 type GuildsHanlder struct {
 	customBotStore store.CustomBotStore
+	guildStore     store.GuildStore
 	caches         cache.Caches
 	am             *access.AccessManager
 	planStore      store.PlanStore
 }
 
-func New(customBotStore store.CustomBotStore, caches cache.Caches, am *access.AccessManager, planStore store.PlanStore) *GuildsHanlder {
+func New(customBotStore store.CustomBotStore, guildStore store.GuildStore, caches cache.Caches, am *access.AccessManager, planStore store.PlanStore) *GuildsHanlder {
 	return &GuildsHanlder{
 		customBotStore: customBotStore,
+		guildStore:     guildStore,
 		caches:         caches,
 		am:             am,
 		planStore:      planStore,
@@ -36,34 +38,32 @@ func New(customBotStore store.CustomBotStore, caches cache.Caches, am *access.Ac
 func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
 
-	known, err := h.am.CheckGuildsKnown(c.Context(), session.GuildIDs)
+	// The user's own guild list, not session.GuildIDs, which is captured at login and never refreshed.
+	userGuilds, err := h.am.GetGuildsForUser(c.Context(), session)
 	if err != nil {
-		slog.Error("Failed to check guilds known", slog.Any("error", err))
+		slog.Error("Failed to get guilds for user", slog.Any("error", err))
 		return err
 	}
 
-	res := make([]wire.GuildWire, 0, len(session.GuildIDs))
-	for i, guildID := range session.GuildIDs {
-		if !known[i] {
-			continue
-		}
+	guildIDs := make([]common.ID, 0, len(userGuilds))
+	for _, guild := range userGuilds {
+		guildIDs = append(guildIDs, guild.ID)
+	}
 
-		access, guild, err := h.am.GetGuildAccessForSession(c.Context(), session, guildID)
-		if err != nil {
-			slog.Error("Failed to check guild access", slog.Any("error", err))
-			return err
-		}
+	// Intersect with the guilds the bot is in. Name and icon come from there so the list shows what
+	// the bot sees; computing channel level access for every guild would be a REST fan out each.
+	guilds, err := h.guildStore.GetGuilds(c.Context(), guildIDs)
+	if err != nil {
+		slog.Error("Failed to get guilds", slog.Any("error", err))
+		return err
+	}
 
-		if guild == nil {
-			continue
-		}
-
+	res := make([]wire.GuildWire, 0, len(guilds))
+	for _, guild := range guilds {
 		res = append(res, wire.GuildWire{
-			ID:                       guild.ID,
-			Name:                     guild.Name,
-			Icon:                     null.StringFromPtr(guild.Icon),
-			HasChannelWithUserAccess: access.HasChannelWithUserAccess(),
-			HasChannelWithBotAccess:  access.HasChannelWithBotAccess(),
+			ID:   guild.ID,
+			Name: guild.Name,
+			Icon: guild.Icon,
 		})
 	}
 
@@ -74,47 +74,35 @@ func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 }
 
 func (h *GuildsHanlder) HandleGetGuild(c *fiber.Ctx) error {
-	session := c.Locals("session").(*session.Session)
 	guildID, err := handlers.ParamID(c, "guildID")
 	if err != nil {
 		return err
 	}
 
+	// This already resolves the user's and the bot's permissions in the guild and 403s without them.
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
-	known, err := h.am.CheckGuildsKnown(c.Context(), []common.ID{guildID})
+	// Name and icon come from the guilds table, the same source the list uses, rather than a second
+	// pass over the guild's channels and roles.
+	guilds, err := h.guildStore.GetGuilds(c.Context(), []common.ID{guildID})
 	if err != nil {
-		slog.Error("Failed to check guilds known", slog.Any("error", err))
+		slog.Error("Failed to get guild", slog.Any("error", err))
 		return err
 	}
 
-	if !known[0] {
+	if len(guilds) == 0 {
 		return handlers.NotFound("unknown_guild", "The guild does not exist.")
-	}
-
-	access, guild, err := h.am.GetGuildAccessForSession(c.Context(), session, guildID)
-	if err != nil {
-		slog.Error("Failed to check guild access", slog.Any("error", err))
-		return err
-	}
-
-	if guild == nil {
-		return handlers.NotFound("unknown_guild", "The guild does not exist.")
-	}
-
-	res := wire.GuildWire{
-		ID:                       guild.ID,
-		Name:                     guild.Name,
-		Icon:                     null.StringFromPtr(guild.Icon),
-		HasChannelWithUserAccess: access.HasChannelWithUserAccess(),
-		HasChannelWithBotAccess:  access.HasChannelWithBotAccess(),
 	}
 
 	return c.JSON(wire.GetGuildResponseWire{
 		Success: true,
-		Data:    res,
+		Data: wire.GuildWire{
+			ID:   guilds[0].ID,
+			Name: guilds[0].Name,
+			Icon: guilds[0].Icon,
+		},
 	})
 }
 

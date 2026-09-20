@@ -141,8 +141,6 @@ export interface GuildWire {
   id: string;
   name: string;
   icon: null | string;
-  has_channel_with_user_access: boolean;
-  has_channel_with_bot_access: boolean;
 }
 export type ListGuildsResponseWire = APIResponse<GuildWire[]>;
 export type GetGuildResponseWire = APIResponse<GuildWire>;

@@ -91,6 +91,7 @@ type Env struct {
 	MessageActionSetStore store.MessageActionSetStore
 	ScheduledMessageStore store.ScheduledMessageStore
 	CustomBotStore        store.CustomBotStore
+	GuildStore            store.GuildStore
 	CustomCommandStore    store.CustomCommandStore
 	ImageStore            store.ImageStore
 	EmbedLinkStore        store.EmbedLinkStore

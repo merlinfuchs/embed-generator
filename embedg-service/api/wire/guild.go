@@ -9,9 +9,6 @@ type GuildWire struct {
 	ID   common.ID   `json:"id"`
 	Name string      `json:"name"`
 	Icon null.String `json:"icon"`
-
-	HasChannelWithUserAccess bool `json:"has_channel_with_user_access"`
-	HasChannelWithBotAccess  bool `json:"has_channel_with_bot_access"`
 }
 
 type ListGuildsResponseWire APIResponse[[]GuildWire]
