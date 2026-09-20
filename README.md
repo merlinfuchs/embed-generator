@@ -246,6 +246,19 @@ pnpm start
 pnpm build
 ```
 
+#### Run the databases
+
+`docker-compose.dev.yaml` in the repository root starts Postgres and MinIO and nothing else, so the
+service itself runs from source against them:
+
+```sh
+docker compose -f docker-compose.dev.yaml up -d
+```
+
+The credentials match the defaults in `embedg-service/config/default.toml`, so `embedg.toml` only
+needs the Discord section. MinIO creates its buckets on startup. If you'd rather install Postgres
+yourself, create a `postgres` user and an `embedg` database.
+
 #### Build the server (backend)
 
 Install Go `>=1.21` from [go.dev](https://go.dev/doc/install).
@@ -270,10 +283,6 @@ go build --tags  "embedapp embedsite"
 # Build without including the frontend files in the backend binary (you need to serve yourself)
 go build
 ```
-
-#### Install databases
-
-If you are not using Docker you need to Install PostgreSQL on your device and create a user and database. I'm sure you can find instructions online!
 
 #### Run the binary
 
