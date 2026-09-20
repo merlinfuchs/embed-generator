@@ -212,6 +212,26 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		return fmt.Errorf("failed to parse message components: %w", err)
 	}
 
+	// Actions carry the creator's authority, so resolve the creator before sending. Without a member
+	// the message would go out with empty permissions attached to its actions.
+	hasActions := len(data.Actions) != 0
+
+	var creator *discord.Member
+	if hasActions {
+		creator, err = m.rest.GetMember(scheduledMessage.GuildID, scheduledMessage.CreatorID, rest.WithCtx(ctx))
+		if err != nil {
+			if common.IsDiscordRestErrorCode(
+				err,
+				discordgo.ErrCodeUnknownMember,
+				discordgo.ErrCodeUnknownGuild,
+				discordgo.ErrCodeMissingAccess,
+			) {
+				return m.disable(ctx, scheduledMessage, "creator is no longer a member of the server")
+			}
+			return fmt.Errorf("failed to get scheduled message creator: %w", err)
+		}
+	}
+
 	msg, err := m.webhookManager.SendMessageToChannel(ctx, scheduledMessage.ChannelID, params)
 	if err != nil {
 		if errors.Is(err, webhook.ErrChannelNotFound) {
@@ -235,7 +255,11 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 	}
 
 	// The message is out at this point, failures below must not trigger a resend.
-	permContext, err := m.actionParser.DerivePermissionsForActions(scheduledMessage.CreatorID, scheduledMessage.GuildID, scheduledMessage.ChannelID)
+	if !hasActions {
+		return nil
+	}
+
+	permContext, err := m.actionParser.DerivePermissionsForActions(ctx, *creator, scheduledMessage.GuildID, scheduledMessage.ChannelID)
 	if err != nil {
 		slog.Error(
 			"Failed to create permission context for scheduled message actions",

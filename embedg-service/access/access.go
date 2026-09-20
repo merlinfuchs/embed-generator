@@ -167,37 +167,6 @@ func (m *AccessManager) GetChannelAccessForSession(ctx context.Context, sess *se
 	return res, nil
 }
 
-// GetChannelAccessForUser resolves the user's member with the bot token. Only for callers without a
-// session; B4 moves the last of those (the action parser) off it.
-func (m *AccessManager) GetChannelAccessForUser(userID common.ID, channelID common.ID) (ChannelAccess, error) {
-	res := ChannelAccess{}
-
-	err := m.SetChannelAccessUserPermissions(&res, userID, channelID)
-	if err != nil {
-		return res, err
-	}
-
-	err = m.SetChannelAccessBotPermissions(&res, channelID)
-	if err != nil {
-		return res, err
-	}
-
-	return res, nil
-}
-
-func (m *AccessManager) SetChannelAccessUserPermissions(res *ChannelAccess, userID common.ID, channelID common.ID) (err error) {
-	res.UserPermissions, err = m.ComputeUserPermissionsForChannel(userID, channelID)
-	if err != nil {
-		if common.IsDiscordRestErrorCode(err, discordgo.ErrCodeUnknownMember) {
-			// The user is not in the server, so we can't compute the permissions
-			return nil
-		}
-		return err
-	}
-
-	return nil
-}
-
 func (m *AccessManager) SetChannelAccessBotPermissions(res *ChannelAccess, channelID common.ID) error {
 	botPerms, err := m.ComputeBotPermissionsForChannel(channelID)
 	if err != nil {
@@ -210,18 +179,6 @@ func (m *AccessManager) SetChannelAccessBotPermissions(res *ChannelAccess, chann
 	res.BotPermissions = botPerms
 
 	return nil
-}
-
-func (m *AccessManager) ComputeUserPermissionsForChannel(userID common.ID, channelID common.ID) (discord.Permissions, error) {
-	permissions, err := m.computePermissionsForChannel(channelID, func(guildID common.ID) (*discord.Member, error) {
-		return m.GetGuildMember(guildID, userID)
-	})
-	if err != nil {
-		// TODO: Handle this error
-		return 0, nil
-	}
-
-	return permissions, nil
 }
 
 // computePermissionsForChannel resolves the channel's guild and lets the caller decide how the
@@ -240,8 +197,27 @@ func (m *AccessManager) computePermissionsForChannel(channelID common.ID, getMem
 	return m.caches.MemberPermissionsInChannel(channel, *member), nil
 }
 
+// ComputeMemberPermissionsForChannel computes an already resolved member's permissions in a channel,
+// for callers that fetched the member themselves.
+func (m *AccessManager) ComputeMemberPermissionsForChannel(member discord.Member, channelID common.ID) (discord.Permissions, error) {
+	channel, ok := m.caches.Channel(channelID)
+	if !ok || channel.GuildID() == 0 {
+		return 0, nil
+	}
+
+	return m.caches.MemberPermissionsInChannel(channel, member), nil
+}
+
 func (m *AccessManager) ComputeBotPermissionsForChannel(channelID common.ID) (discord.Permissions, error) {
-	return m.ComputeUserPermissionsForChannel(m.appContext.ApplicationID(), channelID)
+	permissions, err := m.computePermissionsForChannel(channelID, func(guildID common.ID) (*discord.Member, error) {
+		return m.GetGuildMember(guildID, m.appContext.ApplicationID())
+	})
+	if err != nil {
+		// TODO: Handle this error
+		return 0, nil
+	}
+
+	return permissions, nil
 }
 
 func (m *AccessManager) GetGuildMember(guildID common.ID, userID common.ID) (*discord.Member, error) {

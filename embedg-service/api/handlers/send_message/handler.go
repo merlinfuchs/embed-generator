@@ -140,7 +140,12 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return fmt.Errorf("Failed to send or edit message: %w", err)
 	}
 
-	permContext, err := h.actionParser.DerivePermissionsForActions(session.UserID, req.GuildID, req.ChannelID)
+	member, err := h.accessManager.GetMemberForUser(c.Context(), session, req.GuildID)
+	if err != nil {
+		return fmt.Errorf("Failed to get member: %w", err)
+	}
+
+	permContext, err := h.actionParser.DerivePermissionsForActions(c.Context(), *member, req.GuildID, req.ChannelID)
 	if err != nil {
 		return fmt.Errorf("Failed to create permission context: %w", err)
 	}
