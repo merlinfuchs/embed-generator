@@ -45,11 +45,13 @@ func NewEmbedGenerator(config EmbedGeneratorConfig) (*EmbedGenerator, error) {
 				// ("decoder used after Close"). Both zstd-stream and zlib-stream have it, and
 				// zstd-stream is the default. Uncompressed costs bandwidth, not stability.
 				gateway.WithCompression(gateway.CompressionNone),
-				gateway.WithIntents(
-					// Guilds covers the guild, channel and role events the guild table and the guild
-					// state provider are kept fresh by; GuildMessages is only for message deletes.
-					gateway.IntentGuilds|gateway.IntentGuildMessages,
-				),
+				// Guilds covers the guild, channel and role events the guild table and the guild
+				// state provider are kept fresh by. Not GuildMessages: it is an intent for every
+				// message sent in every guild, which at this scale is tens of MB a second that
+				// stalls the shard read loops until they miss heartbeats and reconnect. The only
+				// thing it bought was deleting action sets for deleted messages, which can be a
+				// sweep instead.
+				gateway.WithIntents(gateway.IntentGuilds),
 			),
 		))
 	}
