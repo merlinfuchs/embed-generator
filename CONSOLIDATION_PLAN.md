@@ -244,6 +244,13 @@ func (p *Provider) Invalidate(guildID common.ID)
 
 There is no gateway cache to consult. Every read is REST behind the TTL cache. `Invalidate` is called from the event listener on `GuildChannelCreate/Update/Delete`, `GuildRoleCreate/Update/Delete`, and `GuildUpdate` for guilds this instance owns, so the owner instance sees changes immediately and others within two minutes.
 
+**Payload before REST.** Interactions already carry most of what the templates and handlers read from the cache. Use it before touching the provider:
+
+- `actions/template/provider.go` `InteractionProvider.ProvideData` calls `NewChannelData(caches, id, nil)`. Pass `p.interaction.Channel()` instead; it's a partial channel with id, type, name, parent id, which covers the common template fields. Only fall back to the provider for fields the partial lacks.
+- `actions/template/data.go` `NewCommandOptionData` resolves channel, role, and member options from the cache. Read them from the interaction's `Resolved` data (`SlashCommandInteractionData.Resolved.Channels/Roles/Members`) instead. Zero fetches.
+- `GuildData`, `ChannelData`, `RoleData`, `MemberData.Roles()` stay lazy as they are today. They must call the provider only inside `ensure*()`, never in the constructor, so a template that doesn't reference `{{Guild...}}` costs nothing.
+- `manager/webhook/message.go` reads the channel on every send to find the thread parent and type. Route through `provider.Channel`. This is one extra `GET /channels/{id}` per distinct channel per two minutes on a path that already does one or two webhook REST calls; acceptable.
+
 Replace all 30 `caches.X(...)` read sites in the service with the provider. They are in `actions/parser/permissions.go` (10), `manager/webhook/message.go` (6), `actions/template/data.go` (3), `access/access.go` (3), `api/handlers/guilds/handler.go` (2), `api/handlers/custom_bots/handler.go` (2), `command/cmd_message.go` (1), `api/handlers/send_message/handler.go` (1). Every one of them currently treats a cache miss as an error or as "no permissions"; with the provider a miss is a real REST error or 404 and should be handled as such. Remove `cache.Caches` from every constructor that only used it for these reads.
 
 **CheckGuildsKnown.** Replace body with `m.guildStore.GetGuilds(ctx, guildIDs)` and map back to `[]bool` in input order. Add `guildStore store.GuildStore` to `AccessManager`.
