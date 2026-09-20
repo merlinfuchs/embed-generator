@@ -50,8 +50,8 @@ export default function HomePremium(): JSX.Element {
             />
             <span className="whitespace-normal">
               Premium is what pays for hosting and keeps this free for everyone
-              else. Thanks!{" "}
-              <span className="text-mist-400">— Merlin</span>
+              else. Thanks!
+              <span className="ml-2 text-mist-400">Merlin</span>
             </span>
           </div>
       </div>
