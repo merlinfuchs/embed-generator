@@ -1,10 +1,11 @@
 ---
 sidebar_position: 2
+description: "Schedule Discord messages to be sent later, once or on a repeating schedule every hour, day or week. Set it up in Embed Generator without a bot command."
 ---
 
 # Scheduled Messages
 
-Scheduled Messages let you scheduled messages to be sent at a later point. This way you can define an exact point in time where your message will be sent.
+Scheduled Messages let you send a saved message at a later point in time. This way you can define an exact point in time where your message will be sent.
 
 ## Send Once
 
@@ -18,6 +19,6 @@ Make sure there are no errors in the selected message, otherwise the message wil
 
 You can also select messages to be sent periodically, so every hour, day or week.
 
-This feature is only available to [Embed Generator Premium](../premium) subscribers.
+Sending a message once is free. Repeating schedules are only available to [Embed Generator Premium](../premium) subscribers.
 
 ![Scheduled Messages Periodic](./scheduled-messages-periodic.png)

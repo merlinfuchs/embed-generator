@@ -3,7 +3,7 @@ import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
 
 const config: Config = {
-  title: "Embed Generator | Discord embeds without the hassle",
+  title: "Embed Generator",
   tagline: "The best way to create Discord embeds!",
   favicon: "img/logo.svg",
 
@@ -17,6 +17,34 @@ const config: Config = {
   // If you aren't using GitHub pages, you don't need these.
   organizationName: "merlinfuchs", // Usually your GitHub org/user name.
   projectName: "embed-generator", // Usually your repo name.
+
+  headTags: [
+    {
+      tagName: "script",
+      attributes: { type: "application/ld+json" },
+      innerHTML: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        name: "Embed Generator",
+        url: "https://message.style",
+        applicationCategory: "UtilitiesApplication",
+        operatingSystem: "Web",
+        description:
+          "Visual editor for Discord embeds, buttons and select menus. Send messages through webhooks or a bot, save them, schedule them.",
+        offers: [
+          { "@type": "Offer", price: "0", priceCurrency: "USD", name: "Free" },
+          {
+            "@type": "Offer",
+            price: "4.99",
+            priceCurrency: "USD",
+            name: "Premium",
+            description: "Per server, monthly",
+          },
+        ],
+        author: { "@type": "Person", name: "Merlin Fuchs" },
+      }),
+    },
+  ],
 
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
@@ -48,6 +76,9 @@ const config: Config = {
           editUrl:
             "https://github.com/merlinfuchs/embed-generator/tree/main/embedg-site/",
         },
+        sitemap: {
+          ignorePatterns: ["/blog/tags/**", "/blog/archive", "/blog/authors"],
+        },
         theme: {
           customCss: require.resolve("./src/css/global.css"),
         },
@@ -75,20 +106,22 @@ const config: Config = {
         },
         {
           name: "twitter:card",
-          content: "summary",
+          content: "summary_large_image",
         },
         {
           name: "theme-color",
-          content: "#237feb",
+          content: "#1e1f22",
         },
       ],
 
       colorMode: {
         defaultMode: "dark",
+        disableSwitch: true,
+        respectPrefersColorScheme: false,
       },
 
       // Replace with your project's social card
-      image: "img/logo-256.png",
+      image: "img/og.png",
       navbar: {
         title: "Embed Generator",
         logo: {
@@ -101,18 +134,28 @@ const config: Config = {
             type: "docSidebar",
             sidebarId: "tutorialSidebar",
             position: "left",
-            label: "Tutorial",
+            label: "Docs",
           },
           {
             to: "blog",
             label: "Blog",
             position: "left",
           },
-          // { to: "/blog", label: "Blog", position: "left" },
+          {
+            href: "https://message.style/discord",
+            label: "Discord",
+            position: "right",
+          },
           {
             href: "https://github.com/merlinfuchs/embed-generator",
             label: "GitHub",
             position: "right",
+          },
+          {
+            href: "https://message.style/app",
+            label: "Open App",
+            position: "right",
+            className: "navbar__item--cta",
           },
         ],
       },
@@ -120,12 +163,12 @@ const config: Config = {
         style: "dark",
         links: [
           {
-            title: "Docs",
+            title: "Product",
             items: [
-              {
-                label: "Tutorial",
-                to: "/docs",
-              },
+              { label: "Open App", href: "https://message.style/app" },
+              { label: "Premium", href: "https://message.style/premium" },
+              { label: "Documentation", to: "/docs" },
+              { label: "Blog", to: "/blog" },
             ],
           },
           {
@@ -151,6 +194,10 @@ const config: Config = {
               {
                 label: "Privacy Policy",
                 href: "/privacy",
+              },
+              {
+                label: "Cookies",
+                to: "/cookies",
               },
             ],
           },
