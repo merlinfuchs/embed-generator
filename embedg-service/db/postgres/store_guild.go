@@ -14,14 +14,41 @@ import (
 
 var _ store.GuildStore = (*Client)(nil)
 
-func (c *Client) UpsertGuild(ctx context.Context, guild model.Guild) error {
-	return c.Q.UpsertGuild(ctx, pgmodel.UpsertGuildParams{
-		ID:       int64(guild.ID),
-		Name:     guild.Name,
-		Icon:     pgtype.Text{String: guild.Icon.String, Valid: guild.Icon.Valid},
-		OwnerID:  int64(guild.OwnerID),
-		JoinedAt: pgtype.Timestamp{Time: guild.JoinedAt, Valid: true},
-	})
+// upsertGuildsQuery is hand written because sqlc can't parse multi-argument unnest (the catalog
+// only has the single-argument form), and its text[] maps to []string, which can't carry a NULL icon.
+const upsertGuildsQuery = `
+INSERT INTO guilds (id, name, icon, owner_id, joined_at, left_at, updated_at)
+SELECT id, name, icon, owner_id, $5, NULL, $5
+FROM unnest($1::bigint[], $2::text[], $3::text[], $4::bigint[]) AS t(id, name, icon, owner_id)
+ON CONFLICT (id)
+DO UPDATE SET
+    name = EXCLUDED.name,
+    icon = EXCLUDED.icon,
+    owner_id = EXCLUDED.owner_id,
+    -- only moves when the bot rejoins, otherwise the original join time stands
+    joined_at = CASE WHEN guilds.left_at IS NOT NULL THEN EXCLUDED.joined_at ELSE guilds.joined_at END,
+    left_at = NULL,
+    updated_at = EXCLUDED.updated_at
+WHERE guilds.name IS DISTINCT FROM EXCLUDED.name
+   OR guilds.icon IS DISTINCT FROM EXCLUDED.icon
+   OR guilds.owner_id IS DISTINCT FROM EXCLUDED.owner_id
+   OR guilds.left_at IS NOT NULL`
+
+func (c *Client) UpsertGuilds(ctx context.Context, guilds []model.Guild, now time.Time) error {
+	ids := make([]int64, len(guilds))
+	names := make([]string, len(guilds))
+	icons := make([]*string, len(guilds))
+	ownerIDs := make([]int64, len(guilds))
+
+	for i, guild := range guilds {
+		ids[i] = int64(guild.ID)
+		names[i] = guild.Name
+		icons[i] = guild.Icon.Ptr()
+		ownerIDs[i] = int64(guild.OwnerID)
+	}
+
+	_, err := c.DB.Exec(ctx, upsertGuildsQuery, ids, names, icons, ownerIDs, now)
+	return err
 }
 
 func (c *Client) MarkGuildLeft(ctx context.Context, guildID common.ID, now time.Time) error {

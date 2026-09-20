@@ -17,6 +17,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-service/embedg"
 	"github.com/merlinfuchs/embed-generator/embedg-service/embedg/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-service/manager/custom_bot"
+	"github.com/merlinfuchs/embed-generator/embedg-service/manager/guild"
 	"github.com/merlinfuchs/embed-generator/embedg-service/manager/premium"
 	scheduled_messages "github.com/merlinfuchs/embed-generator/embedg-service/manager/scheduled_message"
 	"github.com/merlinfuchs/embed-generator/embedg-service/manager/webhook"
@@ -65,8 +66,12 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 
 	handler := NewEventHandler(EventHandlerConfig{
 		DiscordLink: cfg.Links.Discord,
-	}, embedg, embedg.Rest(), embedg.Caches(), pg, pg, actionHandler)
+	}, embedg, embedg.Rest(), embedg.Caches(), pg, actionHandler)
 	embedg.Client().AddEventListeners(handler)
+
+	guildTracker := guild.NewGuildTracker(pg)
+	embedg.Client().AddEventListeners(guildTracker)
+	go guildTracker.Run(ctx)
 
 	commandHandler := command.NewCommandHandler(command.CommandHandlerConfig{
 		DiscordLink:  cfg.Links.Discord,

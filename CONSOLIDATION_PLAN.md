@@ -70,17 +70,18 @@ Do not handle `GuildUnavailable`. That is an outage, not a leave. Do not store c
 
 Purpose: #213 does one upsert per event. On every restart the gateway replays about 250k `GuildReady` events within a minute or two, so that's 250k statements per boot, and later with N instances it's 250k across all of them every rolling deploy. Batch it before B7 makes the service own the gateway.
 
-Replace `UpsertGuild` in `db/postgres/queries/guilds.sql` with:
+Replace `UpsertGuild` with a hand written query in `db/postgres/store_guild.go` (not `queries/guilds.sql`):
 
 ```sql
--- name: UpsertGuilds :exec
 INSERT INTO guilds (id, name, icon, owner_id, joined_at, left_at, updated_at)
 SELECT id, name, icon, owner_id, $5, NULL, $5
 FROM unnest($1::bigint[], $2::text[], $3::text[], $4::bigint[]) AS t(id, name, icon, owner_id)
-ON CONFLICT (id) DO UPDATE SET
+ON CONFLICT (id)
+DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
     owner_id = EXCLUDED.owner_id,
+    joined_at = CASE WHEN guilds.left_at IS NOT NULL THEN EXCLUDED.joined_at ELSE guilds.joined_at END,
     left_at = NULL,
     updated_at = EXCLUDED.updated_at
 WHERE guilds.name IS DISTINCT FROM EXCLUDED.name
@@ -89,7 +90,9 @@ WHERE guilds.name IS DISTINCT FROM EXCLUDED.name
    OR guilds.left_at IS NOT NULL;
 ```
 
-`icon` is nullable; pass it as `[]*string` or use `sqlc.narg`. `store.GuildStore.UpsertGuild(ctx, model.Guild)` becomes `UpsertGuilds(ctx, []model.Guild)`. The `WHERE` clause makes unchanged rows a no-op so a restart mostly touches nothing; `joined_at` is refreshed on rejoin via the `left_at IS NOT NULL` branch.
+Run it with `c.DB.Exec`, passing `[]int64`, `[]string`, `[]*string`, `[]int64` and the timestamp. sqlc can't generate this: its catalog only has single-argument `unnest`, so multi-argument `unnest` fails to parse (`function unnest(unknown, unknown, unknown, unknown) does not exist`) on every release up to v1.31.1, the current one. Its `text[]` also maps to `[]string`, which can't carry a NULL icon. pgx encodes the arrays natively and `[]*string` gives NULL icons for free. This is the first hand written query in the store; keep the rest on sqlc.
+
+`joined_at` has to be in the `SET` list to move on rejoin; the `WHERE` clause only decides whether the update fires. `store.GuildStore.UpsertGuild(ctx, model.Guild)` becomes `UpsertGuilds(ctx, []model.Guild, now time.Time)`, matching `MarkGuildLeft`'s existing `now` parameter. The `WHERE` clause makes unchanged rows a no-op, so a restart touches nothing.
 
 Move the guild cases out of `EventHandler` into a new `manager/guild/tracker.go`:
 
@@ -109,7 +112,8 @@ func (t *GuildTracker) OnEvent(event bot.Event) {
     }
 }
 
-// Run flushes buf every 2 seconds or when it reaches 1000 entries, whichever first. Flush on ctx.Done too.
+// Run empties buf every 2 seconds, writing at most 1000 guilds per statement so one
+// statement can't grow to the whole reconnect burst. Drains on ctx.Done too.
 func (t *GuildTracker) Run(ctx context.Context)
 ```
 
