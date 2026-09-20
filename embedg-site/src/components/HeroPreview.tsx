@@ -19,7 +19,7 @@ const avatars: AvatarSpec[] = [
 ];
 
 const swatches = [
-  "#2F8BFF",
+  "#5B7CF7",
   "#57F287",
   "#FEE75C",
   "#EB459E",
