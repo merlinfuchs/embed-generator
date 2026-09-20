@@ -22,7 +22,7 @@ export default function Modal({
   return (
     <div
       className={clsx(
-        "fixed h-[100dvh] w-[100vw] bg-black bg-opacity-70 flex flex-col items-center justify-center px-2 py-20 sm:px-5 md:px-10 lg:px-20 xl:px-32 z-30 top-0 left-0",
+        "fixed h-[100dvh] w-[100vw] bg-black/70 flex flex-col items-center justify-center px-2 py-20 sm:px-5 md:px-10 lg:px-20 xl:px-32 z-30 top-0 left-0",
         !allowOverflow && "overflow-hidden",
       )}
       onClick={(e) => e.target === e.currentTarget && onClose()}

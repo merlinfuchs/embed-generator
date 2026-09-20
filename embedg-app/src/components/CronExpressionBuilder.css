@@ -1,59 +1,61 @@
+@reference "../index.css";
+
 .cron_builder {
-  @apply bg-dark-2 border-none m-0 p-2 rounded w-full !important;
+  @apply bg-dark-2! border-none! m-0! p-2! rounded! w-full!;
 }
 
 .cron_builder .nav-item .nav-link {
-  @apply bg-dark-4 text-gray-300 !important;
+  @apply bg-dark-4! text-gray-300!;
 }
 
 .cron_builder .nav-item .nav-link:hover {
-  @apply bg-dark-3 text-gray-300 !important;
+  @apply bg-dark-3! text-gray-300!;
 }
 
 .cron_builder .nav-item .active {
-  @apply bg-dark-3 text-white !important;
+  @apply bg-dark-3! text-white!;
 }
 
 .cron_builder .nav-item .active:hover {
-  @apply bg-dark-3 text-white !important;
+  @apply bg-dark-3! text-white!;
 }
 
 .cron_builder .cron_builder_bordering {
-  @apply bg-dark-3 border-none !important;
+  @apply bg-dark-3! border-none!;
 }
 
 .cron_builder .well {
-  @apply bg-dark-2 border-none text-gray-300 !important;
+  @apply bg-dark-2! border-none! text-gray-300!;
 }
 
 .cron_builder .well-small {
-  @apply bg-dark-2 border-none text-gray-300 !important;
+  @apply bg-dark-2! border-none! text-gray-300!;
 }
 
 .cron_builder .cron_builder_bordering select {
-  @apply bg-dark-1 px-3 py-2 rounded border-none text-white !important;
+  @apply bg-dark-1! px-3! py-2! rounded! border-none! text-white!;
 }
 
 .cron_builder .cron_builder_bordering input[type="radio"] {
-  @apply cursor-pointer !important;
+  @apply cursor-pointer!;
 }
 
 .cron_builder .well input {
-  @apply bg-dark-1 px-3 py-2 rounded border-none text-white !important;
+  @apply bg-dark-1! px-3! py-2! rounded! border-none! text-white!;
 }
 
 .cron_builder .well select {
-  @apply bg-dark-1 px-3 py-2 rounded border-none !important;
+  @apply bg-dark-1! px-3! py-2! rounded! border-none!;
 }
 
 .cron_builder .cron_builder_bordering .tab-pane {
-  @apply text-gray-300 !important;
+  @apply text-gray-300!;
 }
 
 .cron_builder .cron_builder_bordering .container-fluid {
-  @apply text-gray-300 !important;
+  @apply text-gray-300!;
 }
 
 .cron_builder .cron-builder-bg {
-  @apply bg-blurple rounded my-2 !important;
+  @apply bg-blurple! rounded! my-2!;
 }

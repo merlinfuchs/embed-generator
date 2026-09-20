@@ -76,8 +76,8 @@ export function RolesSelect({ guildId, roleIds, onChange }: Props) {
                 <div
                   key={r.id}
                   className={clsx(
-                    "py-2 flex space-x-2 items-center hover:bg-dark-3 hover:bg-opacity-100 rounded cursor-pointer px-3",
-                    roleIds.includes(r.id) && "bg-dark-3 bg-opacity-50",
+                    "py-2 flex space-x-2 items-center hover:bg-dark-3 rounded cursor-pointer px-3",
+                    roleIds.includes(r.id) && "bg-dark-3/50",
                   )}
                   role="button"
                   onClick={() => toggleRole(r.id)}

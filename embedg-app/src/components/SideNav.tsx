@@ -185,7 +185,7 @@ export default function SideNav() {
       </div>
       {!hidden && (
         <div
-          className="fixed inset-0 bg-black z-20 bg-opacity-40"
+          className="fixed inset-0 bg-black/40 z-20"
           onClick={() => setHidden(true)}
         ></div>
       )}
@@ -341,7 +341,7 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
           </>
         )}
         {collapsed && (
-          <div className="hidden group-hover:flex absolute cursor-pointer inset-0 bg-black bg-opacity-30 rounded-full items-center justify-center">
+          <div className="hidden group-hover:flex absolute cursor-pointer inset-0 bg-black/30 rounded-full items-center justify-center">
             <ChevronDownIcon className="text-gray-300 h-8 w-8" />
           </div>
         )}

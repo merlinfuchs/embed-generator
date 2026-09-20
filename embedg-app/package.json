@@ -43,7 +43,7 @@
     "react-textarea-autosize": "^8.4.1",
     "react-twemoji": "^0.5.0",
     "simple-markdown": "^0.7.3",
-    "tailwindcss": "^3.3.1",
+    "tailwindcss": "^4",
     "vaul": "^0.7.0",
     "zod": "^3.21.4",
     "zundo": "^2.1.0",
@@ -51,6 +51,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.14",
+    "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7",
     "@testing-library/react": "^14",
