@@ -13,10 +13,14 @@ const perks = [
 export default function HomePremium(): JSX.Element {
   return (
     <section className="mx-auto max-w-7xl px-5 py-16 md:px-8 lg:py-24">
-      <div className="grid gap-10 rounded-3xl border border-solid border-white/10 bg-[linear-gradient(135deg,#313338_0%,#2B2D31_55%,#2E2A33_100%)] px-6 py-12 md:px-12 lg:grid-cols-2 lg:items-center lg:gap-y-10 lg:px-16 lg:py-14">
-        <div>
+      <div className="relative grid gap-10 overflow-hidden rounded-3xl border border-solid border-amber-400/20 bg-[linear-gradient(135deg,#2B2D31_0%,#33302B_60%,#4A3A1C_100%)] px-6 py-12 md:px-12 lg:grid-cols-2 lg:items-center lg:gap-y-10 lg:px-16 lg:py-14">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-amber-400/25 blur-[110px]"
+        />
+        <div className="relative">
           <h2 className="mb-4 text-3xl font-bold tracking-tight text-mist-100 sm:text-4xl">
-            Want more? Get Premium.
+            Want more? Get <span className="text-amber-300">Premium</span>.
           </h2>
           <p className="mb-8 max-w-md text-lg text-mist-400">
             Unlocks the good stuff for one server.
@@ -32,7 +36,7 @@ export default function HomePremium(): JSX.Element {
             Get Premium
           </a>
         </div>
-        <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 lg:grid-cols-1">
+        <ul className="relative m-0 grid list-none gap-3 p-0 sm:grid-cols-2 lg:grid-cols-1">
           {perks.map((p) => (
             <li key={p} className="flex items-center gap-3 text-mist-300">
               <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-amber-400/15 text-amber-300">
@@ -42,7 +46,7 @@ export default function HomePremium(): JSX.Element {
             </li>
           ))}
         </ul>
-          <div className="flex items-center gap-3 text-sm text-mist-500 lg:col-span-2">
+          <div className="relative flex items-center gap-3 text-sm text-mist-500 lg:col-span-2">
             <img
               src="/img/merlin.webp"
               alt=""
