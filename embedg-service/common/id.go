@@ -10,6 +10,12 @@ import (
 
 type ID = snowflake.ID
 
+func init() {
+	// Discord sends some snowflakes as JSON numbers instead of strings. Without this the whole
+	// event fails to decode ("failed to unquote snowflake") and we silently drop the guild.
+	snowflake.AllowUnquoted = true
+}
+
 type NullID struct {
 	Valid bool
 	ID    ID
