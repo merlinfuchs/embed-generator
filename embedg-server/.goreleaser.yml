@@ -1,7 +1,0 @@
-builds:
-  - binary: embedg-server
-    tags:
-      - embedapp
-      - embedsite
-    ldflags:
-      - -s -w -X github.com/merlinfuchs/embed-generator/embedg-server/buildinfo.version={{.Version}} -X github.com/merlinfuchs/embed-generator/embedg-server/buildinfo.commit={{.Commit}} -X github.com/merlinfuchs/embed-generator/embedg-server/buildinfo.commitDate={{.CommitDate}}

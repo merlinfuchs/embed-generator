@@ -1,0 +1,7 @@
+builds:
+  - binary: embedg-service
+    tags:
+      - embedapp
+      - embedsite
+    ldflags:
+      - -s -w

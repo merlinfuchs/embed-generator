@@ -448,12 +448,12 @@ Two of B9's stray legacy imports had to come along, because they are what stoppe
 
 ### B8. Build and docs
 
-- `Dockerfile`: replace `cd embedg-server && go build --tags "embedapp embedsite"` with the same in `embedg-service`. Check `embedg-service` has the `embed.go`/`noembed.go` build-tag files like `embedg-app` and `embedg-site` do; if the service imports the app/site packages unconditionally, no tags are needed. `COPY --from=builder /root/embedg-service/embedg-service .` and `CMD ./embedg-service migrate up; ./embedg-service server` (check the exact subcommand names in `cmd/`). Drop `build-essential` from the runtime stage, it's not needed to run a static Go binary.
-- `.github/workflows/release.yaml`: `workdir: embedg-service`. Move `.goreleaser.yaml` from `embedg-server` to `embedg-service` and fix the binary name.
+- `Dockerfile`: build `embedg-service` instead of `embedg-server`. The tags stay: `api/routes.go` imports the app and site packages unconditionally and they carry the `embed.go`/`noembed.go` pair. `CMD ./embedg-service database migrate postgres up; ./embedg-service server`, the migrate subcommand sits under `database`. Drop `build-essential` and `gnupg` from the runtime stage, neither is needed to run the binary.
+- `.github/workflows/release.yaml`: `workdir: embedg-service`. Move `.goreleaser.yml` to `embedg-service` and build `embedg-service`. The ldflags lose the `buildinfo` `-X` flags, that package is `embedg-server` only and nothing in the service reads a version.
 - `.github/workflows/docker-push.yaml`: check it builds from the root Dockerfile; usually no change.
 - `go.work`: remove `./embedg-server`.
-- `tygo.yaml`: `path: "github.com/merlinfuchs/embed-generator/embedg-service/api/wire"`. Run `tygo generate` and confirm `embedg-app/src/api/wire.ts` diff is empty or trivial.
-- `README.md` self-hosting section: replace the YAML config block with the TOML equivalent (copy `default.toml` and add the required `discord.*` and `database.*` keys). Add a short "Migrating from embedg-server" note: config is now TOML at `config.toml`, env vars are `EMBEDG_SECTION__KEY`, the database schema is unchanged, run the migrate command once.
+- `tygo.yaml`: `path: "github.com/merlinfuchs/embed-generator/embedg-service/api/wire"` plus `common.ID`, `common.NullID` and `actions.ActionSet` mappings, without which every id degrades to `any`. Generating then leaves one comment's worth of diff (`int32` to `int` on `file_size`), which confirms the hand-edited `wire.ts` was right. It also surfaced `api/wire/health.go`, a dead stateway-shaped shard type with no readers; deleted.
+- `README.md` self-hosting section: the YAML block becomes TOML, at `embedg.toml` rather than `config.toml`, and gains `discord.public_key` and the S3 credentials, all of which are required and none of which the old sample mentioned. Check the block by loading it through `config.LoadConfig` rather than by eye. The migration note covers the renames: `postgres.*` moved under `database`, `log.use_json` became `logging.debug`, `discord.shard_count` is new, and sessions don't survive.
 - `docker-compose.yaml`: env var names to the new format.
 
 Done when: `docker build .` succeeds and the container serves the app on 8080 against the compose Postgres.

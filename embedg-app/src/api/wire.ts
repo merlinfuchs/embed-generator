@@ -194,7 +194,7 @@ export interface ImageWire {
   user_id: string;
   guild_id: null | string;
   file_name: string;
-  file_size: number /* int32 */;
+  file_size: number /* int */;
   cdn_url: string;
 }
 export type UploadImageResponseWire = APIResponse<ImageWire>;
