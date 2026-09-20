@@ -1,4 +1,4 @@
-import { useChildIds, useDocumentStore } from "../state/document";
+import { slotLimit, useChildIds, useDocumentStore } from "../state/document";
 import { slotScope } from "../state/validationError";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { AutoAnimate } from "../util/autoAnimate";
@@ -27,7 +27,7 @@ export default function EditorComponents({
       extra={
         <div className="flex space-x-2">
           <div className="text-sm italic font-light text-gray-400">
-            {components.length} / 5
+            {components.length} / {slotLimit("message", "components")}
           </div>
           <div className="bg-blurple px-1 rounded text-white text-xs items-center flex font-bold">
             ADVANCED
@@ -53,7 +53,7 @@ export default function EditorComponents({
           context="root"
           size="large"
           parentId={rootId}
-          disabled={components.length >= 5}
+          disabled={components.length >= slotLimit("message", "components")}
         />
 
         <button

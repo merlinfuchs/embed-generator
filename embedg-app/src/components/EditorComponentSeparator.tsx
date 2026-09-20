@@ -1,15 +1,13 @@
 import {
-  type FileNode,
+  type SeparatorNode,
   type NodeId,
   useDocumentStore,
   useNode,
   useNodeActions,
 } from "../state/document";
-import { nodeField, nodeScope } from "../state/validationError";
-import { useCurrentAttachmentsStore } from "../state/attachments";
+import { nodeScope } from "../state/validationError";
 import CheckBox from "./CheckBox";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
-import ValidationError from "./ValidationError";
 
 interface Props {
   id: NodeId;
@@ -17,62 +15,55 @@ interface Props {
   size?: "medium" | "large";
 }
 
-export default function EditorComponentBaseFile({
+export default function EditorComponentSeparator({
   id,
-  title = "File",
+  title = "Separator",
   size = "medium",
 }: Props) {
-  const data = useNode<FileNode>(id);
+  const data = useNode<SeparatorNode>(id);
   const actions = useNodeActions(id);
   const { update } = useDocumentStore.getState();
-  const attachments = useCurrentAttachmentsStore((state) => state.attachments);
 
   if (!data) return null;
 
   return (
     <EditorComponentCollapsable
       id={id}
-      validationPathPrefix={nodeScope<FileNode>(id)}
+      validationPathPrefix={nodeScope<SeparatorNode>(id)}
       title={title}
-      size={size}
       {...actions}
+      size={size}
     >
       <div className="space-y-4">
         <div className="flex space-x-3">
           <div className="flex-auto">
             <div className="mb-1.5 flex">
               <div className="uppercase text-gray-300 text-sm font-medium">
-                Attachment
+                Spacing
               </div>
             </div>
             <select
               className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
-              value={data.file.url}
-              onChange={(e) =>
-                update<FileNode>(id, { file: { url: e.target.value } })
+              value={data.spacing.toString()}
+              onChange={(v) =>
+                update<SeparatorNode>(id, {
+                  spacing: parseInt(v.target.value, 10) as any,
+                })
               }
             >
-              {attachments.map((attachment) => (
-                <option
-                  key={attachment.name}
-                  value={`attachment://${attachment.name}`}
-                >
-                  {attachment.name}
-                </option>
-              ))}
-              <option value="">Select Attachment</option>
+              <option value="1">Small</option>
+              <option value="2">Large</option>
             </select>
-            <ValidationError target={nodeField<FileNode>(id, "file.url")} />
           </div>
           <div className="flex-none">
             <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
-              Spoiler
+              Divider
             </div>
             <CheckBox
-              checked={data.spoiler ?? false}
+              checked={data.divider ?? false}
               onChange={(v) =>
-                update<FileNode>(id, {
-                  spoiler: v,
+                update<SeparatorNode>(id, {
+                  divider: v,
                 })
               }
             />

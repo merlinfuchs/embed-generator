@@ -18,7 +18,7 @@ interface Props {
 export default function EditorEmbedField({ id }: Props) {
   const field = useNode<EmbedFieldNode>(id);
   const { index } = useNodeIndex(id);
-  const actions = useNodeActions(id, 25);
+  const actions = useNodeActions(id);
 
   const { update } = useDocumentStore.getState();
 
@@ -30,14 +30,7 @@ export default function EditorEmbedField({ id }: Props) {
       validationPathPrefix={nodeScope<EmbedFieldNode>(id)}
       title={`Field ${index + 1}`}
       className="border-2 border-dark-6 rounded-md p-3"
-      extra={
-        field.name && (
-          <div className="text-gray-500 truncate flex space-x-2 pl-2">
-            <div>-</div>
-            <div className="truncate">{field.name}</div>
-          </div>
-        )
-      }
+      subtitle={field.name}
       {...actions}
     >
       <div className="space-y-3">

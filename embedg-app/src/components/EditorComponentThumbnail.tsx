@@ -1,5 +1,5 @@
 import {
-  type MediaGalleryItemNode,
+  type ThumbnailNode,
   type NodeId,
   useDocumentStore,
   useNode,
@@ -16,13 +16,13 @@ interface Props {
   size?: "medium" | "large";
 }
 
-export default function EditorComponentBaseMediaGalleryItem({
+export default function EditorComponentThumbnail({
   id,
-  title = "Item",
+  title = "Thumbnail",
   size = "medium",
 }: Props) {
-  const data = useNode<MediaGalleryItemNode>(id);
-  const actions = useNodeActions(id, 10);
+  const data = useNode<ThumbnailNode>(id);
+  const actions = useNodeActions(id);
   const { update } = useDocumentStore.getState();
 
   if (!data) return null;
@@ -30,18 +30,11 @@ export default function EditorComponentBaseMediaGalleryItem({
   return (
     <EditorComponentCollapsable
       id={id}
-      validationPathPrefix={nodeScope<MediaGalleryItemNode>(id)}
+      validationPathPrefix={nodeScope<ThumbnailNode>(id)}
       title={title}
-      extra={
-        data.description && (
-          <div className="text-gray-500 truncate flex space-x-2 pl-1">
-            <div>-</div>
-            <div className="truncate">{data.description}</div>
-          </div>
-        )
-      }
       size={size}
       {...actions}
+      subtitle={data.description}
     >
       <div className="space-y-4">
         <div className="flex space-x-3">
@@ -49,14 +42,14 @@ export default function EditorComponentBaseMediaGalleryItem({
             label="File URL"
             value={data.media.url}
             onChange={(v) =>
-              update<MediaGalleryItemNode>(id, {
+              update<ThumbnailNode>(id, {
                 media: {
                   url: v,
                 },
               })
             }
             className="flex-auto"
-            validationPath={nodeField<MediaGalleryItemNode>(id, "media.url")}
+            validationPath={nodeField<ThumbnailNode>(id, "media.url")}
           />
           <div className="flex-none">
             <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
@@ -65,7 +58,7 @@ export default function EditorComponentBaseMediaGalleryItem({
             <CheckBox
               checked={data.spoiler ?? false}
               onChange={(v) =>
-                update<MediaGalleryItemNode>(id, {
+                update<ThumbnailNode>(id, {
                   spoiler: v,
                 })
               }
@@ -77,12 +70,12 @@ export default function EditorComponentBaseMediaGalleryItem({
           maxLength={80}
           value={data.description ?? ""}
           onChange={(v) =>
-            update<MediaGalleryItemNode>(id, {
+            update<ThumbnailNode>(id, {
               description: v,
             })
           }
           className="flex-auto"
-          validationPath={nodeField<MediaGalleryItemNode>(id, "description")}
+          validationPath={nodeField<ThumbnailNode>(id, "description")}
         />
       </div>
     </EditorComponentCollapsable>

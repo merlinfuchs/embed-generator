@@ -12,6 +12,8 @@ interface Props {
   validationPathPrefix?: ValidationScope;
   title: string;
   extra?: React.ReactNode;
+  /** Shown after the title as `- <subtitle>`, truncated. */
+  subtitle?: string;
   className?: string;
   style?: React.CSSProperties;
   children: React.ReactNode;
@@ -32,6 +34,7 @@ export default function EditorComponentCollapsable({
   remove,
   title,
   extra,
+  subtitle,
   className,
   style,
   children,
@@ -44,7 +47,16 @@ export default function EditorComponentCollapsable({
         id={id}
         validationPathPrefix={validationPathPrefix}
         title={title}
-        extra={extra}
+        extra={
+          subtitle ? (
+            <div className="text-gray-500 truncate flex space-x-2 pl-1">
+              <div>-</div>
+              <div className="truncate">{subtitle}</div>
+            </div>
+          ) : (
+            extra
+          )
+        }
         size={size}
         defaultCollapsed={defaultCollapsed}
         buttons={

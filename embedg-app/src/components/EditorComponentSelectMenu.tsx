@@ -4,19 +4,21 @@ import {
   useChildIds,
   useDocumentStore,
   useNode,
+  slotLimit,
 } from "../state/document";
 import { nodeField, slotScope } from "../state/validationError";
 import { AutoAnimate } from "../util/autoAnimate";
 import CheckBox from "./CheckBox";
 import Collapsable from "./Collapsable";
-import EditorComponentBaseSelectMenuOption from "./EditorComponentBaseSelectMenuOption";
+import EditorSlotButtons from "./EditorSlotButtons";
+import EditorComponentSelectMenuOption from "./EditorComponentSelectMenuOption";
 import EditorInput from "./EditorInput";
 
 interface Props {
   id: NodeId;
 }
 
-export default function EditorComponentBaseSelectMenu({ id }: Props) {
+export default function EditorComponentSelectMenu({ id }: Props) {
   const data = useNode<SelectMenuNode>(id);
   const optionIds = useChildIds(id, "options");
   const { update, insert, removeChildren } = useDocumentStore.getState();
@@ -54,44 +56,22 @@ export default function EditorComponentBaseSelectMenu({ id }: Props) {
         <AutoAnimate className="space-y-2">
           {optionIds.map((optionId, i) => (
             <div key={optionId}>
-              <EditorComponentBaseSelectMenuOption
+              <EditorComponentSelectMenuOption
                 id={optionId}
                 title={`Option ${i + 1}`}
               />
             </div>
           ))}
         </AutoAnimate>
-        <div className="space-x-3 mt-3">
-          {optionIds.length < 25 ? (
-            <button
-              type="button"
-              className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white"
-              onClick={() =>
-                insert(id, "options", "end", {
-                  type: "selectOption",
-                  label: "",
-                })
-              }
-            >
-              Add Option
-            </button>
-          ) : (
-            <button
-              type="button"
-              disabled
-              className="bg-dark-2 px-3 py-2 rounded transition-colors cursor-not-allowed text-gray-300"
-            >
-              Add Option
-            </button>
-          )}
-          <button
-            type="button"
-            className="px-3 py-2 rounded border-2 border-red hover:bg-red transition-colors text-white"
-            onClick={() => removeChildren(id, "options")}
-          >
-            Clear Options
-          </button>
-        </div>
+        <EditorSlotButtons
+          addLabel="Add Option"
+          clearLabel="Clear Options"
+          canAdd={optionIds.length < slotLimit("selectMenu", "options")}
+          onAdd={() =>
+            insert(id, "options", "end", { type: "selectOption", label: "" })
+          }
+          onClear={() => removeChildren(id, "options")}
+        />
       </Collapsable>
     </div>
   );
