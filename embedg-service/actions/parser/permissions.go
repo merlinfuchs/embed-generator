@@ -20,9 +20,9 @@ func (m *ActionParser) DerivePermissionsForActions(ctx context.Context, member d
 	}
 
 	if channelID != 0 {
-		channel, ok := m.caches.Channel(channelID)
-		if !ok {
-			return res, fmt.Errorf("channel not found in cache")
+		channel, err := m.guildState.Channel(ctx, channelID)
+		if err != nil {
+			return res, fmt.Errorf("failed to get channel: %w", err)
 		}
 
 		if channel.GuildID() != guildID {
@@ -30,12 +30,12 @@ func (m *ActionParser) DerivePermissionsForActions(ctx context.Context, member d
 		}
 	}
 
-	guild, ok := m.caches.Guild(guildID)
-	if !ok {
-		return res, fmt.Errorf("guild not found in cache")
+	state, err := m.guildState.Guild(ctx, guildID)
+	if err != nil {
+		return res, fmt.Errorf("failed to get guild: %w", err)
 	}
 
-	res.GuildIsOwner = guild.OwnerID == userID
+	res.GuildIsOwner = state.Guild.OwnerID == userID
 
 	if channelID != 0 {
 		channelPermissions, err := m.accessManager.ComputeMemberPermissionsForChannel(ctx, member, channelID)
@@ -47,21 +47,22 @@ func (m *ActionParser) DerivePermissionsForActions(ctx context.Context, member d
 
 	highestRolePosition := 0
 
-	defaultRole, ok := m.caches.Role(guildID, guildID)
+	// The @everyone role has the guild's id.
+	defaultRole, ok := state.Role(guildID)
 	if ok {
 		highestRolePosition = defaultRole.Position
 		res.GuildPermissions = uint64(defaultRole.Permissions)
 	}
 
 	for _, roleID := range member.RoleIDs {
-		role, ok := m.caches.Role(guildID, roleID)
+		role, ok := state.Role(roleID)
 		if ok && role.Position > highestRolePosition {
 			highestRolePosition = role.Position
 			res.GuildPermissions |= uint64(role.Permissions)
 		}
 	}
 
-	for role := range m.caches.Roles(guildID) {
+	for _, role := range state.Roles {
 		if role.Position < highestRolePosition {
 			res.AllowedRoleIDs = append(res.AllowedRoleIDs, role.ID)
 		}
