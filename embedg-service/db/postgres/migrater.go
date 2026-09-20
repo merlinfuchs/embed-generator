@@ -71,14 +71,11 @@ func (pgs *Client) GetMigrater() (*Migrater, error) {
 	}
 	defer db.Close()
 
-	_, err = db.Exec("CREATE SCHEMA IF NOT EXISTS gateway")
-	if err != nil {
-		return nil, fmt.Errorf("failed to create gateway schema: %w", err)
-	}
-
-	driver, err := postgres.WithInstance(db, &postgres.Config{
-		SchemaName: "gateway",
-	})
+	// The migrations create their tables in the connection's schema, so the version has to be
+	// tracked there too. A leftover from the Stateway fork tracked it in a "gateway" schema
+	// instead, which reads as version 0 against a database that is already migrated and replays
+	// everything from the start.
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to open postgres migration: %w", err)
 	}
