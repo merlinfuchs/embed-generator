@@ -204,10 +204,7 @@ export default function HomeShowcase(): JSX.Element {
     if (!track || !el) return;
     lockUntil.current = Date.now() + 800;
     setIndex(i);
-    track.scrollTo({
-      top: el.offsetTop - (track.clientHeight - el.offsetHeight) / 2,
-      behavior: "smooth",
-    });
+    track.scrollTo({ top: el.offsetTop, behavior: "smooth" });
   };
 
   React.useEffect(() => {
@@ -223,11 +220,11 @@ export default function HomeShowcase(): JSX.Element {
     if (Date.now() < lockUntil.current) return;
     const track = trackRef.current;
     if (!track) return;
-    const mid = track.scrollTop + track.clientHeight / 2;
+    const top = track.scrollTop + 40;
     let best = 0;
     let bestDist = Infinity;
     slideEls().forEach((el, i) => {
-      const d = Math.abs(el.offsetTop + el.offsetHeight / 2 - mid);
+      const d = Math.abs(el.offsetTop - top);
       if (d < bestDist) {
         bestDist = d;
         best = i;
@@ -558,22 +555,21 @@ export default function HomeShowcase(): JSX.Element {
               onScroll={onScroll}
               onWheel={() => setTouched(true)}
               onTouchMove={() => setTouched(true)}
-              className="relative h-[520px] snap-y snap-mandatory overflow-y-auto [mask-image:linear-gradient(to_bottom,transparent,black_12%,black_88%,transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="relative h-[560px] snap-y snap-mandatory overflow-y-auto [mask-image:linear-gradient(to_bottom,black_80%,transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
-              <div aria-hidden className="h-40" />
               {features.map((f, i) => (
                 <div
                   key={f.id}
                   data-slide
                   className={[
-                    "snap-center py-6 transition-opacity duration-500",
+                    "snap-start pb-10 pt-1 transition-opacity duration-500",
                     index === i ? "opacity-100" : "opacity-25",
                   ].join(" ")}
                 >
                   {slides[f.id]}
                 </div>
               ))}
-              <div aria-hidden className="h-40" />
+              <div aria-hidden className="h-[400px]" />
             </div>
             <div className="flex items-center justify-between border-0 border-t border-solid border-white/5 pt-3 text-xs">
               <a
