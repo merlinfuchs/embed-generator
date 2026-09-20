@@ -53,6 +53,9 @@ type DiscordConfig struct {
 	ClientSecret string `toml:"client_secret" validate:"required"`
 	PublicKey    string `toml:"public_key" validate:"required"`
 	RestURL      string `toml:"rest_url"`
+	// ActivityName is what the bot shows as "Watching <name>". Empty leaves it without a
+	// presence.
+	ActivityName string `toml:"activity_name"`
 	// ShardCount is 0 to use the count Discord recommends for this bot, which is what a self
 	// hoster wants and what keeps a growing bot from outgrowing a hardcoded number. Every
 	// instance of a deployment has to agree on it, so pin it once you run more than one.

@@ -44,6 +44,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		Token:               discordCfg.Token,
 		Shards:              shards,
 		IdentifyConcurrency: discordCfg.IdentifyConcurrency,
+		ActivityName:        discordCfg.ActivityName,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create embedg: %w", err)
