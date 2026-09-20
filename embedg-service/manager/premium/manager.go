@@ -19,6 +19,7 @@ type Config struct {
 
 type PremiumManager struct {
 	config              Config
+	shards              common.Shards
 	rest                rest.Rest
 	entitlementStore    store.EntitlementStore
 	appContext          store.AppContext
@@ -27,6 +28,7 @@ type PremiumManager struct {
 
 func NewPremiumManager(
 	config Config,
+	shards common.Shards,
 	rest rest.Rest,
 	entitlementStore store.EntitlementStore,
 	appContext store.AppContext,
@@ -40,6 +42,7 @@ func NewPremiumManager(
 
 	return &PremiumManager{
 		config:              config,
+		shards:              shards,
 		rest:                rest,
 		entitlementStore:    entitlementStore,
 		appContext:          appContext,
@@ -47,7 +50,13 @@ func NewPremiumManager(
 	}
 }
 
+// Run keeps entitlements and premium roles in sync. Both sweep everything rather than a shard
+// range, so only the leader runs them.
 func (m *PremiumManager) Run(ctx context.Context) {
+	if !m.shards.IsLeader() {
+		return
+	}
+
 	entitlementTicker := time.NewTicker(time.Minute * 5)
 	defer entitlementTicker.Stop()
 

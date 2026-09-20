@@ -26,7 +26,6 @@ require (
 	github.com/merlinfuchs/discordgo v0.0.0-20251108151703-8f057be56eb6
 	github.com/merlinfuchs/embed-generator/embedg-app v0.0.0
 	github.com/merlinfuchs/embed-generator/embedg-site v0.0.0
-	github.com/merlinfuchs/stateway/stateway-lib v0.0.0-20251129112323-227c71735bd5
 	github.com/minio/minio-go/v7 v7.0.97
 	github.com/pelletier/go-toml/v2 v2.2.4
 	github.com/ravener/discord-oauth2 v0.0.0-20230514095040-ae65713199b3
@@ -71,9 +70,6 @@ require (
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
-	github.com/nats-io/nats.go v1.47.0 // indirect
-	github.com/nats-io/nkeys v0.4.11 // indirect
-	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect

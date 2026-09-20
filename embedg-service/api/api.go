@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/disgoorg/disgo/rest"
+	"github.com/disgoorg/disgo/sharding"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/merlinfuchs/embed-generator/embedg-service/access"
@@ -105,6 +106,7 @@ type Env struct {
 	ActionParser          *parser.ActionParser
 	ActionHandler         *handler.ActionHandler
 	Rest                  rest.Rest
+	ShardManager          sharding.ShardManager
 	OpenAIClient          *openai.Client
 	FileStore             store.FileStore
 	AppContext            store.AppContext

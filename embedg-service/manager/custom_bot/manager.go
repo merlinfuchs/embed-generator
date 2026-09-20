@@ -27,7 +27,8 @@ const (
 
 type CustomBotManager struct {
 	store.CustomBotStore
-	rest disrest.Rest
+	rest   disrest.Rest
+	shards common.Shards
 
 	syncRequests chan struct{}
 
@@ -38,10 +39,12 @@ type CustomBotManager struct {
 func NewCustomBotManager(
 	customBotStore store.CustomBotStore,
 	rest disrest.Rest,
+	shards common.Shards,
 ) *CustomBotManager {
 	return &CustomBotManager{
 		CustomBotStore: customBotStore,
 		rest:           rest,
+		shards:         shards,
 		syncRequests:   make(chan struct{}, 1),
 		bots:           make(map[common.ID]*runningBot),
 	}
@@ -106,7 +109,7 @@ func (m *CustomBotManager) syncCustomBots(ctx context.Context) error {
 	wanted := make(map[common.ID]struct{}, len(customBots))
 	for i := range customBots {
 		customBot := customBots[i]
-		if !customBot.TokenUsable() {
+		if !customBot.TokenUsable() || !m.shards.Owns(customBot.GuildID) {
 			continue
 		}
 		if _, ok := wanted[customBot.ApplicationID]; ok {

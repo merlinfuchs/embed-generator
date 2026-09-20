@@ -6,24 +6,23 @@ import (
 
 	"github.com/disgoorg/disgo"
 	"github.com/disgoorg/disgo/bot"
+	"github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/disgo/gateway"
 	disrest "github.com/disgoorg/disgo/rest"
+	"github.com/disgoorg/disgo/sharding"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
 	"github.com/merlinfuchs/embed-generator/embedg-service/embedg/rest"
-	"github.com/merlinfuchs/stateway/stateway-lib/broker"
-	"github.com/merlinfuchs/stateway/stateway-lib/compat"
 )
 
 type EmbedGeneratorConfig struct {
-	Token        string
-	BrokerURL    string
-	GatewayCount int
-	DiscordLink  string
+	Token       string
+	Shards      common.Shards
+	DiscordLink string
 }
 
 type EmbedGenerator struct {
 	client *bot.Client
-	broker broker.Broker
 	config EmbedGeneratorConfig
 }
 
@@ -31,35 +30,20 @@ func NewEmbedGenerator(
 	ctx context.Context,
 	config EmbedGeneratorConfig,
 ) (*EmbedGenerator, error) {
-	br, err := broker.NewNATSBroker(config.BrokerURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create NATS broker: %w", err)
-	}
-
-	compatGateway := compat.NewDisgoGateway(br, compat.DisgoGatewayConfig{
-		GatewayCount: config.GatewayCount,
-		// We don't want to listen for events by custom bots
-		GroupIDs: []string{"default"},
-		EventTypes: []string{
-			"guild.create",
-			"guild.update",
-			"guild.delete",
-			"guild.role.create",
-			"guild.role.update",
-			"guild.role.delete",
-			"message.delete",
-			"channel.create",
-			"channel.update",
-			"channel.delete",
-			"webhooks.update",
-			"interaction.>",
-			"entitlement.>",
-		},
-	})
-
 	client, err := disgo.New(
 		config.Token,
-		bot.WithGateway(compatGateway),
+		bot.WithShardManagerConfigOpts(
+			sharding.WithShardCount(config.Shards.Count),
+			sharding.WithShardIDs(config.Shards.All()...),
+			sharding.WithGatewayConfigOpts(gateway.WithIntents(
+				// Guilds covers the guild, channel and role events the guild table and the guild
+				// state provider are kept fresh by; GuildMessages is only for message deletes.
+				gateway.IntentGuilds|gateway.IntentGuildMessages,
+			)),
+		),
+		// No guild, channel or role cache: 250k guilds would be around 9 GB. Reads go through
+		// the guild state provider instead.
+		bot.WithCacheConfigOpts(cache.WithCaches(cache.FlagsNone)),
 		bot.WithEventManagerConfigOpts(bot.WithAsyncEventsEnabled()),
 		bot.WithRest(rest.NewRestClient(config.Token)),
 	)
@@ -67,15 +51,10 @@ func NewEmbedGenerator(
 		return nil, fmt.Errorf("failed to create Discord client: %w", err)
 	}
 
-	compatGateway.EventHandlerFunc = client.EventManager.HandleGatewayEvent
-
-	embedg := &EmbedGenerator{
+	return &EmbedGenerator{
 		client: client,
-		broker: br,
 		config: config,
-	}
-
-	return embedg, nil
+	}, nil
 }
 
 func (g *EmbedGenerator) Client() *bot.Client {
@@ -86,8 +65,16 @@ func (g *EmbedGenerator) Rest() disrest.Rest {
 	return g.client.Rest
 }
 
+func (g *EmbedGenerator) ShardManager() sharding.ShardManager {
+	return g.client.ShardManager
+}
+
 func (g *EmbedGenerator) Open(ctx context.Context) error {
-	return g.client.OpenGateway(ctx)
+	return g.client.OpenShardManager(ctx)
+}
+
+func (g *EmbedGenerator) Close(ctx context.Context) {
+	g.client.Close(ctx)
 }
 
 func (g *EmbedGenerator) AppInviteURL() string {

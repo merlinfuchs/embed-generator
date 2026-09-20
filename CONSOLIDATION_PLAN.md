@@ -359,17 +359,18 @@ Purpose: embedg-service owns the gateway. Stateway is gone. Multi-instance by sh
 **Config** `config/model.go`:
 
 - Delete `BrokerConfig`, `NATSConfig`, and `RootConfig.Broker`.
-- `DiscordConfig` gains `ShardCount int \`toml:"shard_count" validate:"required"\`` and `ShardIDs []int \`toml:"shard_ids"\``. Shard count is required and explicit so every instance agrees on it; at 250k guilds it's around 250. Empty `ShardIDs` means "all shards of this count", which is the single-instance deployment.
-- `default.toml`: delete `[broker]` and `[broker.nats]`.
+- `DiscordConfig` gains `ShardCount int \`toml:"shard_count" validate:"required,min=1"\`` and `ShardIDs []int \`toml:"shard_ids"\``. Shard count is required and explicit so every instance agrees on it; at 250k guilds it's around 250. Empty `ShardIDs` means "all shards of this count", which is the single-instance deployment.
+- `default.toml`: delete `[broker]` and `[broker.nats]`. Don't put a `shard_count` default there. `default.toml` is embedded and applies to every deployment, so a default would make the required tag unreachable and hand production a single shard, which Discord refuses with a 4011 once you're past a few thousand guilds. Local dev sets it in `embedg.toml` next to the token.
 
-Add a helper:
+The ownership rule lives in `common.Shards{Count, IDs}` rather than on `DiscordConfig`, with `DiscordConfig.Shards()` building it. Managers take the value, so nothing under `manager/` has to import `config`, and the arithmetic is unit tested:
 
 ```go
-func (c DiscordConfig) IsLeader() bool  // ShardIDs empty (single instance) or contains 0
-func (c DiscordConfig) OwnsGuild(guildID common.ID) bool // (guildID >> 22) % ShardCount in ShardIDs; true if ShardIDs empty
+func (s Shards) All() []int              // IDs, or every shard of Count for a single instance
+func (s Shards) Owns(guildID ID) bool    // (guildID >> 22) % Count in IDs; true if IDs is empty
+func (s Shards) IsLeader() bool          // IDs empty or contains 0
 ```
 
-**Gateway** `embedg/embedg.go`. Replace the constructor body:
+**Gateway** `embedg/embedg.go`. The compat gateway, the NATS broker and the stateway imports all go; the constructor body becomes:
 
 ```go
 opts := []bot.ConfigOpt{
@@ -395,38 +396,32 @@ client, err := disgo.New(config.Token, opts...)
 
 If the message content intent is needed for restore-by-id, add `gateway.IntentMessageContent`; check `api/handlers/send_message/restore.go` first, it may use REST which doesn't need the intent.
 
-Delete the `broker` field and its accessor; `gateway`, `cache` and `compatCaches` went in B5 and B6. `Caches()` returns `g.client.Caches`. Delete `EmbedGeneratorConfig.BrokerURL` and `GatewayCount`. Add `ShardCount`, `ShardIDs`. Add:
+Delete the `broker` field and its accessor; `gateway`, `cache` and `compatCaches` went in B5 and B6. Delete `EmbedGeneratorConfig.BrokerURL` and `GatewayCount`, add `Shards common.Shards`. `Open` becomes `OpenShardManager`, and a `Close` lets the server shut the shards down on the way out. Add:
 
 ```go
 func (g *EmbedGenerator) ShardManager() sharding.ShardManager { return g.client.ShardManager }
 ```
 
-**Wiring** `entry/server/server.go` and `api/api.go`: remove `Gateway` from `api.Env` and the `embedg.Gateway()` argument. Pass `cfg.Discord` (for `IsLeader`/`OwnsGuild`) to the scheduled message manager, custom bot manager, premium manager, and command handler.
+**Wiring** `entry/server/server.go` and `api/api.go`: `api.Env` swaps `Gateway` (already gone in B6) for `ShardManager`. The `common.Shards` value goes to the scheduled message manager, the custom bot manager and the premium manager. The command handler doesn't need it: it only reacts to interactions, which Discord already routes to the shard that owns the guild.
 
 **Shard range filters.**
 
 - `manager/scheduled_message/manager.go` `Run`: after `GetDueScheduledMessages`, skip messages where `!cfg.OwnsGuild(msg.GuildID)`. Do the filter in Go, not SQL, so the query stays simple. Under 100k rows this is fine; if it ever isn't, add `WHERE (guild_id >> 22) % $2 = ANY($3)`.
 - `manager/custom_bot/manager.go` `syncCustomBots`: only start bots where `cfg.OwnsGuild(customBot.GuildID)`; a guild this instance doesn't own drops out of the wanted set and gets stopped by the existing reconcile step.
 
-**Leader gate.** Only when `cfg.IsLeader()`:
+**Leader gate.** `PremiumManager.Run` returns immediately unless `shards.IsLeader()`. Both of its tickers (entitlements and premium roles) sweep everything rather than a shard range, so running them on every instance would be N copies of the same work. The entitlement event listener stays registered everywhere; Discord only delivers those to shard 0 anyway, and the per-request plan lookups are unaffected.
 
-- `command.SyncCommands` at startup (find the call in `entry/server/server.go`).
-- `premiumManager.SyncEntitlements` at startup. The entitlement events listener can stay registered everywhere, Discord only delivers them to shard 0 anyway.
-- DB backup cron if one runs inside the server process (check `entry/database/backup.go` and where it's invoked).
+Nothing else needs the gate. `command.SyncCommands` is only reachable from the admin CLI, not from server startup, and the database backup is a CLI subcommand too, not a cron inside the server.
 
-**Health** `api/handlers/health/handler.go`: `New(shardManager sharding.ShardManager)`. Add:
+**Health** `api/handlers/health/handler.go`: `New(shardManager sharding.ShardManager)`, and `GET /api/health/shards` returns `[{"id": 0, "status": "Ready", "latency_ms": 42}, ...]`. `HandleHealth` returns 503 while any shard this instance owns is not `StatusReady`, so a rolling deploy waits for the shards to identify. `sharding.ShardManager.Shards()` is an `iter.Seq[gateway.Gateway]`, so range over it with one variable.
 
-```go
-// GET /api/health/shard-list
-func (h *HealthHandler) HandleShardList(c *fiber.Ctx) error
-// returns [{"id": 0, "status": "Ready", "latency_ms": 42}, ...] from shardManager.Shards()
-```
+**Stateway removal.** `go mod tidy` once the imports are gone; stateway and the three NATS modules drop out. `grep -r stateway embedg-service` must be empty. Update `embedg-service/README.md` to drop the Stateway sentence. Delete `cmd/root.go` references to `stateway-gateway` (the CLI app name is wrong there anyway, make it `embedg`).
 
-`gateway.Gateway` has `ShardID()`, `Status()`, `Latency()`. Register the route in `api/routes.go` next to the existing health route. `HandleHealth` should return 503 if any owned shard is not `StatusReady`.
+Two of B9's stray legacy imports had to come along, because they are what stopped `go mod tidy` from running clean: `entry/database/migrate.go` read `viper.GetBool("debug")` (always false, this service configures through koanf) and now reads `cfg.Logging.Debug`, and `command/cmd_message.go` pulled `embedg-server/util` for `UniqueID` and `CreateVaultBinPaste`. The first is `common.InternalID`, the second moved to `common/vaultbin.go` with its ignored errors and leaked response body fixed. That takes `viper` and the `embedg-server` module itself out of `embedg-service`'s go.mod; `discordgo` is still in there for `common/guilded.go` and the custom command handler.
 
-**Stateway removal.** `go get github.com/merlinfuchs/stateway/stateway-lib@none && go mod tidy`. `grep -r stateway embedg-service` must be empty. Update `embedg-service/README.md` to drop the Stateway sentence. Delete `cmd/root.go` references to `stateway-gateway` (the CLI app name is wrong there anyway, make it `embedg`).
+**Event invalidation.** Already done in B5: `guildstate/listener.go` invalidates on guild, channel and role events, all covered by the Guilds intent.
 
-**Event invalidation.** The `GuildTracker` from B2 (or a sibling listener) calls `guildstate.Provider.Invalidate(guildID)` on `GuildChannelCreate`, `GuildChannelUpdate`, `GuildChannelDelete`, `GuildRoleCreate`, `GuildRoleUpdate`, `GuildRoleDelete`, `GuildUpdate`. All covered by the Guilds intent.
+**Intents.** `IntentGuilds` for the guild, channel and role events the guild table and the state provider live on, plus `IntentGuildMessages` for the message deletes that clean up action sets. Not `IntentGuildWebhooks`: `WebhookManager.OnEvent` is empty, nothing subscribes to webhook updates. Not `IntentMessageContent` either, restore-by-id goes through REST.
 
 **Deploy.** Big bang, single instance, `shard_count` set, no `shard_ids`. Expect boot to take one to two minutes for all shards to identify. Rollback is the previous image; no migration in this step.
 
