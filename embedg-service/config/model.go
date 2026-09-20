@@ -53,9 +53,14 @@ type DiscordConfig struct {
 	ClientSecret string `toml:"client_secret" validate:"required"`
 	PublicKey    string `toml:"public_key" validate:"required"`
 	RestURL      string `toml:"rest_url"`
-	// ShardCount defaults to 1 for self hosting. Every instance of a deployment has to agree on
-	// it, and Discord rejects a count that is too low for the number of guilds.
-	ShardCount int `toml:"shard_count" validate:"min=1"`
+	// ShardCount is 0 to use the count Discord recommends for this bot, which is what a self
+	// hoster wants and what keeps a growing bot from outgrowing a hardcoded number. Every
+	// instance of a deployment has to agree on it, so pin it once you run more than one.
+	ShardCount int `toml:"shard_count" validate:"min=0"`
+	// IdentifyConcurrency is how many shards may identify per five second window. 0 uses what
+	// Discord grants this bot. Lowering it spreads the guild burst at boot, which is worth doing
+	// if the process can't keep up with the events while all the shards come up.
+	IdentifyConcurrency int `toml:"identify_concurrency" validate:"min=0"`
 	// ShardIDs is empty for a single instance that runs every shard. Prefer InstanceCount and
 	// InstanceIndex below unless you need an irregular split.
 	ShardIDs []int `toml:"shard_ids"`
@@ -83,7 +88,7 @@ func (c DiscordConfig) validateShards() error {
 		if c.InstanceIndex >= c.InstanceCount {
 			return fmt.Errorf("discord.instance_index %d is outside instance_count %d", c.InstanceIndex, c.InstanceCount)
 		}
-		if c.InstanceCount > c.ShardCount {
+		if c.ShardCount > 0 && c.InstanceCount > c.ShardCount {
 			return fmt.Errorf("discord.instance_count %d is above shard_count %d, so some instances would run no shards", c.InstanceCount, c.ShardCount)
 		}
 		if len(c.ShardIDs) != 0 && c.InstanceCount > 1 {
