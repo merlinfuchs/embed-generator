@@ -1,50 +1,34 @@
 import debounce from "just-debounce-it";
 import { useEffect, useMemo, useState } from "react";
 import { defaultMessage } from "../discord/defaultMessage";
+import { parseMessageWithAction } from "../discord/restoreSchema";
 import type { Message } from "../discord/schema";
-import { type NodeId, persistedDocument, useDocumentStore } from "./document";
+import {
+  MESSAGE_STORE_KEY,
+  type NodeId,
+  persistedDocument,
+  useDocumentStore,
+} from "./document";
 import { toMessage } from "./documentConvert";
-import { useCurrentMessageStore } from "./message";
 
-/**
- * Embeds, components and their action sets live in the document store; the
- * root fields are still in `message.ts`. Both halves are merged here until the
- * rest moves over.
- */
 export function getCurrentMessage(): Message {
   return getCurrentDocument().message;
 }
 
-/** The merged message together with the node ids of its embeds. */
+/** The message together with the node ids of the values inside it. */
 export function getCurrentDocument(): {
   message: Message;
   idToPath: Map<NodeId, string>;
 } {
-  const converted = toMessage(useDocumentStore.getState());
-  const root = useCurrentMessageStore.getState();
+  const { message, idToPath } = toMessage(useDocumentStore.getState());
 
-  return {
-    message: {
-      content: root.content,
-      username: root.username,
-      avatar_url: root.avatar_url,
-      tts: root.tts,
-      thread_name: root.thread_name,
-      flags: root.flags,
-      allowed_mentions: root.allowed_mentions,
-      embeds: converted.message.embeds,
-      components: converted.message.components,
-      actions: converted.message.actions,
-    },
-    idToPath: converted.idToPath,
-  };
+  return { message, idToPath };
 }
 
 /**
- * The merged message and its node ids, at most once per `wait` milliseconds.
+ * The message and its node ids, at most once per `wait` milliseconds.
  * Subscribing instead of selecting keeps a keystroke from re-rendering
- * everything that reads the message, and both halves come from one conversion
- * so the ids always describe the message that was validated.
+ * everything that reads the message.
  */
 export function useDebouncedCurrentDocument(wait: number) {
   const [document, setDocument] = useState<ReturnType<
@@ -61,22 +45,13 @@ export function useDebouncedCurrentDocument(wait: number) {
   useEffect(() => {
     update();
 
-    const unsubscribers = [
-      useCurrentMessageStore.subscribe(update),
-      useDocumentStore.subscribe(update),
-    ];
-
-    return () => {
-      for (const unsubscribe of unsubscribers) unsubscribe();
-    };
+    return useDocumentStore.subscribe(update);
   }, [update]);
 
   return document;
 }
 
-/** Writes a whole message back into both stores. */
 export function setCurrentMessage(message: Message) {
-  useCurrentMessageStore.getState().replace(message);
   useDocumentStore.getState().replaceAll(message);
 }
 
@@ -84,31 +59,45 @@ export function clearCurrentMessage() {
   setCurrentMessage(defaultMessage);
 }
 
-/**
- * The Components V2 toggle replaces the message rather than editing it, so the
- * document store has to follow the message store instead of keeping its embeds.
- */
-export function setComponentsV2Enabled(enabled: boolean) {
-  useCurrentMessageStore.getState().setComponentsV2Enabled(enabled);
-  useDocumentStore.getState().replaceAll(useCurrentMessageStore.getState());
+/** The draft the message store used to own, straight out of storage. */
+function legacyDraft(): Message | null {
+  if (typeof localStorage === "undefined") return null;
+
+  const raw = localStorage.getItem(MESSAGE_STORE_KEY);
+  if (!raw) return null;
+
+  try {
+    return parseMessageWithAction(JSON.parse(raw).state);
+  } catch (e) {
+    console.error("failed to read the draft from the message store", e);
+    return null;
+  }
 }
 
 /**
- * Hands a draft over to the document store as it takes ownership of more of
- * the message. Version 0 predates the store entirely; version 1 owned the
- * embeds but left components and action sets to the message store, so its
- * copy of those is stale. The message store rehydrates synchronously, so its
- * state is the parsed draft by now.
+ * Takes over whatever the message store still owned, which depends on how far
+ * the document store had got when the draft was last written: version 1 owned
+ * only the embeds, version 2 the components and action sets as well, and
+ * version 3 owns the whole message.
  */
 export function seedDocumentStore() {
   const persisted = persistedDocument();
   if (persisted === "current") return;
 
-  // Version 1 owns the embeds, so they are the one part of the draft in the
-  // message store that is stale. Anything older owns nothing.
-  const draft = useCurrentMessageStore.getState();
-  const embeds =
-    persisted === "none" ? draft.embeds : getCurrentDocument().message.embeds;
+  const draft = legacyDraft();
+  if (!draft) return;
 
-  useDocumentStore.getState().replaceAll({ ...draft, embeds });
+  const current = getCurrentDocument().message;
+  const owned =
+    persisted === "none"
+      ? {}
+      : persisted === 1
+        ? { embeds: current.embeds }
+        : {
+            embeds: current.embeds,
+            components: current.components,
+            actions: current.actions,
+          };
+
+  useDocumentStore.getState().replaceAll({ ...draft, ...owned });
 }

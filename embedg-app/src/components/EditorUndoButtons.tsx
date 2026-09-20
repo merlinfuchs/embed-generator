@@ -3,24 +3,20 @@ import {
   ArrowUturnRightIcon,
 } from "@heroicons/react/20/solid";
 import { useEffect } from "react";
-import {
-  pauseHistory,
-  redoAll,
-  resumeHistory,
-  undoAll,
-  useHasFutureStates,
-  useHasPastStates,
-} from "../state/history";
-import { useCurrentMessageUndoStore } from "../state/message";
+import { useDocumentStore, useDocumentUndoStore } from "../state/document";
 import { useSettingsStore } from "../state/settings";
 import EditorIconButton from "./EditorIconButton";
 
 export default function EditorUndoButtons() {
   const historyEnabled = useSettingsStore((s) => s.editHistoryEnabled);
 
-  const isTracking = useCurrentMessageUndoStore((s) => s.isTracking);
-  const hasPastStates = useHasPastStates();
-  const hasFutureStates = useHasFutureStates();
+  const { undo, redo, pause, resume } = useDocumentStore.temporal.getState();
+
+  const isTracking = useDocumentUndoStore((s) => s.isTracking);
+  const hasPastStates = useDocumentUndoStore((s) => s.pastStates.length !== 0);
+  const hasFutureStates = useDocumentUndoStore(
+    (s) => s.futureStates.length !== 0,
+  );
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -28,24 +24,24 @@ export default function EditorUndoButtons() {
 
       if (e.key === "z" || e.key === "Z") {
         e.preventDefault();
-        e.shiftKey ? redoAll() : undoAll();
+        e.shiftKey ? redo(1) : undo(1);
       } else if (e.key === "y") {
         e.preventDefault();
-        redoAll();
+        redo(1);
       }
     }
 
     if (historyEnabled) {
-      resumeHistory();
+      resume();
       document.addEventListener("keydown", onKeyDown);
     } else {
-      pauseHistory();
+      pause();
     }
 
     return () => {
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [historyEnabled]);
+  }, [historyEnabled, pause, resume, undo, redo]);
 
   if (!isTracking) {
     return null;
@@ -54,14 +50,14 @@ export default function EditorUndoButtons() {
   return (
     <>
       <EditorIconButton
-        onClick={undoAll}
+        onClick={() => undo(1)}
         label="Undo"
         disabled={!hasPastStates}
       >
         <ArrowUturnLeftIcon />
       </EditorIconButton>
       <EditorIconButton
-        onClick={redoAll}
+        onClick={() => redo(1)}
         label="Redo"
         disabled={!hasFutureStates}
       >

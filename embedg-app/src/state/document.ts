@@ -16,7 +16,10 @@ import type {
   MessageComponentButtonStyle,
   UnfurledMediaItem,
 } from "../discord/schema";
-import { defaultMessage } from "../discord/defaultMessage";
+import {
+  defaultMessage,
+  emptyComponentsV2Message,
+} from "../discord/defaultMessage";
 import { getUniqueId } from "../util";
 import { type ActionSetActions, createActionSetSlice } from "./actionSetSlice";
 import {
@@ -270,8 +273,11 @@ export const useSlotLimit = (id: NodeId) =>
 
 export const DOCUMENT_STORE_KEY = "current-document";
 
-/** 2 is the first version that owns components and their action sets. */
-export const DOCUMENT_VERSION = 2;
+/** 3 is the first version that owns the whole message. */
+export const DOCUMENT_VERSION = 3;
+
+/** Where the message store kept its draft, read once while migrating. */
+export const MESSAGE_STORE_KEY = "current-message";
 
 const hadPersistedDocument =
   typeof localStorage !== "undefined" &&
@@ -459,16 +465,14 @@ export const createDocumentStore = (key: string) =>
 
             clear: () => set(fromMessage(defaultMessage)),
 
+            // The two modes cannot hold each other's content, so the toggle
+            // replaces the message rather than editing it.
             setComponentsV2: (enabled) =>
-              set((state) => {
-                const root = state.nodes[state.rootId];
-                if (root?.type !== "message") return;
-
-                const flags = root.flags ?? 0;
-                root.flags = enabled
-                  ? flags | COMPONENTS_V2_FLAG
-                  : flags & ~COMPONENTS_V2_FLAG;
-              }),
+              set(
+                fromMessage(
+                  enabled ? emptyComponentsV2Message : defaultMessage,
+                ),
+              ),
           }),
           {
             limit: 10,
@@ -614,3 +618,12 @@ export function useNodeActions(id: NodeId) {
     remove: () => remove(id),
   };
 }
+
+export const useComponentsV2Enabled = () =>
+  useDocumentStore((state) => {
+    const root = state.nodes[state.rootId];
+
+    return root?.type === "message"
+      ? ((root.flags ?? 0) & COMPONENTS_V2_FLAG) !== 0
+      : false;
+  });
