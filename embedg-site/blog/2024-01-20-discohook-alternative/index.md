@@ -1,14 +1,17 @@
 ---
 slug: discohook-alternative
-title: The Best Discohook Alternative
+title: The Best Discohook Alternative (2026)
+description: Embed Generator is a free, open source Discohook alternative with buttons, select menus, Components V2, scheduled messages and custom commands, no extra bots needed. Paste your Discohook JSON and keep going.
+last_update:
+  date: 2026-09-20
 authors: [merlin]
-tags: [disohook, alternative, embed, discord, webhook]
+tags: [discohook, alternative, embed, discord, webhook]
 ---
 
 Discohook is a popular tool for creating Discord embed messages using Webhooks. Sadly it's not perfect ...
 For many features an additional bot is needed and the setup can be confusing. Additionally the uptime has been far from perfect recently.
 
-TLDR: [Embed Generator](https://message.style) is the superior alternative to Discohook in terms of features, usability, and stability.
+TLDR: [Embed Generator](https://message.style) is the superior alternative to Discohook in terms of features, usability, and stability. You can paste your existing Discohook JSON straight into the editor, see the [migration guide](/docs/guides/migrating-discohook) for the details.
 
 <!--truncate-->
 
@@ -16,11 +19,11 @@ TLDR: [Embed Generator](https://message.style) is the superior alternative to Di
 
 Discohook is an open source service that allows users to create good looking embed messages for their Discord server.
 
-Discord embed messages are commonly used by Discord server owners to make their announcement messages look better and give them a bit more strucutre. Without external tools like Discohook the formatting of messages in Discord is quite limited.
+Discord embed messages are commonly used by Discord server owners to make their announcement messages look better and give them a bit more structure. Without external tools like Discohook the formatting of messages in Discord is quite limited.
 
 To send these messages Discohook uses so called Webhooks. Discord allows server owner to create Webhooks for their channels which can then be copied into tools Discohook to send a message to that channel. While Webhooks are good for many purposes they are no very beginner friendly and also lack some important features.
 
-Discohook lets users create "backups" of their messages which they can restore at a later point. This way users can work on multiple messages without loosing progress. These message backups are sadly only stored locally and are not synchronized across the devices of the user. Sometimes they are even deleted when the user clears their browser cache.
+Discohook lets users create "backups" of their messages which they can restore at a later point. This way users can work on multiple messages without losing progress. These message backups are sadly only stored locally and are not synchronized across the devices of the user. Sometimes they are even deleted when the user clears their browser cache.
 
 ![Embed Example](embed.jpg)
 
@@ -30,7 +33,7 @@ While the most basic features of Discohook are easily accessible through their w
 
 Discohook is a great service for creating Discord embed messages and it's understandable that many users like it. It allows designing and structuring Discord messages in a way that isn't possible out of the box with Discord.
 
-Sadly Discohook hasn't seen any active development in the last fear years and is falling behind the competition. It lacks support for newer Discord features and is only really suitable for static messages.
+Sadly Discohook hasn't seen any active development in the last few years and is falling behind the competition. It lacks support for newer Discord features and is only suitable for static messages.
 
 While you can use other third party services to augment the features of Discohook to add support for interactive components and scheduled messages, this isn't user or beginner friendly at all.
 
@@ -46,9 +49,13 @@ All of the features like embeds, interactive components, scheduled messages, and
 
 All features of Discohook and even more advanced features like interactive components and scheduled messages are available for free using Embed Generator. While you can subscribe to Embed Generator Premium to get the most out of it and support the development, it's completely optional.
 
+### Components V2
+
+Embed Generator supports Discord's [Components V2](/docs/features/components-v2) layouts with sections, separators, media galleries and thumbnails. Discohook only supports classic embeds.
+
 ### Visual Engaging Embeds
 
-Embed Generator allows you take advantage of all Discord embed features, including titles, images, custom fields, and even having multiple embeds per message. In additional to embeds you can add file attachments and interactive componenets.
+Embed Generator allows you take advantage of all Discord embed features, including titles, images, custom fields, and even having multiple embeds per message. In addition to embeds you can add file attachments and interactive components.
 
 ### User-Friendly Interface
 
