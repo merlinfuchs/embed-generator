@@ -19,8 +19,7 @@ export default function HomePremium(): JSX.Element {
             Want more? Get Premium.
           </h2>
           <p className="mb-8 max-w-md text-lg text-mist-400">
-            Unlocks the good stuff for one server and pays for the servers
-            that keep this running for everyone else.
+            Unlocks the good stuff for one server.
           </p>
           <div className="mb-8 flex items-baseline gap-2">
             <span className="text-5xl font-bold tracking-tight text-mist-100">$4.99</span>
@@ -32,6 +31,18 @@ export default function HomePremium(): JSX.Element {
           >
             Get Premium
           </a>
+          <div className="mt-8 flex items-center gap-3 text-sm text-mist-500">
+            <img
+              src="/img/merlin.webp"
+              alt=""
+              className="h-8 w-8 flex-none rounded-full"
+            />
+            <span>
+              Premium is what pays for hosting and keeps this free for everyone
+              else. Thanks!{" "}
+              <span className="text-mist-400">— Merlin</span>
+            </span>
+          </div>
         </div>
         <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 lg:grid-cols-1">
           {perks.map((p) => (
@@ -43,24 +54,6 @@ export default function HomePremium(): JSX.Element {
             </li>
           ))}
         </ul>
-        <div className="flex items-start gap-4 border-0 border-t border-solid border-white/5 pt-8 lg:col-span-2">
-          <img
-            src="/img/merlin.webp"
-            alt="Merlin"
-            className="h-11 w-11 flex-none rounded-full"
-          />
-          <p className="m-0 max-w-3xl text-sm leading-relaxed text-mist-400">
-            Embed Generator is a side project I maintain in my free time,
-            together with a few contributors, and the whole thing is open
-            source. Premium is what pays for hosting and keeps it free for
-            everyone else. If you have questions or ideas, the{" "}
-            <a href="/discord" className="text-azure-400 hover:text-azure-300">
-              Discord server
-            </a>{" "}
-            is where I hang out.
-            <span className="mt-1 block text-mist-500">— Merlin</span>
-          </p>
-        </div>
       </div>
     </section>
   );
