@@ -1,8 +1,5 @@
-import { useMemo, useState } from "react";
-import {
-  useSendMessageToChannelMutation,
-  useSendMessageToWebhookMutation,
-} from "../api/mutations";
+import { useMemo } from "react";
+import { useSendMessageToWebhookMutation } from "../api/mutations";
 import { useCurrentMessageStore } from "../state/message";
 import { useValidationErrorStore } from "../state/validationError";
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
@@ -15,12 +12,12 @@ import { useToasts } from "../util/toasts";
 
 export default function SendMenuWebhook() {
   const validationError = useValidationErrorStore((state) =>
-    state.checkIssueByPathPrefix("")
+    state.checkIssueByPathPrefix(""),
   );
 
   const [webhookUrl, setWebhookUrl] = useSendSettingsStore(
     (state) => [state.webhookUrl, state.setWebhookUrl],
-    shallow
+    shallow,
   );
   const webhookInfo = useMemo(() => {
     if (!webhookUrl) return null;
@@ -29,11 +26,11 @@ export default function SendMenuWebhook() {
 
   const [messageId, setMessageId] = useSendSettingsStore(
     (state) => [state.messageId, state.setMessageId],
-    shallow
+    shallow,
   );
   const [threadId, setThreadId] = useSendSettingsStore(
     (state) => [state.threadId, state.setThreadId],
-    shallow
+    shallow,
   );
 
   const sendToWebhookMutation = useSendMessageToWebhookMutation();
@@ -84,7 +81,7 @@ export default function SendMenuWebhook() {
             });
           }
         },
-      }
+      },
     );
   }
 
@@ -148,7 +145,9 @@ export default function SendMenuWebhook() {
           {messageId && (
             <div
               className={`px-3 py-2 rounded text-white flex items-center space-x-3 ${
-                validationError || !webhookInfo || webhookInfo.type != "discord"
+                validationError ||
+                !webhookInfo ||
+                webhookInfo.type !== "discord"
                   ? "cursor-not-allowed bg-dark-2"
                   : "bg-blurple hover:bg-blurple-dark cursor-pointer"
               }`}

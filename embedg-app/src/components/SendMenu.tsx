@@ -9,7 +9,7 @@ import SendMenuWebhook from "./SendMenuWebhook";
 export default function SendMenu() {
   const [mode, setMode] = useSendSettingsStore(
     (state) => [state.mode, state.setMode],
-    shallow
+    shallow,
   );
 
   const { data: user } = useUserQuery();
@@ -28,7 +28,7 @@ export default function SendMenu() {
           <div
             className={clsx(
               "py-1 px-2 rounded transition-colors",
-              mode === "webhook" && "bg-dark-3"
+              mode === "webhook" && "bg-dark-3",
             )}
           >
             Webhook
@@ -36,7 +36,7 @@ export default function SendMenu() {
           <div
             className={clsx(
               "py-1 px-2 rounded transition-colors",
-              mode === "channel" && "bg-dark-3"
+              mode === "channel" && "bg-dark-3",
             )}
           >
             Channel
@@ -45,7 +45,7 @@ export default function SendMenu() {
       </div>
       {mode === "webhook" ? (
         <SendMenuWebhook />
-      ) : !!user ? (
+      ) : user ? (
         <SendMenuChannel />
       ) : (
         <LoginSuggest />

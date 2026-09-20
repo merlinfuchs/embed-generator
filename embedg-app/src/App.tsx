@@ -1,4 +1,4 @@
-import { lazy, ReactNode, Suspense } from "react";
+import { lazy, type ReactNode, Suspense } from "react";
 import { Route, Routes, Navigate } from "react-router-dom";
 import { ToastContainer } from "./util/toasts";
 import EditorView from "./views/editor/editor";

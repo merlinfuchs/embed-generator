@@ -66,8 +66,12 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   height: 32px;
   min-width: 60px;
   min-height: 32px;
-  -webkit-transition: background-color 0.17s ease, color 0.17s ease;
-  transition: background-color 0.17s ease, color 0.17s ease;
+  -webkit-transition:
+    background-color 0.17s ease,
+    color 0.17s ease;
+  transition:
+    background-color 0.17s ease,
+    color 0.17s ease;
   border-radius: 3px;
   font-size: 14px;
   font-weight: 500;
@@ -467,8 +471,8 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
 .discord-embed .discord-embed-thumbnail {
   border-radius: 4px;
   flex-shrink: 0;
-  grid-column: 2/2;
-  grid-row: 1/8;
+  grid-column: 2 / 2;
+  grid-row: 1 / 8;
   justify-self: end;
   margin-left: 16px;
   margin-top: 8px;
@@ -514,7 +518,7 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   font-size: 0.75rem;
   line-height: 1rem;
   font-weight: 400;
-  grid-column: 1/1;
+  grid-column: 1 / 1;
   margin-top: 8px;
   unicode-bidi: plaintext;
   text-align: left;
@@ -554,7 +558,7 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   border-radius: 4px;
   contain: paint;
   display: block;
-  grid-column: 1/1;
+  grid-column: 1 / 1;
   margin-top: 16px;
 }
 
@@ -598,7 +602,7 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
 .discord-embed .discord-embed-description {
   font-size: 0.875rem;
   font-weight: 400;
-  grid-column: 1/1;
+  grid-column: 1 / 1;
   line-height: 1.125rem;
   margin-top: 8px;
   min-width: 0;
@@ -687,7 +691,7 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   line-height: 1.125rem;
   min-width: 0;
   font-weight: 400;
-  grid-column: 1/13;
+  grid-column: 1 / 13;
 }
 
 .discord-embed .discord-embed-field .discord-field-title {
@@ -710,19 +714,19 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
 }
 
 .discord-embed-inline-field-3 {
-  grid-column: 9/13 !important;
+  grid-column: 9 / 13 !important;
 }
 
 .discord-embed-inline-field-2 {
-  grid-column: 5/9 !important;
+  grid-column: 5 / 9 !important;
 }
 
 .discord-embed-inline-field-1 {
-  grid-column: 1/5 !important;
+  grid-column: 1 / 5 !important;
 }
 .discord-embed .discord-embed-fields {
   display: grid;
-  grid-column: 1/1;
+  grid-column: 1 / 1;
   margin-top: 8px;
   grid-gap: 8px;
 }
@@ -734,8 +738,8 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   font-size: 12px;
   line-height: 16px;
   font-weight: 500;
-  grid-column: 1/3;
-  grid-row: auto/auto;
+  grid-column: 1 / 3;
+  grid-row: auto / auto;
   margin-top: 8px;
 }
 
@@ -805,8 +809,9 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
 }
 
 .discord-invite .discord-invite-info {
-  font-family: WhitneyMedium, Whitney, Roboto, "Helvetica Neue", Helvetica,
-    Arial, sans-serif;
+  font-family:
+    WhitneyMedium, Whitney, Roboto, "Helvetica Neue", Helvetica, Arial,
+    sans-serif;
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
@@ -945,8 +950,12 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   border-radius: 3px;
   unicode-bidi: -moz-plaintext;
   unicode-bidi: plaintext;
-  -webkit-transition: background-color 50ms ease-out, color 50ms ease-out;
-  transition: background-color 50ms ease-out, color 50ms ease-out;
+  -webkit-transition:
+    background-color 50ms ease-out,
+    color 50ms ease-out;
+  transition:
+    background-color 50ms ease-out,
+    color 50ms ease-out;
   cursor: pointer;
 }
 
@@ -1163,7 +1172,7 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
 
 .discord-message small {
   display: block;
-  font-size: .8125rem;
+  font-size: 0.8125rem;
   font-weight: 400;
   line-height: 1.11719rem;
   color: rgb(148, 155, 164);
@@ -1205,9 +1214,20 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
 .discord-message .discord-message-body code {
   background: #2f3136;
   white-space: break-spaces;
-  font-family: Consolas, Andale Mono WT, Andale Mono, Lucida Console,
-    Lucida Sans Typewriter, DejaVu Sans Mono, Bitstream Vera Sans Mono,
-    Liberation Mono, Nimbus Mono L, Monaco, Courier New, Courier, monospace;
+  font-family:
+    Consolas,
+    Andale Mono WT,
+    Andale Mono,
+    Lucida Console,
+    Lucida Sans Typewriter,
+    DejaVu Sans Mono,
+    Bitstream Vera Sans Mono,
+    Liberation Mono,
+    Nimbus Mono L,
+    Monaco,
+    Courier New,
+    Courier,
+    monospace;
 }
 
 .discord-light-theme .discord-message .discord-message-timestamp,
@@ -2246,7 +2266,11 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   border-radius: 3px;
   unicode-bidi: -moz-plaintext;
   unicode-bidi: plaintext;
-  -webkit-transition: background-color 50ms ease-out, color 50ms ease-out;
-  transition: background-color 50ms ease-out, color 50ms ease-out;
+  -webkit-transition:
+    background-color 50ms ease-out,
+    color 50ms ease-out;
+  transition:
+    background-color 50ms ease-out,
+    color 50ms ease-out;
   cursor: pointer;
 }

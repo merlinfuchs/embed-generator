@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAssistantGenerateMessageMutation } from "../../api/mutations";
 import Modal from "../../components/Modal";
@@ -9,7 +9,7 @@ import { useCurrentMessageStore } from "../../state/message";
 import { useSendSettingsStore } from "../../state/sendSettings";
 import { SparklesIcon } from "@heroicons/react/24/solid";
 import { useToasts } from "../../util/toasts";
-import { Message } from "../../discord/schema";
+import type { Message } from "../../discord/schema";
 
 export default function AssistantView() {
   const navigate = useNavigate();
@@ -98,6 +98,7 @@ export default function AssistantView() {
           <div className="flex-auto space-y-3 overflow-y-auto mb-5">
             {history.map((h, i) => (
               <div
+                // biome-ignore lint/suspicious/noArrayIndexKey: history is append-only
                 key={i}
                 className="text-gray-300 px-3 py-2 rounded-md bg-dark-2 whitespace-pre-line"
               >
@@ -136,7 +137,7 @@ export default function AssistantView() {
               <button
                 className={clsx(
                   "text-white px-3 py-2 rounded flex items-center space-x-3",
-                  isLoading ? "bg-dark-5 cursor-not-allowed " : "bg-blurple"
+                  isLoading ? "bg-dark-5 cursor-not-allowed " : "bg-blurple",
                 )}
                 onClick={generate}
               >
@@ -155,7 +156,7 @@ export default function AssistantView() {
           <div
             className={clsx(
               "rounded text-white h-full px-5 py-3",
-              isLoading && "animate-pulse"
+              isLoading && "animate-pulse",
             )}
           >
             {output && <MessagePreview msg={output} />}

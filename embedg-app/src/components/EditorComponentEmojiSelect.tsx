@@ -1,7 +1,7 @@
 import { FaceSmileIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useSendSettingsStore } from "../state/sendSettings";
 import EmojiPicker from "./EmojiPicker";
-import { Emoji } from "../discord/schema";
+import type { Emoji } from "../discord/schema";
 import Twemoji from "./Twemoji";
 
 interface Props {

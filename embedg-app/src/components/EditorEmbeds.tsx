@@ -1,7 +1,6 @@
 import { useCurrentMessageStore } from "../state/message";
 import EditorEmbed from "./EditorEmbed";
 import { shallow } from "zustand/shallow";
-import { useCollapsedStatesStore } from "../state/collapsed";
 import { getUniqueId } from "../util";
 import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";
@@ -10,7 +9,7 @@ import clsx from "clsx";
 export default function EditorEmbeds() {
   const embeds = useCurrentMessageStore(
     (state) => state.embeds.map((e) => e.id),
-    shallow
+    shallow,
   );
   const addEmbed = useCurrentMessageStore((state) => state.addEmbed);
   const clearEmbeds = useCurrentMessageStore((state) => state.clearEmbeds);
@@ -40,7 +39,7 @@ export default function EditorEmbeds() {
             "px-3 py-2 rounded text-white",
             embeds.length < 10
               ? "bg-blurple hover:bg-blurple-dark"
-              : "bg-dark-3 cursor-not-allowed"
+              : "bg-dark-3 cursor-not-allowed",
           )}
           onClick={() =>
             embeds.length < 10 &&

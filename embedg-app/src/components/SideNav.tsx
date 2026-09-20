@@ -30,11 +30,11 @@ const collapsedBreakpoint = 1680;
 
 export default function SideNav() {
   const alwaysCollapseSidebar = useSettingsStore(
-    (s) => s.alwaysCollapseSidebar
+    (s) => s.alwaysCollapseSidebar,
   );
 
   const [preCollapsed, setCollapsed] = useState(
-    alwaysCollapseSidebar || document.body.clientWidth < collapsedBreakpoint
+    alwaysCollapseSidebar || document.body.clientWidth < collapsedBreakpoint,
   );
   const [hidden, setHidden] = useState(true);
 
@@ -56,7 +56,7 @@ export default function SideNav() {
         className={clsx(
           "h-full bg-dark-3 flex-none transition-all fixed z-30 shadow",
           collapsed ? "w-16" : "w-64",
-          hidden && "hidden xl:relative xl:block"
+          hidden && "hidden xl:relative xl:block",
         )}
       >
         <div className="flex flex-col justify-between h-full">
@@ -83,7 +83,7 @@ export default function SideNav() {
                 <LoginLink
                   className={clsx(
                     "bg-dark-2 flex items-center mx-3 group",
-                    collapsed ? "rounded-full p-2" : "rounded p-2"
+                    collapsed ? "rounded-full p-2" : "rounded p-2",
                   )}
                 >
                   <ArrowRightOnRectangleIcon className="h-8 w-8 flex-none text-gray-300 group-hover:text-white" />
@@ -104,7 +104,7 @@ export default function SideNav() {
             <div
               className={clsx(
                 "h-0.5 bg-dark-4 rounded-full mb-7",
-                collapsed ? "w-12" : "w-52 mx-auto"
+                collapsed ? "w-12" : "w-52 mx-auto",
               )}
             ></div>
             <div className="flex flex-col space-y-4">
@@ -157,14 +157,14 @@ export default function SideNav() {
               <LogoutLink
                 className={clsx(
                   "flex w-full items-center group",
-                  collapsed ? "px-4" : "px-5"
+                  collapsed ? "px-4" : "px-5",
                 )}
               >
                 <ArrowLeftOnRectangleIcon className="h-8 w-8 flex-none text-gray-300 group-hover:text-white" />
                 {!collapsed && (
                   <div
                     className={clsx(
-                      "ml-5 text-gray-300 group-hover:text-white"
+                      "ml-5 text-gray-300 group-hover:text-white",
                     )}
                   >
                     Logout
@@ -220,19 +220,22 @@ function NavigationButton({
       className="flex w-full items-center pr-4 group"
       to={href}
       onClick={() => setHidden(true)}
-      children={({ isActive }) => (
+    >
+      {({ isActive }) => (
         <>
           <div
             className={clsx(
               "w-1 rounded-r h-12",
               isActive && "bg-blurple",
-              collapsed ? "mr-3" : "mr-4"
+              collapsed ? "mr-3" : "mr-4",
             )}
           ></div>
           <Icon
             className={clsx(
               "h-8 w-8 flex-none",
-              isActive ? "text-blurple" : "text-gray-300 group-hover:text-white"
+              isActive
+                ? "text-blurple"
+                : "text-gray-300 group-hover:text-white",
             )}
             aria-label={label}
             title={label}
@@ -243,7 +246,7 @@ function NavigationButton({
                 "ml-5 truncate",
                 isActive
                   ? "text-blurple"
-                  : "text-gray-300 group-hover:text-white"
+                  : "text-gray-300 group-hover:text-white",
               )}
             >
               {label}
@@ -251,7 +254,7 @@ function NavigationButton({
           )}
         </>
       )}
-    />
+    </NavLink>
   );
 }
 
@@ -265,19 +268,20 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
 
   const [guildId, setGuildId] = useSendSettingsStore(
     (state) => [state.guildId, state.setGuildId],
-    shallow
+    shallow,
   );
 
   const guild = useMemo(
     () => guilds?.success && guilds.data.find((g) => g.id === guildId),
-    [guilds, guildId]
+    [guilds, guildId],
   );
 
   useEffect(() => {
     if (!guildId) {
       if (guilds?.success) {
         const defaultGuild = guilds.data.find(
-          (g) => g.has_channel_with_bot_access && g.has_channel_with_user_access
+          (g) =>
+            g.has_channel_with_bot_access && g.has_channel_with_user_access,
         );
         if (defaultGuild) {
           setGuildId(defaultGuild.id);
@@ -305,7 +309,7 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
       <div
         className={clsx(
           "relative flex items-center cursor-pointer",
-          collapsed ? "group" : "bg-dark-2 mx-3 rounded px-2 py-1"
+          collapsed ? "group" : "bg-dark-2 mx-3 rounded px-2 py-1",
         )}
         role="button"
         onClick={() => setOpen((prev) => !prev)}
@@ -315,7 +319,7 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
             src={guildIconUrl(guild)}
             className={clsx(
               "rounded-full flex-none",
-              collapsed ? "h-12 w-12 border border-dark-2 shadow" : "h-10 w-10"
+              collapsed ? "h-12 w-12 border border-dark-2 shadow" : "h-10 w-10",
             )}
             alt=""
           />
@@ -325,7 +329,7 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
               "rounded-full flex-none flex items-center justify-center",
               collapsed
                 ? "h-12 w-12 border border-dark-2 shadow bg-dark-2"
-                : "h-10 w-10"
+                : "h-10 w-10",
             )}
           >
             <ChevronDownIcon className="text-gray-300 h-8 w-8 flex-none" />
@@ -350,7 +354,7 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
         <div
           className={clsx(
             "absolute bg-dark-2 rounded shadow-lg w-64 max-h-128 overflow-y-auto border-2 border-dark-2 z-10",
-            collapsed ? "top-14 left-0" : "top-16 left-3"
+            collapsed ? "top-14 left-0" : "top-16 left-3",
           )}
         >
           {guilds?.success &&
@@ -362,7 +366,7 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
                   g.has_channel_with_bot_access &&
                     g.has_channel_with_user_access
                     ? "hover:bg-dark-3 cursor-pointer"
-                    : "opacity-60 cursor-not-allowed"
+                    : "opacity-60 cursor-not-allowed",
                 )}
                 role="button"
                 onClick={() =>

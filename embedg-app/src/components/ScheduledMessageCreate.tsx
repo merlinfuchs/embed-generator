@@ -40,7 +40,7 @@ export default function ScheduledMessageCreate({
   const [startAt, setStartAt] = useState<string | undefined>();
   const [endAt, setEndAt] = useState<string | undefined>();
   const [cronExpression, setCronExpression] = useState<string | null>(
-    "* * * * *"
+    "* * * * *",
   );
   const [savedMessageId, setSavedMessageId] = useState<string | null>(null);
   const [channelId, setChannelId] = useState<string | null>(null);
@@ -53,7 +53,7 @@ export default function ScheduledMessageCreate({
   const selectedChannel = useMemo(
     () =>
       channels?.success ? channels.data.find((c) => c.id === channelId) : null,
-    [channels, channelId]
+    [channels, channelId],
   );
 
   const queryClient = useQueryClient();
@@ -61,7 +61,7 @@ export default function ScheduledMessageCreate({
 
   function create() {
     if (
-      name.length == 0 ||
+      name.length === 0 ||
       !guildId ||
       !channelId ||
       !savedMessageId ||
@@ -108,7 +108,7 @@ export default function ScheduledMessageCreate({
             });
           }
         },
-      }
+      },
     );
   }
 
@@ -209,7 +209,7 @@ export default function ScheduledMessageCreate({
             <div
               className={clsx(
                 "py-1 px-2 rounded transition-colors",
-                onlyOnce && "bg-dark-3"
+                onlyOnce && "bg-dark-3",
               )}
             >
               Send Once
@@ -217,7 +217,7 @@ export default function ScheduledMessageCreate({
             <div
               className={clsx(
                 "py-1 px-2 rounded transition-colors",
-                !onlyOnce && "bg-dark-3"
+                !onlyOnce && "bg-dark-3",
               )}
             >
               Send Periodically

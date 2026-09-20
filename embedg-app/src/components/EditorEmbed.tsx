@@ -34,16 +34,16 @@ export default function EditorEmbed({ embedIndex, embedId }: Props) {
       state.duplicateEmbed,
       state.deleteEmbed,
     ],
-    shallow
+    shallow,
   );
 
   const color = useCurrentMessageStore(
-    (state) => state.embeds[embedIndex]?.color
+    (state) => state.embeds[embedIndex]?.color,
   );
 
   const hexColor = useMemo(
     () => (color !== undefined ? colorIntToHex(color) : "#1f2225"),
-    [color]
+    [color],
   );
 
   function wrappedRemove() {

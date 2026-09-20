@@ -18,10 +18,10 @@ export default function EditorComponentActionRowSelectMenu({
 }: Props) {
   const selectMenu = useCurrentMessageStore(
     (state) => state.getActionRowSelectMenu(rootIndex, childIndex),
-    shallow
+    shallow,
   );
   const updateActionRowComponent = useCurrentMessageStore(
-    (state) => state.updateActionRowComponent
+    (state) => state.updateActionRowComponent,
   );
 
   const [
@@ -42,7 +42,7 @@ export default function EditorComponentActionRowSelectMenu({
       state.deleteActionRowSelectMenuOption,
       state.updateActionRowSelectMenuOption,
     ],
-    shallow
+    shallow,
   );
 
   if (!selectMenu) {

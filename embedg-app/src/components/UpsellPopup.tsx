@@ -54,6 +54,7 @@ export default function UpsellPopup() {
           href="/source"
           target="_blank"
           className="bg-blurple px-3 py-2 rounded block w-full text-gray-100"
+          rel="noopener"
         >
           Star on GitHub
         </a>

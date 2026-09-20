@@ -9,15 +9,15 @@ interface Props {
 
 export default function EditorComponentSeparator({ rootIndex, rootId }: Props) {
   const componentCount = useCurrentMessageStore(
-    (state) => state.components.length
+    (state) => state.components.length,
   );
 
   const separator = useCurrentMessageStore(
     (state) => state.getSeparator(rootIndex),
-    shallow
+    shallow,
   );
   const updateSeparator = useCurrentMessageStore(
-    (state) => state.updateComponent
+    (state) => state.updateComponent,
   );
 
   const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
@@ -27,7 +27,7 @@ export default function EditorComponentSeparator({ rootIndex, rootId }: Props) {
       state.duplicateComponent,
       state.deleteComponent,
     ],
-    shallow
+    shallow,
   );
 
   if (!separator) {

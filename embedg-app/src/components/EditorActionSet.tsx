@@ -16,12 +16,12 @@ export default function EditorActionSet({ setId }: Props) {
 
   const actions = useCurrentMessageStore(
     (state) => state.actions[setId]?.actions.map((a) => a.id) || [],
-    shallow
+    shallow,
   );
 
   const [addAction, clearActions] = useCurrentMessageStore(
     (state) => [state.addAction, state.clearActions],
-    shallow
+    shallow,
   );
 
   function add() {

@@ -1,5 +1,5 @@
 import type { DiscordSDK } from "@discord/embedded-app-sdk";
-import { AuthExchangeResponseWire } from "../api/wire";
+import type { AuthExchangeResponseWire } from "../api/wire";
 import queryClient, { setLocalSessionToken } from "../api/client";
 import { useActivityStateStore } from "../state/activity";
 
@@ -35,7 +35,7 @@ async function setupSdk() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ code }),
-    }
+    },
   ).then((res) => res.json());
   if (!tokenData || !tokenData.success) {
     console.error("Failed to exchange code for token");

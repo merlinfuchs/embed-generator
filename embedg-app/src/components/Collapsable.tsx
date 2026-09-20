@@ -1,6 +1,6 @@
 import { ChevronRightIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useCollapsedState } from "../state/collapsed";
 import { AutoAnimate } from "../util/autoAnimate";
 import ValidationErrorIndicator from "./ValidationErrorIndicator";
@@ -40,7 +40,7 @@ export default function Collapsable({
               "transition-transform duration-300 flex-none",
               !collapsed && "rotate-90",
               size === "large" && "w-7 h-7",
-              size === "medium" && "w-6 h-6"
+              size === "medium" && "w-6 h-6",
             )}
           />
           <div className={clsx("flex-none", size === "large" && "text-lg")}>

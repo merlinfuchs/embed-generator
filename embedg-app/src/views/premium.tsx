@@ -35,6 +35,7 @@ export default function PremiumView() {
                   className="px-3 py-2 rounded border-2 text-white border-dark-7 hover:bg-dark-6 cursor-pointer"
                   href="/premium"
                   target="_blank"
+                  rel="noopener"
                 >
                   <div>Manage Subscription</div>
                 </a>

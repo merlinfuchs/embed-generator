@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import { MessageAction, MessageActionSet } from "../discord/schema";
+import type { MessageAction, MessageActionSet } from "../discord/schema";
 import { getUniqueId } from "../util";
 
 export interface ActionsStore {
@@ -21,7 +21,7 @@ export interface ActionsStore {
   setActionDisableDefaultResponse: (
     id: string,
     i: number,
-    val: boolean
+    val: boolean,
   ) => void;
   setActionPermissions: (id: string, i: number, val: string) => void;
   setActionRoleIds: (id: string, i: number, val: string[]) => void;
@@ -33,7 +33,7 @@ export const createActionStore = (key: string) =>
   create<ActionsStore>()(
     immer(
       persist(
-        (set, get) => ({
+        (set, _get) => ({
           actions: {},
 
           clear: () => set({ actions: {} }),
@@ -188,7 +188,7 @@ export const createActionStore = (key: string) =>
           setActionDisableDefaultResponse: (
             id: string,
             i: number,
-            val: boolean
+            val: boolean,
           ) =>
             set((state) => {
               const actionSet = state.actions[id];
@@ -219,16 +219,16 @@ export const createActionStore = (key: string) =>
               }
             }),
         }),
-        { name: key, version: 0 }
-      )
-    )
+        { name: key, version: 0 },
+      ),
+    ),
   );
 
 // TODO: move message actions into this store instead of current message store
 export const useCurrentMessageActionsStore = createActionStore(
-  "current-message-actions"
+  "current-message-actions",
 );
 
 export const useCommandActionsStore = createActionStore(
-  "custom-commands-actions"
+  "custom-commands-actions",
 );

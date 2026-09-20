@@ -1,5 +1,5 @@
-import autoAnimate, { AutoAnimateOptions } from "@formkit/auto-animate";
-import { ReactNode, useEffect, useState } from "react";
+import autoAnimate, { type AutoAnimateOptions } from "@formkit/auto-animate";
+import { type ReactNode, useEffect, useState } from "react";
 
 export function useAutoAnimate<T>(options: Partial<AutoAnimateOptions> = {}) {
   const [element, setElement] = useState<T | null>(null);

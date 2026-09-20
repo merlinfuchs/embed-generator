@@ -1,8 +1,7 @@
-import { MessageComponentFile } from "../discord/schema";
+import type { MessageComponentFile } from "../discord/schema";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import CheckBox from "./CheckBox";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
-import EditorInput from "./EditorInput";
 import ValidationError from "./ValidationError";
 
 interface Props {
@@ -58,7 +57,10 @@ export default function EditorComponentBaseFile({
               onChange={(e) => onChange({ file: { url: e.target.value } })}
             >
               {attachments.map((attachment) => (
-                <option value={`attachment://${attachment.name}`}>
+                <option
+                  key={attachment.name}
+                  value={`attachment://${attachment.name}`}
+                >
                   {attachment.name}
                 </option>
               ))}

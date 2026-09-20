@@ -34,7 +34,7 @@ export default function ToolsWebhookInfo() {
       .then((res) => {
         if (!res.ok)
           throw new Error(
-            "Failed to get Webhook, does the webhook still exist?"
+            "Failed to get Webhook, does the webhook still exist?",
           );
         return res.json();
       })

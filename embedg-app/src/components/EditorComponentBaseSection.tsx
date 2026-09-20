@@ -1,9 +1,7 @@
-import {
+import type {
   MessageComponentAccessory,
-  MessageComponentButton,
   MessageComponentSection,
   MessageComponentTextDisplay,
-  MessageComponentThumbnail,
 } from "../discord/schema";
 import { getUniqueId } from "../util";
 import { AutoAnimate } from "../util/autoAnimate";
@@ -32,7 +30,7 @@ interface Props {
   deleteSubComponent: (index: number) => void;
   onSubComponentChange: (
     index: number,
-    data: Partial<MessageComponentTextDisplay>
+    data: Partial<MessageComponentTextDisplay>,
   ) => void;
   duplicateSubComponent: (index: number) => void;
 }
@@ -43,7 +41,6 @@ export default function EditorComponentBaseSection({
   title = "Section",
   size = "medium",
   data,
-  onChange,
   duplicate,
   moveUp,
   moveDown,
@@ -104,7 +101,9 @@ export default function EditorComponentBaseSection({
           <select
             className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
             value={data.accessory.type.toString()}
-            onChange={(v) => onAccessoryTypeChange(parseInt(v.target.value))}
+            onChange={(v) =>
+              onAccessoryTypeChange(parseInt(v.target.value, 10))
+            }
           >
             <option value="11">Thumbnail</option>
             <option value="2">Button</option>

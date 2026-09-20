@@ -31,7 +31,7 @@ export default function EditorIconButton({
             disabled
               ? "bg-dark-3 cursor-default"
               : "bg-dark-2 cursor-pointer hover:bg-dark-1",
-            className
+            className,
           )}
           to={href}
         >
@@ -45,7 +45,7 @@ export default function EditorIconButton({
             disabled
               ? "bg-dark-3 cursor-default"
               : "bg-dark-2 cursor-pointer hover:bg-dark-1",
-            className
+            className,
           )}
           onClick={() => !disabled && onClick?.()}
         >

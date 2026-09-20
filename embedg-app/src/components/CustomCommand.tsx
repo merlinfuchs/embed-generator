@@ -1,5 +1,4 @@
-import { parseISO } from "date-fns";
-import { CustomCommandWire } from "../api/wire";
+import type { CustomCommandWire } from "../api/wire";
 import Tooltip from "./Tooltip";
 import {
   ClipboardIcon,
@@ -43,7 +42,7 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
   }, [cmd.actions]);
 
   function save() {
-    if (name.length == 0 || description.length == 0) return;
+    if (name.length === 0 || description.length === 0) return;
 
     const actions = useCommandActionsStore.getState().actions[cmd.id];
 
@@ -72,7 +71,7 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
             });
           }
         },
-      }
+      },
     );
   }
 
@@ -97,7 +96,7 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
             });
           }
         },
-      }
+      },
     );
   }
 

@@ -1,4 +1,4 @@
-import {
+import type {
   MessageComponentSelectMenu,
   MessageComponentSelectMenuOption,
 } from "../discord/schema";
@@ -22,12 +22,11 @@ interface Props {
   clearOptions: () => void;
   onOptionChange: (
     o: number,
-    data: Partial<MessageComponentSelectMenuOption>
+    data: Partial<MessageComponentSelectMenuOption>,
   ) => void;
 }
 
 export default function EditorComponentBaseSelectMenu({
-  id,
   validationPathPrefix,
   data,
   onChange,

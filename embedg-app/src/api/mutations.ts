@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "react-query";
-import {
+import type {
   AssistantGenerateMessageRequestWire,
   AssistantGenerateMessageResponseWire,
   ConsumeEntitlementRequestWire,
@@ -57,9 +57,9 @@ export function useAssistantGenerateMessageMutation() {
           "Content-Type": "application/json",
         },
       }).then((res) =>
-        handleApiResponse<AssistantGenerateMessageResponseWire>(res.json())
+        handleApiResponse<AssistantGenerateMessageResponseWire>(res.json()),
       );
-    }
+    },
   );
 }
 
@@ -132,9 +132,9 @@ export function useCreatedSavedMessageMutation() {
           "Content-Type": "application/json",
         },
       }).then((res) =>
-        handleApiResponse<SavedMessageCreateResponseWire>(res.json())
+        handleApiResponse<SavedMessageCreateResponseWire>(res.json()),
       );
-    }
+    },
   );
 }
 
@@ -161,9 +161,9 @@ export function useUpdateSavedMessageMutation() {
           "Content-Type": "application/json",
         },
       }).then((res) =>
-        handleApiResponse<SavedMessageUpdateResponseWire>(res.json())
+        handleApiResponse<SavedMessageUpdateResponseWire>(res.json()),
       );
-    }
+    },
   );
 }
 
@@ -181,9 +181,9 @@ export function useDeleteSavedMessageMutation() {
           "Content-Type": "application/json",
         },
       }).then((res) =>
-        handleApiResponse<SavedMessageDeleteResponseWire>(res.json())
+        handleApiResponse<SavedMessageDeleteResponseWire>(res.json()),
       );
-    }
+    },
   );
 }
 
@@ -208,9 +208,9 @@ export function useImportSavedMessagesMutation() {
           "Content-Type": "application/json",
         },
       }).then((res) =>
-        handleApiResponse<SavedMessagesImportResponseWire>(res.json())
+        handleApiResponse<SavedMessagesImportResponseWire>(res.json()),
       );
-    }
+    },
   );
 }
 
@@ -223,7 +223,7 @@ export function useSharedMessageCreateMutation() {
         "Content-Type": "application/json",
       },
     }).then((res) =>
-      handleApiResponse<SharedMessageGetResponseWire>(res.json())
+      handleApiResponse<SharedMessageGetResponseWire>(res.json()),
     );
   });
 }
@@ -244,9 +244,9 @@ export function useCustomBotConfigureMutation() {
           "Content-Type": "application/json",
         },
       }).then((res) =>
-        handleApiResponse<CustomBotConfigureResponseWire>(res.json())
+        handleApiResponse<CustomBotConfigureResponseWire>(res.json()),
       );
-    }
+    },
   );
 }
 
@@ -258,7 +258,7 @@ export function useCustomBotDisableMutation() {
         "Content-Type": "application/json",
       },
     }).then((res) =>
-      handleApiResponse<CustomBotDisableResponseWire>(res.json())
+      handleApiResponse<CustomBotDisableResponseWire>(res.json()),
     );
   });
 }
@@ -279,9 +279,9 @@ export function useCustomBotUpdatePresenceMutation() {
           "Content-Type": "application/json",
         },
       }).then((res) =>
-        handleApiResponse<CustomBotUpdatePresenceResponseWire>(res.json())
+        handleApiResponse<CustomBotUpdatePresenceResponseWire>(res.json()),
       );
-    }
+    },
   );
 }
 
@@ -301,9 +301,9 @@ export function useCustomCommandCreateMutation() {
           "Content-Type": "application/json",
         },
       }).then((res) =>
-        handleApiResponse<CustomCommandCreateResponseWire>(res.json())
+        handleApiResponse<CustomCommandCreateResponseWire>(res.json()),
       );
-    }
+    },
   );
 }
 
@@ -326,11 +326,11 @@ export function useCustomCommandUpdateMutation() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       ).then((res) =>
-        handleApiResponse<CustomCommandUpdateResponseWire>(res.json())
+        handleApiResponse<CustomCommandUpdateResponseWire>(res.json()),
       );
-    }
+    },
   );
 }
 
@@ -342,7 +342,7 @@ export function useCustomCommandsDeployMutation() {
         "Content-Type": "application/json",
       },
     }).then((res) =>
-      handleApiResponse<CustomCommandsDeployResponseWire>(res.json())
+      handleApiResponse<CustomCommandsDeployResponseWire>(res.json()),
     );
   });
 }
@@ -357,11 +357,11 @@ export function useCustomCommandDeleteMutation() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       ).then((res) =>
-        handleApiResponse<CustomCommandDeleteResponseWire>(res.json())
+        handleApiResponse<CustomCommandDeleteResponseWire>(res.json()),
       );
-    }
+    },
   );
 }
 
@@ -380,7 +380,7 @@ export function useUploadImageMutation() {
         method: "POST",
         body,
       }).then((res) => handleApiResponse<UploadImageResponseWire>(res.json()));
-    }
+    },
   );
 }
 
@@ -400,9 +400,9 @@ export function useScheduledMessageCreateMutation() {
           "Content-Type": "application/json",
         },
       }).then((res) =>
-        handleApiResponse<ScheduledMessageCreateResponseWire>(res.json())
+        handleApiResponse<ScheduledMessageCreateResponseWire>(res.json()),
       );
-    }
+    },
   );
 }
 
@@ -425,11 +425,11 @@ export function useScheduledMessageUpdateMutation() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       ).then((res) =>
-        handleApiResponse<ScheduledMessageUpdateResponseWire>(res.json())
+        handleApiResponse<ScheduledMessageUpdateResponseWire>(res.json()),
       );
-    }
+    },
   );
 }
 
@@ -443,11 +443,11 @@ export function useScheduledMessageDeleteMutation() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       ).then((res) =>
-        handleApiResponse<ScheduledMessageDeleteResponseWire>(res.json())
+        handleApiResponse<ScheduledMessageDeleteResponseWire>(res.json()),
       );
-    }
+    },
   );
 }
 
@@ -460,7 +460,7 @@ export function useEmbedLinkCreateMutation() {
         "Content-Type": "application/json",
       },
     }).then((res) =>
-      handleApiResponse<EmbedLinkCreateResponseWire>(res.json())
+      handleApiResponse<EmbedLinkCreateResponseWire>(res.json()),
     );
   });
 }
@@ -483,13 +483,13 @@ export function usePremiumEntitlementConsumeMutation() {
           "Content-Type": "application/json",
         },
       }).then((res) =>
-        handleApiResponse<ConsumeEntitlementResponseWire>(res.json())
+        handleApiResponse<ConsumeEntitlementResponseWire>(res.json()),
       );
     },
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["premium"]);
       },
-    }
+    },
   );
 }

@@ -7,7 +7,7 @@ interface Props {
 
 export default function ValidationError({ path }: Props) {
   const issue = useValidationErrorStore(
-    (state) => state.getIssueByPath(path)?.message
+    (state) => state.getIssueByPath(path)?.message,
   );
 
   if (issue) {

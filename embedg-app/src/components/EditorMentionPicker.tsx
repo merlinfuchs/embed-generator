@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { type ReactNode, useState } from "react";
 import Modal from "./Modal";
 import { ChannelSelect } from "./ChannelSelect";
 import { RoleSelect } from "./RoleSelect";

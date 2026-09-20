@@ -8,7 +8,7 @@ export interface ActivityStateStore {
 }
 
 export const useActivityStateStore = create<ActivityStateStore>()(
-  (set, get) => ({
+  (set, _get) => ({
     loading: false,
     error: null,
     setError: (error) => {
@@ -17,5 +17,5 @@ export const useActivityStateStore = create<ActivityStateStore>()(
     setLoading: (loading) => {
       set({ loading });
     },
-  })
+  }),
 );

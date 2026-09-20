@@ -16,7 +16,7 @@ export function RolesSelect({ guildId, roleIds, onChange }: Props) {
 
   const firstRole = useMemo(
     () => roles?.success && roles.data.find((r) => r.id === roleIds[0]),
-    [roles, roleIds[0]]
+    [roles, roleIds[0]],
   );
 
   function toggleRole(roleId: string) {
@@ -61,7 +61,7 @@ export function RolesSelect({ guildId, roleIds, onChange }: Props) {
               <ChevronDownIcon
                 className={clsx(
                   "text-white w-5 h-5 flex-none transition-transform",
-                  open && "rotate-180"
+                  open && "rotate-180",
                 )}
               />
             </div>
@@ -77,7 +77,7 @@ export function RolesSelect({ guildId, roleIds, onChange }: Props) {
                   key={r.id}
                   className={clsx(
                     "py-2 flex space-x-2 items-center hover:bg-dark-3 hover:bg-opacity-100 rounded cursor-pointer px-3",
-                    roleIds.includes(r.id) && "bg-dark-3 bg-opacity-50"
+                    roleIds.includes(r.id) && "bg-dark-3 bg-opacity-50",
                   )}
                   role="button"
                   onClick={() => toggleRole(r.id)}

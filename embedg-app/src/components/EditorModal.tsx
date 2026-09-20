@@ -1,6 +1,6 @@
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
   closeButton?: boolean;
 }
 
-export default function ({
+export default function EditorModal({
   children,
   width = "xl",
   height = "auto",
@@ -28,16 +28,16 @@ export default function ({
           "bg-dark-3 w-full rounded-xl flex-shrink overflow-x-hidden overflow-y-auto",
           width === "xl"
             ? "max-w-7xl"
-            : width == "lg"
-            ? "max-w-5xl"
-            : width === "md"
-            ? "max-w-3xl"
-            : width === "sm"
-            ? "max-w-xl"
-            : width === "xs"
-            ? "max-w-md"
-            : "",
-          height === "full" && "h-full"
+            : width === "lg"
+              ? "max-w-5xl"
+              : width === "md"
+                ? "max-w-3xl"
+                : width === "sm"
+                  ? "max-w-xl"
+                  : width === "xs"
+                    ? "max-w-md"
+                    : "",
+          height === "full" && "h-full",
         )}
       >
         {closeButton !== false && (

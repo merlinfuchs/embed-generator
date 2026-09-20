@@ -12,7 +12,7 @@ export default function CheckBox({ checked, onChange, height }: Props) {
     <div
       className={clsx(
         "bg-dark-2 rounded cursor-pointer p-1.5 text-white",
-        height === 10 ? "h-10 w-10" : "w-9 h-9"
+        height === 10 ? "h-10 w-10" : "w-9 h-9",
       )}
       role="button"
       onClick={() => onChange(!checked)}

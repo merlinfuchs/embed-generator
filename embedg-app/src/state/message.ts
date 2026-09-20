@@ -1,9 +1,9 @@
 import debounce from "just-debounce-it";
-import { TemporalState, temporal } from "zundo";
+import { type TemporalState, temporal } from "zundo";
 import { create, useStore } from "zustand";
 import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import {
+import type {
   EmbedField,
   Message,
   MessageAction,
@@ -56,7 +56,7 @@ export interface MessageStore extends Message {
   setEmbedFieldInline: (
     i: number,
     j: number,
-    inline: boolean | undefined
+    inline: boolean | undefined,
   ) => void;
   moveEmbedFieldDown: (i: number, j: number) => void;
   moveEmbedFieldUp: (i: number, j: number) => void;
@@ -74,7 +74,7 @@ export interface MessageStore extends Message {
   getActionRow: (i: number) => MessageComponentActionRow | null;
   addActionRowComponent: (
     i: number,
-    component: MessageComponentButton | MessageComponentSelectMenu
+    component: MessageComponentButton | MessageComponentSelectMenu,
   ) => void;
   moveActionRowComponentDown: (i: number, j: number) => void;
   moveActionRowComponentUp: (i: number, j: number) => void;
@@ -84,19 +84,19 @@ export interface MessageStore extends Message {
   updateActionRowComponent: (
     i: number,
     j: number,
-    data: Partial<MessageComponentButton | MessageComponentSelectMenu>
+    data: Partial<MessageComponentButton | MessageComponentSelectMenu>,
   ) => void;
 
   getActionRowButton: (i: number, j: number) => MessageComponentButton | null;
 
   getActionRowSelectMenu: (
     i: number,
-    j: number
+    j: number,
   ) => MessageComponentSelectMenu | null;
   addActionRowSelectMenuOption: (
     i: number,
     j: number,
-    option: MessageComponentSelectMenuOption
+    option: MessageComponentSelectMenuOption,
   ) => void;
   clearActionRowSelectMenuOptions: (i: number, j: number) => void;
   moveActionRowSelectMenuOptionDown: (i: number, j: number, k: number) => void;
@@ -107,18 +107,18 @@ export interface MessageStore extends Message {
     i: number,
     j: number,
     k: number,
-    option: Partial<MessageComponentSelectMenuOption>
+    option: Partial<MessageComponentSelectMenuOption>,
   ) => void;
 
   getSection: (i: number) => MessageComponentSection | null;
   updateSection: (i: number, data: Partial<MessageComponentSection>) => void;
   updateSectionAccessory: (
     i: number,
-    data: Partial<MessageComponentAccessory>
+    data: Partial<MessageComponentAccessory>,
   ) => void;
   addSectionComponent: (
     i: number,
-    component: MessageComponentTextDisplay
+    component: MessageComponentTextDisplay,
   ) => void;
   clearSectionComponents: (i: number) => void;
   moveSectionComponentDown: (i: number, j: number) => void;
@@ -127,12 +127,12 @@ export interface MessageStore extends Message {
 
   getSectionTextDisplay: (
     i: number,
-    j: number
+    j: number,
   ) => MessageComponentTextDisplay | null;
   updateSectionComponent: (
     i: number,
     j: number,
-    data: Partial<MessageComponentTextDisplay>
+    data: Partial<MessageComponentTextDisplay>,
   ) => void;
   duplicateSectionComponent: (i: number, j: number) => void;
 
@@ -145,12 +145,12 @@ export interface MessageStore extends Message {
 
   getGalleryItem: (
     i: number,
-    j: number
+    j: number,
   ) => MessageComponentMediaGalleryItem | null;
   updateGalleryItem: (
     i: number,
     j: number,
-    data: Partial<MessageComponentMediaGalleryItem>
+    data: Partial<MessageComponentMediaGalleryItem>,
   ) => void;
   duplicateGalleryItem: (i: number, j: number) => void;
 
@@ -161,11 +161,11 @@ export interface MessageStore extends Message {
   getContainer: (i: number) => MessageComponentContainer | null;
   updateContainer: (
     i: number,
-    data: Partial<MessageComponentContainer>
+    data: Partial<MessageComponentContainer>,
   ) => void;
   addContainerComponent: (
     i: number,
-    component: MessageComponentContainerSubComponent
+    component: MessageComponentContainerSubComponent,
   ) => void;
   clearContainerComponents: (i: number) => void;
   moveContainerComponentDown: (i: number, j: number) => void;
@@ -174,85 +174,85 @@ export interface MessageStore extends Message {
   updateContainerComponent: (
     i: number,
     j: number,
-    data: Partial<MessageComponentContainerSubComponent>
+    data: Partial<MessageComponentContainerSubComponent>,
   ) => void;
   duplicateContainerComponent: (i: number, j: number) => void;
 
   addContainerActionRowComponent: (
     c: number,
     a: number,
-    component: MessageComponentButton | MessageComponentSelectMenu
+    component: MessageComponentButton | MessageComponentSelectMenu,
   ) => void;
   clearContainerRowActionComponents: (c: number, a: number) => void;
   moveContainerActionRowComponentUp: (c: number, a: number, k: number) => void;
   moveContainerActionRowComponentDown: (
     c: number,
     a: number,
-    k: number
+    k: number,
   ) => void;
   deleteContainerActionRowComponent: (c: number, a: number, k: number) => void;
   duplicateContainerActionRowComponent: (
     c: number,
     a: number,
-    k: number
+    k: number,
   ) => void;
   updateContainerActionRowComponent: (
     c: number,
     a: number,
     k: number,
-    data: Partial<MessageComponentButton | MessageComponentSelectMenu>
+    data: Partial<MessageComponentButton | MessageComponentSelectMenu>,
   ) => void;
   addContainerActionRowSelectMenuOption: (
     c: number,
     a: number,
-    k: number
+    k: number,
   ) => void;
   updateContainerActionRowSelectMenuOption: (
     c: number,
     a: number,
     k: number,
     o: number,
-    data: Partial<MessageComponentSelectMenuOption>
+    data: Partial<MessageComponentSelectMenuOption>,
   ) => void;
   duplicateContainerActionRowSelectMenuOption: (
     c: number,
     a: number,
     k: number,
-    o: number
+    o: number,
   ) => void;
   moveContainerActionRowSelectMenuOptionUp: (
     c: number,
     a: number,
     k: number,
-    o: number
+    o: number,
   ) => void;
   moveContainerActionRowSelectMenuOptionDown: (
     c: number,
     a: number,
     k: number,
-    o: number
+    o: number,
   ) => void;
   removeContainerActionRowSelectMenuOption: (
     c: number,
     a: number,
     k: number,
-    o: number
+    o: number,
   ) => void;
   clearContainerActionRowSelectMenuOptions: (
     c: number,
     a: number,
-    k: number
+    k: number,
   ) => void;
 
   updateContainerSectionAccessory: (
     i: number,
     j: number,
-    data: Partial<MessageComponentAccessory>
+    data: Partial<MessageComponentAccessory>,
   ) => void;
   addContainerSectionComponent: (
     i: number,
     j: number,
-    component: MessageComponentTextDisplay
+    component: MessageComponentTextDisplay,
   ) => void;
   clearContainerSectionComponents: (i: number, j: number) => void;
   moveContainerSectionComponentUp: (i: number, j: number, k: number) => void;
@@ -262,14 +262,14 @@ export interface MessageStore extends Message {
     i: number,
     j: number,
     k: number,
-    data: Partial<MessageComponentContainerSubComponent>
+    data: Partial<MessageComponentContainerSubComponent>,
   ) => void;
   duplicateContainerSectionComponent: (i: number, j: number, k: number) => void;
 
   addContainerMediaGalleryItem: (
     i: number,
     j: number,
-    component: MessageComponentMediaGalleryItem
+    component: MessageComponentMediaGalleryItem,
   ) => void;
   clearContainerMediaGalleryItems: (i: number, j: number) => void;
   moveContainerMediaGalleryItemUp: (i: number, j: number, k: number) => void;
@@ -279,7 +279,7 @@ export interface MessageStore extends Message {
     i: number,
     j: number,
     k: number,
-    data: Partial<MessageComponentMediaGalleryItem>
+    data: Partial<MessageComponentMediaGalleryItem>,
   ) => void;
   duplicateContainerMediaGalleryItem: (i: number, j: number, k: number) => void;
 
@@ -297,7 +297,7 @@ export interface MessageStore extends Message {
   setActionDisableDefaultResponse: (
     id: string,
     i: number,
-    val: boolean
+    val: boolean,
   ) => void;
   setActionPermissions: (id: string, i: number, val: string) => void;
   setActionRoleIds: (id: string, i: number, val: string[]) => void;
@@ -439,7 +439,7 @@ export const createMessageStore = (key: string) =>
             },
             setEmbedDescription: (
               i: number,
-              description: string | undefined
+              description: string | undefined,
             ) => {
               set((state) => {
                 if (state.embeds && state.embeds[i]) {
@@ -570,7 +570,7 @@ export const createMessageStore = (key: string) =>
             },
             setEmbedFooterIconUrl: (
               i: number,
-              icon_url: string | undefined
+              icon_url: string | undefined,
             ) => {
               set((state) => {
                 const embed = state.embeds && state.embeds[i];
@@ -648,7 +648,7 @@ export const createMessageStore = (key: string) =>
             setEmbedFieldInline: (
               i: number,
               j: number,
-              inline: boolean | undefined
+              inline: boolean | undefined,
             ) =>
               set((state) => {
                 const embed = state.embeds && state.embeds[i];
@@ -851,7 +851,7 @@ export const createMessageStore = (key: string) =>
             },
             addActionRowComponent: (
               i: number,
-              component: MessageComponentButton | MessageComponentSelectMenu
+              component: MessageComponentButton | MessageComponentSelectMenu,
             ) =>
               set((state) => {
                 const row = state.components && state.components[i];
@@ -943,7 +943,9 @@ export const createMessageStore = (key: string) =>
             updateActionRowComponent: (
               i: number,
               j: number,
-              data: Partial<MessageComponentButton | MessageComponentSelectMenu>
+              data: Partial<
+                MessageComponentButton | MessageComponentSelectMenu
+              >,
             ) => {
               set((state) => {
                 const row = state.components && state.components[i];
@@ -987,7 +989,7 @@ export const createMessageStore = (key: string) =>
             addActionRowSelectMenuOption: (
               i: number,
               j: number,
-              option: MessageComponentSelectMenuOption
+              option: MessageComponentSelectMenuOption,
             ) =>
               set((state) => {
                 const root = state.components && state.components[i];
@@ -1027,7 +1029,7 @@ export const createMessageStore = (key: string) =>
             moveActionRowSelectMenuOptionDown: (
               i: number,
               j: number,
-              k: number
+              k: number,
             ) =>
               set((state) => {
                 const root = state.components && state.components[i];
@@ -1048,7 +1050,7 @@ export const createMessageStore = (key: string) =>
             moveActionRowSelectMenuOptionUp: (
               i: number,
               j: number,
-              k: number
+              k: number,
             ) =>
               set((state) => {
                 const root = state.components && state.components[i];
@@ -1069,7 +1071,7 @@ export const createMessageStore = (key: string) =>
             duplicateActionRowSelectMenuOption: (
               i: number,
               j: number,
-              k: number
+              k: number,
             ) =>
               set((state) => {
                 const root = state.components && state.components[i];
@@ -1098,7 +1100,7 @@ export const createMessageStore = (key: string) =>
             deleteActionRowSelectMenuOption: (
               i: number,
               j: number,
-              k: number
+              k: number,
             ) =>
               set((state) => {
                 const root = state.components && state.components[i];
@@ -1119,7 +1121,7 @@ export const createMessageStore = (key: string) =>
               i: number,
               j: number,
               k: number,
-              data: Partial<MessageComponentSelectMenuOption>
+              data: Partial<MessageComponentSelectMenuOption>,
             ) =>
               set((state) => {
                 const root = state.components && state.components[i];
@@ -1148,7 +1150,7 @@ export const createMessageStore = (key: string) =>
             },
             updateSection: (
               i: number,
-              data: Partial<MessageComponentSection>
+              data: Partial<MessageComponentSection>,
             ) =>
               set((state) => {
                 const section = state.components && state.components[i];
@@ -1159,7 +1161,7 @@ export const createMessageStore = (key: string) =>
               }),
             updateSectionAccessory: (
               i: number,
-              data: Partial<MessageComponentAccessory>
+              data: Partial<MessageComponentAccessory>,
             ) =>
               set((state) => {
                 const section = state.components && state.components[i];
@@ -1182,7 +1184,7 @@ export const createMessageStore = (key: string) =>
 
             addSectionComponent: (
               i: number,
-              component: MessageComponentTextDisplay
+              component: MessageComponentTextDisplay,
             ) =>
               set((state) => {
                 const section = state.components && state.components[i];
@@ -1253,7 +1255,7 @@ export const createMessageStore = (key: string) =>
             updateSectionComponent: (
               i: number,
               j: number,
-              data: Partial<MessageComponentTextDisplay>
+              data: Partial<MessageComponentTextDisplay>,
             ) =>
               set((state) => {
                 const section = state.components && state.components[i];
@@ -1290,7 +1292,7 @@ export const createMessageStore = (key: string) =>
             },
             addGalleryItem: (
               i: number,
-              item: MessageComponentMediaGalleryItem
+              item: MessageComponentMediaGalleryItem,
             ) =>
               set((state) => {
                 const gallery = state.components && state.components[i];
@@ -1355,7 +1357,7 @@ export const createMessageStore = (key: string) =>
             updateGalleryItem: (
               i: number,
               j: number,
-              data: Partial<MessageComponentMediaGalleryItem>
+              data: Partial<MessageComponentMediaGalleryItem>,
             ) =>
               set((state) => {
                 const gallery = state.components && state.components[i];
@@ -1420,7 +1422,7 @@ export const createMessageStore = (key: string) =>
 
             updateContainer: (
               i: number,
-              data: Partial<MessageComponentContainer>
+              data: Partial<MessageComponentContainer>,
             ) =>
               set((state) => {
                 const container = state.components && state.components[i];
@@ -1431,7 +1433,7 @@ export const createMessageStore = (key: string) =>
               }),
             addContainerComponent: (
               i: number,
-              component: MessageComponentContainerSubComponent
+              component: MessageComponentContainerSubComponent,
             ) =>
               set((state) => {
                 const container = state.components && state.components[i];
@@ -1501,7 +1503,7 @@ export const createMessageStore = (key: string) =>
             updateContainerComponent: (
               i: number,
               j: number,
-              data: Partial<MessageComponentContainerSubComponent>
+              data: Partial<MessageComponentContainerSubComponent>,
             ) =>
               set((state) => {
                 const container = state.components && state.components[i];
@@ -2118,7 +2120,7 @@ export const createMessageStore = (key: string) =>
             setActionDisableDefaultResponse: (
               id: string,
               i: number,
-              val: boolean
+              val: boolean,
             ) =>
               set((state) => {
                 const actionSet = state.actions[id];
@@ -2152,15 +2154,15 @@ export const createMessageStore = (key: string) =>
           {
             limit: 10,
             handleSet: (handleSet) => debounce(handleSet, 1000, true),
-          }
+          },
         ),
-        { name: key, version: 0 }
-      )
-    )
+        { name: key, version: 0 },
+      ),
+    ),
   );
 
 export const useCurrentMessageStore = createMessageStore("current-message");
 
 export const useCurrentMessageUndoStore = <T>(
-  selector: (state: TemporalState<MessageStore>) => T
+  selector: (state: TemporalState<MessageStore>) => T,
 ) => useStore(useCurrentMessageStore.temporal, selector);

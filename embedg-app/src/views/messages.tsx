@@ -82,7 +82,7 @@ export default function MessagesView() {
             });
           }
         },
-      }
+      },
     );
   }
 
@@ -142,7 +142,7 @@ export default function MessagesView() {
                   "px-3 py-2 rounded text-white flex-none",
                   newMessageName
                     ? "bg-blurple hover:bg-blurple-dark"
-                    : "bg-dark-2 cursor-not-allowed"
+                    : "bg-dark-2 cursor-not-allowed",
                 )}
                 onClick={createMessage}
               >

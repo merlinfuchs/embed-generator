@@ -19,7 +19,7 @@ export default function SavedMessageSelect({
 
   const message = useMemo(
     () => messages?.success && messages.data.find((m) => m.id === messageId),
-    [messages, messageId]
+    [messages, messageId],
   );
 
   useEffect(() => {
@@ -59,7 +59,7 @@ export default function SavedMessageSelect({
               <ChevronDownIcon
                 className={clsx(
                   "text-white w-5 h-5 flex-none transition-transform",
-                  open && "rotate-180"
+                  open && "rotate-180",
                 )}
               />
             </div>

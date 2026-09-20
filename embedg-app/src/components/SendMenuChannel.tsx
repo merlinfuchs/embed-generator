@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useSendMessageToChannelMutation } from "../api/mutations";
 import { useGuildChannelsQuery, useUserQuery } from "../api/queries";
 import { useCurrentMessageStore } from "../state/message";
@@ -16,27 +15,27 @@ import { useToasts } from "../util/toasts";
 
 export default function SendMenuChannel() {
   const validationError = useValidationErrorStore((state) =>
-    state.checkIssueByPathPrefix("")
+    state.checkIssueByPathPrefix(""),
   );
 
   const [selectedGuildId, setSelectedGuildId] = useSendSettingsStore(
     (state) => [state.guildId, state.setGuildId],
-    shallow
+    shallow,
   );
 
   const [selectedChannnelId, setSelectedChannelId] = useSendSettingsStore(
     (state) => [state.channelId, state.setChannelId],
-    shallow
+    shallow,
   );
 
   const [messageId, setMessageId] = useSendSettingsStore(
     (state) => [state.messageId, state.setMessageId],
-    shallow
+    shallow,
   );
 
   const [threadName, setThreadName] = useSendSettingsStore(
     (state) => [state.threadName, state.setThreadName],
-    shallow
+    shallow,
   );
 
   const { data: channels } = useGuildChannelsQuery(selectedGuildId);
@@ -101,11 +100,11 @@ export default function SendMenuChannel() {
             });
           }
         },
-      }
+      },
     );
   }
 
-  return !!user?.success ? (
+  return user?.success ? (
     <div className="space-y-5">
       <div className="flex">
         <div className="flex-auto">

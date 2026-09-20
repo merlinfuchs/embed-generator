@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import {
+import type {
   MessageComponentActionRow,
   MessageComponentButton,
   MessageComponentSelectMenu,
@@ -21,7 +21,7 @@ interface Props {
   moveDown?: () => void;
   remove?: () => void;
   addSubComponent: (
-    component: MessageComponentButton | MessageComponentSelectMenu
+    component: MessageComponentButton | MessageComponentSelectMenu,
   ) => void;
   clearSubComponents: () => void;
   moveSubComponentUp: (index: number) => void;
@@ -29,13 +29,13 @@ interface Props {
   deleteSubComponent: (index: number) => void;
   onSubComponentChange: (
     index: number,
-    data: Partial<MessageComponentButton | MessageComponentSelectMenu>
+    data: Partial<MessageComponentButton | MessageComponentSelectMenu>,
   ) => void;
   duplicateSubComponent: (index: number) => void;
   onSelectMenuOptionChange: (
     a: number,
     o: number,
-    data: Partial<MessageComponentSelectMenuOption>
+    data: Partial<MessageComponentSelectMenuOption>,
   ) => void;
   addSelectMenuOption: (k: number) => void;
   duplicateSelectMenuOption: (k: number, o: number) => void;
@@ -71,7 +71,7 @@ export default function EditorComponentBaseActionRow({
 }: Props) {
   const isButtonRow = useMemo(
     () => data.components.every((c) => c.type === 2),
-    [data]
+    [data],
   );
 
   return (
@@ -132,7 +132,7 @@ export default function EditorComponentBaseActionRow({
               removeOption={(o) => removeSelectMenuOption(i, o)}
               clearOptions={() => clearSelectMenuOptions(i)}
             />
-          )
+          ),
         )}
         {isButtonRow && (
           <div>

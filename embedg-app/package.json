@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check": "biome check .",
+    "format": "biome check --write ."
   },
   "dependencies": {
     "@codemirror/lang-json": "^6.0.1",
@@ -48,6 +50,7 @@
     "zustand": "^4.3.7"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.14",
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
     "@vitejs/plugin-react-swc": "^3.0.0",

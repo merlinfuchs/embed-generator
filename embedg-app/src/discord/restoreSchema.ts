@@ -8,21 +8,21 @@ export const uniqueIdSchema = z.preprocess(
     }
     return d;
   },
-  z.number().default(() => getUniqueId())
+  z.number().default(() => getUniqueId()),
 );
 
 export type UniqueId = z.infer<typeof uniqueIdSchema>;
 
 export const embedFooterTextSchema = z.preprocess(
   (d) => d ?? undefined,
-  z.optional(z.string())
+  z.optional(z.string()),
 );
 
 export type EmbedFooterText = z.infer<typeof embedFooterTextSchema>;
 
 export const embedFooterIconUrlSchema = z.preprocess(
   (d) => d ?? undefined,
-  z.optional(z.string())
+  z.optional(z.string()),
 );
 
 export type EmbedFooterIconUrl = z.infer<typeof embedFooterIconUrlSchema>;
@@ -33,15 +33,15 @@ export const embedFooterSchema = z.preprocess(
     z.object({
       text: embedFooterTextSchema,
       icon_url: embedFooterIconUrlSchema,
-    })
-  )
+    }),
+  ),
 );
 
 export type EmbedFooter = z.infer<typeof embedFooterSchema>;
 
 export const embedImageUrlSchema = z.preprocess(
   (d) => d ?? undefined,
-  z.optional(z.string())
+  z.optional(z.string()),
 );
 
 export type EmbedImageUrl = z.infer<typeof embedImageUrlSchema>;
@@ -51,15 +51,15 @@ export const embedImageSchema = z.preprocess(
   z.optional(
     z.object({
       url: embedImageUrlSchema,
-    })
-  )
+    }),
+  ),
 );
 
 export type EmbedImage = z.infer<typeof embedImageSchema>;
 
 export const embedThumbnailUrlSchema = z.preprocess(
   (d) => d ?? undefined,
-  z.optional(z.string())
+  z.optional(z.string()),
 );
 
 export type EmbedThumbnailUrl = z.infer<typeof embedThumbnailUrlSchema>;
@@ -69,29 +69,29 @@ export const embedThumbnailSchema = z.preprocess(
   z.optional(
     z.object({
       url: embedThumbnailUrlSchema,
-    })
-  )
+    }),
+  ),
 );
 
 export type EmbedThumbnail = z.infer<typeof embedThumbnailSchema>;
 
 export const embedAuthorNameSchema = z.preprocess(
   (d) => d ?? undefined,
-  z.string().default("")
+  z.string().default(""),
 );
 
 export type EmbedAuthorName = z.infer<typeof embedAuthorNameSchema>;
 
 export const embedAuthorUrlSchema = z.preprocess(
   (d) => d ?? undefined,
-  z.optional(z.string())
+  z.optional(z.string()),
 );
 
 export type EmbedAuthorUrl = z.infer<typeof embedAuthorUrlSchema>;
 
 export const embedAuthorIconUrlSchema = z.preprocess(
   (d) => d ?? undefined,
-  z.optional(z.string())
+  z.optional(z.string()),
 );
 
 export type EmbedAuthorIconUrl = z.infer<typeof embedAuthorIconUrlSchema>;
@@ -103,22 +103,22 @@ export const embedAuthorSchema = z.preprocess(
       name: embedAuthorNameSchema,
       url: embedAuthorUrlSchema,
       icon_url: embedAuthorIconUrlSchema,
-    })
-  )
+    }),
+  ),
 );
 
 export type EmbedAuthor = z.infer<typeof embedAuthorSchema>;
 
 export const embedProviderNameSchema = z.preprocess(
   (d) => d ?? undefined,
-  z.string().default("")
+  z.string().default(""),
 );
 
 export type EmbedProviderName = z.infer<typeof embedProviderNameSchema>;
 
 export const embedProviderUrlSchema = z.preprocess(
   (d) => d ?? undefined,
-  z.optional(z.string())
+  z.optional(z.string()),
 );
 
 export type EmbedProviderUrl = z.infer<typeof embedProviderUrlSchema>;
@@ -129,29 +129,29 @@ export const embedProviderSchema = z.preprocess(
     z.object({
       name: embedProviderNameSchema,
       url: embedProviderUrlSchema,
-    })
-  )
+    }),
+  ),
 );
 
 export type EmbedProvider = z.infer<typeof embedProviderSchema>;
 
 export const embedFieldNameSchema = z.preprocess(
   (d) => d ?? undefined,
-  z.string().default("")
+  z.string().default(""),
 );
 
 export type EmbedFieldName = z.infer<typeof embedFieldNameSchema>;
 
 export const embedFieldValueSchema = z.preprocess(
   (d) => d ?? undefined,
-  z.string().default("")
+  z.string().default(""),
 );
 
 export type EmbedFieldValue = z.infer<typeof embedFieldValueSchema>;
 
 export const embedFieldInlineSchma = z.preprocess(
   (d) => d ?? undefined,
-  z.optional(z.boolean())
+  z.optional(z.boolean()),
 );
 
 export type EmbedFieldInline = z.infer<typeof embedFieldInlineSchma>;
@@ -167,35 +167,35 @@ export type EmbedField = z.infer<typeof embedFieldSchema>;
 
 export const embedtitleSchema = z.preprocess(
   (d) => d ?? undefined,
-  z.optional(z.string())
+  z.optional(z.string()),
 );
 
 export type EmbedTitle = z.infer<typeof embedtitleSchema>;
 
 export const embedDescriptionSchema = z.preprocess(
   (d) => d ?? undefined,
-  z.optional(z.string())
+  z.optional(z.string()),
 );
 
 export type EmbedDescription = z.infer<typeof embedDescriptionSchema>;
 
 export const embedUrlSchema = z.preprocess(
   (d) => d ?? undefined,
-  z.optional(z.string())
+  z.optional(z.string()),
 );
 
 export type EmbedUrl = z.infer<typeof embedUrlSchema>;
 
 export const embedTimestampSchema = z.preprocess(
   (d) => d ?? undefined,
-  z.optional(z.string())
+  z.optional(z.string()),
 );
 
 export type EmbedTimestamp = z.infer<typeof embedTimestampSchema>;
 
 export const embedColor = z.preprocess(
   (d) => d ?? undefined,
-  z.optional(z.number())
+  z.optional(z.number()),
 );
 
 export type EmbedColor = z.infer<typeof embedColor>;
@@ -214,7 +214,7 @@ export const embedSchema = z.object({
   thumbnail: embedThumbnailSchema,
   fields: z.preprocess(
     (d) => d ?? undefined,
-    z.array(embedFieldSchema).default([])
+    z.array(embedFieldSchema).default([]),
   ),
 });
 
@@ -253,7 +253,7 @@ export const componentButtonSchema = z
     disabled: z.preprocess((d) => d ?? undefined, z.optional(z.boolean())),
     action_set_id: z.preprocess(
       (d) => d ?? undefined,
-      z.string().default(() => getUniqueId().toString())
+      z.string().default(() => getUniqueId().toString()),
     ),
   })
   .or(
@@ -266,7 +266,7 @@ export const componentButtonSchema = z
       url: z.preprocess((d) => d ?? undefined, z.string().default("")),
       disabled: z.preprocess((d) => d ?? undefined, z.optional(z.boolean())),
       action_set_id: z.string().default(() => getUniqueId().toString()),
-    })
+    }),
   );
 
 export type MessageComponentButton = z.infer<typeof componentButtonSchema>;
@@ -278,7 +278,7 @@ export const componentSelectMenuOptionSchema = z.object({
   emoji: z.preprocess((d) => d ?? undefined, z.optional(emojiSchema)),
   action_set_id: z.preprocess(
     (d) => d ?? undefined,
-    z.string().default(() => getUniqueId().toString())
+    z.string().default(() => getUniqueId().toString()),
   ),
 });
 
@@ -293,7 +293,7 @@ export const componentSelectMenuSchema = z.object({
   disabled: z.preprocess((d) => d ?? undefined, z.optional(z.boolean())),
   options: z.preprocess(
     (d) => d ?? undefined,
-    z.array(componentSelectMenuOptionSchema).default([])
+    z.array(componentSelectMenuOptionSchema).default([]),
   ),
 });
 
@@ -306,7 +306,7 @@ export const componentActionRowSchema = z.object({
   type: z.literal(1),
   components: z.preprocess(
     (d) => d ?? undefined,
-    z.array(componentButtonSchema.or(componentSelectMenuSchema)).default([])
+    z.array(componentButtonSchema.or(componentSelectMenuSchema)).default([]),
   ),
 });
 
@@ -337,7 +337,7 @@ export const componentSectionSchema = z.object({
   type: z.literal(9),
   components: z.preprocess(
     (d) => d ?? undefined,
-    z.array(componentTextDisplaySchema).default([])
+    z.array(componentTextDisplaySchema).default([]),
   ),
   accessory: z.preprocess(
     (d) => d ?? undefined,
@@ -346,7 +346,7 @@ export const componentSectionSchema = z.object({
       media: {
         url: "",
       },
-    })
+    }),
   ),
 });
 
@@ -364,7 +364,7 @@ export const componentMediaGallerySchema = z.object({
   type: z.literal(12),
   items: z.preprocess(
     (d) => d ?? undefined,
-    z.array(componentMediaGalleryItemSchema).default([])
+    z.array(componentMediaGalleryItemSchema).default([]),
   ),
 });
 
@@ -385,7 +385,7 @@ export const componentSeparatorSchema = z.object({
   divider: z.preprocess((d) => d ?? undefined, z.boolean().default(true)),
   spacing: z.preprocess(
     (d) => d ?? undefined,
-    z.union([z.literal(1), z.literal(2)]).default(1)
+    z.union([z.literal(1), z.literal(2)]).default(1),
   ),
 });
 
@@ -403,7 +403,7 @@ export const componentContainerSchema = z.object({
         componentMediaGallerySchema,
         componentSeparatorSchema,
         componentFileSchema,
-      ])
+      ]),
     )
     .min(1)
     .max(10),
@@ -434,7 +434,7 @@ export const messageActionSchema = z
     public: z.preprocess((d) => d ?? undefined, z.boolean().default(false)),
     allow_role_mentions: z.preprocess(
       (d) => d ?? undefined,
-      z.boolean().default(false)
+      z.boolean().default(false),
     ),
   })
   .or(
@@ -445,9 +445,9 @@ export const messageActionSchema = z
       public: z.preprocess((d) => d ?? undefined, z.boolean().default(false)),
       allow_role_mentions: z.preprocess(
         (d) => d ?? undefined,
-        z.boolean().default(false)
+        z.boolean().default(false),
       ),
-    })
+    }),
   )
   .or(
     z.object({
@@ -457,13 +457,13 @@ export const messageActionSchema = z
       public: z.preprocess((d) => d ?? undefined, z.boolean().default(false)),
       allow_role_mentions: z.preprocess(
         (d) => d ?? undefined,
-        z.boolean().default(false)
+        z.boolean().default(false),
       ),
       disable_default_response: z.preprocess(
         (d) => d ?? undefined,
-        z.boolean().default(false)
+        z.boolean().default(false),
       ),
-    })
+    }),
   )
   .or(
     z.object({
@@ -472,14 +472,14 @@ export const messageActionSchema = z
       permissions: z.preprocess((d) => d ?? undefined, z.string().default("0")),
       role_ids: z.preprocess(
         (d) => d ?? undefined,
-        z.array(z.string()).default([])
+        z.array(z.string()).default([]),
       ),
       disable_default_response: z.preprocess(
         (d) => d ?? undefined,
-        z.boolean().default(false)
+        z.boolean().default(false),
       ),
       text: z.preprocess((d) => d ?? undefined, z.string().default("")),
-    })
+    }),
   );
 
 export type MessageAction = z.infer<typeof messageActionSchema>;
@@ -492,28 +492,28 @@ export type MessageActionSet = z.infer<typeof messageActionSetSchema>;
 
 export const messageContentSchema = z.preprocess(
   (d) => d ?? undefined,
-  z.string().default("")
+  z.string().default(""),
 );
 
 export type MessageContent = z.infer<typeof messageContentSchema>;
 
 export const webhookUsernameSchema = z.preprocess(
   (d) => d ?? undefined,
-  z.optional(z.string())
+  z.optional(z.string()),
 );
 
 export type WebhookUsername = z.infer<typeof webhookUsernameSchema>;
 
 export const webhookAvatarUrlSchema = z.preprocess(
   (d) => d ?? undefined,
-  z.optional(z.string())
+  z.optional(z.string()),
 );
 
 export type WebhookAvatarUrl = z.infer<typeof webhookAvatarUrlSchema>;
 
 export const messageTtsSchema = z.preprocess(
   (d) => d ?? undefined,
-  z.boolean().default(false)
+  z.boolean().default(false),
 );
 
 export type MessageTts = z.infer<typeof messageTtsSchema>;
@@ -523,13 +523,13 @@ export const messageAllowedMentionsSchema = z.preprocess(
   z.optional(
     z.object({
       parse: z.array(
-        z.literal("users").or(z.literal("roles")).or(z.literal("everyone"))
+        z.literal("users").or(z.literal("roles")).or(z.literal("everyone")),
       ),
       roles: z.array(z.string()),
       users: z.array(z.string()),
       replied_user: z.boolean(),
-    })
-  )
+    }),
+  ),
 );
 
 export const messageThreadName = z.optional(z.string());
@@ -537,7 +537,7 @@ export const messageThreadName = z.optional(z.string());
 export const messageSchema = z.object({
   content: z.preprocess(
     (d) => d ?? undefined,
-    messageContentSchema.default("")
+    messageContentSchema.default(""),
   ),
   username: webhookUsernameSchema,
   avatar_url: webhookAvatarUrlSchema,
@@ -546,12 +546,12 @@ export const messageSchema = z.object({
   allowed_mentions: messageAllowedMentionsSchema,
   components: z.preprocess(
     (d) => d ?? undefined,
-    z.array(componentSchema).default([])
+    z.array(componentSchema).default([]),
   ),
   thread_name: messageThreadName,
   actions: z.preprocess(
     (d) => d ?? undefined,
-    z.record(z.string(), messageActionSetSchema).default({})
+    z.record(z.string(), messageActionSetSchema).default({}),
   ),
   flags: z.preprocess((d) => d ?? 0, z.number()),
 });

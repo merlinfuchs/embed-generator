@@ -12,11 +12,11 @@ interface Props {
 
 export default function GuildOrUserSelect({ value, onChange }: Props) {
   const { data: user } = useUserQuery();
-  const { data: guilds, isLoading } = useGuildsQuery();
+  const { data: guilds } = useGuildsQuery();
 
   const guild = useMemo(
     () => guilds && guilds.success && guilds.data.find((g) => g.id === value),
-    [guilds, value]
+    [guilds, value],
   );
 
   useEffect(() => {
@@ -49,6 +49,7 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
           {value === "user" && user?.success ? (
             <div className="flex items-center space-x-2 cursor-pointer w-full">
               <img
+                alt=""
                 src={userAvatarUrl(user.data)}
                 className="guild icon url w-8 h-8 rounded-full flex-none"
               />
@@ -58,13 +59,14 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
               <ChevronDownIcon
                 className={clsx(
                   "text-white w-5 h-5 flex-none transition-transform",
-                  open && "rotate-180"
+                  open && "rotate-180",
                 )}
               />
             </div>
           ) : guild ? (
             <div className="flex items-center space-x-2 cursor-pointer w-full">
               <img
+                alt=""
                 src={guildIconUrl(guild)}
                 className="guild icon url w-8 h-8 rounded-full flex-none"
               />
@@ -74,7 +76,7 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
               <ChevronDownIcon
                 className={clsx(
                   "text-white w-5 h-5 flex-none transition-transform",
-                  open && "rotate-180"
+                  open && "rotate-180",
                 )}
               />
             </div>
@@ -114,7 +116,7 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
                     g.has_channel_with_bot_access &&
                       g.has_channel_with_user_access
                       ? "hover:bg-dark-3 cursor-pointer"
-                      : "opacity-60 cursor-not-allowed"
+                      : "opacity-60 cursor-not-allowed",
                   )}
                   role="button"
                   onClick={() =>

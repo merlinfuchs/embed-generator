@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";
-import { ChangeEvent, useRef } from "react";
+import { type ChangeEvent, useRef } from "react";
 import { getUniqueId } from "../util";
 import EditorAttachment from "./EditorAttachment";
 import { shallow } from "zustand/shallow";
@@ -10,20 +10,20 @@ import { useCurrentMessageStore } from "../state/message";
 
 export default function EditorAttachments() {
   const attachments = useCurrentAttachmentsStore((state) =>
-    state.attachments.map((a) => a.id)
+    state.attachments.map((a) => a.id),
   );
 
   const componentsV2Enabled = useCurrentMessageStore((state) =>
-    state.getComponentsV2Enabled()
+    state.getComponentsV2Enabled(),
   );
 
   const totalBytes = useCurrentAttachmentsStore((state) =>
-    state.attachments.reduce((acc, curr) => acc + curr.size, 0)
+    state.attachments.reduce((acc, curr) => acc + curr.size, 0),
   );
 
   const [addAttachment, clearAttachments] = useCurrentAttachmentsStore(
     (state) => [state.addAttachment, state.clearAttachments],
-    shallow
+    shallow,
   );
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -72,7 +72,7 @@ export default function EditorAttachments() {
           <div
             className={clsx(
               "text-sm italic font-light",
-              totalBytes < 25 * 1024 * 1024 ? "text-gray-400" : "text-red"
+              totalBytes < 25 * 1024 * 1024 ? "text-gray-400" : "text-red",
             )}
           >
             {Math.round(totalBytes / 10_000) / 100} / 25MB
@@ -96,7 +96,7 @@ export default function EditorAttachments() {
             "px-3 py-2 rounded text-white",
             attachments.length < 10
               ? "bg-blurple hover:bg-blurple-dark"
-              : "bg-dark-3 cursor-not-allowed"
+              : "bg-dark-3 cursor-not-allowed",
           )}
           onClick={handleAddAttachment}
         >

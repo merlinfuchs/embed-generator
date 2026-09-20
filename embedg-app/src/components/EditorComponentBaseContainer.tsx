@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import {
+import type {
   MessageComponentAccessory,
   MessageComponentButton,
   MessageComponentContainer,
@@ -9,7 +9,6 @@ import {
   MessageComponentSelectMenuOption,
   MessageComponentTextDisplay,
 } from "../discord/schema";
-import { getUniqueId } from "../util";
 import { AutoAnimate } from "../util/autoAnimate";
 import CheckBox from "./CheckBox";
 import EditorComponentAddDropdown from "./EditorComponentAddDropdown";
@@ -20,7 +19,6 @@ import EditorComponentBaseSection from "./EditorComponentBaseSection";
 import EditorComponentBaseSeparator from "./EditorComponentBaseSeparator";
 import EditorComponentBaseTextDisplay from "./EditorComponentBaseTextDisplay";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
-import EditorInput from "./EditorInput";
 import { colorIntToHex } from "../util/discord";
 import ColorPicker from "./ColorPicker";
 import ValidationError from "./ValidationError";
@@ -44,12 +42,12 @@ interface Props {
   duplicateSubComponent: (index: number) => void;
   onSubComponentChange: (
     index: number,
-    data: Partial<MessageComponentContainerSubComponent>
+    data: Partial<MessageComponentContainerSubComponent>,
   ) => void;
 
   actionRowAddSubComponent: (
     index: number,
-    comp: MessageComponentButton | MessageComponentSelectMenu
+    comp: MessageComponentButton | MessageComponentSelectMenu,
   ) => void;
   actionRowClearSubComponents: (a: number) => void;
   actionRowMoveSubComponentUp: (a: number, k: number) => void;
@@ -59,14 +57,14 @@ interface Props {
   actionRowOnSubComponentChange: (
     a: number,
     k: number,
-    data: Partial<MessageComponentButton | MessageComponentSelectMenu>
+    data: Partial<MessageComponentButton | MessageComponentSelectMenu>,
   ) => void;
   actionRowAddSelectMenuOption: (a: number, k: number) => void;
   actionRowOnSelectMenuOptionChange: (
     a: number,
     k: number,
     o: number,
-    data: Partial<MessageComponentSelectMenuOption>
+    data: Partial<MessageComponentSelectMenuOption>,
   ) => void;
   actionRowDuplicateSelectMenuOption: (a: number, k: number, o: number) => void;
   actionRowMoveSelectMenuOptionUp: (a: number, k: number, o: number) => void;
@@ -76,11 +74,11 @@ interface Props {
 
   sectionOnAccessoryChange: (
     i: number,
-    data: Partial<MessageComponentAccessory>
+    data: Partial<MessageComponentAccessory>,
   ) => void;
   sectionAddSubComponent: (
     s: number,
-    comp: MessageComponentTextDisplay
+    comp: MessageComponentTextDisplay,
   ) => void;
   sectionClearSubComponents: (s: number) => void;
   sectionMoveSubComponentUp: (s: number, k: number) => void;
@@ -89,13 +87,13 @@ interface Props {
   sectionOnSubComponentChange: (
     s: number,
     k: number,
-    data: Partial<MessageComponentContainerSubComponent>
+    data: Partial<MessageComponentContainerSubComponent>,
   ) => void;
   sectionDuplicateSubComponent: (s: number, k: number) => void;
 
   mediaGalleryAddItem: (
     a: number,
-    comp: MessageComponentMediaGalleryItem
+    comp: MessageComponentMediaGalleryItem,
   ) => void;
   mediaGalleryClearItems: (a: number) => void;
   mediaGalleryMoveItemUp: (a: number, i: number) => void;
@@ -104,7 +102,7 @@ interface Props {
   mediaGalleryOnItemChange: (
     a: number,
     i: number,
-    data: Partial<MessageComponentContainerSubComponent>
+    data: Partial<MessageComponentContainerSubComponent>,
   ) => void;
   mediaGalleryDuplicateItem: (a: number, i: number) => void;
 }
@@ -164,7 +162,7 @@ export default function EditorComponentBaseContainer({
       data.accent_color !== undefined
         ? colorIntToHex(data.accent_color)
         : "#1f2225",
-    [data.accent_color]
+    [data.accent_color],
   );
 
   return (
@@ -279,7 +277,7 @@ export default function EditorComponentBaseContainer({
                         i,
                         index,
                         optionIndex,
-                        data
+                        data,
                       );
                     }}
                     addSelectMenuOption={(k) => {

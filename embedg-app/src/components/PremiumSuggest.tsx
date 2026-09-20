@@ -20,7 +20,7 @@ export default function PremiumSuggest({ alwaysExpanded }: Props) {
   const consumableEntitlementId = useMemo(() => {
     if (!data?.success) return null;
     return data.data.entitlements.find(
-      (e) => e.consumable && !e.consumed_guild_id
+      (e) => e.consumable && !e.consumed_guild_id,
     )?.id;
   }, [data]);
 
@@ -33,7 +33,7 @@ export default function PremiumSuggest({ alwaysExpanded }: Props) {
     if (!consumableEntitlementId || !guildId) return;
 
     const confirmed = confirm(
-      `You are about to activate Premium for the server with the id '${guildId}'. Once activated, you can't activate it for another server.`
+      `You are about to activate Premium for the server with the id '${guildId}'. Once activated, you can't activate it for another server.`,
     );
     if (!confirmed) return;
 
@@ -58,7 +58,7 @@ export default function PremiumSuggest({ alwaysExpanded }: Props) {
             });
           }
         },
-      }
+      },
     );
   }, [consumableEntitlementId, guildId]);
 
@@ -98,6 +98,7 @@ export default function PremiumSuggest({ alwaysExpanded }: Props) {
                 className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white w-full text-center"
                 href="/premium"
                 target="_blank"
+                rel="noopener"
               >
                 <div>Get Premium</div>
               </a>

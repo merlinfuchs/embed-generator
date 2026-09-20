@@ -24,28 +24,28 @@ export default function EditorEmbedField({
   fieldId,
 }: Props) {
   const fieldCount = useCurrentMessageStore(
-    (state) => state.embeds[embedIndex].fields.length
+    (state) => state.embeds[embedIndex].fields.length,
   );
   const [name, setName] = useCurrentMessageStore(
     (state) => [
       state.embeds[embedIndex].fields[fieldIndex].name,
       state.setEmbedFieldName,
     ],
-    shallow
+    shallow,
   );
   const [value, setValue] = useCurrentMessageStore(
     (state) => [
       state.embeds[embedIndex].fields[fieldIndex].value,
       state.setEmbedFieldValue,
     ],
-    shallow
+    shallow,
   );
   const [inline, setInline] = useCurrentMessageStore(
     (state) => [
       state.embeds[embedIndex].fields[fieldIndex].inline,
       state.setEmbedFieldInline,
     ],
-    shallow
+    shallow,
   );
   const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
     (state) => [
@@ -54,7 +54,7 @@ export default function EditorEmbedField({
       state.duplicateEmbedField,
       state.deleteEmbedField,
     ],
-    shallow
+    shallow,
   );
 
   return (

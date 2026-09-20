@@ -18,7 +18,7 @@ export default function ColorPicker({ value, onChange }: Props) {
 
     if (raw) {
       const value = parseInt(raw, 16);
-      if (!isNaN(value)) {
+      if (!Number.isNaN(value)) {
         onChange(value);
       } else {
         onChange(undefined);
@@ -36,7 +36,7 @@ export default function ColorPicker({ value, onChange }: Props) {
     }
   }, [value]);
 
-  const displayColor = hexColor ? "#" + hexColor : "#1f2225";
+  const displayColor = hexColor ? `#${hexColor}` : "#1f2225";
 
   return (
     <div className="flex space-x-2">
@@ -64,7 +64,7 @@ export default function ColorPicker({ value, onChange }: Props) {
         />
         {show && (
           <div className="absolute bottom-14 right-0">
-            <HexColorPicker color={"#" + hexColor} onChange={setHexColor} />
+            <HexColorPicker color={`#${hexColor}`} onChange={setHexColor} />
           </div>
         )}
       </ClickOutsideHandler>

@@ -1,8 +1,8 @@
-import { ChangeEvent, useRef } from "react";
+import { type ChangeEvent, useRef } from "react";
 import { messageSchema } from "../discord/restoreSchema";
 import { z } from "zod";
 import { useToasts } from "../util/toasts";
-import { SavedMessageWire } from "../api/wire";
+import type { SavedMessageWire } from "../api/wire";
 import { useImportSavedMessagesMutation } from "../api/mutations";
 import { useQueryClient } from "react-query";
 
@@ -13,7 +13,7 @@ const messageExportSchema = z
         name: z.string(),
         description: z.string().nullable(),
         data: messageSchema,
-      })
+      }),
     ),
   })
   .or(
@@ -25,9 +25,9 @@ const messageExportSchema = z
             messages: z.array(
               z.object({
                 data: messageSchema,
-              })
+              }),
             ),
-          })
+          }),
         ),
       })
       .transform((data) => ({
@@ -36,9 +36,9 @@ const messageExportSchema = z
             name: b.name,
             description: null,
             data: m.data,
-          }))
+          })),
         ),
-      }))
+      })),
   );
 
 type MessageExport = z.infer<typeof messageExportSchema>;
@@ -50,7 +50,6 @@ interface Props {
 
 export default function MessageExportImport({ messages, guildId }: Props) {
   const importInputRef = useRef<HTMLInputElement>(null);
-  const exportAnchorRef = useRef<HTMLAnchorElement>(null);
 
   const queryClient = useQueryClient();
 
@@ -81,7 +80,7 @@ export default function MessageExportImport({ messages, guildId }: Props) {
                 onSuccess: () => {
                   queryClient.invalidateQueries(["saved-messages", guildId]);
                 },
-              }
+              },
             );
           } else {
             console.log(parsed.error);
@@ -116,13 +115,14 @@ export default function MessageExportImport({ messages, guildId }: Props) {
     const data = JSON.stringify(exportData, null, 2);
 
     const dataUrl = window.URL.createObjectURL(
-      new Blob([data], { type: "application/json" })
+      new Blob([data], { type: "application/json" }),
     );
 
-    if (exportAnchorRef.current) {
-      exportAnchorRef.current.href = dataUrl;
-      exportAnchorRef.current.click();
-    }
+    const anchor = document.createElement("a");
+    anchor.href = dataUrl;
+    anchor.download = "messages.json";
+    anchor.click();
+    window.URL.revokeObjectURL(dataUrl);
   }
 
   return (
@@ -146,12 +146,6 @@ export default function MessageExportImport({ messages, guildId }: Props) {
         onClick={handleExport}
       >
         Export All
-        <a
-          href=""
-          ref={exportAnchorRef}
-          download="messages.json"
-          className="hidden"
-        ></a>
       </button>
     </div>
   );

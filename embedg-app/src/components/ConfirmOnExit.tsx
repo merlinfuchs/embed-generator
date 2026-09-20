@@ -11,7 +11,8 @@ export default function ConfirmOnExit() {
 
     function onBeforeUnload(e: BeforeUnloadEvent) {
       e.preventDefault();
-      return (e.returnValue = "Are you sure you want to leave?");
+      e.returnValue = "Are you sure you want to leave?";
+      return e.returnValue;
     }
 
     window.addEventListener("beforeunload", onBeforeUnload);

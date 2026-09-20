@@ -1,12 +1,10 @@
-import {
+import type {
   MessageComponentMediaGallery,
   MessageComponentMediaGalleryItem,
-  MessageComponentTextDisplay,
 } from "../discord/schema";
 import { getUniqueId } from "../util";
 import { AutoAnimate } from "../util/autoAnimate";
 import EditorComponentBaseMediaGalleryItem from "./EditorComponentBaseMediaGalleryItem";
-import EditorComponentBaseTextDisplay from "./EditorComponentBaseTextDisplay";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
 
 interface Props {
@@ -25,7 +23,7 @@ interface Props {
   deleteItem: (index: number) => void;
   onItemChange: (
     index: number,
-    data: Partial<MessageComponentMediaGalleryItem>
+    data: Partial<MessageComponentMediaGalleryItem>,
   ) => void;
   duplicateItem: (index: number) => void;
 }

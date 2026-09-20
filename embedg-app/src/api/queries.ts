@@ -1,5 +1,5 @@
 import { useQuery } from "react-query";
-import {
+import type {
   CustomBotGetResponseWire,
   GetPremiumPlanFeaturesResponseWire,
   ListChannelsResponseWire,
@@ -15,19 +15,22 @@ import {
   GetGuildBrandingResponseWire,
   ScheduledMessageListResponseWire,
 } from "./wire";
-import { APIResponse } from "./base";
+import type { APIResponse } from "./base";
 import { fetchApi } from "./client";
 
 export class APIError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
     super(message);
   }
 }
 
-const silentErrorCodes = new Set(["invalid_session"]);
+const _silentErrorCodes = new Set(["invalid_session"]);
 
 export function handleApiResponse<T extends APIResponse<any>>(
-  resp: Promise<T>
+  resp: Promise<T>,
 ): Promise<T> {
   return resp; /*.then((res) => {
     if (!res.success) {
@@ -45,7 +48,7 @@ export function handleApiResponse<T extends APIResponse<any>>(
 export function useUserQuery(userId = "@me") {
   return useQuery<UserResponseWire>(["users", userId], () => {
     return fetchApi(`/api/users/${userId}`).then((res) =>
-      handleApiResponse(res.json())
+      handleApiResponse(res.json()),
     );
   });
 }
@@ -61,10 +64,10 @@ export function useGuildChannelsQuery(guildId: string | null) {
     ["guild", guildId, "channels"],
     () => {
       return fetchApi(`/api/guilds/${guildId}/channels`).then((res) =>
-        handleApiResponse(res.json())
+        handleApiResponse(res.json()),
       );
     },
-    { enabled: !!guildId }
+    { enabled: !!guildId },
   );
 }
 
@@ -73,10 +76,10 @@ export function useGuildRolesQuery(guildId: string | null) {
     ["guild", guildId, "roles"],
     () => {
       return fetchApi(`/api/guilds/${guildId}/roles`).then((res) =>
-        handleApiResponse(res.json())
+        handleApiResponse(res.json()),
       );
     },
-    { enabled: !!guildId }
+    { enabled: !!guildId },
   );
 }
 
@@ -85,10 +88,10 @@ export function useGuildEmojisQuery(guildId: string | null) {
     ["guild", guildId, "emojis"],
     () => {
       return fetchApi(`/api/guilds/${guildId}/emojis`).then((res) =>
-        handleApiResponse(res.json())
+        handleApiResponse(res.json()),
       );
     },
-    { enabled: !!guildId }
+    { enabled: !!guildId },
   );
 }
 
@@ -97,10 +100,10 @@ export function useGuildBrandingQuery(guildId: string | null) {
     ["guild", guildId, "branding"],
     () => {
       return fetchApi(`/api/guilds/${guildId}/branding`).then((res) =>
-        handleApiResponse(res.json())
+        handleApiResponse(res.json()),
       );
     },
-    { enabled: !!guildId }
+    { enabled: !!guildId },
   );
 }
 
@@ -113,7 +116,7 @@ export function useSavedMessagesQuery(guildId: string | null) {
         url += `?guild_id=${guildId}`;
       }
       return fetchApi(url).then((res) => handleApiResponse(res.json()));
-    }
+    },
   );
 }
 
@@ -121,10 +124,10 @@ export function useSharedMessageQuery(messageId: string | null) {
   return useQuery<SharedMessageGetResponseWire>(
     ["shared-message", messageId],
     () => {
-      let url = `/api/shared-messages/${messageId}`;
+      const url = `/api/shared-messages/${messageId}`;
       return fetchApi(url).then((res) => handleApiResponse(res.json()));
     },
-    { enabled: !!messageId }
+    { enabled: !!messageId },
   );
 }
 
@@ -133,9 +136,9 @@ export function usePremiumGuildFeaturesQuery(guildId?: string | null) {
     ["premium", "features", guildId],
     () =>
       fetchApi(`/api/premium/features?guild_id=${guildId}`).then((res) =>
-        handleApiResponse(res.json())
+        handleApiResponse(res.json()),
       ),
-    { enabled: !!guildId }
+    { enabled: !!guildId },
   );
 }
 
@@ -144,9 +147,9 @@ export function usePremiumGuildEntitlementsQuery(guildId?: string | null) {
     ["premium", "entitlements", guildId],
     () =>
       fetchApi(`/api/premium/entitlements?guild_id=${guildId}`).then((res) =>
-        handleApiResponse(res.json())
+        handleApiResponse(res.json()),
       ),
-    { enabled: !!guildId }
+    { enabled: !!guildId },
   );
 }
 
@@ -155,8 +158,8 @@ export function usePremiumUserEntitlementsQuery() {
     ["premium", "entitlements", "user"],
     () =>
       fetchApi(`/api/premium/entitlements`).then((res) =>
-        handleApiResponse(res.json())
-      )
+        handleApiResponse(res.json()),
+      ),
   );
 }
 
@@ -165,8 +168,8 @@ export function usePremiumUserFeaturesQuery() {
     ["premium", "features", "user"],
     () =>
       fetchApi(`/api/premium/features`).then((res) =>
-        handleApiResponse(res.json())
-      )
+        handleApiResponse(res.json()),
+      ),
   );
 }
 
@@ -175,9 +178,9 @@ export function useCustomBotQuery(guildId: string | null) {
     ["custom-bot", guildId],
     () =>
       fetchApi(`/api/custom-bot?guild_id=${guildId}`).then((res) =>
-        handleApiResponse(res.json())
+        handleApiResponse(res.json()),
       ),
-    { enabled: !!guildId }
+    { enabled: !!guildId },
   );
 }
 
@@ -186,23 +189,23 @@ export function useCustomCmmandsQuery(guildId: string | null) {
     ["custom-bot", guildId, "commands"],
     () =>
       fetchApi(`/api/custom-bot/commands?guild_id=${guildId}`).then((res) =>
-        handleApiResponse(res.json())
+        handleApiResponse(res.json()),
       ),
-    { enabled: !!guildId }
+    { enabled: !!guildId },
   );
 }
 
 export function useCustomCmmandQuery(
   guildId: string | null,
-  commandId: string | null
+  commandId: string | null,
 ) {
   return useQuery<CustomCommandGetResponseWire>(
     ["custom-bot", guildId, "commands", commandId],
     () =>
       fetchApi(
-        `/api/custom-bot/commands/${commandId}?guild_id=${guildId}`
+        `/api/custom-bot/commands/${commandId}?guild_id=${guildId}`,
       ).then((res) => handleApiResponse(res.json())),
-    { enabled: !!guildId && !!commandId }
+    { enabled: !!guildId && !!commandId },
   );
 }
 
@@ -211,8 +214,8 @@ export function useScheduledMessagesQuery(guildId: string | null) {
     ["scheduled-messages", guildId],
     () =>
       fetchApi(`/api/scheduled-messages?guild_id=${guildId}`).then((res) =>
-        handleApiResponse(res.json())
+        handleApiResponse(res.json()),
       ),
-    { enabled: !!guildId }
+    { enabled: !!guildId },
   );
 }

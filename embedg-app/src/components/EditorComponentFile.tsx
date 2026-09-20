@@ -23,7 +23,7 @@ export default function EditorComponentFile({ rootIndex, rootId }: Props) {
       state.moveComponentDown,
       state.deleteComponent,
     ],
-    shallow
+    shallow,
   );
 
   if (!file) {

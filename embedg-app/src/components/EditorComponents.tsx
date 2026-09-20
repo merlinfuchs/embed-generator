@@ -13,11 +13,11 @@ export default function EditorComponents({
 }) {
   const components = useCurrentMessageStore(
     (state) => state.components.map((e) => e.id),
-    shallow
+    shallow,
   );
   const [clearComponents, addComponent] = useCurrentMessageStore(
     (state) => [state.clearComponents, state.addComponent],
-    shallow
+    shallow,
   );
 
   const sendMode = useSendSettingsStore((state) => state.mode);

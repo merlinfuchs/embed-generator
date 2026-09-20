@@ -16,7 +16,7 @@ export function RoleSelect({ guildId, roleId, onChange }: Props) {
 
   const role = useMemo(
     () => roles?.success && roles.data.find((r) => r.id === roleId),
-    [roles, roleId]
+    [roles, roleId],
   );
 
   function selectRole(roleId: string) {
@@ -52,7 +52,7 @@ export function RoleSelect({ guildId, roleId, onChange }: Props) {
               <ChevronDownIcon
                 className={clsx(
                   "text-white w-5 h-5 flex-none transition-transform",
-                  open && "rotate-180"
+                  open && "rotate-180",
                 )}
               />
             </div>

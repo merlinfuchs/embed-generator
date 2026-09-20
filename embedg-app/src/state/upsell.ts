@@ -26,6 +26,6 @@ export const useUpsellStateStore = create<UpsellStateStore>()(
         return Date.now() - get().pageFirstOpenedAt > upsellAfterSeconds * 1000;
       },
     }),
-    { name: "upselling", version: 0 }
-  )
+    { name: "upselling", version: 0 },
+  ),
 );

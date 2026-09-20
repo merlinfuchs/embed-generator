@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { getUniqueId } from "../util";
 
-const VARIABLE_RE = new RegExp("\\{\\{[^}]+\\}\\}");
-const ATTACHMENT_RE = new RegExp("attachment://\\.+");
+const VARIABLE_RE = /\{\{[^}]+\}\}/;
+const ATTACHMENT_RE = /attachment:\/\/\.+/;
 
-const HOSTNAME_RE = new RegExp("\\.[a-zA-Z]{2,}$");
+const HOSTNAME_RE = /\.[a-zA-Z]{2,}$/;
 const urlRefinement: [(v: string) => boolean, string] = [
   (v) => {
     if (v.match(VARIABLE_RE)) return true;
@@ -12,14 +12,14 @@ const urlRefinement: [(v: string) => boolean, string] = [
     try {
       const url = new URL(v);
       return !!url.hostname.match(HOSTNAME_RE);
-    } catch (e) {
+    } catch (_e) {
       return false;
     }
   },
   "Invalid URL",
 ];
 
-const IMAGE_PATH_RE = new RegExp("\\.(png|jpg|jpeg|webp|gif)$");
+const _IMAGE_PATH_RE = /\.(png|jpg|jpeg|webp|gif)$/;
 const imageUrlRefinement: [(v: string) => boolean, string] = [
   (v) => {
     if (v.match(VARIABLE_RE)) return true;
@@ -43,7 +43,7 @@ export const embedFooterTextSchema = z.optional(z.string().max(2048));
 export type EmbedFooterText = z.infer<typeof embedFooterTextSchema>;
 
 export const embedFooterIconUrlSchema = z.optional(
-  z.string().refine(...imageUrlRefinement)
+  z.string().refine(...imageUrlRefinement),
 );
 
 export type EmbedFooterIconUrl = z.infer<typeof embedFooterIconUrlSchema>;
@@ -52,13 +52,13 @@ export const embedFooterSchema = z.optional(
   z.object({
     text: embedFooterTextSchema,
     icon_url: embedFooterIconUrlSchema,
-  })
+  }),
 );
 
 export type EmbedFooter = z.infer<typeof embedFooterSchema>;
 
 export const embedImageUrlSchema = z.optional(
-  z.string().refine(...urlRefinement)
+  z.string().refine(...urlRefinement),
 );
 
 export type EmbedImageUrl = z.infer<typeof embedImageUrlSchema>;
@@ -66,13 +66,13 @@ export type EmbedImageUrl = z.infer<typeof embedImageUrlSchema>;
 export const embedImageSchema = z.optional(
   z.object({
     url: embedImageUrlSchema,
-  })
+  }),
 );
 
 export type EmbedImage = z.infer<typeof embedImageSchema>;
 
 export const embedThumbnailUrlSchema = z.optional(
-  z.string().refine(...urlRefinement)
+  z.string().refine(...urlRefinement),
 );
 
 export type EmbedThumbnailUrl = z.infer<typeof embedThumbnailUrlSchema>;
@@ -80,7 +80,7 @@ export type EmbedThumbnailUrl = z.infer<typeof embedThumbnailUrlSchema>;
 export const embedThumbnailSchema = z.optional(
   z.object({
     url: embedThumbnailUrlSchema,
-  })
+  }),
 );
 
 export type EmbedThumbnail = z.infer<typeof embedThumbnailSchema>;
@@ -90,13 +90,13 @@ export const embedAuthorNameSchema = z.string().min(1).max(256);
 export type EmbedAuthorName = z.infer<typeof embedAuthorNameSchema>;
 
 export const embedAuthorUrlSchema = z.optional(
-  z.string().refine(...urlRefinement)
+  z.string().refine(...urlRefinement),
 );
 
 export type EmbedAuthorUrl = z.infer<typeof embedAuthorUrlSchema>;
 
 export const embedAuthorIconUrlSchema = z.optional(
-  z.string().refine(...imageUrlRefinement)
+  z.string().refine(...imageUrlRefinement),
 );
 
 export type EmbedAuthorIconUrl = z.infer<typeof embedAuthorIconUrlSchema>;
@@ -106,7 +106,7 @@ export const embedAuthorSchema = z.optional(
     name: embedAuthorNameSchema,
     url: embedAuthorUrlSchema,
     icon_url: embedAuthorIconUrlSchema,
-  })
+  }),
 );
 
 export type EmbedAuthor = z.infer<typeof embedAuthorSchema>;
@@ -116,7 +116,7 @@ export const embedProviderNameSchema = z.string().min(1).max(256);
 export type EmbedProviderName = z.infer<typeof embedProviderNameSchema>;
 
 export const embedProviderUrlSchema = z.optional(
-  z.string().refine(...urlRefinement)
+  z.string().refine(...urlRefinement),
 );
 
 export type EmbedProviderUrl = z.infer<typeof embedProviderUrlSchema>;
@@ -125,7 +125,7 @@ export const embedProviderSchema = z.optional(
   z.object({
     name: embedProviderNameSchema,
     url: embedProviderUrlSchema,
-  })
+  }),
 );
 
 export type EmbedProvider = z.infer<typeof embedProviderSchema>;
@@ -215,7 +215,7 @@ export const emojiSchema = z
   })
   .refine(
     (val) => val.id || val.name,
-    "Emoji must have either an id or a name"
+    "Emoji must have either an id or a name",
   );
 
 export type Emoji = z.infer<typeof emojiSchema>;
@@ -257,7 +257,7 @@ export const componentButtonSchema = z
       url: z.string().refine(...urlRefinement),
       disabled: z.optional(z.boolean()),
       action_set_id: z.string().default(() => getUniqueId().toString()),
-    })
+    }),
   )
   .superRefine((data, ctx) => {
     if (!data.emoji && !data.label) {
@@ -444,7 +444,7 @@ export const messageActionSchema = z
       target_id: z.string().min(1),
       public: z.boolean().default(false),
       allow_role_mentions: z.boolean().default(false),
-    })
+    }),
   )
   .or(
     z.object({
@@ -454,7 +454,7 @@ export const messageActionSchema = z
       public: z.boolean().default(false),
       allow_role_mentions: z.boolean().default(false),
       disable_default_response: z.boolean().default(false),
-    })
+    }),
   )
   .or(
     z.object({
@@ -463,7 +463,7 @@ export const messageActionSchema = z
       permissions: z.string().default("0"),
       role_ids: z.array(z.string()),
       disable_default_response: z.literal(false),
-    })
+    }),
   )
   .or(
     z.object({
@@ -473,7 +473,7 @@ export const messageActionSchema = z
       role_ids: z.array(z.string()),
       disable_default_response: z.literal(true),
       text: z.string().min(1).max(2000),
-    })
+    }),
   );
 
 export type MessageAction = z.infer<typeof messageActionSchema>;
@@ -496,18 +496,18 @@ export const webhookUsernameSchema = z.optional(
       (val) =>
         !val.toLowerCase().includes("clyde") &&
         !val.toLowerCase().includes("discord"),
-      "Username can't contain 'clyde' or 'discord'"
+      "Username can't contain 'clyde' or 'discord'",
     )
     .refine(
       (val) => val.toLowerCase() !== "everyone" && val.toLowerCase() !== "here",
-      "Username can't be 'everyone'  or 'here'"
-    )
+      "Username can't be 'everyone'  or 'here'",
+    ),
 );
 
 export type WebhookUsername = z.infer<typeof webhookUsernameSchema>;
 
 export const webhookAvatarUrlSchema = z.optional(
-  z.string().refine(...imageUrlRefinement)
+  z.string().refine(...imageUrlRefinement),
 );
 
 export type WebhookAvatarUrl = z.infer<typeof webhookAvatarUrlSchema>;
@@ -519,12 +519,12 @@ export type MessageTts = z.infer<typeof messageTtsSchema>;
 export const messageAllowedMentionsSchema = z.optional(
   z.object({
     parse: z.array(
-      z.literal("users").or(z.literal("roles")).or(z.literal("everyone"))
+      z.literal("users").or(z.literal("roles")).or(z.literal("everyone")),
     ),
     roles: z.array(z.string()),
     users: z.array(z.string()),
     replied_user: z.boolean(),
-  })
+  }),
 );
 
 export const messageThreadName = z.optional(z.string().max(100));
@@ -545,7 +545,7 @@ export const messageSchema = z
   .superRefine((data, ctx) => {
     const flags = data.flags ?? 0;
     if (flags & (1 << 15)) {
-      if (data.components.length == 0) {
+      if (data.components.length === 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["components"],

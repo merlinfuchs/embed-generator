@@ -69,9 +69,9 @@ export default function PermissionsSelect({ permissions, onChange }: Props) {
   const activeFlags = useMemo(
     () =>
       Object.keys(permissionFlags).filter(
-        (f) => permissionsInt & permissionFlags[f]
+        (f) => permissionsInt & permissionFlags[f],
       ),
-    [permissionsInt]
+    [permissionsInt],
   );
 
   function togglePermission(flag: string) {
@@ -109,7 +109,7 @@ export default function PermissionsSelect({ permissions, onChange }: Props) {
               <ChevronDownIcon
                 className={clsx(
                   "text-white w-5 h-5 flex-none transition-transform",
-                  open && "rotate-180"
+                  open && "rotate-180",
                 )}
               />
             </div>
@@ -124,7 +124,7 @@ export default function PermissionsSelect({ permissions, onChange }: Props) {
                 key={f}
                 className={clsx(
                   "py-2 flex space-x-2 items-center hover:bg-dark-3 hover:bg-opacity-100 rounded cursor-pointer px-3",
-                  activeFlags.includes(f) && "bg-dark-3 bg-opacity-50"
+                  activeFlags.includes(f) && "bg-dark-3 bg-opacity-50",
                 )}
                 role="button"
                 onClick={() => togglePermission(f)}
