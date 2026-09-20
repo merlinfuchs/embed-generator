@@ -15,154 +15,127 @@ function fakeStorage(entries: Record<string, string> = {}) {
   } as Storage;
 }
 
+/** What the message store used to persist, back when it owned the message. */
 const draft = {
   state: {
     content: "Draft content",
     tts: false,
     embeds: [{ id: 1, title: "Draft embed", fields: [] }],
-    components: [],
-    actions: {},
+    components: [
+      {
+        type: 1,
+        id: 2,
+        components: [
+          {
+            type: 2,
+            id: 3,
+            style: 1,
+            label: "Draft button",
+            action_set_id: "set-1",
+          },
+        ],
+      },
+    ],
+    actions: { "set-1": { actions: [] } },
   },
   version: 0,
 };
+
+async function documentAt(version: number, message: unknown) {
+  const { fromMessage } = await import("./documentConvert");
+  const { parseMessageWithAction } = await import("../discord/restoreSchema");
+
+  return JSON.stringify({
+    state: fromMessage(parseMessageWithAction(message)),
+    version,
+  });
+}
+
+async function seedWith(entries: Record<string, string>) {
+  vi.stubGlobal("localStorage", fakeStorage(entries));
+
+  const { seedDocumentStore, getCurrentMessage } = await import(
+    "./currentMessage"
+  );
+  seedDocumentStore();
+
+  return getCurrentMessage();
+}
 
 beforeEach(() => {
   vi.resetModules();
 });
 
-test("seeding takes over the embeds of an existing draft", async () => {
-  vi.stubGlobal(
-    "localStorage",
-    fakeStorage({ "current-message": JSON.stringify(draft) }),
-  );
+test("a draft with no document at all is taken over whole", async () => {
+  const message = await seedWith({
+    "current-message": JSON.stringify(draft),
+  });
 
-  const { seedDocumentStore, getCurrentMessage } = await import(
-    "./currentMessage"
-  );
-  seedDocumentStore();
-
-  expect(getCurrentMessage().embeds).toMatchObject([{ title: "Draft embed" }]);
-});
-
-test("a version 1 document keeps its embeds but takes the draft components", async () => {
-  const { fromMessage } = await import("./documentConvert");
-  const { messageSchema } = await import("../discord/schema");
-
-  const v1 = fromMessage(
-    messageSchema.parse({
-      content: "",
-      embeds: [{ title: "Document embed", fields: [] }],
-      components: [],
-    }),
-  );
-
-  vi.stubGlobal(
-    "localStorage",
-    fakeStorage({
-      "current-message": JSON.stringify({
-        state: {
-          content: "",
-          tts: false,
-          embeds: [],
-          components: [
-            {
-              type: 1,
-              id: 1,
-              components: [
-                {
-                  type: 2,
-                  id: 2,
-                  style: 1,
-                  label: "Kept",
-                  action_set_id: "set-1",
-                },
-              ],
-            },
-          ],
-          actions: { "set-1": { actions: [] } },
-        },
-        version: 0,
-      }),
-      "current-document": JSON.stringify({ state: v1, version: 1 }),
-    }),
-  );
-
-  const { seedDocumentStore, getCurrentMessage } = await import(
-    "./currentMessage"
-  );
-  seedDocumentStore();
-
-  const message = getCurrentMessage();
-  expect(message.embeds).toMatchObject([{ title: "Document embed" }]);
+  expect(message.content).toBe("Draft content");
+  expect(message.embeds).toMatchObject([{ title: "Draft embed" }]);
   expect(message.components).toMatchObject([
-    { type: 1, components: [{ label: "Kept" }] },
+    { components: [{ label: "Draft button" }] },
   ]);
-  expect(message.actions).toHaveProperty("set-1");
 });
 
-test("seeding leaves an existing document alone", async () => {
-  const { fromMessage } = await import("./documentConvert");
-  const { messageSchema } = await import("../discord/schema");
+test("a version 1 document keeps its embeds and takes the rest", async () => {
+  vi.resetModules();
+  const document = await documentAt(1, {
+    content: "",
+    embeds: [{ title: "Document embed", fields: [] }],
+    components: [],
+  });
 
-  const existing = fromMessage(
-    messageSchema.parse({
-      content: "",
-      embeds: [{ title: "Document embed", fields: [] }],
-    }),
-  );
+  const message = await seedWith({
+    "current-message": JSON.stringify(draft),
+    "current-document": document,
+  });
 
-  vi.stubGlobal(
-    "localStorage",
-    fakeStorage({
-      "current-message": JSON.stringify(draft),
-      "current-document": JSON.stringify({ state: existing, version: 2 }),
-    }),
-  );
-
-  const { seedDocumentStore, getCurrentMessage } = await import(
-    "./currentMessage"
-  );
-  seedDocumentStore();
-
-  expect(getCurrentMessage().embeds).toMatchObject([
-    { title: "Document embed" },
+  expect(message.embeds).toMatchObject([{ title: "Document embed" }]);
+  expect(message.content).toBe("Draft content");
+  expect(message.components).toMatchObject([
+    { components: [{ label: "Draft button" }] },
   ]);
+});
+
+test("a version 2 document keeps its components and takes the root fields", async () => {
+  vi.resetModules();
+  const document = await documentAt(2, {
+    content: "",
+    embeds: [{ title: "Document embed", fields: [] }],
+    components: [{ type: 10, content: "Document text" }],
+  });
+
+  const message = await seedWith({
+    "current-message": JSON.stringify(draft),
+    "current-document": document,
+  });
+
+  expect(message.embeds).toMatchObject([{ title: "Document embed" }]);
+  expect(message.components).toMatchObject([{ content: "Document text" }]);
+  expect(message.content).toBe("Draft content");
+});
+
+test("a current document is left alone", async () => {
+  vi.resetModules();
+  const document = await documentAt(3, {
+    content: "Document content",
+    embeds: [{ title: "Document embed", fields: [] }],
+    components: [],
+  });
+
+  const message = await seedWith({
+    "current-message": JSON.stringify(draft),
+    "current-document": document,
+  });
+
+  expect(message.content).toBe("Document content");
+  expect(message.embeds).toMatchObject([{ title: "Document embed" }]);
 });
 
 test("seeding without a draft keeps the default message", async () => {
-  vi.stubGlobal("localStorage", fakeStorage());
-
-  const { seedDocumentStore, getCurrentMessage } = await import(
-    "./currentMessage"
-  );
   const { defaultMessage } = await import("../discord/defaultMessage");
-  seedDocumentStore();
+  const message = await seedWith({});
 
-  expect(getCurrentMessage().embeds).toEqual(defaultMessage.embeds);
-});
-
-test("the merged message takes embeds from the document store", async () => {
-  vi.stubGlobal("localStorage", fakeStorage());
-
-  const { getCurrentMessage } = await import("./currentMessage");
-  const { useDocumentStore } = await import("./document");
-  const { useCurrentMessageStore } = await import("./message");
-  const { messageSchema } = await import("../discord/schema");
-
-  useCurrentMessageStore.getState().replace(
-    messageSchema.parse({
-      content: "From the message store",
-      embeds: [{ title: "Stale embed", fields: [] }],
-    }),
-  );
-  useDocumentStore.getState().replaceAll(
-    messageSchema.parse({
-      content: "",
-      embeds: [{ title: "Live embed", fields: [] }],
-    }),
-  );
-
-  const message = getCurrentMessage();
-  expect(message.content).toBe("From the message store");
-  expect(message.embeds).toMatchObject([{ title: "Live embed" }]);
+  expect(message.embeds).toEqual(defaultMessage.embeds);
 });

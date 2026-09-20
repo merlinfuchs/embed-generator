@@ -1,12 +1,11 @@
-import { useCurrentMessageStore } from "../state/message";
+import { type MessageNode, useDocumentStore, useNode } from "../state/document";
+import { nodeField } from "../state/validationError";
 import EditorInput from "./EditorInput";
 
 export default function EditorWebhookFields() {
-  const username = useCurrentMessageStore((state) => state.username);
-  const setUsername = useCurrentMessageStore((state) => state.setUsername);
-
-  const avatarUrl = useCurrentMessageStore((state) => state.avatar_url);
-  const setAvatarUrl = useCurrentMessageStore((state) => state.setAvatarUrl);
+  const rootId = useDocumentStore((state) => state.rootId);
+  const root = useNode<MessageNode>(rootId);
+  const { update } = useDocumentStore.getState();
 
   return (
     <div>
@@ -14,19 +13,23 @@ export default function EditorWebhookFields() {
         <div className="w-1/2">
           <EditorInput
             label="Username"
-            value={username || ""}
-            onChange={(v) => setUsername(v || undefined)}
+            value={root?.username || ""}
+            onChange={(v) =>
+              update<MessageNode>(rootId, { username: v || undefined })
+            }
             maxLength={80}
-            validationPath={`username`}
+            validationPath={nodeField<MessageNode>(rootId, "username")}
           />
         </div>
         <div className="w-1/2 flex space-x-2 items-end">
           <EditorInput
             type="url"
             label="Avatar URL"
-            value={avatarUrl || ""}
-            onChange={(v) => setAvatarUrl(v || undefined)}
-            validationPath={`avatar_url`}
+            value={root?.avatar_url || ""}
+            onChange={(v) =>
+              update<MessageNode>(rootId, { avatar_url: v || undefined })
+            }
+            validationPath={nodeField<MessageNode>(rootId, "avatar_url")}
             className="flex-auto"
             imageUpload={true}
           />

@@ -6,30 +6,22 @@ import { MemoryRouter } from "react-router-dom";
 import { parseMessageWithAction } from "../discord/restoreSchema";
 import { setCurrentMessage } from "../state/currentMessage";
 import { useDocumentStore } from "../state/document";
-import { useCurrentMessageStore } from "../state/message";
 import { toMessage } from "../state/documentConvert";
 
 /**
- * Puts both stores in a known state, the way an import does. The root fields
- * still live in the message store, so a document alone is not the whole
- * message.
+ * Puts the store in a known state, the way an import does.
  */
 export function loadMessage(raw: unknown) {
   // Loading a fixture is not an edit, and letting it through would both leave
   // an entry in the history and arm zundo's debounce, swallowing the first
   // change a test makes.
-  const histories = [
-    useDocumentStore.temporal,
-    useCurrentMessageStore.temporal,
-  ];
-  for (const history of histories) history.getState().pause();
+  const history = useDocumentStore.temporal.getState();
+  history.pause();
 
   setCurrentMessage(parseMessageWithAction(raw));
 
-  for (const history of histories) {
-    history.getState().clear();
-    history.getState().resume();
-  }
+  history.clear();
+  useDocumentStore.temporal.getState().resume();
 }
 
 export function currentComponents() {

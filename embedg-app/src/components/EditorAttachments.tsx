@@ -6,16 +6,14 @@ import { type ChangeEvent, useRef } from "react";
 import { getUniqueId } from "../util";
 import EditorAttachment from "./EditorAttachment";
 import { shallow } from "zustand/shallow";
-import { useCurrentMessageStore } from "../state/message";
+import { useComponentsV2Enabled } from "../state/document";
 
 export default function EditorAttachments() {
   const attachments = useCurrentAttachmentsStore((state) =>
     state.attachments.map((a) => a.id),
   );
 
-  const componentsV2Enabled = useCurrentMessageStore((state) =>
-    state.getComponentsV2Enabled(),
-  );
+  const componentsV2Enabled = useComponentsV2Enabled();
 
   const totalBytes = useCurrentAttachmentsStore((state) =>
     state.attachments.reduce((acc, curr) => acc + curr.size, 0),

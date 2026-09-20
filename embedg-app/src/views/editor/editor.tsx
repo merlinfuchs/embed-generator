@@ -12,7 +12,7 @@ import EditorWebhookFields from "../../components/EditorWebhookFields";
 import SendMenu from "../../components/SendMenu";
 import { messageSchema } from "../../discord/schema";
 import { useDebouncedCurrentDocument } from "../../state/currentMessage";
-import { useCurrentMessageStore } from "../../state/message";
+import { useComponentsV2Enabled } from "../../state/document";
 import { useValidationErrorStore } from "../../state/validationError";
 import EditorErrorBoundary from "../../components/EditorErrorBoundary";
 
@@ -28,9 +28,7 @@ export default function EditorView() {
     setValidationError(res.success ? null : res.error, document.idToPath);
   }, [document, setValidationError]);
 
-  const componentsV2Enabled = useCurrentMessageStore((s) =>
-    s.getComponentsV2Enabled(),
-  );
+  const componentsV2Enabled = useComponentsV2Enabled();
 
   // TODO: also validate actions stores
 

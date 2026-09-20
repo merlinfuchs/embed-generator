@@ -1,7 +1,11 @@
 import { ChevronUpIcon, StarIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
-import { type NewNode, type NodeId, useDocumentStore } from "../state/document";
-import { useCurrentMessageStore } from "../state/message";
+import {
+  type NewNode,
+  type NodeId,
+  useDocumentStore,
+  useComponentsV2Enabled,
+} from "../state/document";
 import { useState } from "react";
 import ClickOutsideHandler from "./ClickOutsideHandler";
 import { usePremiumGuildFeatures } from "../util/premium";
@@ -31,9 +35,7 @@ export default function EditorComponentAddDropdown({
 
   const navigate = useNavigate();
 
-  const componentsV2Enabled = useCurrentMessageStore((state) =>
-    state.getComponentsV2Enabled(),
-  );
+  const componentsV2Enabled = useComponentsV2Enabled();
 
   const features = usePremiumGuildFeatures();
   const allowedComponentTypes = features?.component_types ?? [];
