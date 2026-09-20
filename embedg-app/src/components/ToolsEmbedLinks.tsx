@@ -113,6 +113,16 @@ export default function ToolsEmbedLinks() {
       return;
     }
 
+    if (componentEmbed && !title && !description) {
+      createToast({
+        title: "The fallback preview is missing",
+        message:
+          "Add a title or description for Discord to fall back on and for platforms that don't render custom components",
+        type: "error",
+      });
+      return;
+    }
+
     embedLinkCreateMutation.mutate(
       {
         url,
@@ -197,6 +207,17 @@ export default function ToolsEmbedLinks() {
             onChange={setUrl}
             type="url"
           />
+          {componentEmbed && (
+            <div className="pt-2">
+              <div className="uppercase text-mist-300 text-sm font-medium">
+                Fallback preview
+              </div>
+              <div className="text-sm font-light text-mist-300">
+                What everything but Discord shows, and what Discord falls back
+                to when it can't render the custom component.
+              </div>
+            </div>
+          )}
           <div className="flex space-x-3">
             <EditorInput
               label="Title"
@@ -268,13 +289,13 @@ export default function ToolsEmbedLinks() {
           <div className="space-y-3 pt-3">
             <div className="flex items-center space-x-3">
               <CheckBox
-                label="Component Embed"
+                label="Custom Component"
                 checked={componentEmbed}
                 onChange={setComponentEmbed}
               />
               <div className="text-sm font-light text-mist-300">
-                Discord replaces the preview above with these components. Other
-                platforms keep using the fields above.
+                Discord renders these components instead of the preview. The
+                fields above stay as the fallback.
               </div>
             </div>
             {componentEmbed && componentEmbedContainerId && (
@@ -282,7 +303,7 @@ export default function ToolsEmbedLinks() {
                 <EditorModeContext.Provider value="componentEmbed">
                   <EditorComponentContainer
                     id={componentEmbedContainerId}
-                    title="Component Embed"
+                    title="Custom Component"
                   />
                 </EditorModeContext.Provider>
               </DocumentStoreContext.Provider>
@@ -298,7 +319,12 @@ export default function ToolsEmbedLinks() {
           </div>
         </div>
       )}
-      <div className="w-full lg:w-1/2">
+      <div className="w-full lg:w-1/2 space-y-2">
+        {componentEmbed && (
+          <div className="text-sm font-light text-mist-300">
+            Fallback preview, Discord shows the custom component instead.
+          </div>
+        )}
         <MessagePreview msg={previewMsg} />
       </div>
     </div>

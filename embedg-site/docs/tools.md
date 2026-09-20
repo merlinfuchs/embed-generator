@@ -15,7 +15,7 @@ Discord renders ANSI color codes inside code blocks. The [Colored Text Generator
 
 [Embed Links](https://message.style/app/tools/embed-links) turn a title, description, image and color into a URL. When that URL is posted in Discord, it unfurls into an embed, so you can share a rich preview without a webhook or bot. Only a subset of embed fields is supported, since Discord builds the preview from the page's meta tags.
 
-Turning on **Component Embed** replaces that preview in Discord with a Components V2 layout: markdown text, images, galleries, separators and link buttons. The fields above stay as the fallback for everywhere else and for Discord clients that can't render it.
+Turning on **Custom Component** replaces that preview in Discord with a Components V2 layout: markdown text, images, galleries, separators and link buttons. The fields above stay as the fallback for everywhere else and for Discord clients that can't render it.
 
 ## Webhook Info
 
