@@ -125,19 +125,29 @@ func (s *SessionManager) CreateSession(ctx context.Context, userID common.ID, gu
 	return token, nil
 }
 
+// ErrSessionInvalid means Discord no longer accepts the session's OAuth token, typically because the
+// user revoked the app. The session row is already gone when it's returned; the API maps it to a 401
+// so the app sends the user back to log in instead of showing an error.
+var ErrSessionInvalid = errors.New("session token is no longer valid")
+
 // UserToken returns a valid access token for the session, refreshing it if it expires within 5 minutes.
 func (s *SessionManager) UserToken(ctx context.Context, sess *Session) (string, error) {
 	if time.Until(sess.TokenExpiresAt) > 5*time.Minute {
 		return sess.AccessToken, nil
 	}
 
+	// No access token on purpose: oauth2 only refreshes a token it considers expired, which is 10
+	// seconds before expiry, so passing the current one would return it unchanged for most of the
+	// window above. We've already decided to refresh, so leave it nothing to reuse.
 	tokenData, err := s.oauth2Config.TokenSource(ctx, &oauth2.Token{
-		AccessToken:  sess.AccessToken,
 		RefreshToken: sess.RefreshToken,
-		Expiry:       sess.TokenExpiresAt,
-		TokenType:    "Bearer",
 	}).Token()
 	if err != nil {
+		var retrieveErr *oauth2.RetrieveError
+		if errors.As(err, &retrieveErr) && retrieveErr.Response != nil && retrieveErr.Response.StatusCode < 500 {
+			// invalid_grant and friends: the refresh token is dead, no retry will bring it back.
+			return "", s.InvalidateSession(ctx, sess)
+		}
 		return "", fmt.Errorf("failed to refresh access token: %w", err)
 	}
 
@@ -156,6 +166,15 @@ func (s *SessionManager) UserToken(ctx context.Context, sess *Session) (string, 
 	sess.TokenExpiresAt = tokenData.Expiry
 
 	return tokenData.AccessToken, nil
+}
+
+// InvalidateSession deletes the session because Discord rejected its token, and returns
+// ErrSessionInvalid for the caller to pass up.
+func (s *SessionManager) InvalidateSession(ctx context.Context, sess *Session) error {
+	if err := s.sessionStore.DeleteSession(ctx, sess.TokenHash); err != nil {
+		slog.Error("Failed to delete session with revoked token", slog.Any("error", err))
+	}
+	return ErrSessionInvalid
 }
 
 func (s *SessionManager) CreateSessionCookie(c *fiber.Ctx, token string) {

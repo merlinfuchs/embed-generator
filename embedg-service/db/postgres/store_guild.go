@@ -58,6 +58,20 @@ func (c *Client) MarkGuildLeft(ctx context.Context, guildID common.ID, now time.
 	})
 }
 
+func (c *Client) MarkGuildsLeftOnShard(ctx context.Context, shardID int, shardCount int, keepIDs []common.ID, now time.Time) error {
+	ids := make([]int64, len(keepIDs))
+	for i, guildID := range keepIDs {
+		ids[i] = int64(guildID)
+	}
+
+	return c.Q.MarkGuildsLeftOnShard(ctx, pgmodel.MarkGuildsLeftOnShardParams{
+		Now:        pgtype.Timestamp{Time: now, Valid: true},
+		ShardCount: int64(shardCount),
+		ShardID:    int64(shardID),
+		KeepIds:    ids,
+	})
+}
+
 func (c *Client) GetGuilds(ctx context.Context, guildIDs []common.ID) ([]model.Guild, error) {
 	ids := make([]int64, len(guildIDs))
 	for i, guildID := range guildIDs {

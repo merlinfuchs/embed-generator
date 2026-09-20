@@ -46,6 +46,14 @@ func Serve(ctx context.Context, env *Env, config APIConfig) {
 			var e *wire.Error
 			if errors.As(err, &e) {
 				return c.Status(e.Status).JSON(e)
+			} else if errors.Is(err, session.ErrSessionInvalid) {
+				// Discord no longer accepts the user's token and the session is gone, so this is a
+				// re-login, not a server error.
+				return c.Status(fiber.StatusUnauthorized).JSON(wire.Error{
+					Status:  fiber.StatusUnauthorized,
+					Code:    "invalid_session",
+					Message: "Your Discord login is no longer valid, try logging in again.",
+				})
 			} else {
 				slog.Error(
 					"Unhandled error in rest endpoint",
