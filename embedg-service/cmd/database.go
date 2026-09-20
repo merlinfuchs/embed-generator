@@ -134,7 +134,7 @@ func init() {
 
 	databaseCMD = cli.Command{
 		Name:  "database",
-		Usage: "Manage and migrate databases used by Stateway.",
+		Usage: "Manage and migrate databases used by Embed Generator.",
 		Subcommands: []*cli.Command{
 			{
 				Name:        "migrate",
