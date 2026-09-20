@@ -202,24 +202,24 @@ Purpose: `actions/parser/permissions.go` stops fetching members itself, so dashb
 
 Background, so nobody "fixes" the wrong thing: at runtime `actions/handler/handle.go` never fetches members. It reads `DerivedPermissions` stored on the action set (the creator's authority, computed at save time) and, for the permission-check action type, reads `interaction.Member().Permissions` straight from the payload. Leave the runtime path alone.
 
-Callers of `DerivePermissionsForActions` and `CheckPermissionsForActionSets`:
+`CheckPermissionsForActionSets` has no callers in `embedg-service` (nor in `embedg-server`, so nothing was lost in the port) and gets deleted rather than converted. Permissions are enforced by storing `DerivedPermissions` at save time, which is what the runtime replays.
+
+Callers of `DerivePermissionsForActions`:
 
 - `api/handlers/send_message/handler.go:143`, `api/handlers/custom_bots/commands.go:140` and `:209`. Dashboard, have a session, use `GetMemberForUser` from B3.
-- `manager/scheduled_message/manager.go:238`. Background, no session. Fetch the creator with the bot token via `AccessManager.GetGuildMember(guildID, creatorID)`. If that returns unknown member or missing access, call the manager's existing `disable(ctx, msg, "creator is no longer a member of the server")` and skip the send instead of sending with empty permissions.
+- `manager/scheduled_message/manager.go:238`. Background, no session. Fetch the creator with the bot token. The manager has no `AccessManager`, and `m.rest` is already the member-caching `RestClient`, so call `m.rest.GetMember` directly rather than wiring a new dependency. If it returns unknown member, unknown guild or missing access, call the existing `disable(ctx, msg, "creator is no longer a member of the server")` and skip the send.
 
-Change both parser functions to:
+That fetch has to move *above* the send, since the point is not to send with empty permissions, and it only runs when `len(data.Actions) != 0` — a scheduled message with no actions must keep sending after its creator leaves the guild.
+
+Change the parser function to:
 
 ```go
-type MemberInfo struct {
-    UserID  common.ID
-    RoleIDs []common.ID
-}
-
-func (m *ActionParser) CheckPermissionsForActionSets(ctx context.Context, actionSets map[string]actions.ActionSet, member MemberInfo, guildID, channelID common.ID) error
-func (m *ActionParser) DerivePermissionsForActions(ctx context.Context, member MemberInfo, guildID, channelID common.ID) (actions.ActionDerivedPermissions, error)
+func (m *ActionParser) DerivePermissionsForActions(ctx context.Context, member discord.Member, guildID, channelID common.ID) (actions.ActionDerivedPermissions, error)
 ```
 
-Remove the internal `m.accessManager.GetGuildMember` calls. Channel-level permissions inside these functions come from `AccessManager.ComputeUserPermissionsForChannel`, which also needs to accept the member instead of a user id (B5 rewrites that function; in B4 add a variant taking `*discord.Member` and keep the old one until B5 deletes it).
+Take the whole `discord.Member`, not a `MemberInfo{UserID, RoleIDs}` struct: disgo's `MemberPermissions` also reads `member.GuildID` and `member.CommunicationDisabledUntil` (a timed-out member loses permissions), so a two-field copy would silently drop the timeout check. Both `rest.GetMember` and `GetMemberForUser` already populate `GuildID`. `ctx` is unused in B4 but B5's provider calls need it, so take it now rather than touching the call sites twice.
+
+Remove the internal `m.accessManager.GetGuildMember` call. Channel-level permissions come from a new `AccessManager.ComputeMemberPermissionsForChannel(member, channelID)`, which B5 rewrites onto the provider. `GetChannelAccessForUser` and `SetChannelAccessUserPermissions` lose their last caller here and get deleted; `ComputeUserPermissionsForChannel` stays for the bot path.
 
 Done when: grep `GetGuildMember(` in `actions/` returns nothing, saving a message with actions from the dashboard works, a scheduled message whose creator left the guild gets disabled with a visible reason.
 

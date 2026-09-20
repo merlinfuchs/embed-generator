@@ -137,9 +137,9 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return err
 	}
 
-	derivedPerms, err := h.actionParser.DerivePermissionsForActions(session.UserID, guildID, 0)
+	derivedPerms, err := h.derivePermissionsForUser(c, session, guildID)
 	if err != nil {
-		return handlers.BadRequest("invalid_actions", err.Error())
+		return err
 	}
 
 	rawParameters, err := json.Marshal(req.Parameters)
@@ -206,9 +206,9 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return err
 	}
 
-	derivedPerms, err := h.actionParser.DerivePermissionsForActions(session.UserID, guildID, 0)
+	derivedPerms, err := h.derivePermissionsForUser(c, session, guildID)
 	if err != nil {
-		return handlers.BadRequest("invalid_actions", err.Error())
+		return err
 	}
 
 	rawParameters, err := json.Marshal(req.Parameters)
@@ -440,4 +440,20 @@ type NameCollisionError struct {
 
 func (e *NameCollisionError) Error() string {
 	return fmt.Sprintf("Name collision between %s and %s", e.FirstName, e.SecondName)
+}
+
+// derivePermissionsForUser records the authority the requesting user has over the command's actions,
+// resolving their member with their own OAuth token.
+func (h *CustomBotsHandler) derivePermissionsForUser(c *fiber.Ctx, session *session.Session, guildID common.ID) (actions.ActionDerivedPermissions, error) {
+	member, err := h.am.GetMemberForUser(c.Context(), session, guildID)
+	if err != nil {
+		return actions.ActionDerivedPermissions{}, fmt.Errorf("Failed to get member: %w", err)
+	}
+
+	derivedPerms, err := h.actionParser.DerivePermissionsForActions(c.Context(), *member, guildID, 0)
+	if err != nil {
+		return actions.ActionDerivedPermissions{}, handlers.BadRequest("invalid_actions", err.Error())
+	}
+
+	return derivedPerms, nil
 }
