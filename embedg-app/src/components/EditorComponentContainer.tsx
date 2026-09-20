@@ -4,10 +4,10 @@ import {
   type ContainerNode,
   type NodeId,
   useChildIds,
-  useDocumentStore,
   useNode,
   useNodeActions,
   slotLimit,
+  useDocumentStoreApi,
 } from "../state/document";
 import { nodeField, nodeScope, slotScope } from "../state/validationError";
 import { AutoAnimate } from "../util/autoAnimate";
@@ -32,7 +32,7 @@ export default function EditorComponentContainer({
   const data = useNode<ContainerNode>(id);
   const childIds = useChildIds(id, "components");
   const actions = useNodeActions(id);
-  const { update, removeChildren } = useDocumentStore.getState();
+  const { update, removeChildren } = useDocumentStoreApi().getState();
 
   const hexColor = useMemo(
     () =>

@@ -1,6 +1,6 @@
 import { screen } from "@testing-library/react";
 import { beforeEach, expect, test, vi } from "vitest";
-import { useDocumentStore } from "../state/document";
+import { messageDocumentStore } from "../state/document";
 import { editorUser, loadMessage, renderEditor } from "../test/editor";
 import EditorActionSet from "./EditorActionSet";
 
@@ -15,7 +15,7 @@ vi.mock("../util/premium", () => ({
 const SET_ID = "set-1";
 
 function actions() {
-  return useDocumentStore.getState().actions[SET_ID]?.actions ?? [];
+  return messageDocumentStore.getState().actions[SET_ID]?.actions ?? [];
 }
 
 function textAction(id: number, text: string) {

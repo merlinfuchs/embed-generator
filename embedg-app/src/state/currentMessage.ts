@@ -7,7 +7,7 @@ import {
   MESSAGE_STORE_KEY,
   type NodeId,
   persistedDocument,
-  useDocumentStore,
+  messageDocumentStore,
 } from "./document";
 import { toMessage } from "./documentConvert";
 
@@ -20,7 +20,7 @@ export function getCurrentDocument(): {
   message: Message;
   idToPath: Map<NodeId, string>;
 } {
-  const { message, idToPath } = toMessage(useDocumentStore.getState());
+  const { message, idToPath } = toMessage(messageDocumentStore.getState());
 
   return { message, idToPath };
 }
@@ -45,14 +45,14 @@ export function useDebouncedCurrentDocument(wait: number) {
   useEffect(() => {
     update();
 
-    return useDocumentStore.subscribe(update);
+    return messageDocumentStore.subscribe(update);
   }, [update]);
 
   return document;
 }
 
 export function setCurrentMessage(message: Message) {
-  useDocumentStore.getState().replaceAll(message);
+  messageDocumentStore.getState().replaceAll(message);
 }
 
 export function clearCurrentMessage() {
@@ -99,5 +99,5 @@ export function seedDocumentStore() {
             actions: current.actions,
           };
 
-  useDocumentStore.getState().replaceAll({ ...draft, ...owned });
+  messageDocumentStore.getState().replaceAll({ ...draft, ...owned });
 }

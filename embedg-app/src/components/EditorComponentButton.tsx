@@ -3,9 +3,9 @@ import clsx from "clsx";
 import {
   type ButtonNode,
   type NodeId,
-  useDocumentStore,
   useNode,
   useNodeActions,
+  useDocumentStoreApi,
 } from "../state/document";
 import { nodeField, nodeScope } from "../state/validationError";
 import CheckBox from "./CheckBox";
@@ -35,7 +35,7 @@ export default function EditorComponentButton({
 }: Props) {
   const data = useNode<ButtonNode>(id);
   const actions = useNodeActions(id);
-  const { update } = useDocumentStore.getState();
+  const { update } = useDocumentStoreApi().getState();
 
   if (!data) return null;
 

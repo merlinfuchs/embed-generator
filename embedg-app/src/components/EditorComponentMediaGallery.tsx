@@ -2,9 +2,9 @@ import { NESTED_CARD } from "./editorCard";
 import {
   type NodeId,
   useChildIds,
-  useDocumentStore,
   useNodeActions,
   slotLimit,
+  useDocumentStoreApi,
 } from "../state/document";
 import { slotScope } from "../state/validationError";
 import { AutoAnimate } from "../util/autoAnimate";
@@ -23,7 +23,7 @@ export default function EditorComponentMediaGallery({
 }: Props) {
   const itemIds = useChildIds(id, "items");
   const actions = useNodeActions(id);
-  const { insert, removeChildren } = useDocumentStore.getState();
+  const { insert, removeChildren } = useDocumentStoreApi().getState();
 
   return (
     <EditorComponentCollapsable

@@ -1,9 +1,9 @@
 import {
   type ThumbnailNode,
   type NodeId,
-  useDocumentStore,
   useNode,
   useNodeActions,
+  useDocumentStoreApi,
 } from "../state/document";
 import { nodeField, nodeScope } from "../state/validationError";
 import CheckBox from "./CheckBox";
@@ -23,7 +23,7 @@ export default function EditorComponentThumbnail({
 }: Props) {
   const data = useNode<ThumbnailNode>(id);
   const actions = useNodeActions(id);
-  const { update } = useDocumentStore.getState();
+  const { update } = useDocumentStoreApi().getState();
 
   if (!data) return null;
 

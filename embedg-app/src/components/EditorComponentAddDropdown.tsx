@@ -3,8 +3,8 @@ import clsx from "clsx";
 import {
   type NewNode,
   type NodeId,
-  useDocumentStore,
   useComponentsV2Enabled,
+  useDocumentStoreApi,
 } from "../state/document";
 import { useState } from "react";
 import ClickOutsideHandler from "./ClickOutsideHandler";
@@ -26,7 +26,7 @@ export default function EditorComponentAddDropdown({
 }: Props) {
   const [open, setOpen] = useState(false);
 
-  const { insert } = useDocumentStore.getState();
+  const { insert } = useDocumentStoreApi().getState();
 
   function addComponent(node: NewNode) {
     insert(parentId, "components", "end", node);

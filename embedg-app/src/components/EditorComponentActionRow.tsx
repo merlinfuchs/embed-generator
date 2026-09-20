@@ -2,9 +2,10 @@ import {
   type ActionRowNode,
   type NodeId,
   useChildIds,
-  useDocumentStore,
   useNodeActions,
   slotLimit,
+  useDocumentStoreApi,
+  useDocument,
 } from "../state/document";
 import { nodeScope } from "../state/validationError";
 import { AutoAnimate } from "../util/autoAnimate";
@@ -23,9 +24,9 @@ export default function EditorComponentActionRow({
 }: Props) {
   const childIds = useChildIds(id, "components");
   const actions = useNodeActions(id);
-  const { insert, removeChildren } = useDocumentStore.getState();
+  const { insert, removeChildren } = useDocumentStoreApi().getState();
   // A row holds either buttons or a single select menu, never both.
-  const isButtonRow = useDocumentStore(
+  const isButtonRow = useDocument(
     (state) => state.nodes[childIds[0]]?.type !== "selectMenu",
   );
 

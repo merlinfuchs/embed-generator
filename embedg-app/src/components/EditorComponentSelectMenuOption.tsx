@@ -1,9 +1,9 @@
 import {
   type SelectOptionNode,
   type NodeId,
-  useDocumentStore,
   useNode,
   useNodeActions,
+  useDocumentStoreApi,
 } from "../state/document";
 import { nodeField, nodeScope } from "../state/validationError";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
@@ -22,7 +22,7 @@ export default function EditorComponentSelectMenuOption({
 }: Props) {
   const data = useNode<SelectOptionNode>(id);
   const actions = useNodeActions(id);
-  const { update } = useDocumentStore.getState();
+  const { update } = useDocumentStoreApi().getState();
 
   if (!data) return null;
 

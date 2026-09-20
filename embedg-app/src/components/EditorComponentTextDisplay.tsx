@@ -1,9 +1,9 @@
 import {
   type TextDisplayNode,
   type NodeId,
-  useDocumentStore,
   useNode,
   useNodeActions,
+  useDocumentStoreApi,
 } from "../state/document";
 import { nodeField, nodeScope } from "../state/validationError";
 import EditorInput from "./EditorInput";
@@ -22,7 +22,7 @@ export default function EditorComponentTextDisplay({
 }: Props) {
   const data = useNode<TextDisplayNode>(id);
   const actions = useNodeActions(id);
-  const { update } = useDocumentStore.getState();
+  const { update } = useDocumentStoreApi().getState();
 
   if (!data) return null;
 

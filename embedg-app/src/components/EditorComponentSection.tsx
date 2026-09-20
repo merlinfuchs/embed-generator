@@ -3,10 +3,11 @@ import {
   type NodeId,
   type SectionNode,
   useChildIds,
-  useDocumentStore,
   useNode,
   useNodeActions,
   slotLimit,
+  useDocumentStoreApi,
+  useDocument,
 } from "../state/document";
 import { nodeScope, slotScope } from "../state/validationError";
 import { AutoAnimate } from "../util/autoAnimate";
@@ -31,9 +32,9 @@ export default function EditorComponentSection({
   const data = useNode<SectionNode>(id);
   const childIds = useChildIds(id, "components");
   const actions = useNodeActions(id);
-  const { insert, removeChildren } = useDocumentStore.getState();
+  const { insert, removeChildren } = useDocumentStoreApi().getState();
 
-  const accessoryType = useDocumentStore(
+  const accessoryType = useDocument(
     (state) => state.nodes[data?.accessoryId ?? ""]?.type,
   );
 

@@ -1,4 +1,9 @@
-import { slotLimit, useChildIds, useDocumentStore } from "../state/document";
+import {
+  slotLimit,
+  useChildIds,
+  useDocumentStoreApi,
+  useDocument,
+} from "../state/document";
 import { slotScope } from "../state/validationError";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { AutoAnimate } from "../util/autoAnimate";
@@ -11,9 +16,9 @@ export default function EditorComponents({
 }: {
   defaultCollapsed?: boolean;
 }) {
-  const rootId = useDocumentStore((state) => state.rootId);
+  const rootId = useDocument((state) => state.rootId);
   const components = useChildIds(rootId, "components");
-  const { removeChildren } = useDocumentStore.getState();
+  const { removeChildren } = useDocumentStoreApi().getState();
 
   const sendMode = useSendSettingsStore((state) => state.mode);
 
