@@ -36,7 +36,7 @@ func New(customBotStore store.CustomBotStore, caches cache.Caches, am *access.Ac
 func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
 
-	known, err := h.am.CheckGuildsKnown(session.GuildIDs)
+	known, err := h.am.CheckGuildsKnown(c.Context(), session.GuildIDs)
 	if err != nil {
 		slog.Error("Failed to check guilds known", slog.Any("error", err))
 		return err
@@ -84,7 +84,7 @@ func (h *GuildsHanlder) HandleGetGuild(c *fiber.Ctx) error {
 		return err
 	}
 
-	known, err := h.am.CheckGuildsKnown([]common.ID{guildID})
+	known, err := h.am.CheckGuildsKnown(c.Context(), []common.ID{guildID})
 	if err != nil {
 		slog.Error("Failed to check guilds known", slog.Any("error", err))
 		return err

@@ -264,7 +264,7 @@ Both caches are capacity bounded and evict least recently used: uncapped, a traf
 
 Replace all 30 `caches.X(...)` read sites in the service with the provider. They are in `actions/parser/permissions.go` (10), `manager/webhook/message.go` (6), `actions/template/data.go` (3), `access/access.go` (3), `api/handlers/guilds/handler.go` (2), `api/handlers/custom_bots/handler.go` (2), `command/cmd_message.go` (1), `api/handlers/send_message/handler.go` (1). Every one of them currently treats a cache miss as an error or as "no permissions"; with the provider a miss is a real REST error or 404 and should be handled as such. Remove `cache.Caches` from every constructor that only used it for these reads.
 
-**CheckGuildsKnown.** Replace body with `m.guildStore.GetGuilds(ctx, guildIDs)` and map back to `[]bool` in input order. Add `guildStore store.GuildStore` to `AccessManager`.
+**CheckGuildsKnown.** Takes a `ctx` and replaces its body with `m.guildStore.GetGuilds(ctx, guildIDs)`, mapped back to `[]bool` in input order. `AccessManager` swaps its `cache cache.Cache` and `caches discache.Caches` fields for `guildState *guildstate.Provider` and `guildStore store.GuildStore`, which takes `access` off `stateway-lib` entirely.
 
 **Guild list endpoint.** `HandleListGuilds` in `api/handlers/guilds/handler.go` currently calls `GetGuildAccessForUser` for every guild in the session, which needs channels and roles per guild. On a non-owner instance that's up to three REST calls per guild. Replace with:
 
@@ -277,15 +277,15 @@ Check `wire.GuildWire` for fields the frontend expects beyond these and source t
 
 `HandleGetGuild` keeps the full `GetGuildAccessForUser` check. That's one guild, one state fetch, cached two minutes.
 
-**GetGuildAccessForUser.** Replace the two `m.cache.GetGuildWithPermissions` calls with a local function:
+**GetGuildAccessForUser.** Replace the two `m.cache.GetGuildWithPermissions` calls with a local function in `access/helpers.go`:
 
 ```go
-// maxChannelPermissions ORs memberPermissions() over every channel in st. Returns early once
+// maxChannelPermissions ORs memberPermissions() over every channel in the state. Returns early once
 // all bits of stopAt are set. This mirrors stateway's MaxChannelPermissions with abortAtPermissions.
-func maxChannelPermissions(st *guildstate.State, userID common.ID, roleIDs []common.ID, stopAt discord.Permissions) discord.Permissions
+func maxChannelPermissions(state *guildstate.State, userID common.ID, roleIDs []common.ID, stopAt discord.Permissions) discord.Permissions
 ```
 
-using the existing `memberPermissions` in `access/helpers.go` (signature `memberPermissions(guild *discord.Guild, roles []discord.Role, channel discord.GuildChannel, userID, roleIDs)`). Skip channels of type category when iterating, they don't matter for sending. Bot member: `GetGuildMember(guildID, m.appContext.ApplicationID())`. User member: `GetMemberForUser` from B3.
+using the existing `memberPermissions` in `access/helpers.go`. Skip channels of type category when iterating, they can't be posted in. Bot member: `GetGuildMember(ctx, guildID, m.appContext.ApplicationID())`. User member: `GetMemberForUser` from B3. This replaces logic that used to live in Stateway, so cover it with tests: owner, deny overwrite, missing role, category-only, and no channels. CI runs `go build && go vet` only, so add `go test ./...` alongside them.
 
 **ComputeUserPermissionsForChannel.** Takes a `*discord.Member` (B4). `provider.Channel(channelID)`, then `provider.Guild(channel.GuildID())`, then `memberPermissions(...)`. Drop the `m.caches.MemberPermissionsInChannel` call, it only works on cached data.
 
