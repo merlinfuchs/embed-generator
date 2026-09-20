@@ -181,7 +181,10 @@ const tom = <Avatar initial="T" color="bg-[#57C271]" />;
 // Feature list on the left, chat log on the right. Hovering a feature lights up
 // the messages it produced and scrolls the log to the first one.
 export default function HomeShowcase(): JSX.Element {
-  const [active, setActive] = React.useState<FeatureId | null>(null);
+  // Click selects (sticks), hover previews on top of the selection.
+  const [selected, setSelected] = React.useState<FeatureId | null>(null);
+  const [hovered, setHovered] = React.useState<FeatureId | null>(null);
+  const active = hovered ?? selected;
   const [entered, setEntered] = React.useState(false);
   const logRef = React.useRef<HTMLDivElement>(null);
 
@@ -198,8 +201,7 @@ export default function HomeShowcase(): JSX.Element {
     v2: "event",
   };
 
-  const focus = (id: FeatureId) => {
-    setActive(id);
+  const scrollToFeature = (id: FeatureId) => {
     const log = logRef.current;
     const el = log?.querySelector<HTMLElement>(`[data-msg="${firstMsg[id]}"]`);
     if (log && el) {
@@ -215,30 +217,29 @@ export default function HomeShowcase(): JSX.Element {
             What it can do, shown in a real-ish server.
           </h2>
           <p className="text-lg text-mist-400">
-            Hover a feature to see where it shows up in the chat.
+            Pick a feature to see where it shows up in the chat.
           </p>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[340px_minmax(0,1fr)] lg:gap-12">
           <div
             className="flex gap-2 overflow-x-auto pb-2 lg:sticky lg:top-24 lg:flex-col lg:self-start lg:overflow-visible lg:pb-0"
-            onMouseLeave={() => setActive(null)}
+            onMouseLeave={() => setHovered(null)}
           >
             {features.map((f) => (
-              <a
+              <button
                 key={f.id}
-                href={f.href}
-                onMouseEnter={() => focus(f.id)}
-                onFocus={() => focus(f.id)}
-                onClick={(e) => {
-                  // On touch devices the first tap highlights, second follows the link.
-                  if (window.matchMedia("(hover: none)").matches && active !== f.id) {
-                    e.preventDefault();
-                    focus(f.id);
-                  }
+                type="button"
+                onMouseEnter={() => {
+                  setHovered(f.id);
+                  scrollToFeature(f.id);
+                }}
+                onClick={() => {
+                  setSelected(f.id);
+                  scrollToFeature(f.id);
                 }}
                 className={[
-                  "flex flex-none items-start gap-3 rounded-xl border border-solid px-3 py-2.5 transition-colors hover:no-underline lg:flex-auto",
+                  "flex flex-none cursor-pointer items-start gap-3 rounded-xl border border-solid bg-transparent px-3 py-2.5 text-left font-sans transition-colors lg:flex-auto",
                   active === f.id
                     ? "border-azure-500/50 bg-azure-500/10"
                     : "border-transparent hover:border-white/10 hover:bg-white/[0.03]",
@@ -266,8 +267,17 @@ export default function HomeShowcase(): JSX.Element {
                   <span className="hidden text-xs text-mist-400 lg:block">
                     {f.blurb}
                   </span>
+                  {selected === f.id && (
+                    <a
+                      href={f.href}
+                      onClick={(e) => e.stopPropagation()}
+                      className="mt-1 hidden text-xs font-medium text-azure-400 hover:text-azure-300 lg:block"
+                    >
+                      Read the docs →
+                    </a>
+                  )}
                 </span>
-              </a>
+              </button>
             ))}
           </div>
 
