@@ -13,6 +13,23 @@ type Shards struct {
 	IDs   []int
 }
 
+// ShardsForInstance gives instance index of instances every instances-th shard. The instances
+// together cover every shard exactly once without any of them being told the ids, and it stays
+// exact when the shard count doesn't divide evenly. Instance 0 always holds shard 0, so it is
+// the leader.
+func ShardsForInstance(shardCount int, index int, instances int) Shards {
+	if instances <= 0 {
+		return NewShards(shardCount, nil)
+	}
+
+	ids := make([]int, 0, shardCount/instances+1)
+	for id := index; id < shardCount; id += instances {
+		ids = append(ids, id)
+	}
+
+	return Shards{Count: shardCount, IDs: ids}
+}
+
 // NewShards fills in every shard of the count when no ids are configured, which is the single
 // instance deployment, so nothing downstream has to special case it.
 func NewShards(count int, ids []int) Shards {

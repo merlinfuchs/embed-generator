@@ -477,7 +477,7 @@ Squash or merge `merlin/consolidate` into `main`. Tag a release. Release note: l
 Not part of this plan, listed so the design constraints make sense.
 
 1. Deploy a REST rate limit proxy (NIRN or twilight-http-proxy). Set `discord.rest_url` on every instance.
-2. Run N instances with the same `discord.shard_count` and disjoint `discord.shard_ids`. Exactly one has `0`.
+2. Run N instances with the same `discord.shard_count` and `discord.instance_count`, and a distinct `discord.instance_index` each. Instance `i` takes every `n`-th shard, which covers the range exactly once without hand-written id lists and keeps the config identical across instances apart from one integer, so it can come from the environment. `instance_index` 0 holds shard 0 and is the leader. `discord.shard_ids` still works for an irregular split, but it can't be set through an env var: koanf's env provider doesn't split a list, so `EMBEDG_DISCORD__SHARD_IDS=0,1` fails to parse.
 3. Caddy or Nginx round robin in front of `/api`. No stickiness needed.
 
 ---

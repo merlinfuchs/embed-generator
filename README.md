@@ -121,6 +121,21 @@ components_v2 = true
 component_types = [1, 2, 3, 9, 10, 11, 12, 13, 14, 17]
 ```
 
+To run several instances, give them all the same `shard_count` and tell each one which slice to
+take with `instance_count` and `instance_index`, which is the only value that differs between
+them:
+
+```toml
+[discord]
+shard_count = 250
+instance_count = 5
+instance_index = 0   # 1, 2, 3, 4 on the others; EMBEDG_DISCORD__INSTANCE_INDEX works too
+```
+
+Instance `i` of `n` runs every `n`-th shard, so together they cover every shard exactly once even
+when the count doesn't divide evenly. Instance 0 holds shard 0 and runs the work that happens once
+per deployment rather than once per guild. `shard_ids` is still there for an irregular split.
+
 The S3 credentials are required; image uploads go there. The docker-compose setup below runs MinIO for it.
 
 You can also set the config values using environment variables, with `__` between the sections. For example
