@@ -23,3 +23,25 @@ func TestValidateShards(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateShardInstances(t *testing.T) {
+	tests := []struct {
+		name    string
+		config  DiscordConfig
+		wantErr bool
+	}{
+		{"index within count", DiscordConfig{ShardCount: 4, InstanceCount: 2, InstanceIndex: 1}, false},
+		{"index at the count", DiscordConfig{ShardCount: 4, InstanceCount: 2, InstanceIndex: 2}, true},
+		{"more instances than shards", DiscordConfig{ShardCount: 2, InstanceCount: 4}, true},
+		{"both forms at once", DiscordConfig{ShardCount: 4, InstanceCount: 2, ShardIDs: []int{0}}, true},
+		{"negative index", DiscordConfig{ShardCount: 4, InstanceCount: 2, InstanceIndex: -1}, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.config.validateShards(); (err != nil) != tt.wantErr {
+				t.Errorf("validateShards() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

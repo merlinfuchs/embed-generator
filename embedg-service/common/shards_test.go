@@ -43,3 +43,38 @@ func TestShardsLeader(t *testing.T) {
 		t.Error("an instance without shard 0 should not be the leader")
 	}
 }
+
+func TestShardsForInstance(t *testing.T) {
+	// Five shards over two instances doesn't divide evenly, which is the case that has to stay
+	// exact: every shard owned once, nothing owned twice.
+	const shardCount = 5
+	const instances = 2
+
+	owners := make(map[int]int)
+	for index := range instances {
+		shards := ShardsForInstance(shardCount, index, instances)
+		if shards.Count != shardCount {
+			t.Fatalf("instance %d Count = %d, want %d", index, shards.Count, shardCount)
+		}
+
+		for _, id := range shards.IDs {
+			if previous, ok := owners[id]; ok {
+				t.Errorf("shard %d owned by instance %d and %d", id, previous, index)
+			}
+			owners[id] = index
+		}
+	}
+
+	for id := range shardCount {
+		if _, ok := owners[id]; !ok {
+			t.Errorf("shard %d is owned by nobody", id)
+		}
+	}
+
+	if !ShardsForInstance(shardCount, 0, instances).IsLeader() {
+		t.Error("instance 0 holds shard 0 and should be the leader")
+	}
+	if ShardsForInstance(shardCount, 1, instances).IsLeader() {
+		t.Error("instance 1 should not be the leader")
+	}
+}

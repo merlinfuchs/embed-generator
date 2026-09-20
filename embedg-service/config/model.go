@@ -53,17 +53,41 @@ type DiscordConfig struct {
 	// ShardCount defaults to 1 for self hosting. Every instance of a deployment has to agree on
 	// it, and Discord rejects a count that is too low for the number of guilds.
 	ShardCount int `toml:"shard_count" validate:"min=1"`
-	// ShardIDs is empty for a single instance that runs every shard.
+	// ShardIDs is empty for a single instance that runs every shard. Prefer InstanceCount and
+	// InstanceIndex below unless you need an irregular split.
 	ShardIDs []int `toml:"shard_ids"`
+	// InstanceCount and InstanceIndex derive the shard ids, so every instance of a deployment
+	// runs the same config apart from its index. Zero or one means a single instance.
+	InstanceCount int `toml:"instance_count"`
+	InstanceIndex int `toml:"instance_index"`
 }
 
 func (c DiscordConfig) Shards() common.Shards {
+	if c.InstanceCount > 1 {
+		return common.ShardsForInstance(c.ShardCount, c.InstanceIndex, c.InstanceCount)
+	}
+
 	return common.NewShards(c.ShardCount, c.ShardIDs)
 }
 
 // validateShards catches what the shard math would otherwise absorb in silence: an id outside the
 // range owns nothing, so nobody ever serves those guilds.
 func (c DiscordConfig) validateShards() error {
+	if c.InstanceCount < 0 || c.InstanceIndex < 0 {
+		return fmt.Errorf("discord.instance_count and discord.instance_index can't be negative")
+	}
+	if c.InstanceCount > 0 {
+		if c.InstanceIndex >= c.InstanceCount {
+			return fmt.Errorf("discord.instance_index %d is outside instance_count %d", c.InstanceIndex, c.InstanceCount)
+		}
+		if c.InstanceCount > c.ShardCount {
+			return fmt.Errorf("discord.instance_count %d is above shard_count %d, so some instances would run no shards", c.InstanceCount, c.ShardCount)
+		}
+		if len(c.ShardIDs) != 0 && c.InstanceCount > 1 {
+			return fmt.Errorf("set either discord.shard_ids or discord.instance_count, not both")
+		}
+	}
+
 	seen := make(map[int]struct{}, len(c.ShardIDs))
 	for _, id := range c.ShardIDs {
 		if id < 0 || id >= c.ShardCount {
