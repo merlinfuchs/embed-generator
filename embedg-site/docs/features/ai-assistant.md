@@ -1,9 +1,12 @@
 ---
 sidebar_position: 7
 description: Let the Embed Generator AI assistant draft Discord embeds and messages from a short prompt, then edit the result in the editor. Premium feature.
+sidebar_class_name: sidebar-premium
 ---
 
-# ⭐ AI Assistant
+# AI Assistant
+
+<span className="premium-badge">Premium</span>
 
 With Embed Generator Premium you get an AI assistant inside the editor. Describe the message you want in a sentence, for example "welcome message for a gaming server with rules and a role button", and the assistant drafts the whole thing: content, embeds, fields and colors.
 

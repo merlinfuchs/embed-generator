@@ -1,9 +1,12 @@
 ---
 sidebar_position: 4
 description: "Step by step: create a Discord application, add the bot to Embed Generator, invite it, set the interaction endpoint and a custom status. Needed for white label and custom commands."
+sidebar_class_name: sidebar-premium
 ---
 
 # Custom Bots
+
+<span className="premium-badge">Premium</span>
 
 Custom Bots allow you to change the username and avatar for interactive component responses and make it appear in your member list.
 

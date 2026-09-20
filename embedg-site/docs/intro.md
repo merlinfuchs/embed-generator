@@ -19,7 +19,7 @@ Embed Generator is a visual editor for Discord messages. You build embeds, butto
 
 The video below shows the same flow in a few minutes.
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/DnFP0MRJPIg?si=CdxkMRsuFBhj40-O" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/DnFP0MRJPIg" title="Embed Generator crash course video" frameBorder="0" referrerPolicy="strict-origin-when-cross-origin" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
 
 ## Where to go next
 

@@ -1,9 +1,12 @@
 ---
 sidebar_position: 5
 description: "How to create custom slash commands for your Discord server with Embed Generator: set up your bot, add a command, arguments and actions, and the current limits."
+sidebar_class_name: sidebar-premium
 ---
 
 # Custom Commands
+
+<span className="premium-badge">Premium</span>
 
 Custom Commands allow you to add your own commands to your Custom Bot which can be used by members of your server by typing `/`. They can have arguments, respond with messages, or assign roles to members.
 

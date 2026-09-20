@@ -9,7 +9,9 @@ Components V2 is Discord's newer message layout system. Instead of one text bloc
 
 Components V2 replaces regular embeds. A message uses one or the other, not both.
 
-**⭐ Some Components V2 components are only available with [Embed Generator Premium](../premium).**
+:::info Premium
+Some Components V2 components are only available with [Embed Generator Premium](../premium).
+:::
 
 ![Components V2 Example](./components-v2.png)
 

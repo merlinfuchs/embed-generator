@@ -126,3 +126,32 @@ html[data-theme="dark"] .tag_node_modules-\@docusaurus-theme-classic-lib-theme-T
 .navbar__item--cta svg {
   display: none;
 }
+
+/* Premium markers in docs */
+.premium-badge {
+  display: inline-block;
+  margin: -0.5rem 0 1.25rem;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid rgba(245, 181, 68, 0.35);
+  border-radius: 999px;
+  background: rgba(245, 181, 68, 0.12);
+  color: #ffd27a;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.sidebar-premium > .menu__link::after,
+.sidebar-premium > .menu__list-item-collapsible > .menu__link::after {
+  content: "Premium";
+  margin-left: auto;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: rgba(245, 181, 68, 0.12);
+  color: #ffd27a;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.5;
+}
