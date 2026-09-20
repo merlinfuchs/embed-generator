@@ -10,7 +10,7 @@ UPDATE custom_bots SET gateway_status = $2, gateway_activity_type = $3, gateway_
 UPDATE custom_bots SET user_name = $2, user_discriminator = $3, user_avatar = $4 WHERE guild_id = $1 RETURNING *;
 
 -- name: UpdateCustomBotTokenInvalid :one
-UPDATE custom_bots SET token_invalid = $2 WHERE guild_id = $1 RETURNING *;
+UPDATE custom_bots SET token_invalid = true WHERE guild_id = $1 RETURNING *;
 
 -- name: DeleteCustomBot :one
 DELETE FROM custom_bots WHERE guild_id = $1 RETURNING *;

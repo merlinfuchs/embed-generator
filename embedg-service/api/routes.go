@@ -99,7 +99,6 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 		},
 		env.CustomBotManager,
 		env.CustomCommandStore,
-		env.Rest,
 		env.GuildState,
 		env.AccessManager,
 		env.PremiumManager,

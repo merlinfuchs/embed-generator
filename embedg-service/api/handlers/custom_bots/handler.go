@@ -34,7 +34,6 @@ type CustomBotsHandler struct {
 	config             CustomBotsHandlerConfig
 	customBotManager   *custom_bot.CustomBotManager
 	customCommandStore store.CustomCommandStore
-	rest               disrest.Rest
 	guildState         *guildstate.Provider
 	am                 *access.AccessManager
 	planStore          store.PlanStore
@@ -46,7 +45,6 @@ func New(
 	config CustomBotsHandlerConfig,
 	customBotManager *custom_bot.CustomBotManager,
 	customCommandStore store.CustomCommandStore,
-	rest disrest.Rest,
 	guildState *guildstate.Provider,
 	am *access.AccessManager,
 	planStore store.PlanStore,
@@ -57,7 +55,6 @@ func New(
 		config:             config,
 		customBotManager:   customBotManager,
 		customCommandStore: customCommandStore,
-		rest:               rest,
 		guildState:         guildState,
 		am:                 am,
 		planStore:          planStore,
@@ -147,8 +144,6 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 		return fmt.Errorf("failed to upsert custom bot: %w", err)
 	}
 
-	h.customBotManager.RequestSync()
-
 	return c.JSON(wire.CustomBotConfigureResponseWire{
 		Success: true,
 		Data: wire.CustomBotInfoWire{
@@ -209,8 +204,6 @@ func (h *CustomBotsHandler) HandleUpdateCustomBotPresence(c *fiber.Ctx, req wire
 		return fmt.Errorf("failed to update custom bot presence: %w", err)
 	}
 
-	h.customBotManager.RequestSync()
-
 	return c.JSON(wire.CustomBotUpdatePresenceResponseWire{
 		Success: true,
 		Data:    wire.CustomBotPresenceWire(req),
@@ -234,8 +227,6 @@ func (h *CustomBotsHandler) HandleDisableCustomBot(c *fiber.Ctx) error {
 		}
 		return fmt.Errorf("failed to delete custom bot: %w", err)
 	}
-
-	h.customBotManager.RequestSync()
 
 	return c.JSON(wire.CustomBotDisableResponseWire{
 		Success: true,
@@ -309,12 +300,6 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 		}
 	}
 
-	connected := h.customBotManager.Status(customBot.ApplicationID).IsConnected()
-	disabledCode := ""
-	if !connected {
-		disabledCode = "gateway_disconnected"
-	}
-
 	return c.JSON(wire.CustomBotGetResponseWire{
 		Success: true,
 		Data: wire.CustomBotInfoWire{
@@ -324,9 +309,6 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 			UserName:          customBot.UserName,
 			UserDiscriminator: customBot.UserDiscriminator,
 			UserAvatar:        customBot.UserAvatar,
-
-			Disabled:     !connected,
-			DisabledCode: disabledCode,
 
 			TokenValid:              tokenValid,
 			IsMember:                isMember,

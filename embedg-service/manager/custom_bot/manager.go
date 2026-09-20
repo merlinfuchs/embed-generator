@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"maps"
+	"slices"
 	"sync"
 	"time"
 
@@ -18,8 +20,9 @@ import (
 
 const (
 	syncInterval = 5 * time.Minute
-	// How many custom bots we connect at the same time when catching up after a restart.
+	// How many custom bots we connect, disconnect or update at the same time.
 	syncConcurrency = 10
+	gatewayTimeout  = 5 * time.Second
 )
 
 type CustomBotManager struct {
@@ -28,7 +31,6 @@ type CustomBotManager struct {
 
 	syncRequests chan struct{}
 
-	// bots is only written by Run's goroutine, the lock is for readers like Status.
 	botsMu sync.Mutex
 	bots   map[common.ID]*runningBot
 }
@@ -64,25 +66,31 @@ func (m *CustomBotManager) Run(ctx context.Context) {
 	}
 }
 
-// RequestSync asks the manager to reconcile the running custom bots as soon as possible.
-// It never blocks, a sync that is already pending covers the request.
-func (m *CustomBotManager) RequestSync() {
-	select {
-	case m.syncRequests <- struct{}{}:
-	default:
-	}
+// The store methods that change which bots should be running reconcile afterwards, so no caller
+// has to remember to. Everything writing custom bots goes through the manager.
+
+func (m *CustomBotManager) UpsertCustomBot(ctx context.Context, customBot model.CustomBot) (*model.CustomBot, error) {
+	return m.syncAfterWrite(m.CustomBotStore.UpsertCustomBot(ctx, customBot))
 }
 
-// Status returns the gateway status of a custom bot, or StatusUnconnected if it isn't running.
-func (m *CustomBotManager) Status(applicationID common.ID) gateway.Status {
-	m.botsMu.Lock()
-	defer m.botsMu.Unlock()
+func (m *CustomBotManager) UpdateCustomBotPresence(ctx context.Context, params store.UpdateCustomBotPresenceParams) (*model.CustomBot, error) {
+	return m.syncAfterWrite(m.CustomBotStore.UpdateCustomBotPresence(ctx, params))
+}
 
-	bot, ok := m.bots[applicationID]
-	if !ok {
-		return gateway.StatusUnconnected
+func (m *CustomBotManager) DeleteCustomBot(ctx context.Context, guildID common.ID) (*model.CustomBot, error) {
+	return m.syncAfterWrite(m.CustomBotStore.DeleteCustomBot(ctx, guildID))
+}
+
+// syncAfterWrite asks for a reconcile as soon as possible. It never blocks, a sync that is
+// already pending covers the request.
+func (m *CustomBotManager) syncAfterWrite(customBot *model.CustomBot, err error) (*model.CustomBot, error) {
+	if err == nil {
+		select {
+		case m.syncRequests <- struct{}{}:
+		default:
+		}
 	}
-	return bot.gateway.Status()
+	return customBot, err
 }
 
 // syncCustomBots reconciles the running gateway connections with the custom bots in the database.
@@ -92,63 +100,70 @@ func (m *CustomBotManager) syncCustomBots(ctx context.Context) error {
 		return err
 	}
 
-	wanted := make(map[common.ID]struct{}, len(customBots))
-	toStart := make([]*model.CustomBot, 0)
+	var group errgroup.Group
+	group.SetLimit(syncConcurrency)
 
+	wanted := make(map[common.ID]struct{}, len(customBots))
 	for i := range customBots {
-		customBot := &customBots[i]
-		if customBot.Token == "" || customBot.TokenInvalid {
+		customBot := customBots[i]
+		if !customBot.TokenUsable() {
+			continue
+		}
+		if _, ok := wanted[customBot.ApplicationID]; ok {
+			// Two guilds can be configured with the same bot, which still needs one connection.
 			continue
 		}
 		wanted[customBot.ApplicationID] = struct{}{}
 
 		running := m.runningBot(customBot.ApplicationID)
-		if running == nil {
-			toStart = append(toStart, customBot)
-			continue
-		}
+		presence := presenceConfigFromCustomBot(&customBot)
 
-		if running.token != customBot.Token {
-			m.stopBot(customBot.ApplicationID)
-			toStart = append(toStart, customBot)
-			continue
-		}
-
-		if presence := presenceConfigFromCustomBot(customBot); presence != running.presence {
-			m.updatePresence(customBot.ApplicationID, presence)
+		switch {
+		case running == nil:
+			group.Go(func() error {
+				m.startBot(ctx, customBot)
+				return nil
+			})
+		case running.token != customBot.Token:
+			group.Go(func() error {
+				m.stopBot(customBot.ApplicationID)
+				m.startBot(ctx, customBot)
+				return nil
+			})
+		case running.presence != presence:
+			group.Go(func() error {
+				m.updatePresence(running, presence)
+				return nil
+			})
 		}
 	}
 
 	for _, applicationID := range m.runningIDs() {
 		if _, ok := wanted[applicationID]; !ok {
-			m.stopBot(applicationID)
+			group.Go(func() error {
+				m.stopBot(applicationID)
+				return nil
+			})
 		}
 	}
 
-	var group errgroup.Group
-	group.SetLimit(syncConcurrency)
-	for _, customBot := range toStart {
-		group.Go(func() error {
-			m.startBot(ctx, customBot)
-			return nil
-		})
-	}
 	return group.Wait()
 }
 
-func (m *CustomBotManager) startBot(ctx context.Context, customBot *model.CustomBot) {
-	presence := presenceConfigFromCustomBot(customBot)
+func (m *CustomBotManager) startBot(ctx context.Context, customBot model.CustomBot) {
+	ref := refFromCustomBot(&customBot)
+	presence := presenceConfigFromCustomBot(&customBot)
 
-	gw, err := openGateway(ctx, customBot, presence, func(gw gateway.Gateway, err error, _ bool) {
-		m.onGatewayClose(customBot, gw, err)
+	gw, err := openGateway(ctx, ref, customBot.Token, presence, func(gw gateway.Gateway, err error, _ bool) {
+		m.onGatewayClose(ref, gw, err)
 	})
 	if err != nil {
 		if isAuthenticationFailure(err) {
-			m.markTokenInvalid(customBot)
+			m.markTokenInvalid(ref)
 		} else {
 			slog.Error(
 				"Failed to connect custom bot to the gateway",
-				slog.String("custom_bot_id", customBot.ID),
+				slog.String("custom_bot_id", ref.id),
 				slog.Any("error", err),
 			)
 		}
@@ -157,7 +172,7 @@ func (m *CustomBotManager) startBot(ctx context.Context, customBot *model.Custom
 
 	m.botsMu.Lock()
 	defer m.botsMu.Unlock()
-	m.bots[customBot.ApplicationID] = &runningBot{
+	m.bots[ref.applicationID] = &runningBot{
 		gateway:  gw,
 		token:    customBot.Token,
 		presence: presence,
@@ -171,25 +186,27 @@ func (m *CustomBotManager) stopBot(applicationID common.ID) {
 	m.botsMu.Unlock()
 
 	if ok {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), gatewayTimeout)
 		defer cancel()
 		bot.gateway.Close(ctx)
 	}
 }
 
 func (m *CustomBotManager) stopAll() {
+	var group errgroup.Group
+	group.SetLimit(syncConcurrency)
+
 	for _, applicationID := range m.runningIDs() {
-		m.stopBot(applicationID)
+		group.Go(func() error {
+			m.stopBot(applicationID)
+			return nil
+		})
 	}
+	group.Wait()
 }
 
-func (m *CustomBotManager) updatePresence(applicationID common.ID, presence presenceConfig) {
-	bot := m.runningBot(applicationID)
-	if bot == nil {
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func (m *CustomBotManager) updatePresence(bot *runningBot, presence presenceConfig) {
+	ctx, cancel := context.WithTimeout(context.Background(), gatewayTimeout)
 	defer cancel()
 
 	if err := bot.gateway.Send(ctx, gateway.OpcodePresenceUpdate, presence.data()); err != nil {
@@ -202,33 +219,28 @@ func (m *CustomBotManager) updatePresence(applicationID common.ID, presence pres
 	bot.presence = presence
 }
 
-// onGatewayClose runs when a connection died in a way it can't recover from on its own.
-// The bot is dropped from the pool and the next sync reconnects it, unless the token is gone.
-func (m *CustomBotManager) onGatewayClose(customBot *model.CustomBot, gw gateway.Gateway, err error) {
+// onGatewayClose runs when a connection died in a way it can't recover from on its own. disgo
+// logs the close itself. The bot is dropped from the pool and the next sync reconnects it,
+// unless the token is gone.
+func (m *CustomBotManager) onGatewayClose(ref botRef, gw gateway.Gateway, err error) {
 	if isAuthenticationFailure(err) {
-		m.markTokenInvalid(customBot)
-	} else {
-		slog.Error(
-			"Custom bot gateway connection closed",
-			slog.String("custom_bot_id", customBot.ID),
-			slog.Any("error", err),
-		)
+		m.markTokenInvalid(ref)
 	}
 
 	m.botsMu.Lock()
 	defer m.botsMu.Unlock()
-	if bot, ok := m.bots[customBot.ApplicationID]; ok && bot.gateway == gw {
-		delete(m.bots, customBot.ApplicationID)
+	if bot, ok := m.bots[ref.applicationID]; ok && bot.gateway == gw {
+		delete(m.bots, ref.applicationID)
 	}
 }
 
-func (m *CustomBotManager) markTokenInvalid(customBot *model.CustomBot) {
-	slog.Warn("Custom bot token was rejected by Discord", slog.String("custom_bot_id", customBot.ID))
+func (m *CustomBotManager) markTokenInvalid(ref botRef) {
+	slog.Warn("Custom bot token was rejected by Discord", slog.String("custom_bot_id", ref.id))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if _, err := m.UpdateCustomBotTokenInvalid(ctx, customBot.GuildID); err != nil {
+	if _, err := m.UpdateCustomBotTokenInvalid(ctx, ref.guildID); err != nil {
 		slog.Error("Failed to mark custom bot token as invalid", slog.Any("error", err))
 	}
 }
@@ -242,12 +254,7 @@ func (m *CustomBotManager) runningBot(applicationID common.ID) *runningBot {
 func (m *CustomBotManager) runningIDs() []common.ID {
 	m.botsMu.Lock()
 	defer m.botsMu.Unlock()
-
-	ids := make([]common.ID, 0, len(m.bots))
-	for applicationID := range m.bots {
-		ids = append(ids, applicationID)
-	}
-	return ids
+	return slices.Collect(maps.Keys(m.bots))
 }
 
 // GetRestForGuild returns the rest client for the given guild.
@@ -262,7 +269,7 @@ func (m *CustomBotManager) GetRestForGuild(ctx context.Context, guildID common.I
 		return nil, nil, err
 	}
 
-	if customBot.Token == "" || customBot.TokenInvalid {
+	if !customBot.TokenUsable() {
 		return m.rest, nil, nil
 	}
 

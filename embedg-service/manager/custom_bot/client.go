@@ -9,6 +9,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/gateway"
 	"github.com/gorilla/websocket"
+	"github.com/merlinfuchs/embed-generator/embedg-service/common"
 	"github.com/merlinfuchs/embed-generator/embedg-service/model"
 )
 
@@ -21,6 +22,23 @@ type runningBot struct {
 	gateway  gateway.Gateway
 	token    string
 	presence presenceConfig
+}
+
+// botRef identifies a custom bot without holding on to the row it came from. The close handler
+// outlives the sync that started the connection, and capturing the model would pin every custom
+// bot row that sync loaded.
+type botRef struct {
+	id            string
+	applicationID common.ID
+	guildID       common.ID
+}
+
+func refFromCustomBot(customBot *model.CustomBot) botRef {
+	return botRef{
+		id:            customBot.ID,
+		applicationID: customBot.ApplicationID,
+		guildID:       customBot.GuildID,
+	}
 }
 
 // presenceConfig is the comparable part of a custom bot's presence, so we can tell whether a
@@ -43,63 +61,52 @@ func presenceConfigFromCustomBot(customBot *model.CustomBot) presenceConfig {
 	}
 }
 
-func (p presenceConfig) opts() []gateway.PresenceOpt {
-	opts := []gateway.PresenceOpt{
-		gateway.WithOnlineStatus(discord.OnlineStatus(p.status)),
-	}
-
-	activityOpts := []gateway.ActivityOpt{}
-	if p.activityState != "" {
-		activityOpts = append(activityOpts, gateway.WithActivityState(p.activityState))
-	}
-
-	switch discord.ActivityType(p.activityType) {
-	case discord.ActivityTypeCustom:
-		if p.activityState != "" {
-			opts = append(opts, gateway.WithCustomActivity(p.activityState))
-		}
-	case discord.ActivityTypeStreaming:
-		if p.activityName != "" {
-			opts = append(opts, gateway.WithStreamingActivity(p.activityName, p.activityURL, activityOpts...))
-		}
-	case discord.ActivityTypeListening:
-		if p.activityName != "" {
-			opts = append(opts, gateway.WithListeningActivity(p.activityName, activityOpts...))
-		}
-	case discord.ActivityTypeWatching:
-		if p.activityName != "" {
-			opts = append(opts, gateway.WithWatchingActivity(p.activityName, activityOpts...))
-		}
-	case discord.ActivityTypeCompeting:
-		if p.activityName != "" {
-			opts = append(opts, gateway.WithCompetingActivity(p.activityName, activityOpts...))
-		}
-	default:
-		if p.activityName != "" {
-			opts = append(opts, gateway.WithPlayingActivity(p.activityName, activityOpts...))
-		}
-	}
-
-	return opts
-}
-
-// data builds the presence update message, so a presence change doesn't need a reconnect.
 func (p presenceConfig) data() gateway.MessageDataPresenceUpdate {
-	data := gateway.MessageDataPresenceUpdate{}
-	for _, opt := range p.opts() {
-		opt(&data)
+	data := gateway.MessageDataPresenceUpdate{
+		Status: discord.OnlineStatus(p.status),
 	}
+
+	activity := discord.Activity{
+		Type: discord.ActivityType(p.activityType),
+		Name: p.activityName,
+	}
+	if activity.Type == discord.ActivityTypeCustom {
+		// Discord shows the state for a custom status and expects this exact name.
+		activity.Name = "Custom Status"
+		if p.activityState == "" {
+			return data
+		}
+	} else if p.activityName == "" {
+		return data
+	}
+
+	if p.activityState != "" {
+		activity.State = &p.activityState
+	}
+	if p.activityURL != "" {
+		activity.URL = &p.activityURL
+	}
+	data.Activities = []discord.Activity{activity}
+
 	return data
 }
 
+// opt passes the presence along with the identify payload, so a bot is never briefly online
+// without it.
+func (p presenceConfig) opt() gateway.PresenceOpt {
+	return func(update *gateway.MessageDataPresenceUpdate) {
+		*update = p.data()
+	}
+}
+
 // openGateway connects a custom bot to the gateway. It blocks until the connection is ready.
-func openGateway(ctx context.Context, customBot *model.CustomBot, presence presenceConfig, closeHandler gateway.CloseHandlerFunc) (gateway.Gateway, error) {
+func openGateway(ctx context.Context, ref botRef, token string, presence presenceConfig, closeHandler gateway.CloseHandlerFunc) (gateway.Gateway, error) {
 	gw := gateway.New(
-		customBot.Token,
+		token,
 		func(gateway.Gateway, gateway.EventType, int, gateway.EventData) {},
-		gateway.WithPresenceOpts(presence.opts()...),
+		gateway.WithPresenceOpts(presence.opt()),
 		gateway.WithCloseHandler(closeHandler),
-		gateway.WithLogger(slog.With(slog.String("custom_bot_id", customBot.ID))),
+		gateway.WithLogger(slog.With(slog.String("custom_bot_id", ref.id))),
 	)
 
 	ctx, cancel := context.WithTimeout(ctx, openTimeout)
@@ -115,5 +122,8 @@ func openGateway(ctx context.Context, customBot *model.CustomBot, presence prese
 // isAuthenticationFailure reports whether Discord rejected the bot token.
 func isAuthenticationFailure(err error) bool {
 	var closeErr *websocket.CloseError
-	return errors.As(err, &closeErr) && closeErr.Code == gateway.CloseEventCodeAuthenticationFailed.Code
+	if !errors.As(err, &closeErr) {
+		return false
+	}
+	return gateway.CloseEventCodeByCode(closeErr.Code) == gateway.CloseEventCodeAuthenticationFailed
 }

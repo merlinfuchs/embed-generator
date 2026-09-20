@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/omit"
 	"github.com/merlinfuchs/embed-generator/embedg-service/model"
 	"gopkg.in/guregu/null.v4"
 )
@@ -33,7 +34,7 @@ func TestPresenceData(t *testing.T) {
 			activities: []discord.Activity{{
 				Name:  "Custom Status",
 				Type:  discord.ActivityTypeCustom,
-				State: ptr("hello"),
+				State: omit.Ptr("hello"),
 			}},
 		},
 		{
@@ -48,7 +49,7 @@ func TestPresenceData(t *testing.T) {
 			activities: []discord.Activity{{
 				Name: "something",
 				Type: discord.ActivityTypeStreaming,
-				URL:  ptr("https://twitch.tv/x"),
+				URL:  omit.Ptr("https://twitch.tv/x"),
 			}},
 		},
 		{
@@ -73,8 +74,4 @@ func TestPresenceData(t *testing.T) {
 			}
 		})
 	}
-}
-
-func ptr[T any](v T) *T {
-	return &v
 }
