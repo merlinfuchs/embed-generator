@@ -1,4 +1,4 @@
-FROM golang:latest as builder
+FROM golang:latest AS builder
 WORKDIR /root/
 COPY . .
 
@@ -24,14 +24,14 @@ RUN cd embedg-site && pnpm install --frozen-lockfile && pnpm build && cd ..
 RUN cd embedg-app && pnpm install --frozen-lockfile && pnpm build && cd ..
 
 # Build backend
-RUN cd embedg-server && go build --tags "embedapp embedsite" && cd ..
+RUN cd embedg-service && go build --tags "embedapp embedsite" && cd ..
 
 FROM debian:stable-slim
 WORKDIR /root/
-COPY --from=builder /root/embedg-server/embedg-server .
+COPY --from=builder /root/embedg-service/embedg-service .
 
 RUN apt-get update
-RUN apt-get install -y ca-certificates gnupg build-essential
+RUN apt-get install -y ca-certificates
 
 EXPOSE 8080
-CMD ./embedg-server migrate postgres up; ./embedg-server server
+CMD ./embedg-service database migrate postgres up; ./embedg-service server

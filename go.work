@@ -1,7 +1,5 @@
 go 1.25.0
 
-use ./embedg-server
-
 use ./embedg-service
 
 use ./embedg-app

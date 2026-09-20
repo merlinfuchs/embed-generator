@@ -1,7 +1,10 @@
 packages:
-  - path: "github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
+  - path: "github.com/merlinfuchs/embed-generator/embedg-service/api/wire"
     output_path: "embedg-app/src/api/wire.ts"
     type_mappings:
+      common.ID: "string"
+      common.NullID: "null | string"
+      actions.ActionSet: "Record<string, any> | null"
       null.String: "null | string"
       null.Bool: "null | boolean"
       null.Float: "null | number"
