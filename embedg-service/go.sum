@@ -26,8 +26,6 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dhui/dktest v0.4.6 h1:+DPKyScKSEp3VLtbMDHcUq6V5Lm5zfZZVb0Sk7Ahom4=
 github.com/dhui/dktest v0.4.6/go.mod h1:JHTSYDtKkvFNFHJKqCzVzqXecyv+tKt8EzceOmQOgbU=
-github.com/disgoorg/disgo v0.19.6 h1:1xJQt6KZgiqvBOnjuziG1gE4Iqd0aJn8DNfE6eE+0qw=
-github.com/disgoorg/disgo v0.19.6/go.mod h1:NnV63iw4lJdF1fnV0gX27XR43ZgRGqnL122svRMTgTE=
 github.com/disgoorg/godave v0.1.0 h1:3g0Zqzz+zNaxQTVLfCnl5eZKGqZk6cM/JLLbMKCtZQQ=
 github.com/disgoorg/godave v0.1.0/go.mod h1:OreAC3hpabr39bMVA+jwOVDq1EUPXH5A0XUBiZaDI1Y=
 github.com/disgoorg/json/v2 v2.0.0 h1:U16yy/ARK7/aEpzjjqK1b/KaqqGHozUdeVw/DViEzQI=
@@ -137,6 +135,8 @@ github.com/mattn/go-runewidth v0.0.16 h1:E5ScNMtiwvlvB5paMFdw9p4kSQzbXFikJ5SQO6T
 github.com/mattn/go-runewidth v0.0.16/go.mod h1:Jdepj2loyihRzMpdS35Xk/zdY8IAYHsh153qUoGf23w=
 github.com/merlinfuchs/discordgo v0.0.0-20251108151703-8f057be56eb6 h1:OUDB8UaPPdjtT+/bXoEvxa9WgWJ4bkq70laLhQHKzj8=
 github.com/merlinfuchs/discordgo v0.0.0-20251108151703-8f057be56eb6/go.mod h1:xAeB1tSUX3ilHSX7DKudmCAuIj5z/UZJDCbr8QKpMzI=
+github.com/merlinfuchs/disgo v0.0.0-20260920205620-45e16f30c0d3 h1:Nuv/W8VGCIslr3sOTjTrk+dPiyXLPnzafO72z31p//c=
+github.com/merlinfuchs/disgo v0.0.0-20260920205620-45e16f30c0d3/go.mod h1:NnV63iw4lJdF1fnV0gX27XR43ZgRGqnL122svRMTgTE=
 github.com/minio/crc64nvme v1.1.0 h1:e/tAguZ+4cw32D+IO/8GSf5UVr9y+3eJcxZI2WOO/7Q=
 github.com/minio/crc64nvme v1.1.0/go.mod h1:eVfm2fAzLlxMdUGc0EEBGSMmPwmXD5XiNRpnu9J3bvg=
 github.com/minio/md5-simd v1.1.2 h1:Gdi1DZK69+ZVMoNHRXJyNcxrMA4dSxoYHZSQbirFg34=
