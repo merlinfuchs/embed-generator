@@ -94,3 +94,5 @@ require (
 replace github.com/merlinfuchs/embed-generator/embedg-app v0.0.0 => ../embedg-app
 
 replace github.com/merlinfuchs/embed-generator/embedg-site v0.0.0 => ../embedg-site
+
+replace github.com/disgoorg/disgo => github.com/merlinfuchs/disgo v0.0.0-20260920205620-45e16f30c0d3
