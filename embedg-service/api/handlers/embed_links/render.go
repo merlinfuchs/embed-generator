@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	"log/slog"
 	"net/url"
 
 	"github.com/gofiber/fiber/v2"
@@ -42,10 +43,39 @@ func (h *EmbedLinksHandler) renderEmbedLinkHTML(c *fiber.Ctx, el *model.EmbedLin
 		metaTags += fmt.Sprintf(`<link type="application/json+oembed" href="%s" />`, oEmbedURL)
 	}
 
+	metaTags += componentEmbedToHTML(el.ComponentEmbed)
+
 	html := fmt.Sprintf(embedLinkHTML, metaTags, safeJSURL(el.Url))
 
 	c.Set("Content-Type", "text/html")
 	return c.SendString(html)
+}
+
+// The payload Discord renders instead of the meta tags, which stay as the
+// fallback for everywhere else. Marshaling it again rather than writing out
+// the stored bytes keeps `<`, `>` and `&` escaped, so no string in it can
+// close the script element.
+func componentEmbedToHTML(raw []byte) string {
+	if len(raw) == 0 {
+		return ""
+	}
+
+	embed, err := model.ParseComponentEmbed(raw)
+	if err != nil {
+		slog.Error("failed to parse stored component embed", slog.String("error", err.Error()))
+		return ""
+	}
+
+	payload, err := json.Marshal(embed)
+	if err != nil {
+		slog.Error("failed to marshal component embed", slog.String("error", err.Error()))
+		return ""
+	}
+
+	return fmt.Sprintf(
+		"<script id=\"discord:component-embed\" type=\"application/json\">%s</script>\n",
+		payload,
+	)
 }
 
 func safeJSURL(rawURL string) string {

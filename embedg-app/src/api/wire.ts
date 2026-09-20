@@ -119,6 +119,7 @@ export interface EmbedLinkCreateRequestWire {
   oe_provider_name: null | string;
   oe_provider_url: null | string;
   tw_card: null | string;
+  component_embed: Record<string, any> | null;
 }
 export interface EmbedLinkCreateResponseDataWire {
   id: string;
