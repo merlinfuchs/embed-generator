@@ -124,6 +124,7 @@ function Message({
   return (
     <div
       data-msg={id}
+      data-ids={ids.join(" ")}
       className={[
         "flex gap-4 px-4 py-3 transition-all duration-300 sm:px-6",
         hit ? "bg-azure-500/10 shadow-[inset_3px_0_0_0_#2F8BFF]" : "",
@@ -232,12 +233,31 @@ export default function HomeShowcase(): JSX.Element {
     return () => clearInterval(t);
   }, [touched, inView]);
 
+  // Ignore scroll events caused by our own smooth scrolling.
+  const lockUntil = React.useRef(0);
+
   const scrollToFeature = (id: FeatureId) => {
     const log = logRef.current;
     const el = log?.querySelector<HTMLElement>(`[data-msg="${firstMsg[id]}"]`);
     if (log && el) {
+      lockUntil.current = Date.now() + 800;
       log.scrollTo({ top: el.offsetTop - 56, behavior: "smooth" });
     }
+  };
+
+  // Manual scrolling through the log selects the feature of the message at the top.
+  const onLogScroll = () => {
+    if (Date.now() < lockUntil.current) return;
+    const log = logRef.current;
+    if (!log) return;
+    const msgs = [...log.querySelectorAll<HTMLElement>("[data-msg]")];
+    const top = log.scrollTop + 80;
+    const current = msgs.filter((m) => m.offsetTop <= top).pop() ?? msgs[0];
+    const ids = (current.dataset.ids ?? "").split(" ") as FeatureId[];
+    if (ids.length === 0 || !ids[0]) return;
+    const primary =
+      ids.find((f) => firstMsg[f] === current.dataset.msg) ?? ids[0];
+    setSelected(primary);
   };
 
   return (
@@ -327,6 +347,7 @@ export default function HomeShowcase(): JSX.Element {
               ref={logRef}
               onWheel={() => setTouched(true)}
               onTouchMove={() => setTouched(true)}
+              onScroll={onLogScroll}
               className="relative max-h-[640px] overflow-y-auto py-3 [scrollbar-color:#34435F_transparent] [scrollbar-width:thin]"
             >
               <Divider label="Monday" />
