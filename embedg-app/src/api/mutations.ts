@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type {
   AssistantGenerateMessageRequestWire,
   AssistantGenerateMessageResponseWire,
@@ -42,8 +42,8 @@ import { handleApiResponse } from "./queries";
 import { fetchApi } from "./client";
 
 export function useAssistantGenerateMessageMutation() {
-  return useMutation(
-    ({
+  return useMutation({
+    mutationFn: ({
       guildId,
       req,
     }: {
@@ -60,60 +60,72 @@ export function useAssistantGenerateMessageMutation() {
         handleApiResponse<AssistantGenerateMessageResponseWire>(res.json()),
       );
     },
-  );
+  });
 }
 
 export function useSendMessageToChannelMutation() {
-  return useMutation((req: MessageSendToChannelRequestWire) => {
-    return fetchApi(`/api/send-message/channel`, {
-      method: "POST",
-      body: JSON.stringify(req),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }).then((res) => handleApiResponse<MessageSendResponseWire>(res.json()));
+  return useMutation({
+    mutationFn: (req: MessageSendToChannelRequestWire) => {
+      return fetchApi(`/api/send-message/channel`, {
+        method: "POST",
+        body: JSON.stringify(req),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) => handleApiResponse<MessageSendResponseWire>(res.json()));
+    },
   });
 }
 
 export function useSendMessageToWebhookMutation() {
-  return useMutation((req: MessageSendToWebhookRequestWire) => {
-    return fetchApi(`/api/send-message/webhook`, {
-      method: "POST",
-      body: JSON.stringify(req),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }).then((res) => handleApiResponse<MessageSendResponseWire>(res.json()));
+  return useMutation({
+    mutationFn: (req: MessageSendToWebhookRequestWire) => {
+      return fetchApi(`/api/send-message/webhook`, {
+        method: "POST",
+        body: JSON.stringify(req),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) => handleApiResponse<MessageSendResponseWire>(res.json()));
+    },
   });
 }
 
 export function useRestoreMessageFromWebhookMutation() {
-  return useMutation((req: MessageRestoreFromWebhookRequestWire) => {
-    return fetchApi(`/api/restore-message/webhook`, {
-      method: "POST",
-      body: JSON.stringify(req),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }).then((res) => handleApiResponse<MessageRestoreResponseWire>(res.json()));
+  return useMutation({
+    mutationFn: (req: MessageRestoreFromWebhookRequestWire) => {
+      return fetchApi(`/api/restore-message/webhook`, {
+        method: "POST",
+        body: JSON.stringify(req),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) =>
+        handleApiResponse<MessageRestoreResponseWire>(res.json()),
+      );
+    },
   });
 }
 
 export function useRestoreMessageFromChannelMutation() {
-  return useMutation((req: MessageRestoreFromChannelRequestWire) => {
-    return fetchApi(`/api/restore-message/channel`, {
-      method: "POST",
-      body: JSON.stringify(req),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }).then((res) => handleApiResponse<MessageRestoreResponseWire>(res.json()));
+  return useMutation({
+    mutationFn: (req: MessageRestoreFromChannelRequestWire) => {
+      return fetchApi(`/api/restore-message/channel`, {
+        method: "POST",
+        body: JSON.stringify(req),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) =>
+        handleApiResponse<MessageRestoreResponseWire>(res.json()),
+      );
+    },
   });
 }
 
 export function useCreatedSavedMessageMutation() {
-  return useMutation(
-    ({
+  return useMutation({
+    mutationFn: ({
       req,
       guildId,
     }: {
@@ -135,12 +147,12 @@ export function useCreatedSavedMessageMutation() {
         handleApiResponse<SavedMessageCreateResponseWire>(res.json()),
       );
     },
-  );
+  });
 }
 
 export function useUpdateSavedMessageMutation() {
-  return useMutation(
-    ({
+  return useMutation({
+    mutationFn: ({
       messageId,
       req,
       guildId,
@@ -164,12 +176,18 @@ export function useUpdateSavedMessageMutation() {
         handleApiResponse<SavedMessageUpdateResponseWire>(res.json()),
       );
     },
-  );
+  });
 }
 
 export function useDeleteSavedMessageMutation() {
-  return useMutation(
-    ({ messageId, guildId }: { messageId: string; guildId: string | null }) => {
+  return useMutation({
+    mutationFn: ({
+      messageId,
+      guildId,
+    }: {
+      messageId: string;
+      guildId: string | null;
+    }) => {
       let url = `/api/saved-messages/${messageId}`;
       if (guildId) {
         url += `?guild_id=${guildId}`;
@@ -184,12 +202,12 @@ export function useDeleteSavedMessageMutation() {
         handleApiResponse<SavedMessageDeleteResponseWire>(res.json()),
       );
     },
-  );
+  });
 }
 
 export function useImportSavedMessagesMutation() {
-  return useMutation(
-    ({
+  return useMutation({
+    mutationFn: ({
       req,
       guildId,
     }: {
@@ -211,26 +229,28 @@ export function useImportSavedMessagesMutation() {
         handleApiResponse<SavedMessagesImportResponseWire>(res.json()),
       );
     },
-  );
+  });
 }
 
 export function useSharedMessageCreateMutation() {
-  return useMutation((req: SharedMessageCreateRequestWire) => {
-    return fetchApi("/api/shared-messages", {
-      method: "POST",
-      body: JSON.stringify(req),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }).then((res) =>
-      handleApiResponse<SharedMessageGetResponseWire>(res.json()),
-    );
+  return useMutation({
+    mutationFn: (req: SharedMessageCreateRequestWire) => {
+      return fetchApi("/api/shared-messages", {
+        method: "POST",
+        body: JSON.stringify(req),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) =>
+        handleApiResponse<SharedMessageGetResponseWire>(res.json()),
+      );
+    },
   });
 }
 
 export function useCustomBotConfigureMutation() {
-  return useMutation(
-    ({
+  return useMutation({
+    mutationFn: ({
       guildId,
       req,
     }: {
@@ -247,25 +267,27 @@ export function useCustomBotConfigureMutation() {
         handleApiResponse<CustomBotConfigureResponseWire>(res.json()),
       );
     },
-  );
+  });
 }
 
 export function useCustomBotDisableMutation() {
-  return useMutation(({ guildId }: { guildId: string }) => {
-    return fetchApi(`/api/custom-bot?guild_id=${guildId}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }).then((res) =>
-      handleApiResponse<CustomBotDisableResponseWire>(res.json()),
-    );
+  return useMutation({
+    mutationFn: ({ guildId }: { guildId: string }) => {
+      return fetchApi(`/api/custom-bot?guild_id=${guildId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) =>
+        handleApiResponse<CustomBotDisableResponseWire>(res.json()),
+      );
+    },
   });
 }
 
 export function useCustomBotUpdatePresenceMutation() {
-  return useMutation(
-    ({
+  return useMutation({
+    mutationFn: ({
       guildId,
       req,
     }: {
@@ -282,12 +304,12 @@ export function useCustomBotUpdatePresenceMutation() {
         handleApiResponse<CustomBotUpdatePresenceResponseWire>(res.json()),
       );
     },
-  );
+  });
 }
 
 export function useCustomCommandCreateMutation() {
-  return useMutation(
-    ({
+  return useMutation({
+    mutationFn: ({
       guildId,
       req,
     }: {
@@ -304,12 +326,12 @@ export function useCustomCommandCreateMutation() {
         handleApiResponse<CustomCommandCreateResponseWire>(res.json()),
       );
     },
-  );
+  });
 }
 
 export function useCustomCommandUpdateMutation() {
-  return useMutation(
-    ({
+  return useMutation({
+    mutationFn: ({
       commandId,
       guildId,
       req,
@@ -331,25 +353,33 @@ export function useCustomCommandUpdateMutation() {
         handleApiResponse<CustomCommandUpdateResponseWire>(res.json()),
       );
     },
-  );
+  });
 }
 
 export function useCustomCommandsDeployMutation() {
-  return useMutation(({ guildId }: { guildId: string }) => {
-    return fetchApi(`/api/custom-bot/commands/deploy?guild_id=${guildId}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }).then((res) =>
-      handleApiResponse<CustomCommandsDeployResponseWire>(res.json()),
-    );
+  return useMutation({
+    mutationFn: ({ guildId }: { guildId: string }) => {
+      return fetchApi(`/api/custom-bot/commands/deploy?guild_id=${guildId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) =>
+        handleApiResponse<CustomCommandsDeployResponseWire>(res.json()),
+      );
+    },
   });
 }
 
 export function useCustomCommandDeleteMutation() {
-  return useMutation(
-    ({ commandId, guildId }: { commandId: string; guildId: string }) => {
+  return useMutation({
+    mutationFn: ({
+      commandId,
+      guildId,
+    }: {
+      commandId: string;
+      guildId: string;
+    }) => {
       return fetchApi(
         `/api/custom-bot/commands/${commandId}?guild_id=${guildId}`,
         {
@@ -362,12 +392,12 @@ export function useCustomCommandDeleteMutation() {
         handleApiResponse<CustomCommandDeleteResponseWire>(res.json()),
       );
     },
-  );
+  });
 }
 
 export function useUploadImageMutation() {
-  return useMutation(
-    ({ guildId, file }: { guildId: string | null; file: File }) => {
+  return useMutation({
+    mutationFn: ({ guildId, file }: { guildId: string | null; file: File }) => {
       let url = `/api/images`;
       if (guildId) {
         url += `?guild_id=${guildId}`;
@@ -381,12 +411,12 @@ export function useUploadImageMutation() {
         body,
       }).then((res) => handleApiResponse<UploadImageResponseWire>(res.json()));
     },
-  );
+  });
 }
 
 export function useScheduledMessageCreateMutation() {
-  return useMutation(
-    ({
+  return useMutation({
+    mutationFn: ({
       guildId,
       req,
     }: {
@@ -403,12 +433,12 @@ export function useScheduledMessageCreateMutation() {
         handleApiResponse<ScheduledMessageCreateResponseWire>(res.json()),
       );
     },
-  );
+  });
 }
 
 export function useScheduledMessageUpdateMutation() {
-  return useMutation(
-    ({
+  return useMutation({
+    mutationFn: ({
       messageId,
       guildId,
       req,
@@ -430,12 +460,18 @@ export function useScheduledMessageUpdateMutation() {
         handleApiResponse<ScheduledMessageUpdateResponseWire>(res.json()),
       );
     },
-  );
+  });
 }
 
 export function useScheduledMessageDeleteMutation() {
-  return useMutation(
-    ({ messageId, guildId }: { messageId: string; guildId: string }) => {
+  return useMutation({
+    mutationFn: ({
+      messageId,
+      guildId,
+    }: {
+      messageId: string;
+      guildId: string;
+    }) => {
       return fetchApi(
         `/api/scheduled-messages/${messageId}?guild_id=${guildId}`,
         {
@@ -448,28 +484,30 @@ export function useScheduledMessageDeleteMutation() {
         handleApiResponse<ScheduledMessageDeleteResponseWire>(res.json()),
       );
     },
-  );
+  });
 }
 
 export function useEmbedLinkCreateMutation() {
-  return useMutation((req: EmbedLinkCreateRequestWire) => {
-    return fetchApi(`/api/embed-links`, {
-      method: "POST",
-      body: JSON.stringify(req),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }).then((res) =>
-      handleApiResponse<EmbedLinkCreateResponseWire>(res.json()),
-    );
+  return useMutation({
+    mutationFn: (req: EmbedLinkCreateRequestWire) => {
+      return fetchApi(`/api/embed-links`, {
+        method: "POST",
+        body: JSON.stringify(req),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) =>
+        handleApiResponse<EmbedLinkCreateResponseWire>(res.json()),
+      );
+    },
   });
 }
 
 export function usePremiumEntitlementConsumeMutation() {
   const queryClient = useQueryClient();
 
-  return useMutation(
-    ({
+  return useMutation({
+    mutationFn: ({
       entitlementId,
       req,
     }: {
@@ -486,10 +524,8 @@ export function usePremiumEntitlementConsumeMutation() {
         handleApiResponse<ConsumeEntitlementResponseWire>(res.json()),
       );
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(["premium"]);
-      },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["premium"] });
     },
-  );
+  });
 }

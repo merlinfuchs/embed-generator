@@ -26,7 +26,7 @@ export default function AssistantView() {
 
   const [output, setOutput] = useState<Message | null>(null);
 
-  const { data, mutate, isLoading } = useAssistantGenerateMessageMutation();
+  const { data, mutate, isPending } = useAssistantGenerateMessageMutation();
 
   useEffect(() => {
     if (data?.success) {
@@ -52,7 +52,7 @@ export default function AssistantView() {
   }, []);
 
   function generate() {
-    if (isLoading) {
+    if (isPending) {
       return;
     }
 
@@ -140,11 +140,11 @@ export default function AssistantView() {
               <button
                 className={clsx(
                   "text-white px-3 py-2 rounded flex items-center space-x-3",
-                  isLoading ? "bg-dark-5 cursor-not-allowed " : "bg-blurple",
+                  isPending ? "bg-dark-5 cursor-not-allowed " : "bg-blurple",
                 )}
                 onClick={generate}
               >
-                {isLoading && (
+                {isPending && (
                   <div className="relative">
                     <div className="h-4 w-4 rounded-full bg-blurple"></div>
                     <div className="h-4 w-4 rounded-full bg-blurple animate-ping absolute inset-0"></div>
@@ -159,7 +159,7 @@ export default function AssistantView() {
           <div
             className={clsx(
               "rounded text-white h-full px-5 py-3",
-              isLoading && "animate-pulse",
+              isPending && "animate-pulse",
             )}
           >
             {output && <MessagePreview msg={output} />}

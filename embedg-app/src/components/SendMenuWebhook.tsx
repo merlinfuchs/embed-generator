@@ -154,7 +154,7 @@ export default function SendMenuWebhook() {
               role="button"
               onClick={() => send(true)}
             >
-              {sendToWebhookMutation.isLoading && (
+              {sendToWebhookMutation.isPending && (
                 <div className="h-2 w-2 bg-white rounded-full animate-ping"></div>
               )}
               <div>Edit Message</div>
@@ -169,7 +169,7 @@ export default function SendMenuWebhook() {
             role="button"
             onClick={() => send(false)}
           >
-            {sendToWebhookMutation.isLoading && (
+            {sendToWebhookMutation.isPending && (
               <div className="h-2 w-2 bg-white rounded-full animate-ping"></div>
             )}
             <div>Send Message</div>
