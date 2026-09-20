@@ -35,9 +35,11 @@ client_secret = ""
 public_key = ""
 token = ""
 
-# One shard is enough until your bot is in a few thousand servers. Discord refuses to let the bot
-# connect once it needs more than you configured here.
-shard_count = 1
+# 0 asks Discord how many shards this bot needs and how many may identify at once, which is what
+# you want unless you run several instances. Lowering identify_concurrency below what Discord
+# grants spreads the guild burst at startup, worth doing if the process can't keep up coming up.
+shard_count = 0
+identify_concurrency = 0
 
 [openai]
 api_key = "" # for ChatGPT integration (optional)

@@ -7,6 +7,7 @@ import (
 	"github.com/disgoorg/disgo"
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/cache"
+	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/gateway"
 	disrest "github.com/disgoorg/disgo/rest"
@@ -17,6 +18,9 @@ import (
 
 type EmbedGeneratorConfig struct {
 	Token string
+	// IdentifyConcurrency caps how many shards identify per five second window. 0 leaves it at
+	// what Discord granted, which is the most it will allow.
+	IdentifyConcurrency int
 	// Shards is empty for the admin CLI, which only needs the rest client. Asking for a shard
 	// manager costs a GetGatewayBot round trip even when nothing ever opens it.
 	Shards common.Shards
@@ -36,7 +40,7 @@ func NewEmbedGenerator(config EmbedGeneratorConfig) (*EmbedGenerator, error) {
 	}
 
 	if config.Shards.Count > 0 {
-		opts = append(opts, bot.WithShardManagerConfigOpts(
+		shardOpts := []sharding.ConfigOpt{
 			sharding.WithShardCount(config.Shards.Count),
 			sharding.WithShardIDs(config.Shards.IDs...),
 			sharding.WithGatewayConfigOpts(
@@ -48,7 +52,17 @@ func NewEmbedGenerator(config EmbedGeneratorConfig) (*EmbedGenerator, error) {
 				// sweep instead.
 				gateway.WithIntents(gateway.IntentGuilds),
 			),
-		))
+		}
+
+		// Left alone, disgo uses the concurrency Discord granted. Lowering it spreads the guild
+		// burst at boot over more time, which is the lever when the process is CPU bound coming up.
+		if config.IdentifyConcurrency > 0 {
+			shardOpts = append(shardOpts, sharding.WithIdentifyRateLimiterConfigOpt(
+				gateway.WithIdentifyMaxConcurrency(config.IdentifyConcurrency),
+			))
+		}
+
+		opts = append(opts, bot.WithShardManagerConfigOpts(shardOpts...))
 	}
 
 	client, err := disgo.New(config.Token, opts...)
@@ -93,4 +107,16 @@ func (g *EmbedGenerator) GenericEvent() *events.GenericEvent {
 
 func (g *EmbedGenerator) DispatchEvent(event bot.Event) {
 	g.client.EventManager.DispatchEvent(event)
+}
+
+// GatewayBot asks Discord what it recommends for this bot: how many shards to run and how many
+// may identify at once. Both are config defaults so neither has to be hardcoded and go stale as
+// the bot grows.
+func GatewayBot(token string) (*discord.GatewayBot, error) {
+	gatewayBot, err := rest.NewRestClient(token).GetGatewayBot()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get the gateway recommendation: %w", err)
+	}
+
+	return gatewayBot, nil
 }

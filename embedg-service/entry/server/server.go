@@ -34,11 +34,16 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		rest.ProxyURL = cfg.Discord.RestURL
 	}
 
-	shards := cfg.Discord.Shards()
+	discordCfg, err := resolveGatewayConfig(cfg.Discord)
+	if err != nil {
+		return err
+	}
+	shards := discordCfg.Shards()
 
 	embedg, err := embedg.NewEmbedGenerator(embedg.EmbedGeneratorConfig{
-		Token:  cfg.Discord.Token,
-		Shards: shards,
+		Token:               discordCfg.Token,
+		Shards:              shards,
+		IdentifyConcurrency: discordCfg.IdentifyConcurrency,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create embedg: %w", err)
@@ -176,4 +181,34 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 	default:
 		return nil
 	}
+}
+
+// resolveGatewayConfig fills in the shard count and identify concurrency from Discord's own
+// recommendation when they aren't pinned, so a self hoster configures neither and a growing bot
+// doesn't outgrow a number someone wrote down once.
+func resolveGatewayConfig(cfg config.DiscordConfig) (config.DiscordConfig, error) {
+	if cfg.ShardCount != 0 && cfg.IdentifyConcurrency != 0 {
+		return cfg, nil
+	}
+
+	gatewayBot, err := embedg.GatewayBot(cfg.Token)
+	if err != nil {
+		return cfg, err
+	}
+
+	if cfg.ShardCount == 0 {
+		cfg.ShardCount = gatewayBot.Shards
+	}
+	if cfg.IdentifyConcurrency == 0 {
+		cfg.IdentifyConcurrency = gatewayBot.SessionStartLimit.MaxConcurrency
+	}
+
+	slog.Info(
+		"Using Discord's gateway recommendation",
+		slog.Int("shard_count", cfg.ShardCount),
+		slog.Int("identify_concurrency", cfg.IdentifyConcurrency),
+		slog.Int("sessions_remaining", gatewayBot.SessionStartLimit.Remaining),
+	)
+
+	return cfg, nil
 }

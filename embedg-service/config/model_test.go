@@ -45,3 +45,11 @@ func TestValidateShardInstances(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateShardsUnpinnedCount(t *testing.T) {
+	// shard_count 0 means "ask Discord", so the instance checks can't compare against it yet.
+	cfg := DiscordConfig{ShardCount: 0, InstanceCount: 4, InstanceIndex: 1}
+	if err := cfg.validateShards(); err != nil {
+		t.Errorf("validateShards() error = %v, want nil", err)
+	}
+}
