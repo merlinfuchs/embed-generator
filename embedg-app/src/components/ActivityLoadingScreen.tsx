@@ -1,9 +1,11 @@
-import { shallow } from "zustand/shallow";
+import { useShallow } from "zustand/react/shallow";
 import { useActivityStateStore } from "../state/activity";
 import { ArrowPathIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 export default function ActivityLoadingScreen() {
-  const { loading, error } = useActivityStateStore((state) => state, shallow);
+  const { loading, error } = useActivityStateStore(
+    useShallow((state) => state),
+  );
 
   if (loading) {
     return (
