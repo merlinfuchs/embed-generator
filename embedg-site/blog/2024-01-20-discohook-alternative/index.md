@@ -1,6 +1,9 @@
 ---
 slug: discohook-alternative
-title: The Best Discohook Alternative
+title: The Best Discohook Alternative (2026)
+description: Embed Generator is a free, open source Discohook alternative with buttons, select menus, Components V2, scheduled messages and custom commands, no extra bots needed. Paste your Discohook JSON and keep going.
+last_update:
+  date: 2026-09-20
 authors: [merlin]
 tags: [discohook, alternative, embed, discord, webhook]
 ---
@@ -8,7 +11,7 @@ tags: [discohook, alternative, embed, discord, webhook]
 Discohook is a popular tool for creating Discord embed messages using Webhooks. Sadly it's not perfect ...
 For many features an additional bot is needed and the setup can be confusing. Additionally the uptime has been far from perfect recently.
 
-TLDR: [Embed Generator](https://message.style) is the superior alternative to Discohook in terms of features, usability, and stability.
+TLDR: [Embed Generator](https://message.style) is the superior alternative to Discohook in terms of features, usability, and stability. You can paste your existing Discohook JSON straight into the editor, see the [migration guide](/docs/guides/migrating-discohook) for the details.
 
 <!--truncate-->
 
@@ -45,6 +48,10 @@ This is why there is a need for a good Discohook alternative that is actively ma
 All of the features like embeds, interactive components, scheduled messages, and custom commands are available through an easy to use web interface and don't require any third party services or complex integrations.
 
 All features of Discohook and even more advanced features like interactive components and scheduled messages are available for free using Embed Generator. While you can subscribe to Embed Generator Premium to get the most out of it and support the development, it's completely optional.
+
+### Components V2
+
+Embed Generator supports Discord's [Components V2](/docs/features/components-v2) layouts with sections, separators, media galleries and thumbnails. Discohook only supports classic embeds.
 
 ### Visual Engaging Embeds
 
