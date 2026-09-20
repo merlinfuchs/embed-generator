@@ -44,8 +44,9 @@ type DiscordConfig struct {
 	ClientSecret string `toml:"client_secret" validate:"required"`
 	PublicKey    string `toml:"public_key" validate:"required"`
 	RestURL      string `toml:"rest_url"`
-	// ShardCount is explicit and required because every instance has to agree on it.
-	ShardCount int `toml:"shard_count" validate:"required,min=1"`
+	// ShardCount defaults to 1 for self hosting. Every instance of a deployment has to agree on
+	// it, and Discord rejects a count that is too low for the number of guilds.
+	ShardCount int `toml:"shard_count" validate:"min=1"`
 	// ShardIDs is empty for a single instance that runs every shard.
 	ShardIDs []int `toml:"shard_ids"`
 }

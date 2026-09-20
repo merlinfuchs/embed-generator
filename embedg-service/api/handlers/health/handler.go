@@ -24,26 +24,33 @@ type shardWire struct {
 	LatencyMS int64  `json:"latency_ms"`
 }
 
-// HandleHealth fails while any shard this instance owns is not ready, so a rolling deploy waits
-// for the shards to identify before taking the next instance down.
+// HandleHealth reports whether the process is up. Shards reconnect on their own and can be down
+// for minutes at a time without the service being unhealthy, so they are not part of it.
 func (h *HealthHandler) HandleHealth(c *fiber.Ctx) error {
-	for shard := range h.shardManager.Shards() {
-		if shard.Status() != gateway.StatusReady {
-			return c.SendStatus(http.StatusServiceUnavailable)
-		}
-	}
-
 	return c.SendStatus(http.StatusOK)
 }
 
-func (h *HealthHandler) HandleShardList(c *fiber.Ctx) error {
+// HandleShardHealth reports the gateway connections, and fails while any shard this instance owns
+// is not ready. Don't restart on it: shards take minutes to identify after a deploy.
+func (h *HealthHandler) HandleShardHealth(c *fiber.Ctx) error {
 	shards := make([]shardWire, 0)
+	ready := true
+
 	for shard := range h.shardManager.Shards() {
+		status := shard.Status()
+		if status != gateway.StatusReady {
+			ready = false
+		}
+
 		shards = append(shards, shardWire{
 			ID:        shard.ShardID(),
-			Status:    shard.Status().String(),
+			Status:    status.String(),
 			LatencyMS: shard.Latency().Milliseconds(),
 		})
+	}
+
+	if !ready {
+		c.Status(http.StatusServiceUnavailable)
 	}
 
 	return c.JSON(shards)

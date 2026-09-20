@@ -23,3 +23,6 @@ db_name = "embedg"
 endpoint = "localhost:9000"
 access_key_id = "embedg"
 secret_access_key = "1234567890"
+
+[discord]
+shard_count = 1

@@ -30,7 +30,7 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	healthHandler := health.New(env.ShardManager)
 	healthGroup := app.Group("/api/health")
 	healthGroup.Get("/", healthHandler.HandleHealth)
-	healthGroup.Get("/shards", healthHandler.HandleShardList)
+	healthGroup.Get("/shards", healthHandler.HandleShardHealth)
 
 	authHandler := auth.New(auth.AuthHandlerConfig{
 		AppPublicURL:    config.AppPublicURL,

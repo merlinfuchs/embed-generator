@@ -359,8 +359,8 @@ Purpose: embedg-service owns the gateway. Stateway is gone. Multi-instance by sh
 **Config** `config/model.go`:
 
 - Delete `BrokerConfig`, `NATSConfig`, and `RootConfig.Broker`.
-- `DiscordConfig` gains `ShardCount int \`toml:"shard_count" validate:"required,min=1"\`` and `ShardIDs []int \`toml:"shard_ids"\``. Shard count is required and explicit so every instance agrees on it; at 250k guilds it's around 250. Empty `ShardIDs` means "all shards of this count", which is the single-instance deployment.
-- `default.toml`: delete `[broker]` and `[broker.nats]`. Don't put a `shard_count` default there. `default.toml` is embedded and applies to every deployment, so a default would make the required tag unreachable and hand production a single shard, which Discord refuses with a 4011 once you're past a few thousand guilds. Local dev sets it in `embedg.toml` next to the token.
+- `DiscordConfig` gains `ShardCount int \`toml:"shard_count" validate:"min=1"\`` and `ShardIDs []int \`toml:"shard_ids"\``. Every instance of a deployment has to agree on the count; at 250k guilds it's around 250. Empty `ShardIDs` means "all shards of this count", which is the single-instance deployment.
+- `default.toml`: delete `[broker]` and `[broker.nats]`, add `shard_count = 1` so self hosting doesn't have to think about sharding at all. Production has to set it: one shard for 250k guilds gets refused at identify with a 4011, which fails the boot loudly rather than silently degrading.
 
 The ownership rule lives in `common.Shards{Count, IDs}` rather than on `DiscordConfig`, with `DiscordConfig.Shards()` building it. Managers take the value, so nothing under `manager/` has to import `config`, and the arithmetic is unit tested:
 
@@ -413,7 +413,11 @@ func (g *EmbedGenerator) ShardManager() sharding.ShardManager { return g.client.
 
 Nothing else needs the gate. `command.SyncCommands` is only reachable from the admin CLI, not from server startup, and the database backup is a CLI subcommand too, not a cron inside the server.
 
-**Health** `api/handlers/health/handler.go`: `New(shardManager sharding.ShardManager)`, and `GET /api/health/shards` returns `[{"id": 0, "status": "Ready", "latency_ms": 42}, ...]`. `HandleHealth` returns 503 while any shard this instance owns is not `StatusReady`, so a rolling deploy waits for the shards to identify. `sharding.ShardManager.Shards()` is an `iter.Seq[gateway.Gateway]`, so range over it with one variable.
+**Health** `api/handlers/health/handler.go`: `New(shardManager sharding.ShardManager)`.
+
+`GET /api/health` stays a liveness check and keeps returning 200 whenever the process is up. Shards reconnect on their own and can be down for minutes without the service being broken, so a restart is the wrong response to a dropped shard.
+
+`GET /api/health/shards` carries the gateway state: `[{"id": 0, "status": "Ready", "latency_ms": 42}, ...]`, with a 503 when any shard this instance owns is not `StatusReady`. Point alerting at it, not a restart policy; after a deploy it stays red for the minutes it takes 250 shards to identify. `sharding.ShardManager.Shards()` is an `iter.Seq[gateway.Gateway]`, so range over it with one variable.
 
 **Stateway removal.** `go mod tidy` once the imports are gone; stateway and the three NATS modules drop out. `grep -r stateway embedg-service` must be empty. Update `embedg-service/README.md` to drop the Stateway sentence. Delete `cmd/root.go` references to `stateway-gateway` (the CLI app name is wrong there anyway, make it `embedg`).
 
