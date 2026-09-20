@@ -4,12 +4,32 @@ import type { ReactElement } from "react";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { MemoryRouter } from "react-router-dom";
 import { parseMessageWithAction } from "../discord/restoreSchema";
+import { setCurrentMessage } from "../state/currentMessage";
 import { useDocumentStore } from "../state/document";
+import { useCurrentMessageStore } from "../state/message";
 import { toMessage } from "../state/documentConvert";
 
-/** Puts the document store in a known state for a test. */
+/**
+ * Puts both stores in a known state, the way an import does. The root fields
+ * still live in the message store, so a document alone is not the whole
+ * message.
+ */
 export function loadMessage(raw: unknown) {
-  useDocumentStore.getState().replaceAll(parseMessageWithAction(raw));
+  // Loading a fixture is not an edit, and letting it through would both leave
+  // an entry in the history and arm zundo's debounce, swallowing the first
+  // change a test makes.
+  const histories = [
+    useDocumentStore.temporal,
+    useCurrentMessageStore.temporal,
+  ];
+  for (const history of histories) history.getState().pause();
+
+  setCurrentMessage(parseMessageWithAction(raw));
+
+  for (const history of histories) {
+    history.getState().clear();
+    history.getState().resume();
+  }
 }
 
 export function currentComponents() {
@@ -37,6 +57,6 @@ export function renderEditor(ui: ReactElement) {
  * jsdom reports no computed styles, which userEvent reads as "pointer events
  * are off", so the check is disabled.
  */
-export function editorUser() {
-  return userEvent.setup({ pointerEventsCheck: 0 });
+export function editorUser(options?: Parameters<typeof userEvent.setup>[0]) {
+  return userEvent.setup({ pointerEventsCheck: 0, ...options });
 }
