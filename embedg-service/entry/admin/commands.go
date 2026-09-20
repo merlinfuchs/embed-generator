@@ -11,9 +11,10 @@ import (
 )
 
 func SyncCommands(ctx context.Context, pg *postgres.Client, cfg *config.RootConfig) error {
-	embedg, err := embedg.NewEmbedGenerator(ctx, embedg.EmbedGeneratorConfig{
-		Token:  cfg.Discord.Token,
-		Shards: cfg.Discord.Shards(),
+	// No shards: this only needs the rest client, and asking for a shard manager would cost a
+	// GetGatewayBot call for a connection nothing opens.
+	embedg, err := embedg.NewEmbedGenerator(embedg.EmbedGeneratorConfig{
+		Token: cfg.Discord.Token,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create embedg: %w", err)

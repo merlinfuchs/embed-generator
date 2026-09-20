@@ -362,13 +362,15 @@ Purpose: embedg-service owns the gateway. Stateway is gone. Multi-instance by sh
 - `DiscordConfig` gains `ShardCount int \`toml:"shard_count" validate:"min=1"\`` and `ShardIDs []int \`toml:"shard_ids"\``. Every instance of a deployment has to agree on the count; at 250k guilds it's around 250. Empty `ShardIDs` means "all shards of this count", which is the single-instance deployment.
 - `default.toml`: delete `[broker]` and `[broker.nats]`, add `shard_count = 1` so self hosting doesn't have to think about sharding at all. Production has to set it: one shard for 250k guilds gets refused at identify with a 4011, which fails the boot loudly rather than silently degrading.
 
-The ownership rule lives in `common.Shards{Count, IDs}` rather than on `DiscordConfig`, with `DiscordConfig.Shards()` building it. Managers take the value, so nothing under `manager/` has to import `config`, and the arithmetic is unit tested:
+The ownership rule lives in `common.Shards{Count, IDs}` rather than on `DiscordConfig`, with `DiscordConfig.Shards()` building it. Managers take the value, so nothing under `manager/` has to import `config`. `NewShards` expands an empty id list to every shard of the count up front, so "no ids means all of them" is stated once instead of in each method, and the shard arithmetic is disgo's `sharding.ShardIDByGuild` rather than a second copy of `(id >> 22) % count`:
 
 ```go
-func (s Shards) All() []int              // IDs, or every shard of Count for a single instance
-func (s Shards) Owns(guildID ID) bool    // (guildID >> 22) % Count in IDs; true if IDs is empty
-func (s Shards) IsLeader() bool          // IDs empty or contains 0
+func NewShards(count int, ids []int) Shards
+func (s Shards) Owns(guildID ID) bool    // false when nothing is configured, as in the admin CLI
+func (s Shards) IsLeader() bool          // IDs contains 0
 ```
+
+`Owns` fails closed. Owning everything when unconfigured would have every instance duplicate every job, which is the failure you don't notice. `RootConfig.Validate` rejects shard ids outside the count or repeated, both of which the arithmetic would otherwise swallow: an out of range id owns nothing, so nobody serves those guilds.
 
 **Gateway** `embedg/embedg.go`. The compat gateway, the NATS broker and the stateway imports all go; the constructor body becomes:
 
@@ -407,7 +409,7 @@ func (g *EmbedGenerator) ShardManager() sharding.ShardManager { return g.client.
 **Shard range filters.**
 
 - `manager/scheduled_message/manager.go` `Run`: after `GetDueScheduledMessages`, skip messages where `!cfg.OwnsGuild(msg.GuildID)`. Do the filter in Go, not SQL, so the query stays simple. Under 100k rows this is fine; if it ever isn't, add `WHERE (guild_id >> 22) % $2 = ANY($3)`.
-- `manager/custom_bot/manager.go` `syncCustomBots`: only start bots where `cfg.OwnsGuild(customBot.GuildID)`; a guild this instance doesn't own drops out of the wanted set and gets stopped by the existing reconcile step.
+- `manager/custom_bot/manager.go` `syncCustomBots`: partition on `customBot.ApplicationID`, not the guild. The pool is keyed by application because two guilds can be configured with the same bot, and hashing the guild would hand one connection to each of two instances, which is the duplicate presence B6 only accepted as a transition.
 
 **Leader gate.** `PremiumManager.Run` returns immediately unless `shards.IsLeader()`. Both of its tickers (entitlements and premium roles) sweep everything rather than a shard range, so running them on every instance would be N copies of the same work. The entitlement event listener stays registered everywhere; Discord only delivers those to shard 0 anyway, and the per-request plan lookups are unaffected.
 
@@ -427,7 +429,7 @@ Two of B9's stray legacy imports had to come along, because they are what stoppe
 
 **Intents.** `IntentGuilds` for the guild, channel and role events the guild table and the state provider live on, plus `IntentGuildMessages` for the message deletes that clean up action sets. Not `IntentGuildWebhooks`: `WebhookManager.OnEvent` is empty, nothing subscribes to webhook updates. Not `IntentMessageContent` either, restore-by-id goes through REST.
 
-**Deploy.** Big bang, single instance, `shard_count` set, no `shard_ids`. Expect boot to take one to two minutes for all shards to identify. Rollback is the previous image; no migration in this step.
+**Deploy.** Big bang, single instance, `shard_count` set, no `shard_ids`. Expect one to two minutes for all shards to identify. `ShardManager.Open` blocks until every shard is ready, so `entry/server/server.go` opens the gateway in a goroutine and serves the API immediately; otherwise the port isn't even bound for that whole window and a load balancer gets connection refused rather than the 503 the health split exists to give it. A failed open cancels the server context and `Run` returns the error. Rollback is the previous image; no migration in this step.
 
 **Manual verification checklist** (run all, on prod after deploy):
 

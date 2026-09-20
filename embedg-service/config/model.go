@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
 	"github.com/merlinfuchs/embed-generator/embedg-service/model"
@@ -20,7 +22,11 @@ type RootConfig struct {
 
 func (cfg *RootConfig) Validate() error {
 	validate := validator.New(validator.WithRequiredStructEnabled())
-	return validate.Struct(cfg)
+	if err := validate.Struct(cfg); err != nil {
+		return err
+	}
+
+	return cfg.Discord.validateShards()
 }
 
 type APIConfig struct {
@@ -52,10 +58,24 @@ type DiscordConfig struct {
 }
 
 func (c DiscordConfig) Shards() common.Shards {
-	return common.Shards{
-		Count: c.ShardCount,
-		IDs:   c.ShardIDs,
+	return common.NewShards(c.ShardCount, c.ShardIDs)
+}
+
+// validateShards catches what the shard math would otherwise absorb in silence: an id outside the
+// range owns nothing, so nobody ever serves those guilds.
+func (c DiscordConfig) validateShards() error {
+	seen := make(map[int]struct{}, len(c.ShardIDs))
+	for _, id := range c.ShardIDs {
+		if id < 0 || id >= c.ShardCount {
+			return fmt.Errorf("discord.shard_ids has %d, outside the range of shard_count %d", id, c.ShardCount)
+		}
+		if _, ok := seen[id]; ok {
+			return fmt.Errorf("discord.shard_ids has %d twice", id)
+		}
+		seen[id] = struct{}{}
 	}
+
+	return nil
 }
 
 type PremiumConfig struct {

@@ -417,8 +417,9 @@ type ChannelData struct {
 	src       Source
 	channelID common.ID
 	channel   discord.GuildChannel
-	// name is set when we only have an interaction's resolved channel, which carries no topic.
-	name string
+	// resolved is what Discord sent along with the interaction. It's a partial, so a field it
+	// doesn't carry still falls through to ensureChannel.
+	resolved *discord.ResolvedChannel
 }
 
 func NewChannelData(src Source, channelID common.ID, c discord.GuildChannel) *ChannelData {
@@ -435,7 +436,7 @@ func NewResolvedChannelData(src Source, c discord.ResolvedChannel) *ChannelData 
 	return &ChannelData{
 		src:       src,
 		channelID: c.ID,
-		name:      c.Name,
+		resolved:  &c,
 	}
 }
 
@@ -462,8 +463,8 @@ func (d *ChannelData) ID() string {
 }
 
 func (d *ChannelData) Name() (string, error) {
-	if d.name != "" {
-		return d.name, nil
+	if d.resolved != nil {
+		return d.resolved.Name, nil
 	}
 
 	if err := d.ensureChannel(); err != nil {
