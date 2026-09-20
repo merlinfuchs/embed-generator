@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function GuildSelect({ guildId, onChange }: Props) {
-  const { data: guilds, isLoading } = useGuildsQuery();
+  const { data: guilds, isPending } = useGuildsQuery();
   const toast = useToasts((state) => state.create);
 
   useEffect(() => {
@@ -39,12 +39,12 @@ export default function GuildSelect({ guildId, onChange }: Props) {
           onChange(defaultGuild.id);
         }
       }
-    } else if (!isLoading) {
+    } else if (!isPending) {
       if (!guilds?.success || !guilds.data.find((g) => g.id === guildId)) {
         onChange(null);
       }
     }
-  }, [guilds, guildId, isLoading]);
+  }, [guilds, guildId, isPending]);
 
   function selectGuild(guildId: string) {
     onChange(guildId);

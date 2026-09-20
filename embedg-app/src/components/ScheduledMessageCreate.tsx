@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useScheduledMessageCreateMutation } from "../api/mutations";
 import { useSendSettingsStore } from "../state/sendSettings";
-import { useQueryClient } from "react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useToasts } from "../util/toasts";
 import EditorInput from "./EditorInput";
 import Tooltip from "./Tooltip";
@@ -99,7 +99,9 @@ export default function ScheduledMessageCreate({
           if (res.success) {
             setName("");
             setCreate(false);
-            queryClient.invalidateQueries(["scheduled-messages", guildId]);
+            queryClient.invalidateQueries({
+              queryKey: ["scheduled-messages", guildId],
+            });
           } else {
             createToast({
               title: "Failed to create scheduled message",

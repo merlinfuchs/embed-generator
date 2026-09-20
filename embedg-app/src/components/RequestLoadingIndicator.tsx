@@ -1,4 +1,4 @@
-import { useIsFetching } from "react-query";
+import { useIsFetching } from "@tanstack/react-query";
 
 export default function RequestLoadingIndicator() {
   const isFetching = useIsFetching();
