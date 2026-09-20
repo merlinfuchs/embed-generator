@@ -6,11 +6,11 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/merlinfuchs/embed-generator/embedg-service/access"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
+	"github.com/merlinfuchs/embed-generator/embedg-service/guildstate"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
 )
 
@@ -18,20 +18,20 @@ type ActionParser struct {
 	accessManager     *access.AccessManager
 	actionSetStore    store.MessageActionSetStore
 	savedMessageStore store.SavedMessageStore
-	caches            cache.Caches
+	guildState        *guildstate.Provider
 }
 
 func New(
 	accessManager *access.AccessManager,
 	actionSetStore store.MessageActionSetStore,
 	savedMessageStore store.SavedMessageStore,
-	caches cache.Caches,
+	guildState *guildstate.Provider,
 ) *ActionParser {
 	return &ActionParser{
 		accessManager:     accessManager,
 		actionSetStore:    actionSetStore,
 		savedMessageStore: savedMessageStore,
-		caches:            caches,
+		guildState:        guildState,
 	}
 }
 

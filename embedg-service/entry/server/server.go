@@ -59,7 +59,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		ClientSecret:    cfg.Discord.ClientSecret,
 	}, pg)
 	accessManager := access.New(guildState, pg, embedg.Rest(), embedg, sessionManager)
-	actionParser := parser.New(accessManager, pg, pg, embedg.Caches())
+	actionParser := parser.New(accessManager, pg, pg, guildState)
 	actionHandler := handler.New(
 		pg,
 		pg,

@@ -37,6 +37,16 @@ type State struct {
 	Stickers []discord.Sticker
 }
 
+func (s *State) Role(roleID common.ID) (discord.Role, bool) {
+	for _, role := range s.Roles {
+		if role.ID == roleID {
+			return role, true
+		}
+	}
+
+	return discord.Role{}, false
+}
+
 type Provider struct {
 	rest rest.Rest
 
