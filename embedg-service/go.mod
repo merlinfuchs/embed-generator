@@ -95,4 +95,4 @@ replace github.com/merlinfuchs/embed-generator/embedg-app v0.0.0 => ../embedg-ap
 
 replace github.com/merlinfuchs/embed-generator/embedg-site v0.0.0 => ../embedg-site
 
-replace github.com/disgoorg/disgo => github.com/merlinfuchs/disgo v0.0.0-20260920205620-45e16f30c0d3
+replace github.com/disgoorg/disgo => github.com/merlinfuchs/disgo v0.0.0-20260920214037-7a482266c27f
