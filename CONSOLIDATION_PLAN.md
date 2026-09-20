@@ -231,10 +231,10 @@ Purpose: `access/access.go` no longer imports `stateway-lib`. Works on owner and
 
 ```go
 type Provider struct {
-    rest   rest.Rest
-    guilds *ttlcache.Cache[common.ID, *State]          // 2 min TTL
-    chans  *ttlcache.Cache[common.ID, discord.GuildChannel] // 2 min TTL, for lookups by channel id
-    sf     singleflight                                 // from common/singleflight.go (B3)
+    rest         rest.Rest
+    singleFlight singleflight.Group                              // common.GetOrSet from B3
+    guilds       *ttlcache.Cache[string, *State]                 // 2 min TTL
+    channels     *ttlcache.Cache[string, discord.GuildChannel]   // 2 min TTL, lookups by channel id
 }
 
 type State struct {
@@ -243,12 +243,17 @@ type State struct {
     Roles    []discord.Role
 }
 
-func (p *Provider) Guild(ctx context.Context, guildID common.ID) (*State, error)          // GetGuild + GetGuildChannels + GetRoles, one singleflight key
-func (p *Provider) Channel(ctx context.Context, channelID common.ID) (discord.GuildChannel, error) // GetChannel, 404 -> store.ErrNotFound
+func (p *Provider) Guild(ctx context.Context, guildID common.ID) (*State, error)                  // GetGuild + GetGuildChannels + GetRoles in parallel, one singleflight key
+func (p *Provider) Channel(ctx context.Context, channelID common.ID) (discord.GuildChannel, error) // GetChannel, 404/403 -> store.ErrNotFound
 func (p *Provider) Invalidate(guildID common.ID)
+func (p *Provider) InvalidateChannel(channelID common.ID)
 ```
 
-There is no gateway cache to consult. Every read is REST behind the TTL cache. `Invalidate` is called from the event listener on `GuildChannelCreate/Update/Delete`, `GuildRoleCreate/Update/Delete`, and `GuildUpdate` for guilds this instance owns, so the owner instance sees changes immediately and others within two minutes.
+There is no gateway cache to consult. Every read is REST behind the TTL cache. `State` carries `Channel(id)` and `Role(id)` lookups so callers that already hold a state don't re-fetch.
+
+Invalidation is a `Provider.OnEvent` listener registered like any other: `GuildUpdate` and the role events drop the guild, the channel events drop the guild and that one channel. Both are O(1) map deletes — at 250k guilds a scan per event is not affordable, which is why the channel cache is invalidated by channel id rather than by walking it looking for a guild. Pre-B7 these events come through Stateway, so `compat.DisgoGatewayConfig.EventTypes` needs `channel.create`, `channel.update`, `guild.role.create`, `guild.role.update` and `guild.role.delete` alongside the guild events B2 added.
+
+Both caches are capacity bounded and evict least recently used: uncapped, a traffic spike would put a large slice of 250k guilds in memory, which is the thing this design exists to avoid. Not-found is cached as a nil entry so a guild the bot was kicked from costs one lookup per TTL rather than three REST calls per request.
 
 **Payload before REST.** Interactions already carry most of what the templates and handlers read from the cache. Use it before touching the provider:
 
