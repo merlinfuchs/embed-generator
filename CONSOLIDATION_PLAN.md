@@ -134,7 +134,7 @@ case *events.GuildJoin:       // bot added to a guild
 case *events.GuildUpdate:     // name, icon, or owner changed
     g.guildStore.UpsertGuild(ctx, guildFromEvent(e.Guild, now))
 case *events.GuildLeave:      // bot removed. e.Guild.Unavailable is false here
-    g.guildStore.MarkGuildLeft(ctx, e.Guild.ID, now)
+    g.guildStore.MarkGuildLeft(ctx, e.GuildID, now)
 ```
 
 `guildFromEvent` copies `ID`, `Name`, `Icon`, `OwnerID` from `discord.Guild`. On `GuildUpdate` the upsert overwrites `joined_at` with `now`; that's acceptable, or split into a second `UpdateGuildMeta` query if you want `joined_at` exact.
@@ -142,6 +142,8 @@ case *events.GuildLeave:      // bot removed. e.Guild.Unavailable is false here
 Do not handle `GuildUnavailable`. That is an outage, not a leave. Do not store channels, roles, or member counts. Those churn and are served by the cache-or-REST path in B5. Do not store a shard id: it is `(id >> 22) % shard_count` and goes stale on resharding; compute it in SQL if ever needed. Use a 5 second context timeout per write. Log and continue on error.
 
 Nothing reads the table in this PR.
+
+Until B7 the events come through Stateway, so `compat.DisgoGatewayConfig.EventTypes` in `embedg/embedg.go` needs `guild.create`, `guild.update` and `guild.delete` (subjects are the Discord event name lowercased with `_` replaced by `.`). The table only backfills when the Stateway gateway re-identifies; it invalidates its stored session on shard close, so a normal restart is enough. `GuildLeave.Guild` is read from the disgo cache, which we don't populate, so use `e.GuildID`.
 
 Done when: after a restart, `SELECT count(*) FROM guilds WHERE left_at IS NULL` matches the bot's guild count and names match Discord. Rename a test guild, the row updates. Kick the test bot from a guild, `left_at` gets set.
 

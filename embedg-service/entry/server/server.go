@@ -65,7 +65,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 
 	handler := NewEventHandler(EventHandlerConfig{
 		DiscordLink: cfg.Links.Discord,
-	}, embedg, embedg.Rest(), embedg.Caches(), pg, actionHandler)
+	}, embedg, embedg.Rest(), embedg.Caches(), pg, pg, actionHandler)
 	embedg.Client().AddEventListeners(handler)
 
 	commandHandler := command.NewCommandHandler(command.CommandHandlerConfig{
