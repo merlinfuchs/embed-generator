@@ -91,7 +91,7 @@ export default function CommandsView() {
         {user?.success ? (
           features?.max_custom_commands ? (
             <div className="space-y-5 mb-8">
-              <AutoAnimate className="space-y-5 overlfow-y-auto">
+              <AutoAnimate className="space-y-5 overflow-y-auto">
                 {commands.map((cmd) => (
                   <CustomCommand cmd={cmd} key={cmd.id} />
                 ))}

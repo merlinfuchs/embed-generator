@@ -57,7 +57,7 @@ export function ToastContainer() {
           ) : toast.type === "error" ? (
             <ExclamationCircleIcon className="w-7 h-7 text-red flex-none" />
           ) : (
-            <InformationCircleIcon className="w-7 h-7 tex-blurple flex-none" />
+            <InformationCircleIcon className="w-7 h-7 text-blurple flex-none" />
           )}
           <div>
             <div className="text-gray-200 mb-1">{toast.title}</div>

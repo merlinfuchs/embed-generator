@@ -85,7 +85,7 @@ export default function MessageExportImport({ messages, guildId }: Props) {
               },
             );
           } else {
-            console.log(parsed.error);
+            console.error(parsed.error);
             createToast({
               title: "Failed to import",
               message: `Data did not match the expected format`,

@@ -60,7 +60,7 @@ export default function EditorComponentButton({
                 </div>
               </div>
               <select
-                className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
+                className="bg-dark-2 rounded p-2 w-full font-light cursor-pointer text-white"
                 value={data.style.toString()}
                 onChange={(v) =>
                   update<ButtonNode>(id, {

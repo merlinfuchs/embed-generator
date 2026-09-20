@@ -47,7 +47,7 @@ export default function ScheduledMessagesView() {
         </div>
         {user?.success ? (
           <div className="space-y-5 mb-8">
-            <AutoAnimate className="space-y-5 overlfow-y-auto">
+            <AutoAnimate className="space-y-5 overflow-y-auto">
               {messages.map((msg) => (
                 <ScheduledMessage msg={msg} key={msg.id} />
               ))}

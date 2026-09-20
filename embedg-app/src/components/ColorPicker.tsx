@@ -46,7 +46,7 @@ export default function ColorPicker({ value, onChange }: Props) {
         </div>
         <input
           type="text"
-          className="bg-dark-2 rounded-r p-2 w-full no-ring font-light text-white focus:outline-none"
+          className="bg-dark-2 rounded-r p-2 w-full font-light text-white focus:outline-none"
           value={hexColor}
           onChange={(e) => setHexColor(e.target.value)}
           placeholder="rrggbb"

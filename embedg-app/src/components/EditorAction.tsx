@@ -8,30 +8,6 @@ interface Props {
   actionIndex: number;
 }
 
-const _actionTypes = {
-  1: "Text Response",
-  6: "Text DM",
-  8: "Text Message Edit",
-  5: "Saved Message Response",
-  7: "Saved Message DM",
-  9: "Saved Message Edit",
-  2: "Toggle Role",
-  3: "Add Role",
-  4: "Remove Role",
-} as const;
-
-const _actionDescriptions = {
-  1: "Respond with a text message to the channel.",
-  2: "Toggle a role for the user.",
-  3: "Add a role to the user.",
-  4: "Remove a role from the user.",
-  5: "Respond with a saved message to the channel.",
-  6: "Send a text message to the user via DM.",
-  7: "Send a saved message to the user via DM.",
-  8: "Edit the message with a new text message.",
-  9: "Edit the message with a saved message.",
-} as const;
-
 export default function EditorAction({ setId, actionIndex }: Props) {
   const features = usePremiumGuildFeatures();
   const maxActions = features?.max_actions_per_component || 0;
