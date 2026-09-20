@@ -135,8 +135,8 @@ github.com/mattn/go-runewidth v0.0.16 h1:E5ScNMtiwvlvB5paMFdw9p4kSQzbXFikJ5SQO6T
 github.com/mattn/go-runewidth v0.0.16/go.mod h1:Jdepj2loyihRzMpdS35Xk/zdY8IAYHsh153qUoGf23w=
 github.com/merlinfuchs/discordgo v0.0.0-20251108151703-8f057be56eb6 h1:OUDB8UaPPdjtT+/bXoEvxa9WgWJ4bkq70laLhQHKzj8=
 github.com/merlinfuchs/discordgo v0.0.0-20251108151703-8f057be56eb6/go.mod h1:xAeB1tSUX3ilHSX7DKudmCAuIj5z/UZJDCbr8QKpMzI=
-github.com/merlinfuchs/disgo v0.0.0-20260920205620-45e16f30c0d3 h1:Nuv/W8VGCIslr3sOTjTrk+dPiyXLPnzafO72z31p//c=
-github.com/merlinfuchs/disgo v0.0.0-20260920205620-45e16f30c0d3/go.mod h1:NnV63iw4lJdF1fnV0gX27XR43ZgRGqnL122svRMTgTE=
+github.com/merlinfuchs/disgo v0.0.0-20260920214037-7a482266c27f h1:tdzSUU7dYg8TiGJd6jrZvVDFb5O7bR/c//b2U9fHvBo=
+github.com/merlinfuchs/disgo v0.0.0-20260920214037-7a482266c27f/go.mod h1:NnV63iw4lJdF1fnV0gX27XR43ZgRGqnL122svRMTgTE=
 github.com/minio/crc64nvme v1.1.0 h1:e/tAguZ+4cw32D+IO/8GSf5UVr9y+3eJcxZI2WOO/7Q=
 github.com/minio/crc64nvme v1.1.0/go.mod h1:eVfm2fAzLlxMdUGc0EEBGSMmPwmXD5XiNRpnu9J3bvg=
 github.com/minio/md5-simd v1.1.2 h1:Gdi1DZK69+ZVMoNHRXJyNcxrMA4dSxoYHZSQbirFg34=
