@@ -1,5 +1,6 @@
 ---
 sidebar_position: 4
+description: "Step by step: create a Discord application, add the bot to Embed Generator, invite it, set the interaction endpoint and a custom status. Needed for white label and custom commands."
 ---
 
 # Custom Bots

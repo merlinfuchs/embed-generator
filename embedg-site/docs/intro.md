@@ -9,6 +9,23 @@ description: Learn how to create Discord embeds with Embed Generator. Build a me
 
 Embed Generator is a visual editor for Discord messages. You build embeds, buttons and select menus in the browser, see a live preview, and send the result to your server through a webhook or the Embed Generator bot.
 
-The video below walks through the basics in a few minutes. The guides in the sidebar cover everything else: [interactive components](/docs/guides/interactive-components), [scheduled messages](/docs/guides/scheduled-messages), [custom commands](/docs/guides/custom-commands), [variables](/docs/guides/variables) and [migrating from Discohook](/docs/guides/migrating-discohook).
+## Your first message in five steps
+
+1. **Open the editor** at [message.style/app](https://message.style/app). No account needed for this part.
+2. **Write the message.** Add content, then click **Add Embed** for a title, description, fields, an image and a color. The preview on the right updates as you type.
+3. **Set a name and avatar** at the top if you don't want the default ones.
+4. **Pick where it goes.** Either paste a [webhook URL](./guides/webhooks), or log in with Discord, invite the bot and choose a channel. The bot route is what unlocks buttons and select menus.
+5. **Send it.** Click **Send Message**. Want it again later? Click **Save** first, then it's available on every device and can be scheduled or reused.
+
+The video below shows the same flow in a few minutes.
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/DnFP0MRJPIg?si=CdxkMRsuFBhj40-O" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
+## Where to go next
+
+- [Interactive components](./guides/interactive-components): buttons and select menus that hand out roles or reply.
+- [Scheduled messages](./guides/scheduled-messages): send once at a set time, or on a repeating schedule.
+- [Components V2](./features/components-v2): Discord's newer layout system with sections, separators and galleries.
+- [Custom commands](./guides/custom-commands) and [your own bot](./guides/custom-bots): Premium features for servers that want slash commands under their own name.
+- [Message variables](./guides/variables): member names, counts and dates filled in when the message is sent.
+- [Migrating from Discohook](./guides/migrating-discohook): paste your Discohook JSON and keep going.

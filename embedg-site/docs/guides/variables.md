@@ -1,5 +1,6 @@
 ---
 sidebar_position: 6
+description: "List of message variables in Embed Generator, like the user mention, member count or channel name, with loop and if-else examples for custom commands and component responses."
 ---
 
 # Message Variables
