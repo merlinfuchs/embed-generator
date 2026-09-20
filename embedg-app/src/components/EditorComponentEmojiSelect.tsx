@@ -50,13 +50,7 @@ export default function EdiotrComponentEmojiSelect({ emoji, onChange }: Props) {
                     className="h-6 w-6"
                   />
                 ) : (
-                  <Twemoji
-                    options={{
-                      className: "h-6 w-6",
-                    }}
-                  >
-                    {emoji.name}
-                  </Twemoji>
+                  <Twemoji className="h-6 w-6">{emoji.name}</Twemoji>
                 )
               ) : (
                 <FaceSmileIcon className="h-7 w-7" />

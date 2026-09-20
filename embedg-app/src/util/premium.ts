@@ -5,7 +5,7 @@ import {
 import { useSendSettingsStore } from "../state/sendSettings";
 
 export function usePremiumGuildFeatures(guildId?: string | null) {
-  const selectedGuildID = useSendSettingsStore().guildId;
+  const selectedGuildID = useSendSettingsStore((state) => state.guildId);
   if (guildId === undefined) {
     guildId = selectedGuildID;
   }
