@@ -15,7 +15,6 @@ type RootConfig struct {
 	Links    LinksConfig    `toml:"links"`
 	Logging  LoggingConfig  `toml:"logging"`
 	Database DatabaseConfig `toml:"database"`
-	Broker   BrokerConfig   `toml:"broker"`
 	OpenAI   OpenAIConfig   `toml:"openai"`
 }
 
@@ -45,6 +44,18 @@ type DiscordConfig struct {
 	ClientSecret string `toml:"client_secret" validate:"required"`
 	PublicKey    string `toml:"public_key" validate:"required"`
 	RestURL      string `toml:"rest_url"`
+	// ShardCount defaults to 1 for self hosting. Every instance of a deployment has to agree on
+	// it, and Discord rejects a count that is too low for the number of guilds.
+	ShardCount int `toml:"shard_count" validate:"min=1"`
+	// ShardIDs is empty for a single instance that runs every shard.
+	ShardIDs []int `toml:"shard_ids"`
+}
+
+func (c DiscordConfig) Shards() common.Shards {
+	return common.Shards{
+		Count: c.ShardCount,
+		IDs:   c.ShardIDs,
+	}
 }
 
 type PremiumConfig struct {
@@ -85,15 +96,6 @@ type S3Config struct {
 	SecretAccessKey string `toml:"secret_access_key" validate:"required"`
 	Secure          bool   `toml:"secure"`
 	SSECKey         string `toml:"ssec_key"`
-}
-
-type BrokerConfig struct {
-	NATS         NATSConfig `toml:"nats"`
-	GatewayCount int        `toml:"gateway_count"`
-}
-
-type NATSConfig struct {
-	URL string `toml:"url" validate:"required"`
 }
 
 type OpenAIConfig struct {

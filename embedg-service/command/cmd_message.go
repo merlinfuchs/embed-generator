@@ -11,7 +11,6 @@ import (
 	"github.com/disgoorg/disgo/handler"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
-	"github.com/merlinfuchs/embed-generator/embedg-server/util"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
 	"github.com/merlinfuchs/embed-generator/embedg-service/model"
@@ -31,7 +30,7 @@ func (g *CommandHandler) handleMessageRestoreCommand(e *handler.CommandEvent) er
 	}
 
 	msg, err := g.sharedMessageStore.CreateSharedMessage(e.Ctx, model.SharedMessage{
-		ID:        util.UniqueID(),
+		ID:        common.InternalID(),
 		CreatedAt: time.Now().UTC(),
 		ExpiresAt: time.Now().UTC().Add(time.Hour * 24),
 		Data:      messageDump,
@@ -57,7 +56,7 @@ func (g *CommandHandler) handleMessageRestoreContextCommand(e *handler.CommandEv
 	}
 
 	msg, err := g.sharedMessageStore.CreateSharedMessage(e.Ctx, model.SharedMessage{
-		ID:        util.UniqueID(),
+		ID:        common.InternalID(),
 		CreatedAt: time.Now().UTC(),
 		ExpiresAt: time.Now().UTC().Add(time.Hour * 24),
 		Data:      messageDump,
@@ -86,7 +85,7 @@ func (g *CommandHandler) handleMessageDumpCommand(e *handler.CommandEvent) error
 		return fmt.Errorf("failed to dump message: %w", err)
 	}
 
-	paste, err := util.CreateVaultBinPaste(string(messageDump), "json")
+	paste, err := common.CreateVaultBinPaste(e.Ctx, string(messageDump), "json")
 	if err != nil {
 		return fmt.Errorf("failed to create vaultb.in paste: %w", err)
 	}
@@ -106,7 +105,7 @@ func (g *CommandHandler) handleMessageDumpContextCommand(e *handler.CommandEvent
 		return fmt.Errorf("failed to dump message: %w", err)
 	}
 
-	paste, err := util.CreateVaultBinPaste(string(messageDump), "json")
+	paste, err := common.CreateVaultBinPaste(e.Ctx, string(messageDump), "json")
 	if err != nil {
 		return fmt.Errorf("failed to create vaultb.in paste: %w", err)
 	}

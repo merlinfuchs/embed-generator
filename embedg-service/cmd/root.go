@@ -12,12 +12,12 @@ import (
 )
 
 var CLI = cli.App{
-	Name:        "stateway-gateway",
-	Description: "Stateway Gateway CLI",
+	Name:        "embedg",
+	Description: "Embed Generator CLI",
 	Commands: []*cli.Command{
 		{
 			Name:  "server",
-			Usage: "Start the Stateway Cache Server.",
+			Usage: "Start the Embed Generator server.",
 			Flags: []cli.Flag{
 				&cli.BoolFlag{
 					Name:  "debug",

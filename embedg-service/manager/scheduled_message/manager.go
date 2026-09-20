@@ -35,6 +35,7 @@ type ScheduledMessageManager struct {
 	guildState            *guildstate.Provider
 	rest                  rest.Rest
 	planStore             store.PlanStore
+	shards                common.Shards
 }
 
 func NewScheduledMessageManager(
@@ -46,6 +47,7 @@ func NewScheduledMessageManager(
 	guildState *guildstate.Provider,
 	rest rest.Rest,
 	planStore store.PlanStore,
+	shards common.Shards,
 ) *ScheduledMessageManager {
 	m := &ScheduledMessageManager{
 		scheduledMessageStore: scheduledMessageStore,
@@ -56,6 +58,7 @@ func NewScheduledMessageManager(
 		guildState:            guildState,
 		rest:                  rest,
 		planStore:             planStore,
+		shards:                shards,
 	}
 
 	return m
@@ -80,6 +83,11 @@ func (m *ScheduledMessageManager) Run(ctx context.Context) {
 			}
 
 			for _, scheduledMessage := range scheduledMessages {
+				// Another instance owns the shard this guild is on and will send it.
+				if !m.shards.Owns(scheduledMessage.GuildID) {
+					continue
+				}
+
 				err = m.processScheduledMessage(context.Background(), scheduledMessage)
 				if err != nil {
 					slog.Error(

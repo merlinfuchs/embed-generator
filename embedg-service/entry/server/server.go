@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/merlinfuchs/embed-generator/embedg-service/access"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions/handler"
@@ -31,11 +32,12 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		rest.ProxyURL = cfg.Discord.RestURL
 	}
 
+	shards := cfg.Discord.Shards()
+
 	embedg, err := embedg.NewEmbedGenerator(ctx, embedg.EmbedGeneratorConfig{
-		Token:        cfg.Discord.Token,
-		BrokerURL:    cfg.Broker.NATS.URL,
-		GatewayCount: cfg.Broker.GatewayCount,
-		DiscordLink:  cfg.Links.Discord,
+		Token:       cfg.Discord.Token,
+		Shards:      shards,
+		DiscordLink: cfg.Links.Discord,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create embedg: %w", err)
@@ -45,7 +47,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		BeneficialGuildID: cfg.Premium.BeneficialGuildID,
 		BeneficialRoleID:  cfg.Premium.BeneficialRoleID,
 		Plans:             cfg.Premium.Plans,
-	}, embedg.Rest(), pg, embedg)
+	}, shards, embedg.Rest(), pg, embedg)
 	embedg.Client().AddEventListeners(premiumManager)
 	go premiumManager.Run(ctx)
 
@@ -69,7 +71,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		premiumManager,
 		guildState,
 	)
-	customBotManager := custom_bot.NewCustomBotManager(pg, embedg.Rest())
+	customBotManager := custom_bot.NewCustomBotManager(pg, embedg.Rest(), shards)
 	go customBotManager.Run(ctx)
 
 	webhookManager := webhook.NewWebhookManager(embedg.Rest(), guildState, customBotManager)
@@ -99,6 +101,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		guildState,
 		embedg.Rest(),
 		premiumManager,
+		shards,
 	)
 	embedg.Client().AddEventListeners(scheduledMessageManager)
 	go scheduledMessageManager.Run(ctx)
@@ -109,6 +112,11 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 	if err != nil {
 		return fmt.Errorf("failed to run embedg: %w", err)
 	}
+	defer func() {
+		closeCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		embedg.Close(closeCtx)
+	}()
 
 	api.Serve(ctx, &api.Env{
 		UserStore:             pg,
@@ -132,6 +140,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		ActionParser:          actionParser,
 		ActionHandler:         actionHandler,
 		Rest:                  embedg.Rest(),
+		ShardManager:          embedg.ShardManager(),
 		OpenAIClient:          openai.NewClient(cfg.OpenAI.APIKey),
 		FileStore:             blob,
 		AppContext:            embedg,

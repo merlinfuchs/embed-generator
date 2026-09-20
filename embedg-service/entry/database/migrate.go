@@ -10,7 +10,6 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-service/config"
 	"github.com/merlinfuchs/embed-generator/embedg-service/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-service/logging"
-	"github.com/spf13/viper"
 )
 
 type MigrateOpts struct {
@@ -69,7 +68,7 @@ func Migrate(ctx context.Context, storeName string, operation string, opts Migra
 
 	migrater.SetLogger(migrationSlogLogger{
 		logger:  l,
-		verbose: viper.GetBool("debug"),
+		verbose: cfg.Logging.Debug,
 	})
 
 	switch operation {
