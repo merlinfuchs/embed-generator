@@ -1214,13 +1214,16 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
 }
 
 .discord-component-container {
-  background-color: #2b2d31;
-  border-left: 4px solid #4e5058;
-  border-radius: 8px;
+  background-color: #2f3136;
+  border: 1px solid rgba(46, 48, 54, 0.6);
+  border-left-style: solid;
+  border-left-width: 4px;
+  border-radius: 4px;
   color: #dcddde;
   font-size: 13px;
   line-height: 150%;
-  padding: 16px;
+  max-width: 520px;
+  padding: 8px 12px;
 }
 
 .discord-component-container > .discord-components {
@@ -1262,10 +1265,19 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   width: 100%;
 }
 
+/* A single image keeps its own shape rather than being cropped to the grid. */
+.discord-component-gallery-single .discord-component-gallery-item {
+  aspect-ratio: auto;
+  max-height: 350px;
+  max-width: 100%;
+  object-fit: contain;
+  width: auto;
+}
+
 .discord-component-file {
   align-items: center;
   background-color: #2b2d31;
-  border: 1px solid #3f4147;
+  border: 1px solid #1e1f22;
   border-radius: 8px;
   color: #dcddde;
   display: flex;
@@ -1273,12 +1285,13 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   padding: 8px 12px;
 }
 
+/* Siblings are already 8px apart, so this is the space a separator adds. */
 .discord-component-separator {
-  padding: 4px 0;
+  padding: 0;
 }
 
 .discord-component-separator-large {
-  padding: 12px 0;
+  padding: 8px 0;
 }
 
 .discord-component-divider {
@@ -1286,16 +1299,25 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   height: 1px;
 }
 
+/* Shrink wraps its content, so the blur is clipped to what it hides. */
 .discord-component-spoiler {
   border-radius: 8px;
-  display: block;
+  display: inline-block;
+  max-width: 100%;
   overflow: hidden;
   position: relative;
+  vertical-align: top;
+}
+
+.discord-component-gallery > .discord-component-spoiler,
+.discord-component-container > .discord-component-spoiler {
   width: 100%;
 }
 
+/* Scaled up so the soft edge of the blur stays outside the clipped box. */
 .discord-component-spoiler > *:not(.discord-component-spoiler-label) {
   filter: blur(16px);
+  transform: scale(1.1);
 }
 
 .discord-component-spoiler-label {

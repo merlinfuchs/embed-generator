@@ -218,9 +218,16 @@ function PreviewSection({ section }: { section: MessageComponentSection }) {
   );
 }
 
+/** How many columns fill evenly, so a row is never left half empty. */
+function galleryColumns(count: number): number {
+  if (count === 1) return 1;
+  if (count === 2 || count === 4) return 2;
+  return 3;
+}
+
 /**
- * A simplified gallery: Discord arranges items by count, this lays them out in
- * an even grid of up to three columns.
+ * A simplified gallery: Discord sizes items by their count and aspect ratio,
+ * this lays them out in an even grid of up to three columns.
  */
 function PreviewMediaGallery({
   gallery,
@@ -232,9 +239,12 @@ function PreviewMediaGallery({
 
   return (
     <div
-      className="discord-component-gallery"
+      className={clsx(
+        "discord-component-gallery",
+        items.length === 1 && "discord-component-gallery-single",
+      )}
       style={{
-        gridTemplateColumns: `repeat(${Math.min(items.length, 3)}, 1fr)`,
+        gridTemplateColumns: `repeat(${galleryColumns(items.length)}, 1fr)`,
       }}
     >
       {items.map((item) => (
@@ -297,20 +307,21 @@ function PreviewContainer({
 }: {
   container: MessageComponentContainer;
 }) {
+  // The card stays crisp and its contents are what a spoiler hides.
   return (
-    <Spoiler spoiler={container.spoiler}>
-      <div
-        className="discord-component-container"
-        style={{
-          borderLeftColor:
-            container.accent_color !== undefined
-              ? colorIntToHex(container.accent_color)
-              : "#4e5058",
-        }}
-      >
+    <div
+      className="discord-component-container"
+      style={{
+        borderLeftColor:
+          container.accent_color !== undefined
+            ? colorIntToHex(container.accent_color)
+            : "#4e5058",
+      }}
+    >
+      <Spoiler spoiler={container.spoiler}>
         <PreviewComponents components={container.components} />
-      </div>
-    </Spoiler>
+      </Spoiler>
+    </div>
   );
 }
 
