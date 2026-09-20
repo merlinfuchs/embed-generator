@@ -1,0 +1,9 @@
+.git
+
+# Built in the image. A host node_modules is worse than useless here: pnpm's
+# layout carries platform-specific binaries, and an up-to-date one would make
+# `pnpm install --frozen-lockfile` a no-op and leave them in place.
+**/node_modules
+**/dist
+**/.docusaurus
+embedg-server/embedg-server

@@ -32,6 +32,8 @@
     "immer": "^9",
     "just-debounce-it": "^3.2.0",
     "react": "^18.2.0",
+    "react-calendar": "^4.3.0",
+    "react-clock": "^4.2.0",
     "react-colorful": "^5.6.1",
     "react-cron-generator": "^2.0.10",
     "react-datetime-picker": "^5.2.0",
@@ -61,5 +63,6 @@
     "typescript": "^5.8.3",
     "vite": "^7",
     "vitest": "^3"
-  }
+  },
+  "packageManager": "pnpm@12.5.1"
 }
