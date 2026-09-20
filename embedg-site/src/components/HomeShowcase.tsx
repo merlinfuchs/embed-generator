@@ -230,9 +230,7 @@ export default function HomeShowcase(): JSX.Element {
   React.useEffect(() => {
     if (window.matchMedia("(hover: none)").matches) return;
     const HEADER = 60;
-    // A gesture is a run of wheel events with no gap over 120ms. The first tick
-    // steps immediately; a long swipe steps again every 260px of travel.
-    const g = { last: 0, lastStep: 0, acc: 0, until: 0 };
+    const acc = { v: 0, until: 0 };
     const onWheel = (e: WheelEvent) => {
       const el = sectionRef.current;
       if (!el) return;
@@ -245,7 +243,7 @@ export default function HomeShowcase(): JSX.Element {
         e.preventDefault();
         setTouched(true);
         window.scrollBy({ top, behavior: "smooth" });
-        g.until = Date.now() + 500;
+        acc.until = Date.now() + 700;
         return;
       }
       if (!engaged) return;
@@ -260,18 +258,11 @@ export default function HomeShowcase(): JSX.Element {
       }
 
       e.preventDefault();
-      const now = Date.now();
-      if (now < g.until) return;
-      const fresh = now - g.last > 120;
-      g.last = now;
-      if (fresh) {
-        g.acc = 0;
-      } else {
-        g.acc += e.deltaY;
-        if (Math.abs(g.acc) < 260 || now - g.lastStep < 180) return;
-        g.acc = 0;
-      }
-      g.lastStep = now;
+      if (Date.now() < acc.until) return;
+      acc.v += e.deltaY;
+      if (Math.abs(acc.v) < 40) return;
+      acc.v = 0;
+      acc.until = Date.now() + 650;
       setTouched(true);
       go(i + (down ? 1 : -1));
     };
@@ -635,7 +626,7 @@ export default function HomeShowcase(): JSX.Element {
                   key={f.id}
                   data-slide
                   className={[
-                    "snap-center py-6 transition-opacity duration-300",
+                    "snap-center py-6 transition-opacity duration-500",
                     index === i ? "opacity-100" : "opacity-25",
                   ].join(" ")}
                 >
