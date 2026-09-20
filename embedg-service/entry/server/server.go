@@ -71,7 +71,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 	customBotManager := custom_bot.NewCustomBotManager(pg, embedg.Rest(), embedg.Gateway())
 	go customBotManager.Run(ctx)
 
-	webhookManager := webhook.NewWebhookManager(embedg.Rest(), embedg.Caches(), customBotManager)
+	webhookManager := webhook.NewWebhookManager(embedg.Rest(), guildState, customBotManager)
 	embedg.Client().AddEventListeners(webhookManager)
 
 	handler := NewEventHandler(EventHandlerConfig{
