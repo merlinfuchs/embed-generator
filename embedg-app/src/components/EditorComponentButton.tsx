@@ -1,3 +1,5 @@
+import { CARD } from "./editorCard";
+import clsx from "clsx";
 import {
   type ButtonNode,
   type NodeId,
@@ -26,13 +28,13 @@ const buttonBorderColors = {
   5: "border-dark-7",
 };
 
-export default function EditorComponentBaseButton({
+export default function EditorComponentButton({
   id,
   title = "Button",
   size = "medium",
 }: Props) {
   const data = useNode<ButtonNode>(id);
-  const actions = useNodeActions(id, 5);
+  const actions = useNodeActions(id);
   const { update } = useDocumentStore.getState();
 
   if (!data) return null;
@@ -40,21 +42,12 @@ export default function EditorComponentBaseButton({
   const borderColor = buttonBorderColors[data.style];
 
   return (
-    <div
-      className={`bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow border-2 ${borderColor}`}
-    >
+    <div className={clsx(CARD, "border-2", borderColor)}>
       <EditorComponentCollapsable
         id={id}
         validationPathPrefix={nodeScope<ButtonNode>(id)}
         title={title}
-        extra={
-          data.label && (
-            <div className="text-gray-500 truncate flex space-x-2 pl-1">
-              <div>-</div>
-              <div className="truncate">{data.label}</div>
-            </div>
-          )
-        }
+        subtitle={data.label}
         size={size}
         {...actions}
       >

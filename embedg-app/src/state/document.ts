@@ -239,6 +239,35 @@ export interface DocumentStore extends DocumentData, ActionSetActions {
 
 export const COMPONENTS_V2_FLAG = 1 << 15;
 
+/**
+ * How many children a slot holds, as the message schema enforces it. Kept here
+ * so the counter, the add button and the duplicate button agree.
+ */
+const SLOT_LIMITS: Record<string, number> = {
+  "message.embeds": 10,
+  "message.components": 5,
+  "embed.fields": 25,
+  "actionRow.components": 5,
+  "section.components": 3,
+  "container.components": 10,
+  "selectMenu.options": 25,
+  "mediaGallery.items": 10,
+};
+
+export function slotLimit(parentType: NodeType, slot: ChildSlot): number {
+  return SLOT_LIMITS[`${parentType}.${slot}`] ?? 1;
+}
+
+/** The limit of the slot a node sits in, for its duplicate button. */
+export const useSlotLimit = (id: NodeId) =>
+  useDocumentStore((state) => {
+    const node = state.nodes[id];
+    const parent = node?.parentId ? state.nodes[node.parentId] : undefined;
+    const slot = parent && slotOfChild(parent, id);
+
+    return parent && slot ? slotLimit(parent.type, slot) : 1;
+  });
+
 export const DOCUMENT_STORE_KEY = "current-document";
 
 /** 2 is the first version that owns components and their action sets. */
@@ -573,15 +602,15 @@ export const useNodeIndex = (id: NodeId) =>
  * The move, duplicate and remove buttons of a node, hidden at the ends of its
  * slot and once `max` siblings exist.
  */
-export function useNodeActions(id: NodeId, max?: number) {
+export function useNodeActions(id: NodeId) {
   const { index, count } = useNodeIndex(id);
+  const max = useSlotLimit(id);
   const { move, duplicate, remove } = useDocumentStore.getState();
 
   return {
     moveUp: index > 0 ? () => move(id, -1) : undefined,
     moveDown: index < count - 1 ? () => move(id, 1) : undefined,
-    duplicate:
-      max === undefined || count < max ? () => duplicate(id) : undefined,
+    duplicate: count < max ? () => duplicate(id) : undefined,
     remove: () => remove(id),
   };
 }

@@ -1,3 +1,5 @@
+import clsx from "clsx";
+import { NESTED_CARD, PADDED } from "./editorCard";
 import { useMemo } from "react";
 import {
   type ContainerNode,
@@ -6,6 +8,7 @@ import {
   useDocumentStore,
   useNode,
   useNodeActions,
+  slotLimit,
 } from "../state/document";
 import { nodeField, nodeScope, slotScope } from "../state/validationError";
 import { AutoAnimate } from "../util/autoAnimate";
@@ -23,7 +26,7 @@ interface Props {
   title?: string;
 }
 
-export default function EditorComponentBaseContainer({
+export default function EditorComponentContainer({
   id,
   title = "Container",
 }: Props) {
@@ -44,7 +47,7 @@ export default function EditorComponentBaseContainer({
 
   return (
     <div
-      className="bg-dark-3 p-3 rounded-md border-l-4"
+      className={clsx(PADDED, "border-l-4")}
       style={{ borderColor: hexColor }}
     >
       <EditorComponentCollapsable
@@ -53,12 +56,7 @@ export default function EditorComponentBaseContainer({
         title={title}
         size="large"
         {...actions}
-        extra={
-          <div className="text-gray-500 truncate flex space-x-2 pl-1">
-            <div>-</div>
-            <div className="truncate">Text</div>
-          </div>
-        }
+        subtitle="Text"
       >
         <div className="space-y-4 mb-4">
           <div className="flex space-x-3">
@@ -92,16 +90,13 @@ export default function EditorComponentBaseContainer({
           title="Components"
           extra={
             <div className="text-sm italic font-light text-gray-400">
-              {childIds.length} / 10
+              {childIds.length} / {slotLimit("container", "components")}
             </div>
           }
         >
           <AutoAnimate>
             {childIds.map((childId) => (
-              <div
-                className="bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow border-2 border-dark-5"
-                key={childId}
-              >
+              <div className={NESTED_CARD} key={childId}>
                 <EditorComponentEntry id={childId} />
               </div>
             ))}
@@ -110,7 +105,9 @@ export default function EditorComponentBaseContainer({
                 <EditorComponentAddDropdown
                   context="container"
                   parentId={id}
-                  disabled={childIds.length >= 10}
+                  disabled={
+                    childIds.length >= slotLimit("container", "components")
+                  }
                 />
                 <button
                   type="button"

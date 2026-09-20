@@ -16,12 +16,12 @@ interface Props {
   title?: string;
 }
 
-export default function EditorComponentBaseSelectMenuOption({
+export default function EditorComponentSelectMenuOption({
   id,
   title = "Option",
 }: Props) {
   const data = useNode<SelectOptionNode>(id);
-  const actions = useNodeActions(id, 25);
+  const actions = useNodeActions(id);
   const { update } = useDocumentStore.getState();
 
   if (!data) return null;
@@ -32,14 +32,7 @@ export default function EditorComponentBaseSelectMenuOption({
       className="p-3 border-2 border-dark-6 rounded-md"
       validationPathPrefix={nodeScope<SelectOptionNode>(id)}
       title={title}
-      extra={
-        data.label && (
-          <div className="text-gray-500 truncate flex space-x-2 pl-2">
-            <div>-</div>
-            <div className="truncate">{data.label}</div>
-          </div>
-        )
-      }
+      subtitle={data.label}
       {...actions}
     >
       <div className="space-y-4">

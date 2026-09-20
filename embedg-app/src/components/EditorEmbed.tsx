@@ -1,3 +1,5 @@
+import { PADDED } from "./editorCard";
+import clsx from "clsx";
 import { useMemo } from "react";
 import {
   type EmbedNode,
@@ -22,7 +24,7 @@ interface Props {
 export default function EditorEmbed({ id }: Props) {
   const embed = useNode<EmbedNode>(id);
   const { index } = useNodeIndex(id);
-  const actions = useNodeActions(id, 10);
+  const actions = useNodeActions(id);
 
   const hexColor = useMemo(
     () => (embed?.color !== undefined ? colorIntToHex(embed.color) : "#1f2225"),
@@ -40,16 +42,9 @@ export default function EditorEmbed({ id }: Props) {
       title={`Embed ${index + 1}`}
       size="large"
       defaultCollapsed={true}
-      className="bg-dark-3 p-3 rounded-md border-l-4"
+      className={clsx(PADDED, "border-l-4")}
       style={{ borderColor: hexColor }}
-      extra={
-        name && (
-          <div className="text-gray-500 truncate flex space-x-2 pl-2">
-            <div>-</div>
-            <div className="truncate">{name}</div>
-          </div>
-        )
-      }
+      subtitle={name}
       {...actions}
     >
       <div className="space-y-4">

@@ -15,7 +15,7 @@ interface Props {
   size?: "medium" | "large";
 }
 
-export default function EditorComponentBaseTextDisplay({
+export default function EditorComponentTextDisplay({
   id,
   title = "Text Display",
   size = "medium",
@@ -33,14 +33,7 @@ export default function EditorComponentBaseTextDisplay({
       title={title}
       size={size}
       {...actions}
-      extra={
-        data.content ? (
-          <div className="text-gray-500 truncate flex space-x-2 pl-1">
-            <div>-</div>
-            <div className="truncate">{data.content}</div>
-          </div>
-        ) : null
-      }
+      subtitle={data.content}
     >
       <div className="space-y-4">
         <EditorInput
