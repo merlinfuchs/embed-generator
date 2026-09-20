@@ -9,8 +9,9 @@ import { shallow } from "zustand/shallow";
 import { useComponentsV2Enabled } from "../state/document";
 
 export default function EditorAttachments() {
-  const attachments = useCurrentAttachmentsStore((state) =>
-    state.attachments.map((a) => a.id),
+  const attachments = useCurrentAttachmentsStore(
+    (state) => state.attachments.map((a) => a.id),
+    shallow,
   );
 
   const componentsV2Enabled = useComponentsV2Enabled();

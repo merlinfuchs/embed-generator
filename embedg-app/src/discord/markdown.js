@@ -443,7 +443,39 @@ const htmlOutputBody = markdown.outputFor(bodyRules, "html");
  * @param {Boolean} [options.isTitle=false] Parse as embed content
  * @param {Object} [options.cssModuleNames] An object mapping css classes to css module classes
  */
+/**
+ * The preview re-renders on a debounce, and every embed title, description and
+ * field is parsed again each time. Parsing is a pure function of the source and
+ * whether it is a title, so results are cached; the cache is bounded because a
+ * long editing session would otherwise hold every intermediate string.
+ */
+const CACHE_LIMIT = 500;
+const htmlCache = new Map();
+
 export function toHTML(source, options) {
+  const cacheable = !options?.discordCallback && !options?.cssModuleNames;
+  const cacheKey = cacheable
+    ? `${options?.isTitle ? "t" : "b"}\u0000${source}`
+    : null;
+
+  if (cacheKey !== null) {
+    const cached = htmlCache.get(cacheKey);
+    if (cached !== undefined) return cached;
+  }
+
+  const html = renderHTML(source, options);
+
+  if (cacheKey !== null) {
+    if (htmlCache.size >= CACHE_LIMIT) {
+      htmlCache.clear();
+    }
+    htmlCache.set(cacheKey, html);
+  }
+
+  return html;
+}
+
+function renderHTML(source, options) {
   options = Object.assign(
     {
       isTitle: false,

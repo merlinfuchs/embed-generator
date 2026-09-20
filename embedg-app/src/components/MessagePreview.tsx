@@ -38,11 +38,7 @@ export default function MessagePreview({ msg }: { msg: Message }) {
     getRelativeUrl("/logo.svg");
 
   return (
-    <Twemoji
-      options={{
-        className: "discord-twemoji",
-      }}
-    >
+    <Twemoji>
       <div
         className="discord-messages"
         style={{
@@ -265,11 +261,7 @@ export default function MessagePreview({ msg }: { msg: Message }) {
                                         className="discord-button-emoji"
                                       />
                                     ) : (
-                                      <Twemoji
-                                        options={{
-                                          className: "discord-button-emoji",
-                                        }}
-                                      >
+                                      <Twemoji className="discord-button-emoji">
                                         {comp.emoji.name}
                                       </Twemoji>
                                     ))}
@@ -314,11 +306,7 @@ export default function MessagePreview({ msg }: { msg: Message }) {
                                         className="discord-button-emoji"
                                       />
                                     ) : (
-                                      <Twemoji
-                                        options={{
-                                          className: "discord-button-emoji",
-                                        }}
-                                      >
+                                      <Twemoji className="discord-button-emoji">
                                         {comp.emoji.name}
                                       </Twemoji>
                                     ))}
