@@ -2,58 +2,46 @@ import type { ZodError, ZodIssue } from "zod";
 import { create } from "zustand";
 import type { NodeId } from "./document";
 
+/** A single field, addressed by node or by path. */
+export type ValidationTarget = { nodeId: NodeId; field?: string } | string;
+
+/** Anything with issues below it, addressed by node or by path. */
+export type ValidationScope =
+  | { nodeId: NodeId; fields?: string[] }
+  | string
+  | string[];
+
 /**
  * Issues indexed by the path they sit at, plus every path that has an issue
- * somewhere below it. Built once per validation run so that a lookup is a map
- * hit instead of a scan over every issue.
+ * somewhere below it, so that a lookup is a map hit instead of a scan over
+ * every issue.
  */
 interface ValidationIndex {
   issues: Map<string, ZodIssue>;
   prefixes: Set<string>;
-  idToPath: Map<NodeId, string>;
 }
 
-const emptyIndex: ValidationIndex = {
-  issues: new Map(),
-  prefixes: new Set(),
-  idToPath: new Map(),
-};
-
-function buildIndex(
-  error: ZodError | null,
-  idToPath: Map<NodeId, string>,
-): ValidationIndex {
-  const index: ValidationIndex = {
-    issues: new Map(),
-    prefixes: new Set(),
-    idToPath,
-  };
+function buildIndex(error: ZodError | null): ValidationIndex {
+  const index: ValidationIndex = { issues: new Map(), prefixes: new Set() };
   if (!error) return index;
 
   for (const issue of error.issues) {
-    const segments = issue.path?.map(String) ?? [];
-    const path = segments.join(".");
+    let path = "";
+    for (let i = 0; i < issue.path.length; i++) {
+      path = i === 0 ? String(issue.path[i]) : `${path}.${issue.path[i]}`;
+      index.prefixes.add(path);
+    }
 
     // The first issue at a path wins, matching what the UI showed before.
     if (!index.issues.has(path)) {
       index.issues.set(path, issue);
-    }
-
-    for (let i = 1; i <= segments.length; i++) {
-      index.prefixes.add(segments.slice(0, i).join("."));
     }
   }
 
   return index;
 }
 
-function nodePath(
-  index: ValidationIndex,
-  id: NodeId,
-  field?: string,
-): string | null {
-  const path = index.idToPath.get(id);
-  if (path === undefined) return null;
+function join(path: string, field?: string) {
   if (!field) return path;
 
   return path ? `${path}.${field}` : field;
@@ -61,33 +49,62 @@ function nodePath(
 
 export interface ValidationErrorStore {
   index: ValidationIndex;
-  setError(error: ZodError | null, idToPath?: Map<NodeId, string>): void;
-  getIssueByPath(path: string): ZodIssue | null;
-  checkIssueByPathPrefix(path: string): boolean;
-  /** The issue on a node, or on one of its own fields, e.g. `author.name`. */
-  getIssueForNode(id: NodeId, field?: string): ZodIssue | null;
-  /** Whether a node, or one of its fields, has an issue at or below it. */
-  hasIssueForNode(id: NodeId, field?: string): boolean;
+  /** Node ids to zod issue paths, from the conversion that was validated. */
+  idToPath: Map<NodeId, string>;
+  setError(error: ZodError | null, idToPath: Map<NodeId, string>): void;
+  getIssue(target: ValidationTarget): ZodIssue | null;
+  hasIssue(scope: ValidationScope): boolean;
+  hasAnyIssue(): boolean;
 }
 
 export const useValidationErrorStore = create<ValidationErrorStore>()(
   (set, get) => ({
-    index: emptyIndex,
-    setError: (error, idToPath) =>
-      set((state) => ({
-        index: buildIndex(error, idToPath ?? state.index.idToPath),
-      })),
-    getIssueByPath: (path) => get().index.issues.get(path) ?? null,
-    checkIssueByPathPrefix: (path) => get().index.prefixes.has(path),
-    getIssueForNode: (id, field) => {
-      const path = nodePath(get().index, id, field);
+    index: buildIndex(null),
+    idToPath: new Map(),
+    setError: (error, idToPath) => {
+      const state = get();
 
-      return path === null ? null : (get().index.issues.get(path) ?? null);
-    },
-    hasIssueForNode: (id, field) => {
-      const path = nodePath(get().index, id, field);
+      // A message that stays valid is the common case, and republishing the
+      // index there would wake every subscriber for the same empty result.
+      if (
+        !error &&
+        state.index.issues.size === 0 &&
+        state.idToPath === idToPath
+      ) {
+        return;
+      }
 
-      return path === null ? false : get().index.prefixes.has(path);
+      set({ index: buildIndex(error), idToPath });
     },
+    getIssue: (target) => {
+      const state = get();
+
+      if (typeof target === "string") {
+        return state.index.issues.get(target) ?? null;
+      }
+
+      const path = state.idToPath.get(target.nodeId);
+      if (path === undefined) return null;
+
+      return state.index.issues.get(join(path, target.field)) ?? null;
+    },
+    hasIssue: (scope) => {
+      const state = get();
+
+      if (typeof scope === "string") return state.index.prefixes.has(scope);
+      if (Array.isArray(scope)) {
+        return scope.some((prefix) => state.index.prefixes.has(prefix));
+      }
+
+      const path = state.idToPath.get(scope.nodeId);
+      if (path === undefined) return false;
+
+      return scope.fields
+        ? scope.fields.some((field) =>
+            state.index.prefixes.has(join(path, field)),
+          )
+        : state.index.prefixes.has(path);
+    },
+    hasAnyIssue: () => get().index.issues.size > 0,
   }),
 );

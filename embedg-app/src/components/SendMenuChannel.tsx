@@ -15,7 +15,7 @@ import { getCurrentMessage } from "../state/currentMessage";
 
 export default function SendMenuChannel() {
   const validationError = useValidationErrorStore((state) =>
-    state.checkIssueByPathPrefix(""),
+    state.hasAnyIssue(),
   );
 
   const [selectedGuildId, setSelectedGuildId] = useSendSettingsStore(

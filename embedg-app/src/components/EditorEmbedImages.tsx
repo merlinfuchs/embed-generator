@@ -7,6 +7,8 @@ import {
 import Collapsable from "./Collapsable";
 import EditorInput from "./EditorInput";
 
+const IMAGE_FIELDS = ["image", "thumbnail"];
+
 interface Props {
   id: NodeId;
 }
@@ -21,8 +23,7 @@ export default function EditorEmbedImages({ id }: Props) {
     <Collapsable
       title="Images"
       id={`embeds.${id}.images`}
-      validationNodeId={id}
-      validationFields={["image", "thumbnail"]}
+      validationPathPrefix={{ nodeId: id, fields: IMAGE_FIELDS }}
     >
       <div className="space-y-3">
         <EditorInput
@@ -32,8 +33,7 @@ export default function EditorEmbedImages({ id }: Props) {
           onChange={(v) =>
             update<EmbedNode>(id, { image: v ? { url: v } : undefined })
           }
-          validationNodeId={id}
-          validationField="image.url"
+          validationPath={{ nodeId: id, field: "image.url" }}
           imageUpload={true}
         />
         <EditorInput
@@ -43,8 +43,7 @@ export default function EditorEmbedImages({ id }: Props) {
           onChange={(v) =>
             update<EmbedNode>(id, { thumbnail: v ? { url: v } : undefined })
           }
-          validationNodeId={id}
-          validationField="thumbnail.url"
+          validationPath={{ nodeId: id, field: "thumbnail.url" }}
           imageUpload={true}
         />
       </div>

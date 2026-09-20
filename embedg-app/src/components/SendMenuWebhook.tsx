@@ -12,7 +12,7 @@ import { getCurrentMessage } from "../state/currentMessage";
 
 export default function SendMenuWebhook() {
   const validationError = useValidationErrorStore((state) =>
-    state.checkIssueByPathPrefix(""),
+    state.hasAnyIssue(),
   );
 
   const [webhookUrl, setWebhookUrl] = useSendSettingsStore(

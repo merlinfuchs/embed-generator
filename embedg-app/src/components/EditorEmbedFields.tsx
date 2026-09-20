@@ -4,6 +4,8 @@ import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";
 import EditorEmbedField from "./EditorEmbedField";
 
+const FIELD_FIELDS = ["fields"];
+
 interface Props {
   id: NodeId;
 }
@@ -15,8 +17,7 @@ export default function EditorEmbedFields({ id }: Props) {
   return (
     <Collapsable
       id={`embeds.${id}.fields`}
-      validationNodeId={id}
-      validationFields={["fields"]}
+      validationPathPrefix={{ nodeId: id, fields: FIELD_FIELDS }}
       title="Fields"
       extra={
         <div className="text-sm italic font-light text-gray-400">

@@ -66,7 +66,7 @@ export default function EditorComponentBaseFile({
               ))}
               <option value="">Select Attachment</option>
             </select>
-            <ValidationError path={`${validationPathPrefix}.file.url`} />
+            <ValidationError target={`${validationPathPrefix}.file.url`} />
           </div>
           <div className="flex-none">
             <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">

@@ -36,7 +36,7 @@ export default function EditorEmbed({ id }: Props) {
   return (
     <EditorComponentCollapsable
       id={`embeds.${id}`}
-      validationNodeId={id}
+      validationPathPrefix={{ nodeId: id }}
       title={`Embed ${index + 1}`}
       size="large"
       defaultCollapsed={true}

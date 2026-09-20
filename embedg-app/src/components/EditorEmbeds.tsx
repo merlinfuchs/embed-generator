@@ -4,6 +4,8 @@ import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";
 import EditorEmbed from "./EditorEmbed";
 
+const EMBED_FIELDS = ["embeds"];
+
 export default function EditorEmbeds() {
   const rootId = useDocumentStore((state) => state.rootId);
   const embedIds = useChildIds(rootId, "embeds");
@@ -14,8 +16,7 @@ export default function EditorEmbeds() {
       id="embeds"
       title="Embeds"
       size="large"
-      validationNodeId={rootId}
-      validationFields={["embeds"]}
+      validationPathPrefix={{ nodeId: rootId, fields: EMBED_FIELDS }}
       extra={
         <div className="text-sm italic font-light text-gray-400">
           {embedIds.length} / 10

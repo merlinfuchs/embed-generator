@@ -4,13 +4,12 @@ import {
   DocumentDuplicateIcon,
   TrashIcon,
 } from "@heroicons/react/20/solid";
+import type { ValidationScope } from "../state/validationError";
 import Collapsable from "./Collapsable";
 
 interface Props {
   id: string;
-  validationPathPrefix?: string | string[];
-  validationNodeId?: string;
-  validationFields?: string[];
+  validationPathPrefix?: ValidationScope;
   title: string;
   extra?: React.ReactNode;
   className?: string;
@@ -27,8 +26,6 @@ interface Props {
 export default function EditorComponentCollapsable({
   id,
   validationPathPrefix,
-  validationNodeId,
-  validationFields,
   duplicate,
   moveUp,
   moveDown,
@@ -46,8 +43,6 @@ export default function EditorComponentCollapsable({
       <Collapsable
         id={id}
         validationPathPrefix={validationPathPrefix}
-        validationNodeId={validationNodeId}
-        validationFields={validationFields}
         title={title}
         extra={extra}
         size={size}

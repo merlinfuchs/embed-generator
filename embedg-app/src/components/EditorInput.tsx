@@ -1,3 +1,4 @@
+import type { ValidationTarget } from "../state/validationError";
 import ValidationError from "./ValidationError";
 import TextareaAutosize from "react-textarea-autosize";
 import InputControlBar from "./InputControlBar";
@@ -15,9 +16,7 @@ interface Props {
   type?: "text" | "url" | "textarea";
   props?: Record<string, any>;
   className?: string;
-  validationPath?: string;
-  validationNodeId?: string;
-  validationField?: string;
+  validationPath?: ValidationTarget;
   controls?: boolean;
   imageUpload?: boolean;
 }
@@ -32,8 +31,6 @@ export default function EditorInput({
   props,
   className,
   validationPath,
-  validationNodeId,
-  validationField,
   controls,
   imageUpload,
 }: Props) {
@@ -104,13 +101,7 @@ export default function EditorInput({
           </div>
         )}
       </div>
-      {(validationPath || validationNodeId !== undefined) && (
-        <ValidationError
-          path={validationPath}
-          nodeId={validationNodeId}
-          field={validationField}
-        />
-      )}
+      <ValidationError target={validationPath} />
     </div>
   );
 }

@@ -9,6 +9,8 @@ import Collapsable from "./Collapsable";
 import DateTimePicker from "./DateTimePicker";
 import EditorInput from "./EditorInput";
 
+const FOOTER_FIELDS = ["footer", "timestamp"];
+
 interface Props {
   id: NodeId;
 }
@@ -29,8 +31,7 @@ export default function EditorEmbedFooter({ id }: Props) {
     <Collapsable
       title="Footer"
       id={`embeds.${id}.footer`}
-      validationNodeId={id}
-      validationFields={["footer", "timestamp"]}
+      validationPathPrefix={{ nodeId: id, fields: FOOTER_FIELDS }}
     >
       <div className="space-y-3">
         <EditorInput
@@ -38,8 +39,7 @@ export default function EditorEmbedFooter({ id }: Props) {
           value={footer?.text || ""}
           onChange={(v) => patchFooter({ text: v || undefined })}
           maxLength={2048}
-          validationNodeId={id}
-          validationField="footer.text"
+          validationPath={{ nodeId: id, field: "footer.text" }}
         />
         <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3">
           <EditorInput
@@ -48,8 +48,7 @@ export default function EditorEmbedFooter({ id }: Props) {
             value={footer?.icon_url || ""}
             onChange={(v) => patchFooter({ icon_url: v || undefined })}
             className="md:w-1/2"
-            validationNodeId={id}
-            validationField="footer.icon_url"
+            validationPath={{ nodeId: id, field: "footer.icon_url" }}
             imageUpload={true}
           />
           <div className="md:w-1/2">

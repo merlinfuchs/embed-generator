@@ -1,11 +1,11 @@
 import { lazy, Suspense } from "react";
-import { useDebouncedCurrentMessage } from "../state/currentMessage";
+import { useDebouncedCurrentDocument } from "../state/currentMessage";
 
 const LazyMessagePreview = lazy(() => import("./MessagePreview"));
 
 export default function EditorMessagePreview() {
   // We debounce the message preview to prevent it from updating too often.
-  const msg = useDebouncedCurrentMessage(250);
+  const msg = useDebouncedCurrentDocument(250)?.message;
 
   if (msg) {
     if (msg.flags && (msg.flags & (1 << 15)) !== 0) {
