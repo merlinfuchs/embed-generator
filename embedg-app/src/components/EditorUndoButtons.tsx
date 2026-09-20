@@ -18,10 +18,10 @@ export default function EditorUndoButtons() {
 
   const isTracking = useCurrentMessageUndoStore((s) => s.isTracking);
   const hasPastStates = useCurrentMessageUndoStore(
-    (s) => s.pastStates.length != 0,
+    (s) => s.pastStates.length !== 0,
   );
   const hasFutureStates = useCurrentMessageUndoStore(
-    (s) => s.futureStates.length != 0,
+    (s) => s.futureStates.length !== 0,
   );
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import {
+import type {
   MessageComponentSelectMenu,
   MessageComponentSelectMenuOption,
 } from "../discord/schema";
@@ -27,7 +27,6 @@ interface Props {
 }
 
 export default function EditorComponentBaseSelectMenu({
-  id,
   validationPathPrefix,
   data,
   onChange,

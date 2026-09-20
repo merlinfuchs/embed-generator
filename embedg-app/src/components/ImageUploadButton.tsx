@@ -1,5 +1,5 @@
 import { DocumentArrowUpIcon } from "@heroicons/react/24/outline";
-import { ChangeEvent, useRef } from "react";
+import { type ChangeEvent, useRef } from "react";
 import { useUploadImageMutation } from "../api/mutations";
 import { useToasts } from "../util/toasts";
 import { useSendSettingsStore } from "../state/sendSettings";

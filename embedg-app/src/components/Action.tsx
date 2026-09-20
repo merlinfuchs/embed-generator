@@ -9,7 +9,7 @@ import EditorInput from "./EditorInput";
 import { RoleSelect } from "./RoleSelect";
 import SavedMessageSelect from "./SavedMessageSelect";
 import { useMemo } from "react";
-import { MessageAction } from "../discord/schema";
+import type { MessageAction } from "../discord/schema";
 import CheckBox from "./CheckBox";
 import { RolesSelect } from "./RolesSelect";
 import PermissionsSelect from "./PermissionsSelect";

@@ -9,7 +9,7 @@ interface Props {
 
 export default function CronExpressionBuilder({ value, onChange }: Props) {
   const sevenFieldExpression = useMemo(
-    () => (value ? "0 " + value + " *" : undefined),
+    () => (value ? `0 ${value} *` : undefined),
     [value],
   );
 

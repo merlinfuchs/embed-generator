@@ -1,4 +1,4 @@
-import { ZodError, ZodIssue } from "zod";
+import type { ZodError, ZodIssue } from "zod";
 import { create } from "zustand";
 
 export interface ValidationErrorStore {

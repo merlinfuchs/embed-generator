@@ -1,5 +1,5 @@
 import { useQuery } from "react-query";
-import {
+import type {
   CustomBotGetResponseWire,
   GetPremiumPlanFeaturesResponseWire,
   ListChannelsResponseWire,
@@ -15,7 +15,7 @@ import {
   GetGuildBrandingResponseWire,
   ScheduledMessageListResponseWire,
 } from "./wire";
-import { APIResponse } from "./base";
+import type { APIResponse } from "./base";
 import { fetchApi } from "./client";
 
 export class APIError extends Error {
@@ -27,7 +27,7 @@ export class APIError extends Error {
   }
 }
 
-const silentErrorCodes = new Set(["invalid_session"]);
+const _silentErrorCodes = new Set(["invalid_session"]);
 
 export function handleApiResponse<T extends APIResponse<any>>(
   resp: Promise<T>,
@@ -124,7 +124,7 @@ export function useSharedMessageQuery(messageId: string | null) {
   return useQuery<SharedMessageGetResponseWire>(
     ["shared-message", messageId],
     () => {
-      let url = `/api/shared-messages/${messageId}`;
+      const url = `/api/shared-messages/${messageId}`;
       return fetchApi(url).then((res) => handleApiResponse(res.json()));
     },
     { enabled: !!messageId },

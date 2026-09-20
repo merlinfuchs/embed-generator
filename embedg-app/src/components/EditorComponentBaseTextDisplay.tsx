@@ -1,14 +1,5 @@
-import {
-  ChevronDownIcon,
-  ChevronUpIcon,
-  DocumentDuplicateIcon,
-  TrashIcon,
-} from "@heroicons/react/20/solid";
-import { shallow } from "zustand/shallow";
-import { useCurrentMessageStore } from "../state/message";
-import Collapsable from "./Collapsable";
 import EditorInput from "./EditorInput";
-import { MessageComponentTextDisplay } from "../discord/schema";
+import type { MessageComponentTextDisplay } from "../discord/schema";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
 
 interface Props {

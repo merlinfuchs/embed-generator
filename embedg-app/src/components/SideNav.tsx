@@ -220,7 +220,8 @@ function NavigationButton({
       className="flex w-full items-center pr-4 group"
       to={href}
       onClick={() => setHidden(true)}
-      children={({ isActive }) => (
+    >
+      {({ isActive }) => (
         <>
           <div
             className={clsx(
@@ -253,7 +254,7 @@ function NavigationButton({
           )}
         </>
       )}
-    />
+    </NavLink>
   );
 }
 

@@ -1,6 +1,5 @@
 import { shallow } from "zustand/shallow";
 import { useCurrentMessageStore } from "../state/message";
-import EditorComponentBaseSection from "./EditorComponentBaseSection";
 import EditorComponentBaseContainer from "./EditorComponentBaseContainer";
 
 interface Props {

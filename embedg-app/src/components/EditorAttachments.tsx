@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";
-import { ChangeEvent, useRef } from "react";
+import { type ChangeEvent, useRef } from "react";
 import { getUniqueId } from "../util";
 import EditorAttachment from "./EditorAttachment";
 import { shallow } from "zustand/shallow";

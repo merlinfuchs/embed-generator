@@ -61,7 +61,7 @@ export default function ScheduledMessageCreate({
 
   function create() {
     if (
-      name.length == 0 ||
+      name.length === 0 ||
       !guildId ||
       !channelId ||
       !savedMessageId ||

@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { getUniqueId } from "../util";
 
-const VARIABLE_RE = new RegExp("\\{\\{[^}]+\\}\\}");
-const ATTACHMENT_RE = new RegExp("attachment://\\.+");
+const VARIABLE_RE = /\{\{[^}]+\}\}/;
+const ATTACHMENT_RE = /attachment:\/\/\.+/;
 
-const HOSTNAME_RE = new RegExp("\\.[a-zA-Z]{2,}$");
+const HOSTNAME_RE = /\.[a-zA-Z]{2,}$/;
 const urlRefinement: [(v: string) => boolean, string] = [
   (v) => {
     if (v.match(VARIABLE_RE)) return true;
@@ -12,14 +12,14 @@ const urlRefinement: [(v: string) => boolean, string] = [
     try {
       const url = new URL(v);
       return !!url.hostname.match(HOSTNAME_RE);
-    } catch (e) {
+    } catch (_e) {
       return false;
     }
   },
   "Invalid URL",
 ];
 
-const IMAGE_PATH_RE = new RegExp("\\.(png|jpg|jpeg|webp|gif)$");
+const _IMAGE_PATH_RE = /\.(png|jpg|jpeg|webp|gif)$/;
 const imageUrlRefinement: [(v: string) => boolean, string] = [
   (v) => {
     if (v.match(VARIABLE_RE)) return true;
@@ -545,7 +545,7 @@ export const messageSchema = z
   .superRefine((data, ctx) => {
     const flags = data.flags ?? 0;
     if (flags & (1 << 15)) {
-      if (data.components.length == 0) {
+      if (data.components.length === 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["components"],

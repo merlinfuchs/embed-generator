@@ -4,7 +4,7 @@ import { useCurrentMessageStore } from "../state/message";
 import { getUniqueId } from "../util";
 import { useState } from "react";
 import ClickOutsideHandler from "./ClickOutsideHandler";
-import { MessageComponent } from "../discord/schema";
+import type { MessageComponent } from "../discord/schema";
 import { usePremiumGuildFeatures } from "../util/premium";
 import { useNavigate } from "react-router-dom";
 

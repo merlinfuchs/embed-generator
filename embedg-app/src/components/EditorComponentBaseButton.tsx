@@ -1,4 +1,4 @@
-import { MessageComponentButton } from "../discord/schema";
+import type { MessageComponentButton } from "../discord/schema";
 import CheckBox from "./CheckBox";
 import EditorActionSet from "./EditorActionSet";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
@@ -76,7 +76,7 @@ export default function EditorComponentBaseButton({
                 value={data.style.toString()}
                 onChange={(v) =>
                   onChange({
-                    style: parseInt(v.target.value) as any,
+                    style: parseInt(v.target.value, 10) as any,
                   })
                 }
               >

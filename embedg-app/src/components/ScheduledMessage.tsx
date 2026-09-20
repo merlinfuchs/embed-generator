@@ -1,5 +1,5 @@
 import { parseISO } from "date-fns";
-import { ScheduledMessageWire } from "../api/wire";
+import type { ScheduledMessageWire } from "../api/wire";
 import Tooltip from "./Tooltip";
 import {
   ArrowRightIcon,
@@ -74,7 +74,7 @@ export default function ScheduledMessage({
 
   function save() {
     if (
-      name.length == 0 ||
+      name.length === 0 ||
       !guildId ||
       !channelId ||
       !savedMessageId ||

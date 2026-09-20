@@ -73,6 +73,8 @@ export default function ToolsColoredText() {
     if (!editor) return;
 
     if (!style) {
+      // Reassigning innerText strips all child markup, resetting the styling
+      // biome-ignore lint/correctness/noSelfAssign: intentional DOM reset
       editor.innerText = editor.innerText;
       return;
     }
@@ -115,7 +117,7 @@ export default function ToolsColoredText() {
           setCopyButtonText("Copy Format");
         }, 1000);
       },
-      (err) => {
+      (_err) => {
         setCopyButtonText("Failed to copy ...");
         setTimeout(() => {
           setCopyButtonText("Copy Format");

@@ -12,7 +12,7 @@ interface Props {
 
 export default function GuildOrUserSelect({ value, onChange }: Props) {
   const { data: user } = useUserQuery();
-  const { data: guilds, isLoading } = useGuildsQuery();
+  const { data: guilds } = useGuildsQuery();
 
   const guild = useMemo(
     () => guilds && guilds.success && guilds.data.find((g) => g.id === value),
@@ -49,6 +49,7 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
           {value === "user" && user?.success ? (
             <div className="flex items-center space-x-2 cursor-pointer w-full">
               <img
+                alt=""
                 src={userAvatarUrl(user.data)}
                 className="guild icon url w-8 h-8 rounded-full flex-none"
               />
@@ -65,6 +66,7 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
           ) : guild ? (
             <div className="flex items-center space-x-2 cursor-pointer w-full">
               <img
+                alt=""
                 src={guildIconUrl(guild)}
                 className="guild icon url w-8 h-8 rounded-full flex-none"
               />

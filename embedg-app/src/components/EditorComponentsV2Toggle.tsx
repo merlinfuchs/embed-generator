@@ -2,7 +2,6 @@ import clsx from "clsx";
 import { useState } from "react";
 import { useCurrentMessageStore } from "../state/message";
 import ConfirmModal from "./ConfirmModal";
-import { useSendSettingsStore } from "../state/sendSettings";
 
 export default function EditorComponentsV2Toggle() {
   const componentsV2Enabled = useCurrentMessageStore((s) =>
@@ -68,8 +67,10 @@ export default function EditorComponentsV2Toggle() {
         >
           <a
             href="https://message.style/docs/features/components-v2"
+            aria-label="Learn more about Components V2"
             className="text-blue-400 hover:underline"
             target="_blank"
+            rel="noopener"
           >
             Learn More
           </a>
@@ -84,8 +85,10 @@ export default function EditorComponentsV2Toggle() {
         >
           <a
             href="https://message.style/docs/features/components-v2"
+            aria-label="Learn more about Components V2"
             className="text-blue-400 hover:underline"
             target="_blank"
+            rel="noopener"
           >
             Learn More
           </a>

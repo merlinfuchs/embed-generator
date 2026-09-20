@@ -1,4 +1,4 @@
-import { MessageComponentThumbnail } from "../discord/schema";
+import type { MessageComponentThumbnail } from "../discord/schema";
 import CheckBox from "./CheckBox";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
 import EditorInput from "./EditorInput";

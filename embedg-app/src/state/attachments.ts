@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { MessageAttachmentWire } from "../api/wire";
+import type { MessageAttachmentWire } from "../api/wire";
 import { immer } from "zustand/middleware/immer";
 
 export interface MessageAttachment extends MessageAttachmentWire {

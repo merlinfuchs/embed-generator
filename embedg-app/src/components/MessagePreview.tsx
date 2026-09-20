@@ -1,8 +1,8 @@
 import "./MessagePreview.css";
 import { format, parseISO } from "date-fns";
 import { useState } from "react";
-import { Message } from "../discord/schema";
-// @ts-ignore
+import type { Message } from "../discord/schema";
+// @ts-expect-error
 import { toHTML } from "../discord/markdown";
 import { colorIntToHex } from "../util/discord";
 import { useSendSettingsStore } from "../state/sendSettings";
@@ -87,7 +87,7 @@ export default function MessagePreview({ msg }: { msg: Message }) {
                     let timestamp = "";
                     if (embed.timestamp) {
                       const date = parseISO(embed.timestamp);
-                      if (!isNaN(date.getTime())) {
+                      if (!Number.isNaN(date.getTime())) {
                         timestamp = format(date, "dd/MM/yyyy");
                       }
                     }
@@ -276,7 +276,7 @@ export default function MessagePreview({ msg }: { msg: Message }) {
                                   <span>{comp.label}</span>
                                   <svg
                                     className="discord-button-launch"
-                                    aria-hidden="false"
+                                    aria-hidden="true"
                                     width="16"
                                     height="16"
                                     viewBox="0 0 24 24"
@@ -417,7 +417,7 @@ export default function MessagePreview({ msg }: { msg: Message }) {
                   <div className="discord-message-ephemeral flex items-center">
                     <svg
                       className="discord-message-ephemeral-icon"
-                      aria-hidden="false"
+                      aria-hidden="true"
                       width="16"
                       height="16"
                       viewBox="0 0 24 24"

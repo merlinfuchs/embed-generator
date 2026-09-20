@@ -1,7 +1,7 @@
 import { AtSymbolIcon, FaceSmileIcon } from "@heroicons/react/24/outline";
 import { useSendSettingsStore } from "../state/sendSettings";
 import EmojiPicker from "./EmojiPicker";
-import { RefObject, useEffect } from "react";
+import { type RefObject, useEffect } from "react";
 import EditorMentionPicker from "./EditorMentionPicker";
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
   inputRef: RefObject<HTMLInputElement & HTMLTextAreaElement>;
 }
 
-export default function InputControlBar({ value, onChange, inputRef }: Props) {
+export default function InputControlBar({ onChange, inputRef }: Props) {
   const guildId = useSendSettingsStore((state) => state.guildId);
 
   function surroundSelection(
@@ -25,7 +25,7 @@ export default function InputControlBar({ value, onChange, inputRef }: Props) {
     const startPos = element.selectionStart;
     const endPos = element.selectionEnd;
 
-    if (startPos == endPos) {
+    if (startPos === endPos) {
       insertAtCursor(prefix + placeholder + suffix);
       return;
     }

@@ -4,7 +4,7 @@ import {
   TrashIcon,
 } from "@heroicons/react/20/solid";
 import Tooltip from "../components/Tooltip";
-import { SavedMessageWire } from "../api/wire";
+import type { SavedMessageWire } from "../api/wire";
 import { parseISO } from "date-fns";
 import {
   useDeleteSavedMessageMutation,

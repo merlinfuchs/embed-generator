@@ -100,7 +100,7 @@ export default function SettingsCustomBot() {
         guildId,
         req: {
           gateway_status: status,
-          gateway_activity_type: !!customStatus ? 4 : undefined,
+          gateway_activity_type: customStatus ? 4 : undefined,
           gateway_activity_name: customStatus || undefined,
           gateway_activity_state: customStatus || undefined,
         },
@@ -274,6 +274,7 @@ export default function SettingsCustomBot() {
               href={customBot.data.invite_url}
               target="_blank"
               className="bg-blurple hover:bg-blurple-dark px-3 py-2 rounded text-white"
+              rel="noopener"
             >
               Invite Bot
             </a>
@@ -329,6 +330,7 @@ export default function SettingsCustomBot() {
               href={`https://discord.com/developers/applications/${customBot.data.application_id}/information`}
               target="_blank"
               className="bg-blurple hover:bg-blurple-dark px-3 py-2 rounded text-white"
+              rel="noopener"
             >
               Open Developer Portal
             </a>

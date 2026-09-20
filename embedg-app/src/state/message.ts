@@ -1,9 +1,9 @@
 import debounce from "just-debounce-it";
-import { TemporalState, temporal } from "zundo";
+import { type TemporalState, temporal } from "zundo";
 import { create, useStore } from "zustand";
 import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import {
+import type {
   EmbedField,
   Message,
   MessageAction,

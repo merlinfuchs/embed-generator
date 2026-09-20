@@ -20,20 +20,17 @@ function htmlTag(tagName, content, attributes, isClosed = true, state = {}) {
       .join(" ");
 
   let attributeString = "";
-  for (let attr in attributes) {
+  for (const attr in attributes) {
     // Removes falsy attributes
-    if (
-      Object.prototype.hasOwnProperty.call(attributes, attr) &&
-      attributes[attr]
-    )
+    if (Object.hasOwn(attributes, attr) && attributes[attr])
       attributeString += ` ${markdown.sanitizeText(
         attr,
       )}="${markdown.sanitizeText(attributes[attr])}"`;
   }
 
-  let unclosedTag = `<${tagName}${attributeString}>`;
+  const unclosedTag = `<${tagName}${attributeString}>`;
 
-  if (isClosed) return unclosedTag + content + `</${tagName}>`;
+  if (isClosed) return `${unclosedTag + content}</${tagName}>`;
   return unclosedTag;
 }
 markdown.htmlTag = htmlTag;
@@ -42,7 +39,7 @@ const titleRules = {
   newline: markdown.defaultRules.newline,
   escape: markdown.defaultRules.escape,
   em: Object.assign({}, markdown.defaultRules.em, {
-    parse: function (capture, parse, state) {
+    parse: (capture, parse, state) => {
       const parsed = markdown.defaultRules.em.parse(
         capture,
         parse,
@@ -59,19 +56,13 @@ const titleRules = {
   inlineCode: Object.assign({}, markdown.defaultRules.inlineCode, {
     match: (source) =>
       markdown.defaultRules.inlineCode.match.regex.exec(source),
-    html: function (node, output, state) {
-      return htmlTag(
-        "code",
-        markdown.sanitizeText(node.content.trim()),
-        null,
-        state,
-      );
-    },
+    html: (node, _output, state) =>
+      htmlTag("code", markdown.sanitizeText(node.content.trim()), null, state),
   }),
   text: Object.assign({}, markdown.defaultRules.text, {
     match: (source) =>
       /^[\s\S]+?(?=[^0-9A-Za-z\s\u00c0-\uffff-]|\n\n|\n|\w+:\S|$)/.exec(source),
-    html: function (node, output, state) {
+    html: (node, _output, state) => {
       if (state.escapeHTML) return markdown.sanitizeText(node.content);
 
       return node.content;
@@ -80,15 +71,11 @@ const titleRules = {
   emoticon: {
     order: markdown.defaultRules.text.order,
     match: (source) => /^(¯\\_\(ツ\)_\/¯)/.exec(source),
-    parse: function (capture) {
-      return {
-        type: "text",
-        content: capture[1],
-      };
-    },
-    html: function (node, output, state) {
-      return output(node.content, state);
-    },
+    parse: (capture) => ({
+      type: "text",
+      content: capture[1],
+    }),
+    html: (node, output, state) => output(node.content, state),
   },
   br: Object.assign({}, markdown.defaultRules.br, {
     match: markdown.anyScopeRegex(/^\n/),
@@ -96,33 +83,28 @@ const titleRules = {
   spoiler: {
     order: 0,
     match: (source) => /^\|\|([\s\S]+?)\|\|/.exec(source),
-    parse: function (capture, parse, state) {
-      return {
-        content: parse(capture[1], state),
-      };
-    },
-    html: function (node, output, state) {
-      return htmlTag(
+    parse: (capture, parse, state) => ({
+      content: parse(capture[1], state),
+    }),
+    html: (node, output, state) =>
+      htmlTag(
         "span",
         output(node.content, state),
         { class: "discord-spoiler" },
         state,
-      );
-    },
+      ),
   },
 
   discordEmoji: {
     order: markdown.defaultRules.strong.order,
     match: (source) => /^<(a?):(\w+):(\d+)>/.exec(source),
-    parse: function (capture) {
-      return {
-        animated: capture[1] === "a",
-        name: capture[2],
-        id: capture[3],
-      };
-    },
-    html: function (node, output, state) {
-      return htmlTag(
+    parse: (capture) => ({
+      animated: capture[1] === "a",
+      name: capture[2],
+      id: capture[3],
+    }),
+    html: (node, _output, state) =>
+      htmlTag(
         "div",
         htmlTag(
           "img",
@@ -142,38 +124,33 @@ const titleRules = {
           class: "discord-custom-emoji",
         },
         state,
-      );
-    },
+      ),
   },
 
   messageVariable: {
     order: markdown.defaultRules.strong.order,
     match: (source) => /^\{\{([^}]+)\}\}/.exec(source),
-    parse: function (capture, parse, state) {
-      return {
-        content: parse(capture[1], state),
-      };
-    },
-    html: function (node, output, state) {
-      return htmlTag(
+    parse: (capture, parse, state) => ({
+      content: parse(capture[1], state),
+    }),
+    html: (node, output, state) =>
+      htmlTag(
         "span",
         output(node.content, state),
         { class: "message-variable" },
         state,
-      );
-    },
+      ),
   },
 };
 
 const bodyRules = {
   ...titleRules,
   blockQuote: Object.assign({}, markdown.defaultRules.blockQuote, {
-    match: function (source, state, prevSource) {
-      return !/^$|\n *$/.test(prevSource) || state.inQuote
+    match: (source, state, prevSource) =>
+      !/^$|\n *$/.test(prevSource) || state.inQuote
         ? null
-        : /^( *>>> ([\s\S]*))|^( *> [^\n]*(\n *> [^\n]*)*\n?)/.exec(source);
-    },
-    parse: function (capture, parse, state) {
+        : /^( *>>> ([\s\S]*))|^( *> [^\n]*(\n *> [^\n]*)*\n?)/.exec(source),
+    parse: (capture, parse, state) => {
       const all = capture[0];
       const isBlock = Boolean(/^ *>>> ?/.exec(all));
       const removeSyntaxRegex = isBlock ? /^ *>>> ?/ : /^ *> ?/gm;
@@ -194,15 +171,13 @@ const bodyRules = {
     },
   }),
   codeBlock: Object.assign({}, markdown.defaultRules.codeBlock, {
-    match: markdown.inlineRegex(/^```(([a-z0-9-]+?)\n+)?\n*([^]+?)\n*```/i),
-    parse: function (capture, parse, state) {
-      return {
-        lang: (capture[2] || "").trim(),
-        content: capture[3] || "",
-        inQuote: state.inQuote || false,
-      };
-    },
-    html: (node, output, state) => {
+    match: markdown.inlineRegex(/^```(([a-z0-9-]+?)\n+)?\n*([\s\S]+?)\n*```/i),
+    parse: (capture, _parse, state) => ({
+      lang: (capture[2] || "").trim(),
+      content: capture[3] || "",
+      inQuote: state.inQuote || false,
+    }),
+    html: (node, _output, state) => {
       let code;
       if (node.lang && highlight.getLanguage(node.lang))
         code = highlight.highlight(node.content, {
@@ -230,7 +205,7 @@ const bodyRules = {
           "code",
           code ? code.value : markdown.sanitizeText(node.content),
           {
-            class: `hljs${code ? " " + code.language : ""}`,
+            class: `hljs${code ? ` ${code.language}` : ""}`,
             style: "padding: 8px;",
           },
           state,
@@ -294,7 +269,7 @@ const bodyRules = {
     },
   }),
   heading: Object.assign({}, markdown.defaultRules.heading, {
-    match: function (source, state) {
+    match: (source, state) => {
       if (
         state.prevCapture === null ||
         state.prevCapture[state.prevCapture.length - 1] === "\n"
@@ -312,17 +287,13 @@ const bodyRules = {
       state.prevCapture[state.prevCapture.length - 1] === "\n"
         ? /^ *-# +((?!(-#)+)[^\n]+?) *(\n|$)/.exec(source)
         : null,
-    parse: function (capture) {
-      return {
-        content: capture[1].trim(),
-      };
-    },
-    html: function (node) {
-      return htmlTag("small", node.content);
-    },
+    parse: (capture) => ({
+      content: capture[1].trim(),
+    }),
+    html: (node) => htmlTag("small", node.content),
   },
   list: Object.assign({}, markdown.defaultRules.list, {
-    match: function (source, state, prevCapture) {
+    match: (source, state, prevCapture) => {
       state._list = true;
       return markdown.defaultRules.list.match(source, state, prevCapture);
     },
@@ -331,94 +302,77 @@ const bodyRules = {
   discordUser: {
     order: markdown.defaultRules.strong.order,
     match: (source) => /^<@!?([0-9]*)>/.exec(source),
-    parse: function (capture) {
-      return {
-        id: capture[1],
-      };
-    },
-    html: function (node, output, state) {
-      return htmlTag(
+    parse: (capture) => ({
+      id: capture[1],
+    }),
+    html: (node, _output, state) =>
+      htmlTag(
         "span",
         state.discordCallback.user(node),
         { class: "discord-mention discord-user-mention" },
         state,
-      );
-    },
+      ),
   },
   discordChannel: {
     order: markdown.defaultRules.strong.order,
     match: (source) => /^<#?([0-9]*)>/.exec(source),
-    parse: function (capture) {
-      return {
-        id: capture[1],
-      };
-    },
-    html: function (node, output, state) {
-      return htmlTag(
+    parse: (capture) => ({
+      id: capture[1],
+    }),
+    html: (node, _output, state) =>
+      htmlTag(
         "span",
         state.discordCallback.channel(node),
         { class: "discord-mention" },
         state,
-      );
-    },
+      ),
   },
   discordRole: {
     order: markdown.defaultRules.strong.order,
     match: (source) => /^<@&([0-9]*)>/.exec(source),
-    parse: function (capture) {
-      return {
-        id: capture[1],
-      };
-    },
-    html: function (node, output, state) {
-      return htmlTag(
+    parse: (capture) => ({
+      id: capture[1],
+    }),
+    html: (node, _output, state) =>
+      htmlTag(
         "span",
         state.discordCallback.role(node),
         { class: "discord-mention discord-role-mention" },
         state,
-      );
-    },
+      ),
   },
   discordEveryone: {
     order: markdown.defaultRules.strong.order,
     match: (source) => /^@everyone/.exec(source),
-    parse: function () {
-      return {};
-    },
-    html: function (node, output, state) {
-      return htmlTag(
+    parse: () => ({}),
+    html: (node, _output, state) =>
+      htmlTag(
         "span",
         state.discordCallback.everyone(node),
         { class: "discord-mention discord-role-mention" },
         state,
-      );
-    },
+      ),
   },
   discordHere: {
     order: markdown.defaultRules.strong.order,
     match: (source) => /^@here/.exec(source),
-    parse: function () {
-      return {};
-    },
-    html: function (node, output, state) {
-      return htmlTag(
+    parse: () => ({}),
+    html: (node, _output, state) =>
+      htmlTag(
         "span",
         state.discordCallback.here(node),
         { class: "discord-mention discord-role-mention" },
         state,
-      );
-    },
+      ),
   },
   discordTimestamp: {
     order: markdown.defaultRules.strong.order,
     match: (source) => /^<t:(\d+)(?::([a-zA-Z]))?>/.exec(source),
-    parse: function (capture) {
-      return {
-        timestamp: parseInt(capture[1], 10),
-        format: capture[2] || "f",
-      };
-    },
-    html: function (node, output, state) {
+    parse: (capture) => ({
+      timestamp: parseInt(capture[1], 10),
+      format: capture[2] || "f",
+    }),
+    html: (node, _output, state) => {
       const date = new Date(node.timestamp * 1000);
       const options = {
         t: date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -469,9 +423,9 @@ const bodyRules = {
 };
 
 const discordCallbackDefaults = {
-  user: (node) => "@" + markdown.sanitizeText(node.id),
-  channel: (node) => "#" + markdown.sanitizeText(node.id),
-  role: (node) => "@" + markdown.sanitizeText(node.id),
+  user: (node) => `@${markdown.sanitizeText(node.id)}`,
+  channel: (node) => `#${markdown.sanitizeText(node.id)}`,
+  role: (node) => `@${markdown.sanitizeText(node.id)}`,
   everyone: () => "@everyone",
   here: () => "@here",
 };

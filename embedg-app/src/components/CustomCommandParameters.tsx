@@ -1,4 +1,4 @@
-import { CustomCommandParameterWire } from "../api/wire";
+import type { CustomCommandParameterWire } from "../api/wire";
 import { getUniqueId } from "../util";
 import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";

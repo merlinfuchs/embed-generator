@@ -1,6 +1,6 @@
 import { debounce } from "debounce";
 import { lazy, Suspense, useState } from "react";
-import { Message } from "../discord/schema";
+import type { Message } from "../discord/schema";
 import { useCurrentMessageStore } from "../state/message";
 
 const LazyMessagePreview = lazy(() => import("./MessagePreview"));

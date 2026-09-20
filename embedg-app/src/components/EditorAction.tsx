@@ -9,7 +9,7 @@ interface Props {
   actionIndex: number;
 }
 
-const actionTypes = {
+const _actionTypes = {
   1: "Text Response",
   6: "Text DM",
   8: "Text Message Edit",
@@ -21,7 +21,7 @@ const actionTypes = {
   4: "Remove Role",
 } as const;
 
-const actionDescriptions = {
+const _actionDescriptions = {
   1: "Respond with a text message to the channel.",
   2: "Toggle a role for the user.",
   3: "Add a role to the user.",

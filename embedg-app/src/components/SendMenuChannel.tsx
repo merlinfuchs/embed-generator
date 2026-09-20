@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useSendMessageToChannelMutation } from "../api/mutations";
 import { useGuildChannelsQuery, useUserQuery } from "../api/queries";
 import { useCurrentMessageStore } from "../state/message";
@@ -105,7 +104,7 @@ export default function SendMenuChannel() {
     );
   }
 
-  return !!user?.success ? (
+  return user?.success ? (
     <div className="space-y-5">
       <div className="flex">
         <div className="flex-auto">

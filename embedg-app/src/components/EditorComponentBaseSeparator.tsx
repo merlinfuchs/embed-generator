@@ -1,4 +1,4 @@
-import { MessageComponentSeparator } from "../discord/schema";
+import type { MessageComponentSeparator } from "../discord/schema";
 import CheckBox from "./CheckBox";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
 
@@ -52,7 +52,7 @@ export default function EditorComponentBaseSeparator({
               value={data.spacing.toString()}
               onChange={(v) =>
                 onChange({
-                  spacing: parseInt(v.target.value) as any,
+                  spacing: parseInt(v.target.value, 10) as any,
                 })
               }
             >

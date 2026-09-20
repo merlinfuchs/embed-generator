@@ -98,6 +98,7 @@ export default function PremiumSuggest({ alwaysExpanded }: Props) {
                 className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white w-full text-center"
                 href="/premium"
                 target="_blank"
+                rel="noopener"
               >
                 <div>Get Premium</div>
               </a>

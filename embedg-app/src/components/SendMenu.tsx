@@ -45,7 +45,7 @@ export default function SendMenu() {
       </div>
       {mode === "webhook" ? (
         <SendMenuWebhook />
-      ) : !!user ? (
+      ) : user ? (
         <SendMenuChannel />
       ) : (
         <LoginSuggest />

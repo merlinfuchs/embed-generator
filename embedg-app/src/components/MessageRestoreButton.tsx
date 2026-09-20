@@ -5,7 +5,7 @@ import {
   useRestoreMessageFromChannelMutation,
   useRestoreMessageFromWebhookMutation,
 } from "../api/mutations";
-import { MessageRestoreResponseDataWire } from "../api/wire";
+import type { MessageRestoreResponseDataWire } from "../api/wire";
 import { parseMessageWithAction } from "../discord/restoreSchema";
 import { useCurrentMessageStore } from "../state/message";
 import { useCurrentAttachmentsStore } from "../state/attachments";

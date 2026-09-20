@@ -4,7 +4,7 @@ import {
   DocumentDuplicateIcon,
   TrashIcon,
 } from "@heroicons/react/20/solid";
-import { CustomCommandParameterWire } from "../api/wire";
+import type { CustomCommandParameterWire } from "../api/wire";
 import Collapsable from "./Collapsable";
 import { getUniqueId } from "../util";
 import EditorInput from "./EditorInput";
@@ -18,7 +18,7 @@ interface Props {
   setParameters: (p: CustomCommandParameterWire[]) => void;
 }
 
-const parameterTypes: Record<number, string> = {
+const _parameterTypes: Record<number, string> = {
   0: "Text",
 } as const;
 
@@ -68,7 +68,7 @@ export default function CustomCommandParameter({
 
   function setType(newType: string) {
     const newParameters = [...parameters];
-    newParameters[parameterIndex].type = parseInt(newType);
+    newParameters[parameterIndex].type = parseInt(newType, 10);
     setParameters(newParameters);
   }
 

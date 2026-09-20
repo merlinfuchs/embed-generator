@@ -1,7 +1,6 @@
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
-import { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import type { ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
@@ -36,7 +35,7 @@ export default function Modal({
             : "overflow-y-hidden",
           width === "xl"
             ? "max-w-7xl"
-            : width == "lg"
+            : width === "lg"
               ? "max-w-5xl"
               : width === "md"
                 ? "max-w-3xl"

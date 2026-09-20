@@ -1,8 +1,18 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
-  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
   "files": {
-    "includes": ["**", "!package-lock.json", "!src/api/wire.ts"]
+    "includes": [
+      "**",
+      "!package-lock.json",
+      "!src/api/wire.ts",
+      "!src/assets",
+      "!public"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -10,76 +20,89 @@
     "indentWidth": 2
   },
   "css": {
-    "parser": { "tailwindDirectives": true }
+    "parser": {
+      "tailwindDirectives": true
+    }
   },
   "javascript": {
-    "formatter": { "quoteStyle": "double" }
+    "formatter": {
+      "quoteStyle": "double"
+    }
   },
   "assist": {
-    "actions": { "source": { "organizeImports": "off" } }
+    "actions": {
+      "source": {
+        "organizeImports": "off"
+      }
+    }
   },
   "linter": {
     "enabled": true,
     "rules": {
       "preset": "recommended",
       "a11y": {
-        "noAmbiguousAnchorText": "off",
+        "noAmbiguousAnchorText": "error",
         "noStaticElementInteractions": "off",
-        "noSvgWithoutTitle": "off",
-        "useAltText": "off",
-        "useAnchorContent": "off",
+        "noSvgWithoutTitle": "error",
+        "useAltText": "error",
+        "useAnchorContent": "error",
         "useAriaPropsSupportedByRole": "off",
         "useButtonType": "off",
         "useFocusableInteractive": "off",
         "useKeyWithClickEvents": "off",
         "useSemanticElements": "off",
-        "useValidAnchor": "off"
+        "useValidAnchor": "error"
       },
       "complexity": {
-        "noBannedTypes": "off",
+        "noBannedTypes": "error",
         "noImportantStyles": "off",
-        "noExtraBooleanCast": "off",
-        "noUselessFragments": "off",
-        "useArrowFunction": "off",
-        "useLiteralKeys": "off",
+        "noExtraBooleanCast": "error",
+        "noUselessFragments": "error",
+        "useArrowFunction": "error",
+        "useLiteralKeys": "error",
         "useOptionalChain": "off",
-        "useRegexLiterals": "off"
+        "useRegexLiterals": "error"
       },
       "correctness": {
-        "noChildrenProp": "off",
-        "noEmptyCharacterClassInRegex": "off",
-        "noSelfAssign": "off",
-        "noUnusedFunctionParameters": "off",
-        "noUnusedImports": "off",
-        "noUnusedVariables": "off",
+        "noChildrenProp": "error",
+        "noEmptyCharacterClassInRegex": "error",
+        "noSelfAssign": "error",
+        "noUnusedFunctionParameters": "error",
+        "noUnusedImports": "error",
+        "noUnusedVariables": "error",
         "useExhaustiveDependencies": "off",
-        "useHookAtTopLevel": "off",
-        "useJsxKeyInIterable": "off",
-        "useParseIntRadix": "off"
+        "useHookAtTopLevel": "error",
+        "useJsxKeyInIterable": "error",
+        "useParseIntRadix": "error"
       },
       "security": {
-        "noBlankTarget": "off",
+        "noBlankTarget": "error",
         "noDangerouslySetInnerHtml": "off"
       },
       "style": {
         "noDescendingSpecificity": "off",
         "noNonNullAssertion": "off",
-        "useConst": "off",
-        "useImportType": "off",
-        "useNodejsImportProtocol": "off",
-        "useTemplate": "off"
+        "useConst": "error",
+        "useImportType": "error",
+        "useNodejsImportProtocol": "error",
+        "useTemplate": "error"
       },
       "suspicious": {
-        "noArrayIndexKey": "off",
-        "noAssignInExpressions": "off",
-        "noDoubleEquals": "off",
+        "noArrayIndexKey": "error",
+        "noAssignInExpressions": "error",
+        "noDoubleEquals": "error",
         "noDuplicateProperties": "off",
-        "noEmptyInterface": "off",
+        "noEmptyInterface": "error",
         "noExplicitAny": "off",
-        "noGlobalIsNan": "off",
-        "noPrototypeBuiltins": "off",
-        "noTsIgnore": "off",
-        "noUnknownAtRules": "off"
+        "noGlobalIsNan": "error",
+        "noPrototypeBuiltins": "error",
+        "noTsIgnore": "error",
+        "noUnknownAtRules": {
+          "level": "error",
+          "options": {
+            "ignore": ["tailwind"]
+          }
+        }
       }
     }
   }

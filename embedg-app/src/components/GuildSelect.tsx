@@ -77,6 +77,7 @@ export default function GuildSelect({ guildId, onChange }: Props) {
           ) : guild ? (
             <div className="flex items-center space-x-2 cursor-pointer w-full">
               <img
+                alt=""
                 src={guildIconUrl(guild)}
                 className="guild icon url w-7 h-7 rounded-full flex-none"
               />

@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 interface Props {
   text: string;

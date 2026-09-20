@@ -1,7 +1,6 @@
 import { useCurrentMessageStore } from "../state/message";
 import EditorEmbed from "./EditorEmbed";
 import { shallow } from "zustand/shallow";
-import { useCollapsedStatesStore } from "../state/collapsed";
 import { getUniqueId } from "../util";
 import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";

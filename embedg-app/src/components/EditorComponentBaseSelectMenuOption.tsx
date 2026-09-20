@@ -5,12 +5,10 @@ import {
   TrashIcon,
 } from "@heroicons/react/20/solid";
 import Collapsable from "./Collapsable";
-import { shallow } from "zustand/shallow";
-import { useCurrentMessageStore } from "../state/message";
 import EditorInput from "./EditorInput";
 import EditorComponentActions from "./EditorActionSet";
 import EditorComponentEmojiSelect from "./EditorComponentEmojiSelect";
-import { MessageComponentSelectMenuOption } from "../discord/schema";
+import type { MessageComponentSelectMenuOption } from "../discord/schema";
 
 interface Props {
   validationPathPrefix: string;

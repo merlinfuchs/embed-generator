@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "react-query";
-import {
+import type {
   AssistantGenerateMessageRequestWire,
   AssistantGenerateMessageResponseWire,
   ConsumeEntitlementRequestWire,

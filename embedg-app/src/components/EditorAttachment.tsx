@@ -10,7 +10,7 @@ interface Props {
   id: number;
 }
 
-export default function EditorAttachment({ index, id }: Props) {
+export default function EditorAttachment({ index }: Props) {
   const [name, dataUrl] = useCurrentAttachmentsStore(
     (state) => [
       state.attachments[index].name,

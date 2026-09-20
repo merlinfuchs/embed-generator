@@ -1,5 +1,5 @@
 import Picker from "@emoji-mart/react";
-import { ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import ClickOutsideHandler from "./ClickOutsideHandler";
 import { useGuildEmojisQuery } from "../api/queries";
 import clsx from "clsx";

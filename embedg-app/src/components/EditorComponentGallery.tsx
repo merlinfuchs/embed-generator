@@ -1,7 +1,7 @@
 import { shallow } from "zustand/shallow";
 import { useCurrentMessageStore } from "../state/message";
 import EditorComponentBaseMediaGallery from "./EditorComponentBaseMediaGallery";
-import { MessageComponentMediaGalleryItem } from "../discord/schema";
+import type { MessageComponentMediaGalleryItem } from "../discord/schema";
 
 interface Props {
   rootIndex: number;

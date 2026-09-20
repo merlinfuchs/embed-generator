@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import { MessageAction, MessageActionSet } from "../discord/schema";
+import type { MessageAction, MessageActionSet } from "../discord/schema";
 import { getUniqueId } from "../util";
 
 export interface ActionsStore {
@@ -33,7 +33,7 @@ export const createActionStore = (key: string) =>
   create<ActionsStore>()(
     immer(
       persist(
-        (set, get) => ({
+        (set, _get) => ({
           actions: {},
 
           clear: () => set({ actions: {} }),

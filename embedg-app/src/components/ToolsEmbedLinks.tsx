@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import MessagePreview from "./MessagePreview";
 import EditorInput from "./EditorInput";
-import { Message } from "../discord/schema";
+import type { Message } from "../discord/schema";
 import { getUniqueId } from "../util";
 import ColorPicker from "./ColorPicker";
 import { useEmbedLinkCreateMutation } from "../api/mutations";
@@ -36,13 +36,13 @@ export default function ToolsEmbedLinks() {
           title: title || undefined,
           description: description || undefined,
           color: color,
-          author: !!authorName
+          author: authorName
             ? {
                 name: authorName,
                 url: authorUrl || undefined,
               }
             : undefined,
-          provider: !!providerName
+          provider: providerName
             ? {
                 name: providerName,
                 url: providerUrl || undefined,
@@ -50,13 +50,13 @@ export default function ToolsEmbedLinks() {
             : undefined,
           fields: [],
           thumbnail:
-            !!imageUrl && !twitterCard
+            imageUrl && !twitterCard
               ? {
                   url: imageUrl,
                 }
               : undefined,
           image:
-            !!imageUrl && twitterCard
+            imageUrl && twitterCard
               ? {
                   url: imageUrl,
                 }

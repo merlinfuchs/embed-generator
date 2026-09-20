@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import {
+import type {
   MessageComponentAccessory,
   MessageComponentButton,
   MessageComponentContainer,
@@ -9,7 +9,6 @@ import {
   MessageComponentSelectMenuOption,
   MessageComponentTextDisplay,
 } from "../discord/schema";
-import { getUniqueId } from "../util";
 import { AutoAnimate } from "../util/autoAnimate";
 import CheckBox from "./CheckBox";
 import EditorComponentAddDropdown from "./EditorComponentAddDropdown";
@@ -20,7 +19,6 @@ import EditorComponentBaseSection from "./EditorComponentBaseSection";
 import EditorComponentBaseSeparator from "./EditorComponentBaseSeparator";
 import EditorComponentBaseTextDisplay from "./EditorComponentBaseTextDisplay";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
-import EditorInput from "./EditorInput";
 import { colorIntToHex } from "../util/discord";
 import ColorPicker from "./ColorPicker";
 import ValidationError from "./ValidationError";

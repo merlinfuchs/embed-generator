@@ -5,7 +5,7 @@ export function userAvatarUrl(
   if (user.avatar) {
     return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=${size}`;
   } else {
-    let defaultAvatar: number | BigInt = parseInt(user.discriminator) % 5;
+    let defaultAvatar: number | bigint = parseInt(user.discriminator, 10) % 5;
     if (!user.discriminator || user.discriminator === "0") {
       defaultAvatar = (BigInt(user.id) >> 22n) % 6n;
     }

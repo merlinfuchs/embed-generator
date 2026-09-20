@@ -1,5 +1,5 @@
 import type { DiscordSDK } from "@discord/embedded-app-sdk";
-import { AuthExchangeResponseWire } from "../api/wire";
+import type { AuthExchangeResponseWire } from "../api/wire";
 import queryClient, { setLocalSessionToken } from "../api/client";
 import { useActivityStateStore } from "../state/activity";
 

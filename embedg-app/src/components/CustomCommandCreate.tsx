@@ -9,7 +9,7 @@ import { useCommandActionsStore } from "../state/actions";
 import Tooltip from "./Tooltip";
 import { ArrowUpTrayIcon, XMarkIcon } from "@heroicons/react/20/solid";
 import CustomCommandParameters from "./CustomCommandParameters";
-import { CustomCommandParameterWire } from "../api/wire";
+import type { CustomCommandParameterWire } from "../api/wire";
 
 export default function CustomCommandCreate({
   setCreate,
@@ -31,9 +31,9 @@ export default function CustomCommandCreate({
   const createMutation = useCustomCommandCreateMutation();
 
   function create() {
-    if (name.length == 0 || description.length == 0 || !guildId) return;
+    if (name.length === 0 || description.length === 0 || !guildId) return;
 
-    const actions = useCommandActionsStore.getState().actions["new"];
+    const actions = useCommandActionsStore.getState().actions.new;
 
     createMutation.mutate(
       {

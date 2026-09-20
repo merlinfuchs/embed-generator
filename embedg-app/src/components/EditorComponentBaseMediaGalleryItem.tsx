@@ -1,8 +1,6 @@
-import { MessageComponentMediaGalleryItem } from "../discord/schema";
+import type { MessageComponentMediaGalleryItem } from "../discord/schema";
 import CheckBox from "./CheckBox";
-import EditorActionSet from "./EditorActionSet";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
-import EditorComponentEmojiSelect from "./EditorComponentEmojiSelect";
 import EditorInput from "./EditorInput";
 
 interface Props {

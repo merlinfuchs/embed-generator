@@ -1,5 +1,4 @@
 import {
-  ClockIcon,
   CodeBracketSquareIcon,
   PhotoIcon,
   SwatchIcon,
