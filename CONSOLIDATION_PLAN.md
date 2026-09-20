@@ -167,7 +167,7 @@ Uses `oauth2.Config.TokenSource(ctx, &oauth2.Token{...}).Token()`. On success wi
 func (m *AccessManager) GetMemberForUser(ctx context.Context, sess *session.Session, guildID common.ID) (*discord.Member, error)
 ```
 
-Endpoint: `GET https://discord.com/api/v10/users/@me/guilds/{guildID}/member` with `Authorization: Bearer <token>`. Use disgo's `rest.NewClient` with a bearer token if it supports it, otherwise plain `net/http`. Decode into `discord.Member`. 404 maps to `store.ErrNotFound`. Cache: `ttlcache` keyed by `tokenHash + ":" + guildID.String()`, TTL 60s, plus the singleflight `getOrSet` helper copied from `embedg/rest/rest.go` (generalize it into `common/singleflight.go` so both callers use it).
+Endpoint: `GET https://discord.com/api/v10/users/@me/guilds/{guildID}/member` with `Authorization: Bearer <token>`. Use disgo's `rest.NewClient` with a bearer token if it supports it, otherwise plain `net/http`. Decode into `discord.Member`. 404 maps to `store.ErrNotFound`. Cache: `ttlcache` keyed by `tokenHash + ":" + guildID.String()`, TTL 60s, wrapped in the `getOrSet` helper from `embedg/rest/rest.go` (generalize it into `common/singleflight.go` on top of `golang.org/x/sync/singleflight`, already an indirect dependency, so both callers use it).
 
 `AccessManager` needs the `*session.SessionManager` to call `UserToken`. Wire it in `entry/server/server.go`; note `sessionManager` is currently created after `accessManager`, reorder.
 
@@ -186,9 +186,11 @@ type UserGuild struct {
 func (m *AccessManager) GetGuildsForUser(ctx context.Context, sess *session.Session) ([]UserGuild, error)
 ```
 
+`UserGuild` is `discord.OAuth2Guild` from disgo, which already carries these fields; no new struct needed. Add this in B5 next to the caller rather than in B3, where nothing would use it.
+
 This replaces `session.GuildIDs`, which is captured at login and never refreshed (a guild joined after login doesn't show until logout). Keep the column for now; stop reading it in B5.
 
-**Call sites.** `GetGuildAccessForUser(userID, guildID)` and `GetChannelAccessForUser(userID, channelID)` change signature to take `sess *session.Session` instead of `userID`. Callers are in `api/handlers/guilds/handler.go`, `api/handlers/send_message/handler.go`, `api/handlers/custom_bots/handler.go`, `api/handlers/scheduled_messages/handler.go`, `api/handlers/saved_messages/handler.go`, and `actions/parser/permissions.go` (see B4 for that one). Every handler already has `session := c.Locals("session").(*session.Session)`.
+**Call sites.** `GetGuildAccessForUser(userID, guildID)` and `GetChannelAccessForUser(userID, channelID)` get session-based counterparts, `GetGuildAccessForSession(ctx, sess, guildID)` and `GetChannelAccessForSession(ctx, sess, channelID)`. Most handlers go through `CheckGuildAccessForRequest`/`CheckChannelAccessForRequest` in `access/check.go`, which already pull the session off the fiber context, so switching those two covers nearly every caller. `GetGuildAccessForUser` ends up with no callers and gets deleted; `GetChannelAccessForUser` stays only for the action parser until B4. Callers are in `api/handlers/guilds/handler.go`, `api/handlers/send_message/handler.go`, `api/handlers/custom_bots/handler.go`, `api/handlers/scheduled_messages/handler.go`, `api/handlers/saved_messages/handler.go`, and `actions/parser/permissions.go` (see B4 for that one). Every handler already has `session := c.Locals("session").(*session.Session)`.
 
 Inside, replace `m.GetGuildMember(guildID, userID)` for the user with `m.GetMemberForUser(ctx, sess, guildID)`. Keep `GetGuildMember` for the bot's own member and for the scheduled message sender (B4), which has no session.
 

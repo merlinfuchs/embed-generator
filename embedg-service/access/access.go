@@ -2,32 +2,52 @@ package access
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	discache "github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
+	"github.com/jellydator/ttlcache/v3"
 	"github.com/merlinfuchs/discordgo"
+	"github.com/merlinfuchs/embed-generator/embedg-service/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
 	"github.com/merlinfuchs/stateway/stateway-lib/cache"
+	"golang.org/x/sync/singleflight"
 )
 
 const RequiredPermissions = discord.PermissionManageWebhooks
 
 type AccessManager struct {
-	cache      cache.Cache
-	caches     discache.Caches
-	rest       rest.Rest
-	appContext store.AppContext
+	cache          cache.Cache
+	caches         discache.Caches
+	rest           rest.Rest
+	appContext     store.AppContext
+	sessionManager *session.SessionManager
+
+	singleFlight    singleflight.Group
+	userMemberCache *ttlcache.Cache[string, *discord.Member]
 }
 
-func New(cache cache.Cache, caches discache.Caches, rest rest.Rest, appContext store.AppContext) *AccessManager {
+func New(
+	cache cache.Cache,
+	caches discache.Caches,
+	rest rest.Rest,
+	appContext store.AppContext,
+	sessionManager *session.SessionManager,
+) *AccessManager {
+	userMemberCache := ttlcache.New(ttlcache.WithTTL[string, *discord.Member](time.Minute))
+	go userMemberCache.Start()
+
 	return &AccessManager{
-		cache:      cache,
-		caches:     caches,
-		rest:       rest,
-		appContext: appContext,
+		cache:           cache,
+		caches:          caches,
+		rest:            rest,
+		appContext:      appContext,
+		sessionManager:  sessionManager,
+		userMemberCache: userMemberCache,
 	}
 }
 
@@ -66,7 +86,8 @@ func (m *AccessManager) CheckGuildsKnown(guildID []common.ID) ([]bool, error) {
 	return known, nil
 }
 
-func (m *AccessManager) GetGuildAccessForUser(userID common.ID, guildID common.ID) (GuildAccess, *discord.Guild, error) {
+// GetGuildAccessForSession resolves the user's member with their own OAuth token.
+func (m *AccessManager) GetGuildAccessForSession(ctx context.Context, sess *session.Session, guildID common.ID) (GuildAccess, *discord.Guild, error) {
 	res := GuildAccess{}
 
 	botMember, err := m.GetGuildMember(guildID, m.appContext.ApplicationID())
@@ -101,14 +122,9 @@ func (m *AccessManager) GetGuildAccessForUser(userID common.ID, guildID common.I
 		return res, &guild.Guild.Data, nil
 	}
 
-	member, err := m.GetGuildMember(guildID, userID)
+	member, err := m.GetMemberForUser(ctx, sess, guildID)
 	if err != nil {
-		if common.IsDiscordRestErrorCode(
-			err,
-			discordgo.ErrCodeMissingAccess,
-			discordgo.ErrCodeUnknownGuild,
-			discordgo.ErrCodeUnknownMember,
-		) {
+		if errors.Is(err, store.ErrNotFound) {
 			// The user is not in the server, so we can't compute the permissions
 			return res, nil, nil
 		}
@@ -118,7 +134,7 @@ func (m *AccessManager) GetGuildAccessForUser(userID common.ID, guildID common.I
 	guild, err = m.cache.GetGuildWithPermissions(
 		context.Background(),
 		guildID,
-		userID,
+		sess.UserID,
 		member.RoleIDs,
 		RequiredPermissions,
 		nil...,
@@ -131,6 +147,28 @@ func (m *AccessManager) GetGuildAccessForUser(userID common.ID, guildID common.I
 	return res, &guild.Guild.Data, nil
 }
 
+// GetChannelAccessForSession resolves the user's member with their own OAuth token.
+func (m *AccessManager) GetChannelAccessForSession(ctx context.Context, sess *session.Session, channelID common.ID) (ChannelAccess, error) {
+	res := ChannelAccess{}
+
+	userPermissions, err := m.computePermissionsForChannel(channelID, func(guildID common.ID) (*discord.Member, error) {
+		return m.GetMemberForUser(ctx, sess, guildID)
+	})
+	if err != nil && !errors.Is(err, store.ErrNotFound) {
+		return res, err
+	}
+	res.UserPermissions = userPermissions
+
+	err = m.SetChannelAccessBotPermissions(&res, channelID)
+	if err != nil {
+		return res, err
+	}
+
+	return res, nil
+}
+
+// GetChannelAccessForUser resolves the user's member with the bot token. Only for callers without a
+// session; B4 moves the last of those (the action parser) off it.
 func (m *AccessManager) GetChannelAccessForUser(userID common.ID, channelID common.ID) (ChannelAccess, error) {
 	res := ChannelAccess{}
 
@@ -175,15 +213,28 @@ func (m *AccessManager) SetChannelAccessBotPermissions(res *ChannelAccess, chann
 }
 
 func (m *AccessManager) ComputeUserPermissionsForChannel(userID common.ID, channelID common.ID) (discord.Permissions, error) {
+	permissions, err := m.computePermissionsForChannel(channelID, func(guildID common.ID) (*discord.Member, error) {
+		return m.GetGuildMember(guildID, userID)
+	})
+	if err != nil {
+		// TODO: Handle this error
+		return 0, nil
+	}
+
+	return permissions, nil
+}
+
+// computePermissionsForChannel resolves the channel's guild and lets the caller decide how the
+// member is fetched, so the bot token and user token paths share everything else.
+func (m *AccessManager) computePermissionsForChannel(channelID common.ID, getMember func(guildID common.ID) (*discord.Member, error)) (discord.Permissions, error) {
 	channel, ok := m.caches.Channel(channelID)
 	if !ok || channel.GuildID() == 0 {
 		return 0, nil
 	}
 
-	member, err := m.GetGuildMember(channel.GuildID(), userID)
+	member, err := getMember(channel.GuildID())
 	if err != nil {
-		// TODO: Handle this error
-		return 0, nil
+		return 0, err
 	}
 
 	return m.caches.MemberPermissionsInChannel(channel, *member), nil
