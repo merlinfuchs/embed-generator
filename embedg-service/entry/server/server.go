@@ -67,6 +67,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		pg,
 		actionParser,
 		premiumManager,
+		guildState,
 	)
 	customBotManager := custom_bot.NewCustomBotManager(pg, embedg.Rest(), embedg.Gateway())
 	go customBotManager.Run(ctx)
@@ -76,7 +77,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 
 	handler := NewEventHandler(EventHandlerConfig{
 		DiscordLink: cfg.Links.Discord,
-	}, embedg, embedg.Rest(), embedg.Caches(), pg, actionHandler)
+	}, embedg, embedg.Rest(), pg, actionHandler)
 	embedg.Client().AddEventListeners(handler)
 
 	guildTracker := guild.NewGuildTracker(pg)
@@ -86,7 +87,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 	commandHandler := command.NewCommandHandler(command.CommandHandlerConfig{
 		DiscordLink:  cfg.Links.Discord,
 		AppPublicURL: cfg.App.PublicURL,
-	}, embedg.Caches(), embedg.Rest(), embedg, pg, actionParser, webhookManager)
+	}, guildState, embedg.Rest(), embedg, pg, actionParser, webhookManager)
 	embedg.Client().AddEventListeners(commandHandler)
 
 	scheduledMessageManager := scheduled_messages.NewScheduledMessageManager(
@@ -95,7 +96,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		pg,
 		actionParser,
 		webhookManager,
-		embedg.Caches(),
+		guildState,
 		embedg.Rest(),
 		premiumManager,
 	)
@@ -131,7 +132,6 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		ActionParser:          actionParser,
 		ActionHandler:         actionHandler,
 		Gateway:               embedg.Gateway(),
-		Caches:                embedg.Caches(),
 		Rest:                  embedg.Rest(),
 		OpenAIClient:          openai.NewClient(cfg.OpenAI.APIKey),
 		FileStore:             blob,

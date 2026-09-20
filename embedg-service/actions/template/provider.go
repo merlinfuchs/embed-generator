@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
 	"github.com/merlinfuchs/embed-generator/embedg-service/model"
@@ -22,13 +21,13 @@ type ContextProvider interface {
 }
 
 type InteractionProvider struct {
-	caches      cache.Caches
+	src         Source
 	interaction discord.Interaction
 }
 
-func NewInteractionProvider(caches cache.Caches, interaction discord.Interaction) *InteractionProvider {
+func NewInteractionProvider(src Source, interaction discord.Interaction) *InteractionProvider {
 	return &InteractionProvider{
-		caches:      caches,
+		src:         src,
 		interaction: interaction,
 	}
 }
@@ -36,7 +35,7 @@ func NewInteractionProvider(caches cache.Caches, interaction discord.Interaction
 func (p *InteractionProvider) ProvideFuncs(funcs map[string]interface{}) {}
 
 func (p *InteractionProvider) ProvideData(data map[string]interface{}) {
-	interactionData := NewInteractionData(p.caches, p.interaction)
+	interactionData := NewInteractionData(p.src, p.interaction)
 	data["Interaction"] = interactionData
 	data["User"] = interactionData.User()
 	data["Member"] = interactionData.Member()
@@ -52,22 +51,24 @@ func (p *InteractionProvider) ProvideData(data map[string]interface{}) {
 		return
 	}
 
-	guildData := NewGuildData(p.caches, *guildID, nil)
+	guildData := NewGuildData(p.src, *guildID, nil)
 	data["Guild"] = guildData
 	data["Server"] = guildData
 
-	data["Channel"] = NewChannelData(p.caches, p.interaction.Channel().ID(), nil)
+	// The interaction payload already carries the channel, so the common case costs no fetch.
+	interactionChannel, _ := p.interaction.Channel().MessageChannel.(discord.GuildChannel)
+	data["Channel"] = NewChannelData(p.src, p.interaction.Channel().ID(), interactionChannel)
 }
 
 type GuildProvider struct {
-	caches  cache.Caches
+	src     Source
 	guildID common.ID
 	guild   *discord.Guild
 }
 
-func NewGuildProvider(caches cache.Caches, guildID common.ID, guild *discord.Guild) *GuildProvider {
+func NewGuildProvider(src Source, guildID common.ID, guild *discord.Guild) *GuildProvider {
 	return &GuildProvider{
-		caches:  caches,
+		src:     src,
 		guildID: guildID,
 		guild:   guild,
 	}
@@ -76,20 +77,20 @@ func NewGuildProvider(caches cache.Caches, guildID common.ID, guild *discord.Gui
 func (p *GuildProvider) ProvideFuncs(funcs map[string]interface{}) {}
 
 func (p *GuildProvider) ProvideData(data map[string]interface{}) {
-	guildData := NewGuildData(p.caches, p.guildID, p.guild)
+	guildData := NewGuildData(p.src, p.guildID, p.guild)
 	data["Guild"] = guildData
 	data["Server"] = guildData
 }
 
 type ChannelProvider struct {
-	caches    cache.Caches
+	src       Source
 	channelID common.ID
 	channel   discord.GuildChannel
 }
 
-func NewChannelProvider(caches cache.Caches, channelID common.ID, channel discord.GuildChannel) *ChannelProvider {
+func NewChannelProvider(src Source, channelID common.ID, channel discord.GuildChannel) *ChannelProvider {
 	return &ChannelProvider{
-		caches:    caches,
+		src:       src,
 		channelID: channelID,
 		channel:   channel,
 	}
@@ -98,7 +99,7 @@ func NewChannelProvider(caches cache.Caches, channelID common.ID, channel discor
 func (p *ChannelProvider) ProvideFuncs(funcs map[string]interface{}) {}
 
 func (p *ChannelProvider) ProvideData(data map[string]interface{}) {
-	data["Channel"] = NewChannelData(p.caches, p.channelID, p.channel)
+	data["Channel"] = NewChannelData(p.src, p.channelID, p.channel)
 }
 
 type KVProvider struct {

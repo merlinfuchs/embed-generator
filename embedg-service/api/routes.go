@@ -76,7 +76,7 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 
 	sendMessageHandler := send_message.New(
 		env.Rest,
-		env.Caches,
+		env.GuildState,
 		env.KVEntryStore,
 		env.WebhookManager,
 		env.AccessManager,
@@ -100,7 +100,7 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 		env.CustomBotManager,
 		env.CustomCommandStore,
 		env.Rest,
-		env.Caches,
+		env.GuildState,
 		env.AccessManager,
 		env.PremiumManager,
 		env.ActionParser,

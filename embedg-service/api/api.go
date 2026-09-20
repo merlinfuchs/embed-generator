@@ -8,7 +8,6 @@ import (
 
 	"os"
 
-	"github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -107,7 +106,6 @@ type Env struct {
 	ActionParser          *parser.ActionParser
 	ActionHandler         *handler.ActionHandler
 	Gateway               gateway.Gateway
-	Caches                cache.Caches
 	Rest                  rest.Rest
 	OpenAIClient          *openai.Client
 	FileStore             store.FileStore

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/disgoorg/disgo/bot"
-	"github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/rest"
@@ -18,6 +17,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions/template"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
+	"github.com/merlinfuchs/embed-generator/embedg-service/guildstate"
 	"github.com/merlinfuchs/embed-generator/embedg-service/manager/webhook"
 	"github.com/merlinfuchs/embed-generator/embedg-service/model"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
@@ -33,7 +33,7 @@ type ScheduledMessageManager struct {
 	kvEntryStore          store.KVEntryStore
 	actionParser          *parser.ActionParser
 	webhookManager        *webhook.WebhookManager
-	cache                 cache.Caches
+	guildState            *guildstate.Provider
 	rest                  rest.Rest
 	planStore             store.PlanStore
 }
@@ -44,7 +44,7 @@ func NewScheduledMessageManager(
 	kvEntryStore store.KVEntryStore,
 	actionParser *parser.ActionParser,
 	webhookManager *webhook.WebhookManager,
-	cache cache.Caches,
+	guildState *guildstate.Provider,
 	rest rest.Rest,
 	planStore store.PlanStore,
 ) *ScheduledMessageManager {
@@ -54,7 +54,7 @@ func NewScheduledMessageManager(
 		kvEntryStore:          kvEntryStore,
 		actionParser:          actionParser,
 		webhookManager:        webhookManager,
-		cache:                 cache,
+		guildState:            guildState,
 		rest:                  rest,
 		planStore:             planStore,
 	}
@@ -179,10 +179,11 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		return fmt.Errorf("could not get plan features: %w", err)
 	}
 
+	templateSource := template.NewSource(ctx, m.guildState)
 	templates := template.NewContext(
 		"SCHEDULED_MESSAGE", features.MaxTemplateOps,
-		template.NewGuildProvider(m.cache, scheduledMessage.GuildID, nil),
-		template.NewChannelProvider(m.cache, scheduledMessage.ChannelID, nil),
+		template.NewGuildProvider(templateSource, scheduledMessage.GuildID, nil),
+		template.NewChannelProvider(templateSource, scheduledMessage.ChannelID, nil),
 		template.NewKVProvider(scheduledMessage.GuildID, m.kvEntryStore, features.MaxKVKeys),
 	)
 
