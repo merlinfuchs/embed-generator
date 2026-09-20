@@ -9,6 +9,7 @@ import {
   useDocumentStoreApi,
   useDocument,
 } from "../state/document";
+import { useEditorMode } from "../state/editorMode";
 import { nodeScope, slotScope } from "../state/validationError";
 import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";
@@ -34,6 +35,8 @@ export default function EditorComponentSection({
   const actions = useNodeActions(id);
   const { insert, removeChildren } = useDocumentStoreApi().getState();
 
+  const linkOnly = useEditorMode() === "componentEmbed";
+
   const accessoryType = useDocument(
     (state) => state.nodes[data?.accessoryId ?? ""]?.type,
   );
@@ -50,7 +53,7 @@ export default function EditorComponentSection({
       insert(id, "accessory", "end", {
         type: "button",
         label: "",
-        style: 1,
+        style: linkOnly ? 5 : 1,
       });
     }
   }

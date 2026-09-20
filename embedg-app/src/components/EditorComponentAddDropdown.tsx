@@ -7,6 +7,7 @@ import {
   useDocumentStoreApi,
 } from "../state/document";
 import { useState } from "react";
+import { COMPONENT_EMBED_TYPES, useEditorMode } from "../state/editorMode";
 import ClickOutsideHandler from "./ClickOutsideHandler";
 import { usePremiumGuildFeatures } from "../util/premium";
 import { useNavigate } from "react-router-dom";
@@ -36,9 +37,15 @@ export default function EditorComponentAddDropdown({
   const navigate = useNavigate();
 
   const componentsV2Enabled = useComponentsV2Enabled();
+  const editorMode = useEditorMode();
 
   const features = usePremiumGuildFeatures();
-  const allowedComponentTypes = features?.component_types ?? [];
+  // Component embeds live on a link instead of in a message, so they aren't
+  // part of what a plan unlocks.
+  const allowedComponentTypes =
+    editorMode === "componentEmbed"
+      ? COMPONENT_EMBED_TYPES
+      : (features?.component_types ?? []);
 
   function addSelectMenuRow() {
     const rowId = insert(parentId, "components", "end", { type: "actionRow" });
@@ -108,6 +115,11 @@ export default function EditorComponentAddDropdown({
   ].filter((c) => {
     if (c.v2Only && !componentsV2Enabled) return false;
     if (c.rootOnly && context !== "root") return false;
+    if (
+      editorMode === "componentEmbed" &&
+      !COMPONENT_EMBED_TYPES.includes(c.type)
+    )
+      return false;
 
     return true;
   });
