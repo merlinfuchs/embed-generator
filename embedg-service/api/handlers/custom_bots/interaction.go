@@ -66,16 +66,15 @@ func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 
 	if handle {
 		respCh := make(chan *discord.InteractionResponse)
+		client := rest.NewRestClient(customBot.Token)
 
 		ri := &handler.RestInteraction{
 			Inner:           interaction,
-			Rest:            h.rest, // TODO?: Use custom bot session
+			Rest:            client,
 			InitialResponse: respCh,
 		}
 
 		go func() {
-			client := rest.NewRestClient(customBot.Token)
-
 			err := h.actionHandler.HandleActionInteraction(client, ri)
 			if err != nil {
 				slog.Error("Failed to handle action interaction", slog.Any("error", err))

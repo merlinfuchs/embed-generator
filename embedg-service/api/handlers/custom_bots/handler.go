@@ -23,8 +23,6 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-service/manager/custom_bot"
 	"github.com/merlinfuchs/embed-generator/embedg-service/model"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
-	"github.com/merlinfuchs/stateway/stateway-lib/gateway"
-	"github.com/merlinfuchs/stateway/stateway-lib/service"
 	"gopkg.in/guregu/null.v4"
 )
 
@@ -42,7 +40,6 @@ type CustomBotsHandler struct {
 	planStore          store.PlanStore
 	actionParser       *parser.ActionParser
 	actionHandler      *handler.ActionHandler
-	gateway            gateway.Gateway
 }
 
 func New(
@@ -55,7 +52,6 @@ func New(
 	planStore store.PlanStore,
 	actionParser *parser.ActionParser,
 	actionHandler *handler.ActionHandler,
-	gateway gateway.Gateway,
 ) *CustomBotsHandler {
 	return &CustomBotsHandler{
 		config:             config,
@@ -67,7 +63,6 @@ func New(
 		planStore:          planStore,
 		actionParser:       actionParser,
 		actionHandler:      actionHandler,
-		gateway:            gateway,
 	}
 }
 
@@ -152,10 +147,7 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 		return fmt.Errorf("failed to upsert custom bot: %w", err)
 	}
 
-	_, err = h.gateway.UpsertApp(c.Context(), custom_bot.AppFromCustomBot(customBot))
-	if err != nil {
-		return fmt.Errorf("failed to upsert custom bot app in gateway: %w", err)
-	}
+	h.customBotManager.RequestSync()
 
 	return c.JSON(wire.CustomBotConfigureResponseWire{
 		Success: true,
@@ -202,7 +194,7 @@ func (h *CustomBotsHandler) HandleUpdateCustomBotPresence(c *fiber.Ctx, req wire
 		return handlers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
 	}
 
-	customBot, err := h.customBotManager.UpdateCustomBotPresence(c.Context(), store.UpdateCustomBotPresenceParams{
+	_, err = h.customBotManager.UpdateCustomBotPresence(c.Context(), store.UpdateCustomBotPresenceParams{
 		GuildID:              guildID,
 		GatewayStatus:        req.GatewayStatus,
 		GatewayActivityType:  null.IntFrom(int64(req.GatewayActivityType)),
@@ -217,10 +209,7 @@ func (h *CustomBotsHandler) HandleUpdateCustomBotPresence(c *fiber.Ctx, req wire
 		return fmt.Errorf("failed to update custom bot presence: %w", err)
 	}
 
-	_, err = h.gateway.UpsertApp(c.Context(), custom_bot.AppFromCustomBot(customBot))
-	if err != nil {
-		return fmt.Errorf("failed to upsert custom bot app in gateway: %w", err)
-	}
+	h.customBotManager.RequestSync()
 
 	return c.JSON(wire.CustomBotUpdatePresenceResponseWire{
 		Success: true,
@@ -238,7 +227,7 @@ func (h *CustomBotsHandler) HandleDisableCustomBot(c *fiber.Ctx) error {
 		return err
 	}
 
-	customBot, err := h.customBotManager.DeleteCustomBot(c.Context(), guildID)
+	_, err = h.customBotManager.DeleteCustomBot(c.Context(), guildID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			return handlers.NotFound("not_configured", "There is no custom bot configured right now")
@@ -246,10 +235,7 @@ func (h *CustomBotsHandler) HandleDisableCustomBot(c *fiber.Ctx) error {
 		return fmt.Errorf("failed to delete custom bot: %w", err)
 	}
 
-	err = h.gateway.DeleteApp(c.Context(), customBot.ApplicationID)
-	if err != nil {
-		return fmt.Errorf("failed to delete custom bot app in gateway: %w", err)
-	}
+	h.customBotManager.RequestSync()
 
 	return c.JSON(wire.CustomBotDisableResponseWire{
 		Success: true,
@@ -323,12 +309,10 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 		}
 	}
 
-	app, err := h.gateway.GetApp(c.Context(), customBot.ApplicationID, false)
-	if err != nil {
-		if service.IsErrorCode(err, service.ErrorCodeNotFound) {
-			return fmt.Errorf("custom bot app not found in gateway: %w", err)
-		}
-		return fmt.Errorf("failed to get custom bot app in gateway: %w", err)
+	connected := h.customBotManager.Status(customBot.ApplicationID).IsConnected()
+	disabledCode := ""
+	if !connected {
+		disabledCode = "gateway_disconnected"
 	}
 
 	return c.JSON(wire.CustomBotGetResponseWire{
@@ -341,9 +325,8 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 			UserDiscriminator: customBot.UserDiscriminator,
 			UserAvatar:        customBot.UserAvatar,
 
-			Disabled:        app.Disabled,
-			DisabledCode:    string(app.DisabledCode),
-			DisabledMessage: app.DisabledMessage.String,
+			Disabled:     !connected,
+			DisabledCode: disabledCode,
 
 			TokenValid:              tokenValid,
 			IsMember:                isMember,
