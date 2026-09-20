@@ -8,6 +8,9 @@ import { useEmbedLinkCreateMutation } from "../api/mutations";
 import { useToasts } from "../util/toasts";
 import { colorIntToHex } from "../util/discord";
 import CheckBox from "./CheckBox";
+import Collapsable from "./Collapsable";
+import clsx from "clsx";
+import { PADDED } from "./editorCard";
 import ComponentEmbedEditor from "./ComponentEmbedEditor";
 import { componentEmbedPayload } from "../state/componentEmbed";
 
@@ -185,7 +188,7 @@ export default function ToolsEmbedLinks() {
           </div>
         </div>
       ) : (
-        <div className="w-full lg:w-1/2 space-y-3">
+        <div className="w-full lg:w-1/2 space-y-5">
           <EditorInput
             label="URL"
             description="The URL that users will be redirected to when clicking your embed link."
@@ -193,102 +196,116 @@ export default function ToolsEmbedLinks() {
             onChange={setUrl}
             type="url"
           />
-          {componentEmbed && (
-            <div className="pt-2">
-              <div className="uppercase text-mist-300 text-sm font-medium">
-                Fallback preview
+          <Collapsable
+            id="embedLink.preview"
+            title={componentEmbed ? "Fallback Preview" : "Preview"}
+            size="large"
+            extra={
+              componentEmbed ? (
+                <div className="text-sm italic font-light text-mist-400">
+                  everywhere but Discord
+                </div>
+              ) : undefined
+            }
+          >
+            <div className={clsx(PADDED, "space-y-3")}>
+              <div className="flex space-x-3">
+                <EditorInput
+                  label="Title"
+                  value={title}
+                  onChange={setTitle}
+                  maxLength={256}
+                />
+                <div>
+                  <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
+                    Color
+                  </div>
+                  <ColorPicker value={color} onChange={setColor} />
+                </div>
               </div>
-              <div className="text-sm font-light text-mist-300">
-                What everything but Discord shows, and what Discord falls back
-                to when it can't render the custom component.
+              <div className="flex space-x-3">
+                <EditorInput
+                  label="Provider"
+                  value={providerName}
+                  onChange={setProviderName}
+                  maxLength={256}
+                />
+                <EditorInput
+                  label="Provider URL"
+                  value={providerUrl}
+                  onChange={setProviderUrl}
+                />
               </div>
-            </div>
-          )}
-          <div className="flex space-x-3">
-            <EditorInput
-              label="Title"
-              value={title}
-              onChange={setTitle}
-              maxLength={256}
-            />
-            <div>
-              <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
-                Color
+              <div className="flex space-x-3">
+                <EditorInput
+                  label="Author"
+                  value={authorName}
+                  onChange={setAuthorName}
+                  maxLength={256}
+                />
+                <EditorInput
+                  label="Author URL"
+                  value={authorUrl}
+                  onChange={setAuthorUrl}
+                />
               </div>
-              <ColorPicker value={color} onChange={setColor} />
-            </div>
-          </div>
-          <div className="flex space-x-3">
-            <EditorInput
-              label="Provider"
-              value={providerName}
-              onChange={setProviderName}
-              maxLength={256}
-            />
-            <EditorInput
-              label="Provider URL"
-              value={providerUrl}
-              onChange={setProviderUrl}
-            />
-          </div>
-          <div className="flex space-x-3">
-            <EditorInput
-              label="Author"
-              value={authorName}
-              onChange={setAuthorName}
-              maxLength={256}
-            />
-            <EditorInput
-              label="Author URL"
-              value={authorUrl}
-              onChange={setAuthorUrl}
-            />
-          </div>
-          <EditorInput
-            label="Description"
-            value={description}
-            onChange={setDescription}
-            type="textarea"
-            maxLength={4096}
-          />
-          <div className="flex space-x-3">
-            <div>
-              <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
-                Large
-              </div>
-              <CheckBox
-                label="Large"
-                checked={!twitterCard}
-                onChange={setTwitterCard}
-                height={10}
+              <EditorInput
+                label="Description"
+                value={description}
+                onChange={setDescription}
+                type="textarea"
+                maxLength={4096}
               />
+              <div className="flex space-x-3">
+                <div>
+                  <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
+                    Large
+                  </div>
+                  <CheckBox
+                    label="Large"
+                    checked={!twitterCard}
+                    onChange={setTwitterCard}
+                    height={10}
+                  />
+                </div>
+                <EditorInput
+                  label="Image URL"
+                  value={imageUrl}
+                  onChange={setImageUrl}
+                  type="url"
+                  imageUpload={true}
+                  className="w-full"
+                />
+              </div>
             </div>
-            <EditorInput
-              label="Image URL"
-              value={imageUrl}
-              onChange={setImageUrl}
-              type="url"
-              imageUpload={true}
-              className="w-full"
-            />
-          </div>
-          <div className="space-y-3 pt-3">
-            <div className="flex items-center space-x-3">
+          </Collapsable>
+          <Collapsable
+            id="embedLink.customComponent"
+            title="Custom Component"
+            size="large"
+            extra={
+              <div className="text-sm italic font-light text-mist-400">
+                Discord only
+              </div>
+            }
+            buttons={
               <CheckBox
                 label="Custom Component"
                 checked={componentEmbed}
                 onChange={setComponentEmbed}
               />
-              <div className="text-sm font-light text-mist-300">
-                Discord renders these components instead of the preview. The
-                fields above stay as the fallback.
+            }
+          >
+            {componentEmbed ? (
+              <ComponentEmbedEditor title="Container" />
+            ) : (
+              <div className={clsx(PADDED, "text-sm font-light text-mist-400")}>
+                Replace the Discord preview with components: markdown, images,
+                galleries and link buttons.
               </div>
-            </div>
-            {componentEmbed && (
-              <ComponentEmbedEditor title="Custom Component" />
             )}
-          </div>
-          <div className="flex justify-end pt-3">
+          </Collapsable>
+          <div className="flex justify-end">
             <button
               className="px-3 py-2 rounded-lg text-white bg-azure-500 hover:bg-azure-400"
               onClick={createEmbedLink}
@@ -298,12 +315,17 @@ export default function ToolsEmbedLinks() {
           </div>
         </div>
       )}
-      <div className="w-full lg:w-1/2 space-y-2">
-        {componentEmbed && (
-          <div className="text-sm font-light text-mist-300">
-            Fallback preview, Discord shows the custom component instead.
+      <div className="w-full lg:w-1/2 space-y-3">
+        <div className="flex items-center space-x-2">
+          <div className="uppercase text-mist-300 text-sm font-medium">
+            {componentEmbed ? "Fallback Preview" : "Preview"}
           </div>
-        )}
+          {componentEmbed && (
+            <div className="text-sm italic font-light text-mist-400">
+              Discord shows the custom component
+            </div>
+          )}
+        </div>
         <MessagePreview msg={previewMsg} />
       </div>
     </div>
