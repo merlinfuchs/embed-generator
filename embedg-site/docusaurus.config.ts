@@ -96,6 +96,8 @@ const config: Config = {
 
       colorMode: {
         defaultMode: "dark",
+        disableSwitch: true,
+        respectPrefersColorScheme: false,
       },
 
       // Replace with your project's social card
@@ -119,11 +121,21 @@ const config: Config = {
             label: "Blog",
             position: "left",
           },
-          // { to: "/blog", label: "Blog", position: "left" },
+          {
+            href: "https://message.style/discord",
+            label: "Discord",
+            position: "right",
+          },
           {
             href: "https://github.com/merlinfuchs/embed-generator",
             label: "GitHub",
             position: "right",
+          },
+          {
+            href: "https://message.style/app",
+            label: "Open App",
+            position: "right",
+            className: "navbar__item--cta",
           },
         ],
       },
@@ -131,12 +143,12 @@ const config: Config = {
         style: "dark",
         links: [
           {
-            title: "Docs",
+            title: "Product",
             items: [
-              {
-                label: "Tutorial",
-                to: "/docs",
-              },
+              { label: "Open App", href: "https://message.style/app" },
+              { label: "Premium", href: "https://message.style/premium" },
+              { label: "Documentation", to: "/docs" },
+              { label: "Blog", to: "/blog" },
             ],
           },
           {
@@ -162,6 +174,10 @@ const config: Config = {
               {
                 label: "Privacy Policy",
                 href: "/privacy",
+              },
+              {
+                label: "Cookies",
+                to: "/cookies",
               },
             ],
           },
