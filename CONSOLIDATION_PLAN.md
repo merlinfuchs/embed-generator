@@ -67,6 +67,9 @@ Migration `019_create_guilds_table`:
 CREATE TABLE guilds (
     id BIGINT PRIMARY KEY,
     shard_id INT NOT NULL,
+    name TEXT NOT NULL,
+    icon TEXT,
+    owner_id BIGINT NOT NULL,
     joined_at TIMESTAMP NOT NULL,
     left_at TIMESTAMP,
     updated_at TIMESTAMP NOT NULL
@@ -80,24 +83,45 @@ Queries `db/postgres/queries/guilds.sql`:
 
 ```sql
 -- name: UpsertGuild :exec
-INSERT INTO guilds (id, shard_id, joined_at, left_at, updated_at)
-VALUES ($1, $2, $3, NULL, $3)
-ON CONFLICT (id) DO UPDATE SET shard_id = EXCLUDED.shard_id, left_at = NULL, updated_at = EXCLUDED.updated_at;
+INSERT INTO guilds (id, shard_id, name, icon, owner_id, joined_at, left_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, NULL, $6)
+ON CONFLICT (id) DO UPDATE SET
+    shard_id = EXCLUDED.shard_id,
+    name = EXCLUDED.name,
+    icon = EXCLUDED.icon,
+    owner_id = EXCLUDED.owner_id,
+    left_at = NULL,
+    updated_at = EXCLUDED.updated_at;
 
 -- name: MarkGuildLeft :exec
 UPDATE guilds SET left_at = $2, updated_at = $2 WHERE id = $1;
 
--- name: GetExistingGuildIDs :many
-SELECT id FROM guilds WHERE id = ANY($1::bigint[]) AND left_at IS NULL;
+-- name: GetGuilds :many
+SELECT * FROM guilds WHERE id = ANY($1::bigint[]) AND left_at IS NULL;
 ```
 
 Store interface `store/guild.go`:
 
 ```go
 type GuildStore interface {
-    UpsertGuild(ctx context.Context, guildID common.ID, shardID int, now time.Time) error
+    UpsertGuild(ctx context.Context, guild model.Guild) error
     MarkGuildLeft(ctx context.Context, guildID common.ID, now time.Time) error
-    GetExistingGuildIDs(ctx context.Context, guildIDs []common.ID) ([]common.ID, error)
+    GetGuilds(ctx context.Context, guildIDs []common.ID) ([]model.Guild, error) // only guilds the bot is still in
+}
+```
+
+Model `model/guild.go`:
+
+```go
+type Guild struct {
+    ID        common.ID
+    ShardID   int
+    Name      string
+    Icon      null.String
+    OwnerID   common.ID
+    JoinedAt  time.Time
+    LeftAt    null.Time
+    UpdatedAt time.Time
 }
 ```
 
@@ -107,18 +131,22 @@ Listener: add cases to `EventHandler.OnEvent` in `entry/server/handler.go`. `Eve
 
 ```go
 case *events.GuildReady:      // sent for each guild after Ready
-    g.guildStore.UpsertGuild(ctx, e.Guild.ID, e.ShardID(), now)
+    g.guildStore.UpsertGuild(ctx, guildFromEvent(e.Guild, e.ShardID(), now))
 case *events.GuildJoin:       // bot added to a guild
-    g.guildStore.UpsertGuild(ctx, e.Guild.ID, e.ShardID(), now)
+    g.guildStore.UpsertGuild(ctx, guildFromEvent(e.Guild, e.ShardID(), now))
+case *events.GuildUpdate:     // name, icon, or owner changed
+    g.guildStore.UpsertGuild(ctx, guildFromEvent(e.Guild, e.ShardID(), now))
 case *events.GuildLeave:      // bot removed. e.Guild.Unavailable is false here
     g.guildStore.MarkGuildLeft(ctx, e.Guild.ID, now)
 ```
 
-Do not handle `GuildUnavailable`. That is an outage, not a leave. `ShardID()` comes from `GenericEvent`. Use a 5 second context timeout per write. Log and continue on error.
+`guildFromEvent` copies `ID`, `Name`, `Icon`, `OwnerID` from `discord.Guild`. On `GuildUpdate` the upsert overwrites `joined_at` with `now`; that's acceptable, or split into a second `UpdateGuildMeta` query if you want `joined_at` exact.
+
+Do not handle `GuildUnavailable`. That is an outage, not a leave. Do not store channels, roles, or member counts. Those churn and are served by the cache-or-REST path in B5. `ShardID()` comes from `GenericEvent`. Use a 5 second context timeout per write. Log and continue on error.
 
 Nothing reads the table in this PR.
 
-Done when: after a restart, `SELECT count(*) FROM guilds WHERE left_at IS NULL` matches the bot's guild count. Kick the test bot from a guild, `left_at` gets set.
+Done when: after a restart, `SELECT count(*) FROM guilds WHERE left_at IS NULL` matches the bot's guild count and names match Discord. Rename a test guild, the row updates. Kick the test bot from a guild, `left_at` gets set.
 
 ### B3. User-token member fetch
 
@@ -169,6 +197,23 @@ func (m *AccessManager) GetMemberForUser(ctx context.Context, sess *session.Sess
 Endpoint: `GET https://discord.com/api/v10/users/@me/guilds/{guildID}/member` with `Authorization: Bearer <token>`. Use disgo's `rest.NewClient` with a bearer token if it supports it, otherwise plain `net/http`. Decode into `discord.Member`. 404 maps to `store.ErrNotFound`. Cache: `ttlcache` keyed by `tokenHash + ":" + guildID.String()`, TTL 60s, plus the singleflight `getOrSet` helper copied from `embedg/rest/rest.go` (generalize it into `common/singleflight.go` so both callers use it).
 
 `AccessManager` needs the `*session.SessionManager` to call `UserToken`. Wire it in `entry/server/server.go`; note `sessionManager` is currently created after `accessManager`, reorder.
+
+**OAuth guild list.** Also in `access/user_member.go`:
+
+```go
+type UserGuild struct {
+    ID          common.ID
+    Name        string
+    Icon        null.String
+    Owner       bool
+    Permissions discord.Permissions // guild-level, as computed by Discord
+}
+
+// GetGuildsForUser fetches /users/@me/guilds with the user's token. Cached per session token hash for 60s.
+func (m *AccessManager) GetGuildsForUser(ctx context.Context, sess *session.Session) ([]UserGuild, error)
+```
+
+This replaces `session.GuildIDs`, which is captured at login and never refreshed (a guild joined after login doesn't show until logout). Keep the column for now; stop reading it in B5.
 
 **Call sites.** `GetGuildAccessForUser(userID, guildID)` and `GetChannelAccessForUser(userID, channelID)` change signature to take `sess *session.Session` instead of `userID`. Callers are in `api/handlers/guilds/handler.go`, `api/handlers/send_message/handler.go`, `api/handlers/custom_bots/handler.go`, `api/handlers/scheduled_messages/handler.go`, `api/handlers/saved_messages/handler.go`, and `actions/parser/permissions.go` (see B4 for that one). Every handler already has `session := c.Locals("session").(*session.Session)`.
 
@@ -221,7 +266,18 @@ func (m *AccessManager) getGuildState(ctx context.Context, guildID common.ID) (*
 
 Local path: `m.caches.Guild(guildID)`, `m.caches.ChannelsForGuild(guildID)` (iterator, collect), `m.caches.Roles(guildID)` (iterator, collect). REST path: `m.rest.GetGuild(guildID, false)` returns `*discord.RestGuild`, take `.Guild`; `m.rest.GetGuildChannels`, `m.rest.GetRoles`. Cache the struct in a `ttlcache.Cache[common.ID, *guildState]` on the manager.
 
-**CheckGuildsKnown.** Replace body with `m.guildStore.GetExistingGuildIDs(ctx, guildIDs)` and map back to `[]bool` in input order. Add `guildStore store.GuildStore` to `AccessManager`.
+**CheckGuildsKnown.** Replace body with `m.guildStore.GetGuilds(ctx, guildIDs)` and map back to `[]bool` in input order. Add `guildStore store.GuildStore` to `AccessManager`.
+
+**Guild list endpoint.** `HandleListGuilds` in `api/handlers/guilds/handler.go` currently calls `GetGuildAccessForUser` for every guild in the session, which needs channels and roles per guild. On a non-owner instance that's up to three REST calls per guild. Replace with:
+
+1. `userGuilds := am.GetGuildsForUser(ctx, sess)` (B3).
+2. Keep only those where `Permissions & (ManageWebhooks | Administrator) != 0`.
+3. `known := guildStore.GetGuilds(ctx, ids)`. Intersect.
+4. Respond with `id`, `name`, `icon` from the `guilds` table row and the user's guild-level permissions. No channel-level computation here.
+
+Check `wire.GuildWire` for fields the frontend expects beyond these and source them from the table or the OAuth response. If the frontend relies on a channel-level "bot has access" boolean in the list, drop it from the list and let the guild view surface it.
+
+`HandleGetGuild` keeps the full `GetGuildAccessForUser` check. That's one guild, one state fetch, cached two minutes.
 
 **GetGuildAccessForUser.** Replace the two `m.cache.GetGuildWithPermissions` calls with a local function:
 
