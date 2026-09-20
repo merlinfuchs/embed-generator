@@ -9,7 +9,7 @@ interface Props {
   onChange: (emoji: Emoji | undefined) => void;
 }
 
-export default function EdiotrComponentEmojiSelect({ emoji, onChange }: Props) {
+export default function EditorComponentEmojiSelect({ emoji, onChange }: Props) {
   const guildId = useSendSettingsStore((state) => state.guildId);
 
   function onEmojiSelect(emoji: any) {

@@ -1,7 +1,7 @@
 import ToolsBackButton from "../../components/ToolsBackButton";
 import ToolsWebhookInfo from "../../components/ToolsWebhookInfo";
 
-export default function WebhookInfoToolInfo() {
+export default function WebhookInfoToolView() {
   return (
     <div className="overflow-y-auto w-full">
       <div className="flex flex-col max-w-5xl mx-auto px-4 w-full my-5 mb-20 lg:mt-20 space-y-20">
