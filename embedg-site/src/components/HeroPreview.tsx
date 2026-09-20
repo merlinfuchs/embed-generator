@@ -100,12 +100,8 @@ export default function HeroPreview(): JSX.Element {
         </label>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-solid border-white/10 bg-ink-800 shadow-card">
-        <div className="flex items-center gap-2 border-0 border-b border-solid border-white/5 px-4 py-2.5 text-sm text-mist-500">
-          <span className="text-lg leading-none">#</span>
-          <span className="font-medium text-mist-300">welcome</span>
-        </div>
-        <div className="flex gap-4 px-4 py-5">
+      <div className="lg:pl-2">
+        <div className="flex gap-4 py-4">
           <button
             type="button"
             aria-label="Swap avatar"
@@ -128,7 +124,7 @@ export default function HeroPreview(): JSX.Element {
             </div>
 
             <div
-              className="mt-1 max-w-md overflow-hidden rounded-md border-0 border-l-4 border-solid bg-ink-700"
+              className="mt-1 max-w-md overflow-hidden rounded-md border-0 border-l-4 border-solid bg-ink-800"
               style={{ borderColor: color }}
             >
               <div className="p-4">
@@ -204,7 +200,7 @@ export default function HeroPreview(): JSX.Element {
             )}
           </div>
         </div>
-        <div className="border-0 border-t border-solid border-white/5 px-4 py-2">
+        <div className="pl-14 pt-1">
           <Typing who="Merlin" />
         </div>
       </div>
