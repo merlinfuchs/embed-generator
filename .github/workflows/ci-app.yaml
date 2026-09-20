@@ -1,20 +1,13 @@
-name: CI
+name: CI (app)
 
-on: [pull_request]
+on:
+  pull_request:
+    paths:
+      - "embedg-app/**"
+      - ".github/workflows/ci-app.yaml"
 
 jobs:
-  service:
-    name: embedg-service
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: embedg-service/go.mod
-      - run: go build ./... && go vet ./...
-        working-directory: embedg-service
-
-  app:
+  typecheck:
     name: embedg-app
     runs-on: ubuntu-latest
     steps:
