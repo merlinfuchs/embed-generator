@@ -43,6 +43,7 @@ export default function EditorComponentSeparator({
               </div>
             </div>
             <select
+              aria-label="Spacing"
               className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
               value={data.spacing.toString()}
               onChange={(v) =>

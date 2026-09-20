@@ -39,6 +39,9 @@ export default function EditorIconButton({
         </Link>
       ) : (
         <button
+          type="button"
+          aria-label={label}
+          disabled={disabled}
           className={clsx(
             "rounded-full p-2 block",
             highlight ? "text-yellow" : "text-white",
