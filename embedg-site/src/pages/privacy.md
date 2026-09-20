@@ -35,7 +35,7 @@ Some information is collected automatically when you visit or use the Services. 
 - **Log and usage data.** Service-related, diagnostic, usage, and performance information our servers record in log files. Depending on how you interact with us, this may include your IP address, device information, browser type and settings, the pages and features you use, timestamps, and error reports.
 - **Device data.** Information about the computer, phone, tablet, or other device you use to access the Services, such as your IP address, browser type, hardware model, operating system, internet service provider, and system configuration.
 
-This information is primarily needed to maintain the security and operation of the Services, and for our internal analytics and reporting. We also collect information through cookies and similar technologies, which is described in our [Cookie Policy](/cookies).
+This information is primarily needed to maintain the security and operation of the Services, and for our internal analytics and reporting. Our analytics run on software we host ourselves, so usage data is not sent to a third-party analytics provider. We also collect information through cookies and similar technologies, which is described in our [Cookie Policy](/cookies).
 
 ## How We Use Your Information
 
@@ -152,4 +152,4 @@ Alte Str. 5
 04229 Leipzig  
 Germany
 
-_Last updated May 12, 2023_
+_Last updated September 20, 2026_

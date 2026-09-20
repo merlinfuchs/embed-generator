@@ -28,6 +28,12 @@ Some cookies are required for technical reasons in order for the website to oper
 
 The specific cookies served may vary depending on which parts of the site you visit.
 
+## Analytics
+
+We measure how the site is used with OpenPanel, which we run on our own infrastructure. The data stays with us, no analytics data is sent to a third-party provider.
+
+OpenPanel does not set cookies and does not store an identifier in your browser, so there is nothing to opt out of on the cookie level. It records page views along with the technical information every web request carries, such as your IP address, user agent, and referrer. Visitors are counted using a hash derived from that data, which cannot be used to recognize you on other websites.
+
 ## How to Control Cookies
 
 You can set or amend your web browser controls to accept or refuse cookies. The way to do this differs between browsers, so check your browser's help menu:
@@ -57,4 +63,4 @@ Alte Str. 5
 04229 Leipzig  
 Germany
 
-_Last updated May 12, 2023_
+_Last updated September 20, 2026_
