@@ -197,7 +197,7 @@ export default function HomeShowcase(): JSX.Element {
   // First message per feature, used as scroll target.
   const firstMsg: Record<FeatureId, string> = {
     components: "roles",
-    branding: "roles",
+    branding: "patch",
     save: "patch",
     variables: "welcome",
     v2: "event",
@@ -334,9 +334,9 @@ export default function HomeShowcase(): JSX.Element {
               <Message
                 id="roles"
                 active={active}
-                ids={["components", "branding"]}
-                avatar={<Avatar initial="R" color="bg-[#57C271]" />}
-                name="Role Bot"
+                ids={["components"]}
+                avatar={server}
+                name="Embed Generator"
                 app
                 time="10:12 AM"
               >
@@ -397,9 +397,9 @@ export default function HomeShowcase(): JSX.Element {
               <Message
                 id="patch"
                 active={active}
-                ids={["save"]}
-                avatar={server}
-                name="Your Server"
+                ids={["branding", "save"]}
+                avatar={<Avatar initial="P" color="bg-[#57C271]" />}
+                name="Patch Bot"
                 app
                 time="6:30 PM"
               >
