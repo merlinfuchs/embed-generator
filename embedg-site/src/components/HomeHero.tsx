@@ -9,7 +9,7 @@ export default function HomeHero(): JSX.Element {
         aria-hidden
         className="absolute left-1/2 top-0 h-[520px] w-[1100px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-azure-600/20 blur-[140px]"
       />
-      <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-5 pb-20 pt-16 md:px-8 lg:grid-cols-2 lg:gap-12 lg:pb-28 lg:pt-24">
+      <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-5 pb-20 pt-16 md:px-8 lg:grid-cols-2 lg:gap-12 lg:pb-24 lg:pt-20">
         <div>
           <h1 className="mb-5 text-4xl font-bold leading-[1.1] tracking-tight text-mist-100 sm:text-5xl lg:text-6xl">
             Good-looking{" "}
@@ -35,9 +35,20 @@ export default function HomeHero(): JSX.Element {
               Read the docs
             </a>
           </div>
-          <p className="mt-6 text-sm text-mist-500">
-            Free and open source. No account needed to get started.
-          </p>
+          <div className="mt-10 flex flex-wrap gap-x-10 gap-y-4">
+            <div>
+              <div className="text-2xl font-bold text-mist-100">250,000+</div>
+              <div className="text-sm text-mist-500">servers</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-mist-100">3,000,000+</div>
+              <div className="text-sm text-mist-500">messages sent</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-mist-100">Free</div>
+              <div className="text-sm text-mist-500">and open source</div>
+            </div>
+          </div>
         </div>
         <HeroPreview />
       </div>
