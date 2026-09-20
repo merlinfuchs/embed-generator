@@ -13,12 +13,12 @@ export default function HomeHero(): JSX.Element {
         <div>
           <h1 className="mb-5 text-4xl font-bold leading-[1.1] tracking-tight text-mist-100 sm:text-5xl lg:text-6xl">
             Good-looking{" "}
-            <span className="text-azure-400">Discord messages</span>, without
+            <span className="text-azure-400">Discord embeds</span>, without
             the hassle.
           </h1>
           <p className="mb-8 max-w-lg text-lg leading-relaxed text-mist-400">
             Design embeds, buttons and select menus in a visual editor and send
-            them straight to your server. No coding needed.
+            them through a webhook or our bot. No coding needed.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <a

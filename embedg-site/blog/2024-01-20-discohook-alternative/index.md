@@ -2,7 +2,7 @@
 slug: discohook-alternative
 title: The Best Discohook Alternative
 authors: [merlin]
-tags: [disohook, alternative, embed, discord, webhook]
+tags: [discohook, alternative, embed, discord, webhook]
 ---
 
 Discohook is a popular tool for creating Discord embed messages using Webhooks. Sadly it's not perfect ...

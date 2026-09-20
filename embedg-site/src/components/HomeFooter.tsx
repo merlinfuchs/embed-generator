@@ -8,6 +8,22 @@ const columns = [
       { label: "Premium", href: "/premium" },
       { label: "Documentation", href: "/docs" },
       { label: "Blog", href: "/blog" },
+      { label: "Colored Text Generator", href: "/app/tools/colored-text" },
+      { label: "Embed Links", href: "/app/tools/embed-links" },
+    ],
+  },
+  {
+    title: "Features",
+    links: [
+      { label: "Buttons & Select Menus", href: "/docs/features/interactive-components" },
+      { label: "Custom Name & Avatar", href: "/docs/features/custom-branding" },
+      { label: "Saved Messages", href: "/docs/features/save-messages" },
+      { label: "Variables", href: "/docs/guides/variables" },
+      { label: "Components V2", href: "/docs/features/components-v2" },
+      { label: "Scheduled Messages", href: "/docs/guides/scheduled-messages" },
+      { label: "Custom Commands", href: "/docs/features/custom-commands" },
+      { label: "White Label Bot", href: "/docs/features/white-label" },
+      { label: "AI Assistant", href: "/docs/features/ai-assistant" },
     ],
   },
   {
@@ -31,7 +47,7 @@ export default function HomeFooter(): JSX.Element {
   return (
     <footer className="border-0 border-t border-solid border-white/5 bg-ink-950">
       <div className="mx-auto max-w-7xl px-5 py-14 md:px-8">
-        <div className="grid grid-cols-2 gap-10 md:grid-cols-5">
+        <div className="grid grid-cols-2 gap-10 md:grid-cols-6">
           <div className="col-span-2">
             <div className="mb-3 flex items-center gap-3 text-mist-100">
               <img src="/img/logo.svg" alt="" className="h-8 w-8 rounded-lg" />

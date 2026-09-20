@@ -1,3 +1,5 @@
+@import "@fontsource-variable/inter";
+
 /* Docs/blog theme (Infima). Same navy/azure palette as the landing page.
    Selectors use html[data-theme] so they outrank Infima's own dark overrides. */
 :root {
