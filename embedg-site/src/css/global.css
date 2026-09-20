@@ -27,38 +27,38 @@ html[data-theme="dark"] {
   --ifm-color-primary-lighter: #87bdff;
   --ifm-color-primary-lightest: #b3d5ff;
 
-  --ifm-background-color: #0b1120;
-  --ifm-background-surface-color: #111a2e;
-  --ifm-navbar-background-color: rgba(11, 17, 32, 0.85);
-  --ifm-footer-background-color: #070b14;
-  --ifm-footer-link-color: #9aa6bc;
-  --ifm-footer-title-color: #f3f6fb;
+  --ifm-background-color: #1e1f22;
+  --ifm-background-surface-color: #2b2d31;
+  --ifm-navbar-background-color: rgba(30, 31, 34, 0.85);
+  --ifm-footer-background-color: #111214;
+  --ifm-footer-link-color: #b5bac1;
+  --ifm-footer-title-color: #f2f3f5;
 
-  --ifm-font-color-base: #c6cfdf;
-  --ifm-heading-color: #f3f6fb;
-  --ifm-color-content-secondary: #9aa6bc;
+  --ifm-font-color-base: #dbdee1;
+  --ifm-heading-color: #f2f3f5;
+  --ifm-color-content-secondary: #b5bac1;
 
-  --ifm-color-emphasis-100: #111a2e;
-  --ifm-color-emphasis-200: #182238;
-  --ifm-color-emphasis-300: #233049;
-  --ifm-color-emphasis-400: #34435f;
-  --ifm-color-emphasis-500: #4a5a78;
-  --ifm-color-emphasis-600: #6e7a91;
-  --ifm-color-emphasis-700: #9aa6bc;
-  --ifm-color-emphasis-800: #c6cfdf;
-  --ifm-color-emphasis-900: #f3f6fb;
+  --ifm-color-emphasis-100: #2b2d31;
+  --ifm-color-emphasis-200: #313338;
+  --ifm-color-emphasis-300: #3f4147;
+  --ifm-color-emphasis-400: #4e5058;
+  --ifm-color-emphasis-500: #6d6f78;
+  --ifm-color-emphasis-600: #949ba4;
+  --ifm-color-emphasis-700: #b5bac1;
+  --ifm-color-emphasis-800: #dbdee1;
+  --ifm-color-emphasis-900: #f2f3f5;
 
-  --ifm-toc-border-color: #233049;
-  --ifm-menu-color: #c6cfdf;
+  --ifm-toc-border-color: #3f4147;
+  --ifm-menu-color: #dbdee1;
   --ifm-menu-color-background-active: rgba(47, 139, 255, 0.12);
   --ifm-menu-color-background-hover: rgba(255, 255, 255, 0.04);
   --ifm-breadcrumb-item-background-active: rgba(47, 139, 255, 0.12);
-  --ifm-code-background: #182238;
-  --ifm-pre-background: #111a2e;
-  --ifm-card-background-color: #111a2e;
-  --ifm-hr-background-color: #233049;
+  --ifm-code-background: #313338;
+  --ifm-pre-background: #2b2d31;
+  --ifm-card-background-color: #2b2d31;
+  --ifm-hr-background-color: #3f4147;
   --ifm-table-stripe-background: rgba(255, 255, 255, 0.02);
-  --ifm-table-border-color: #233049;
+  --ifm-table-border-color: #3f4147;
   --ifm-blockquote-border-color: #2f8bff;
   --docusaurus-highlighted-code-line-bg: rgba(47, 139, 255, 0.12);
 }
@@ -70,7 +70,7 @@ html[data-theme="dark"] .navbar {
 }
 
 html[data-theme="dark"] .footer--dark {
-  --ifm-footer-background-color: #070b14;
+  --ifm-footer-background-color: #111214;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -85,7 +85,7 @@ html[data-theme="dark"] .menu__link--active:not(.menu__link--sublist) {
 html[data-theme="dark"] .pagination-nav__link,
 html[data-theme="dark"] .card {
   border-color: rgba(255, 255, 255, 0.08);
-  background: #111a2e;
+  background: #2b2d31;
 }
 html[data-theme="dark"] .pagination-nav__link:hover,
 html[data-theme="dark"] .card:hover {

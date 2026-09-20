@@ -6,13 +6,14 @@ module.exports = {
     extend: {
       colors: {
         // Brand palette derived from the logo (navy + azure), not Discord blurple.
+        // Neutral grays close to Discord's own dark theme, accent stays azure.
         ink: {
-          950: "#070B14",
-          900: "#0B1120",
-          800: "#111A2E",
-          700: "#182238",
-          600: "#233049",
-          500: "#34435F",
+          950: "#111214",
+          900: "#1E1F22",
+          800: "#2B2D31",
+          700: "#313338",
+          600: "#404249",
+          500: "#4E5058",
         },
         azure: {
           300: "#8BC0FF",
@@ -27,10 +28,10 @@ module.exports = {
           500: "#E09B1F",
         },
         mist: {
-          100: "#F3F6FB",
-          300: "#C6CFDF",
-          400: "#9AA6BC",
-          500: "#6E7A91",
+          100: "#F2F3F5",
+          300: "#DBDEE1",
+          400: "#B5BAC1",
+          500: "#949BA4",
         },
         // Discord semantic colors, used inside the message mockup only.
         discord: {

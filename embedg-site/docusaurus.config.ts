@@ -110,7 +110,7 @@ const config: Config = {
         },
         {
           name: "theme-color",
-          content: "#0b1120",
+          content: "#1e1f22",
         },
       ],
 
