@@ -32,25 +32,12 @@ const features: {
   premium?: boolean;
 }[] = [
   {
-    id: "components",
-    name: "Buttons & select menus",
-    blurb: "Hand out roles, reply, or link somewhere.",
-    href: "/docs/features/interactive-components",
-    icon: CursorArrowRippleIcon,
-  },
-  {
-    id: "branding",
-    name: "Custom name & avatar",
-    blurb: "Every message looks like it's from your server.",
-    href: "/docs/features/custom-branding",
-    icon: EyeDropperIcon,
-  },
-  {
-    id: "save",
-    name: "Saved messages",
-    blurb: "Keep templates and reuse them anywhere.",
-    href: "/docs/features/save-messages",
-    icon: CloudIcon,
+    id: "scheduled",
+    name: "Scheduled messages",
+    blurb: "Send once, or every hour, day or week.",
+    href: "/docs/guides/scheduled-messages",
+    icon: ClockIcon,
+    premium: true,
   },
   {
     id: "variables",
@@ -60,19 +47,11 @@ const features: {
     icon: VariableIcon,
   },
   {
-    id: "v2",
-    name: "Components V2",
-    blurb: "Sections, thumbnails, separators. New layouts.",
-    href: "/docs/features/components-v2",
-    icon: Squares2X2Icon,
-  },
-  {
-    id: "scheduled",
-    name: "Scheduled messages",
-    blurb: "Send once, or every hour, day or week.",
-    href: "/docs/guides/scheduled-messages",
-    icon: ClockIcon,
-    premium: true,
+    id: "branding",
+    name: "Custom name & avatar",
+    blurb: "Every message looks like it's from your server.",
+    href: "/docs/features/custom-branding",
+    icon: EyeDropperIcon,
   },
   {
     id: "commands",
@@ -91,12 +70,33 @@ const features: {
     premium: true,
   },
   {
+    id: "components",
+    name: "Buttons & select menus",
+    blurb: "Hand out roles, reply, or link somewhere.",
+    href: "/docs/features/interactive-components",
+    icon: CursorArrowRippleIcon,
+  },
+  {
     id: "ai",
     name: "AI assistant",
     blurb: "Draft a message from a sentence.",
     href: "/docs/features/ai-assistant",
     icon: SparklesIcon,
     premium: true,
+  },
+  {
+    id: "save",
+    name: "Saved messages",
+    blurb: "Keep templates and reuse them anywhere.",
+    href: "/docs/features/save-messages",
+    icon: CloudIcon,
+  },
+  {
+    id: "v2",
+    name: "Components V2",
+    blurb: "Sections, thumbnails, separators. New layouts.",
+    href: "/docs/features/components-v2",
+    icon: Squares2X2Icon,
   },
 ];
 
@@ -178,7 +178,7 @@ const server = <Avatar src="/img/logo.svg" />;
 const sarah = <Avatar initial="S" color="bg-[#EB459E]" />;
 const tom = <Avatar initial="T" color="bg-[#57C271]" />;
 
-// Feature list on the left, chat log on the right. Hovering a feature lights up
+// Feature list on the left (ordered like the chat), chat log on the right. Hovering a feature lights up
 // the messages it produced and scrolls the log to the first one.
 export default function HomeShowcase(): JSX.Element {
   // Click selects (sticks), hover previews on top of the selection.
