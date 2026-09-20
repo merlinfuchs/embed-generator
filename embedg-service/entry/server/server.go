@@ -107,6 +107,10 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 	embedg.Client().AddEventListeners(scheduledMessageManager)
 	go scheduledMessageManager.Run(ctx)
 
+	if cfg.API.PprofAddr != "" {
+		go servePprof(ctx, cfg.API.PprofAddr)
+	}
+
 	slog.Info("Starting Embed Generator")
 
 	ctx, cancel := context.WithCancel(ctx)

@@ -30,7 +30,10 @@ func (cfg *RootConfig) Validate() error {
 }
 
 type APIConfig struct {
-	PublicURL       string `toml:"public_url" validate:"required"`
+	PublicURL string `toml:"public_url" validate:"required"`
+	// PprofAddr turns on net/http/pprof when set, along with block and mutex sampling. Keep it
+	// on localhost, the dumps carry tokens and message content.
+	PprofAddr       string `toml:"pprof_addr"`
 	Host            string `toml:"host" validate:"required"`
 	Port            int    `toml:"port" validate:"required"`
 	InsecureCookies bool   `toml:"insecure_cookies"`
