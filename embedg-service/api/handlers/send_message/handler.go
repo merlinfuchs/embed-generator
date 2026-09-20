@@ -11,7 +11,6 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
-	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-service/access"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions/parser"
@@ -139,7 +138,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		msg, err = h.webhookManager.SendMessageToChannel(c.Context(), req.ChannelID, params)
 	}
 	if err != nil {
-		if common.IsDiscordRestErrorCode(err, discordgo.ErrCodeUnknownMessage) {
+		if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeUnknownMessage) {
 			return handlers.NotFound("unknown_message", "The message to edit does not exist.")
 		}
 		return fmt.Errorf("Failed to send or edit message: %w", err)
@@ -245,7 +244,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		)
 	}
 	if err != nil {
-		if common.IsDiscordRestErrorCode(err, discordgo.ErrCodeUnknownWebhook) {
+		if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeUnknownWebhook) {
 			return handlers.NotFound("unknown_webhook", "The webhook does not exist.")
 		}
 		return err

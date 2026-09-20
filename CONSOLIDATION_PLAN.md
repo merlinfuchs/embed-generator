@@ -298,7 +298,9 @@ using the existing `memberPermissions` in `access/helpers.go`. Skip channels of 
 
 **GetGuildMember.** Keep for the bot's own member and for scheduled message creators. Plain `m.rest.GetMember`; the `RestClient` in `embedg/rest/rest.go` already caches members 5 minutes with singleflight. Drop the `m.caches.Member` lookup.
 
-**Remove** the `cache cache.Cache` field, the `stateway-lib/cache` import, and the `discordgo` import (replace `discordgo.ErrCodeUnknownMember` etc. with disgo's `discord.JSONErrorCode` constants; `common.IsDiscordRestErrorCode` may need adjusting, check `common/discord.go`).
+**Remove** the `cache cache.Cache` field, the `stateway-lib/cache` import, and the `discordgo` error codes. The constants live in `rest`, not `discord`, and only from disgo v0.19.6: the pinned `v0.19.0-rc.12` pseudo-version has the `JSONErrorCode` type but no named values. Upgrading is a one line change on our side (`rest.ConfigOpt` split into `rest.ClientConfigOpt`, which `embedg/rest/rest.go` takes) and `stateway-lib` still compiles against it. `common.IsDiscordRestErrorCode` takes `...rest.JSONErrorCode` instead of `...int`. Note 50013 is `JSONErrorCodeLackPermissionsToPerformAction`, not `MissingPermissions`.
+
+`discordgo` stays as a dependency for two things that have nothing to do with error codes: multipart encoding in `common/guilded.go`, and the command sync in `api/handlers/custom_bots/commands.go` that carries its own "didn't have the nerve to convert it to disgo yet" comment. B6 touches that file anyway.
 
 **Guild handlers.** `GET /guilds/{id}` returns roles, emojis and stickers in the same payload as the guild (`discord.RestGuild`), so `State` carries all three from one call. Do not add `GetRoles`, `GetEmojis` or `GetStickers` calls; the guild fetch is two requests, guild and channels.
 

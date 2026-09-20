@@ -12,7 +12,6 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/rest"
-	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions/template"
@@ -159,9 +158,9 @@ func (m *ScheduledMessageManager) channelGone(ctx context.Context, channelID com
 	_, err := m.rest.GetChannel(channelID, rest.WithCtx(ctx))
 	return common.IsDiscordRestErrorCode(
 		err,
-		discordgo.ErrCodeUnknownChannel,
-		discordgo.ErrCodeUnknownGuild,
-		discordgo.ErrCodeMissingAccess,
+		rest.JSONErrorCodeUnknownChannel,
+		rest.JSONErrorCodeUnknownGuild,
+		rest.JSONErrorCodeMissingAccess,
 	)
 }
 
@@ -223,9 +222,9 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		if err != nil {
 			if common.IsDiscordRestErrorCode(
 				err,
-				discordgo.ErrCodeUnknownMember,
-				discordgo.ErrCodeUnknownGuild,
-				discordgo.ErrCodeMissingAccess,
+				rest.JSONErrorCodeUnknownMember,
+				rest.JSONErrorCodeUnknownGuild,
+				rest.JSONErrorCodeMissingAccess,
 			) {
 				return m.disable(ctx, scheduledMessage, "creator is no longer a member of the server")
 			}
@@ -244,10 +243,10 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 
 		if common.IsDiscordRestErrorCode(
 			err,
-			discordgo.ErrCodeUnknownChannel,
-			discordgo.ErrCodeUnknownGuild,
-			discordgo.ErrCodeMissingAccess,
-			discordgo.ErrCodeMissingPermissions,
+			rest.JSONErrorCodeUnknownChannel,
+			rest.JSONErrorCodeUnknownGuild,
+			rest.JSONErrorCodeMissingAccess,
+			rest.JSONErrorCodeLackPermissionsToPerformAction,
 		) {
 			return m.disable(ctx, scheduledMessage, "channel inaccessible")
 		}

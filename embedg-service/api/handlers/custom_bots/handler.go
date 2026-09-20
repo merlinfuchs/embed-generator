@@ -12,7 +12,6 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	disrest "github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
-	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-service/access"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions/parser"
@@ -109,7 +108,7 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 	isMember := true
 	member, err := restClient.GetMember(guildID, user.ID)
 	if err != nil {
-		if common.IsDiscordRestErrorCode(err, discordgo.ErrCodeMissingAccess, discordgo.ErrCodeUnknownGuild) {
+		if common.IsDiscordRestErrorCode(err, disrest.JSONErrorCodeMissingAccess, disrest.JSONErrorCodeUnknownGuild) {
 			isMember = false
 		} else {
 			return fmt.Errorf("Failed to check if custom bot is member of guild: %w", err)

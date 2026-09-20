@@ -21,7 +21,7 @@ type RestClient struct {
 	singleFlight singleflight.Group
 }
 
-func NewRestClient(token string, opts ...rest.ConfigOpt) *RestClient {
+func NewRestClient(token string, opts ...rest.ClientConfigOpt) *RestClient {
 	memberCache := ttlcache.New(
 		ttlcache.WithTTL[string, *discord.Member](5 * time.Minute),
 	)
