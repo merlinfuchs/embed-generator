@@ -62,7 +62,7 @@ type ComponentWithActions struct {
 	File *UnfurledMediaItem `json:"file,omitempty"`
 
 	// Separator
-	Divider bool `json:"divider,omitempty"`
+	Divider *bool `json:"divider,omitempty"`
 	Spacing int  `json:"spacing,omitempty"`
 
 	// Container
