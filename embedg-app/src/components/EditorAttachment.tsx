@@ -1,4 +1,4 @@
-import { shallow } from "zustand/shallow";
+import { useShallow } from "zustand/react/shallow";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import { TrashIcon } from "@heroicons/react/20/solid";
 import { DocumentIcon } from "@heroicons/react/24/outline";
@@ -12,16 +12,14 @@ interface Props {
 
 export default function EditorAttachment({ index }: Props) {
   const [name, dataUrl] = useCurrentAttachmentsStore(
-    (state) => [
+    useShallow((state) => [
       state.attachments[index].name,
       state.attachments[index].data_url,
-    ],
-    shallow,
+    ]),
   );
 
   const [removeAttachment] = useCurrentAttachmentsStore(
-    (state) => [state.removeAttachment],
-    shallow,
+    useShallow((state) => [state.removeAttachment]),
   );
 
   const isImage = isImageRegex.test(dataUrl);

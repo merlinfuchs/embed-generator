@@ -1,9 +1,10 @@
+import { localStorageJSON } from "./storage";
+import { useShallow } from "zustand/react/shallow";
 import debounce from "just-debounce-it";
 import { type TemporalState, temporal } from "zundo";
 import { create, useStore } from "zustand";
 import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import { shallow } from "zustand/shallow";
 import type {
   EmbedAuthor,
   EmbedFooter,
@@ -487,6 +488,7 @@ export const createDocumentStore = (key: string) =>
         {
           name: key,
           version: DOCUMENT_VERSION,
+          storage: localStorageJSON,
           // The node tree itself is unchanged between versions; what a version
           // says is which parts of the message this store owns, which
           // `seedDocumentStore` reconciles once both stores have rehydrated.
@@ -589,18 +591,20 @@ export const useNode = <T extends Node>(id: NodeId) =>
   useDocumentStore((state) => state.nodes[id] as T | undefined);
 
 export const useChildIds = (id: NodeId, slot: ChildSlot) =>
-  useDocumentStore((state) => childIds(state.nodes[id], slot), shallow);
+  useDocumentStore(useShallow((state) => childIds(state.nodes[id], slot)));
 
 /** Position of a node among its siblings, for move and duplicate buttons. */
 export const useNodeIndex = (id: NodeId) =>
-  useDocumentStore((state) => {
-    const node = state.nodes[id];
-    const parent = node?.parentId ? state.nodes[node.parentId] : undefined;
-    const slot = parent && slotOfChild(parent, id);
-    const ids = slot ? childIds(parent, slot) : [];
+  useDocumentStore(
+    useShallow((state) => {
+      const node = state.nodes[id];
+      const parent = node?.parentId ? state.nodes[node.parentId] : undefined;
+      const slot = parent && slotOfChild(parent, id);
+      const ids = slot ? childIds(parent, slot) : [];
 
-    return { index: ids.indexOf(id), count: ids.length };
-  }, shallow);
+      return { index: ids.indexOf(id), count: ids.length };
+    }),
+  );
 
 /**
  * The move, duplicate and remove buttons of a node, hidden at the ends of its

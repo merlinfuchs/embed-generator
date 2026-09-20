@@ -1,10 +1,10 @@
+import { useShallow } from "zustand/react/shallow";
 import { useMemo } from "react";
 import { useSendMessageToWebhookMutation } from "../api/mutations";
 import { useValidationErrorStore } from "../state/validationError";
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import { useSendSettingsStore } from "../state/sendSettings";
-import { shallow } from "zustand/shallow";
 import { messageUrlRegex, parseWebhookUrl } from "../discord/util";
 import MessageRestoreButton from "./MessageRestoreButton";
 import { useToasts } from "../util/toasts";
@@ -16,8 +16,7 @@ export default function SendMenuWebhook() {
   );
 
   const [webhookUrl, setWebhookUrl] = useSendSettingsStore(
-    (state) => [state.webhookUrl, state.setWebhookUrl],
-    shallow,
+    useShallow((state) => [state.webhookUrl, state.setWebhookUrl]),
   );
   const webhookInfo = useMemo(() => {
     if (!webhookUrl) return null;
@@ -25,12 +24,10 @@ export default function SendMenuWebhook() {
   }, [webhookUrl]);
 
   const [messageId, setMessageId] = useSendSettingsStore(
-    (state) => [state.messageId, state.setMessageId],
-    shallow,
+    useShallow((state) => [state.messageId, state.setMessageId]),
   );
   const [threadId, setThreadId] = useSendSettingsStore(
-    (state) => [state.threadId, state.setThreadId],
-    shallow,
+    useShallow((state) => [state.threadId, state.setThreadId]),
   );
 
   const sendToWebhookMutation = useSendMessageToWebhookMutation();

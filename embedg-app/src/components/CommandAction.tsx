@@ -1,4 +1,4 @@
-import { shallow } from "zustand/shallow";
+import { useShallow } from "zustand/react/shallow";
 import { useCommandActionsStore } from "../state/actions";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { usePremiumGuildFeatures } from "../util/premium";
@@ -15,8 +15,7 @@ export default function EditorAction({ cmdId, actionIndex }: Props) {
   const selectedGuildId = useSendSettingsStore((state) => state.guildId);
 
   const action = useCommandActionsStore(
-    (state) => state.actions[cmdId]?.actions[actionIndex],
-    shallow,
+    useShallow((state) => state.actions[cmdId]?.actions[actionIndex]),
   );
 
   const actionCount = useCommandActionsStore(
@@ -24,13 +23,12 @@ export default function EditorAction({ cmdId, actionIndex }: Props) {
   );
 
   const [moveUp, moveDown, duplicate, remove] = useCommandActionsStore(
-    (state) => [
+    useShallow((state) => [
       state.moveActionUp,
       state.moveActionDown,
       state.duplicateAction,
       state.deleteAction,
-    ],
-    shallow,
+    ]),
   );
 
   const [
@@ -43,7 +41,7 @@ export default function EditorAction({ cmdId, actionIndex }: Props) {
     setRoleIds,
     setPermissions,
   ] = useCommandActionsStore(
-    (state) => [
+    useShallow((state) => [
       state.setActionType,
       state.setActionText,
       state.setActionTargetId,
@@ -52,8 +50,7 @@ export default function EditorAction({ cmdId, actionIndex }: Props) {
       state.setActionDisableDefaultResponse,
       state.setActionRoleIds,
       state.setActionPermissions,
-    ],
-    shallow,
+    ]),
   );
 
   return (

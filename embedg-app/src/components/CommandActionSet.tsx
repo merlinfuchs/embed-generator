@@ -1,4 +1,4 @@
-import { shallow } from "zustand/shallow";
+import { useShallow } from "zustand/react/shallow";
 import CommandAction from "./CommandAction";
 import Collapsable from "./Collapsable";
 import { getUniqueId } from "../util";
@@ -15,13 +15,11 @@ export default function ActionSet({ cmdId }: Props) {
   const maxActions = features?.max_actions_per_component || 0;
 
   const actions = useCommandActionsStore(
-    (state) => state.actions[cmdId]?.actions.map((a) => a.id) || [],
-    shallow,
+    useShallow((state) => state.actions[cmdId]?.actions.map((a) => a.id) || []),
   );
 
   const [addAction, clearActions] = useCommandActionsStore(
-    (state) => [state.addAction, state.clearActions],
-    shallow,
+    useShallow((state) => [state.addAction, state.clearActions]),
   );
 
   function add() {

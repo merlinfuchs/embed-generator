@@ -1,3 +1,4 @@
+import { useShallow } from "zustand/react/shallow";
 import clsx from "clsx";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import { AutoAnimate } from "../util/autoAnimate";
@@ -5,13 +6,11 @@ import Collapsable from "./Collapsable";
 import { type ChangeEvent, useRef } from "react";
 import { getUniqueId } from "../util";
 import EditorAttachment from "./EditorAttachment";
-import { shallow } from "zustand/shallow";
 import { useComponentsV2Enabled } from "../state/document";
 
 export default function EditorAttachments() {
   const attachments = useCurrentAttachmentsStore(
-    (state) => state.attachments.map((a) => a.id),
-    shallow,
+    useShallow((state) => state.attachments.map((a) => a.id)),
   );
 
   const componentsV2Enabled = useComponentsV2Enabled();
@@ -21,8 +20,7 @@ export default function EditorAttachments() {
   );
 
   const [addAttachment, clearAttachments] = useCurrentAttachmentsStore(
-    (state) => [state.addAttachment, state.clearAttachments],
-    shallow,
+    useShallow((state) => [state.addAttachment, state.clearAttachments]),
   );
 
   const inputRef = useRef<HTMLInputElement>(null);

@@ -1,3 +1,4 @@
+import { localStorageJSON } from "./storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -43,6 +44,6 @@ export const useSendSettingsStore = create<SendSettingsStore>()(
       setChannelId: (channelId: string | null) => set({ channelId }),
       setThreadName: (threadName: string | null) => set({ threadName }),
     }),
-    { name: "send-settings", version: 0 },
+    { name: "send-settings", version: 0, storage: localStorageJSON },
   ),
 );

@@ -1,5 +1,5 @@
+import { useShallow } from "zustand/react/shallow";
 import clsx from "clsx";
-import { shallow } from "zustand/shallow";
 import { useUserQuery } from "../api/queries";
 import { useSendSettingsStore } from "../state/sendSettings";
 import LoginSuggest from "./LoginSuggest";
@@ -8,8 +8,7 @@ import SendMenuWebhook from "./SendMenuWebhook";
 
 export default function SendMenu() {
   const [mode, setMode] = useSendSettingsStore(
-    (state) => [state.mode, state.setMode],
-    shallow,
+    useShallow((state) => [state.mode, state.setMode]),
   );
 
   const { data: user } = useUserQuery();

@@ -1,4 +1,4 @@
-import { shallow } from "zustand/shallow";
+import { useShallow } from "zustand/react/shallow";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { useMemo } from "react";
 import {
@@ -16,15 +16,14 @@ import { setCurrentMessage } from "../state/currentMessage";
 export default function MessageRestoreButton() {
   const [mode, webhookUrl, messageId, threadId, guildId, channelId] =
     useSendSettingsStore(
-      (state) => [
+      useShallow((state) => [
         state.mode,
         state.webhookUrl,
         state.messageId,
         state.threadId,
         state.guildId,
         state.channelId,
-      ],
-      shallow,
+      ]),
     );
 
   const webhookInfo = useMemo(() => {

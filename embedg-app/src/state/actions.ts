@@ -1,3 +1,4 @@
+import { localStorageJSON } from "./storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
@@ -20,7 +21,7 @@ export const createActionStore = (key: string) =>
 
           ...createActionSetSlice<ActionsStore>(set),
         }),
-        { name: key, version: 0 },
+        { name: key, version: 0, storage: localStorageJSON },
       ),
     ),
   );

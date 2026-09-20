@@ -1,3 +1,4 @@
+import { useShallow } from "zustand/react/shallow";
 import {
   PencilSquareIcon,
   RectangleStackIcon,
@@ -21,7 +22,6 @@ import ClickOutsideHandler from "./ClickOutsideHandler";
 import { useGuildsQuery, useUserQuery } from "../api/queries";
 import { guildIconUrl } from "../discord/cdn";
 import { useSendSettingsStore } from "../state/sendSettings";
-import { shallow } from "zustand/shallow";
 import LoginLink from "./LoginLink";
 import LogoutLink from "./LogoutLink";
 import { useSettingsStore } from "../state/settings";
@@ -267,8 +267,7 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
   }, [guilds]);
 
   const [guildId, setGuildId] = useSendSettingsStore(
-    (state) => [state.guildId, state.setGuildId],
-    shallow,
+    useShallow((state) => [state.guildId, state.setGuildId]),
   );
 
   const guild = useMemo(

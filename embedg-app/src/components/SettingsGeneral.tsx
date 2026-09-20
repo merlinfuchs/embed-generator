@@ -1,19 +1,16 @@
-import { shallow } from "zustand/shallow";
+import { useShallow } from "zustand/react/shallow";
 import { useSettingsStore } from "../state/settings";
 import CheckBox from "./CheckBox";
 
 export default function SettingsGeneral() {
   const [editHistoryEnabled, setEditHistoryEnabled] = useSettingsStore(
-    (s) => [s.editHistoryEnabled, s.setEditHistoryEnabled],
-    shallow,
+    useShallow((s) => [s.editHistoryEnabled, s.setEditHistoryEnabled]),
   );
   const [alwaysCollapseSidebar, setAlwaysCollapseSidebar] = useSettingsStore(
-    (s) => [s.alwaysCollapseSidebar, s.setAlwaysCollapseSidebar],
-    shallow,
+    useShallow((s) => [s.alwaysCollapseSidebar, s.setAlwaysCollapseSidebar]),
   );
   const [confirmOnExit, setConfirmOnExit] = useSettingsStore(
-    (s) => [s.confirmOnExit, s.setConfirmOnExit],
-    shallow,
+    useShallow((s) => [s.confirmOnExit, s.setConfirmOnExit]),
   );
 
   function clearAll() {

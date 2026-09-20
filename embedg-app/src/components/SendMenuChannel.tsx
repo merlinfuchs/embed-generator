@@ -1,3 +1,4 @@
+import { useShallow } from "zustand/react/shallow";
 import { useSendMessageToChannelMutation } from "../api/mutations";
 import { useGuildChannelsQuery, useUserQuery } from "../api/queries";
 import { ChannelSelect } from "./ChannelSelect";
@@ -7,7 +8,6 @@ import { useValidationErrorStore } from "../state/validationError";
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import { useSendSettingsStore } from "../state/sendSettings";
-import { shallow } from "zustand/shallow";
 import { messageUrlRegex } from "../discord/util";
 import MessageRestoreButton from "./MessageRestoreButton";
 import { useToasts } from "../util/toasts";
@@ -19,23 +19,19 @@ export default function SendMenuChannel() {
   );
 
   const [selectedGuildId, setSelectedGuildId] = useSendSettingsStore(
-    (state) => [state.guildId, state.setGuildId],
-    shallow,
+    useShallow((state) => [state.guildId, state.setGuildId]),
   );
 
   const [selectedChannnelId, setSelectedChannelId] = useSendSettingsStore(
-    (state) => [state.channelId, state.setChannelId],
-    shallow,
+    useShallow((state) => [state.channelId, state.setChannelId]),
   );
 
   const [messageId, setMessageId] = useSendSettingsStore(
-    (state) => [state.messageId, state.setMessageId],
-    shallow,
+    useShallow((state) => [state.messageId, state.setMessageId]),
   );
 
   const [threadName, setThreadName] = useSendSettingsStore(
-    (state) => [state.threadName, state.setThreadName],
-    shallow,
+    useShallow((state) => [state.threadName, state.setThreadName]),
   );
 
   const { data: channels } = useGuildChannelsQuery(selectedGuildId);
