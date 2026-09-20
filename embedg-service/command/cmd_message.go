@@ -130,7 +130,7 @@ func (g *CommandHandler) getMessageFromCommand(e *handler.CommandEvent) (*discor
 		channelID, _ = snowflake.Parse(match[1])
 		messageID, _ = snowflake.Parse(match[2])
 
-		channel, err := g.guildState.Channel(context.TODO(), channelID)
+		channel, err := g.guildState.Channel(e.Ctx, channelID)
 		if err != nil {
 			return nil, e.CreateMessage(discord.MessageCreate{
 				Content: "The message belongs to a channel that the bot doesn't have access to.",

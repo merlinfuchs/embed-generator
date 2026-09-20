@@ -33,28 +33,17 @@ func (m *WebhookManager) channel(ctx context.Context, channelID common.ID) (disc
 
 // webhookChannel resolves the channel a webhook has to live on. Threads can't own webhooks, so
 // messages to a thread go through the parent's webhook with a thread id.
-func (m *WebhookManager) webhookChannel(ctx context.Context, channelID common.ID) (discord.GuildChannel, error) {
-	channel, err := m.channel(ctx, channelID)
-	if err != nil {
-		return nil, err
-	}
-
-	if !isThread(channel.Type()) {
+func (m *WebhookManager) webhookChannel(ctx context.Context, channel discord.GuildChannel) (discord.GuildChannel, error) {
+	if _, ok := channel.(discord.GuildThread); !ok {
 		return channel, nil
 	}
 
 	parentID := channel.ParentID()
 	if parentID == nil {
-		return nil, fmt.Errorf("thread %s has no parent channel", channelID)
+		return nil, fmt.Errorf("thread %s has no parent channel", channel.ID())
 	}
 
 	return m.channel(ctx, *parentID)
-}
-
-func isThread(channelType discord.ChannelType) bool {
-	return channelType == discord.ChannelTypeGuildNewsThread ||
-		channelType == discord.ChannelTypeGuildPublicThread ||
-		channelType == discord.ChannelTypeGuildPrivateThread
 }
 
 //go:embed logo-512.png
@@ -97,7 +86,7 @@ func (m *WebhookManager) SendMessageToChannel(ctx context.Context, channelID com
 			return nil, fmt.Errorf("Failed to send message: %w", err)
 		}
 	} else {
-		webhook, err := m.findWebhookForChannel(ctx, channelID)
+		webhook, err := m.findWebhookForChannel(ctx, channel)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to find webhook: %w", err)
 		}
@@ -161,7 +150,7 @@ func (m *WebhookManager) UpdateMessageInChannel(ctx context.Context, channelID c
 			return nil, fmt.Errorf("Failed to edt message: %w", err)
 		}
 	} else {
-		webhook, err := m.getWebhookForChannel(ctx, channelID, *msg.WebhookID)
+		webhook, err := m.getWebhookForChannel(ctx, channel, *msg.WebhookID)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get the webhook that was used to create the message: %w", err)
 		}
@@ -184,8 +173,8 @@ func (m *WebhookManager) UpdateMessageInChannel(ctx context.Context, channelID c
 	return newMessage, nil
 }
 
-func (m *WebhookManager) findWebhookForChannel(ctx context.Context, channelID common.ID) (*discord.IncomingWebhook, error) {
-	channel, err := m.webhookChannel(ctx, channelID)
+func (m *WebhookManager) findWebhookForChannel(ctx context.Context, target discord.GuildChannel) (*discord.IncomingWebhook, error) {
+	channel, err := m.webhookChannel(ctx, target)
 	if err != nil {
 		return nil, err
 	}
@@ -226,8 +215,8 @@ func (m *WebhookManager) findWebhookForChannel(ctx context.Context, channelID co
 	return webhook, nil
 }
 
-func (m *WebhookManager) getWebhookForChannel(ctx context.Context, channelID common.ID, webhookID common.ID) (*discord.IncomingWebhook, error) {
-	channel, err := m.webhookChannel(ctx, channelID)
+func (m *WebhookManager) getWebhookForChannel(ctx context.Context, target discord.GuildChannel, webhookID common.ID) (*discord.IncomingWebhook, error) {
+	channel, err := m.webhookChannel(ctx, target)
 	if err != nil {
 		return nil, err
 	}

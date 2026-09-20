@@ -22,10 +22,6 @@ func NewSource(ctx context.Context, guildState *guildstate.Provider) Source {
 }
 
 func (s Source) guild(guildID common.ID) (*discord.Guild, error) {
-	if s.guildState == nil {
-		return nil, fmt.Errorf("no guild state available")
-	}
-
 	state, err := s.guildState.Guild(s.ctx, guildID)
 	if err != nil {
 		return nil, err
@@ -35,18 +31,10 @@ func (s Source) guild(guildID common.ID) (*discord.Guild, error) {
 }
 
 func (s Source) channel(channelID common.ID) (discord.GuildChannel, error) {
-	if s.guildState == nil {
-		return nil, fmt.Errorf("no guild state available")
-	}
-
 	return s.guildState.Channel(s.ctx, channelID)
 }
 
 func (s Source) role(guildID common.ID, roleID common.ID) (*discord.Role, error) {
-	if s.guildState == nil {
-		return nil, fmt.Errorf("no guild state available")
-	}
-
 	state, err := s.guildState.Guild(s.ctx, guildID)
 	if err != nil {
 		return nil, err

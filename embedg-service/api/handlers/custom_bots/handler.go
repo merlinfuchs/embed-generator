@@ -115,11 +115,14 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 		}
 	}
 
+	// A guild the main bot can't see means no roles to check, not a failed request.
+	var roles []discord.Role
 	state, err := h.guildState.Guild(c.Context(), guildID)
-	if err != nil {
+	if err != nil && !errors.Is(err, store.ErrNotFound) {
 		return fmt.Errorf("Failed to get guild state: %w", err)
+	} else if state != nil {
+		roles = state.Roles
 	}
-	roles := state.Roles
 
 	hasPermissions := false
 	if isMember {
@@ -299,11 +302,14 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 		}
 	}
 
+	// A guild the main bot can't see means no roles to check, not a failed request.
+	var roles []discord.Role
 	state, err := h.guildState.Guild(c.Context(), guildID)
-	if err != nil {
+	if err != nil && !errors.Is(err, store.ErrNotFound) {
 		return fmt.Errorf("Failed to get guild state: %w", err)
+	} else if state != nil {
+		roles = state.Roles
 	}
-	roles := state.Roles
 
 	hasPermissions := false
 	if member != nil {
