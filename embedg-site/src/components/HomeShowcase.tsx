@@ -187,6 +187,9 @@ export default function HomeShowcase(): JSX.Element {
   const active = hovered ?? selected;
   const [entered, setEntered] = React.useState(false);
   const logRef = React.useRef<HTMLDivElement>(null);
+  const sectionRef = React.useRef<HTMLElement>(null);
+  const [touched, setTouched] = React.useState(false);
+  const [inView, setInView] = React.useState(false);
 
   // First message per feature, used as scroll target.
   const firstMsg: Record<FeatureId, string> = {
@@ -201,6 +204,31 @@ export default function HomeShowcase(): JSX.Element {
     v2: "event",
   };
 
+  React.useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => setInView(e.isIntersecting),
+      { threshold: 0.4 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  // Walk through the features on its own until the visitor takes over.
+  React.useEffect(() => {
+    if (touched || !inView) return;
+    const t = setInterval(() => {
+      setSelected((cur) => {
+        const i = features.findIndex((f) => f.id === cur);
+        const next = features[(i + 1) % features.length].id;
+        scrollToFeature(next);
+        return next;
+      });
+    }, 3500);
+    return () => clearInterval(t);
+  }, [touched, inView]);
+
   const scrollToFeature = (id: FeatureId) => {
     const log = logRef.current;
     const el = log?.querySelector<HTMLElement>(`[data-msg="${firstMsg[id]}"]`);
@@ -210,7 +238,10 @@ export default function HomeShowcase(): JSX.Element {
   };
 
   return (
-    <section className="border-0 border-t border-solid border-white/5 bg-ink-950/40">
+    <section
+      ref={sectionRef}
+      className="border-0 border-t border-solid border-white/5 bg-ink-950/40"
+    >
       <div className="mx-auto max-w-7xl px-5 py-20 md:px-8 lg:py-24">
         <div className="mb-10 max-w-2xl">
           <h2 className="mb-4 text-3xl font-bold tracking-tight text-mist-100 sm:text-4xl">
@@ -231,10 +262,12 @@ export default function HomeShowcase(): JSX.Element {
                 key={f.id}
                 type="button"
                 onMouseEnter={() => {
+                  setTouched(true);
                   setHovered(f.id);
                   scrollToFeature(f.id);
                 }}
                 onClick={() => {
+                  setTouched(true);
                   setSelected(f.id);
                   scrollToFeature(f.id);
                 }}
@@ -289,6 +322,8 @@ export default function HomeShowcase(): JSX.Element {
 
             <div
               ref={logRef}
+              onWheel={() => setTouched(true)}
+              onTouchMove={() => setTouched(true)}
               className="relative max-h-[640px] overflow-y-auto py-3 [scrollbar-color:#34435F_transparent] [scrollbar-width:thin]"
             >
               <Divider label="Monday" />
