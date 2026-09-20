@@ -11,7 +11,10 @@ import EditorMessagePreview from "../../components/EditorMessagePreview";
 import EditorWebhookFields from "../../components/EditorWebhookFields";
 import SendMenu from "../../components/SendMenu";
 import { messageSchema } from "../../discord/schema";
-import { useDebouncedCurrentMessage } from "../../state/currentMessage";
+import {
+  currentIdToPath,
+  useDebouncedCurrentMessage,
+} from "../../state/currentMessage";
 import { useCurrentMessageStore } from "../../state/message";
 import { useValidationErrorStore } from "../../state/validationError";
 import EditorErrorBoundary from "../../components/EditorErrorBoundary";
@@ -25,7 +28,7 @@ export default function EditorView() {
     if (!message) return;
 
     const res = messageSchema.safeParse(message);
-    setValidationError(res.success ? null : res.error);
+    setValidationError(res.success ? null : res.error, currentIdToPath());
   }, [message, setValidationError]);
 
   const componentsV2Enabled = useCurrentMessageStore((s) =>

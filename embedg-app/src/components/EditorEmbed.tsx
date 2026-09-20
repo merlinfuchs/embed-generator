@@ -5,7 +5,6 @@ import {
   useDocumentStore,
   useNode,
   useNodeIndex,
-  useNodePath,
 } from "../state/document";
 import { colorIntToHex } from "../util/discord";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
@@ -21,7 +20,6 @@ interface Props {
 
 export default function EditorEmbed({ id }: Props) {
   const embed = useNode<EmbedNode>(id);
-  const path = useNodePath(id);
   const { index, count } = useNodeIndex(id);
 
   const { move, duplicate, remove } = useDocumentStore.getState();
@@ -38,7 +36,7 @@ export default function EditorEmbed({ id }: Props) {
   return (
     <EditorComponentCollapsable
       id={`embeds.${id}`}
-      validationPathPrefix={path ?? undefined}
+      validationNodeId={id}
       title={`Embed ${index + 1}`}
       size="large"
       defaultCollapsed={true}

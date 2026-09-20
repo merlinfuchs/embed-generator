@@ -4,7 +4,6 @@ import {
   useDocumentStore,
   useNode,
   useNodeIndex,
-  useNodePath,
 } from "../state/document";
 import CheckBox from "./CheckBox";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
@@ -16,7 +15,6 @@ interface Props {
 
 export default function EditorEmbedField({ id }: Props) {
   const field = useNode<EmbedFieldNode>(id);
-  const path = useNodePath(id);
   const { index, count } = useNodeIndex(id);
 
   const { move, duplicate, remove, update } = useDocumentStore.getState();
@@ -26,7 +24,7 @@ export default function EditorEmbedField({ id }: Props) {
   return (
     <EditorComponentCollapsable
       id={`embeds.fields.${id}`}
-      validationPathPrefix={path ?? undefined}
+      validationNodeId={id}
       title={`Field ${index + 1}`}
       className="border-2 border-dark-6 rounded-md p-3"
       extra={
@@ -50,7 +48,8 @@ export default function EditorEmbedField({ id }: Props) {
             onChange={(v) => update<EmbedFieldNode>(id, { name: v })}
             maxLength={256}
             className="w-full"
-            validationPath={`${path}.name`}
+            validationNodeId={id}
+            validationField="name"
           />
           <div>
             <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
@@ -69,7 +68,8 @@ export default function EditorEmbedField({ id }: Props) {
           value={field.value}
           onChange={(v) => update<EmbedFieldNode>(id, { value: v })}
           maxLength={1024}
-          validationPath={`${path}.value`}
+          validationNodeId={id}
+          validationField="value"
           controls={true}
         />
       </div>

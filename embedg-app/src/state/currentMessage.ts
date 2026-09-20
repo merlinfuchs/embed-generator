@@ -16,6 +16,11 @@ export function getCurrentMessage(): Message {
   };
 }
 
+/** Node ids to zod issue paths, for the validation index. */
+export function currentIdToPath() {
+  return toMessage(useDocumentStore.getState()).idToPath;
+}
+
 /**
  * The merged message, at most once per `wait` milliseconds. Subscribing instead
  * of selecting keeps a keystroke from re-rendering everything that reads the

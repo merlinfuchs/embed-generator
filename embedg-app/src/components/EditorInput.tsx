@@ -16,6 +16,8 @@ interface Props {
   props?: Record<string, any>;
   className?: string;
   validationPath?: string;
+  validationNodeId?: string;
+  validationField?: string;
   controls?: boolean;
   imageUpload?: boolean;
 }
@@ -30,6 +32,8 @@ export default function EditorInput({
   props,
   className,
   validationPath,
+  validationNodeId,
+  validationField,
   controls,
   imageUpload,
 }: Props) {
@@ -100,7 +104,13 @@ export default function EditorInput({
           </div>
         )}
       </div>
-      {validationPath && <ValidationError path={validationPath} />}
+      {(validationPath || validationNodeId !== undefined) && (
+        <ValidationError
+          path={validationPath}
+          nodeId={validationNodeId}
+          field={validationField}
+        />
+      )}
     </div>
   );
 }

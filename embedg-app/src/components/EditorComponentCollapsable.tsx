@@ -9,6 +9,8 @@ import Collapsable from "./Collapsable";
 interface Props {
   id: string;
   validationPathPrefix?: string | string[];
+  validationNodeId?: string;
+  validationFields?: string[];
   title: string;
   extra?: React.ReactNode;
   className?: string;
@@ -25,6 +27,8 @@ interface Props {
 export default function EditorComponentCollapsable({
   id,
   validationPathPrefix,
+  validationNodeId,
+  validationFields,
   duplicate,
   moveUp,
   moveDown,
@@ -42,6 +46,8 @@ export default function EditorComponentCollapsable({
       <Collapsable
         id={id}
         validationPathPrefix={validationPathPrefix}
+        validationNodeId={validationNodeId}
+        validationFields={validationFields}
         title={title}
         extra={extra}
         size={size}

@@ -14,7 +14,8 @@ export default function EditorEmbeds() {
       id="embeds"
       title="Embeds"
       size="large"
-      validationPathPrefix="embeds"
+      validationNodeId={rootId}
+      validationFields={["embeds"]}
       extra={
         <div className="text-sm italic font-light text-gray-400">
           {embedIds.length} / 10

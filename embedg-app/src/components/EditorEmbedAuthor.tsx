@@ -3,7 +3,6 @@ import {
   type NodeId,
   useDocumentStore,
   useNode,
-  useNodePath,
 } from "../state/document";
 import { patchGroup } from "../util/patch";
 import Collapsable from "./Collapsable";
@@ -15,7 +14,6 @@ interface Props {
 
 export default function EditorEmbedAuthor({ id }: Props) {
   const embed = useNode<EmbedNode>(id);
-  const path = useNodePath(id);
   const { update } = useDocumentStore.getState();
 
   if (!embed) return null;
@@ -32,7 +30,8 @@ export default function EditorEmbedAuthor({ id }: Props) {
     <Collapsable
       title="Author"
       id={`embeds.${id}.author`}
-      validationPathPrefix={`${path}.author`}
+      validationNodeId={id}
+      validationFields={["author"]}
     >
       <div className="space-y-3">
         <EditorInput
@@ -40,7 +39,8 @@ export default function EditorEmbedAuthor({ id }: Props) {
           value={author?.name || ""}
           onChange={(v) => patchAuthor({ name: v })}
           maxLength={256}
-          validationPath={`${path}.author.name`}
+          validationNodeId={id}
+          validationField="author.name"
         />
         <div className="flex space-x-3">
           <EditorInput
@@ -49,7 +49,8 @@ export default function EditorEmbedAuthor({ id }: Props) {
             value={author?.url || ""}
             onChange={(v) => patchAuthor({ url: v || undefined })}
             className="w-1/2"
-            validationPath={`${path}.author.url`}
+            validationNodeId={id}
+            validationField="author.url"
           />
           <EditorInput
             type="url"
@@ -57,7 +58,8 @@ export default function EditorEmbedAuthor({ id }: Props) {
             value={author?.icon_url || ""}
             onChange={(v) => patchAuthor({ icon_url: v || undefined })}
             className="w-1/2"
-            validationPath={`${path}.author.icon_url`}
+            validationNodeId={id}
+            validationField="author.icon_url"
             imageUpload={true}
           />
         </div>

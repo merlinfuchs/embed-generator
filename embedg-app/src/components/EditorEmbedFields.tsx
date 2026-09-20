@@ -1,10 +1,5 @@
 import clsx from "clsx";
-import {
-  type NodeId,
-  useChildIds,
-  useDocumentStore,
-  useNodePath,
-} from "../state/document";
+import { type NodeId, useChildIds, useDocumentStore } from "../state/document";
 import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";
 import EditorEmbedField from "./EditorEmbedField";
@@ -14,14 +9,14 @@ interface Props {
 }
 
 export default function EditorEmbedFields({ id }: Props) {
-  const path = useNodePath(id);
   const fieldIds = useChildIds(id, "fields");
   const { insert, removeChildren } = useDocumentStore.getState();
 
   return (
     <Collapsable
       id={`embeds.${id}.fields`}
-      validationPathPrefix={path ? `${path}.fields` : undefined}
+      validationNodeId={id}
+      validationFields={["fields"]}
       title="Fields"
       extra={
         <div className="text-sm italic font-light text-gray-400">
