@@ -183,12 +183,19 @@ export default function HomeShowcase(): JSX.Element {
     return () => obs.disconnect();
   }, []);
 
+  const slideEls = () =>
+    [...(trackRef.current?.querySelectorAll<HTMLElement>("[data-slide]") ?? [])];
+
   const go = (i: number) => {
     const track = trackRef.current;
-    if (!track) return;
+    const el = slideEls()[i];
+    if (!track || !el) return;
     lockUntil.current = Date.now() + 800;
     setIndex(i);
-    track.scrollTo({ top: i * track.clientHeight, behavior: "smooth" });
+    track.scrollTo({
+      top: el.offsetTop - (track.clientHeight - el.offsetHeight) / 2,
+      behavior: "smooth",
+    });
   };
 
   React.useEffect(() => {
@@ -204,7 +211,17 @@ export default function HomeShowcase(): JSX.Element {
     if (Date.now() < lockUntil.current) return;
     const track = trackRef.current;
     if (!track) return;
-    setIndex(Math.round(track.scrollTop / track.clientHeight));
+    const mid = track.scrollTop + track.clientHeight / 2;
+    let best = 0;
+    let bestDist = Infinity;
+    slideEls().forEach((el, i) => {
+      const d = Math.abs(el.offsetTop + el.offsetHeight / 2 - mid);
+      if (d < bestDist) {
+        bestDist = d;
+        best = i;
+      }
+    });
+    setIndex(best);
   };
 
   const slides: Record<FeatureId, React.ReactNode> = {
@@ -535,19 +552,22 @@ export default function HomeShowcase(): JSX.Element {
               onScroll={onScroll}
               onWheel={() => setTouched(true)}
               onTouchMove={() => setTouched(true)}
-              className="h-[520px] snap-y snap-mandatory overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="relative h-[520px] snap-y snap-mandatory overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
+              <div aria-hidden className="h-40" />
               {features.map((f, i) => (
                 <div
                   key={f.id}
+                  data-slide
                   className={[
-                    "flex h-full snap-start flex-col justify-center px-5 py-8 transition-opacity duration-500 sm:px-8",
+                    "snap-center px-5 py-6 transition-opacity duration-500 sm:px-8",
                     index === i ? "opacity-100" : "opacity-25",
                   ].join(" ")}
                 >
                   {slides[f.id]}
                 </div>
               ))}
+              <div aria-hidden className="h-40" />
             </div>
             <div
               aria-hidden
