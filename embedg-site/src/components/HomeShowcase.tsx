@@ -532,15 +532,6 @@ export default function HomeShowcase(): JSX.Element {
                   <span className="hidden text-xs text-mist-400 lg:block">
                     {f.blurb}
                   </span>
-                  {index === i && (
-                    <a
-                      href={f.href}
-                      onClick={(e) => e.stopPropagation()}
-                      className="mt-1 hidden text-xs font-medium text-azure-400 hover:text-azure-300 lg:block"
-                    >
-                      Read the docs →
-                    </a>
-                  )}
                 </span>
               </button>
             ))}
@@ -577,8 +568,16 @@ export default function HomeShowcase(): JSX.Element {
               aria-hidden
               className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-ink-800 to-transparent"
             />
-            <div className="pointer-events-none absolute bottom-3 right-4 text-xs text-mist-500">
-              {index + 1} / {features.length}
+            <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-5 py-3 text-xs sm:px-8">
+              <a
+                href={features[index].href}
+                className="font-medium text-azure-400 hover:text-azure-300"
+              >
+                Read the docs on {features[index].name.toLowerCase()} →
+              </a>
+              <span className="text-mist-500">
+                {index + 1} / {features.length}
+              </span>
             </div>
           </div>
         </div>
