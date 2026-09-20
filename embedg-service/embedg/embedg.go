@@ -47,6 +47,9 @@ func NewEmbedGenerator(
 		// We don't want to listen for events by custom bots
 		GroupIDs: []string{"default"},
 		EventTypes: []string{
+			"guild.create",
+			"guild.update",
+			"guild.delete",
 			"message.delete",
 			"channel.delete",
 			"webhooks.update",

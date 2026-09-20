@@ -74,6 +74,16 @@ type Entitlement struct {
 	ConsumedGuildID pgtype.Text
 }
 
+type Guild struct {
+	ID        int64
+	Name      string
+	Icon      pgtype.Text
+	OwnerID   int64
+	JoinedAt  pgtype.Timestamp
+	LeftAt    pgtype.Timestamp
+	UpdatedAt pgtype.Timestamp
+}
+
 type Image struct {
 	ID              string
 	UserID          string
