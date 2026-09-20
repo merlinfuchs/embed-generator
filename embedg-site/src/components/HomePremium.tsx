@@ -12,19 +12,19 @@ const perks = [
 
 export default function HomePremium(): JSX.Element {
   return (
-    <section className="bg-azure-600 text-white">
-      <div className="mx-auto grid max-w-7xl gap-10 px-5 py-16 md:px-8 lg:grid-cols-2 lg:items-center lg:py-24">
+    <section className="mx-auto max-w-7xl px-5 pt-16 md:px-8 lg:pt-24">
+      <div className="grid gap-10 rounded-3xl border border-solid border-white/10 bg-ink-800 px-6 py-12 md:px-12 lg:grid-cols-2 lg:items-center lg:px-16 lg:py-16">
         <div>
-          <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
+          <h2 className="mb-4 text-3xl font-bold tracking-tight text-mist-100 sm:text-4xl">
             Want more? Get Premium.
           </h2>
-          <p className="mb-8 max-w-md text-lg text-white/80">
+          <p className="mb-8 max-w-md text-lg text-mist-400">
             Unlocks the good stuff for one server and pays for the servers
             that keep this running for everyone else.
           </p>
           <div className="mb-8 flex items-baseline gap-2">
-            <span className="text-5xl font-bold tracking-tight">$4.99</span>
-            <span className="text-white/70">/ month, cancel anytime</span>
+            <span className="text-5xl font-bold tracking-tight text-mist-100">$4.99</span>
+            <span className="text-mist-400">/ month, cancel anytime</span>
           </div>
           <a
             href="/premium"
@@ -35,8 +35,8 @@ export default function HomePremium(): JSX.Element {
         </div>
         <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 lg:grid-cols-1">
           {perks.map((p) => (
-            <li key={p} className="flex items-center gap-3 text-white/90">
-              <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-white/20">
+            <li key={p} className="flex items-center gap-3 text-mist-300">
+              <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-amber-400/15 text-amber-300">
                 <CheckIcon className="h-3.5 w-3.5" />
               </span>
               {p}
