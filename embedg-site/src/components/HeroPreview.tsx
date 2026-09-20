@@ -9,7 +9,6 @@ import {
   AvatarSpec,
   DiscordButton,
   Reactions,
-  Typing,
 } from "./discord";
 
 const avatars: AvatarSpec[] = [
@@ -199,9 +198,6 @@ export default function HeroPreview(): JSX.Element {
               </div>
             )}
           </div>
-        </div>
-        <div className="pl-14 pt-1">
-          <Typing who="Merlin" />
         </div>
       </div>
     </div>
