@@ -28,6 +28,7 @@ type AccessManager struct {
 
 	singleFlight    singleflight.Group
 	userMemberCache *ttlcache.Cache[string, *discord.Member]
+	userGuildsCache *ttlcache.Cache[string, []discord.OAuth2Guild]
 }
 
 func New(
@@ -40,6 +41,9 @@ func New(
 	userMemberCache := ttlcache.New(ttlcache.WithTTL[string, *discord.Member](time.Minute))
 	go userMemberCache.Start()
 
+	userGuildsCache := ttlcache.New(ttlcache.WithTTL[string, []discord.OAuth2Guild](time.Minute))
+	go userGuildsCache.Start()
+
 	return &AccessManager{
 		guildState:      guildState,
 		guildStore:      guildStore,
@@ -47,6 +51,7 @@ func New(
 		appContext:      appContext,
 		sessionManager:  sessionManager,
 		userMemberCache: userMemberCache,
+		userGuildsCache: userGuildsCache,
 	}
 }
 
@@ -74,26 +79,6 @@ func (c *ChannelAccess) UserAccess() bool {
 
 func (c *ChannelAccess) BotAccess() bool {
 	return c.BotPermissions&(RequiredPermissions|discord.PermissionAdministrator) != 0
-}
-
-// CheckGuildsKnown reports, in input order, which of these guilds the bot is still in.
-func (m *AccessManager) CheckGuildsKnown(ctx context.Context, guildIDs []common.ID) ([]bool, error) {
-	guilds, err := m.guildStore.GetGuilds(ctx, guildIDs)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to check guilds known: %w", err)
-	}
-
-	known := make(map[common.ID]struct{}, len(guilds))
-	for _, guild := range guilds {
-		known[guild.ID] = struct{}{}
-	}
-
-	res := make([]bool, len(guildIDs))
-	for i, guildID := range guildIDs {
-		_, res[i] = known[guildID]
-	}
-
-	return res, nil
 }
 
 // GetGuildAccessForSession resolves the user's member with their own OAuth token.

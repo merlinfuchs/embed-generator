@@ -264,18 +264,23 @@ Both caches are capacity bounded and evict least recently used: uncapped, a traf
 
 Replace all 30 `caches.X(...)` read sites in the service with the provider. They are in `actions/parser/permissions.go` (10), `manager/webhook/message.go` (6), `actions/template/data.go` (3), `access/access.go` (3), `api/handlers/guilds/handler.go` (2), `api/handlers/custom_bots/handler.go` (2), `command/cmd_message.go` (1), `api/handlers/send_message/handler.go` (1). Every one of them currently treats a cache miss as an error or as "no permissions"; with the provider a miss is a real REST error or 404 and should be handled as such. Remove `cache.Caches` from every constructor that only used it for these reads.
 
-**CheckGuildsKnown.** Takes a `ctx` and replaces its body with `m.guildStore.GetGuilds(ctx, guildIDs)`, mapped back to `[]bool` in input order. `AccessManager` swaps its `cache cache.Cache` and `caches discache.Caches` fields for `guildState *guildstate.Provider` and `guildStore store.GuildStore`, which takes `access` off `stateway-lib` entirely.
+**CheckGuildsKnown.** Deleted rather than reworked. Its only callers were the two guild handlers, and both need the guild rows (name, icon), not a positional `[]bool`, so they read `guildStore.GetGuilds` directly. `AccessManager` swaps its `cache cache.Cache` and `caches discache.Caches` fields for `guildState *guildstate.Provider` and `guildStore store.GuildStore`, which takes `access` off `stateway-lib` entirely.
 
-**Guild list endpoint.** `HandleListGuilds` in `api/handlers/guilds/handler.go` currently calls `GetGuildAccessForUser` for every guild in the session, which needs channels and roles per guild. On a non-owner instance that's up to three REST calls per guild. Replace with:
+**Guild list endpoint.** `HandleListGuilds` in `api/handlers/guilds/handler.go` called `GetGuildAccessForUser` for every guild in the session, which needs channels and roles per guild: with the provider that is up to five REST calls per guild, sequentially, on a page the dashboard loads every visit. Replace with:
 
-1. `userGuilds := am.GetGuildsForUser(ctx, sess)` (B3).
-2. Keep only those where `Permissions & (ManageWebhooks | Administrator) != 0`.
-3. `known := guildStore.GetGuilds(ctx, ids)`. Intersect.
-4. Respond with `id`, `name`, `icon` from the `guilds` table row and the user's guild-level permissions. No channel-level computation here.
+1. `userGuilds := am.GetGuildsForUser(ctx, sess)` (added here, where it finally has a caller).
+2. `guilds := guildStore.GetGuilds(ctx, ids)`. The intersection is the answer; the handler takes a `store.GuildStore`.
+3. Respond with `id`, `name`, `icon` from the `guilds` table row, and `has_user_access` from `Permissions & (ManageWebhooks | Administrator) != 0` via `access.HasGuildPermissions`. No channel level computation.
 
-Check `wire.GuildWire` for fields the frontend expects beyond these and source them from the table or the OAuth response. If the frontend relies on a channel-level "bot has access" boolean in the list, drop it from the list and let the guild view surface it.
+Do not filter the list on that permission, as an earlier draft of this step said: the picker greys out guilds the user can't manage, so dropping them instead would make "you lack permission here" indistinguishable from "the bot isn't in this server", and would leave `has_user_access` constantly true.
 
-`HandleGetGuild` keeps the full `GetGuildAccessForUser` check. That's one guild, one state fetch, cached two minutes.
+`wire.GuildWire` loses both access booleans and becomes `id`, `name`, `icon`. `has_channel_with_bot_access` cannot survive: it needs every channel of every guild. `has_channel_with_user_access` cannot either, for the same reason, and replacing it with Discord's guild level permissions would lock out anyone whose Manage Webhooks comes from a channel overwrite rather than a role — the pickers used it to disable selection. Every guild the user and the bot share is now selectable, and the channel picker is the authority on what can actually be used: it already lists only channels where both the user and the bot have access, and `ChannelSelect.tsx` now says so explicitly when no channel has `bot_access`.
+
+Nothing else moves to guild level permissions. `CheckGuildAccessForRequest` (saved messages, scheduled messages, custom bots, images, assistant, channel and role lists) still resolves through `maxChannelPermissions`, which applies channel overwrites, and `CheckChannelAccessForRequest` (send, restore) is still per channel. A user with only a channel overwrite passes both.
+
+`wire.ts` is hand edited for this. `tygo.yaml` still points at `embedg-server`, and pointing it at `embedg-service` today regresses every id field to `any` because the service's wire package uses `common.ID`, `common.NullID` and `actions.ActionSet`. B8 needs `type_mappings` for those three before the switch, and will pick up the new health types.
+
+`HandleGetGuild` keeps `CheckGuildAccessForRequest` for the 403, then reads name and icon from the `guilds` table like the list does. Do not also call `GetGuildAccessForSession` for them: that recomputes the whole permission pass the check just did, and answers "does this guild exist" from REST while the table answers it from postgres, so the two can disagree.
 
 **GetGuildAccessForUser.** Replace the two `m.cache.GetGuildWithPermissions` calls with a local function in `access/helpers.go`:
 
