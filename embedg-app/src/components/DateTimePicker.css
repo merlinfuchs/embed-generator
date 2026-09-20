@@ -1,3 +1,5 @@
+@reference "../index.css";
+
 .react-datetime-picker {
   @apply w-full;
 }
@@ -23,11 +25,11 @@
 }
 
 .react-calendar button {
-  @apply focus:bg-dark-3 hover:bg-dark-3 !important;
+  @apply focus:bg-dark-3! hover:bg-dark-3!;
 }
 
 .react-calendar__navigation__label {
-  @apply bg-dark-2 !important;
+  @apply bg-dark-2!;
 }
 
 .react-datetime-picker__clock {
@@ -35,13 +37,13 @@
 }
 
 .react-clock__face {
-  @apply bg-dark-3 !important;
+  @apply bg-dark-3!;
 }
 
 .react-clock__face div {
-  @apply bg-gray-100 !important;
+  @apply bg-gray-100!;
 }
 
 .react-clock__hand div {
-  @apply bg-gray-100 !important;
+  @apply bg-gray-100!;
 }

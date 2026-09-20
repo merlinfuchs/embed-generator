@@ -20,7 +20,7 @@ export default function EditorModal({
 
   return (
     <div
-      className="fixed h-[100dvh] w-[100vw] bg-black bg-opacity-70 flex flex-col items-center justify-center px-2 py-20 sm:px-5 md:px-10 lg:px-20 xl:px-32 z-30 overflow-hidden top-0 left-0"
+      className="fixed h-[100dvh] w-[100vw] bg-black/70 flex flex-col items-center justify-center px-2 py-20 sm:px-5 md:px-10 lg:px-20 xl:px-32 z-30 overflow-hidden top-0 left-0"
       onClick={(e) => e.target === e.currentTarget && navigate("/editor")}
     >
       <div

@@ -1,6 +1,42 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-blurple: #5865f2;
+  --color-blurple-dark: #4650c7;
+  --color-green: #57f287;
+  --color-yellow: #fee75c;
+  --color-fuchsia: #eb459e;
+  --color-red: #ed4245;
+  --color-dark-1: #18191c;
+  --color-dark-2: #1f2225;
+  --color-dark-3: #2e3136;
+  --color-dark-4: #36393e;
+  --color-dark-5: #3e4247;
+  --color-dark-6: #45494f;
+  --color-dark-7: #71757d;
+
+  --height-128: 32rem;
+  --height-160: 40rem;
+  --height-192: 48rem;
+  --height-256: 64rem;
+
+  --width-18: 4.5rem;
+  --width-128: 32rem;
+  --width-160: 40rem;
+  --width-192: 48rem;
+  --width-256: 64rem;
+
+  --scale-101: 1.01;
+}
+
+@layer base {
+  /* v4's preflight gives buttons the default cursor; the app was built
+     against v3, where they were pointers. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
 
 .no-scrollbar::-webkit-scrollbar {
   display: none;

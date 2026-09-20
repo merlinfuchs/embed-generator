@@ -24,7 +24,6 @@
     "@types/react-twemoji": "^0.4.1",
     "@uiw/codemirror-theme-github": "^4.19.11",
     "@uiw/react-codemirror": "^4.19.11",
-    "autoprefixer": "^10.4.14",
     "clsx": "^1.2.1",
     "cronstrue": "^2.47.0",
     "date-fns": "^2.29.3",
@@ -43,7 +42,6 @@
     "react-textarea-autosize": "^8.4.1",
     "react-twemoji": "^0.5.0",
     "simple-markdown": "^0.7.3",
-    "tailwindcss": "^3.3.1",
     "vaul": "^0.7.0",
     "zod": "^3.21.4",
     "zundo": "^2.1.0",
@@ -51,6 +49,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.14",
+    "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7",
     "@testing-library/react": "^14",
@@ -59,6 +58,7 @@
     "@types/react-dom": "^18.0.11",
     "@vitejs/plugin-react-swc": "^4.3.3",
     "jsdom": "^24",
+    "tailwindcss": "^4",
     "typescript": "^5.8.3",
     "vite": "^7",
     "vitest": "^3"
