@@ -17,6 +17,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-service/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-service/api/wire"
+	"github.com/merlinfuchs/embed-generator/embedg-service/guildstate"
 	"github.com/merlinfuchs/embed-generator/embedg-service/manager/custom_bot"
 	"github.com/merlinfuchs/embed-generator/embedg-service/manager/premium"
 	"github.com/merlinfuchs/embed-generator/embedg-service/manager/webhook"
@@ -92,6 +93,7 @@ type Env struct {
 	ScheduledMessageStore store.ScheduledMessageStore
 	CustomBotStore        store.CustomBotStore
 	GuildStore            store.GuildStore
+	GuildState            *guildstate.Provider
 	CustomCommandStore    store.CustomCommandStore
 	ImageStore            store.ImageStore
 	EmbedLinkStore        store.EmbedLinkStore

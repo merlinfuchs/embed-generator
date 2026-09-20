@@ -6,6 +6,30 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-service/guildstate"
 )
 
+// permissionSource returns the channel whose overwrites decide access. For a thread that's its
+// parent: disgo returns no overwrites for threads at all, so computing permissions from the thread
+// itself silently ignores everything the parent allows or denies. Falling back to the thread only
+// matters when its parent isn't in the guild's channel list.
+func permissionSource(channel discord.GuildChannel, state *guildstate.State) discord.GuildChannel {
+	thread, ok := channel.(discord.GuildThread)
+	if !ok {
+		return channel
+	}
+
+	parentID := thread.ParentID()
+	if parentID == nil {
+		return channel
+	}
+
+	for _, candidate := range state.Channels {
+		if candidate.ID() == *parentID {
+			return candidate
+		}
+	}
+
+	return channel
+}
+
 // maxChannelPermissions ORs the member's permissions over every channel they could send in, which
 // is what "has access to this guild" means here. It stops as soon as stopAt is satisfied, so a
 // guild with hundreds of channels usually costs a handful of iterations.

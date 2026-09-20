@@ -24,6 +24,7 @@ const (
 	// caches are capped and evict least recently used rather than growing to the guild count.
 	guildCapacity   = 10_000
 	channelCapacity = 50_000
+	threadCapacity  = 10_000
 )
 
 // State is everything guild scoped that permission checks and templates read. There is no gateway
@@ -32,6 +33,8 @@ type State struct {
 	Guild    discord.Guild
 	Channels []discord.GuildChannel
 	Roles    []discord.Role
+	Emojis   []discord.Emoji
+	Stickers []discord.Sticker
 }
 
 type Provider struct {
@@ -40,6 +43,7 @@ type Provider struct {
 	singleFlight singleflight.Group
 	guilds       *ttlcache.Cache[string, *State]
 	channels     *ttlcache.Cache[string, discord.GuildChannel]
+	threads      *ttlcache.Cache[string, []discord.GuildThread]
 }
 
 func New(rest rest.Rest) *Provider {
@@ -55,14 +59,36 @@ func New(rest rest.Rest) *Provider {
 	)
 	go channels.Start()
 
+	threads := ttlcache.New(
+		ttlcache.WithTTL[string, []discord.GuildThread](stateTTL),
+		ttlcache.WithCapacity[string, []discord.GuildThread](threadCapacity),
+	)
+	go threads.Start()
+
 	return &Provider{
 		rest:     rest,
 		guilds:   guilds,
 		channels: channels,
+		threads:  threads,
 	}
 }
 
-// Guild returns the guild with its channels and roles. Returns store.ErrNotFound if the bot can't
+// Threads lists the guild's active threads. They are not part of the channel list Discord returns
+// for a guild, but they can be posted in, so the channel picker needs them.
+func (p *Provider) Threads(ctx context.Context, guildID common.ID) ([]discord.GuildThread, error) {
+	return common.GetOrSet(&p.singleFlight, threadsKey(guildID), p.threads, func() ([]discord.GuildThread, error) {
+		active, err := p.rest.GetActiveGuildThreads(guildID, rest.WithCtx(ctx))
+		if err != nil {
+			if isGone(err) {
+				return nil, nil
+			}
+			return nil, fmt.Errorf("failed to get active threads: %w", err)
+		}
+		return active.Threads, nil
+	})
+}
+
+// Guild returns the guild with its channels, roles, emojis and stickers. Returns store.ErrNotFound if the bot can't
 // see the guild.
 func (p *Provider) Guild(ctx context.Context, guildID common.ID) (*State, error) {
 	// A nil state is cached on purpose, so a guild the bot was kicked from costs one lookup per TTL
@@ -76,7 +102,11 @@ func (p *Provider) Guild(ctx context.Context, guildID common.ID) (*State, error)
 			if err != nil {
 				return fmt.Errorf("failed to get guild: %w", err)
 			}
+			// GET /guilds/{id} carries these three, so nothing else has to fetch them.
 			state.Guild = guild.Guild
+			state.Roles = guild.Roles
+			state.Emojis = guild.Emojis
+			state.Stickers = guild.Stickers
 			return nil
 		})
 		group.Go(func() error {
@@ -87,15 +117,6 @@ func (p *Provider) Guild(ctx context.Context, guildID common.ID) (*State, error)
 			state.Channels = channels
 			return nil
 		})
-		group.Go(func() error {
-			roles, err := p.rest.GetRoles(guildID, rest.WithCtx(ctx))
-			if err != nil {
-				return fmt.Errorf("failed to get guild roles: %w", err)
-			}
-			state.Roles = roles
-			return nil
-		})
-
 		if err := group.Wait(); err != nil {
 			if isGone(err) {
 				return nil, nil
@@ -160,6 +181,10 @@ func isGone(err error) bool {
 
 // The prefixes matter: both caches share one singleflight group, and in guilds created before 2017
 // the default channel's id equals the guild id.
+func threadsKey(guildID common.ID) string {
+	return "threads:" + guildID.String()
+}
+
 func guildKey(guildID common.ID) string {
 	return "guild:" + guildID.String()
 }
