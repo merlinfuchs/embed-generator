@@ -1,10 +1,9 @@
 import clsx from "clsx";
 import { type NodeId, useChildIds, useDocumentStore } from "../state/document";
 import { AutoAnimate } from "../util/autoAnimate";
+import { slotScope } from "../state/validationError";
 import Collapsable from "./Collapsable";
 import EditorEmbedField from "./EditorEmbedField";
-
-const FIELD_FIELDS = ["fields"];
 
 interface Props {
   id: NodeId;
@@ -17,7 +16,7 @@ export default function EditorEmbedFields({ id }: Props) {
   return (
     <Collapsable
       id={`embeds.${id}.fields`}
-      validationPathPrefix={{ nodeId: id, fields: FIELD_FIELDS }}
+      validationPathPrefix={slotScope(id, "fields")}
       title="Fields"
       extra={
         <div className="text-sm italic font-light text-gray-400">

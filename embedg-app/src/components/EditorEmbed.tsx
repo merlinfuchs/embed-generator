@@ -2,11 +2,12 @@ import { useMemo } from "react";
 import {
   type EmbedNode,
   type NodeId,
-  useDocumentStore,
   useNode,
+  useNodeActions,
   useNodeIndex,
 } from "../state/document";
 import { colorIntToHex } from "../util/discord";
+import { nodeScope } from "../state/validationError";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
 import EditorEmbedAuthor from "./EditorEmbedAuthor";
 import EditorEmbedBody from "./EditorEmbedBody";
@@ -20,9 +21,8 @@ interface Props {
 
 export default function EditorEmbed({ id }: Props) {
   const embed = useNode<EmbedNode>(id);
-  const { index, count } = useNodeIndex(id);
-
-  const { move, duplicate, remove } = useDocumentStore.getState();
+  const { index } = useNodeIndex(id);
+  const actions = useNodeActions(id, 10);
 
   const hexColor = useMemo(
     () => (embed?.color !== undefined ? colorIntToHex(embed.color) : "#1f2225"),
@@ -36,7 +36,7 @@ export default function EditorEmbed({ id }: Props) {
   return (
     <EditorComponentCollapsable
       id={`embeds.${id}`}
-      validationPathPrefix={{ nodeId: id }}
+      validationPathPrefix={nodeScope<EmbedNode>(id)}
       title={`Embed ${index + 1}`}
       size="large"
       defaultCollapsed={true}
@@ -50,10 +50,7 @@ export default function EditorEmbed({ id }: Props) {
           </div>
         )
       }
-      moveUp={index > 0 ? () => move(id, -1) : undefined}
-      moveDown={index < count - 1 ? () => move(id, 1) : undefined}
-      duplicate={count < 10 ? () => duplicate(id) : undefined}
-      remove={() => remove(id)}
+      {...actions}
     >
       <div className="space-y-4">
         <EditorEmbedAuthor id={id} />

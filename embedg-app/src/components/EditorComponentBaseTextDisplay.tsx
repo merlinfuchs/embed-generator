@@ -1,43 +1,38 @@
+import {
+  type TextDisplayNode,
+  type NodeId,
+  useDocumentStore,
+  useNode,
+  useNodeActions,
+} from "../state/document";
+import { nodeField, nodeScope } from "../state/validationError";
 import EditorInput from "./EditorInput";
-import type { MessageComponentTextDisplay } from "../discord/schema";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
 
 interface Props {
-  id: string;
-  validationPathPrefix: string;
+  id: NodeId;
   title?: string;
-  data: MessageComponentTextDisplay;
-  onChange: (data: Partial<MessageComponentTextDisplay>) => void;
-
-  duplicate?: () => void;
-  moveUp?: () => void;
-  moveDown?: () => void;
-  remove?: () => void;
   size?: "medium" | "large";
 }
 
 export default function EditorComponentBaseTextDisplay({
   id,
-  validationPathPrefix,
   title = "Text Display",
-  data,
-  onChange,
-  duplicate,
-  moveUp,
-  moveDown,
-  remove,
   size = "medium",
 }: Props) {
+  const data = useNode<TextDisplayNode>(id);
+  const actions = useNodeActions(id);
+  const { update } = useDocumentStore.getState();
+
+  if (!data) return null;
+
   return (
     <EditorComponentCollapsable
       id={id}
-      validationPathPrefix={validationPathPrefix}
+      validationPathPrefix={nodeScope<TextDisplayNode>(id)}
       title={title}
       size={size}
-      moveUp={moveUp}
-      moveDown={moveDown}
-      duplicate={duplicate}
-      remove={remove}
+      {...actions}
       extra={
         data.content ? (
           <div className="text-gray-500 truncate flex space-x-2 pl-1">
@@ -53,9 +48,9 @@ export default function EditorComponentBaseTextDisplay({
           label="Content"
           maxLength={4000}
           value={data.content}
-          onChange={(v) => onChange({ content: v })}
+          onChange={(v) => update<TextDisplayNode>(id, { content: v })}
           className="flex-auto"
-          validationPath={`${validationPathPrefix}.content`}
+          validationPath={nodeField<TextDisplayNode>(id, "content")}
         />
       </div>
     </EditorComponentCollapsable>

@@ -1,6 +1,7 @@
 import type { ZodError, ZodIssue } from "zod";
 import { create } from "zustand";
-import type { NodeId } from "./document";
+import type { FieldPath, Node, NodeId } from "./document";
+import type { ChildSlot } from "./documentConvert";
 
 /** A single field, addressed by node or by path. */
 export type ValidationTarget = { nodeId: NodeId; field?: string } | string;
@@ -10,6 +11,30 @@ export type ValidationScope =
   | { nodeId: NodeId; fields?: string[] }
   | string
   | string[];
+
+/** A field of a node, checked against that node's shape. */
+export function nodeField<T extends Node>(
+  nodeId: NodeId,
+  field: FieldPath<T>,
+): ValidationTarget {
+  return { nodeId, field };
+}
+
+/** A node, or some of its fields, checked against that node's shape. */
+export function nodeScope<T extends Node>(
+  nodeId: NodeId,
+  fields?: FieldPath<T>[],
+): ValidationScope {
+  return fields ? { nodeId, fields } : { nodeId };
+}
+
+/**
+ * A child array of a node, e.g. the `fields` of an embed. Slots are named
+ * after the payload, which is not always what the node calls them.
+ */
+export function slotScope(nodeId: NodeId, slot: ChildSlot): ValidationScope {
+  return { nodeId, fields: [slot] };
+}
 
 /**
  * Issues indexed by the path they sit at, plus every path that has an issue

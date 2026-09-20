@@ -1,27 +1,33 @@
 import { ChevronUpIcon, StarIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
+import { type NewNode, type NodeId, useDocumentStore } from "../state/document";
 import { useCurrentMessageStore } from "../state/message";
-import { getUniqueId } from "../util";
 import { useState } from "react";
 import ClickOutsideHandler from "./ClickOutsideHandler";
-import type { MessageComponent } from "../discord/schema";
 import { usePremiumGuildFeatures } from "../util/premium";
 import { useNavigate } from "react-router-dom";
 
 interface Props {
   context: "root" | "container";
-  addComponent: (component: MessageComponent) => void;
+  parentId: NodeId;
   disabled?: boolean;
   size?: "small" | "large";
 }
 
 export default function EditorComponentAddDropdown({
   context,
-  addComponent,
+  parentId,
   disabled,
   size = "small",
 }: Props) {
   const [open, setOpen] = useState(false);
+
+  const { insert } = useDocumentStore.getState();
+
+  function addComponent(node: NewNode) {
+    insert(parentId, "components", "end", node);
+    setOpen(false);
+  }
 
   const navigate = useNavigate();
 
@@ -32,99 +38,28 @@ export default function EditorComponentAddDropdown({
   const features = usePremiumGuildFeatures();
   const allowedComponentTypes = features?.component_types ?? [];
 
-  function addButtonRow() {
-    setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 1,
-      components: [],
-    });
-  }
-
   function addSelectMenuRow() {
+    const rowId = insert(parentId, "components", "end", { type: "actionRow" });
+    insert(rowId, "components", "end", { type: "selectMenu" });
     setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 1,
-      components: [
-        {
-          id: getUniqueId(),
-          type: 3,
-          options: [],
-        },
-      ],
-    });
   }
 
   function addSection() {
-    setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 9,
-      components: [],
-      accessory: {
-        id: getUniqueId(),
-        type: 11,
-        media: {
-          url: "",
-        },
-      },
+    const sectionId = insert(parentId, "components", "end", {
+      type: "section",
     });
-  }
-
-  function addTextDisplay() {
-    setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 10,
-      content: "",
+    insert(sectionId, "accessory", "end", {
+      type: "thumbnail",
+      media: { url: "" },
     });
-  }
-
-  function addMediaGallery() {
     setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 12,
-      items: [],
-    });
-  }
-
-  function addSeparator() {
-    setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 14,
-      spacing: 1,
-      divider: true,
-    });
-  }
-
-  function addFile() {
-    setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 13,
-      file: {
-        url: "",
-      },
-    });
-  }
-
-  function addContainer() {
-    setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 17,
-      components: [],
-    });
   }
 
   const componentTypes = [
     {
       label: "Button Row",
       type: 1,
-      handler: addButtonRow,
+      node: { type: "actionRow" } as NewNode,
     },
     {
       label: "Select Menu",
@@ -141,32 +76,32 @@ export default function EditorComponentAddDropdown({
       label: "Text Display",
       type: 10,
       v2Only: true,
-      handler: addTextDisplay,
+      node: { type: "textDisplay", content: "" } as NewNode,
     },
     {
       label: "Media Gallery",
       type: 12,
       v2Only: true,
-      handler: addMediaGallery,
+      node: { type: "mediaGallery" } as NewNode,
     },
     {
       label: "File",
       type: 13,
       v2Only: true,
-      handler: addFile,
+      node: { type: "file", file: { url: "" } } as NewNode,
     },
     {
       label: "Separator",
       type: 14,
       v2Only: true,
-      handler: addSeparator,
+      node: { type: "separator", spacing: 1, divider: true } as NewNode,
     },
     {
       label: "Container",
       type: 17,
       v2Only: true,
       rootOnly: true,
-      handler: addContainer,
+      node: { type: "container" } as NewNode,
     },
   ].filter((c) => {
     if (c.v2Only && !componentsV2Enabled) return false;
@@ -203,7 +138,11 @@ export default function EditorComponentAddDropdown({
                 className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left flex items-center gap-2"
                 onClick={() => {
                   if (allowedComponentTypes.includes(componentType.type)) {
-                    componentType.handler();
+                    if (componentType.handler) {
+                      componentType.handler();
+                    } else if (componentType.node) {
+                      addComponent(componentType.node);
+                    }
                   } else {
                     navigate("/premium");
                   }

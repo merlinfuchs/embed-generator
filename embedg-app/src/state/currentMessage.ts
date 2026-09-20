@@ -1,17 +1,15 @@
 import debounce from "just-debounce-it";
 import { useEffect, useMemo, useState } from "react";
+import { defaultMessage } from "../discord/defaultMessage";
 import type { Message } from "../discord/schema";
-import {
-  hadPersistedDocument,
-  type NodeId,
-  useDocumentStore,
-} from "./document";
+import { type NodeId, persistedDocument, useDocumentStore } from "./document";
 import { toMessage } from "./documentConvert";
-import { defaultMessage, useCurrentMessageStore } from "./message";
+import { useCurrentMessageStore } from "./message";
 
 /**
- * Embeds live in the document store, everything else is still in `message.ts`.
- * Both halves are merged here until the remaining fields move over.
+ * Embeds, components and their action sets live in the document store; the
+ * root fields are still in `message.ts`. Both halves are merged here until the
+ * rest moves over.
  */
 export function getCurrentMessage(): Message {
   return getCurrentDocument().message;
@@ -23,11 +21,20 @@ export function getCurrentDocument(): {
   idToPath: Map<NodeId, string>;
 } {
   const converted = toMessage(useDocumentStore.getState());
+  const root = useCurrentMessageStore.getState();
 
   return {
     message: {
-      ...useCurrentMessageStore.getState(),
+      content: root.content,
+      username: root.username,
+      avatar_url: root.avatar_url,
+      tts: root.tts,
+      thread_name: root.thread_name,
+      flags: root.flags,
+      allowed_mentions: root.allowed_mentions,
       embeds: converted.message.embeds,
+      components: converted.message.components,
+      actions: converted.message.actions,
     },
     idToPath: converted.idToPath,
   };
@@ -87,12 +94,21 @@ export function setComponentsV2Enabled(enabled: boolean) {
 }
 
 /**
- * Drafts predate the document store, so the first time it runs it takes over
- * the embeds of the draft that is already in the message store, which the
- * persist middleware has rehydrated synchronously by now.
+ * Hands a draft over to the document store as it takes ownership of more of
+ * the message. Version 0 predates the store entirely; version 1 owned the
+ * embeds but left components and action sets to the message store, so its
+ * copy of those is stale. The message store rehydrates synchronously, so its
+ * state is the parsed draft by now.
  */
 export function seedDocumentStore() {
-  if (hadPersistedDocument) return;
+  const persisted = persistedDocument();
+  if (persisted === "current") return;
 
-  useDocumentStore.getState().replaceAll(useCurrentMessageStore.getState());
+  // Version 1 owns the embeds, so they are the one part of the draft in the
+  // message store that is stale. Anything older owns nothing.
+  const draft = useCurrentMessageStore.getState();
+  const embeds =
+    persisted === "none" ? draft.embeds : getCurrentDocument().message.embeds;
+
+  useDocumentStore.getState().replaceAll({ ...draft, embeds });
 }

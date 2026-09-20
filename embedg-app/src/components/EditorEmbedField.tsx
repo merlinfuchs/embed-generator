@@ -3,9 +3,11 @@ import {
   type NodeId,
   useDocumentStore,
   useNode,
+  useNodeActions,
   useNodeIndex,
 } from "../state/document";
 import CheckBox from "./CheckBox";
+import { nodeField, nodeScope } from "../state/validationError";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
 import EditorInput from "./EditorInput";
 
@@ -15,16 +17,17 @@ interface Props {
 
 export default function EditorEmbedField({ id }: Props) {
   const field = useNode<EmbedFieldNode>(id);
-  const { index, count } = useNodeIndex(id);
+  const { index } = useNodeIndex(id);
+  const actions = useNodeActions(id, 25);
 
-  const { move, duplicate, remove, update } = useDocumentStore.getState();
+  const { update } = useDocumentStore.getState();
 
   if (!field) return null;
 
   return (
     <EditorComponentCollapsable
       id={`embeds.fields.${id}`}
-      validationPathPrefix={{ nodeId: id }}
+      validationPathPrefix={nodeScope<EmbedFieldNode>(id)}
       title={`Field ${index + 1}`}
       className="border-2 border-dark-6 rounded-md p-3"
       extra={
@@ -35,10 +38,7 @@ export default function EditorEmbedField({ id }: Props) {
           </div>
         )
       }
-      moveUp={index > 0 ? () => move(id, -1) : undefined}
-      moveDown={index < count - 1 ? () => move(id, 1) : undefined}
-      duplicate={count < 25 ? () => duplicate(id) : undefined}
-      remove={() => remove(id)}
+      {...actions}
     >
       <div className="space-y-3">
         <div className="flex space-x-3">
@@ -48,7 +48,7 @@ export default function EditorEmbedField({ id }: Props) {
             onChange={(v) => update<EmbedFieldNode>(id, { name: v })}
             maxLength={256}
             className="w-full"
-            validationPath={{ nodeId: id, field: "name" }}
+            validationPath={nodeField<EmbedFieldNode>(id, "name")}
           />
           <div>
             <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
@@ -67,7 +67,7 @@ export default function EditorEmbedField({ id }: Props) {
           value={field.value}
           onChange={(v) => update<EmbedFieldNode>(id, { value: v })}
           maxLength={1024}
-          validationPath={{ nodeId: id, field: "value" }}
+          validationPath={nodeField<EmbedFieldNode>(id, "value")}
           controls={true}
         />
       </div>

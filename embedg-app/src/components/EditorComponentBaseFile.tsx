@@ -1,47 +1,41 @@
-import type { MessageComponentFile } from "../discord/schema";
+import {
+  type FileNode,
+  type NodeId,
+  useDocumentStore,
+  useNode,
+  useNodeActions,
+} from "../state/document";
+import { nodeField, nodeScope } from "../state/validationError";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import CheckBox from "./CheckBox";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
 import ValidationError from "./ValidationError";
 
 interface Props {
-  id: string;
-  validationPathPrefix: string;
+  id: NodeId;
   title?: string;
-  data: MessageComponentFile;
   size?: "medium" | "large";
-  onChange: (data: Partial<MessageComponentFile>) => void;
-
-  duplicate?: () => void;
-  moveUp?: () => void;
-  moveDown?: () => void;
-  remove?: () => void;
 }
 
 export default function EditorComponentBaseFile({
   id,
-  validationPathPrefix,
   title = "File",
   size = "medium",
-  data,
-  onChange,
-  duplicate,
-  moveUp,
-  moveDown,
-  remove,
 }: Props) {
+  const data = useNode<FileNode>(id);
+  const actions = useNodeActions(id);
+  const { update } = useDocumentStore.getState();
   const attachments = useCurrentAttachmentsStore((state) => state.attachments);
+
+  if (!data) return null;
 
   return (
     <EditorComponentCollapsable
       id={id}
-      validationPathPrefix={validationPathPrefix}
+      validationPathPrefix={nodeScope<FileNode>(id)}
       title={title}
       size={size}
-      duplicate={duplicate}
-      moveUp={moveUp}
-      moveDown={moveDown}
-      remove={remove}
+      {...actions}
     >
       <div className="space-y-4">
         <div className="flex space-x-3">
@@ -54,7 +48,9 @@ export default function EditorComponentBaseFile({
             <select
               className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
               value={data.file.url}
-              onChange={(e) => onChange({ file: { url: e.target.value } })}
+              onChange={(e) =>
+                update<FileNode>(id, { file: { url: e.target.value } })
+              }
             >
               {attachments.map((attachment) => (
                 <option
@@ -66,7 +62,7 @@ export default function EditorComponentBaseFile({
               ))}
               <option value="">Select Attachment</option>
             </select>
-            <ValidationError target={`${validationPathPrefix}.file.url`} />
+            <ValidationError target={nodeField<FileNode>(id, "file.url")} />
           </div>
           <div className="flex-none">
             <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
@@ -75,7 +71,7 @@ export default function EditorComponentBaseFile({
             <CheckBox
               checked={data.spoiler ?? false}
               onChange={(v) =>
-                onChange({
+                update<FileNode>(id, {
                   spoiler: v,
                 })
               }

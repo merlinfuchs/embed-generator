@@ -1,42 +1,37 @@
-import type { MessageComponentSeparator } from "../discord/schema";
+import {
+  type SeparatorNode,
+  type NodeId,
+  useDocumentStore,
+  useNode,
+  useNodeActions,
+} from "../state/document";
+import { nodeScope } from "../state/validationError";
 import CheckBox from "./CheckBox";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
 
 interface Props {
-  id: string;
-  validationPathPrefix: string;
+  id: NodeId;
   title?: string;
-  data: MessageComponentSeparator;
-  onChange: (data: Partial<MessageComponentSeparator>) => void;
-
-  duplicate?: () => void;
-  moveUp?: () => void;
-  moveDown?: () => void;
-  remove?: () => void;
   size?: "medium" | "large";
 }
 
 export default function EditorComponentBaseSeparator({
   id,
-  validationPathPrefix,
   title = "Separator",
-  data,
-  onChange,
-  duplicate,
-  moveUp,
-  moveDown,
-  remove,
   size = "medium",
 }: Props) {
+  const data = useNode<SeparatorNode>(id);
+  const actions = useNodeActions(id);
+  const { update } = useDocumentStore.getState();
+
+  if (!data) return null;
+
   return (
     <EditorComponentCollapsable
       id={id}
-      validationPathPrefix={validationPathPrefix}
+      validationPathPrefix={nodeScope<SeparatorNode>(id)}
       title={title}
-      duplicate={duplicate}
-      moveUp={moveUp}
-      moveDown={moveDown}
-      remove={remove}
+      {...actions}
       size={size}
     >
       <div className="space-y-4">
@@ -51,7 +46,7 @@ export default function EditorComponentBaseSeparator({
               className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
               value={data.spacing.toString()}
               onChange={(v) =>
-                onChange({
+                update<SeparatorNode>(id, {
                   spacing: parseInt(v.target.value, 10) as any,
                 })
               }
@@ -67,7 +62,7 @@ export default function EditorComponentBaseSeparator({
             <CheckBox
               checked={data.divider ?? false}
               onChange={(v) =>
-                onChange({
+                update<SeparatorNode>(id, {
                   divider: v,
                 })
               }

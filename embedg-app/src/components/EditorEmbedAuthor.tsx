@@ -1,14 +1,16 @@
 import {
   type EmbedNode,
+  type FieldPath,
   type NodeId,
   useDocumentStore,
   useNode,
 } from "../state/document";
 import { patchGroup } from "../util/patch";
+import { nodeField, nodeScope } from "../state/validationError";
 import Collapsable from "./Collapsable";
 import EditorInput from "./EditorInput";
 
-const AUTHOR_FIELDS = ["author"];
+const AUTHOR_FIELDS: FieldPath<EmbedNode>[] = ["author"];
 
 interface Props {
   id: NodeId;
@@ -32,7 +34,7 @@ export default function EditorEmbedAuthor({ id }: Props) {
     <Collapsable
       title="Author"
       id={`embeds.${id}.author`}
-      validationPathPrefix={{ nodeId: id, fields: AUTHOR_FIELDS }}
+      validationPathPrefix={nodeScope<EmbedNode>(id, AUTHOR_FIELDS)}
     >
       <div className="space-y-3">
         <EditorInput
@@ -40,7 +42,7 @@ export default function EditorEmbedAuthor({ id }: Props) {
           value={author?.name || ""}
           onChange={(v) => patchAuthor({ name: v })}
           maxLength={256}
-          validationPath={{ nodeId: id, field: "author.name" }}
+          validationPath={nodeField<EmbedNode>(id, "author.name")}
         />
         <div className="flex space-x-3">
           <EditorInput
@@ -49,7 +51,7 @@ export default function EditorEmbedAuthor({ id }: Props) {
             value={author?.url || ""}
             onChange={(v) => patchAuthor({ url: v || undefined })}
             className="w-1/2"
-            validationPath={{ nodeId: id, field: "author.url" }}
+            validationPath={nodeField<EmbedNode>(id, "author.url")}
           />
           <EditorInput
             type="url"
@@ -57,7 +59,7 @@ export default function EditorEmbedAuthor({ id }: Props) {
             value={author?.icon_url || ""}
             onChange={(v) => patchAuthor({ icon_url: v || undefined })}
             className="w-1/2"
-            validationPath={{ nodeId: id, field: "author.icon_url" }}
+            validationPath={nodeField<EmbedNode>(id, "author.icon_url")}
             imageUpload={true}
           />
         </div>

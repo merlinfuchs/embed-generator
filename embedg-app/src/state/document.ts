@@ -16,7 +16,9 @@ import type {
   MessageComponentButtonStyle,
   UnfurledMediaItem,
 } from "../discord/schema";
+import { defaultMessage } from "../discord/defaultMessage";
 import { getUniqueId } from "../util";
+import { type ActionSetActions, createActionSetSlice } from "./actionSetSlice";
 import {
   type ChildSlot,
   childIds,
@@ -24,7 +26,6 @@ import {
   fromMessage,
   setChildIds,
 } from "./documentConvert";
-import { defaultMessage } from "./message";
 
 export type NodeId = string;
 
@@ -172,6 +173,24 @@ export type Node =
 
 export type NodeType = Node["type"];
 
+type Primitive = string | number | boolean | bigint | symbol;
+
+/** Bookkeeping that is never addressed by validation. */
+type Bookkeeping = "id" | "parentId" | "discordId" | "type";
+
+/**
+ * The fields of a node as zod issue paths, e.g. `"author.name"`. Keeps a typo
+ * from compiling into a lookup that silently matches nothing. Two levels deep,
+ * which is as far as the message schema nests inside a node.
+ */
+export type FieldPath<T> = {
+  [K in keyof Omit<T, Bookkeeping> & string]: NonNullable<T[K]> extends
+    | Primitive
+    | readonly unknown[]
+    ? K
+    : K | `${K}.${keyof NonNullable<T[K]> & string}`;
+}[keyof Omit<T, Bookkeeping> & string];
+
 type DistributiveOmit<T, K extends keyof never> = T extends unknown
   ? Omit<T, K>
   : never;
@@ -198,7 +217,7 @@ export interface DocumentData {
   actions: Record<string, MessageActionSet>;
 }
 
-export interface DocumentStore extends DocumentData {
+export interface DocumentStore extends DocumentData, ActionSetActions {
   update<T extends Node>(
     id: NodeId,
     patch: Partial<Omit<T, "id" | "type" | "parentId">>,
@@ -219,6 +238,18 @@ export interface DocumentStore extends DocumentData {
 }
 
 export const COMPONENTS_V2_FLAG = 1 << 15;
+
+export const DOCUMENT_STORE_KEY = "current-document";
+
+/** 2 is the first version that owns components and their action sets. */
+export const DOCUMENT_VERSION = 2;
+
+const hadPersistedDocument =
+  typeof localStorage !== "undefined" &&
+  localStorage.getItem(DOCUMENT_STORE_KEY) !== null;
+
+/** Set by `migrate` when an older document is loaded. */
+let migratedFrom: number | null = null;
 
 function freshId(nodes: Record<NodeId, Node>): NodeId {
   let id = getUniqueId().toString();
@@ -393,6 +424,8 @@ export const createDocumentStore = (key: string) =>
               return copied ? copyId : id;
             },
 
+            ...createActionSetSlice<DocumentStore>(set),
+
             replaceAll: (message) => set(fromMessage(message)),
 
             clear: () => set(fromMessage(defaultMessage)),
@@ -418,7 +451,17 @@ export const createDocumentStore = (key: string) =>
             }),
           },
         ),
-        { name: key, version: 1 },
+        {
+          name: key,
+          version: DOCUMENT_VERSION,
+          // The node tree itself is unchanged between versions; what a version
+          // says is which parts of the message this store owns, which
+          // `seedDocumentStore` reconciles once both stores have rehydrated.
+          migrate: (persisted, version) => {
+            migratedFrom = version;
+            return persisted as DocumentStore;
+          },
+        },
       ),
     ),
   );
@@ -489,15 +532,18 @@ function copySubtree(
   return copyId;
 }
 
-export const DOCUMENT_STORE_KEY = "current-document";
-
 /**
- * Read before the store is created, because the persist middleware writes the
- * key as soon as it rehydrates.
+ * What was in storage before this store rehydrated: no document at all, one
+ * written by an older version, or one this version already owns. The key has
+ * to be read before the store is created, because the persist middleware
+ * writes it as soon as it rehydrates; the version comes from `migrate`, which
+ * only runs when there is something older to upgrade.
  */
-export const hadPersistedDocument =
-  typeof localStorage !== "undefined" &&
-  localStorage.getItem(DOCUMENT_STORE_KEY) !== null;
+export function persistedDocument(): "none" | "current" | number {
+  if (!hadPersistedDocument) return "none";
+
+  return migratedFrom ?? "current";
+}
 
 export const useDocumentStore = createDocumentStore(DOCUMENT_STORE_KEY);
 
@@ -522,3 +568,20 @@ export const useNodeIndex = (id: NodeId) =>
 
     return { index: ids.indexOf(id), count: ids.length };
   }, shallow);
+
+/**
+ * The move, duplicate and remove buttons of a node, hidden at the ends of its
+ * slot and once `max` siblings exist.
+ */
+export function useNodeActions(id: NodeId, max?: number) {
+  const { index, count } = useNodeIndex(id);
+  const { move, duplicate, remove } = useDocumentStore.getState();
+
+  return {
+    moveUp: index > 0 ? () => move(id, -1) : undefined,
+    moveDown: index < count - 1 ? () => move(id, 1) : undefined,
+    duplicate:
+      max === undefined || count < max ? () => duplicate(id) : undefined,
+    remove: () => remove(id),
+  };
+}
