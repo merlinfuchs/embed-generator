@@ -1,6 +1,13 @@
 import React from "react";
 import { Avatar, DiscordButton, Reactions, Typing } from "./discord";
 
+const avatars = [
+  "/img/avatars/welcome-bot.svg",
+  "/img/avatars/giveaway-bot.svg",
+  "/img/avatars/patch-bot.svg",
+  "/img/logo.svg",
+];
+
 const swatches = [
   "#2F8BFF",
   "#57F287",
@@ -35,6 +42,8 @@ function Editable({
 // The hero example is a tiny editor: click text to edit, pick a color, toggle parts.
 export default function HeroPreview(): JSX.Element {
   const [color, setColor] = React.useState(swatches[0]);
+  const [name, setName] = React.useState("Community Team");
+  const [avatar, setAvatar] = React.useState(0);
   const [title, setTitle] = React.useState("Welcome to the server!");
   const [desc, setDesc] = React.useState(
     "Read #rules, grab your roles below and say hi in #general. We don't bite."
@@ -46,7 +55,7 @@ export default function HeroPreview(): JSX.Element {
   return (
     <div>
       <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-mist-500">
-        <span>Click any text to edit it.</span>
+        <span>Click text to edit, click the avatar to swap it.</span>
         <span className="flex items-center gap-1.5">
           {swatches.map((c) => (
             <button
@@ -86,10 +95,21 @@ export default function HeroPreview(): JSX.Element {
           <span className="font-medium text-mist-300">welcome</span>
         </div>
         <div className="flex gap-4 px-4 py-5">
-          <Avatar src="/img/logo.svg" />
+          <button
+            type="button"
+            aria-label="Swap avatar"
+            onClick={() => setAvatar((a) => (a + 1) % avatars.length)}
+            className="h-10 w-10 flex-none cursor-pointer rounded-full border-0 bg-transparent p-0 ring-azure-400/60 hover:ring-2"
+          >
+            <Avatar src={avatars[avatar]} />
+          </button>
           <div className="min-w-0 flex-1">
             <div className="mb-1 flex items-center gap-2 text-sm">
-              <span className="font-medium text-mist-100">Your Server</span>
+              <Editable
+                value={name}
+                onChange={setName}
+                className="font-medium text-mist-100"
+              />
               <span className="rounded bg-azure-500 px-1.5 py-px text-[10px] font-semibold uppercase leading-4 text-white">
                 App
               </span>
