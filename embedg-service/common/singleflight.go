@@ -27,5 +27,9 @@ func GetOrSet[T any](group *singleflight.Group, cacheKey string, cache *ttlcache
 		return zero, err
 	}
 
-	return result.(T), nil
+	// Comma ok, not a plain assertion: callers cache a not-found as a nil value, and when T is an
+	// interface that arrives here as a nil any, which a plain assertion panics on rather than
+	// yielding the nil the caller is checking for.
+	value, _ := result.(T)
+	return value, nil
 }
