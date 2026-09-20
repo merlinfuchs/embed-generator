@@ -9,7 +9,6 @@ import (
 
 	"log/slog"
 
-	"github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/discord"
 	disrest "github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
@@ -21,6 +20,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-service/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
 	"github.com/merlinfuchs/embed-generator/embedg-service/embedg/rest"
+	"github.com/merlinfuchs/embed-generator/embedg-service/guildstate"
 	"github.com/merlinfuchs/embed-generator/embedg-service/manager/custom_bot"
 	"github.com/merlinfuchs/embed-generator/embedg-service/model"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
@@ -38,7 +38,7 @@ type CustomBotsHandler struct {
 	customBotManager   *custom_bot.CustomBotManager
 	customCommandStore store.CustomCommandStore
 	rest               disrest.Rest
-	caches             cache.Caches
+	guildState         *guildstate.Provider
 	am                 *access.AccessManager
 	planStore          store.PlanStore
 	actionParser       *parser.ActionParser
@@ -51,7 +51,7 @@ func New(
 	customBotManager *custom_bot.CustomBotManager,
 	customCommandStore store.CustomCommandStore,
 	rest disrest.Rest,
-	caches cache.Caches,
+	guildState *guildstate.Provider,
 	am *access.AccessManager,
 	planStore store.PlanStore,
 	actionParser *parser.ActionParser,
@@ -63,7 +63,7 @@ func New(
 		customBotManager:   customBotManager,
 		customCommandStore: customCommandStore,
 		rest:               rest,
-		caches:             caches,
+		guildState:         guildState,
 		am:                 am,
 		planStore:          planStore,
 		actionParser:       actionParser,
@@ -116,11 +116,15 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 		}
 	}
 
-	roles := h.caches.Roles(guildID)
+	state, err := h.guildState.Guild(c.Context(), guildID)
+	if err != nil {
+		return fmt.Errorf("Failed to get guild state: %w", err)
+	}
+	roles := state.Roles
 
 	hasPermissions := false
 	if isMember {
-		for role := range roles {
+		for _, role := range roles {
 			if slices.Contains(member.RoleIDs, role.ID) || role.ID == guildID {
 				if role.Permissions&discord.PermissionManageWebhooks != 0 {
 					hasPermissions = true
@@ -296,11 +300,15 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 		}
 	}
 
-	roles := h.caches.Roles(guildID)
+	state, err := h.guildState.Guild(c.Context(), guildID)
+	if err != nil {
+		return fmt.Errorf("Failed to get guild state: %w", err)
+	}
+	roles := state.Roles
 
 	hasPermissions := false
 	if member != nil {
-		for role := range roles {
+		for _, role := range roles {
 			if slices.Contains(member.RoleIDs, role.ID) || role.ID == guildID {
 				if role.Permissions&discord.PermissionManageWebhooks != 0 {
 					hasPermissions = true

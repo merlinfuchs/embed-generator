@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/disgoorg/disgo/bot"
-	"github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/rest"
@@ -24,7 +23,6 @@ type EventHandler struct {
 	config         EventHandlerConfig
 	embedg         *embedg.EmbedGenerator
 	rest           rest.Rest
-	caches         cache.Caches
 	actionSetStore store.MessageActionSetStore
 	actionHandler  *handler.ActionHandler
 }
@@ -33,7 +31,6 @@ func NewEventHandler(
 	config EventHandlerConfig,
 	embedg *embedg.EmbedGenerator,
 	rest rest.Rest,
-	caches cache.Caches,
 	actionSetStore store.MessageActionSetStore,
 	actionHandler *handler.ActionHandler,
 ) *EventHandler {
@@ -41,7 +38,6 @@ func NewEventHandler(
 		config:         config,
 		embedg:         embedg,
 		rest:           rest,
-		caches:         caches,
 		actionSetStore: actionSetStore,
 		actionHandler:  actionHandler,
 	}

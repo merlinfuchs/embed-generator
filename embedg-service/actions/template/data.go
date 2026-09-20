@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
 )
@@ -12,20 +11,20 @@ import (
 var standardDataMap = map[string]interface{}{}
 
 type InteractionData struct {
-	caches cache.Caches
-	i      discord.Interaction
+	src Source
+	i   discord.Interaction
 }
 
-func NewInteractionData(caches cache.Caches, i discord.Interaction) *InteractionData {
+func NewInteractionData(src Source, i discord.Interaction) *InteractionData {
 	return &InteractionData{
-		caches: caches,
-		i:      i,
+		src: src,
+		i:   i,
 	}
 }
 
 func (d *InteractionData) User() interface{} {
 	if d.i.Member() != nil {
-		res := NewMemberData(d.caches, *d.i.GuildID(), d.i.Member().Member)
+		res := NewMemberData(d.src, *d.i.GuildID(), d.i.Member().Member)
 		return &res
 	}
 
@@ -37,7 +36,7 @@ func (d *InteractionData) Member() *MemberData {
 		return nil
 	}
 
-	return NewMemberData(d.caches, *d.i.GuildID(), d.i.Member().Member)
+	return NewMemberData(d.src, *d.i.GuildID(), d.i.Member().Member)
 }
 
 func (d *InteractionData) Command() *CommandData {
@@ -50,7 +49,7 @@ func (d *InteractionData) Command() *CommandData {
 		return nil
 	}
 
-	return NewCommandData(d.caches, *d.i.GuildID(), cmdInteraction.Data)
+	return NewCommandData(d.src, *d.i.GuildID(), cmdInteraction.Data)
 }
 
 type UserData struct {
@@ -133,15 +132,15 @@ func (d *UserData) BannerURL() string {
 
 type MemberData struct {
 	UserData
-	caches  cache.Caches
+	src     Source
 	guildID common.ID
 	m       discord.Member
 }
 
-func NewMemberData(caches cache.Caches, guildID common.ID, m discord.Member) *MemberData {
+func NewMemberData(src Source, guildID common.ID, m discord.Member) *MemberData {
 	return &MemberData{
 		UserData: UserData{m.User},
-		caches:   caches,
+		src:      src,
 		guildID:  guildID,
 		m:        m,
 	}
@@ -158,7 +157,7 @@ func (d *MemberData) Nick() string {
 func (d *MemberData) Roles() []*RoleData {
 	res := make([]*RoleData, len(d.m.RoleIDs))
 	for i, roleID := range d.m.RoleIDs {
-		res[i] = NewRoleData(d.caches, d.guildID, roleID, nil)
+		res[i] = NewRoleData(d.src, d.guildID, roleID, nil)
 	}
 
 	return res
@@ -193,14 +192,14 @@ func (d *MemberData) AvatarURL() string {
 }
 
 type CommandData struct {
-	caches  cache.Caches
+	src     Source
 	guildID common.ID
 	c       discord.ApplicationCommandInteractionData
 }
 
-func NewCommandData(caches cache.Caches, guildID common.ID, c discord.ApplicationCommandInteractionData) *CommandData {
+func NewCommandData(src Source, guildID common.ID, c discord.ApplicationCommandInteractionData) *CommandData {
 	return &CommandData{
-		caches:  caches,
+		src:     src,
 		guildID: guildID,
 		c:       c,
 	}
@@ -227,7 +226,7 @@ func (d *CommandData) Options() map[string]interface{} {
 
 	if slashCMD, ok := d.c.(discord.SlashCommandInteractionData); ok {
 		for _, opt := range slashCMD.Options {
-			res[opt.Name] = NewCommandOptionData(d.caches, d.guildID, slashCMD, opt)
+			res[opt.Name] = NewCommandOptionData(d.src, d.guildID, slashCMD, opt)
 		}
 	}
 
@@ -238,7 +237,7 @@ func (d *CommandData) Args() map[string]interface{} {
 	return d.Options()
 }
 
-func NewCommandOptionData(caches cache.Caches, guildID common.ID, c discord.SlashCommandInteractionData, o discord.SlashCommandOption) interface{} {
+func NewCommandOptionData(src Source, guildID common.ID, c discord.SlashCommandInteractionData, o discord.SlashCommandOption) interface{} {
 	switch o.Type {
 	case discord.ApplicationCommandOptionTypeString:
 		return o.String()
@@ -255,14 +254,14 @@ func NewCommandOptionData(caches cache.Caches, guildID common.ID, c discord.Slas
 		return UserData{u: discord.User{ID: userID}}
 	case discord.ApplicationCommandOptionTypeChannel:
 		channelID := o.Snowflake()
-		return NewChannelData(caches, channelID, nil)
+		return NewChannelData(src, channelID, nil)
 	case discord.ApplicationCommandOptionTypeRole:
 		roleID := o.Snowflake()
 		resolved, ok := c.Resolved.Roles[roleID]
 		if ok {
-			return NewRoleData(caches, guildID, roleID, &resolved)
+			return NewRoleData(src, guildID, roleID, &resolved)
 		}
-		return NewRoleData(caches, guildID, roleID, nil)
+		return NewRoleData(src, guildID, roleID, nil)
 	case discord.ApplicationCommandOptionTypeFloat:
 		return o.Float()
 	case discord.ApplicationCommandOptionTypeAttachment:
@@ -278,14 +277,14 @@ func NewCommandOptionData(caches cache.Caches, guildID common.ID, c discord.Slas
 }
 
 type GuildData struct {
-	caches  cache.Caches
+	src     Source
 	guildID common.ID
 	guild   *discord.Guild
 }
 
-func NewGuildData(caches cache.Caches, guildID common.ID, g *discord.Guild) *GuildData {
+func NewGuildData(src Source, guildID common.ID, g *discord.Guild) *GuildData {
 	return &GuildData{
-		caches:  caches,
+		src:     src,
 		guildID: guildID,
 		guild:   g,
 	}
@@ -296,12 +295,12 @@ func (d *GuildData) ensureGuild() error {
 		return nil
 	}
 
-	guild, ok := d.caches.Guild(d.guildID)
-	if !ok {
-		return fmt.Errorf("guild not found in cache")
+	guild, err := d.src.guild(d.guildID)
+	if err != nil {
+		return err
 	}
 
-	d.guild = &guild
+	d.guild = guild
 	return nil
 }
 
@@ -411,14 +410,14 @@ func (d *GuildData) BoostLevel() (int, error) {
 }
 
 type ChannelData struct {
-	caches    cache.Caches
+	src       Source
 	channelID common.ID
 	channel   discord.GuildChannel
 }
 
-func NewChannelData(caches cache.Caches, channelID common.ID, c discord.GuildChannel) *ChannelData {
+func NewChannelData(src Source, channelID common.ID, c discord.GuildChannel) *ChannelData {
 	return &ChannelData{
-		caches:    caches,
+		src:       src,
 		channelID: channelID,
 		channel:   c,
 	}
@@ -429,9 +428,9 @@ func (d *ChannelData) ensureChannel() error {
 		return nil
 	}
 
-	channel, ok := d.caches.Channel(d.channelID)
-	if !ok {
-		return fmt.Errorf("channel not found in cache")
+	channel, err := d.src.channel(d.channelID)
+	if err != nil {
+		return err
 	}
 
 	d.channel = channel
@@ -474,15 +473,15 @@ func (d *ChannelData) Topic() (string, error) {
 }
 
 type RoleData struct {
-	caches  cache.Caches
+	src     Source
 	guildID common.ID
 	roleID  common.ID
 	role    *discord.Role
 }
 
-func NewRoleData(caches cache.Caches, guildID common.ID, roleID common.ID, role *discord.Role) *RoleData {
+func NewRoleData(src Source, guildID common.ID, roleID common.ID, role *discord.Role) *RoleData {
 	return &RoleData{
-		caches:  caches,
+		src:     src,
 		guildID: guildID,
 		roleID:  roleID,
 		role:    role,
@@ -494,12 +493,12 @@ func (d *RoleData) ensureRole() error {
 		return nil
 	}
 
-	role, ok := d.caches.Role(d.guildID, d.roleID)
-	if !ok {
-		return fmt.Errorf("role not found in cache")
+	role, err := d.src.role(d.guildID, d.roleID)
+	if err != nil {
+		return err
 	}
 
-	d.role = &role
+	d.role = role
 	return nil
 }
 
