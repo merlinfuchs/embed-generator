@@ -47,7 +47,13 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 	embedg.Client().AddEventListeners(premiumManager)
 	go premiumManager.Run(ctx)
 
-	accessManager := access.New(embedg.Cache(), embedg.Caches(), embedg.Rest(), embedg)
+	sessionManager := session.New(session.SessionManagerConfig{
+		InsecureCookies: cfg.API.InsecureCookies,
+		APIPublicURL:    cfg.API.PublicURL,
+		ClientID:        cfg.Discord.ClientID,
+		ClientSecret:    cfg.Discord.ClientSecret,
+	}, pg)
+	accessManager := access.New(embedg.Cache(), embedg.Caches(), embedg.Rest(), embedg, sessionManager)
 	actionParser := parser.New(accessManager, pg, pg, embedg.Caches())
 	actionHandler := handler.New(
 		pg,
@@ -74,12 +80,6 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 	}, embedg.Caches(), embedg.Rest(), embedg, pg, actionParser, webhookManager)
 	embedg.Client().AddEventListeners(commandHandler)
 
-	sessionManager := session.New(session.SessionManagerConfig{
-		InsecureCookies: cfg.API.InsecureCookies,
-		APIPublicURL:    cfg.API.PublicURL,
-		ClientID:        cfg.Discord.ClientID,
-		ClientSecret:    cfg.Discord.ClientSecret,
-	}, pg)
 	scheduledMessageManager := scheduled_messages.NewScheduledMessageManager(
 		pg,
 		pg,

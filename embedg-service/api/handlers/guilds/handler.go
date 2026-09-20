@@ -48,7 +48,7 @@ func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 			continue
 		}
 
-		access, guild, err := h.am.GetGuildAccessForUser(session.UserID, guildID)
+		access, guild, err := h.am.GetGuildAccessForSession(c.Context(), session, guildID)
 		if err != nil {
 			slog.Error("Failed to check guild access", slog.Any("error", err))
 			return err
@@ -94,7 +94,7 @@ func (h *GuildsHanlder) HandleGetGuild(c *fiber.Ctx) error {
 		return handlers.NotFound("unknown_guild", "The guild does not exist.")
 	}
 
-	access, guild, err := h.am.GetGuildAccessForUser(session.UserID, guildID)
+	access, guild, err := h.am.GetGuildAccessForSession(c.Context(), session, guildID)
 	if err != nil {
 		slog.Error("Failed to check guild access", slog.Any("error", err))
 		return err
@@ -134,7 +134,7 @@ func (h *GuildsHanlder) HandleListGuildChannels(c *fiber.Ctx) error {
 	res := make([]wire.GuildChannelWire, 0)
 
 	for channel := range channels {
-		access, err := h.am.GetChannelAccessForUser(session.UserID, channel.ID())
+		access, err := h.am.GetChannelAccessForSession(c.Context(), session, channel.ID())
 		if err != nil {
 			slog.Error("Failed to check channel access", slog.Any("error", err))
 			return err

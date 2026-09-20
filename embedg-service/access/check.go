@@ -10,7 +10,7 @@ import (
 func (m *AccessManager) CheckGuildAccessForRequest(c *fiber.Ctx, guildID common.ID) error {
 	session := c.Locals("session").(*session.Session)
 
-	access, _, err := m.GetGuildAccessForUser(session.UserID, guildID)
+	access, _, err := m.GetGuildAccessForSession(c.Context(), session, guildID)
 	if err != nil {
 		return err
 	}
@@ -29,7 +29,7 @@ func (m *AccessManager) CheckGuildAccessForRequest(c *fiber.Ctx, guildID common.
 func (m *AccessManager) CheckChannelAccessForRequest(c *fiber.Ctx, channelID common.ID) error {
 	session := c.Locals("session").(*session.Session)
 
-	access, err := m.GetChannelAccessForUser(session.UserID, channelID)
+	access, err := m.GetChannelAccessForSession(c.Context(), session, channelID)
 	if err != nil {
 		return err
 	}
