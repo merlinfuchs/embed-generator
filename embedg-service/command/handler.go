@@ -6,13 +6,13 @@ import (
 	"log/slog"
 
 	"github.com/disgoorg/disgo/bot"
-	"github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/handler"
 	"github.com/disgoorg/disgo/handler/middleware"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
+	"github.com/merlinfuchs/embed-generator/embedg-service/guildstate"
 	"github.com/merlinfuchs/embed-generator/embedg-service/manager/webhook"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
 )
@@ -24,7 +24,7 @@ type CommandHandlerConfig struct {
 
 type CommandHandler struct {
 	config             CommandHandlerConfig
-	caches             cache.Caches
+	guildState         *guildstate.Provider
 	rest               rest.Rest
 	appContext         store.AppContext
 	sharedMessageStore store.SharedMessageStore
@@ -35,7 +35,7 @@ type CommandHandler struct {
 
 func NewCommandHandler(
 	config CommandHandlerConfig,
-	caches cache.Caches,
+	guildState *guildstate.Provider,
 	rest rest.Rest,
 	appContext store.AppContext,
 	sharedMessageStore store.SharedMessageStore,
@@ -44,7 +44,7 @@ func NewCommandHandler(
 ) *CommandHandler {
 	h := &CommandHandler{
 		config:             config,
-		caches:             caches,
+		guildState:         guildState,
 		rest:               rest,
 		appContext:         appContext,
 		sharedMessageStore: sharedMessageStore,

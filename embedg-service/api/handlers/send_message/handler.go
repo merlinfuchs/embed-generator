@@ -3,11 +3,11 @@ package send_message
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"log/slog"
 
-	"github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
@@ -20,6 +20,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-service/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-service/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
+	"github.com/merlinfuchs/embed-generator/embedg-service/guildstate"
 	"github.com/merlinfuchs/embed-generator/embedg-service/manager/webhook"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
 	"github.com/vincent-petithory/dataurl"
@@ -27,7 +28,7 @@ import (
 
 type SendMessageHandler struct {
 	rest           rest.Rest
-	caches         cache.Caches
+	guildState     *guildstate.Provider
 	kvEntryStore   store.KVEntryStore
 	webhookManager *webhook.WebhookManager
 	accessManager  *access.AccessManager
@@ -37,7 +38,7 @@ type SendMessageHandler struct {
 
 func New(
 	rest rest.Rest,
-	caches cache.Caches,
+	guildState *guildstate.Provider,
 	kvEntryStore store.KVEntryStore,
 	webhookManager *webhook.WebhookManager,
 	accessManager *access.AccessManager,
@@ -46,7 +47,7 @@ func New(
 ) *SendMessageHandler {
 	return &SendMessageHandler{
 		rest:           rest,
-		caches:         caches,
+		guildState:     guildState,
 		kvEntryStore:   kvEntryStore,
 		webhookManager: webhookManager,
 		accessManager:  accessManager,
@@ -62,9 +63,12 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return err
 	}
 
-	channel, ok := h.caches.Channel(req.ChannelID)
-	if !ok {
-		return handlers.BadRequest("channel_not_found", "Channel not found")
+	channel, err := h.guildState.Channel(c.Context(), req.ChannelID)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return handlers.BadRequest("channel_not_found", "Channel not found")
+		}
+		return err
 	}
 
 	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), channel.GuildID())
@@ -72,10 +76,11 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return fmt.Errorf("could not get plan features: %w", err)
 	}
 
+	templateSource := template.NewSource(c.Context(), h.guildState)
 	templates := template.NewContext(
 		"SEND_MESSAGE", features.MaxTemplateOps,
-		template.NewGuildProvider(h.caches, channel.GuildID(), nil),
-		template.NewChannelProvider(h.caches, req.ChannelID, nil),
+		template.NewGuildProvider(templateSource, channel.GuildID(), nil),
+		template.NewChannelProvider(templateSource, req.ChannelID, channel),
 		template.NewKVProvider(channel.GuildID(), h.kvEntryStore, features.MaxKVKeys),
 	)
 
