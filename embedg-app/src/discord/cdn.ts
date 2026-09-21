@@ -24,3 +24,9 @@ export function guildIconUrl(
     return `https://cdn.discordapp.com/embed/avatars/0.png?size=${size}`;
   }
 }
+
+export function emojiUrl(emoji: { id: string; animated?: boolean }) {
+  return `https://cdn.discordapp.com/emojis/${emoji.id}.${
+    emoji.animated ? "gif" : "png"
+  }`;
+}

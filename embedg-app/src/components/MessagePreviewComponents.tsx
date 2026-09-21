@@ -10,12 +10,12 @@ import type {
   MessageComponentSection,
   MessageComponentSelectMenu,
   MessageComponentSeparator,
-  MessageComponentTextDisplay,
   MessageComponentThumbnail,
   UnfurledMediaItem,
 } from "../discord/schema";
 // @ts-expect-error untyped
 import { toHTML } from "../discord/markdown";
+import { emojiUrl } from "../discord/cdn";
 import { colorIntToHex } from "../util/discord";
 import Twemoji from "./Twemoji";
 
@@ -35,9 +35,7 @@ function ComponentEmoji({
   if (emoji.id) {
     return (
       <img
-        src={`https://cdn.discordapp.com/emojis/${emoji.id}.${
-          emoji.animated ? "gif" : "png"
-        }`}
+        src={emojiUrl({ id: emoji.id, animated: emoji.animated })}
         alt=""
         className="discord-button-emoji"
       />
@@ -125,7 +123,7 @@ export function PreviewSelectMenu({
   );
 }
 
-export function PreviewActionRow({ row }: { row: MessageComponentActionRow }) {
+function PreviewActionRow({ row }: { row: MessageComponentActionRow }) {
   return (
     <div className="discord-action-row">
       {row.components.map((component) =>
@@ -164,21 +162,13 @@ function Spoiler({
   );
 }
 
-function Markup({ content }: { content: string }) {
+export function Markup({ content }: { content: string }) {
   return (
     <div
       className="discord-message-markup"
       dangerouslySetInnerHTML={{ __html: toHTML(content, {}) }}
     />
   );
-}
-
-function PreviewTextDisplay({
-  textDisplay,
-}: {
-  textDisplay: MessageComponentTextDisplay;
-}) {
-  return <Markup content={textDisplay.content} />;
 }
 
 function PreviewThumbnail({
@@ -204,7 +194,7 @@ function PreviewSection({ section }: { section: MessageComponentSection }) {
     <div className="discord-component-section">
       <div className="discord-component-section-content">
         {section.components.map((component) => (
-          <PreviewTextDisplay key={component.id} textDisplay={component} />
+          <Markup key={component.id} content={component.content} />
         ))}
       </div>
       {/* The editor leaves the accessory out while it is being picked. */}
@@ -335,7 +325,7 @@ function PreviewComponent({ component }: { component: MessageComponent }) {
     case 9:
       return <PreviewSection section={component} />;
     case 10:
-      return <PreviewTextDisplay textDisplay={component} />;
+      return <Markup content={component.content} />;
     case 11:
       return <PreviewThumbnail thumbnail={component} />;
     case 12:

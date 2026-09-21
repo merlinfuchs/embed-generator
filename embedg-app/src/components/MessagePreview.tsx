@@ -1,17 +1,13 @@
 import "./MessagePreview.css";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { useState } from "react";
-import type { Message } from "../discord/schema";
-// @ts-expect-error
-import { toHTML } from "../discord/markdown";
-import { colorIntToHex } from "../util/discord";
+import { COMPONENTS_V2_FLAG, type Message } from "../discord/schema";
 import { useSendSettingsStore } from "../state/sendSettings";
 import Twemoji from "./Twemoji";
 import { useGuildBrandingQuery } from "../api/queries";
 import { getRelativeUrl } from "../util/url";
-import PreviewComponents, {
-  PreviewActionRow,
-} from "./MessagePreviewComponents";
+import PreviewComponents, { Markup } from "./MessagePreviewComponents";
+import MessagePreviewEmbed from "./MessagePreviewEmbed";
 
 interface ButtonResponse {
   id: number;
@@ -21,7 +17,7 @@ interface ButtonResponse {
 export default function MessagePreview({ msg }: { msg: Message }) {
   const currentTime = format(new Date(), "hh:mm aa");
   // A Components V2 message carries its content in the components instead.
-  const componentsV2 = ((msg.flags ?? 0) & (1 << 15)) !== 0;
+  const componentsV2 = ((msg.flags ?? 0) & COMPONENTS_V2_FLAG) !== 0;
   const sendMode = useSendSettingsStore((state) => state.mode);
   const [responses, setResponses] = useState<ButtonResponse[]>([]);
 
@@ -59,187 +55,35 @@ export default function MessagePreview({ msg }: { msg: Message }) {
               <span className="discord-message-timestamp pl-1">
                 Today at {currentTime}
               </span>
-              {!componentsV2 && !!msg.content && (
-                <div className="discord-message-body">
-                  <div
-                    className="discord-message-markup"
-                    dangerouslySetInnerHTML={{
-                      __html: toHTML(msg.content || "", {}),
-                    }}
-                  />
-                </div>
-              )}
-
-              <div className="discord-message-compact-indent">
-                {componentsV2 && (
+              {componentsV2 ? (
+                <div className="discord-message-compact-indent">
                   <PreviewComponents components={msg.components} />
-                )}
-                {!componentsV2 &&
-                  msg.embeds &&
-                  msg.embeds.map((embed) => {
-                    let inlineFieldIndex = 0;
-                    const hexColor = embed.color
-                      ? colorIntToHex(embed.color)
-                      : "#1f2225";
-                    let timestamp = "";
-                    if (embed.timestamp) {
-                      const date = parseISO(embed.timestamp);
-                      if (!Number.isNaN(date.getTime())) {
-                        timestamp = format(date, "dd/MM/yyyy");
-                      }
-                    }
-                    return (
-                      <div
-                        key={embed.id}
-                        className="discord-embed overflow-hidden"
-                      >
-                        <div
-                          className="discord-left-border"
-                          style={{ backgroundColor: hexColor }}
-                        ></div>
-                        <div className="discord-embed-root">
-                          <div className="discord-embed-wrapper">
-                            <div className="discord-embed-grid">
-                              {!!embed.provider?.name && (
-                                <div className="discord-embed-provider overflow-hidden break-all">
-                                  {embed.provider.url ? (
-                                    <a href={embed.provider.url}>
-                                      {embed.provider.name}
-                                    </a>
-                                  ) : (
-                                    embed.provider.name
-                                  )}
-                                </div>
-                              )}
-                              {!!embed.author?.name && (
-                                <div className="discord-embed-author overflow-hidden break-all">
-                                  {!!embed.author.icon_url && (
-                                    <img
-                                      src={embed.author.icon_url}
-                                      alt=""
-                                      className="discord-author-image"
-                                    />
-                                  )}
-                                  {embed.author.url ? (
-                                    <a href={embed.author.url}>
-                                      {embed.author.name}
-                                    </a>
-                                  ) : (
-                                    embed.author.name
-                                  )}
-                                </div>
-                              )}
-                              {!!embed.title && (
-                                <div className="discord-embed-title overflow-hidden break-all">
-                                  {embed.url ? (
-                                    <a
-                                      href={embed.url}
-                                      dangerouslySetInnerHTML={{
-                                        __html: toHTML(embed.title || "", {
-                                          isTitle: true,
-                                        }),
-                                      }}
-                                    ></a>
-                                  ) : (
-                                    <span
-                                      dangerouslySetInnerHTML={{
-                                        __html: toHTML(embed.title || "", {
-                                          isTitle: true,
-                                        }),
-                                      }}
-                                    />
-                                  )}
-                                </div>
-                              )}
-                              {!!embed.description && (
-                                <div
-                                  className="discord-embed-description"
-                                  dangerouslySetInnerHTML={{
-                                    __html: toHTML(embed.description || "", {}),
-                                  }}
-                                />
-                              )}
-                              {!!embed.fields.length && (
-                                <div className="discord-embed-fields">
-                                  {embed.fields.map((field) => (
-                                    <div
-                                      key={field.id}
-                                      className={`discord-embed-field${
-                                        field.inline
-                                          ? ` discord-embed-inline-field discord-embed-inline-field-${
-                                              (inlineFieldIndex++ % 3) + 1
-                                            }`
-                                          : ""
-                                      }`}
-                                    >
-                                      <div
-                                        className="discord-field-title overflow-hidden break-all"
-                                        dangerouslySetInnerHTML={{
-                                          __html: toHTML(field.name || "", {
-                                            isTitle: true,
-                                          }),
-                                        }}
-                                      />
-                                      <div
-                                        dangerouslySetInnerHTML={{
-                                          __html: toHTML(field.value, {}),
-                                        }}
-                                      />
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                              {!!embed.image && (
-                                <div className="discord-embed-media">
-                                  <img
-                                    src={embed.image.url}
-                                    alt=""
-                                    className="discord-embed-image"
-                                  />
-                                </div>
-                              )}
-                              {!!embed.thumbnail && (
-                                <img
-                                  src={embed.thumbnail.url}
-                                  alt=""
-                                  className="discord-embed-thumbnail"
-                                />
-                              )}
-                              {(embed.footer?.text || embed.timestamp) && (
-                                <div className="discord-embed-footer overflow-hidden break-all">
-                                  {embed.footer?.icon_url && (
-                                    <img
-                                      src={embed.footer?.icon_url}
-                                      alt=""
-                                      className="discord-footer-image"
-                                    />
-                                  )}
-                                  {embed.footer?.text}
-                                  {embed.footer?.text && embed.timestamp && (
-                                    <div className="discord-footer-separator">
-                                      •
-                                    </div>
-                                  )}
-                                  <div className="flex-none">{timestamp}</div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                <div className="discord-attachments">
-                  {!componentsV2 &&
-                    sendMode === "channel" &&
-                    msg.components
-                      .filter((component) => component.type === 1)
-                      .map((row) => (
-                        <PreviewActionRow key={row.id} row={row} />
-                      ))}
                 </div>
-              </div>
+              ) : (
+                <>
+                  {!!msg.content && (
+                    <div className="discord-message-body">
+                      <Markup content={msg.content} />
+                    </div>
+                  )}
+
+                  <div className="discord-message-compact-indent">
+                    {msg.embeds.map((embed) => (
+                      <MessagePreviewEmbed key={embed.id} embed={embed} />
+                    ))}
+
+                    <div className="discord-attachments">
+                      {sendMode === "channel" && (
+                        <PreviewComponents
+                          components={msg.components.filter(
+                            (component) => component.type === 1,
+                          )}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
