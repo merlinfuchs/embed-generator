@@ -6,6 +6,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 source scripts/lib.sh
 
+ensure_pnpm
+
 echo "==> building embedg-site"
 (cd embedg-site && pnpm install --frozen-lockfile && pnpm build)
 

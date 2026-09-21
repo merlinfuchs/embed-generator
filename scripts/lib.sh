@@ -2,6 +2,30 @@
 
 DEPLOY_HOST="${DEPLOY_HOST:-root@embedg-main}"
 
+# With a lazy nvm setup, pnpm and node are zsh functions rather than binaries, so a
+# script sees neither. Take the version .nvmrc asks for straight out of the nvm
+# directory instead of sourcing nvm.sh, which is slow and wants to install things.
+ensure_pnpm() {
+	command -v pnpm > /dev/null 2>&1 && return 0
+
+	local want bin nvm_dir
+	nvm_dir="${NVM_DIR:-$HOME/.nvm}"
+	want="$(tr -d '[:space:]v' < .nvmrc 2>/dev/null || true)"
+
+	if [ -d "$nvm_dir/versions/node/v$want/bin" ]; then
+		bin="$nvm_dir/versions/node/v$want/bin"
+	else
+		bin="$(ls -d "$nvm_dir/versions/node/v$want."*/bin 2>/dev/null | sort -V | tail -1)"
+	fi
+
+	if [ -z "$bin" ] || [ ! -x "$bin/pnpm" ]; then
+		echo "pnpm not found: node ${want:-?} from .nvmrc isn't installed under $nvm_dir" >&2
+		return 1
+	fi
+
+	export PATH="$bin:$PATH"
+}
+
 # Uploads a built frontend and hands it to Caddy with the modes it can actually read:
 # the caddy user needs o+rx on every directory, and rsync -a would otherwise carry
 # whatever the build left behind.
