@@ -10,7 +10,6 @@ import type {
   MessageComponentSection,
   MessageComponentSelectMenu,
   MessageComponentSeparator,
-  MessageComponentTextDisplay,
   MessageComponentThumbnail,
   UnfurledMediaItem,
 } from "../discord/schema";
