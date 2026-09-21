@@ -1285,11 +1285,7 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   padding: 8px 12px;
 }
 
-/* Siblings are already 8px apart, so this is the space a separator adds. */
-.discord-component-separator {
-  padding: 0;
-}
-
+/* Siblings are already 8px apart, so this is what a large separator adds. */
 .discord-component-separator-large {
   padding: 8px 0;
 }

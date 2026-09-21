@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { getUniqueId } from "../util";
 
+export const COMPONENTS_V2_FLAG = 1 << 15;
+
 const VARIABLE_RE = /\{\{[^}]+\}\}/;
 const ATTACHMENT_RE = /attachment:\/\/\.+/;
 
@@ -544,7 +546,7 @@ export const messageSchema = z
   })
   .superRefine((data, ctx) => {
     const flags = data.flags ?? 0;
-    if (flags & (1 << 15)) {
+    if (flags & COMPONENTS_V2_FLAG) {
       if (data.components.length === 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,

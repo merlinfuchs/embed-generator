@@ -5,6 +5,7 @@ import { type TemporalState, temporal } from "zundo";
 import { create, useStore } from "zustand";
 import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
+import { COMPONENTS_V2_FLAG } from "../discord/schema";
 import type {
   EmbedAuthor,
   EmbedFooter,
@@ -244,7 +245,7 @@ export interface DocumentStore extends DocumentData, ActionSetActions {
   setComponentsV2(enabled: boolean): void;
 }
 
-export const COMPONENTS_V2_FLAG = 1 << 15;
+export { COMPONENTS_V2_FLAG };
 
 /**
  * How many children a slot holds, as the message schema enforces it. Kept here
