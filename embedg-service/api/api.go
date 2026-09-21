@@ -11,7 +11,7 @@ import (
 	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/disgo/sharding"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/recover"
+	recovermw "github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/merlinfuchs/embed-generator/embedg-service/access"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions/parser"
@@ -42,7 +42,26 @@ type APIConfig struct {
 
 func Serve(ctx context.Context, env *Env, config APIConfig) {
 	app := fiber.New(fiber.Config{
-		ErrorHandler: func(c *fiber.Ctx, err error) error {
+		ErrorHandler: func(c *fiber.Ctx, err error) (handlerErr error) {
+			// Fiber calls this outside the recover middleware below, so a panic in here takes
+			// the process down. err.Error() is the risk: disgo's rest.Error renders Discord's
+			// error tree and has panicked on shapes it didn't expect.
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error(
+						"Panic while rendering rest endpoint error",
+						slog.String("method", c.Method()),
+						slog.String("path", c.Path()),
+						slog.Any("panic", r),
+					)
+					handlerErr = c.Status(fiber.StatusInternalServerError).JSON(wire.Error{
+						Status:  fiber.StatusInternalServerError,
+						Code:    "internal_server_error",
+						Message: "Internal server error",
+					})
+				}
+			}()
+
 			var e *wire.Error
 			if errors.As(err, &e) {
 				return c.Status(e.Status).JSON(e)
@@ -72,7 +91,7 @@ func Serve(ctx context.Context, env *Env, config APIConfig) {
 	})
 
 	// We don't want the whole app to crash but panics are still very bad
-	app.Use(recover.New(recover.Config{
+	app.Use(recovermw.New(recovermw.Config{
 		EnableStackTrace: true,
 	}))
 
