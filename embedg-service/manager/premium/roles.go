@@ -12,7 +12,8 @@ import (
 
 // defaultMemberRequestInterval paces the member requests. The sweep was seeing a 429 on every
 // user, and it has a whole 15 minutes to get through the list, so spreading it out costs nothing.
-const defaultMemberRequestInterval = time.Second
+// Keep the interval short enough that the list still fits in the sweep's own period.
+const defaultMemberRequestInterval = time.Millisecond * 500
 
 func (m *PremiumManager) assignPremiumRoles(ctx context.Context) error {
 	if m.config.BeneficialGuildID == 0 || m.config.BeneficialRoleID == 0 {
