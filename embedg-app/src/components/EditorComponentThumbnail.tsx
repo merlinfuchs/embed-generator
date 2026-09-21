@@ -49,6 +49,7 @@ export default function EditorComponentThumbnail({
               })
             }
             className="flex-auto"
+            imageUpload={true}
             validationPath={nodeField<ThumbnailNode>(id, "media.url")}
           />
           <div className="flex-none">

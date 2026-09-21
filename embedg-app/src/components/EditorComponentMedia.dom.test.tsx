@@ -14,6 +14,7 @@ vi.mock("../util/premium", () => ({
   usePremiumGuildFeatures: () => ({
     component_types: [1, 2, 3, 9, 10, 11, 12, 13, 14, 17],
     max_actions_per_component: 5,
+    max_image_upload_size: 10 * 1024 * 1024,
   }),
   usePremiumUserFeatures: () => ({}),
 }));
@@ -127,4 +128,11 @@ test("marking a file as a spoiler reaches the message", async () => {
   await editorUser().click(screen.getByRole("checkbox"));
 
   expect(firstComponent().spoiler).toBe(true);
+});
+
+test("a gallery item can upload an image to the CDN", () => {
+  loadMessage(galleryMessage([{ url: "" }]));
+  renderEditor(<EditorComponents defaultCollapsed={false} />);
+
+  expect(screen.getByRole("button", { name: "Upload image" })).toBeVisible();
 });
