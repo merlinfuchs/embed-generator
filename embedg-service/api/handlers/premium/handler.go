@@ -54,9 +54,9 @@ func (h *PremiumHandler) HandleGetFeatures(c *fiber.Ctx) error {
 		if err := h.am.CheckGuildAccessForRequest(c, guildID.ID); err != nil {
 			return err
 		}
-		features, err = h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID.ID)
+		features, err = h.planStore.GetPlanFeaturesForGuild(c.UserContext(), guildID.ID)
 	} else {
-		features, err = h.planStore.GetPlanFeaturesForUser(c.Context(), session.UserID)
+		features, err = h.planStore.GetPlanFeaturesForUser(c.UserContext(), session.UserID)
 	}
 
 	if err != nil {
@@ -96,9 +96,9 @@ func (h *PremiumHandler) HandleListEntitlements(c *fiber.Ctx) error {
 		if err := h.am.CheckGuildAccessForRequest(c, guildID.ID); err != nil {
 			return err
 		}
-		entitlements, err = h.entitlementStore.GetActiveEntitlementsForGuild(c.Context(), guildID.ID)
+		entitlements, err = h.entitlementStore.GetActiveEntitlementsForGuild(c.UserContext(), guildID.ID)
 	} else {
-		entitlements, err = h.entitlementStore.GetActiveEntitlementsForUser(c.Context(), session.UserID)
+		entitlements, err = h.entitlementStore.GetActiveEntitlementsForUser(c.UserContext(), session.UserID)
 	}
 
 	if err != nil {
@@ -143,7 +143,7 @@ func (h *PremiumHandler) HandleConsumeEntitlement(c *fiber.Ctx, req wire.Consume
 		return err
 	}
 
-	entitlement, err := h.entitlementStore.GetEntitlement(c.Context(), entitlementID, session.UserID)
+	entitlement, err := h.entitlementStore.GetEntitlement(c.UserContext(), entitlementID, session.UserID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			return handlers.NotFound("entitlement_not_found", "Entitlement not found")
@@ -155,7 +155,7 @@ func (h *PremiumHandler) HandleConsumeEntitlement(c *fiber.Ctx, req wire.Consume
 		return handlers.BadRequest("entitlement_already_consumed", "Entitlement already consumed")
 	}
 
-	_, err = h.entitlementStore.UpdateEntitlementConsumedGuildID(c.Context(), entitlementID, common.NullID{
+	_, err = h.entitlementStore.UpdateEntitlementConsumedGuildID(c.UserContext(), entitlementID, common.NullID{
 		ID:    req.GuildID,
 		Valid: true,
 	})
@@ -164,7 +164,7 @@ func (h *PremiumHandler) HandleConsumeEntitlement(c *fiber.Ctx, req wire.Consume
 	}
 
 	if !entitlement.Consumed {
-		err = h.rest.ConsumeEntitlement(h.appContext.ApplicationID(), entitlementID, rest.WithCtx(c.Context()))
+		err = h.rest.ConsumeEntitlement(h.appContext.ApplicationID(), entitlementID, rest.WithCtx(c.UserContext()))
 		if err != nil {
 			return fmt.Errorf("failed to consume entitlement: %w", err)
 		}

@@ -97,12 +97,12 @@ func (h *AuthHandler) HandleAuthLogout(c *fiber.Ctx) error {
 }
 
 func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.Token, string, error) {
-	tokenData, err := h.oauth2Config.Exchange(c.Context(), code)
+	tokenData, err := h.oauth2Config.Exchange(c.UserContext(), code)
 	if err != nil {
 		return nil, "", fmt.Errorf("Failed to exchange token: %w", err)
 	}
 
-	client := h.oauth2Config.Client(c.Context(), tokenData)
+	client := h.oauth2Config.Client(c.UserContext(), tokenData)
 	resp, err := client.Get("https://discord.com/api/users/@me")
 	if err != nil {
 		return nil, "", h.HandleAuthRedirect(c)
@@ -120,7 +120,7 @@ func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.T
 	}
 	resp.Body.Close()
 
-	err = h.userStore.UpsertUser(c.Context(), model.User{
+	err = h.userStore.UpsertUser(c.UserContext(), model.User{
 		ID:            user.ID,
 		Name:          user.Username,
 		Discriminator: user.Discriminator,
@@ -151,7 +151,7 @@ func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.T
 		guildIDs[i] = guild.ID
 	}
 
-	token, err := h.sessionManager.CreateSession(c.Context(), user.ID, guildIDs, tokenData)
+	token, err := h.sessionManager.CreateSession(c.UserContext(), user.ID, guildIDs, tokenData)
 	if err != nil {
 		return nil, "", err
 	}

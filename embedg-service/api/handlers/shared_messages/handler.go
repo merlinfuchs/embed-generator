@@ -32,7 +32,7 @@ func New(config SharedMessageHandlerConfig, sharedMessageStore store.SharedMessa
 }
 
 func (h *SharedMessageHandler) HandleCreateSharedMessage(c *fiber.Ctx, req wire.SharedMessageCreateRequestWire) error {
-	msg, err := h.sharedMessageStore.CreateSharedMessage(c.Context(), model.SharedMessage{
+	msg, err := h.sharedMessageStore.CreateSharedMessage(c.UserContext(), model.SharedMessage{
 		ID:        common.InternalID(),
 		CreatedAt: time.Now().UTC(),
 		ExpiresAt: time.Now().UTC().Add(time.Hour * 24 * 7),
@@ -43,7 +43,7 @@ func (h *SharedMessageHandler) HandleCreateSharedMessage(c *fiber.Ctx, req wire.
 		return err
 	}
 
-	err = h.sharedMessageStore.DeleteExpiredSharedMessages(c.Context(), time.Now().UTC())
+	err = h.sharedMessageStore.DeleteExpiredSharedMessages(c.UserContext(), time.Now().UTC())
 	if err != nil {
 		slog.Error("Failed to delete expired shared messages", slog.Any("error", err))
 	}
@@ -63,7 +63,7 @@ func (h *SharedMessageHandler) HandleCreateSharedMessage(c *fiber.Ctx, req wire.
 func (h *SharedMessageHandler) HandleGetSharedMessage(c *fiber.Ctx) error {
 	messageID := c.Params("messageID")
 
-	msg, err := h.sharedMessageStore.GetSharedMessage(c.Context(), messageID)
+	msg, err := h.sharedMessageStore.GetSharedMessage(c.UserContext(), messageID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			return handlers.NotFound("unknown_message", "The shared message does not exist or has expired.")

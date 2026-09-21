@@ -39,7 +39,7 @@ func (h *UsersHandler) HandleGetUser(c *fiber.Ctx) error {
 		}
 	}
 
-	user, err := h.userStore.GetUser(c.Context(), userID)
+	user, err := h.userStore.GetUser(c.UserContext(), userID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			return handlers.NotFound("unknown_user", "The user does not exist.")

@@ -73,7 +73,7 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 		return err
 	}
 
-	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.UserContext(), guildID)
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 
 	// A guild the main bot can't see means no roles to check, not a failed request.
 	var roles []discord.Role
-	state, err := h.guildState.Guild(c.Context(), guildID)
+	state, err := h.guildState.Guild(c.UserContext(), guildID)
 	if err != nil && !errors.Is(err, store.ErrNotFound) {
 		return fmt.Errorf("Failed to get guild state: %w", err)
 	} else if state != nil {
@@ -128,7 +128,7 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 		}
 	}
 
-	customBot, err := h.customBotManager.UpsertCustomBot(c.Context(), model.CustomBot{
+	customBot, err := h.customBotManager.UpsertCustomBot(c.UserContext(), model.CustomBot{
 		ID:                common.InternalID(),
 		GuildID:           guildID,
 		ApplicationID:     app.ID,
@@ -180,7 +180,7 @@ func (h *CustomBotsHandler) HandleUpdateCustomBotPresence(c *fiber.Ctx, req wire
 		return err
 	}
 
-	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.UserContext(), guildID)
 	if err != nil {
 		return err
 	}
@@ -189,7 +189,7 @@ func (h *CustomBotsHandler) HandleUpdateCustomBotPresence(c *fiber.Ctx, req wire
 		return handlers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
 	}
 
-	_, err = h.customBotManager.UpdateCustomBotPresence(c.Context(), store.UpdateCustomBotPresenceParams{
+	_, err = h.customBotManager.UpdateCustomBotPresence(c.UserContext(), store.UpdateCustomBotPresenceParams{
 		GuildID:              guildID,
 		GatewayStatus:        req.GatewayStatus,
 		GatewayActivityType:  null.IntFrom(int64(req.GatewayActivityType)),
@@ -220,7 +220,7 @@ func (h *CustomBotsHandler) HandleDisableCustomBot(c *fiber.Ctx) error {
 		return err
 	}
 
-	_, err = h.customBotManager.DeleteCustomBot(c.Context(), guildID)
+	_, err = h.customBotManager.DeleteCustomBot(c.UserContext(), guildID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			return handlers.NotFound("not_configured", "There is no custom bot configured right now")
@@ -244,7 +244,7 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 		return err
 	}
 
-	restClient, customBot, err := h.customBotManager.GetRestForGuild(c.Context(), guildID)
+	restClient, customBot, err := h.customBotManager.GetRestForGuild(c.UserContext(), guildID)
 	if err != nil {
 		return err
 	}
@@ -268,7 +268,7 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 	}
 
 	if member != nil {
-		customBot, err = h.customBotManager.UpdateCustomBotUser(c.Context(), store.UpdateCustomBotUserParams{
+		customBot, err = h.customBotManager.UpdateCustomBotUser(c.UserContext(), store.UpdateCustomBotUserParams{
 			GuildID:           guildID,
 			UserName:          member.User.Username,
 			UserDiscriminator: member.User.Discriminator,
@@ -281,7 +281,7 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 
 	// A guild the main bot can't see means no roles to check, not a failed request.
 	var roles []discord.Role
-	state, err := h.guildState.Guild(c.Context(), guildID)
+	state, err := h.guildState.Guild(c.UserContext(), guildID)
 	if err != nil && !errors.Is(err, store.ErrNotFound) {
 		return fmt.Errorf("Failed to get guild state: %w", err)
 	} else if state != nil {

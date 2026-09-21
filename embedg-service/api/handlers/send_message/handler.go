@@ -62,7 +62,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return err
 	}
 
-	channel, err := h.guildState.Channel(c.Context(), req.ChannelID)
+	channel, err := h.guildState.Channel(c.UserContext(), req.ChannelID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			return handlers.BadRequest("channel_not_found", "Channel not found")
@@ -70,12 +70,12 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return err
 	}
 
-	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), channel.GuildID())
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.UserContext(), channel.GuildID())
 	if err != nil {
 		return fmt.Errorf("could not get plan features: %w", err)
 	}
 
-	templateSource := template.NewSource(c.Context(), h.guildState)
+	templateSource := template.NewSource(c.UserContext(), h.guildState)
 	templates := template.NewContext(
 		"SEND_MESSAGE", features.MaxTemplateOps,
 		template.NewGuildProvider(templateSource, channel.GuildID(), nil),
@@ -127,7 +127,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 
 	var msg *discord.Message
 	if req.MessageID.Valid {
-		msg, err = h.webhookManager.UpdateMessageInChannel(c.Context(), req.ChannelID, req.MessageID.ID, discord.WebhookMessageUpdate{
+		msg, err = h.webhookManager.UpdateMessageInChannel(c.UserContext(), req.ChannelID, req.MessageID.ID, discord.WebhookMessageUpdate{
 			Content:         &params.Content,
 			Embeds:          &params.Embeds,
 			Components:      &params.Components,
@@ -135,7 +135,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 			Files:           params.Files,
 		})
 	} else {
-		msg, err = h.webhookManager.SendMessageToChannel(c.Context(), req.ChannelID, params)
+		msg, err = h.webhookManager.SendMessageToChannel(c.UserContext(), req.ChannelID, params)
 	}
 	if err != nil {
 		if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeUnknownMessage) {
@@ -144,17 +144,17 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return fmt.Errorf("Failed to send or edit message: %w", err)
 	}
 
-	member, err := h.accessManager.GetMemberForUser(c.Context(), session, req.GuildID)
+	member, err := h.accessManager.GetMemberForUser(c.UserContext(), session, req.GuildID)
 	if err != nil {
 		return fmt.Errorf("Failed to get member: %w", err)
 	}
 
-	permContext, err := h.actionParser.DerivePermissionsForActions(c.Context(), *member, req.GuildID, req.ChannelID)
+	permContext, err := h.actionParser.DerivePermissionsForActions(c.UserContext(), *member, req.GuildID, req.ChannelID)
 	if err != nil {
 		return fmt.Errorf("Failed to create permission context: %w", err)
 	}
 
-	err = h.actionParser.CreateActionsForMessage(c.Context(), data.Actions, permContext, msg.ID, false)
+	err = h.actionParser.CreateActionsForMessage(c.UserContext(), data.Actions, permContext, msg.ID, false)
 	if err != nil {
 		slog.Error("failed to create actions for message", slog.Any("error", err))
 		return err
@@ -202,7 +202,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 	}
 
 	if req.WebhookType == "guilded" {
-		err := common.ExecuteGuildedWebhook(c.Context(), req.WebhookID, req.WebhookToken, params)
+		err := common.ExecuteGuildedWebhook(c.UserContext(), req.WebhookID, req.WebhookToken, params)
 		if err != nil {
 			return err
 		}

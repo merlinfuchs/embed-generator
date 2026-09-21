@@ -24,7 +24,7 @@ func (h *SendMessageHandler) HandleRestoreMessageFromChannel(c *fiber.Ctx, req w
 	}
 
 	// We don't use a webhook here because we don't need to, but this means that some restored messages can't actually be edited
-	msg, err := h.rest.GetMessage(req.ChannelID, req.MessageID, rest.WithCtx(c.Context()))
+	msg, err := h.rest.GetMessage(req.ChannelID, req.MessageID, rest.WithCtx(c.UserContext()))
 	if err != nil {
 		if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeUnknownMessage) {
 			return handlers.NotFound("unknown_message", "The message to restore does not exist.")
@@ -40,7 +40,7 @@ func (h *SendMessageHandler) HandleRestoreMessageFromChannel(c *fiber.Ctx, req w
 		return fmt.Errorf("Failed to unparse message components: %w", err)
 	}
 
-	actionSets, err := h.actionParser.RetrieveActionsForMessage(c.Context(), req.MessageID)
+	actionSets, err := h.actionParser.RetrieveActionsForMessage(c.UserContext(), req.MessageID)
 	if err != nil {
 		return fmt.Errorf("Failed to retrieve actions for message: %w", err)
 	}
@@ -73,7 +73,7 @@ func (h *SendMessageHandler) HandleRestoreMessageFromChannel(c *fiber.Ctx, req w
 
 func (h *SendMessageHandler) HandleRestoreMessageFromWebhook(c *fiber.Ctx, req wire.MessageRestoreFromWebhookRequestWire) error {
 	reqOpts := []rest.RequestOpt{
-		rest.WithCtx(c.Context()),
+		rest.WithCtx(c.UserContext()),
 	}
 	if req.ThreadID.Valid {
 		reqOpts = append(reqOpts, rest.WithQueryParam("thread_id", req.ThreadID.String))

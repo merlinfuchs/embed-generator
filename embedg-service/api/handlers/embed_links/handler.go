@@ -32,7 +32,7 @@ func New(config EmbedLinksHandlerConfig, embedLinkStore store.EmbedLinkStore) *E
 }
 
 func (h *EmbedLinksHandler) HandleCreateEmbedLink(c *fiber.Ctx, req wire.EmbedLinkCreateRequestWire) error {
-	row, err := h.embedLinkStore.CreateEmbedLink(c.Context(), model.EmbedLink{
+	row, err := h.embedLinkStore.CreateEmbedLink(c.UserContext(), model.EmbedLink{
 		ID:             common.InternalID(),
 		OgTitle:        req.OgTitle,
 		Url:            req.Url,
@@ -64,7 +64,7 @@ func (h *EmbedLinksHandler) HandleCreateEmbedLink(c *fiber.Ctx, req wire.EmbedLi
 }
 
 func (h *EmbedLinksHandler) HandleRenderEmbedLinkHTML(c *fiber.Ctx) error {
-	embedLink, err := h.embedLinkStore.GetEmbedLink(c.Context(), c.Params("linkID"))
+	embedLink, err := h.embedLinkStore.GetEmbedLink(c.UserContext(), c.Params("linkID"))
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			return h.renderUnknownEmbedLinkHTML(c)
@@ -76,7 +76,7 @@ func (h *EmbedLinksHandler) HandleRenderEmbedLinkHTML(c *fiber.Ctx) error {
 }
 
 func (h *EmbedLinksHandler) HandleRenderEmbedLinkJSON(c *fiber.Ctx) error {
-	embedLink, err := h.embedLinkStore.GetEmbedLink(c.Context(), c.Params("linkID"))
+	embedLink, err := h.embedLinkStore.GetEmbedLink(c.UserContext(), c.Params("linkID"))
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			return handlers.NotFound("embed_link_not_found", "Embed link not found")
