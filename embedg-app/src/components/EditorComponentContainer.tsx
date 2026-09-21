@@ -4,10 +4,10 @@ import {
   type ContainerNode,
   type NodeId,
   useChildIds,
-  useDocumentStore,
   useNode,
   useNodeActions,
   slotLimit,
+  useDocumentStoreApi,
 } from "../state/document";
 import { nodeField, nodeScope, slotScope } from "../state/validationError";
 import { AutoAnimate } from "../util/autoAnimate";
@@ -23,16 +23,20 @@ import ValidationError from "./ValidationError";
 interface Props {
   id: NodeId;
   title?: string;
+  /** The container is the whole document, so it can't be moved or removed. */
+  fixed?: boolean;
 }
 
 export default function EditorComponentContainer({
   id,
   title = "Container",
+  fixed,
 }: Props) {
   const data = useNode<ContainerNode>(id);
   const childIds = useChildIds(id, "components");
-  const actions = useNodeActions(id);
-  const { update, removeChildren } = useDocumentStore.getState();
+  const nodeActions = useNodeActions(id);
+  const actions = fixed ? {} : nodeActions;
+  const { update, removeChildren } = useDocumentStoreApi().getState();
 
   const hexColor = useMemo(
     () =>

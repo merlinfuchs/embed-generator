@@ -1,6 +1,7 @@
 package embed_links
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"html"
@@ -42,10 +43,29 @@ func (h *EmbedLinksHandler) renderEmbedLinkHTML(c *fiber.Ctx, el *model.EmbedLin
 		metaTags += fmt.Sprintf(`<link type="application/json+oembed" href="%s" />`, oEmbedURL)
 	}
 
+	metaTags += componentEmbedToHTML(el.ComponentEmbed)
+
 	html := fmt.Sprintf(embedLinkHTML, metaTags, safeJSURL(el.Url))
 
 	c.Set("Content-Type", "text/html")
 	return c.SendString(html)
+}
+
+// The payload Discord renders instead of the meta tags, which stay as the
+// fallback for everywhere else. The column is jsonb, which normalizes away the
+// escaping json.Marshal did when the link was created, so `<`, `>` and `&` are
+// escaped again here: nothing in the payload may close the script element.
+func componentEmbedToHTML(raw []byte) string {
+	if len(raw) == 0 {
+		return ""
+	}
+
+	var html bytes.Buffer
+	html.WriteString(`<script id="discord:component-embed" type="application/json">`)
+	json.HTMLEscape(&html, raw)
+	html.WriteString("</script>\n")
+
+	return html.String()
 }
 
 func safeJSURL(rawURL string) string {

@@ -2,8 +2,8 @@ import {
   type EmbedNode,
   type FieldPath,
   type NodeId,
-  useDocumentStore,
   useNode,
+  useDocumentStoreApi,
 } from "../state/document";
 import { patchGroup } from "../util/patch";
 import { nodeField, nodeScope } from "../state/validationError";
@@ -18,7 +18,7 @@ interface Props {
 
 export default function EditorEmbedAuthor({ id }: Props) {
   const embed = useNode<EmbedNode>(id);
-  const { update } = useDocumentStore.getState();
+  const { update } = useDocumentStoreApi().getState();
 
   if (!embed) return null;
 

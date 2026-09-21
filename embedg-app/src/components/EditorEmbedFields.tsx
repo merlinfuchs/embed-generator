@@ -2,7 +2,7 @@ import {
   type NodeId,
   slotLimit,
   useChildIds,
-  useDocumentStore,
+  useDocumentStoreApi,
 } from "../state/document";
 import { AutoAnimate } from "../util/autoAnimate";
 import { slotScope } from "../state/validationError";
@@ -16,7 +16,7 @@ interface Props {
 
 export default function EditorEmbedFields({ id }: Props) {
   const fieldIds = useChildIds(id, "fields");
-  const { insert, removeChildren } = useDocumentStore.getState();
+  const { insert, removeChildren } = useDocumentStoreApi().getState();
 
   return (
     <Collapsable

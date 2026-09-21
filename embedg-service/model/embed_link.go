@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"time"
 
 	"gopkg.in/guregu/null.v4"
@@ -20,6 +21,7 @@ type EmbedLink struct {
 	OeProviderName null.String
 	OeProviderUrl  null.String
 	TwCard         null.String
+	ComponentEmbed json.RawMessage
 	ExpiresAt      null.Time
 	CreatedAt      time.Time
 }

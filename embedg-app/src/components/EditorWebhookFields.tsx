@@ -1,11 +1,16 @@
-import { type MessageNode, useDocumentStore, useNode } from "../state/document";
+import {
+  type MessageNode,
+  useNode,
+  useDocumentStoreApi,
+  useDocument,
+} from "../state/document";
 import { nodeField } from "../state/validationError";
 import EditorInput from "./EditorInput";
 
 export default function EditorWebhookFields() {
-  const rootId = useDocumentStore((state) => state.rootId);
+  const rootId = useDocument((state) => state.rootId);
   const root = useNode<MessageNode>(rootId);
-  const { update } = useDocumentStore.getState();
+  const { update } = useDocumentStoreApi().getState();
 
   return (
     <div>

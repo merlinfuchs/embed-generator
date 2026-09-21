@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { parseMessageWithAction } from "../discord/importSchema";
 import { setCurrentMessage } from "../state/currentMessage";
-import { useDocumentStore } from "../state/document";
+import { messageDocumentStore } from "../state/document";
 import { toMessage } from "../state/documentConvert";
 
 /**
@@ -15,25 +15,25 @@ export function loadMessage(raw: unknown) {
   // Loading a fixture is not an edit, and letting it through would both leave
   // an entry in the history and arm zundo's debounce, swallowing the first
   // change a test makes.
-  const history = useDocumentStore.temporal.getState();
+  const history = messageDocumentStore.temporal.getState();
   history.pause();
 
   setCurrentMessage(parseMessageWithAction(raw));
 
   history.clear();
-  useDocumentStore.temporal.getState().resume();
+  messageDocumentStore.temporal.getState().resume();
 }
 
 export function currentMessage() {
-  return toMessage(useDocumentStore.getState()).message;
+  return toMessage(messageDocumentStore.getState()).message;
 }
 
 export function currentComponents() {
-  return toMessage(useDocumentStore.getState()).message.components;
+  return toMessage(messageDocumentStore.getState()).message.components;
 }
 
 export function rootId() {
-  return useDocumentStore.getState().rootId;
+  return messageDocumentStore.getState().rootId;
 }
 
 /** Editors reach for the router and the query client, so tests wrap them. */

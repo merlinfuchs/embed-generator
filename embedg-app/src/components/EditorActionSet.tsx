@@ -1,4 +1,4 @@
-import { useDocumentStore } from "../state/document";
+import { useDocumentStoreApi, useDocument } from "../state/document";
 import EditorAction from "./EditorAction";
 import Collapsable from "./Collapsable";
 import { getUniqueId } from "../util";
@@ -13,9 +13,9 @@ export default function EditorActionSet({ setId }: Props) {
   const features = usePremiumGuildFeatures();
   const maxActions = features?.max_actions_per_component || 0;
 
-  const actions = useDocumentStore((state) => state.actions[setId]?.actions);
+  const actions = useDocument((state) => state.actions[setId]?.actions);
 
-  const { addAction, clearActions } = useDocumentStore.getState();
+  const { addAction, clearActions } = useDocumentStoreApi().getState();
 
   function add() {
     addAction(setId, {

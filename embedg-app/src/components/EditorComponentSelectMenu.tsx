@@ -2,9 +2,9 @@ import {
   type NodeId,
   type SelectMenuNode,
   useChildIds,
-  useDocumentStore,
   useNode,
   slotLimit,
+  useDocumentStoreApi,
 } from "../state/document";
 import { nodeField, slotScope } from "../state/validationError";
 import { AutoAnimate } from "../util/autoAnimate";
@@ -21,7 +21,7 @@ interface Props {
 export default function EditorComponentSelectMenu({ id }: Props) {
   const data = useNode<SelectMenuNode>(id);
   const optionIds = useChildIds(id, "options");
-  const { update, insert, removeChildren } = useDocumentStore.getState();
+  const { update, insert, removeChildren } = useDocumentStoreApi().getState();
 
   if (!data) return null;
 

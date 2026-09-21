@@ -1,4 +1,4 @@
-import { useDocumentStore } from "../state/document";
+import { useDocumentStoreApi, useDocument } from "../state/document";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { usePremiumGuildFeatures } from "../util/premium";
 import Action from "./Action";
@@ -13,11 +13,11 @@ export default function EditorAction({ setId, actionIndex }: Props) {
   const maxActions = features?.max_actions_per_component || 0;
   const selectedGuildId = useSendSettingsStore((state) => state.guildId);
 
-  const action = useDocumentStore(
+  const action = useDocument(
     (state) => state.actions[setId]?.actions[actionIndex],
   );
 
-  const actionCount = useDocumentStore(
+  const actionCount = useDocument(
     (state) => state.actions[setId]?.actions?.length || 0,
   );
 
@@ -34,7 +34,7 @@ export default function EditorAction({ setId, actionIndex }: Props) {
     setActionDisableDefaultResponse,
     setActionRoleIds,
     setActionPermissions,
-  } = useDocumentStore.getState();
+  } = useDocumentStoreApi().getState();
 
   return (
     <Action

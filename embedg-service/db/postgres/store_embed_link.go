@@ -29,6 +29,7 @@ func (c *Client) CreateEmbedLink(ctx context.Context, embedLink model.EmbedLink)
 		OeProviderName: pgtype.Text{String: embedLink.OeProviderName.String, Valid: embedLink.OeProviderName.Valid},
 		OeProviderUrl:  pgtype.Text{String: embedLink.OeProviderUrl.String, Valid: embedLink.OeProviderUrl.Valid},
 		TwCard:         pgtype.Text{String: embedLink.TwCard.String, Valid: embedLink.TwCard.Valid},
+		ComponentEmbed: embedLink.ComponentEmbed,
 		ExpiresAt:      pgtype.Timestamp{Time: embedLink.ExpiresAt.Time, Valid: embedLink.ExpiresAt.Valid},
 		CreatedAt:      pgtype.Timestamp{Time: embedLink.CreatedAt, Valid: true},
 	})
@@ -64,6 +65,7 @@ func rowToEmbedLink(row pgmodel.EmbedLink) *model.EmbedLink {
 		OeProviderName: null.NewString(row.OeProviderName.String, row.OeProviderName.Valid),
 		OeProviderUrl:  null.NewString(row.OeProviderUrl.String, row.OeProviderUrl.Valid),
 		TwCard:         null.NewString(row.TwCard.String, row.TwCard.Valid),
+		ComponentEmbed: row.ComponentEmbed,
 		ExpiresAt:      null.NewTime(row.ExpiresAt.Time, row.ExpiresAt.Valid),
 		CreatedAt:      row.CreatedAt.Time,
 	}

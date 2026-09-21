@@ -1,4 +1,9 @@
-import { slotLimit, useChildIds, useDocumentStore } from "../state/document";
+import {
+  slotLimit,
+  useChildIds,
+  useDocumentStoreApi,
+  useDocument,
+} from "../state/document";
 import { AutoAnimate } from "../util/autoAnimate";
 import { slotScope } from "../state/validationError";
 import Collapsable from "./Collapsable";
@@ -6,9 +11,9 @@ import EditorSlotButtons from "./EditorSlotButtons";
 import EditorEmbed from "./EditorEmbed";
 
 export default function EditorEmbeds() {
-  const rootId = useDocumentStore((state) => state.rootId);
+  const rootId = useDocument((state) => state.rootId);
   const embedIds = useChildIds(rootId, "embeds");
-  const { insert, removeChildren } = useDocumentStore.getState();
+  const { insert, removeChildren } = useDocumentStoreApi().getState();
 
   return (
     <Collapsable

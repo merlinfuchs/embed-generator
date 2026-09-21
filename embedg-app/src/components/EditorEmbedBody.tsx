@@ -2,8 +2,8 @@ import {
   type EmbedNode,
   type FieldPath,
   type NodeId,
-  useDocumentStore,
   useNode,
+  useDocumentStoreApi,
 } from "../state/document";
 import { nodeField, nodeScope } from "../state/validationError";
 import Collapsable from "./Collapsable";
@@ -24,7 +24,7 @@ interface Props {
 
 export default function EditorEmbedBody({ id }: Props) {
   const embed = useNode<EmbedNode>(id);
-  const { update } = useDocumentStore.getState();
+  const { update } = useDocumentStoreApi().getState();
 
   if (!embed) return null;
 

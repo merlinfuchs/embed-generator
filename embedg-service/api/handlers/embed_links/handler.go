@@ -1,6 +1,7 @@
 package embed_links
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -32,6 +33,20 @@ func New(config EmbedLinksHandlerConfig, embedLinkStore store.EmbedLinkStore) *E
 }
 
 func (h *EmbedLinksHandler) HandleCreateEmbedLink(c *fiber.Ctx, req wire.EmbedLinkCreateRequestWire) error {
+	// Stored as the payload that goes into the page, not as the client sent it.
+	var componentEmbed []byte
+	if len(req.ComponentEmbed) != 0 {
+		parsed, err := model.ParseComponentEmbed(req.ComponentEmbed)
+		if err != nil {
+			return handlers.BadRequest("invalid_component_embed", err.Error())
+		}
+
+		componentEmbed, err = json.Marshal(parsed)
+		if err != nil {
+			return err
+		}
+	}
+
 	row, err := h.embedLinkStore.CreateEmbedLink(c.UserContext(), model.EmbedLink{
 		ID:             common.InternalID(),
 		OgTitle:        req.OgTitle,
@@ -46,6 +61,7 @@ func (h *EmbedLinksHandler) HandleCreateEmbedLink(c *fiber.Ctx, req wire.EmbedLi
 		OeProviderName: req.OeProviderName,
 		OeProviderUrl:  req.OeProviderUrl,
 		TwCard:         req.TwCard,
+		ComponentEmbed: componentEmbed,
 		CreatedAt:      time.Now().UTC(),
 	})
 	if err != nil {

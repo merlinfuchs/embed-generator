@@ -3,10 +3,11 @@ import clsx from "clsx";
 import {
   type NewNode,
   type NodeId,
-  useDocumentStore,
   useComponentsV2Enabled,
+  useDocumentStoreApi,
 } from "../state/document";
 import { useState } from "react";
+import { useEditorCapabilities } from "../state/editorCapabilities";
 import ClickOutsideHandler from "./ClickOutsideHandler";
 import { usePremiumGuildFeatures } from "../util/premium";
 import { useNavigate } from "react-router-dom";
@@ -26,7 +27,7 @@ export default function EditorComponentAddDropdown({
 }: Props) {
   const [open, setOpen] = useState(false);
 
-  const { insert } = useDocumentStore.getState();
+  const { insert } = useDocumentStoreApi().getState();
 
   function addComponent(node: NewNode) {
     insert(parentId, "components", "end", node);
@@ -36,9 +37,14 @@ export default function EditorComponentAddDropdown({
   const navigate = useNavigate();
 
   const componentsV2Enabled = useComponentsV2Enabled();
+  const { componentTypes: allowedTypes } = useEditorCapabilities();
 
   const features = usePremiumGuildFeatures();
-  const allowedComponentTypes = features?.component_types ?? [];
+  const unlockedTypes = features?.component_types ?? [];
+
+  // A surface with its own component types isn't part of what a plan unlocks.
+  const unlocked = (componentType: number) =>
+    allowedTypes !== null || unlockedTypes.includes(componentType);
 
   function addSelectMenuRow() {
     const rowId = insert(parentId, "components", "end", { type: "actionRow" });
@@ -108,6 +114,7 @@ export default function EditorComponentAddDropdown({
   ].filter((c) => {
     if (c.v2Only && !componentsV2Enabled) return false;
     if (c.rootOnly && context !== "root") return false;
+    if (allowedTypes && !allowedTypes.includes(c.type)) return false;
 
     return true;
   });
@@ -141,7 +148,7 @@ export default function EditorComponentAddDropdown({
                 aria-label={componentType.label}
                 className="px-3 py-2 rounded-lg text-white hover:bg-ink-700 w-full text-left flex items-center gap-2"
                 onClick={() => {
-                  if (allowedComponentTypes.includes(componentType.type)) {
+                  if (unlocked(componentType.type)) {
                     if (componentType.handler) {
                       componentType.handler();
                     } else if (componentType.node) {
@@ -152,7 +159,7 @@ export default function EditorComponentAddDropdown({
                   }
                 }}
               >
-                {!allowedComponentTypes.includes(componentType.type) && (
+                {!unlocked(componentType.type) && (
                   <div className="text-amber-300">
                     <StarIcon className="w-4 h-4" />
                   </div>

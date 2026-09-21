@@ -1,9 +1,9 @@
 import {
   type FileNode,
   type NodeId,
-  useDocumentStore,
   useNode,
   useNodeActions,
+  useDocumentStoreApi,
 } from "../state/document";
 import { nodeField, nodeScope } from "../state/validationError";
 import { useCurrentAttachmentsStore } from "../state/attachments";
@@ -24,7 +24,7 @@ export default function EditorComponentFile({
 }: Props) {
   const data = useNode<FileNode>(id);
   const actions = useNodeActions(id);
-  const { update } = useDocumentStore.getState();
+  const { update } = useDocumentStoreApi().getState();
   const attachments = useCurrentAttachmentsStore((state) => state.attachments);
 
   if (!data) return null;

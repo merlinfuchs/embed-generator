@@ -1,4 +1,5 @@
 import { localStorageJSON } from "./storage";
+import { createContext, useContext } from "react";
 import { useShallow } from "zustand/react/shallow";
 import debounce from "just-debounce-it";
 import { type TemporalState, temporal } from "zundo";
@@ -268,7 +269,7 @@ export function slotLimit(parentType: NodeType, slot: ChildSlot): number {
 
 /** The limit of the slot a node sits in, for its duplicate button. */
 export const useSlotLimit = (id: NodeId) =>
-  useDocumentStore((state) => {
+  useDocument((state) => {
     const node = state.nodes[id];
     const parent = node?.parentId ? state.nodes[node.parentId] : undefined;
     const slot = parent && slotOfChild(parent, id);
@@ -345,13 +346,16 @@ function slotOfChild(parent: Node, childId: NodeId): ChildSlot | null {
   return null;
 }
 
-export const createDocumentStore = (key: string) =>
+export const createDocumentStore = (
+  key: string,
+  initialMessage: Message = defaultMessage,
+) =>
   create<DocumentStore>()(
     immer(
       persist(
         temporal(
           (set, get) => ({
-            ...fromMessage(defaultMessage),
+            ...fromMessage(initialMessage),
 
             update: (id, patch) =>
               set((state) => {
@@ -468,7 +472,7 @@ export const createDocumentStore = (key: string) =>
 
             replaceAll: (message) => set(fromMessage(message)),
 
-            clear: () => set(fromMessage(defaultMessage)),
+            clear: () => set(fromMessage(initialMessage)),
 
             // The two modes cannot hold each other's content, so the toggle
             // replaces the message rather than editing it.
@@ -584,22 +588,40 @@ export function persistedDocument(): "none" | "current" | number {
   return migratedFrom ?? "current";
 }
 
-export const useDocumentStore = createDocumentStore(DOCUMENT_STORE_KEY);
+export type DocumentStoreApi = ReturnType<typeof createDocumentStore>;
+
+/** The document behind the message editor. */
+export const messageDocumentStore = createDocumentStore(DOCUMENT_STORE_KEY);
+
+/**
+ * Which document the editor components below this point edit. Unset means the
+ * message, so only a surface that edits something else - the component embed
+ * of a link - has to provide a store.
+ */
+export const DocumentStoreContext =
+  createContext<DocumentStoreApi>(messageDocumentStore);
+
+export const useDocumentStoreApi = (): DocumentStoreApi =>
+  useContext(DocumentStoreContext);
+
+export function useDocument<T>(selector: (state: DocumentStore) => T): T {
+  return useStore(useDocumentStoreApi(), selector);
+}
 
 /** The undo stack only tracks the document itself, not the store actions. */
 export const useDocumentUndoStore = <T>(
   selector: (state: TemporalState<DocumentData>) => T,
-) => useStore(useDocumentStore.temporal, selector);
+) => useStore(useDocumentStoreApi().temporal, selector);
 
 export const useNode = <T extends Node>(id: NodeId) =>
-  useDocumentStore((state) => state.nodes[id] as T | undefined);
+  useDocument((state) => state.nodes[id] as T | undefined);
 
 export const useChildIds = (id: NodeId, slot: ChildSlot) =>
-  useDocumentStore(useShallow((state) => childIds(state.nodes[id], slot)));
+  useDocument(useShallow((state) => childIds(state.nodes[id], slot)));
 
 /** Position of a node among its siblings, for move and duplicate buttons. */
 export const useNodeIndex = (id: NodeId) =>
-  useDocumentStore(
+  useDocument(
     useShallow((state) => {
       const node = state.nodes[id];
       const parent = node?.parentId ? state.nodes[node.parentId] : undefined;
@@ -617,7 +639,7 @@ export const useNodeIndex = (id: NodeId) =>
 export function useNodeActions(id: NodeId) {
   const { index, count } = useNodeIndex(id);
   const max = useSlotLimit(id);
-  const { move, duplicate, remove } = useDocumentStore.getState();
+  const { move, duplicate, remove } = useDocumentStoreApi().getState();
 
   return {
     moveUp: index > 0 ? () => move(id, -1) : undefined,
@@ -628,7 +650,7 @@ export function useNodeActions(id: NodeId) {
 }
 
 export const useComponentsV2Enabled = () =>
-  useDocumentStore((state) => {
+  useDocument((state) => {
     const root = state.nodes[state.rootId];
 
     return root?.type === "message"

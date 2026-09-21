@@ -1,6 +1,6 @@
 import { screen } from "@testing-library/react";
 import { beforeEach, expect, test, vi } from "vitest";
-import { COMPONENTS_V2_FLAG, useDocumentStore } from "../state/document";
+import { COMPONENTS_V2_FLAG, messageDocumentStore } from "../state/document";
 import {
   currentComponents,
   editorUser,
@@ -79,7 +79,7 @@ test("adding an option gives it an action set", async () => {
   expect(options).toHaveLength(3);
 
   const added = options[2] as unknown as { action_set_id: string };
-  expect(useDocumentStore.getState().actions[added.action_set_id]).toEqual({
+  expect(messageDocumentStore.getState().actions[added.action_set_id]).toEqual({
     actions: [],
   });
 });
@@ -108,14 +108,14 @@ test("reordering options reorders them in the message", async () => {
 
 test("removing an option drops its action set", async () => {
   renderEditor(<EditorComponents defaultCollapsed={false} />);
-  const before = Object.keys(useDocumentStore.getState().actions);
+  const before = Object.keys(messageDocumentStore.getState().actions);
 
   await editorUser().click(
     screen.getAllByRole("button", { name: "Remove" })[1],
   );
 
   expect(firstSelectMenu().options).toMatchObject([{ label: "Two" }]);
-  const after = Object.keys(useDocumentStore.getState().actions);
+  const after = Object.keys(messageDocumentStore.getState().actions);
   expect(after).toHaveLength(before.length - 1);
   expect(after).not.toContain("set-0");
 });
@@ -128,7 +128,7 @@ test("clearing options empties the menu and its action sets", async () => {
   );
 
   expect(firstSelectMenu().options).toEqual([]);
-  expect(useDocumentStore.getState().actions).toEqual({});
+  expect(messageDocumentStore.getState().actions).toEqual({});
 });
 
 test("duplicating an option copies it without sharing the action set", async () => {

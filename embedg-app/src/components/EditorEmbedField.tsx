@@ -1,10 +1,10 @@
 import {
   type EmbedFieldNode,
   type NodeId,
-  useDocumentStore,
   useNode,
   useNodeActions,
   useNodeIndex,
+  useDocumentStoreApi,
 } from "../state/document";
 import CheckBox from "./CheckBox";
 import { nodeField, nodeScope } from "../state/validationError";
@@ -20,7 +20,7 @@ export default function EditorEmbedField({ id }: Props) {
   const { index } = useNodeIndex(id);
   const actions = useNodeActions(id);
 
-  const { update } = useDocumentStore.getState();
+  const { update } = useDocumentStoreApi().getState();
 
   if (!field) return null;
 

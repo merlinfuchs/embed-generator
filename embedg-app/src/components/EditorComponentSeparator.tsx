@@ -1,9 +1,9 @@
 import {
   type SeparatorNode,
   type NodeId,
-  useDocumentStore,
   useNode,
   useNodeActions,
+  useDocumentStoreApi,
 } from "../state/document";
 import { nodeScope } from "../state/validationError";
 import CheckBox from "./CheckBox";
@@ -22,7 +22,7 @@ export default function EditorComponentSeparator({
 }: Props) {
   const data = useNode<SeparatorNode>(id);
   const actions = useNodeActions(id);
-  const { update } = useDocumentStore.getState();
+  const { update } = useDocumentStoreApi().getState();
 
   if (!data) return null;
 

@@ -3,11 +3,13 @@ import {
   type NodeId,
   type SectionNode,
   useChildIds,
-  useDocumentStore,
   useNode,
   useNodeActions,
   slotLimit,
+  useDocumentStoreApi,
+  useDocument,
 } from "../state/document";
+import { useEditorCapabilities } from "../state/editorCapabilities";
 import { nodeScope, slotScope } from "../state/validationError";
 import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";
@@ -31,9 +33,11 @@ export default function EditorComponentSection({
   const data = useNode<SectionNode>(id);
   const childIds = useChildIds(id, "components");
   const actions = useNodeActions(id);
-  const { insert, removeChildren } = useDocumentStore.getState();
+  const { insert, removeChildren } = useDocumentStoreApi().getState();
 
-  const accessoryType = useDocumentStore(
+  const { linkButtonsOnly } = useEditorCapabilities();
+
+  const accessoryType = useDocument(
     (state) => state.nodes[data?.accessoryId ?? ""]?.type,
   );
 
@@ -49,7 +53,7 @@ export default function EditorComponentSection({
       insert(id, "accessory", "end", {
         type: "button",
         label: "",
-        style: 1,
+        style: linkButtonsOnly ? 5 : 1,
       });
     }
   }

@@ -1,9 +1,10 @@
 import clsx from "clsx";
 import { useState } from "react";
-import { useComponentsV2Enabled, useDocumentStore } from "../state/document";
+import { useComponentsV2Enabled, useDocumentStoreApi } from "../state/document";
 import ConfirmModal from "./ConfirmModal";
 
 export default function EditorComponentsV2Toggle() {
+  const store = useDocumentStoreApi();
   const componentsV2Enabled = useComponentsV2Enabled();
   const [componentsV2EnableModal, setComponentsV2EnableModal] = useState(false);
   const [componentsV2DisableModal, setComponentsV2DisableModal] =
@@ -13,7 +14,7 @@ export default function EditorComponentsV2Toggle() {
     setComponentsV2DisableModal(false);
     setComponentsV2EnableModal(false);
 
-    useDocumentStore.getState().setComponentsV2(!componentsV2Enabled);
+    store.getState().setComponentsV2(!componentsV2Enabled);
   };
 
   return (
