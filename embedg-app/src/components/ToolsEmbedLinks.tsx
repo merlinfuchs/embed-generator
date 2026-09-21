@@ -147,9 +147,9 @@ export default function ToolsEmbedLinks() {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row h-full flex-auto w-full space-y-10 lg:space-y-0 lg:space-x-10">
+    <div className="flex flex-col lg:flex-row lg:items-start h-full flex-auto w-full space-y-10 lg:space-y-0 lg:space-x-10">
       {newLinkUrl ? (
-        <div className="w-full lg:w-1/2 space-y-5">
+        <div className="w-full lg:w-7/12 space-y-5">
           <div className="flex items-center">
             <input
               type="text"
@@ -175,7 +175,7 @@ export default function ToolsEmbedLinks() {
           </div>
         </div>
       ) : (
-        <div className="w-full lg:w-1/2 space-y-5">
+        <div className="w-full lg:w-7/12 space-y-5">
           <EditorInput
             label="URL"
             description="The URL that users will be redirected to when clicking your embed link."
@@ -292,7 +292,7 @@ export default function ToolsEmbedLinks() {
               </div>
             )}
           </Collapsable>
-          <div className="flex justify-end">
+          <div className="sticky bottom-0 -mx-4 px-4 py-3 bg-ink-800/90 backdrop-blur border-t border-white/5 flex justify-end">
             <button
               className="px-3 py-2 rounded-lg text-white bg-azure-500 hover:bg-azure-400"
               onClick={createEmbedLink}
@@ -302,7 +302,7 @@ export default function ToolsEmbedLinks() {
           </div>
         </div>
       )}
-      <div className="w-full lg:w-1/2 space-y-3">
+      <div className="w-full lg:w-5/12 space-y-3 lg:sticky lg:top-5">
         <div className="flex items-center space-x-2">
           <div className="uppercase text-mist-300 text-sm font-medium">
             Discord Preview
