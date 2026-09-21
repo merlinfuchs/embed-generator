@@ -4,7 +4,7 @@ import ToolsEmbedLinks from "../../components/ToolsEmbedLinks";
 export default function EmbedLinksToolView() {
   return (
     <div className="overflow-y-auto w-full">
-      <div className="flex flex-col max-w-5xl mx-auto px-4 w-full my-5 mb-20 lg:mt-20 space-y-20">
+      <div className="flex flex-col max-w-6xl mx-auto px-4 w-full my-5 mb-20 lg:mt-20 space-y-20">
         <ToolsBackButton />
         <div>
           <div className="mb-10">
