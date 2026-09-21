@@ -148,16 +148,16 @@ test("a section without an accessory still renders", () => {
   expect(screen.getByText("No accessory yet")).toBeVisible();
 });
 
-test("unfurled components render alongside the message content", () => {
+test("an unfurled component renders alongside the message content", () => {
   renderEditor(
     <MessagePreview
       msg={parseMessageWithAction({ content: "https://message.style/e/123" })}
-      unfurledComponents={
+      unfurledComponent={
         parseMessageWithAction({
           content: "",
           flags: COMPONENTS_V2_FLAG,
           components: [patchNotes],
-        }).components
+        }).components[0]
       }
     />,
   );

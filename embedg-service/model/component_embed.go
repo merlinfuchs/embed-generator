@@ -96,22 +96,26 @@ func ParseComponentEmbed(raw []byte) (*ComponentEmbed, error) {
 	}
 
 	count := 0
-	if err := validateComponentEmbedComponent(embed.Component, componentEmbedRootTypes, &count); err != nil {
+	if err := validateComponentEmbedComponent(embed.Component, []int{17}, &count); err != nil {
 		return nil, err
 	}
 
 	return &embed, nil
 }
 
-// What each component type may hold, keyed by the parent it sits in. A type
+// What a component may hold: how many children and of which types. A type
 // missing from its parent's list invalidates the payload.
-var (
-	componentEmbedRootTypes      = []int{17}
-	componentEmbedContainerTypes = []int{1, 9, 10, 12, 14}
-	componentEmbedActionRowTypes = []int{2}
-	componentEmbedSectionTypes   = []int{10}
-	componentEmbedAccessoryTypes = []int{2, 11}
-)
+var componentEmbedChildren = map[int]struct {
+	min, max int
+	types    []int
+	what     string
+}{
+	17: {1, 10, []int{1, 9, 10, 12, 14}, "container must have between 1 and 10 components"},
+	1:  {1, 5, []int{2}, "button row must have between 1 and 5 buttons"},
+	9:  {1, 3, []int{10}, "section must have between 1 and 3 text displays"},
+}
+
+var componentEmbedAccessoryTypes = []int{2, 11}
 
 // The keys each component type may carry. Discord drops a payload that holds
 // anything else, so a field belonging to another type is rejected rather than
@@ -137,37 +141,23 @@ func validateComponentEmbedComponent(c ComponentEmbedComponent, allowedTypes []i
 		return fmt.Errorf("component type %d is not allowed here", c.Type)
 	}
 
+	if children, ok := componentEmbedChildren[c.Type]; ok {
+		if len(c.Components) < children.min || len(c.Components) > children.max {
+			return fmt.Errorf("%s", children.what)
+		}
+		for _, child := range c.Components {
+			if err := validateComponentEmbedComponent(child, children.types, count); err != nil {
+				return err
+			}
+		}
+	}
+
 	switch c.Type {
 	case 17: // container
-		if len(c.Components) == 0 || len(c.Components) > 10 {
-			return fmt.Errorf("container must have between 1 and 10 components")
-		}
 		if c.AccentColor != nil && (*c.AccentColor < 0 || *c.AccentColor > 0xFFFFFF) {
 			return fmt.Errorf("accent color is out of range")
 		}
-		for _, child := range c.Components {
-			if err := validateComponentEmbedComponent(child, componentEmbedContainerTypes, count); err != nil {
-				return err
-			}
-		}
-	case 1: // action row
-		if len(c.Components) == 0 || len(c.Components) > 5 {
-			return fmt.Errorf("button row must have between 1 and 5 buttons")
-		}
-		for _, child := range c.Components {
-			if err := validateComponentEmbedComponent(child, componentEmbedActionRowTypes, count); err != nil {
-				return err
-			}
-		}
 	case 9: // section
-		if len(c.Components) == 0 || len(c.Components) > 3 {
-			return fmt.Errorf("section must have between 1 and 3 text displays")
-		}
-		for _, child := range c.Components {
-			if err := validateComponentEmbedComponent(child, componentEmbedSectionTypes, count); err != nil {
-				return err
-			}
-		}
 		if c.Accessory == nil {
 			return fmt.Errorf("section must have an accessory")
 		}

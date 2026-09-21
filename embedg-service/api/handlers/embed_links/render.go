@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
-	"log/slog"
 	"net/url"
 
 	"github.com/gofiber/fiber/v2"
@@ -61,18 +60,12 @@ func componentEmbedToHTML(raw []byte) string {
 		return ""
 	}
 
-	if !json.Valid(raw) {
-		slog.Error("stored component embed is not valid json")
-		return ""
-	}
+	var html bytes.Buffer
+	html.WriteString(`<script id="discord:component-embed" type="application/json">`)
+	json.HTMLEscape(&html, raw)
+	html.WriteString("</script>\n")
 
-	var payload bytes.Buffer
-	json.HTMLEscape(&payload, raw)
-
-	return fmt.Sprintf(
-		"<script id=\"discord:component-embed\" type=\"application/json\">%s</script>\n",
-		payload.String(),
-	)
+	return html.String()
 }
 
 func safeJSURL(rawURL string) string {

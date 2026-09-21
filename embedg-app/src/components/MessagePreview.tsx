@@ -21,14 +21,14 @@ interface ButtonResponse {
 interface Props {
   msg: Message;
   /**
-   * What a link in the message unfurls into, rendered below the message the
-   * way Discord shows a component embed. Not part of the message itself, so it
-   * sits alongside the content rather than replacing it.
+   * The container a link in the message unfurls into, rendered below the
+   * content the way Discord shows a component embed. Not part of the message
+   * itself, so it sits alongside the content rather than replacing it.
    */
-  unfurledComponents?: MessageComponent[];
+  unfurledComponent?: MessageComponent;
 }
 
-export default function MessagePreview({ msg, unfurledComponents }: Props) {
+export default function MessagePreview({ msg, unfurledComponent }: Props) {
   const currentTime = format(new Date(), "hh:mm aa");
   // A Components V2 message carries its content in the components instead.
   const componentsV2 = ((msg.flags ?? 0) & COMPONENTS_V2_FLAG) !== 0;
@@ -98,9 +98,9 @@ export default function MessagePreview({ msg, unfurledComponents }: Props) {
                   </div>
                 </>
               )}
-              {!!unfurledComponents?.length && (
+              {unfurledComponent && (
                 <div className="discord-message-compact-indent">
-                  <PreviewComponents components={unfurledComponents} />
+                  <PreviewComponents components={[unfurledComponent]} />
                 </div>
               )}
             </div>

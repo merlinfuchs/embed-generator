@@ -10,14 +10,14 @@ import {
 import EditorComponentContainer from "./EditorComponentContainer";
 
 /** The container that becomes the component embed of an embed link. */
-export default function ComponentEmbedEditor({ title }: { title: string }) {
+export default function ComponentEmbedEditor() {
   const containerId = useComponentEmbedContainerId();
   if (!containerId) return null;
 
   return (
     <DocumentStoreContext.Provider value={componentEmbedStore}>
       <EditorCapabilitiesContext.Provider value={COMPONENT_EMBED_CAPABILITIES}>
-        <EditorComponentContainer id={containerId} title={title} />
+        <EditorComponentContainer id={containerId} fixed />
       </EditorCapabilitiesContext.Provider>
     </DocumentStoreContext.Provider>
   );

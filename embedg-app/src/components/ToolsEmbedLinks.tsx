@@ -17,6 +17,16 @@ import {
   useComponentEmbedContainer,
 } from "../state/componentEmbed";
 
+/** Subscribes to the component embed on its own, so typing in the editor
+ * doesn't re-render the whole tool. */
+function ComponentEmbedPreview({ msg }: { msg: Message }) {
+  const container = useComponentEmbedContainer();
+
+  return (
+    <MessagePreview msg={msg} unfurledComponent={container ?? undefined} />
+  );
+}
+
 export default function ToolsEmbedLinks() {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
@@ -33,65 +43,35 @@ export default function ToolsEmbedLinks() {
   const [twitterCard, setTwitterCard] = useState(true);
 
   const [componentEmbed, setComponentEmbed] = useState(false);
-  const componentEmbedContainer = useComponentEmbedContainer();
+  const previewEmbedId = useMemo(getUniqueId, []);
 
-  const previewMsg = useMemo(() => {
-    return {
-      content: "https://message.style/e/123",
-      tts: false,
-      username: "Some User",
-      embeds: componentEmbed
-        ? []
-        : [
-            {
-              id: getUniqueId(),
-              url: url || undefined,
-              title: title || undefined,
-              description: description || undefined,
-              color: color,
-              author: authorName
-                ? {
-                    name: authorName,
-                    url: authorUrl || undefined,
-                  }
-                : undefined,
-              provider: providerName
-                ? {
-                    name: providerName,
-                    url: providerUrl || undefined,
-                  }
-                : undefined,
-              fields: [],
-              thumbnail:
-                imageUrl && !twitterCard
-                  ? {
-                      url: imageUrl,
-                    }
-                  : undefined,
-              image:
-                imageUrl && twitterCard
-                  ? {
-                      url: imageUrl,
-                    }
-                  : undefined,
-            },
-          ],
-      components: [],
-      actions: {},
-    } satisfies Message;
-  }, [
-    title,
-    url,
-    description,
-    color,
-    imageUrl,
-    providerName,
-    providerUrl,
-    authorName,
-    authorUrl,
-    twitterCard,
-    componentEmbed,
-  ]);
+  // What the fallback preview is built from, and what Discord shows when
+  // there is no custom component.
+  const fallbackEmbed = {
+    id: previewEmbedId,
+    url: url || undefined,
+    title: title || undefined,
+    description: description || undefined,
+    color: color,
+    author: authorName
+      ? { name: authorName, url: authorUrl || undefined }
+      : undefined,
+    provider: providerName
+      ? { name: providerName, url: providerUrl || undefined }
+      : undefined,
+    fields: [],
+    thumbnail: imageUrl && !twitterCard ? { url: imageUrl } : undefined,
+    image: imageUrl && twitterCard ? { url: imageUrl } : undefined,
+  };
+
+  const previewMsg = {
+    content: "https://message.style/e/123",
+    tts: false,
+    username: "Some User",
+    embeds: componentEmbed ? [] : [fallbackEmbed],
+    components: [],
+    actions: {},
+  } satisfies Message;
 
   const [newLinkUrl, setNewLinkUrl] = useState("");
 
@@ -304,7 +284,7 @@ export default function ToolsEmbedLinks() {
             }
           >
             {componentEmbed ? (
-              <ComponentEmbedEditor title="Container" />
+              <ComponentEmbedEditor />
             ) : (
               <div className={clsx(PADDED, "text-sm font-light text-mist-400")}>
                 Replace the Discord preview with components: markdown, images,
@@ -333,14 +313,11 @@ export default function ToolsEmbedLinks() {
             </div>
           )}
         </div>
-        <MessagePreview
-          msg={previewMsg}
-          unfurledComponents={
-            componentEmbed && componentEmbedContainer
-              ? [componentEmbedContainer]
-              : undefined
-          }
-        />
+        {componentEmbed ? (
+          <ComponentEmbedPreview msg={previewMsg} />
+        ) : (
+          <MessagePreview msg={previewMsg} />
+        )}
       </div>
     </div>
   );

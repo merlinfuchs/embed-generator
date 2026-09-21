@@ -21,8 +21,8 @@ func TestComponentEmbedToHTML(t *testing.T) {
 	}
 }
 
-func TestComponentEmbedToHTMLSkipsBrokenPayloads(t *testing.T) {
-	if html := componentEmbedToHTML([]byte(`{"component":`)); html != "" {
+func TestComponentEmbedToHTMLSkipsEmptyPayloads(t *testing.T) {
+	if html := componentEmbedToHTML(nil); html != "" {
 		t.Fatalf("expected no script element, got %q", html)
 	}
 }

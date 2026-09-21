@@ -11,20 +11,16 @@ export interface EditorCapabilities {
   componentTypes: number[] | null;
   /** Whether buttons have to be link buttons. */
   linkButtonsOnly: boolean;
-  /** Whether the component being edited can be moved, duplicated or removed. */
-  rootNodeActions: boolean;
 }
 
 export const MESSAGE_CAPABILITIES: EditorCapabilities = {
   componentTypes: null,
   linkButtonsOnly: false,
-  rootNodeActions: true,
 };
 
 export const COMPONENT_EMBED_CAPABILITIES: EditorCapabilities = {
   componentTypes: [1, 9, 10, 12, 14],
   linkButtonsOnly: true,
-  rootNodeActions: false,
 };
 
 export const EditorCapabilitiesContext = createContext(MESSAGE_CAPABILITIES);
