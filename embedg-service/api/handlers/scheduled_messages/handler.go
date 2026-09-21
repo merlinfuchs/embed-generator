@@ -46,7 +46,7 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 		return err
 	}
 
-	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.UserContext(), guildID)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 		}
 	}
 
-	msg, err := h.scheduledMessageStore.CreateScheduledMessage(c.Context(), model.ScheduledMessage{
+	msg, err := h.scheduledMessageStore.CreateScheduledMessage(c.UserContext(), model.ScheduledMessage{
 		ID:             common.InternalID(),
 		CreatorID:      session.UserID,
 		GuildID:        guildID,
@@ -124,7 +124,7 @@ func (h *ScheduledMessageHandler) HandleListScheduledMessages(c *fiber.Ctx) erro
 		return err
 	}
 
-	messages, err := h.scheduledMessageStore.GetScheduledMessages(c.Context(), guildID)
+	messages, err := h.scheduledMessageStore.GetScheduledMessages(c.UserContext(), guildID)
 	if err != nil {
 		slog.Error("Failed to get scheduled messages", slog.Any("error", err))
 		return err
@@ -152,7 +152,7 @@ func (h *ScheduledMessageHandler) HandleGetScheduledMessage(c *fiber.Ctx) error 
 		return err
 	}
 
-	msg, err := h.scheduledMessageStore.GetScheduledMessage(c.Context(), guildID, messageID)
+	msg, err := h.scheduledMessageStore.GetScheduledMessage(c.UserContext(), guildID, messageID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			return handlers.NotFound("unknown_message", "The scheduled message does not exist or has expired.")
@@ -182,7 +182,7 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		return err
 	}
 
-	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.UserContext(), guildID)
 	if err != nil {
 		return err
 	}
@@ -191,7 +191,7 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		return handlers.Forbidden("insufficient_plan", "Periodic scheduled messages are not available on your plan.")
 	}
 
-	existing, err := h.scheduledMessageStore.GetScheduledMessage(c.Context(), guildID, messageID)
+	existing, err := h.scheduledMessageStore.GetScheduledMessage(c.UserContext(), guildID, messageID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			return handlers.NotFound("unknown_message", "The scheduled message does not exist.")
@@ -246,7 +246,7 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		}
 	}
 
-	msg, err := h.scheduledMessageStore.UpdateScheduledMessage(c.Context(), model.ScheduledMessage{
+	msg, err := h.scheduledMessageStore.UpdateScheduledMessage(c.UserContext(), model.ScheduledMessage{
 		ID:             messageID,
 		GuildID:        guildID,
 		ChannelID:      req.ChannelID,
@@ -290,7 +290,7 @@ func (h *ScheduledMessageHandler) HandleDeleteScheduledMessage(c *fiber.Ctx) err
 		return err
 	}
 
-	err = h.scheduledMessageStore.DeleteScheduledMessage(c.Context(), guildID, messageID)
+	err = h.scheduledMessageStore.DeleteScheduledMessage(c.UserContext(), guildID, messageID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			return handlers.NotFound("unknown_message", "The scheduled message does not exist.")

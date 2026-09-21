@@ -78,7 +78,7 @@ func (s *SessionManager) GetSession(c *fiber.Ctx) (*Session, error) {
 		return nil, err
 	}
 
-	model, err := s.sessionStore.GetSession(c.Context(), tokenHash)
+	model, err := s.sessionStore.GetSession(c.UserContext(), tokenHash)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			return nil, nil
@@ -201,7 +201,7 @@ func (s *SessionManager) DeleteSession(c *fiber.Ctx) error {
 		return err
 	}
 
-	return s.sessionStore.DeleteSession(c.Context(), tokenHash)
+	return s.sessionStore.DeleteSession(c.UserContext(), tokenHash)
 }
 
 // grantedScopes reads the scopes Discord actually granted, which can differ from the ones we asked for.

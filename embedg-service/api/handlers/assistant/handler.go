@@ -41,7 +41,7 @@ func (h *AssistantHandler) HandleAssistantGenerateMessage(c *fiber.Ctx, req wire
 		return err
 	}
 
-	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.UserContext(), guildID)
 	if err != nil {
 		return err
 	}

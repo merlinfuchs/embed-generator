@@ -42,9 +42,9 @@ func (h *SavedMessagesHandler) HandleListSavedMessages(c *fiber.Ctx) error {
 		if err := h.am.CheckGuildAccessForRequest(c, guildID.ID); err != nil {
 			return err
 		}
-		messages, err = h.savedMessageStore.GetSavedMessagesForGuild(c.Context(), guildID.ID)
+		messages, err = h.savedMessageStore.GetSavedMessagesForGuild(c.UserContext(), guildID.ID)
 	} else {
-		messages, err = h.savedMessageStore.GetSavedMessagesForCreator(c.Context(), session.UserID)
+		messages, err = h.savedMessageStore.GetSavedMessagesForCreator(c.UserContext(), session.UserID)
 	}
 
 	if err != nil {
@@ -76,7 +76,7 @@ func (h *SavedMessagesHandler) HandleCreateSavedMessage(c *fiber.Ctx, req wire.S
 		}
 	}
 
-	message, err := h.savedMessageStore.CreateSavedMessage(c.Context(), model.SavedMessage{
+	message, err := h.savedMessageStore.CreateSavedMessage(c.UserContext(), model.SavedMessage{
 		ID:          common.InternalID(),
 		CreatorID:   session.UserID,
 		GuildID:     guildID,
@@ -112,7 +112,7 @@ func (h *SavedMessagesHandler) HandleUpdateSavedMessage(c *fiber.Ctx, req wire.S
 
 	var message *model.SavedMessage
 	if guildID.Valid {
-		message, err = h.savedMessageStore.UpdateSavedMessageForGuild(c.Context(), model.SavedMessage{
+		message, err = h.savedMessageStore.UpdateSavedMessageForGuild(c.UserContext(), model.SavedMessage{
 			ID:          messageID,
 			GuildID:     guildID,
 			UpdatedAt:   time.Now().UTC(),
@@ -121,7 +121,7 @@ func (h *SavedMessagesHandler) HandleUpdateSavedMessage(c *fiber.Ctx, req wire.S
 			Data:        req.Data,
 		})
 	} else {
-		message, err = h.savedMessageStore.UpdateSavedMessageForCreator(c.Context(), model.SavedMessage{
+		message, err = h.savedMessageStore.UpdateSavedMessageForCreator(c.UserContext(), model.SavedMessage{
 			ID:          messageID,
 			CreatorID:   session.UserID,
 			UpdatedAt:   time.Now().UTC(),
@@ -160,9 +160,9 @@ func (h *SavedMessagesHandler) HandleDeleteSavedMessage(c *fiber.Ctx) error {
 	}
 
 	if guildID.Valid {
-		err = h.savedMessageStore.DeleteSavedMessageForGuild(c.Context(), guildID.ID, messageID)
+		err = h.savedMessageStore.DeleteSavedMessageForGuild(c.UserContext(), guildID.ID, messageID)
 	} else {
-		err = h.savedMessageStore.DeleteSavedMessageForCreator(c.Context(), session.UserID, messageID)
+		err = h.savedMessageStore.DeleteSavedMessageForCreator(c.UserContext(), session.UserID, messageID)
 	}
 
 	if err != nil {
@@ -195,7 +195,7 @@ func (h *SavedMessagesHandler) HandleImportSavedMessages(c *fiber.Ctx, req wire.
 	res := make([]wire.SavedMessageWire, len(req.Messages))
 
 	for i, msg := range req.Messages {
-		message, err := h.savedMessageStore.CreateSavedMessage(c.Context(), model.SavedMessage{
+		message, err := h.savedMessageStore.CreateSavedMessage(c.UserContext(), model.SavedMessage{
 			ID:          common.InternalID(),
 			CreatorID:   session.UserID,
 			GuildID:     guildID,

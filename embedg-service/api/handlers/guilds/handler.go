@@ -39,7 +39,7 @@ func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
 
 	// The user's own guild list, not session.GuildIDs, which is captured at login and never refreshed.
-	userGuilds, err := h.am.GetGuildsForUser(c.Context(), session)
+	userGuilds, err := h.am.GetGuildsForUser(c.UserContext(), session)
 	if err != nil {
 		slog.Error("Failed to get guilds for user", slog.Any("error", err))
 		return err
@@ -52,7 +52,7 @@ func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 
 	// Intersect with the guilds the bot is in. Name and icon come from there so the list shows what
 	// the bot sees; computing channel level access for every guild would be a REST fan out each.
-	guilds, err := h.guildStore.GetGuilds(c.Context(), guildIDs)
+	guilds, err := h.guildStore.GetGuilds(c.UserContext(), guildIDs)
 	if err != nil {
 		slog.Error("Failed to get guilds", slog.Any("error", err))
 		return err
@@ -86,7 +86,7 @@ func (h *GuildsHanlder) HandleGetGuild(c *fiber.Ctx) error {
 
 	// Name and icon come from the guilds table, the same source the list uses, rather than a second
 	// pass over the guild's channels and roles.
-	guilds, err := h.guildStore.GetGuilds(c.Context(), []common.ID{guildID})
+	guilds, err := h.guildStore.GetGuilds(c.UserContext(), []common.ID{guildID})
 	if err != nil {
 		slog.Error("Failed to get guild", slog.Any("error", err))
 		return err
@@ -117,7 +117,7 @@ func (h *GuildsHanlder) HandleListGuildChannels(c *fiber.Ctx) error {
 		return err
 	}
 
-	channels, err := h.am.ChannelAccessForGuild(c.Context(), session, guildID)
+	channels, err := h.am.ChannelAccessForGuild(c.UserContext(), session, guildID)
 	if err != nil {
 		slog.Error("Failed to check channel access", slog.Any("error", err))
 		return err
@@ -154,7 +154,7 @@ func (h *GuildsHanlder) HandleListGuildRoles(c *fiber.Ctx) error {
 		return err
 	}
 
-	state, err := h.guildState.Guild(c.Context(), guildID)
+	state, err := h.guildState.Guild(c.UserContext(), guildID)
 	if err != nil {
 		slog.Error("Failed to get guild state", slog.Any("error", err))
 		return err
@@ -188,7 +188,7 @@ func (h *GuildsHanlder) HandleListGuildEmojis(c *fiber.Ctx) error {
 		return err
 	}
 
-	state, err := h.guildState.Guild(c.Context(), guildID)
+	state, err := h.guildState.Guild(c.UserContext(), guildID)
 	if err != nil {
 		slog.Error("Failed to get guild state", slog.Any("error", err))
 		return err
@@ -222,7 +222,7 @@ func (h *GuildsHanlder) HandleListGuildStickers(c *fiber.Ctx) error {
 		return err
 	}
 
-	state, err := h.guildState.Guild(c.Context(), guildID)
+	state, err := h.guildState.Guild(c.UserContext(), guildID)
 	if err != nil {
 		slog.Error("Failed to get guild state", slog.Any("error", err))
 		return err
@@ -262,7 +262,7 @@ func (h *GuildsHanlder) HandleGetGuildBranding(c *fiber.Ctx) error {
 
 	res := wire.GuildBrandingWire{}
 
-	customBot, err := h.customBotStore.GetCustomBotByGuildID(c.Context(), guildID)
+	customBot, err := h.customBotStore.GetCustomBotByGuildID(c.UserContext(), guildID)
 	if err != nil {
 		if !errors.Is(err, store.ErrNotFound) {
 			return err

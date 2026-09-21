@@ -64,7 +64,7 @@ func (h *ImagesHandler) HandleUploadImage(c *fiber.Ctx) error {
 	}
 
 	// If guildID is empty, this will be the default max upload size
-	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.UserContext(), guildID)
 	if err != nil {
 		return fmt.Errorf("could not get plan features: %w", err)
 	}
@@ -95,7 +95,7 @@ func (h *ImagesHandler) HandleUploadImage(c *fiber.Ctx) error {
 	fileHash := common.HashBytes(body)
 	fileKey := fileHash + common.GetFileExtensionFromMimeType(contentType)
 
-	err = h.fileStore.UploadFileIfNotExists(c.Context(), model.File{
+	err = h.fileStore.UploadFileIfNotExists(c.UserContext(), model.File{
 		FileName:    fileKey,
 		ContentType: contentType,
 		Body:        body,
@@ -104,7 +104,7 @@ func (h *ImagesHandler) HandleUploadImage(c *fiber.Ctx) error {
 		return fmt.Errorf("could not upload image: %w", err)
 	}
 
-	image, err := h.imageStore.CreateImage(c.Context(), model.Image{
+	image, err := h.imageStore.CreateImage(c.UserContext(), model.Image{
 		ID:     common.InternalID(),
 		UserID: session.UserID,
 		GuildID: common.NullID{
@@ -128,7 +128,7 @@ func (h *ImagesHandler) HandleUploadImage(c *fiber.Ctx) error {
 }
 
 func (h *ImagesHandler) HandleGetImage(c *fiber.Ctx) error {
-	image, err := h.imageStore.GetImage(c.Context(), c.Params("imageID"))
+	image, err := h.imageStore.GetImage(c.UserContext(), c.Params("imageID"))
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			return handlers.NotFound("unknown_image", "Unknown image")
@@ -160,7 +160,7 @@ func (h *ImagesHandler) HandleDownloadImage(c *fiber.Ctx) error {
 		}
 	}
 
-	file, err := h.fileStore.DownloadFile(c.Context(), c.Params("imageKey"))
+	file, err := h.fileStore.DownloadFile(c.UserContext(), c.Params("imageKey"))
 	if err != nil {
 		return fmt.Errorf("could not download image: %w", err)
 	}

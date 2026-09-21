@@ -28,7 +28,7 @@ func (h *CustomBotsHandler) HandleListCustomCommands(c *fiber.Ctx) error {
 		return err
 	}
 
-	commands, err := h.customCommandStore.GetCustomCommands(c.Context(), guildID)
+	commands, err := h.customCommandStore.GetCustomCommands(c.UserContext(), guildID)
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,7 @@ func (h *CustomBotsHandler) HandleGetCustomCommand(c *fiber.Ctx) error {
 		return err
 	}
 
-	command, err := h.customCommandStore.GetCustomCommand(c.Context(), guildID, c.Params("commandID"))
+	command, err := h.customCommandStore.GetCustomCommand(c.UserContext(), guildID, c.Params("commandID"))
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			return handlers.NotFound("command_not_found", "No command found with this ID")
@@ -113,7 +113,7 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return err
 	}
 
-	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.UserContext(), guildID)
 	if err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return handlers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
 	}
 
-	existingCount, err := h.customCommandStore.CountCustomCommands(c.Context(), guildID)
+	existingCount, err := h.customCommandStore.CountCustomCommands(c.UserContext(), guildID)
 	if err != nil {
 		return err
 	}
@@ -147,7 +147,7 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return err
 	}
 
-	command, err := h.customCommandStore.CreateCustomCommand(c.Context(), model.CustomCommand{
+	command, err := h.customCommandStore.CreateCustomCommand(c.UserContext(), model.CustomCommand{
 		ID:                 common.InternalID(),
 		GuildID:            guildID,
 		Name:               req.Name,
@@ -191,7 +191,7 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return err
 	}
 
-	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.UserContext(), guildID)
 	if err != nil {
 		return err
 	}
@@ -216,7 +216,7 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return fmt.Errorf("Failed to marshal parameters: %w", err)
 	}
 
-	command, err := h.customCommandStore.UpdateCustomCommand(c.Context(), model.CustomCommand{
+	command, err := h.customCommandStore.UpdateCustomCommand(c.UserContext(), model.CustomCommand{
 		ID:                 c.Params("commandID"),
 		GuildID:            guildID,
 		Name:               req.Name,
@@ -256,7 +256,7 @@ func (h *CustomBotsHandler) HandleDeleteCustomCommand(c *fiber.Ctx) error {
 		return err
 	}
 
-	_, err = h.customCommandStore.DeleteCustomCommand(c.Context(), guildID, c.Params("commandID"))
+	_, err = h.customCommandStore.DeleteCustomCommand(c.UserContext(), guildID, c.Params("commandID"))
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			return handlers.NotFound("command_not_found", "No command found with this ID")
@@ -279,7 +279,7 @@ func (h *CustomBotsHandler) HandleDeployCustomCommands(c *fiber.Ctx) error {
 		return err
 	}
 
-	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.UserContext(), guildID)
 	if err != nil {
 		return err
 	}
@@ -288,7 +288,7 @@ func (h *CustomBotsHandler) HandleDeployCustomCommands(c *fiber.Ctx) error {
 		return handlers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
 	}
 
-	customBot, err := h.customBotManager.GetCustomBotByGuildID(c.Context(), guildID)
+	customBot, err := h.customBotManager.GetCustomBotByGuildID(c.UserContext(), guildID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			return handlers.NotFound("not_configured", "There is no custom bot configured right now, you need to configure one first.")
@@ -296,7 +296,7 @@ func (h *CustomBotsHandler) HandleDeployCustomCommands(c *fiber.Ctx) error {
 		return fmt.Errorf("Failed to retrieve custom bot: %w", err)
 	}
 
-	commands, err := h.customCommandStore.GetCustomCommands(c.Context(), guildID)
+	commands, err := h.customCommandStore.GetCustomCommands(c.UserContext(), guildID)
 	if err != nil {
 		return fmt.Errorf("Failed to retrieve custom commands: %w", err)
 	}
@@ -320,7 +320,7 @@ func (h *CustomBotsHandler) HandleDeployCustomCommands(c *fiber.Ctx) error {
 		return fmt.Errorf("Failed to deploy commands: %w", err)
 	}
 
-	_, err = h.customCommandStore.SetCustomCommandsDeployedAt(c.Context(), guildID, time.Now().UTC())
+	_, err = h.customCommandStore.SetCustomCommandsDeployedAt(c.UserContext(), guildID, time.Now().UTC())
 	if err != nil {
 		return fmt.Errorf("Failed to set deployed_at: %w", err)
 	}
@@ -445,12 +445,12 @@ func (e *NameCollisionError) Error() string {
 // derivePermissionsForUser records the authority the requesting user has over the command's actions,
 // resolving their member with their own OAuth token.
 func (h *CustomBotsHandler) derivePermissionsForUser(c *fiber.Ctx, session *session.Session, guildID common.ID) (actions.ActionDerivedPermissions, error) {
-	member, err := h.am.GetMemberForUser(c.Context(), session, guildID)
+	member, err := h.am.GetMemberForUser(c.UserContext(), session, guildID)
 	if err != nil {
 		return actions.ActionDerivedPermissions{}, fmt.Errorf("Failed to get member: %w", err)
 	}
 
-	derivedPerms, err := h.actionParser.DerivePermissionsForActions(c.Context(), *member, guildID, 0)
+	derivedPerms, err := h.actionParser.DerivePermissionsForActions(c.UserContext(), *member, guildID, 0)
 	if err != nil {
 		return actions.ActionDerivedPermissions{}, handlers.BadRequest("invalid_actions", err.Error())
 	}

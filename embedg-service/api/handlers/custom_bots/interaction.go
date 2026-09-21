@@ -22,7 +22,7 @@ import (
 func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 	customBotID := c.Params("customBotID")
 
-	customBot, err := h.customBotManager.GetCustomBot(c.Context(), customBotID)
+	customBot, err := h.customBotManager.GetCustomBot(c.UserContext(), customBotID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			return handlers.NotFound("unknown_bot", "Custom bot not found")
@@ -43,7 +43,7 @@ func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 		return fmt.Errorf("application id mismatch")
 	}
 
-	err = h.customBotManager.SetCustomBotHandledFirstInteraction(c.Context(), customBotID)
+	err = h.customBotManager.SetCustomBotHandledFirstInteraction(c.UserContext(), customBotID)
 	if err != nil {
 		slog.Error("Failed to set custom bot handled first interaction", slog.Any("error", err))
 	}

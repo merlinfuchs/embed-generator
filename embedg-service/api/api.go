@@ -76,6 +76,23 @@ func Serve(ctx context.Context, env *Env, config APIConfig) {
 		EnableStackTrace: true,
 	}))
 
+	// Handlers pass this to pgx, minio and oauth2, which all derive cancelable contexts from
+	// it. fasthttp's RequestCtx closes Done() without ever setting Err(), which panics the
+	// watcher goroutine the context package spawns for a non-stdlib parent. That goroutine is
+	// outside the recover above, so it takes the process down.
+	//
+	// Cancelling when the handler returns keeps derived contexts from piling up under the
+	// server context. Nothing that outlives the request may take this context: both
+	// interaction handlers answer after three seconds while their goroutine keeps working,
+	// so threading this into one of those would cancel the work as the response goes out.
+	app.Use(func(c *fiber.Ctx) error {
+		reqCtx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		c.SetUserContext(reqCtx)
+		return c.Next()
+	})
+
 	registerRoutes(app, env, config)
 
 	slog.Info("Starting API server", slog.String("host", config.Host), slog.Int("port", config.Port))
