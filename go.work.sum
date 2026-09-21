@@ -753,6 +753,8 @@ github.com/mediocregopher/radix/v3 v3.8.1 h1:rOkHflVuulFKlwsLY01/M2cM2tWCjDoETcM
 github.com/mediocregopher/radix/v3 v3.8.1/go.mod h1:8FL3F6UQRXHXIBSPUs5h0RybMF8i4n7wVopoX3x7Bv8=
 github.com/merlinfuchs/discordgo v0.0.0-20230424012904-69f6c46a340c h1:YXNIyWpGtXF2fPts7c0myZ109numzwtPX/ov5pzIYb0=
 github.com/merlinfuchs/discordgo v0.0.0-20230424012904-69f6c46a340c/go.mod h1:NJZpH+1AfhIcyQsPeuBKsUtYrRnjkyu0kIVMCHkZtRY=
+github.com/merlinfuchs/disgo v0.0.0-20260921140728-6defe1c62db5 h1:pRE2tcZINxc1lynm5vHgcr14eJoB8T4dsbC2MrqpZTk=
+github.com/merlinfuchs/disgo v0.0.0-20260921140728-6defe1c62db5/go.mod h1:NnV63iw4lJdF1fnV0gX27XR43ZgRGqnL122svRMTgTE=
 github.com/microcosm-cc/bluemonday v1.0.1/go.mod h1:hsXNsILzKxV+sX77C5b8FSuKF00vh2OMYv+xgHpAMF4=
 github.com/microcosm-cc/bluemonday v1.0.24 h1:NGQoPtwGVcbGkKfvyYk1yRqknzBuoMiUrO6R7uFTPlw=
 github.com/microcosm-cc/bluemonday v1.0.24/go.mod h1:ArQySAMps0790cHSkdPEJ7bGkF2VePWH773hsJNSHf8=
