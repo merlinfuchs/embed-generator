@@ -1,7 +1,11 @@
 import "./MessagePreview.css";
 import { format } from "date-fns";
 import { useState } from "react";
-import { COMPONENTS_V2_FLAG, type Message } from "../discord/schema";
+import {
+  COMPONENTS_V2_FLAG,
+  type Message,
+  type MessageComponent,
+} from "../discord/schema";
 import { useSendSettingsStore } from "../state/sendSettings";
 import Twemoji from "./Twemoji";
 import { useGuildBrandingQuery } from "../api/queries";
@@ -14,7 +18,17 @@ interface ButtonResponse {
   text: string;
 }
 
-export default function MessagePreview({ msg }: { msg: Message }) {
+interface Props {
+  msg: Message;
+  /**
+   * What a link in the message unfurls into, rendered below the message the
+   * way Discord shows a component embed. Not part of the message itself, so it
+   * sits alongside the content rather than replacing it.
+   */
+  unfurledComponents?: MessageComponent[];
+}
+
+export default function MessagePreview({ msg, unfurledComponents }: Props) {
   const currentTime = format(new Date(), "hh:mm aa");
   // A Components V2 message carries its content in the components instead.
   const componentsV2 = ((msg.flags ?? 0) & COMPONENTS_V2_FLAG) !== 0;
@@ -83,6 +97,11 @@ export default function MessagePreview({ msg }: { msg: Message }) {
                     </div>
                   </div>
                 </>
+              )}
+              {!!unfurledComponents?.length && (
+                <div className="discord-message-compact-indent">
+                  <PreviewComponents components={unfurledComponents} />
+                </div>
               )}
             </div>
           </div>

@@ -55,12 +55,23 @@ function stripEditorFields<T>(value: T): T {
   return value;
 }
 
+function componentEmbedContainer(
+  state: ReturnType<typeof componentEmbedStore.getState>,
+): MessageComponentContainer | null {
+  const [container] = toMessage(state).message.components;
+
+  return container?.type === 17 ? container : null;
+}
+
+/** The container as the preview renders it, editor fields and all. */
+export const useComponentEmbedContainer = () =>
+  useStore(componentEmbedStore, componentEmbedContainer);
+
 export function componentEmbedPayload(): {
   component: MessageComponentContainer;
 } | null {
-  const { message } = toMessage(componentEmbedStore.getState());
-  const [container] = message.components;
-  if (container?.type !== 17) return null;
+  const container = componentEmbedContainer(componentEmbedStore.getState());
+  if (!container) return null;
 
   return { component: stripEditorFields(container) };
 }

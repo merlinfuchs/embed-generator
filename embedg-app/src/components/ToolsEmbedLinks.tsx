@@ -12,7 +12,10 @@ import Collapsable from "./Collapsable";
 import clsx from "clsx";
 import { PADDED } from "./editorCard";
 import ComponentEmbedEditor from "./ComponentEmbedEditor";
-import { componentEmbedPayload } from "../state/componentEmbed";
+import {
+  componentEmbedPayload,
+  useComponentEmbedContainer,
+} from "../state/componentEmbed";
 
 export default function ToolsEmbedLinks() {
   const [title, setTitle] = useState("");
@@ -30,46 +33,49 @@ export default function ToolsEmbedLinks() {
   const [twitterCard, setTwitterCard] = useState(true);
 
   const [componentEmbed, setComponentEmbed] = useState(false);
+  const componentEmbedContainer = useComponentEmbedContainer();
 
   const previewMsg = useMemo(() => {
     return {
       content: "https://message.style/e/123",
       tts: false,
       username: "Some User",
-      embeds: [
-        {
-          id: getUniqueId(),
-          url: url || undefined,
-          title: title || undefined,
-          description: description || undefined,
-          color: color,
-          author: authorName
-            ? {
-                name: authorName,
-                url: authorUrl || undefined,
-              }
-            : undefined,
-          provider: providerName
-            ? {
-                name: providerName,
-                url: providerUrl || undefined,
-              }
-            : undefined,
-          fields: [],
-          thumbnail:
-            imageUrl && !twitterCard
-              ? {
-                  url: imageUrl,
-                }
-              : undefined,
-          image:
-            imageUrl && twitterCard
-              ? {
-                  url: imageUrl,
-                }
-              : undefined,
-        },
-      ],
+      embeds: componentEmbed
+        ? []
+        : [
+            {
+              id: getUniqueId(),
+              url: url || undefined,
+              title: title || undefined,
+              description: description || undefined,
+              color: color,
+              author: authorName
+                ? {
+                    name: authorName,
+                    url: authorUrl || undefined,
+                  }
+                : undefined,
+              provider: providerName
+                ? {
+                    name: providerName,
+                    url: providerUrl || undefined,
+                  }
+                : undefined,
+              fields: [],
+              thumbnail:
+                imageUrl && !twitterCard
+                  ? {
+                      url: imageUrl,
+                    }
+                  : undefined,
+              image:
+                imageUrl && twitterCard
+                  ? {
+                      url: imageUrl,
+                    }
+                  : undefined,
+            },
+          ],
       components: [],
       actions: {},
     } satisfies Message;
@@ -84,6 +90,7 @@ export default function ToolsEmbedLinks() {
     authorName,
     authorUrl,
     twitterCard,
+    componentEmbed,
   ]);
 
   const [newLinkUrl, setNewLinkUrl] = useState("");
@@ -318,15 +325,22 @@ export default function ToolsEmbedLinks() {
       <div className="w-full lg:w-1/2 space-y-3">
         <div className="flex items-center space-x-2">
           <div className="uppercase text-mist-300 text-sm font-medium">
-            {componentEmbed ? "Fallback Preview" : "Preview"}
+            Discord Preview
           </div>
           {componentEmbed && (
             <div className="text-sm italic font-light text-mist-400">
-              Discord shows the custom component
+              other platforms get the fallback
             </div>
           )}
         </div>
-        <MessagePreview msg={previewMsg} />
+        <MessagePreview
+          msg={previewMsg}
+          unfurledComponents={
+            componentEmbed && componentEmbedContainer
+              ? [componentEmbedContainer]
+              : undefined
+          }
+        />
       </div>
     </div>
   );

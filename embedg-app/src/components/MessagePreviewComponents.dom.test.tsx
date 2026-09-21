@@ -147,3 +147,21 @@ test("a section without an accessory still renders", () => {
 
   expect(screen.getByText("No accessory yet")).toBeVisible();
 });
+
+test("unfurled components render alongside the message content", () => {
+  renderEditor(
+    <MessagePreview
+      msg={parseMessageWithAction({ content: "https://message.style/e/123" })}
+      unfurledComponents={
+        parseMessageWithAction({
+          content: "",
+          flags: COMPONENTS_V2_FLAG,
+          components: [patchNotes],
+        }).components
+      }
+    />,
+  );
+
+  expect(screen.getByText("https://message.style/e/123")).toBeVisible();
+  expect(screen.getByRole("heading", { name: "Patch Notes" })).toBeVisible();
+});
