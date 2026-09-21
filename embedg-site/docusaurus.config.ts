@@ -182,6 +182,10 @@ const config: Config = {
                 label: "Discord",
                 href: "https://message.style/discord",
               },
+              {
+                label: "Status",
+                href: "https://status.message.style",
+              },
             ],
           },
           {
