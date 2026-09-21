@@ -207,13 +207,16 @@ function PreviewSection({ section }: { section: MessageComponentSection }) {
           <PreviewTextDisplay key={component.id} textDisplay={component} />
         ))}
       </div>
-      <div className="discord-component-section-accessory">
-        {section.accessory.type === 11 ? (
-          <PreviewThumbnail thumbnail={section.accessory} />
-        ) : (
-          <PreviewButton button={section.accessory} />
-        )}
-      </div>
+      {/* The editor leaves the accessory out while it is being picked. */}
+      {section.accessory && (
+        <div className="discord-component-section-accessory">
+          {section.accessory.type === 11 ? (
+            <PreviewThumbnail thumbnail={section.accessory} />
+          ) : (
+            <PreviewButton button={section.accessory} />
+          )}
+        </div>
+      )}
     </div>
   );
 }

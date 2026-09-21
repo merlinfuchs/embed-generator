@@ -113,3 +113,37 @@ test("a spoiler hides its content until it is clicked", async () => {
     screen.queryByRole("button", { name: "Reveal spoiler" }),
   ).not.toBeInTheDocument();
 });
+
+// The editor drops the accessory while one is being picked, and the document
+// converter passes that straight through so validation can report it.
+test("a section without an accessory still renders", () => {
+  const msg = parseMessageWithAction({
+    content: "",
+    flags: COMPONENTS_V2_FLAG,
+    embeds: [],
+    components: [
+      {
+        type: 17,
+        components: [
+          {
+            type: 9,
+            components: [{ type: 10, content: "No accessory yet" }],
+            accessory: {
+              type: 11,
+              media: { url: "https://message.style/a.png" },
+            },
+          },
+        ],
+      },
+    ],
+  });
+
+  const container = msg.components[0] as {
+    components: { accessory?: unknown }[];
+  };
+  delete container.components[0].accessory;
+
+  renderEditor(<MessagePreview msg={msg} />);
+
+  expect(screen.getByText("No accessory yet")).toBeVisible();
+});
