@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
 	"github.com/merlinfuchs/embed-generator/embedg-service/model"
@@ -14,52 +15,37 @@ import (
 const (
 	testGuildID = common.ID(1)
 	testRoleID  = common.ID(2)
+	testUserID  = common.ID(3)
 	premiumSKU  = "premium-sku"
 	freeSKU     = "free-sku"
 )
 
 type fakeEntitlementStore struct {
 	store.EntitlementStore
-	entitlements []model.Entitlement
+	skuID string
 }
 
-func (s *fakeEntitlementStore) GetActiveEntitlements(ctx context.Context) ([]model.Entitlement, error) {
-	return s.entitlements, nil
+func (s *fakeEntitlementStore) GetEntitledUserIDs(ctx context.Context) ([]common.ID, error) {
+	return []common.ID{testUserID}, nil
 }
 
-type fakePremiumRoleStore struct {
-	assigned map[common.ID]struct{}
-}
-
-func (s *fakePremiumRoleStore) GetPremiumRoleAssignments(ctx context.Context) ([]common.ID, error) {
-	userIDs := make([]common.ID, 0, len(s.assigned))
-	for userID := range s.assigned {
-		userIDs = append(userIDs, userID)
-	}
-	return userIDs, nil
-}
-
-func (s *fakePremiumRoleStore) UpsertPremiumRoleAssignment(ctx context.Context, userID common.ID, assignedAt time.Time) error {
-	s.assigned[userID] = struct{}{}
-	return nil
-}
-
-func (s *fakePremiumRoleStore) DeletePremiumRoleAssignment(ctx context.Context, userID common.ID) error {
-	delete(s.assigned, userID)
-	return nil
+func (s *fakeEntitlementStore) GetActiveEntitlementsForUser(ctx context.Context, userID common.ID) ([]model.Entitlement, error) {
+	return []model.Entitlement{{ID: s.skuID, SkuID: s.skuID}}, nil
 }
 
 type fakeRest struct {
 	rest.Rest
-	added   []common.ID
-	removed []common.ID
-	addErr  error
+	member    *discord.Member
+	memberErr error
+	added     []common.ID
+	removed   []common.ID
+}
+
+func (r *fakeRest) GetMember(guildID, userID common.ID, opts ...rest.RequestOpt) (*discord.Member, error) {
+	return r.member, r.memberErr
 }
 
 func (r *fakeRest) AddMemberRole(guildID, userID, roleID common.ID, opts ...rest.RequestOpt) error {
-	if r.addErr != nil {
-		return r.addErr
-	}
 	r.added = append(r.added, userID)
 	return nil
 }
@@ -69,104 +55,83 @@ func (r *fakeRest) RemoveMemberRole(guildID, userID, roleID common.ID, opts ...r
 	return nil
 }
 
-func entitlement(userID common.ID, skuID string) model.Entitlement {
-	return model.Entitlement{
-		ID:     skuID,
-		UserID: common.NullID{Valid: true, ID: userID},
-		SkuID:  skuID,
-	}
-}
-
-func newManager(entitlements []model.Entitlement, assigned map[common.ID]struct{}, r *fakeRest) *PremiumManager {
-	return &PremiumManager{
-		config: Config{
-			BeneficialGuildID: testGuildID,
-			BeneficialRoleID:  testRoleID,
-			Plans: []model.Plan{
-				{ID: "free", SKUID: freeSKU, Default: true},
-				{ID: "premium", SKUID: premiumSKU, Features: model.PlanFeatures{IsPremium: true}},
-			},
-		},
-		rest:             r,
-		entitlementStore: &fakeEntitlementStore{entitlements: entitlements},
-		premiumRoleStore: &fakePremiumRoleStore{assigned: assigned},
-	}
-}
-
 func TestAssignPremiumRoles(t *testing.T) {
-	tests := []struct {
-		name         string
-		entitlements []model.Entitlement
-		assigned     map[common.ID]struct{}
-		addErr       error
-		wantAdded    []common.ID
-		wantRemoved  []common.ID
-		wantAssigned []common.ID
+	memberRequestInterval = time.Microsecond
+	t.Cleanup(func() { memberRequestInterval = time.Second })
+
+	data := []struct {
+		Name        string
+		SkuID       string
+		Member      *discord.Member
+		MemberErr   error
+		WantAdded   []common.ID
+		WantRemoved []common.ID
 	}{
 		{
-			name:         "grants the role to a newly entitled user",
-			entitlements: []model.Entitlement{entitlement(10, premiumSKU)},
-			assigned:     map[common.ID]struct{}{},
-			wantAdded:    []common.ID{10},
-			wantAssigned: []common.ID{10},
+			Name:      "grants the role to a premium user without it",
+			SkuID:     premiumSKU,
+			Member:    &discord.Member{},
+			WantAdded: []common.ID{testUserID},
 		},
 		{
-			name:         "strips the role once the entitlement is gone",
-			entitlements: nil,
-			assigned:     map[common.ID]struct{}{10: {}},
-			wantRemoved:  []common.ID{10},
+			Name:        "strips the role from a user that isn't premium",
+			SkuID:       freeSKU,
+			Member:      &discord.Member{RoleIDs: []common.ID{testRoleID}},
+			WantRemoved: []common.ID{testUserID},
 		},
 		{
-			name:         "leaves a user that already holds the role alone",
-			entitlements: []model.Entitlement{entitlement(10, premiumSKU)},
-			assigned:     map[common.ID]struct{}{10: {}},
-			wantAssigned: []common.ID{10},
+			Name:   "leaves a premium user that already has the role alone",
+			SkuID:  premiumSKU,
+			Member: &discord.Member{RoleIDs: []common.ID{testRoleID}},
 		},
 		{
-			name:         "ignores an entitlement whose plan isn't premium",
-			entitlements: []model.Entitlement{entitlement(10, freeSKU)},
-			assigned:     map[common.ID]struct{}{},
-		},
-		{
-			name:         "doesn't record an assignment when the user isn't in the guild",
-			entitlements: []model.Entitlement{entitlement(10, premiumSKU)},
-			assigned:     map[common.ID]struct{}{},
-			addErr:       &rest.Error{Code: rest.JSONErrorCodeUnknownMember},
+			Name:      "skips a user that isn't in the guild",
+			SkuID:     premiumSKU,
+			MemberErr: &rest.Error{Code: rest.JSONErrorCodeUnknownMember},
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			r := &fakeRest{addErr: tt.addErr}
-			m := newManager(tt.entitlements, tt.assigned, r)
+	for _, d := range data {
+		t.Run(d.Name, func(t *testing.T) {
+			r := &fakeRest{member: d.Member, memberErr: d.MemberErr}
+			m := &PremiumManager{
+				config: Config{
+					BeneficialGuildID: testGuildID,
+					BeneficialRoleID:  testRoleID,
+					Plans: []model.Plan{
+						{ID: "free", SKUID: freeSKU, Default: true},
+						{ID: "premium", SKUID: premiumSKU, Features: model.PlanFeatures{IsPremium: true}},
+					},
+				},
+				rest:             r,
+				entitlementStore: &fakeEntitlementStore{skuID: d.SkuID},
+			}
 
 			if err := m.assignPremiumRoles(context.Background()); err != nil {
 				t.Fatalf("assignPremiumRoles: %v", err)
 			}
 
-			assertIDs(t, "added", r.added, tt.wantAdded)
-			assertIDs(t, "removed", r.removed, tt.wantRemoved)
-
-			assigned, _ := m.premiumRoleStore.GetPremiumRoleAssignments(context.Background())
-			assertIDs(t, "assigned", assigned, tt.wantAssigned)
+			if len(r.added) != len(d.WantAdded) {
+				t.Fatalf("added = %v, want %v", r.added, d.WantAdded)
+			}
+			if len(r.removed) != len(d.WantRemoved) {
+				t.Fatalf("removed = %v, want %v", r.removed, d.WantRemoved)
+			}
 		})
 	}
 }
 
-func assertIDs(t *testing.T, name string, got []common.ID, want []common.ID) {
-	t.Helper()
+func TestAssignPremiumRolesCancelled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
 
-	if len(got) != len(want) {
-		t.Fatalf("%s = %v, want %v", name, got, want)
+	m := &PremiumManager{
+		config:           Config{BeneficialGuildID: testGuildID, BeneficialRoleID: testRoleID},
+		rest:             &fakeRest{},
+		entitlementStore: &fakeEntitlementStore{skuID: premiumSKU},
 	}
 
-	set := make(map[common.ID]struct{}, len(got))
-	for _, id := range got {
-		set[id] = struct{}{}
-	}
-	for _, id := range want {
-		if _, ok := set[id]; !ok {
-			t.Fatalf("%s = %v, want %v", name, got, want)
-		}
+	if err := m.assignPremiumRoles(ctx); err != context.Canceled {
+		t.Fatalf("assignPremiumRoles = %v, want %v", err, context.Canceled)
 	}
 }

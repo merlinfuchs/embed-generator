@@ -11,44 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const getActiveEntitlements = `-- name: GetActiveEntitlements :many
-SELECT id, user_id, guild_id, updated_at, deleted, sku_id, starts_at, ends_at, consumed, consumed_guild_id FROM entitlements
-WHERE deleted = false
-  AND (starts_at IS NULL OR starts_at < NOW())
-  AND (ends_at IS NULL OR ends_at > NOW())
-`
-
-func (q *Queries) GetActiveEntitlements(ctx context.Context) ([]Entitlement, error) {
-	rows, err := q.db.Query(ctx, getActiveEntitlements)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Entitlement
-	for rows.Next() {
-		var i Entitlement
-		if err := rows.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.GuildID,
-			&i.UpdatedAt,
-			&i.Deleted,
-			&i.SkuID,
-			&i.StartsAt,
-			&i.EndsAt,
-			&i.Consumed,
-			&i.ConsumedGuildID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getActiveEntitlementsForGuild = `-- name: GetActiveEntitlementsForGuild :many
 SELECT id, user_id, guild_id, updated_at, deleted, sku_id, starts_at, ends_at, consumed, consumed_guild_id FROM entitlements 
 WHERE deleted = false 
@@ -120,6 +82,30 @@ func (q *Queries) GetActiveEntitlementsForUser(ctx context.Context, userID pgtyp
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getEntitledUserIDs = `-- name: GetEntitledUserIDs :many
+SELECT DISTINCT user_id FROM entitlements
+`
+
+func (q *Queries) GetEntitledUserIDs(ctx context.Context) ([]pgtype.Text, error) {
+	rows, err := q.db.Query(ctx, getEntitledUserIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []pgtype.Text
+	for rows.Next() {
+		var user_id pgtype.Text
+		if err := rows.Scan(&user_id); err != nil {
+			return nil, err
+		}
+		items = append(items, user_id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

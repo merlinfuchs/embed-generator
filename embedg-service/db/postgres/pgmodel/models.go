@@ -114,11 +114,6 @@ type MessageActionSet struct {
 	Ephemeral          bool
 }
 
-type PremiumRoleAssignment struct {
-	UserID     int64
-	AssignedAt pgtype.Timestamp
-}
-
 type SavedMessage struct {
 	ID          string
 	CreatorID   string

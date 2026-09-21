@@ -52,8 +52,5 @@ DO UPDATE SET
   consumed = $9
 RETURNING *;
 
--- name: GetActiveEntitlements :many
-SELECT * FROM entitlements
-WHERE deleted = false
-  AND (starts_at IS NULL OR starts_at < NOW())
-  AND (ends_at IS NULL OR ends_at > NOW());
+-- name: GetEntitledUserIDs :many
+SELECT DISTINCT user_id FROM entitlements;
