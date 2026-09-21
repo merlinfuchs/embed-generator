@@ -54,7 +54,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		BeneficialGuildID: cfg.Premium.BeneficialGuildID,
 		BeneficialRoleID:  cfg.Premium.BeneficialRoleID,
 		Plans:             cfg.Premium.Plans,
-	}, shards, embedg.Rest(), pg, embedg)
+	}, shards, embedg.Rest(), pg, pg, embedg)
 	embedg.Client().AddEventListeners(premiumManager)
 	go premiumManager.Run(ctx)
 

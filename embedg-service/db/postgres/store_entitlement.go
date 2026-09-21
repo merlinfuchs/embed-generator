@@ -85,18 +85,12 @@ func (c *Client) UpsertEntitlement(ctx context.Context, entitlement model.Entitl
 	return rowToEntitlement(row), nil
 }
 
-func (c *Client) GetEntitledUserIDs(ctx context.Context) ([]common.ID, error) {
-	rows, err := c.Q.GetEntitledUserIDs(ctx)
+func (c *Client) GetActiveEntitlements(ctx context.Context) ([]model.Entitlement, error) {
+	rows, err := c.Q.GetActiveEntitlements(ctx)
 	if err != nil {
 		return nil, err
 	}
-	userIDs := make([]common.ID, 0, len(rows))
-	for _, row := range rows {
-		if row.Valid {
-			userIDs = append(userIDs, common.DefinitelyID(row.String))
-		}
-	}
-	return userIDs, nil
+	return rowsToEntitlements(rows), nil
 }
 
 func rowsToEntitlements(rows []pgmodel.Entitlement) []model.Entitlement {

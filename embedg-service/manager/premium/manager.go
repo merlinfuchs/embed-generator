@@ -22,6 +22,7 @@ type PremiumManager struct {
 	shards              common.Shards
 	rest                rest.Rest
 	entitlementStore    store.EntitlementStore
+	premiumRoleStore    store.PremiumRoleStore
 	appContext          store.AppContext
 	defaultPlanFeatures model.PlanFeatures
 }
@@ -31,6 +32,7 @@ func NewPremiumManager(
 	shards common.Shards,
 	rest rest.Rest,
 	entitlementStore store.EntitlementStore,
+	premiumRoleStore store.PremiumRoleStore,
 	appContext store.AppContext,
 ) *PremiumManager {
 	var defaultPlanFeatures model.PlanFeatures
@@ -45,6 +47,7 @@ func NewPremiumManager(
 		shards:              shards,
 		rest:                rest,
 		entitlementStore:    entitlementStore,
+		premiumRoleStore:    premiumRoleStore,
 		appContext:          appContext,
 		defaultPlanFeatures: defaultPlanFeatures,
 	}
