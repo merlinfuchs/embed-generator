@@ -57,6 +57,9 @@ func (s *Client) DownloadFile(ctx context.Context, fileName string) (*model.File
 
 		return nil, err
 	}
+	// GetObject starts a goroutine that serves reads and only returns when the object is
+	// closed. It doesn't watch the context, so without this every download leaks one.
+	defer object.Close()
 
 	data, err := io.ReadAll(object)
 	if err != nil {
