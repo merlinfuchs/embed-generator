@@ -1,19 +1,28 @@
 ---
-slug: discord-component-embeds
-title: Build a Discord Component Embed Without Writing JSON
-description: Discord link previews can now be a Components V2 container with markdown, image galleries and link buttons. Build one in Embed Generator and share it as a link, no website or bot required.
+slug: discord-link-preview-components
+title: Custom Discord Link Previews With Components V2
+description: Discord link previews can now render Components V2 instead of the usual title and description card. Discord calls the payload a component embed. Build one in Embed Generator with markdown, image galleries and link buttons, no website or bot required.
 authors: [merlin]
-tags: [discord, components, embed, link-preview, unfurl, components-v2]
+tags:
+  [
+    discord,
+    link-preview,
+    components,
+    components-v2,
+    component-embed,
+    unfurl,
+    open-graph,
+  ]
 draft: true
 ---
 
-Discord shipped component embeds: a website can now replace its link preview with a [Components V2](https://discord.com/developers/docs/components/reference) container instead of the usual title, description and thumbnail card. The [documentation PR](https://github.com/discord/discord-api-docs/pull/8606) describes a `discord:component-embed` script tag you add to your page. The feature is live even though that PR hasn't merged yet.
+When you paste a link into Discord you get a link preview: a card with the page title, a description and an image. Discord now lets that card be a [Components V2](https://discord.com/developers/docs/components/reference) layout instead, with markdown, image galleries, an accent color and buttons that link out. In the docs it lives under [Link Previews](https://discord.com/developers/docs/link-previews/overview) and the payload itself is called a component embed, added to your page as a `discord:component-embed` script tag. The [documentation PR](https://github.com/discord/discord-api-docs/pull/8606) hasn't merged yet, but the feature is already live.
 
 That works if you own a website and can change its server-rendered HTML. If you don't, Embed Generator now builds the whole thing for you and hands you a URL to paste into Discord.
 
 <!--truncate-->
 
-## What a component embed actually is
+## What replaces the normal link preview
 
 A normal link preview comes from Open Graph tags. Discord reads `og:title`, `og:description`, `og:image` and friends, then draws a card. A component embed skips that card and renders components instead: markdown text with headings and lists, an accent-colored container, image galleries, thumbnails, separators, and buttons that link out.
 
@@ -27,7 +36,7 @@ Turn on **Custom Component** and the editor gives you the same component builder
 
 Hit **Create Link** and you get a `message.style/e/...` URL. Paste it into any Discord channel and it unfurls into your container.
 
-## What Discord allows inside one
+## What Discord allows inside a link preview
 
 A component embed is a read-only subset of message components, and Discord drops the entire payload if anything falls outside it. The parts you can use are containers, sections, text displays, thumbnails, media galleries, separators, action rows and buttons. Select menus and file components are out.
 
