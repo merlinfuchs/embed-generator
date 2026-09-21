@@ -32,6 +32,7 @@ const columns = [
     links: [
       { label: "Discord", href: "/discord", external: true },
       { label: "GitHub", href: "/source", external: true },
+      { label: "Status", href: "https://status.message.style", external: true },
     ],
   },
   {
