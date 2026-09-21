@@ -2,6 +2,7 @@ package premium
 
 import (
 	"context"
+	"slices"
 	"testing"
 	"time"
 
@@ -55,10 +56,23 @@ func (r *fakeRest) RemoveMemberRole(guildID, userID, roleID common.ID, opts ...r
 	return nil
 }
 
-func TestAssignPremiumRoles(t *testing.T) {
-	memberRequestInterval = time.Microsecond
-	t.Cleanup(func() { memberRequestInterval = time.Second })
+func newTestManager(skuID string, r *fakeRest) *PremiumManager {
+	return &PremiumManager{
+		memberRequestInterval: time.Microsecond,
+		config: Config{
+			BeneficialGuildID: testGuildID,
+			BeneficialRoleID:  testRoleID,
+			Plans: []model.Plan{
+				{SKUID: freeSKU},
+				{SKUID: premiumSKU, Features: model.PlanFeatures{IsPremium: true}},
+			},
+		},
+		rest:             r,
+		entitlementStore: &fakeEntitlementStore{skuID: skuID},
+	}
+}
 
+func TestAssignPremiumRoles(t *testing.T) {
 	data := []struct {
 		Name        string
 		SkuID       string
@@ -94,44 +108,34 @@ func TestAssignPremiumRoles(t *testing.T) {
 	for _, d := range data {
 		t.Run(d.Name, func(t *testing.T) {
 			r := &fakeRest{member: d.Member, memberErr: d.MemberErr}
-			m := &PremiumManager{
-				config: Config{
-					BeneficialGuildID: testGuildID,
-					BeneficialRoleID:  testRoleID,
-					Plans: []model.Plan{
-						{ID: "free", SKUID: freeSKU, Default: true},
-						{ID: "premium", SKUID: premiumSKU, Features: model.PlanFeatures{IsPremium: true}},
-					},
-				},
-				rest:             r,
-				entitlementStore: &fakeEntitlementStore{skuID: d.SkuID},
-			}
 
-			if err := m.assignPremiumRoles(context.Background()); err != nil {
+			if err := newTestManager(d.SkuID, r).assignPremiumRoles(context.Background()); err != nil {
 				t.Fatalf("assignPremiumRoles: %v", err)
 			}
 
-			if len(r.added) != len(d.WantAdded) {
+			if !slices.Equal(r.added, d.WantAdded) {
 				t.Fatalf("added = %v, want %v", r.added, d.WantAdded)
 			}
-			if len(r.removed) != len(d.WantRemoved) {
+			if !slices.Equal(r.removed, d.WantRemoved) {
 				t.Fatalf("removed = %v, want %v", r.removed, d.WantRemoved)
 			}
 		})
 	}
 }
 
+// a cancelled sweep stops where it is rather than walking the rest of the list
 func TestAssignPremiumRolesCancelled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	m := &PremiumManager{
-		config:           Config{BeneficialGuildID: testGuildID, BeneficialRoleID: testRoleID},
-		rest:             &fakeRest{},
-		entitlementStore: &fakeEntitlementStore{skuID: premiumSKU},
-	}
+	r := &fakeRest{member: &discord.Member{}}
+	m := newTestManager(premiumSKU, r)
+	m.memberRequestInterval = time.Hour
 
-	if err := m.assignPremiumRoles(ctx); err != context.Canceled {
-		t.Fatalf("assignPremiumRoles = %v, want %v", err, context.Canceled)
+	if err := m.assignPremiumRoles(ctx); err != nil {
+		t.Fatalf("assignPremiumRoles: %v", err)
+	}
+	if len(r.added) != 0 {
+		t.Fatalf("added = %v, want nothing after a cancel", r.added)
 	}
 }

@@ -10,10 +10,9 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
 )
 
-// memberRequestInterval paces the member requests below the guild member rate limit. Without it the
-// sweep runs into 429s on every user and disgo spends the whole sweep backing off and retrying.
-// A var so tests don't have to wait for it.
-var memberRequestInterval = time.Second
+// defaultMemberRequestInterval paces the member requests. The sweep was seeing a 429 on every
+// user, and it has a whole 15 minutes to get through the list, so spreading it out costs nothing.
+const defaultMemberRequestInterval = time.Second
 
 func (m *PremiumManager) assignPremiumRoles(ctx context.Context) error {
 	if m.config.BeneficialGuildID == 0 || m.config.BeneficialRoleID == 0 {
@@ -25,20 +24,20 @@ func (m *PremiumManager) assignPremiumRoles(ctx context.Context) error {
 		return fmt.Errorf("Failed to get entitled user IDs: %w", err)
 	}
 
-	pace := time.NewTicker(memberRequestInterval)
+	pace := time.NewTicker(m.memberRequestInterval)
 	defer pace.Stop()
 
 	for _, userID := range userIDs {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-pace.C:
-		}
-
 		features, err := m.GetPlanFeaturesForUser(ctx, userID)
 		if err != nil {
 			slog.Error("Failed to get plan features for guild", slog.Any("error", err))
 			continue
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-pace.C:
 		}
 
 		member, err := m.rest.GetMember(m.config.BeneficialGuildID, userID, rest.WithCtx(ctx))

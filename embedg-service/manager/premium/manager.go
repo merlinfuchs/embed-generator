@@ -24,6 +24,8 @@ type PremiumManager struct {
 	entitlementStore    store.EntitlementStore
 	appContext          store.AppContext
 	defaultPlanFeatures model.PlanFeatures
+
+	memberRequestInterval time.Duration
 }
 
 func NewPremiumManager(
@@ -41,6 +43,8 @@ func NewPremiumManager(
 	}
 
 	return &PremiumManager{
+		memberRequestInterval: defaultMemberRequestInterval,
+
 		config:              config,
 		shards:              shards,
 		rest:                rest,
@@ -51,33 +55,28 @@ func NewPremiumManager(
 }
 
 // Run keeps entitlements and premium roles in sync. Both sweep everything rather than a shard
-// range, so only the leader runs them.
+// range, so only the leader runs them. They get a goroutine each because the role sweep paces
+// itself against the member rate limit and can outrun the entitlement sync's interval.
 func (m *PremiumManager) Run(ctx context.Context) {
 	if !m.shards.IsLeader() {
 		return
 	}
 
-	entitlementTicker := time.NewTicker(time.Minute * 5)
-	defer entitlementTicker.Stop()
+	go runEvery(ctx, time.Minute*5, "Failed to sync entitlements", m.SyncEntitlements)
+	go runEvery(ctx, time.Minute*15, "Failed to sync premium roles", m.assignPremiumRoles)
+}
 
-	rolesTicker := time.NewTicker(time.Minute * 15)
-	defer rolesTicker.Stop()
+func runEvery(ctx context.Context, interval time.Duration, errMessage string, sweep func(context.Context) error) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-entitlementTicker.C:
-			err := m.SyncEntitlements(ctx)
-			if err != nil {
-				slog.Error("Failed to sync entitlements", slog.Any("error", err))
-				continue
-			}
-		case <-rolesTicker.C:
-			err := m.assignPremiumRoles(ctx)
-			if err != nil {
-				slog.Error("Failed to sync premium roles", slog.Any("error", err))
-				continue
+		case <-ticker.C:
+			if err := sweep(ctx); err != nil {
+				slog.Error(errMessage, slog.Any("error", err))
 			}
 		}
 	}
