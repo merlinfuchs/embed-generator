@@ -1,9 +1,9 @@
 import { render, screen } from "@testing-library/react";
-import { Component, type ComponentType, type ReactNode, Suspense } from "react";
+import { type ComponentType, Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 import { beforeEach, expect, test, vi } from "vitest";
-import { lazyView } from "./lazyView";
+import { lazyView, RELOAD_KEY } from "./lazyView";
 
-const RELOAD_KEY = "embedg-chunk-reload";
 const reload = vi.fn();
 
 beforeEach(() => {
@@ -16,24 +16,14 @@ beforeEach(() => {
   });
 });
 
-class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
-  state = { failed: false };
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
-  render() {
-    return this.state.failed ? <div>boundary</div> : this.props.children;
-  }
-}
-
 function renderLazy(factory: () => Promise<{ default: ComponentType }>) {
   const View = lazyView(factory);
   render(
-    <Boundary>
+    <ErrorBoundary fallback={<div>boundary</div>}>
       <Suspense fallback={<div>loading</div>}>
         <View />
       </Suspense>
-    </Boundary>,
+    </ErrorBoundary>,
   );
 }
 

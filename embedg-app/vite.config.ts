@@ -7,6 +7,11 @@ export default ({ mode }) => {
   return defineConfig({
     plugins: [react()],
     base: env.VITE_DISCORD_ACTIVITY === "true" ? undefined : "/app",
+    build: {
+      // The server caches everything under this directory long term and 404s
+      // misses there, so it has to stay in sync with registerFrontendRoutes.
+      assetsDir: "assets",
+    },
     server: {
       proxy: {
         "/api": {

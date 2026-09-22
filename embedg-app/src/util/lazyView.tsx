@@ -1,37 +1,36 @@
 import { type ComponentType, lazy, type LazyExoticComponent } from "react";
 
-const RELOAD_KEY = "embedg-chunk-reload";
+export const RELOAD_KEY = "embedg-chunk-reload";
 const RELOAD_WINDOW_MS = 10_000;
 
 /**
- * Whether we already reloaded recently. Time based rather than a flag we clear
- * on success: a screen that loads several chunks would otherwise clear the flag
- * with one of them and re-arm the reload for the next failure, which loops.
+ * Reload to pick up the new index.html, unless we already did recently.
+ * Returns whether the reload was triggered.
+ *
+ * Time based rather than a flag cleared on success: a screen that loads several
+ * chunks would otherwise clear the flag with one of them and re-arm the reload
+ * for the next failure, which loops.
  *
  * When sessionStorage is unavailable (third party iframe with storage blocked,
- * e.g. the Discord activity under Safari) we can't tell, so we assume we
- * already reloaded. Surfacing the error to the boundary beats risking a loop.
+ * e.g. the Discord activity under Safari) we can't tell whether we already
+ * reloaded, so we don't. Surfacing the error beats risking a loop.
  */
-function reloadedRecently() {
+function reloadOnce(): boolean {
   try {
-    const at = Number(sessionStorage.getItem(RELOAD_KEY));
-    if (!at) return false;
-    return Date.now() - at < RELOAD_WINDOW_MS;
-  } catch {
-    return true;
-  }
-}
-
-function markReloaded() {
-  try {
+    const at = sessionStorage.getItem(RELOAD_KEY);
+    if (at && Date.now() - Number(at) < RELOAD_WINDOW_MS) return false;
     sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
-  } catch {}
+  } catch {
+    return false;
+  }
+
+  window.location.reload();
+  return true;
 }
 
 /**
  * Like React.lazy, but recovers from chunks that disappeared because a new
- * version was deployed while the page was open. Reloads to pick up the new
- * index.html, at most once per RELOAD_WINDOW_MS.
+ * version was deployed while the page was open.
  *
  * This only covers chunks loaded after the app booted. A stale index.html whose
  * entry bundle is gone never gets this far, which is what the no-cache header
@@ -44,12 +43,7 @@ export function lazyView<T extends ComponentType<any>>(
     try {
       return await factory();
     } catch (e) {
-      if (reloadedRecently()) {
-        throw e;
-      }
-
-      markReloaded();
-      window.location.reload();
+      if (!reloadOnce()) throw e;
       // The page is going away, never resolve.
       return new Promise<never>(() => {});
     }
