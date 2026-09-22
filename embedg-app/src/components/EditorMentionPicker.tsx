@@ -34,7 +34,12 @@ export default function EditorMentionPicker({
     <div>
       <div onClick={() => setOpen(true)}>{children}</div>
       {open && (
-        <Modal height="auto" width="sm" onClose={() => setOpen(false)}>
+        <Modal
+          height="auto"
+          width="sm"
+          overflow="visible"
+          onClose={() => setOpen(false)}
+        >
           <div className="p-4">
             <div className="text-lg text-white mb-1">Add a mention</div>
             <div className="text-mist-400 mb-6">

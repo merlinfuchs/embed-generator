@@ -7,6 +7,7 @@ import clsx from "clsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useGuildChannelsQuery } from "../api/queries";
 import ClickOutsideHandler from "./ClickOutsideHandler";
+import SelectDropdown from "./SelectDropdown";
 import { useToasts } from "../util/toasts";
 
 interface Props {
@@ -220,7 +221,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
           </div>
         </div>
         {open && (
-          <div className="absolute bg-ink-900 top-14 left-0 rounded-lg shadow-lg w-full border-2 border-white/10 z-10 max-h-48 overflow-y-auto overflow-x-none">
+          <SelectDropdown>
             {botHasNoAccess && (
               <div className="p-2 text-mist-400 text-sm">
                 The bot can't post in any channel in this server. Give it the
@@ -261,7 +262,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
             ) : (
               <div className="p-2 text-mist-300">No channels found</div>
             )}
-          </div>
+          </SelectDropdown>
         )}
       </div>
     </ClickOutsideHandler>

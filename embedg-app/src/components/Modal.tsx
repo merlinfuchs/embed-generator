@@ -14,6 +14,8 @@ interface Props {
   children: ReactNode;
   width?: keyof typeof maxWidths;
   height?: "auto" | "full";
+  /** Let content like dropdowns escape the modal instead of being cut off. */
+  overflow?: "hidden" | "visible";
   onClose: () => void;
 }
 
@@ -21,6 +23,7 @@ export default function Modal({
   children,
   width = "xl",
   height = "auto",
+  overflow = "hidden",
   onClose,
 }: Props) {
   return (
@@ -30,9 +33,10 @@ export default function Modal({
     >
       <div
         className={clsx(
-          "bg-ink-700 border border-white/10 shadow-card w-full rounded-2xl flex-shrink overflow-y-hidden",
+          "bg-ink-700 border border-white/10 shadow-card w-full rounded-2xl flex-shrink",
           maxWidths[width],
           height === "full" && "h-full",
+          overflow === "visible" ? "overflow-visible" : "overflow-y-hidden",
         )}
       >
         <XMarkIcon

@@ -2,6 +2,7 @@ import { CheckIcon, ChevronDownIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
 import { useEffect, useMemo, useState } from "react";
 import ClickOutsideHandler from "./ClickOutsideHandler";
+import SelectDropdown from "./SelectDropdown";
 import { useGuildRolesQuery } from "../api/queries";
 import { colorIntToHex } from "../util/discord";
 
@@ -70,7 +71,7 @@ export function RolesSelect({ guildId, roleIds, onChange }: Props) {
           )}
         </div>
         {open && (
-          <div className="absolute bg-ink-900 top-14 left-0 rounded-lg shadow-lg w-full border-2 border-white/10 z-10 max-h-48 overflow-y-auto overflow-x-none">
+          <SelectDropdown>
             {roles?.success && roles.data.length ? (
               roles.data.map((r) => (
                 <div
@@ -97,7 +98,7 @@ export function RolesSelect({ guildId, roleIds, onChange }: Props) {
             ) : (
               <div className="p-2 text-mist-300">No roles found</div>
             )}
-          </div>
+          </SelectDropdown>
         )}
       </div>
     </ClickOutsideHandler>
