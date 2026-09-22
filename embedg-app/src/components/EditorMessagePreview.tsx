@@ -1,7 +1,8 @@
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
 import { useDebouncedCurrentDocument } from "../state/currentMessage";
+import { lazyView } from "../util/lazyView";
 
-const LazyMessagePreview = lazy(() => import("./MessagePreview"));
+const LazyMessagePreview = lazyView(() => import("./MessagePreview"));
 
 export default function EditorMessagePreview() {
   // We debounce the message preview to prevent it from updating too often.

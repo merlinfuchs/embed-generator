@@ -1,8 +1,11 @@
 package api
 
 import (
+	"bytes"
 	"fmt"
+	"io/fs"
 	"net/http"
+	"path"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
@@ -167,18 +170,68 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 		return c.Redirect(fmt.Sprintf("https://discord.com/application-directory/%s/premium", env.AppContext.ApplicationID()), 302)
 	})
 
-	// Serve static files
-	app.Use("/app/", filesystem.New(filesystem.Config{
-		Root:         http.FS(embedgapp.DistFS),
-		Browse:       false,
-		NotFoundFile: "dist/index.html",
-		PathPrefix:   "/dist",
-	}))
+	// Serve static files. Hashed assets are cached long term; index.html points
+	// at those hashed names so it has to be revalidated on every load, or a
+	// deploy leaves browsers asking for assets that no longer exist.
+	registerFrontendRoutes(app, "/app/", embedgapp.DistFS)
+	registerFrontendRoutes(app, "/", embedgsite.DistFS)
+}
 
-	app.Use("/", filesystem.New(filesystem.Config{
-		Root:         http.FS(embedgsite.DistFS),
-		Browse:       false,
+const (
+	// Asset file names carry a content hash. fiber's filesystem.Config.MaxAge
+	// can't be used for these: it emits max-age but never immutable.
+	assetCacheControl = "public, max-age=2592000, immutable"
+	// index.html, which must always reflect the deployed asset hashes.
+	noCacheControl = "no-cache"
+	// Unhashed files that aren't index.html: logos, fonts, docs images. embed.FS
+	// reports no ModTime and fiber sets no ETag, so revalidating one costs a full
+	// body. A short TTL is cheaper than no-cache and bounds how long a replaced
+	// file stays stale.
+	staticCacheControl = "public, max-age=3600"
+)
+
+// registerFrontendRoutes serves one embedded dist directory. Assets get their
+// own mount so that a miss 404s instead of falling through to NotFoundFile,
+// which would answer a request for a chunk from an older deploy with index.html
+// at 200 and leave the page blank.
+func registerFrontendRoutes(app *fiber.App, mount string, dist fs.FS) {
+	app.Use(path.Join(mount, "assets"), cacheControl(assetCacheControl), filesystem.New(filesystem.Config{
+		Root:       http.FS(dist),
+		PathPrefix: "/dist/assets",
+	}), func(c *fiber.Ctx) error {
+		c.Set(fiber.HeaderCacheControl, noCacheControl)
+		return c.SendStatus(fiber.StatusNotFound)
+	})
+
+	app.Use(mount, staticCacheHeaders, filesystem.New(filesystem.Config{
+		Root:         http.FS(dist),
 		NotFoundFile: "dist/index.html",
 		PathPrefix:   "/dist",
 	}))
+}
+
+func cacheControl(value string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		c.Set(fiber.HeaderCacheControl, value)
+		return c.Next()
+	}
+}
+
+// staticCacheHeaders revalidates HTML on every load and gives the remaining
+// unhashed files a short TTL. Set after the fact because which one applies
+// depends on what the file server resolved the request to.
+func staticCacheHeaders(c *fiber.Ctx) error {
+	if err := c.Next(); err != nil {
+		return err
+	}
+	if c.Response().StatusCode() >= fiber.StatusBadRequest {
+		return nil
+	}
+
+	if bytes.Contains(c.Response().Header.ContentType(), []byte(fiber.MIMETextHTML)) {
+		c.Set(fiber.HeaderCacheControl, noCacheControl)
+	} else {
+		c.Set(fiber.HeaderCacheControl, staticCacheControl)
+	}
+	return nil
 }
