@@ -1,10 +1,9 @@
-import { useMemo } from "react";
+import { type ComponentPropsWithoutRef, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 
-interface Props {
-  /** Asks for the guilds.join scope and adds the user to the support server. */
+interface Props extends ComponentPropsWithoutRef<"a"> {
+  /** Also asks for the guilds.join scope. */
   joinSupportServer?: boolean;
-  [key: string]: any;
 }
 
 export default function LoginLink({ joinSupportServer, ...props }: Props) {

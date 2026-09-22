@@ -15,6 +15,8 @@ interface Props {
   alwaysExpanded?: boolean;
 }
 
+const joinSupportServerLabel = "Join the Discord support server";
+
 export default function LogginSuggest({ alwaysExpanded }: Props) {
   const [collapsed, setCollapsed] = useState(!alwaysExpanded);
   const [joinSupportServer, setJoinSupportServer] = useState(false);
@@ -75,15 +77,12 @@ export default function LogginSuggest({ alwaysExpanded }: Props) {
           </div>
           <div className="flex items-center gap-4 pt-2">
             <CheckBox
-              label="Join the Discord support server"
+              label={joinSupportServerLabel}
               checked={joinSupportServer}
               onChange={setJoinSupportServer}
             />
-            <div
-              className="text-mist-300 text-sm cursor-pointer"
-              onClick={() => setJoinSupportServer(!joinSupportServer)}
-            >
-              Join the Discord support server
+            <div className="text-mist-300 text-sm">
+              {joinSupportServerLabel}
             </div>
           </div>
           <div className="flex justify-end pt-4">

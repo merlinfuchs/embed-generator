@@ -74,10 +74,6 @@ func (s *SessionManager) OAuth2Config() *oauth2.Config {
 // AuthCodeURL builds the Discord consent URL, with extraScopes on top of the ones every login asks
 // for. Asking for more scopes makes Discord show the consent screen again even for returning users.
 func (s *SessionManager) AuthCodeURL(state string, extraScopes ...string) string {
-	if len(extraScopes) == 0 {
-		return s.oauth2Config.AuthCodeURL(state)
-	}
-
 	config := *s.oauth2Config
 	config.Scopes = append(slices.Clone(config.Scopes), extraScopes...)
 	return config.AuthCodeURL(state)
@@ -130,7 +126,7 @@ func (s *SessionManager) CreateSession(ctx context.Context, userID common.ID, gu
 		AccessToken:    tokenData.AccessToken,
 		RefreshToken:   tokenData.RefreshToken,
 		TokenExpiresAt: tokenData.Expiry,
-		Scopes:         GrantedScopes(tokenData),
+		Scopes:         grantedScopes(tokenData),
 		CreatedAt:      time.Now().UTC(),
 		ExpiresAt:      time.Now().UTC().Add(30 * 24 * time.Hour),
 	})
@@ -220,8 +216,14 @@ func (s *SessionManager) DeleteSession(c *fiber.Ctx) error {
 	return s.sessionStore.DeleteSession(c.UserContext(), tokenHash)
 }
 
-// GrantedScopes reads the scopes Discord actually granted, which can differ from the ones we asked for.
-func GrantedScopes(tokenData *oauth2.Token) []string {
+// HasScope reports whether Discord granted a token the scope, which can differ from what we asked
+// for.
+func HasScope(tokenData *oauth2.Token, scope string) bool {
+	return slices.Contains(grantedScopes(tokenData), scope)
+}
+
+// grantedScopes reads the scopes Discord actually granted, which can differ from the ones we asked for.
+func grantedScopes(tokenData *oauth2.Token) []string {
 	scope, _ := tokenData.Extra("scope").(string)
 	return strings.Fields(scope)
 }
