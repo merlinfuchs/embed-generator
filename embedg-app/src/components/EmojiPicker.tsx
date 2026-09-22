@@ -1,11 +1,12 @@
-import { lazy, type ReactNode, Suspense, useMemo, useState } from "react";
+import { type ReactNode, Suspense, useMemo, useState } from "react";
 import ClickOutsideHandler from "./ClickOutsideHandler";
 import { useGuildEmojisQuery } from "../api/queries";
 import clsx from "clsx";
+import { lazyView } from "../util/lazyView";
 
 // The picker and its dataset are only needed once someone opens it, and they
 // are a sizeable part of the main chunk otherwise.
-const Picker = lazy(() => import("@emoji-mart/react"));
+const Picker = lazyView(() => import("@emoji-mart/react"));
 
 let emojiData: Promise<unknown> | undefined;
 
