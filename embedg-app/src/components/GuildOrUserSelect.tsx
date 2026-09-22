@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useGuildsQuery, useUserQuery } from "../api/queries";
 import { guildIconUrl, userAvatarUrl } from "../discord/cdn";
 import ClickOutsideHandler from "./ClickOutsideHandler";
+import SelectDropdown from "./SelectDropdown";
 
 interface Props {
   value: string | null;
@@ -85,7 +86,7 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
           )}
         </div>
         {open && (
-          <div className="absolute bg-ink-900 top-14 left-0 rounded-lg shadow-lg w-full border-2 border-white/10 z-10">
+          <SelectDropdown>
             {user?.success && (
               <div
                 className="py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg cursor-pointer px-3"
@@ -126,7 +127,7 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
             ) : (
               <div className="p-2 text-mist-300">No servers found</div>
             )}
-          </div>
+          </SelectDropdown>
         )}
       </div>
     </ClickOutsideHandler>

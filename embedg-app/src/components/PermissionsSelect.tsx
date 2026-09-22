@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import ClickOutsideHandler from "./ClickOutsideHandler";
+import SelectDropdown from "./SelectDropdown";
 import {
   CheckIcon,
   ChevronDownIcon,
@@ -118,7 +119,7 @@ export default function PermissionsSelect({ permissions, onChange }: Props) {
           )}
         </div>
         {open && (
-          <div className="absolute bg-ink-900 top-14 left-0 rounded-lg shadow-lg w-full border-2 border-white/10 z-10 max-h-48 overflow-y-auto overflow-x-none">
+          <SelectDropdown>
             {Object.keys(permissionFlags).map((f) => (
               <div
                 key={f}
@@ -138,7 +139,7 @@ export default function PermissionsSelect({ permissions, onChange }: Props) {
                 )}
               </div>
             ))}
-          </div>
+          </SelectDropdown>
         )}
       </div>
     </ClickOutsideHandler>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useGuildsQuery } from "../api/queries";
 import { guildIconUrl } from "../discord/cdn";
 import ClickOutsideHandler from "./ClickOutsideHandler";
+import SelectDropdown from "./SelectDropdown";
 import { useToasts } from "../util/toasts";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 
@@ -94,7 +95,7 @@ export default function GuildSelect({ guildId, onChange }: Props) {
           )}
         </div>
         {open && (
-          <div className="absolute bg-ink-900 top-14 left-0 rounded-lg shadow-lg w-full border-2 border-white/10 z-10">
+          <SelectDropdown>
             {guilds?.success &&
               guilds.data.map((g) => (
                 <div
@@ -119,7 +120,7 @@ export default function GuildSelect({ guildId, onChange }: Props) {
               <PlusCircleIcon className="w-7 h-7 text-mist-300" />
               <div className="text-mist-300">Invite the bot</div>
             </a>
-          </div>
+          </SelectDropdown>
         )}
       </div>
     </ClickOutsideHandler>

@@ -3,6 +3,7 @@ import clsx from "clsx";
 import { useEffect, useMemo, useState } from "react";
 import { useSavedMessagesQuery } from "../api/queries";
 import ClickOutsideHandler from "./ClickOutsideHandler";
+import SelectDropdown from "./SelectDropdown";
 
 interface Props {
   guildId: string | null;
@@ -68,7 +69,7 @@ export default function SavedMessageSelect({
           )}
         </div>
         {open && (
-          <div className="absolute bg-ink-900 top-14 left-0 rounded-lg shadow-lg w-full border-2 border-white/10 z-10">
+          <SelectDropdown>
             {messages?.success && messages.data.length > 0 ? (
               messages.data.map((m) => (
                 <div
@@ -84,7 +85,7 @@ export default function SavedMessageSelect({
             ) : (
               <div className="text-mist-300 p-2">No saved messages</div>
             )}
-          </div>
+          </SelectDropdown>
         )}
       </div>
     </ClickOutsideHandler>
