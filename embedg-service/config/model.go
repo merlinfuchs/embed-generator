@@ -52,7 +52,10 @@ type DiscordConfig struct {
 	ClientID     string `toml:"client_id" validate:"required"`
 	ClientSecret string `toml:"client_secret" validate:"required"`
 	PublicKey    string `toml:"public_key" validate:"required"`
-	RestURL      string `toml:"rest_url"`
+	// SupportGuildID is the guild users are added to when they opt into joining the support
+	// server while logging in. Unset skips the join.
+	SupportGuildID common.ID `toml:"support_guild_id"`
+	RestURL        string    `toml:"rest_url"`
 	// ActivityName is what the bot shows as "Watching <name>". Empty leaves it without a
 	// presence.
 	ActivityName string `toml:"activity_name"`

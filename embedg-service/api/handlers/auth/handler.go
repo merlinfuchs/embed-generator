@@ -8,8 +8,11 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-service/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-service/api/wire"
@@ -23,6 +26,7 @@ import (
 type AuthHandlerConfig struct {
 	AppPublicURL    string
 	InsecureCookies bool
+	SupportGuildID  common.ID
 }
 
 type AuthHandler struct {
@@ -30,21 +34,31 @@ type AuthHandler struct {
 	userStore      store.UserStore
 	sessionManager *session.SessionManager
 	oauth2Config   *oauth2.Config
+	rest           rest.Rest
 }
 
-func New(config AuthHandlerConfig, userStore store.UserStore, sessionManager *session.SessionManager) *AuthHandler {
+func New(config AuthHandlerConfig, userStore store.UserStore, sessionManager *session.SessionManager, restClient rest.Rest) *AuthHandler {
 	return &AuthHandler{
 		config:         config,
 		userStore:      userStore,
 		sessionManager: sessionManager,
 		oauth2Config:   sessionManager.OAuth2Config(),
+		rest:           restClient,
 	}
 }
 
 func (h *AuthHandler) HandleAuthRedirect(c *fiber.Ctx) error {
 	state := h.setOauthStateCookie(c)
 	h.setOauthRedirectCookie(c)
-	return c.Redirect(h.oauth2Config.AuthCodeURL(state), http.StatusTemporaryRedirect)
+
+	// Whether the user is added to the support guild in the callback follows from the scope
+	// Discord grants, so nothing about this choice has to survive the redirect.
+	var extraScopes []string
+	if c.Query("join_support") == "true" {
+		extraScopes = append(extraScopes, session.ScopeGuildsJoin)
+	}
+
+	return c.Redirect(h.sessionManager.AuthCodeURL(state, extraScopes...), http.StatusTemporaryRedirect)
 }
 
 func (h *AuthHandler) HandleAuthCallback(c *fiber.Ctx) error {
@@ -54,18 +68,20 @@ func (h *AuthHandler) HandleAuthCallback(c *fiber.Ctx) error {
 		return h.HandleAuthRedirect(c)
 	}
 
-	_, _, err := h.authenticateWithCode(c, c.Query("code"))
+	tokenData, userID, _, err := h.authenticateWithCode(c, c.Query("code"))
 	if err != nil {
 		// TODO: redirect to error page
 		return h.HandleAuthRedirect(c)
 	}
+
+	h.joinSupportGuild(c, userID, tokenData)
 
 	redirectURL := h.getOauthRedirectURL(c)
 	return c.Redirect(redirectURL, http.StatusTemporaryRedirect)
 }
 
 func (h *AuthHandler) HandleAuthExchange(c *fiber.Ctx, req wire.AuthExchangeRequestWire) error {
-	tokenData, token, err := h.authenticateWithCode(c, req.Code)
+	tokenData, _, token, err := h.authenticateWithCode(c, req.Code)
 	if err != nil {
 		slog.Error("Failed to authenticate with code", slog.Any("error", err))
 		return err
@@ -96,16 +112,16 @@ func (h *AuthHandler) HandleAuthLogout(c *fiber.Ctx) error {
 	return c.Redirect(redirectURL, http.StatusTemporaryRedirect)
 }
 
-func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.Token, string, error) {
+func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.Token, common.ID, string, error) {
 	tokenData, err := h.oauth2Config.Exchange(c.UserContext(), code)
 	if err != nil {
-		return nil, "", fmt.Errorf("Failed to exchange token: %w", err)
+		return nil, 0, "", fmt.Errorf("Failed to exchange token: %w", err)
 	}
 
 	client := h.oauth2Config.Client(c.UserContext(), tokenData)
 	resp, err := client.Get("https://discord.com/api/users/@me")
 	if err != nil {
-		return nil, "", h.HandleAuthRedirect(c)
+		return nil, 0, "", h.HandleAuthRedirect(c)
 	}
 
 	user := struct {
@@ -116,7 +132,7 @@ func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.T
 	}{}
 	err = json.NewDecoder(resp.Body).Decode(&user)
 	if err != nil {
-		return nil, "", fmt.Errorf("Failed to decode user info: %w", err)
+		return nil, 0, "", fmt.Errorf("Failed to decode user info: %w", err)
 	}
 	resp.Body.Close()
 
@@ -128,13 +144,13 @@ func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.T
 	})
 	if err != nil {
 		slog.Error("Failed to upsert user", slog.Any("error", err))
-		return nil, "", err
+		return nil, 0, "", err
 	}
 
 	resp, err = client.Get("https://discord.com/api/users/@me/guilds")
 	if err != nil {
 		slog.Error("Failed to get guilds", slog.Any("error", err))
-		return nil, "", fmt.Errorf("Failed to get guilds: %w", err)
+		return nil, 0, "", fmt.Errorf("Failed to get guilds: %w", err)
 	}
 
 	guilds := []struct {
@@ -142,7 +158,7 @@ func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.T
 	}{}
 	err = json.NewDecoder(resp.Body).Decode(&guilds)
 	if err != nil {
-		return nil, "", fmt.Errorf("Failed to decode guilds: %w", err)
+		return nil, 0, "", fmt.Errorf("Failed to decode guilds: %w", err)
 	}
 	resp.Body.Close()
 
@@ -153,11 +169,35 @@ func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.T
 
 	token, err := h.sessionManager.CreateSession(c.UserContext(), user.ID, guildIDs, tokenData)
 	if err != nil {
-		return nil, "", err
+		return nil, 0, "", err
 	}
 
 	h.sessionManager.CreateSessionCookie(c, token)
-	return tokenData, token, nil
+	return tokenData, user.ID, token, nil
+}
+
+// joinSupportGuild adds the user to the support guild after they ticked the box on the login
+// prompt. Best effort: a failed join shouldn't keep them from logging in.
+func (h *AuthHandler) joinSupportGuild(c *fiber.Ctx, userID common.ID, tokenData *oauth2.Token) {
+	if h.config.SupportGuildID == 0 || !slices.Contains(session.GrantedScopes(tokenData), session.ScopeGuildsJoin) {
+		return
+	}
+
+	// Passing no response body on purpose: Discord answers 204 when the user is already a member,
+	// which the typed AddMember would fail to unmarshal.
+	err := h.rest.Do(
+		rest.AddMember.Compile(nil, h.config.SupportGuildID, userID),
+		discord.MemberAdd{AccessToken: tokenData.AccessToken},
+		nil,
+		rest.WithCtx(c.UserContext()),
+	)
+	if err != nil {
+		slog.Error(
+			"Failed to add user to the support guild",
+			slog.String("user_id", userID.String()),
+			slog.Any("error", err),
+		)
+	}
 }
 
 func (h *AuthHandler) getOauthStateCookie(c *fiber.Ctx) string {

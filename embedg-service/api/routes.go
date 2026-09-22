@@ -35,7 +35,8 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	authHandler := auth.New(auth.AuthHandlerConfig{
 		AppPublicURL:    config.AppPublicURL,
 		InsecureCookies: config.InsecureCookies,
-	}, env.UserStore, env.SessionManager)
+		SupportGuildID:  config.SupportGuildID,
+	}, env.UserStore, env.SessionManager, env.Rest)
 	app.Get("/api/auth/login", authHandler.HandleAuthRedirect)
 	app.Get("/api/auth/callback", authHandler.HandleAuthCallback)
 	app.Post("/api/auth/exchange", handlers.WithRequestBody(authHandler.HandleAuthExchange))

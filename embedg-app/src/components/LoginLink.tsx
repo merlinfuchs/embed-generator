@@ -1,13 +1,22 @@
 import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 
-export default function LoginLink(props: any) {
+interface Props {
+  /** Asks for the guilds.join scope and adds the user to the support server. */
+  joinSupportServer?: boolean;
+  [key: string]: any;
+}
+
+export default function LoginLink({ joinSupportServer, ...props }: Props) {
   const location = useLocation();
 
-  const href = useMemo(
-    () => `/api/auth/login?redirect=${encodeURIComponent(location.pathname)}`,
-    [location.pathname],
-  );
+  const href = useMemo(() => {
+    const params = new URLSearchParams({ redirect: location.pathname });
+    if (joinSupportServer) {
+      params.set("join_support", "true");
+    }
+    return `/api/auth/login?${params}`;
+  }, [location.pathname, joinSupportServer]);
 
   return <a href={href} {...props}></a>;
 }
