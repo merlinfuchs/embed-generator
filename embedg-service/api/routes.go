@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"io/fs"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -168,17 +169,50 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	})
 
 	// Serve static files
-	app.Use("/app/", filesystem.New(filesystem.Config{
+	//
+	// Content hashed assets are cached long term, everything else (most
+	// importantly index.html) must be revalidated on every load. Without this a
+	// stale index.html keeps pointing at asset hashes that no longer exist after
+	// a deploy. Assets are also served by their own middleware so that a miss
+	// returns a 404 instead of falling through to the index.html of the SPA
+	// handlers below, which would answer a script request with HTML.
+	registerAssetRoutes(app, "/app/assets", embedgapp.DistFS, "/dist/assets")
+	registerAssetRoutes(app, "/assets", embedgsite.DistFS, "/dist/assets")
+
+	app.Use("/app/", noHTTPCache, filesystem.New(filesystem.Config{
 		Root:         http.FS(embedgapp.DistFS),
 		Browse:       false,
 		NotFoundFile: "dist/index.html",
 		PathPrefix:   "/dist",
 	}))
 
-	app.Use("/", filesystem.New(filesystem.Config{
+	app.Use("/", noHTTPCache, filesystem.New(filesystem.Config{
 		Root:         http.FS(embedgsite.DistFS),
 		Browse:       false,
 		NotFoundFile: "dist/index.html",
 		PathPrefix:   "/dist",
 	}))
+}
+
+const assetCacheControl = "public, max-age=2592000, immutable"
+
+// registerAssetRoutes serves content hashed build assets and terminates the
+// request with a 404 when the asset doesn't exist.
+func registerAssetRoutes(app *fiber.App, mount string, dist fs.FS, pathPrefix string) {
+	app.Use(mount, func(c *fiber.Ctx) error {
+		c.Set(fiber.HeaderCacheControl, assetCacheControl)
+		return c.Next()
+	}, filesystem.New(filesystem.Config{
+		Root:       http.FS(dist),
+		Browse:     false,
+		PathPrefix: pathPrefix,
+	}), func(c *fiber.Ctx) error {
+		c.Set(fiber.HeaderCacheControl, "no-cache")
+		return c.SendStatus(fiber.StatusNotFound)
+	})
+}
+
+func noHTTPCache(c *fiber.Ctx) error {
+	c.Set(fiber.HeaderCacheControl, "no-cache")
+	return c.Next()
 }

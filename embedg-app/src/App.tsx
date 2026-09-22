@@ -1,4 +1,4 @@
-import { lazy, type ReactNode, Suspense } from "react";
+import { type ReactNode, Suspense } from "react";
 import { Route, Routes, Navigate } from "react-router-dom";
 import { ToastContainer } from "./util/toasts";
 import EditorView from "./views/editor/editor";
@@ -10,19 +10,28 @@ import ActivityLoadingScreen from "./components/ActivityLoadingScreen";
 import "./util/activity";
 import UpsellPopup from "./components/UpsellPopup";
 import ConfirmOnExit from "./components/ConfirmOnExit";
+import { lazyView } from "./util/lazyView";
 
-const LazyJsonView = lazy(() => import("./views/editor/json"));
-const LazyAssistantView = lazy(() => import("./views/editor/assisstant"));
-const LazyMessagesView = lazy(() => import("./views/messages"));
-const LazyPremiumView = lazy(() => import("./views/premium"));
-const LazyShareRestoreView = lazy(() => import("./views/editor/shareRestore"));
-const LazySettingsView = lazy(() => import("./views/settings"));
-const LazyCommandsView = lazy(() => import("./views/commands"));
-const LazyScheduledMessagesView = lazy(() => import("./views/scheduled"));
-const LazyToolsView = lazy(() => import("./views/tools"));
-const LazyColoredTextToolView = lazy(() => import("./views/tools/coloredText"));
-const LazyWebhookInfoToolView = lazy(() => import("./views/tools/webhookInfo"));
-const LazyEmbedLinksToolView = lazy(() => import("./views/tools/embedLinks"));
+const LazyJsonView = lazyView(() => import("./views/editor/json"));
+const LazyAssistantView = lazyView(() => import("./views/editor/assisstant"));
+const LazyMessagesView = lazyView(() => import("./views/messages"));
+const LazyPremiumView = lazyView(() => import("./views/premium"));
+const LazyShareRestoreView = lazyView(
+  () => import("./views/editor/shareRestore"),
+);
+const LazySettingsView = lazyView(() => import("./views/settings"));
+const LazyCommandsView = lazyView(() => import("./views/commands"));
+const LazyScheduledMessagesView = lazyView(() => import("./views/scheduled"));
+const LazyToolsView = lazyView(() => import("./views/tools"));
+const LazyColoredTextToolView = lazyView(
+  () => import("./views/tools/coloredText"),
+);
+const LazyWebhookInfoToolView = lazyView(
+  () => import("./views/tools/webhookInfo"),
+);
+const LazyEmbedLinksToolView = lazyView(
+  () => import("./views/tools/embedLinks"),
+);
 
 function SuspendedView({ children }: { children: ReactNode }) {
   return <Suspense>{children}</Suspense>;
