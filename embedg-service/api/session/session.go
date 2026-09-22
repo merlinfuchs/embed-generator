@@ -126,7 +126,7 @@ func (s *SessionManager) CreateSession(ctx context.Context, userID common.ID, gu
 		AccessToken:    tokenData.AccessToken,
 		RefreshToken:   tokenData.RefreshToken,
 		TokenExpiresAt: tokenData.Expiry,
-		Scopes:         grantedScopes(tokenData),
+		Scopes:         GrantedScopes(tokenData),
 		CreatedAt:      time.Now().UTC(),
 		ExpiresAt:      time.Now().UTC().Add(30 * 24 * time.Hour),
 	})
@@ -219,11 +219,11 @@ func (s *SessionManager) DeleteSession(c *fiber.Ctx) error {
 // HasScope reports whether Discord granted a token the scope, which can differ from what we asked
 // for.
 func HasScope(tokenData *oauth2.Token, scope string) bool {
-	return slices.Contains(grantedScopes(tokenData), scope)
+	return slices.Contains(GrantedScopes(tokenData), scope)
 }
 
-// grantedScopes reads the scopes Discord actually granted, which can differ from the ones we asked for.
-func grantedScopes(tokenData *oauth2.Token) []string {
+// GrantedScopes reads the scopes Discord actually granted, which can differ from the ones we asked for.
+func GrantedScopes(tokenData *oauth2.Token) []string {
 	scope, _ := tokenData.Extra("scope").(string)
 	return strings.Fields(scope)
 }

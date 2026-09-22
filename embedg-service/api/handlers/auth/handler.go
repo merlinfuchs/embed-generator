@@ -180,7 +180,19 @@ func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.T
 // joinSupportGuild adds the user to the support guild after they ticked the box on the login
 // prompt. Best effort: a failed join shouldn't keep them from logging in.
 func (h *AuthHandler) joinSupportGuild(ctx context.Context, userID common.ID, tokenData *oauth2.Token) {
-	if h.config.SupportGuildID == 0 || !session.HasScope(tokenData, session.ScopeGuildsJoin) {
+	if !session.HasScope(tokenData, session.ScopeGuildsJoin) {
+		// Not an error: this is every login where the box was left unticked. Logged because the
+		// scope is the only trace of the choice that reaches the callback.
+		slog.Debug(
+			"Skipping support guild join, Discord didn't grant guilds.join",
+			slog.String("user_id", userID.String()),
+			slog.Any("granted_scopes", session.GrantedScopes(tokenData)),
+		)
+		return
+	}
+
+	if h.config.SupportGuildID == 0 {
+		slog.Warn("User asked to join the support guild but discord.support_guild_id isn't configured")
 		return
 	}
 
@@ -203,7 +215,10 @@ func (h *AuthHandler) joinSupportGuild(ctx context.Context, userID common.ID, to
 			slog.String("user_id", userID.String()),
 			slog.Any("error", err),
 		)
+		return
 	}
+
+	slog.Info("Added user to the support guild", slog.String("user_id", userID.String()))
 }
 
 func (h *AuthHandler) getOauthStateCookie(c *fiber.Ctx) string {
