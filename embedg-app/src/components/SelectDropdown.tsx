@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
 
-const GAP = 8;
+const MARGIN = 16;
 const MAX_HEIGHT = 192;
 const MIN_HEIGHT = 96;
 
@@ -15,32 +15,46 @@ interface Props {
  */
 export default function SelectDropdown({ children }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  const [placement, setPlacement] = useState<"top" | "bottom">("bottom");
-  const [maxHeight, setMaxHeight] = useState(MAX_HEIGHT);
+  const [{ placement, maxHeight }, setPosition] = useState<{
+    placement: "top" | "bottom";
+    maxHeight: number;
+  }>({ placement: "bottom", maxHeight: MAX_HEIGHT });
 
   useLayoutEffect(() => {
-    // the select component itself, the dropdown is positioned relative to it
-    const anchor = ref.current?.parentElement;
-    if (!anchor) return;
+    let frame = 0;
 
-    function update() {
-      const rect = anchor!.getBoundingClientRect();
-      const below = window.innerHeight - rect.bottom - GAP * 2;
-      const above = rect.top - GAP * 2;
+    const update = () => {
+      frame = 0;
+      // the select itself, the dropdown is positioned relative to it
+      const rect = ref.current?.parentElement?.getBoundingClientRect();
+      if (!rect) return;
 
-      const placement = below < MIN_HEIGHT && above > below ? "top" : "bottom";
-      setPlacement(placement);
-      setMaxHeight(
-        Math.max(Math.min(MAX_HEIGHT, placement === "top" ? above : below), 0),
-      );
-    }
+      const below = window.innerHeight - rect.bottom - MARGIN;
+      const above = rect.top - MARGIN;
+      const next = below < MIN_HEIGHT && above > below ? "top" : "bottom";
+
+      setPosition({
+        placement: next,
+        maxHeight: Math.max(
+          Math.min(MAX_HEIGHT, next === "top" ? above : below),
+          0,
+        ),
+      });
+    };
+
+    const schedule = (e: Event) => {
+      // scrolling the options doesn't move the select we hang off of
+      if (e.target instanceof Node && ref.current?.contains(e.target)) return;
+      if (!frame) frame = requestAnimationFrame(update);
+    };
 
     update();
-    window.addEventListener("resize", update);
-    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", schedule);
+    window.addEventListener("scroll", schedule, true);
     return () => {
-      window.removeEventListener("resize", update);
-      window.removeEventListener("scroll", update, true);
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", schedule);
+      window.removeEventListener("scroll", schedule, true);
     };
   }, []);
 
