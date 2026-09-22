@@ -7,6 +7,7 @@ import (
 	"encoding/base32"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -23,6 +24,9 @@ import (
 
 // scopeGuildsMembersRead lets us fetch the session user's own member object with their token.
 const scopeGuildsMembersRead = "guilds.members.read"
+
+// ScopeGuildsJoin lets us add the user to the support guild. Only requested when they ask for it.
+const ScopeGuildsJoin = discord.ScopeGuildsJoin
 
 type Session struct {
 	TokenHash      string
@@ -65,6 +69,14 @@ func New(config SessionManagerConfig, sessionStore store.SessionStore) *SessionM
 
 func (s *SessionManager) OAuth2Config() *oauth2.Config {
 	return s.oauth2Config
+}
+
+// AuthCodeURL builds the Discord consent URL, with extraScopes on top of the ones every login asks
+// for. Asking for more scopes makes Discord show the consent screen again even for returning users.
+func (s *SessionManager) AuthCodeURL(state string, extraScopes ...string) string {
+	config := *s.oauth2Config
+	config.Scopes = append(slices.Clone(config.Scopes), extraScopes...)
+	return config.AuthCodeURL(state)
 }
 
 func (s *SessionManager) GetSession(c *fiber.Ctx) (*Session, error) {
@@ -202,6 +214,12 @@ func (s *SessionManager) DeleteSession(c *fiber.Ctx) error {
 	}
 
 	return s.sessionStore.DeleteSession(c.UserContext(), tokenHash)
+}
+
+// HasScope reports whether Discord granted a token the scope, which can differ from what we asked
+// for.
+func HasScope(tokenData *oauth2.Token, scope string) bool {
+	return slices.Contains(grantedScopes(tokenData), scope)
 }
 
 // grantedScopes reads the scopes Discord actually granted, which can differ from the ones we asked for.

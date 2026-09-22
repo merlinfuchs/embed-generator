@@ -8,14 +8,18 @@ import {
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { AutoAnimate } from "../util/autoAnimate";
+import CheckBox from "./CheckBox";
 import LoginLink from "./LoginLink";
 
 interface Props {
   alwaysExpanded?: boolean;
 }
 
+const joinSupportServerLabel = "Join the Discord support server";
+
 export default function LogginSuggest({ alwaysExpanded }: Props) {
   const [collapsed, setCollapsed] = useState(!alwaysExpanded);
+  const [joinSupportServer, setJoinSupportServer] = useState(false);
 
   return (
     <AutoAnimate className="p-3 bg-ink-700 border border-white/5 rounded-2xl shadow-card select-none">
@@ -71,8 +75,21 @@ export default function LogginSuggest({ alwaysExpanded }: Props) {
               Add custom emojis to your messages using the emoji picker
             </div>
           </div>
+          <div className="flex items-center gap-4 pt-2">
+            <CheckBox
+              label={joinSupportServerLabel}
+              checked={joinSupportServer}
+              onChange={setJoinSupportServer}
+            />
+            <div className="text-mist-300 text-sm">
+              {joinSupportServerLabel}
+            </div>
+          </div>
           <div className="flex justify-end pt-4">
-            <LoginLink className="bg-azure-500 px-4 py-2.5 rounded-lg transition-colors hover:bg-azure-400 text-white font-semibold">
+            <LoginLink
+              className="bg-azure-500 px-4 py-2.5 rounded-lg transition-colors hover:bg-azure-400 text-white font-semibold"
+              joinSupportServer={joinSupportServer}
+            >
               <div>Login Now</div>
             </LoginLink>
           </div>

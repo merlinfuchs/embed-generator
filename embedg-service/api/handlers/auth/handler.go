@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
@@ -9,7 +10,10 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-service/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-service/api/wire"
@@ -23,6 +27,7 @@ import (
 type AuthHandlerConfig struct {
 	AppPublicURL    string
 	InsecureCookies bool
+	SupportGuildID  common.ID
 }
 
 type AuthHandler struct {
@@ -30,21 +35,31 @@ type AuthHandler struct {
 	userStore      store.UserStore
 	sessionManager *session.SessionManager
 	oauth2Config   *oauth2.Config
+	rest           rest.Rest
 }
 
-func New(config AuthHandlerConfig, userStore store.UserStore, sessionManager *session.SessionManager) *AuthHandler {
+func New(config AuthHandlerConfig, userStore store.UserStore, sessionManager *session.SessionManager, restClient rest.Rest) *AuthHandler {
 	return &AuthHandler{
 		config:         config,
 		userStore:      userStore,
 		sessionManager: sessionManager,
 		oauth2Config:   sessionManager.OAuth2Config(),
+		rest:           restClient,
 	}
 }
 
 func (h *AuthHandler) HandleAuthRedirect(c *fiber.Ctx) error {
 	state := h.setOauthStateCookie(c)
 	h.setOauthRedirectCookie(c)
-	return c.Redirect(h.oauth2Config.AuthCodeURL(state), http.StatusTemporaryRedirect)
+
+	// Whether the user is added to the support guild in the callback follows from the scope
+	// Discord grants, so nothing about this choice has to survive the redirect.
+	var extraScopes []string
+	if c.Query("join_support") == "true" {
+		extraScopes = []string{session.ScopeGuildsJoin}
+	}
+
+	return c.Redirect(h.sessionManager.AuthCodeURL(state, extraScopes...), http.StatusTemporaryRedirect)
 }
 
 func (h *AuthHandler) HandleAuthCallback(c *fiber.Ctx) error {
@@ -157,7 +172,38 @@ func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.T
 	}
 
 	h.sessionManager.CreateSessionCookie(c, token)
+
+	h.joinSupportGuild(c.UserContext(), user.ID, tokenData)
 	return tokenData, token, nil
+}
+
+// joinSupportGuild adds the user to the support guild after they ticked the box on the login
+// prompt. Best effort: a failed join shouldn't keep them from logging in.
+func (h *AuthHandler) joinSupportGuild(ctx context.Context, userID common.ID, tokenData *oauth2.Token) {
+	if h.config.SupportGuildID == 0 || !session.HasScope(tokenData, session.ScopeGuildsJoin) {
+		return
+	}
+
+	// Every join targets the same guild, so they all queue behind one rate limit bucket while the
+	// user waits on the login redirect. Give up rather than hold the redirect open for a burst.
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	// Passing no response body on purpose: Discord answers 204 when the user is already a member,
+	// which the typed AddMember would fail to unmarshal.
+	err := h.rest.Do(
+		rest.AddMember.Compile(nil, h.config.SupportGuildID, userID),
+		discord.MemberAdd{AccessToken: tokenData.AccessToken},
+		nil,
+		rest.WithCtx(ctx),
+	)
+	if err != nil {
+		slog.Error(
+			"Failed to add user to the support guild",
+			slog.String("user_id", userID.String()),
+			slog.Any("error", err),
+		)
+	}
 }
 
 func (h *AuthHandler) getOauthStateCookie(c *fiber.Ctx) string {

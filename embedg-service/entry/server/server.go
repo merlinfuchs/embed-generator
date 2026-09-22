@@ -173,6 +173,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		DiscordLink:      cfg.Links.Discord,
 		SourceLink:       cfg.Links.Source,
 		DiscordPublicKey: cfg.Discord.PublicKey,
+		SupportGuildID:   cfg.Discord.SupportGuildID,
 		InsecureCookies:  cfg.API.InsecureCookies,
 	})
 
