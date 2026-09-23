@@ -59,16 +59,20 @@ export default function SendMenuChannel() {
 
   const createToast = useToasts((state) => state.create);
 
+  // One predicate per button, used for both the styling and the disabled attribute. A forum
+  // channel needs a thread name, and can't have an existing message edited in it.
+  const ready =
+    !validationError &&
+    !!selectedGuildId &&
+    !!selectedChannnelId &&
+    !sendToChannelMutation.isPending;
+  const canSend = ready && !(selectedChannel?.type === 15 && !threadName);
+  const canEdit = ready && selectedChannel?.type !== 15;
+
   function send(edit: boolean) {
-    if (validationError) return;
-
-    if (!selectedGuildId || !selectedChannnelId) {
-      return;
-    }
-
-    if (edit && selectedChannel?.type === 15) {
-      return;
-    }
+    if (edit ? !canEdit : !canSend) return;
+    // Already covered by the predicate, repeated so the ids narrow to non-null below.
+    if (!selectedGuildId || !selectedChannnelId) return;
 
     sendToChannelMutation.mutate(
       {
@@ -175,11 +179,9 @@ export default function SendMenuChannel() {
           {messageId && (
             <div
               className={`px-3 py-2 rounded-lg text-white flex items-center space-x-3 ${
-                validationError ||
-                !selectedChannnelId ||
-                selectedChannel?.type === 15
-                  ? "cursor-not-allowed bg-ink-900"
-                  : "bg-azure-500 hover:bg-azure-400 cursor-pointer"
+                canEdit
+                  ? "bg-azure-500 hover:bg-azure-400 cursor-pointer"
+                  : "cursor-not-allowed bg-ink-900"
               }`}
               role="button"
               onClick={() => send(true)}
@@ -192,11 +194,9 @@ export default function SendMenuChannel() {
           )}
           <div
             className={`px-3 py-2 rounded-lg text-white flex items-center space-x-3 ${
-              validationError ||
-              !selectedChannnelId ||
-              (selectedChannel?.type === 15 && !threadName)
-                ? "cursor-not-allowed bg-ink-900"
-                : "bg-azure-500 hover:bg-azure-400 cursor-pointer"
+              canSend
+                ? "bg-azure-500 hover:bg-azure-400 cursor-pointer"
+                : "cursor-not-allowed bg-ink-900"
             }`}
             role="button"
             onClick={() => send(false)}

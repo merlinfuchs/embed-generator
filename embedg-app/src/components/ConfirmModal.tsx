@@ -5,6 +5,9 @@ interface Props {
   subTitle: string;
   children?: React.ReactNode;
 
+  /** Disables Confirm while the action it starts is in flight, so it can't be started twice. */
+  pending?: boolean;
+
   onClose: () => void;
   onConfirm: () => void;
 }
@@ -13,6 +16,7 @@ export default function ConfirmModal({
   title,
   subTitle,
   children,
+  pending,
   onClose,
   onConfirm,
 }: Props) {
@@ -39,7 +43,8 @@ export default function ConfirmModal({
             Cancel
           </button>
           <button
-            className="px-3 py-2 rounded-lg bg-red/90 hover:bg-red transition-colors text-white font-medium"
+            className="px-3 py-2 rounded-lg bg-red/90 hover:bg-red transition-colors text-white font-medium disabled:bg-ink-900 disabled:hover:bg-ink-900"
+            disabled={pending}
             onClick={onConfirm}
           >
             Confirm

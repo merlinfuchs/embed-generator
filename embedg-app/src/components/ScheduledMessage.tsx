@@ -9,7 +9,7 @@ import {
   PencilSquareIcon,
   TrashIcon,
 } from "@heroicons/react/20/solid";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AutoAnimate } from "../util/autoAnimate";
 import {
   useScheduledMessageDeleteMutation,
@@ -59,9 +59,12 @@ export default function ScheduledMessage({
   const [channelId, setChannelId] = useState<string | null>(msg.channel_id);
   const [threadName, setThreadName] = useState<string | null>(msg.thread_name);
 
-  useEffect(() => {
+  // A thread name belongs to the channel it was typed for. This used to be an effect, which also
+  // ran on mount and so dropped the thread name already stored on a forum channel schedule.
+  function selectChannel(id: string | null) {
+    setChannelId(id);
     setThreadName(null);
-  }, [channelId, setThreadName]);
+  }
 
   const selectedChannel = useMemo(
     () =>
@@ -232,7 +235,7 @@ export default function ScheduledMessage({
                   <ChannelSelect
                     guildId={guildId}
                     channelId={channelId}
-                    onChange={setChannelId}
+                    onChange={selectChannel}
                   />
                 </div>
               </div>
@@ -377,6 +380,7 @@ export default function ScheduledMessage({
           title="Are you sure that you want to delete the scheduled message?"
           subTitle="The scheduled message will be deleted permanently and can't be restored."
           onClose={() => setDeleteModal(false)}
+          pending={deleteMutation.isPending}
           onConfirm={deleteScheduledMessageConfirm}
         />
       )}

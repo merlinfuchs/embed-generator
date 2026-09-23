@@ -66,22 +66,24 @@ export default function CustomCommandParameter({
     setParameters(newParameters);
   }
 
-  function setType(newType: string) {
+  // Replace the parameter rather than assigning into it: the objects in this array come from the
+  // query cache, so writing through them edited the cached command before anything was saved.
+  function updateParameter(values: Partial<CustomCommandParameterWire>) {
     const newParameters = [...parameters];
-    newParameters[parameterIndex].type = parseInt(newType, 10);
+    newParameters[parameterIndex] = { ...parameter, ...values };
     setParameters(newParameters);
+  }
+
+  function setType(newType: string) {
+    updateParameter({ type: parseInt(newType, 10) });
   }
 
   function setName(newName: string) {
-    const newParameters = [...parameters];
-    newParameters[parameterIndex].name = newName;
-    setParameters(newParameters);
+    updateParameter({ name: newName });
   }
 
   function setDescription(newDescription: string) {
-    const newParameters = [...parameters];
-    newParameters[parameterIndex].description = newDescription;
-    setParameters(newParameters);
+    updateParameter({ description: newDescription });
   }
 
   return (

@@ -48,8 +48,16 @@ export default function SendMenuWebhook() {
 
   const createToast = useToasts((state) => state.create);
 
+  // One predicate per button, used for both the styling and the disabled attribute. Only Discord
+  // webhooks can edit a message they sent.
+  const canSend =
+    !validationError && !!webhookInfo && !sendToWebhookMutation.isPending;
+  const canEdit = canSend && webhookInfo?.type === "discord";
+
   function send(edit: boolean) {
-    if (validationError || !webhookInfo) return;
+    if (edit ? !canEdit : !canSend) return;
+    // Already covered by the predicate, repeated so webhookInfo narrows to non-null below.
+    if (!webhookInfo) return;
 
     sendToWebhookMutation.mutate(
       {
@@ -142,11 +150,9 @@ export default function SendMenuWebhook() {
           {messageId && (
             <div
               className={`px-3 py-2 rounded-lg text-white flex items-center space-x-3 ${
-                validationError ||
-                !webhookInfo ||
-                webhookInfo.type !== "discord"
-                  ? "cursor-not-allowed bg-ink-900"
-                  : "bg-azure-500 hover:bg-azure-400 cursor-pointer"
+                canEdit
+                  ? "bg-azure-500 hover:bg-azure-400 cursor-pointer"
+                  : "cursor-not-allowed bg-ink-900"
               }`}
               role="button"
               onClick={() => send(true)}
@@ -159,9 +165,9 @@ export default function SendMenuWebhook() {
           )}
           <div
             className={`px-3 py-2 rounded-lg text-white flex items-center space-x-3 ${
-              validationError || !webhookInfo
-                ? "cursor-not-allowed bg-ink-900"
-                : "bg-azure-500 hover:bg-azure-400 cursor-pointer"
+              canSend
+                ? "bg-azure-500 hover:bg-azure-400 cursor-pointer"
+                : "cursor-not-allowed bg-ink-900"
             }`}
             role="button"
             onClick={() => send(false)}
