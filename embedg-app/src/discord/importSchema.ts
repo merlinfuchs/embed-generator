@@ -417,8 +417,7 @@ export const componentContainerSchema = z.object({
         componentFileSchema,
       ]),
     )
-    .min(1)
-    .max(10),
+    .default([]),
   accent_color: z.preprocess((d) => d ?? undefined, z.optional(z.number())),
   spoiler: z.preprocess((d) => d ?? undefined, z.optional(z.boolean())),
 });
@@ -570,31 +569,42 @@ export const messageSchema = z.object({
 
 export type Message = z.infer<typeof messageSchema>;
 
+// Buttons and select options carry an action set id wherever they sit, so this has to walk the
+// whole tree: components v2 puts them inside containers and as section accessories, which the
+// editor then showed with no action set at all.
+function collectActionSetIds(components: any[], ids: Set<string>) {
+  for (const component of components) {
+    if (component.action_set_id) {
+      ids.add(component.action_set_id);
+    }
+
+    for (const option of component.options ?? []) {
+      if (option.action_set_id) {
+        ids.add(option.action_set_id);
+      }
+    }
+
+    if (component.accessory) {
+      collectActionSetIds([component.accessory], ids);
+    }
+
+    if (component.components) {
+      collectActionSetIds(component.components, ids);
+    }
+  }
+}
+
 export function parseMessageWithAction(raw: any) {
   const parsedData = messageSchema.parse(raw);
 
-  // create messing action sets
-  for (const row of parsedData.components) {
-    if (row.type !== 1) {
-      continue;
-    }
+  const actionSetIds = new Set<string>();
+  collectActionSetIds(parsedData.components, actionSetIds);
 
-    for (const comp of row.components) {
-      if (comp.type === 2) {
-        if (!parsedData.actions[comp.action_set_id]) {
-          parsedData.actions[comp.action_set_id] = {
-            actions: [],
-          };
-        }
-      } else {
-        for (const option of comp.options) {
-          if (!parsedData.actions[option.action_set_id]) {
-            parsedData.actions[option.action_set_id] = {
-              actions: [],
-            };
-          }
-        }
-      }
+  for (const id of actionSetIds) {
+    if (!parsedData.actions[id]) {
+      parsedData.actions[id] = {
+        actions: [],
+      };
     }
   }
 

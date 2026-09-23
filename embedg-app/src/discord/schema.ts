@@ -239,12 +239,14 @@ export type MessageComponentButtonStyle = z.infer<
   typeof componentButtonStyleSchema
 >;
 
+export const componentButtonLabelSchema = z.string().max(80);
+
 export const componentButtonSchema = z
   .object({
     id: uniqueIdSchema.default(() => getUniqueId()),
     type: z.literal(2),
     style: z.literal(1).or(z.literal(2)).or(z.literal(3)).or(z.literal(4)),
-    label: z.string(),
+    label: componentButtonLabelSchema,
     emoji: z.optional(z.nullable(emojiSchema)),
     disabled: z.optional(z.boolean()),
     action_set_id: z.string().default(() => getUniqueId().toString()),
@@ -254,7 +256,7 @@ export const componentButtonSchema = z
       id: uniqueIdSchema.default(() => getUniqueId()),
       type: z.literal(2),
       style: z.literal(5),
-      label: z.string(),
+      label: componentButtonLabelSchema,
       emoji: z.optional(z.nullable(emojiSchema)),
       url: z.string().refine(...urlRefinement),
       disabled: z.optional(z.boolean()),
@@ -324,7 +326,7 @@ export const componentThumbnailSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
   type: z.literal(11),
   media: unfurledMediaItemSchema,
-  description: z.optional(z.string()),
+  description: z.optional(z.string().max(1024)),
   spoiler: z.optional(z.boolean()),
 });
 
@@ -353,7 +355,7 @@ export type MessageComponentSection = z.infer<typeof componentSectionSchema>;
 export const componentMediaGalleryItemSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
   media: unfurledMediaItemSchema,
-  description: z.optional(z.string()),
+  description: z.optional(z.string().max(1024)),
   spoiler: z.optional(z.boolean()),
 });
 
@@ -408,7 +410,7 @@ export const componentContainerSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
   type: z.literal(17),
   components: z.array(componentContainerSubComponentSchema).min(1).max(10),
-  accent_color: z.optional(z.number()),
+  accent_color: embedColor,
   spoiler: z.optional(z.boolean()),
 });
 

@@ -77,9 +77,14 @@ export default function EditorComponentSection({
           <select
             aria-label="Accessory Type"
             className="bg-ink-900 rounded-lg p-2 w-full font-light cursor-pointer text-white"
-            value={accessoryType === "button" ? "2" : "11"}
+            value={
+              data.accessoryId ? (accessoryType === "button" ? "2" : "11") : ""
+            }
             onChange={(v) => setAccessoryType(parseInt(v.target.value, 10))}
           >
+            {/* Only reachable for a section saved without an accessory, which is invalid.
+                Showing it is what lets the user pick one and get out of that state. */}
+            {!data.accessoryId && <option value="">None</option>}
             <option value="11">Thumbnail</option>
             <option value="2">Button</option>
           </select>
