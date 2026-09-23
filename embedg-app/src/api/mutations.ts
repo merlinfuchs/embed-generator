@@ -39,7 +39,6 @@ import type {
   UploadImageResponseWire,
 } from "./wire";
 import { handleApiResponse } from "./queries";
-import { fetchApi } from "./client";
 
 export function useAssistantGenerateMessageMutation() {
   return useMutation({
@@ -50,7 +49,7 @@ export function useAssistantGenerateMessageMutation() {
       req: AssistantGenerateMessageRequestWire;
       guildId: string;
     }) => {
-      return fetchApi(`/api/assistant/message?guild_id=${guildId}`, {
+      return fetch(`/api/assistant/message?guild_id=${guildId}`, {
         method: "POST",
         body: JSON.stringify(req),
         headers: {
@@ -66,7 +65,7 @@ export function useAssistantGenerateMessageMutation() {
 export function useSendMessageToChannelMutation() {
   return useMutation({
     mutationFn: (req: MessageSendToChannelRequestWire) => {
-      return fetchApi(`/api/send-message/channel`, {
+      return fetch(`/api/send-message/channel`, {
         method: "POST",
         body: JSON.stringify(req),
         headers: {
@@ -80,7 +79,7 @@ export function useSendMessageToChannelMutation() {
 export function useSendMessageToWebhookMutation() {
   return useMutation({
     mutationFn: (req: MessageSendToWebhookRequestWire) => {
-      return fetchApi(`/api/send-message/webhook`, {
+      return fetch(`/api/send-message/webhook`, {
         method: "POST",
         body: JSON.stringify(req),
         headers: {
@@ -94,7 +93,7 @@ export function useSendMessageToWebhookMutation() {
 export function useRestoreMessageFromWebhookMutation() {
   return useMutation({
     mutationFn: (req: MessageRestoreFromWebhookRequestWire) => {
-      return fetchApi(`/api/restore-message/webhook`, {
+      return fetch(`/api/restore-message/webhook`, {
         method: "POST",
         body: JSON.stringify(req),
         headers: {
@@ -110,7 +109,7 @@ export function useRestoreMessageFromWebhookMutation() {
 export function useRestoreMessageFromChannelMutation() {
   return useMutation({
     mutationFn: (req: MessageRestoreFromChannelRequestWire) => {
-      return fetchApi(`/api/restore-message/channel`, {
+      return fetch(`/api/restore-message/channel`, {
         method: "POST",
         body: JSON.stringify(req),
         headers: {
@@ -137,7 +136,7 @@ export function useCreatedSavedMessageMutation() {
         url += `?guild_id=${guildId}`;
       }
 
-      return fetchApi(url, {
+      return fetch(url, {
         method: "POST",
         body: JSON.stringify(req),
         headers: {
@@ -166,7 +165,7 @@ export function useUpdateSavedMessageMutation() {
         url += `?guild_id=${guildId}`;
       }
 
-      return fetchApi(url, {
+      return fetch(url, {
         method: "PUT",
         body: JSON.stringify(req),
         headers: {
@@ -193,7 +192,7 @@ export function useDeleteSavedMessageMutation() {
         url += `?guild_id=${guildId}`;
       }
 
-      return fetchApi(url, {
+      return fetch(url, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -219,7 +218,7 @@ export function useImportSavedMessagesMutation() {
         url += `?guild_id=${guildId}`;
       }
 
-      return fetchApi(url, {
+      return fetch(url, {
         method: "PATCH",
         body: JSON.stringify(req),
         headers: {
@@ -235,7 +234,7 @@ export function useImportSavedMessagesMutation() {
 export function useSharedMessageCreateMutation() {
   return useMutation({
     mutationFn: (req: SharedMessageCreateRequestWire) => {
-      return fetchApi("/api/shared-messages", {
+      return fetch("/api/shared-messages", {
         method: "POST",
         body: JSON.stringify(req),
         headers: {
@@ -257,7 +256,7 @@ export function useCustomBotConfigureMutation() {
       guildId: string;
       req: CustomBotConfigureRequestWire;
     }) => {
-      return fetchApi(`/api/custom-bot?guild_id=${guildId}`, {
+      return fetch(`/api/custom-bot?guild_id=${guildId}`, {
         method: "POST",
         body: JSON.stringify(req),
         headers: {
@@ -273,7 +272,7 @@ export function useCustomBotConfigureMutation() {
 export function useCustomBotDisableMutation() {
   return useMutation({
     mutationFn: ({ guildId }: { guildId: string }) => {
-      return fetchApi(`/api/custom-bot?guild_id=${guildId}`, {
+      return fetch(`/api/custom-bot?guild_id=${guildId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -294,7 +293,7 @@ export function useCustomBotUpdatePresenceMutation() {
       guildId: string;
       req: CustomBotUpdatePresenceRequestWire;
     }) => {
-      return fetchApi(`/api/custom-bot/presence?guild_id=${guildId}`, {
+      return fetch(`/api/custom-bot/presence?guild_id=${guildId}`, {
         method: "PUT",
         body: JSON.stringify(req),
         headers: {
@@ -316,7 +315,7 @@ export function useCustomCommandCreateMutation() {
       guildId: string;
       req: CustomCommandCreateRequestWire;
     }) => {
-      return fetchApi(`/api/custom-bot/commands?guild_id=${guildId}`, {
+      return fetch(`/api/custom-bot/commands?guild_id=${guildId}`, {
         method: "POST",
         body: JSON.stringify(req),
         headers: {
@@ -340,7 +339,7 @@ export function useCustomCommandUpdateMutation() {
       guildId: string;
       req: CustomCommandUpdateRequestWire;
     }) => {
-      return fetchApi(
+      return fetch(
         `/api/custom-bot/commands/${commandId}?guild_id=${guildId}`,
         {
           method: "PUT",
@@ -359,7 +358,7 @@ export function useCustomCommandUpdateMutation() {
 export function useCustomCommandsDeployMutation() {
   return useMutation({
     mutationFn: ({ guildId }: { guildId: string }) => {
-      return fetchApi(`/api/custom-bot/commands/deploy?guild_id=${guildId}`, {
+      return fetch(`/api/custom-bot/commands/deploy?guild_id=${guildId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -380,7 +379,7 @@ export function useCustomCommandDeleteMutation() {
       commandId: string;
       guildId: string;
     }) => {
-      return fetchApi(
+      return fetch(
         `/api/custom-bot/commands/${commandId}?guild_id=${guildId}`,
         {
           method: "DELETE",
@@ -406,7 +405,7 @@ export function useUploadImageMutation() {
       const body = new FormData();
       body.append("file", file);
 
-      return fetchApi(url, {
+      return fetch(url, {
         method: "POST",
         body,
       }).then((res) => handleApiResponse<UploadImageResponseWire>(res.json()));
@@ -423,7 +422,7 @@ export function useScheduledMessageCreateMutation() {
       guildId: string;
       req: ScheduledMessageCreateRequestWire;
     }) => {
-      return fetchApi(`/api/scheduled-messages?guild_id=${guildId}`, {
+      return fetch(`/api/scheduled-messages?guild_id=${guildId}`, {
         method: "POST",
         body: JSON.stringify(req),
         headers: {
@@ -447,16 +446,13 @@ export function useScheduledMessageUpdateMutation() {
       guildId: string;
       req: ScheduledMessageUpdateRequestWire;
     }) => {
-      return fetchApi(
-        `/api/scheduled-messages/${messageId}?guild_id=${guildId}`,
-        {
-          method: "PUT",
-          body: JSON.stringify(req),
-          headers: {
-            "Content-Type": "application/json",
-          },
+      return fetch(`/api/scheduled-messages/${messageId}?guild_id=${guildId}`, {
+        method: "PUT",
+        body: JSON.stringify(req),
+        headers: {
+          "Content-Type": "application/json",
         },
-      ).then((res) =>
+      }).then((res) =>
         handleApiResponse<ScheduledMessageUpdateResponseWire>(res.json()),
       );
     },
@@ -472,15 +468,12 @@ export function useScheduledMessageDeleteMutation() {
       messageId: string;
       guildId: string;
     }) => {
-      return fetchApi(
-        `/api/scheduled-messages/${messageId}?guild_id=${guildId}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
+      return fetch(`/api/scheduled-messages/${messageId}?guild_id=${guildId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
         },
-      ).then((res) =>
+      }).then((res) =>
         handleApiResponse<ScheduledMessageDeleteResponseWire>(res.json()),
       );
     },
@@ -490,7 +483,7 @@ export function useScheduledMessageDeleteMutation() {
 export function useEmbedLinkCreateMutation() {
   return useMutation({
     mutationFn: (req: EmbedLinkCreateRequestWire) => {
-      return fetchApi(`/api/embed-links`, {
+      return fetch(`/api/embed-links`, {
         method: "POST",
         body: JSON.stringify(req),
         headers: {
@@ -514,7 +507,7 @@ export function usePremiumEntitlementConsumeMutation() {
       entitlementId: string;
       req: ConsumeEntitlementRequestWire;
     }) => {
-      return fetchApi(`/api/premium/entitlements/${entitlementId}/consume`, {
+      return fetch(`/api/premium/entitlements/${entitlementId}/consume`, {
         method: "POST",
         body: JSON.stringify(req),
         headers: {

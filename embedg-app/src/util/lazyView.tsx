@@ -11,8 +11,8 @@ const RELOAD_WINDOW_MS = 10_000;
  * chunks would otherwise clear the flag with one of them and re-arm the reload
  * for the next failure, which loops.
  *
- * When sessionStorage is unavailable (third party iframe with storage blocked,
- * e.g. the Discord activity under Safari) we can't tell whether we already
+ * When sessionStorage is unavailable (a third party iframe with storage
+ * blocked, or Safari with cookies disabled) we can't tell whether we already
  * reloaded, so we don't. Surfacing the error beats risking a loop.
  */
 function reloadOnce(): boolean {
