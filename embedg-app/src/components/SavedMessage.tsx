@@ -174,6 +174,7 @@ export default function SavedMessage({
           title="Are you sure that you want to update the message?"
           subTitle="The message will be overwritten and the previous data will be lost."
           onClose={() => setUpdateModal(false)}
+          pending={updateMessageMutation.isPending}
           onConfirm={updateMessageConfirm}
         />
       )}
@@ -182,6 +183,7 @@ export default function SavedMessage({
           title="Are you sure that you want to delete the message?"
           subTitle="The message will be deleted permanently and can't be restored."
           onClose={() => setDeleteModal(false)}
+          pending={deleteMessageMutation.isPending}
           onConfirm={deleteMessageConfirm}
         />
       )}

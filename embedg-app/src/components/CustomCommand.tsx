@@ -5,7 +5,7 @@ import {
   PencilSquareIcon,
   TrashIcon,
 } from "@heroicons/react/20/solid";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AutoAnimate } from "../util/autoAnimate";
 import {
   useCustomCommandDeleteMutation,
@@ -34,12 +34,19 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
   const queryClient = useQueryClient();
   const updateMutation = useCustomCommandUpdateMutation();
 
+  // Seed the action store from the server once per command. Re-running whenever cmd.actions
+  // changes identity meant any refetch, including the one after saving another command, threw away
+  // unsaved action edits in every command that happened to be open.
+  const seededActionsFor = useRef<string | null>(null);
   useEffect(() => {
+    if (seededActionsFor.current === cmd.id) return;
+
     const res = messageActionSetSchema.safeParse(cmd.actions);
     if (res.success) {
+      seededActionsFor.current = cmd.id;
       useCommandActionsStore.getState().setActionSet(cmd.id, res.data);
     }
-  }, [cmd.actions]);
+  }, [cmd.id, cmd.actions]);
 
   function save() {
     if (name.length === 0 || description.length === 0) return;
@@ -195,6 +202,7 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
           title="Are you sure that you want to delete the command?"
           subTitle="The command will be deleted permanently and can't be restored."
           onClose={() => setDeleteModal(false)}
+          pending={deleteMutation.isPending}
           onConfirm={deleteCommandConfirm}
         />
       )}

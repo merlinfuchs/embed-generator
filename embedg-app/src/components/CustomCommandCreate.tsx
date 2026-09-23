@@ -50,6 +50,12 @@ export default function CustomCommandCreate({
           if (res.success) {
             setName("");
             setDescription("");
+            setParameters([]);
+            // The store is persisted under a fixed key, so without this the next new command
+            // starts with the actions of the one just created.
+            useCommandActionsStore.getState().setActionSet("new", {
+              actions: [],
+            });
             setCreate(false);
             queryClient.invalidateQueries({
               queryKey: ["custom-bot", guildId, "commands"],
