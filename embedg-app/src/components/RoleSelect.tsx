@@ -1,6 +1,6 @@
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import ClickOutsideHandler from "./ClickOutsideHandler";
 import SelectDropdown from "./SelectDropdown";
 import { useGuildRolesQuery } from "../api/queries";
@@ -26,12 +26,6 @@ export function RoleSelect({ guildId, roleId, onChange }: Props) {
   }
 
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    if (roles?.success) {
-      roles.data.sort((a, b) => b.position - a.position);
-    }
-  }, [roles]);
 
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>

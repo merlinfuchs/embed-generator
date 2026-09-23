@@ -16,6 +16,31 @@ import type {
 } from "./wire";
 import type { APIResponse } from "./base";
 
+/**
+ * Sorts a list response in place before it is cached, so every consumer gets it in display order
+ * and none of them has to copy the array to sort it. Sorting the cached array in a component
+ * mutates state react-query owns.
+ */
+function sorted<T, R extends APIResponse<T[]>>(
+  res: R,
+  compare: (a: T, b: T) => number,
+): R {
+  if (res.success) res.data.sort(compare);
+  return res;
+}
+
+const byGuildName = (a: { name: string }, b: { name: string }) =>
+  a.name.localeCompare(b.name);
+
+const byRolePosition = (a: { position: number }, b: { position: number }) =>
+  b.position - a.position;
+
+// Categories sort after a channel they tie with, which the channel tree below depends on.
+const byChannelPosition = (
+  a: { position: number; type: number },
+  b: { position: number; type: number },
+) => (a.position === b.position && a.type === 4 ? 1 : a.position - b.position);
+
 export class APIError extends Error {
   constructor(
     public status: number,
@@ -56,7 +81,9 @@ export function useGuildsQuery() {
   return useQuery<ListGuildsResponseWire>({
     queryKey: ["guilds"],
     queryFn: () => {
-      return fetch(`/api/guilds`).then((res) => handleApiResponse(res.json()));
+      return fetch(`/api/guilds`)
+        .then((res) => handleApiResponse(res.json()))
+        .then((res) => sorted(res, byGuildName));
     },
   });
 }
@@ -65,9 +92,9 @@ export function useGuildChannelsQuery(guildId: string | null) {
   return useQuery<ListChannelsResponseWire>({
     queryKey: ["guild", guildId, "channels"],
     queryFn: () => {
-      return fetch(`/api/guilds/${guildId}/channels`).then((res) =>
-        handleApiResponse(res.json()),
-      );
+      return fetch(`/api/guilds/${guildId}/channels`)
+        .then((res) => handleApiResponse(res.json()))
+        .then((res) => sorted(res, byChannelPosition));
     },
     enabled: !!guildId,
   });
@@ -77,9 +104,9 @@ export function useGuildRolesQuery(guildId: string | null) {
   return useQuery<ListRolesResponseWire>({
     queryKey: ["guild", guildId, "roles"],
     queryFn: () => {
-      return fetch(`/api/guilds/${guildId}/roles`).then((res) =>
-        handleApiResponse(res.json()),
-      );
+      return fetch(`/api/guilds/${guildId}/roles`)
+        .then((res) => handleApiResponse(res.json()))
+        .then((res) => sorted(res, byRolePosition));
     },
     enabled: !!guildId,
   });
@@ -179,9 +206,9 @@ export function useCustomCmmandsQuery(guildId: string | null) {
   return useQuery<CustomCommandsListResponseWire>({
     queryKey: ["custom-bot", guildId, "commands"],
     queryFn: () =>
-      fetch(`/api/custom-bot/commands?guild_id=${guildId}`).then((res) =>
-        handleApiResponse(res.json()),
-      ),
+      fetch(`/api/custom-bot/commands?guild_id=${guildId}`)
+        .then((res) => handleApiResponse(res.json()))
+        .then((res) => sorted(res, byGuildName)),
     enabled: !!guildId,
   });
 }

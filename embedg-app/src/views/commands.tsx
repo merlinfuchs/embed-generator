@@ -5,7 +5,7 @@ import { usePremiumGuildFeatures } from "../util/premium";
 import CustomCommand from "../components/CustomCommand";
 import CustomCommandCreate from "../components/CustomCommandCreate";
 import { SparklesIcon } from "@heroicons/react/24/solid";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useCustomCommandsDeployMutation } from "../api/mutations";
 import { parseISO } from "date-fns";
 import clsx from "clsx";
@@ -63,13 +63,7 @@ export default function CommandsView() {
     );
   }
 
-  const commands = useMemo(() => {
-    if (!commandsQuery.data?.success) return [];
-
-    const commands = commandsQuery.data.data;
-    commands.sort((a, b) => a.name.localeCompare(b.name));
-    return commands;
-  }, [commandsQuery.data]);
+  const commands = commandsQuery.data?.success ? commandsQuery.data.data : [];
 
   return (
     <div className="overflow-y-auto w-full">
