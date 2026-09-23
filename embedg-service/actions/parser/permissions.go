@@ -54,11 +54,19 @@ func (m *ActionParser) DerivePermissionsForActions(ctx context.Context, member d
 		res.GuildPermissions = uint64(defaultRole.Permissions)
 	}
 
+	// Every role the member has grants its permissions, whatever its position. Only the hierarchy
+	// below depends on the highest one, so the two must be tracked separately: member.RoleIDs is in
+	// no particular order, so folding them together dropped the permissions of every role that
+	// happened to sit below one listed before it.
 	for _, roleID := range member.RoleIDs {
 		role, ok := state.Role(roleID)
-		if ok && role.Position > highestRolePosition {
+		if !ok {
+			continue
+		}
+
+		res.GuildPermissions |= uint64(role.Permissions)
+		if role.Position > highestRolePosition {
 			highestRolePosition = role.Position
-			res.GuildPermissions |= uint64(role.Permissions)
 		}
 	}
 

@@ -10,6 +10,7 @@ import (
 	"github.com/disgoorg/disgo/handler"
 	"github.com/disgoorg/disgo/handler/middleware"
 	"github.com/disgoorg/disgo/rest"
+	"github.com/merlinfuchs/embed-generator/embedg-service/access"
 	"github.com/merlinfuchs/embed-generator/embedg-service/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
 	"github.com/merlinfuchs/embed-generator/embedg-service/guildstate"
@@ -25,6 +26,7 @@ type CommandHandlerConfig struct {
 type CommandHandler struct {
 	config             CommandHandlerConfig
 	guildState         *guildstate.Provider
+	accessManager      *access.AccessManager
 	rest               rest.Rest
 	appContext         store.AppContext
 	sharedMessageStore store.SharedMessageStore
@@ -36,6 +38,7 @@ type CommandHandler struct {
 func NewCommandHandler(
 	config CommandHandlerConfig,
 	guildState *guildstate.Provider,
+	accessManager *access.AccessManager,
 	rest rest.Rest,
 	appContext store.AppContext,
 	sharedMessageStore store.SharedMessageStore,
@@ -45,6 +48,7 @@ func NewCommandHandler(
 	h := &CommandHandler{
 		config:             config,
 		guildState:         guildState,
+		accessManager:      accessManager,
 		rest:               rest,
 		appContext:         appContext,
 		sharedMessageStore: sharedMessageStore,

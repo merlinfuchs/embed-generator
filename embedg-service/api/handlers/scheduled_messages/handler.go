@@ -42,7 +42,7 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 		return err
 	}
 
-	if err := h.am.CheckChannelAccessForRequest(c, req.ChannelID); err != nil {
+	if err := h.am.CheckChannelAccessForRequestInGuild(c, req.ChannelID, guildID); err != nil {
 		return err
 	}
 
@@ -178,7 +178,7 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		return err
 	}
 
-	if err := h.am.CheckChannelAccessForRequest(c, req.ChannelID); err != nil {
+	if err := h.am.CheckChannelAccessForRequestInGuild(c, req.ChannelID, guildID); err != nil {
 		return err
 	}
 

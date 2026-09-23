@@ -42,6 +42,10 @@ func TestMaxChannelPermissions(t *testing.T) {
 	locked := `{"id":"10","type":0,"guild_id":"1","name":"locked","permission_overwrites":[{"id":"2","type":0,"allow":"0","deny":"536870912"}]}`
 	open := `{"id":"11","type":0,"guild_id":"1","name":"open","permission_overwrites":[]}`
 	category := `{"id":"12","type":4,"guild_id":"1","name":"cat","permission_overwrites":[]}`
+	// Hides itself from @everyone, which is how a private staff channel is set up.
+	hidden := `{"id":"13","type":0,"guild_id":"1","name":"hidden","permission_overwrites":[{"id":"1","type":0,"allow":"0","deny":"1024"}]}`
+	// Same, but the staff role is let back in.
+	hiddenAllowed := `{"id":"14","type":0,"guild_id":"1","name":"hidden-allowed","permission_overwrites":[{"id":"1","type":0,"allow":"0","deny":"1024"},{"id":"2","type":0,"allow":"1024","deny":"0"}]}`
 
 	tests := []struct {
 		name       string
@@ -56,6 +60,9 @@ func TestMaxChannelPermissions(t *testing.T) {
 		{"without the role that grants it", []string{open}, userID, nil, false},
 		{"owner ignores overwrites", []string{locked}, ownerID, nil, true},
 		{"guild with no channels", nil, userID, []common.ID{staffRole}, false},
+		{"channel the member can't see", []string{hidden}, userID, []common.ID{staffRole}, false},
+		{"channel that lets the role back in", []string{hiddenAllowed}, userID, []common.ID{staffRole}, true},
+		{"owner sees hidden channels", []string{hidden}, ownerID, nil, true},
 	}
 
 	for _, test := range tests {
