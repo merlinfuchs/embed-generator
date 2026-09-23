@@ -56,10 +56,11 @@ export default function ColorPicker({ value, onChange }: Props) {
         onClickOutside={() => setShow(false)}
         className="relative"
       >
-        <div
+        <button
+          type="button"
+          aria-label="Pick a color"
           className="w-12 h-full rounded-lg cursor-pointer relative bg-ink-600"
           style={{ backgroundColor: displayColor }}
-          role="button"
           onClick={() => setShow(!show)}
         />
         {show && (

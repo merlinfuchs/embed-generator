@@ -180,7 +180,8 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
       <div className="px-3 h-10 flex items-center rounded-lg bg-ink-900 relative select-none">
-        <div role="button" onClick={() => setOpen(!open)} className="flex-auto">
+        {/* Not a button itself: it holds the filter input, which may not be nested inside one. */}
+        <div className="flex-auto">
           <input
             type="text"
             ref={inputRef}
@@ -191,7 +192,11 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
               open ? "hidden md:block" : "hidden",
             )}
           />
-          <div className={open ? "md:hidden" : ""}>
+          <button
+            type="button"
+            onClick={() => setOpen(!open)}
+            className={clsx("w-full text-left", open && "md:hidden")}
+          >
             {!data ? (
               <div className="flex items-center space-x-2">
                 <ArrowPathIcon className="h-5 w-5 text-mist-300 animate-spin" />
@@ -214,7 +219,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
             ) : (
               <div className="text-mist-300">Select channel</div>
             )}
-          </div>
+          </button>
         </div>
         {open && (
           <SelectDropdown>
@@ -226,15 +231,17 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
             )}
             {filteredChannels.length ? (
               filteredChannels.map((c) => (
-                <div
+                <button
+                  type="button"
                   key={c.id}
                   className={clsx(
                     "py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg pr-3",
                     c.level === 0 ? "pl-2" : c.level === 1 ? "pl-4" : "pl-6",
                     c.canSelect ? "cursor-pointer" : "cursor-not-allowed",
+                    "w-full text-left",
                   )}
-                  role="button"
-                  onClick={() => c.canSelect && selectChannel(c.id)}
+                  disabled={!c.canSelect}
+                  onClick={() => selectChannel(c.id)}
                 >
                   {c.type === 4 ? (
                     <ChevronDownIcon className="h-5 w-5 text-mist-300" />
@@ -253,7 +260,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
                   >
                     {c.name}
                   </div>
-                </div>
+                </button>
               ))
             ) : (
               <div className="p-2 text-mist-300">No channels found</div>

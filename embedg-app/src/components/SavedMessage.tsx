@@ -126,38 +126,38 @@ export default function SavedMessage({
           </div>
         </div>
         <div className="flex flex-none items-center space-x-4 md:space-x-3">
-          <div
+          <button
+            type="button"
             className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
-            role="button"
             onClick={() => setRestoreModal(true)}
           >
             <Tooltip text="Restore Message">
               <ArrowDownTrayIcon className="h-5 w-5" />
             </Tooltip>
             <div className="hidden md:block ml-2">Restore</div>
-          </div>
+          </button>
 
-          <div
+          <button
+            type="button"
             className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
-            role="button"
             onClick={() => setUpdateModal(true)}
           >
             <Tooltip text="Overwrite Message">
               <ArrowUpTrayIcon className="h-5 w-5" />
             </Tooltip>
             <div className="hidden md:block ml-2">Overwrite</div>
-          </div>
+          </button>
 
-          <div
+          <button
+            type="button"
             className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
-            role="button"
             onClick={() => setDeleteModal(true)}
           >
             <Tooltip text="Delete Message">
               <TrashIcon className="h-5 w-5" />
             </Tooltip>
             <div className="hidden md:block ml-2">Delete</div>
-          </div>
+          </button>
         </div>
       </div>
 

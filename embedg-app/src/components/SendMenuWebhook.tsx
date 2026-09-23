@@ -148,35 +148,41 @@ export default function SendMenuWebhook() {
         <MessageRestoreButton />
         <div className="flex items-center space-x-2">
           {messageId && (
-            <div
+            <button
+              type="button"
               className={`px-3 py-2 rounded-lg text-white flex items-center space-x-3 ${
                 canEdit
                   ? "bg-azure-500 hover:bg-azure-400 cursor-pointer"
                   : "cursor-not-allowed bg-ink-900"
               }`}
-              role="button"
+              disabled={
+                !!validationError ||
+                !webhookInfo ||
+                webhookInfo.type !== "discord"
+              }
               onClick={() => send(true)}
             >
               {sendToWebhookMutation.isPending && (
                 <div className="h-2 w-2 bg-white rounded-full animate-ping"></div>
               )}
               <div>Edit Message</div>
-            </div>
+            </button>
           )}
-          <div
+          <button
+            type="button"
             className={`px-3 py-2 rounded-lg text-white flex items-center space-x-3 ${
               canSend
                 ? "bg-azure-500 hover:bg-azure-400 cursor-pointer"
                 : "cursor-not-allowed bg-ink-900"
             }`}
-            role="button"
+            disabled={!!validationError || !webhookInfo}
             onClick={() => send(false)}
           >
             {sendToWebhookMutation.isPending && (
               <div className="h-2 w-2 bg-white rounded-full animate-ping"></div>
             )}
             <div>Send Message</div>
-          </div>
+          </button>
         </div>
       </div>
     </div>

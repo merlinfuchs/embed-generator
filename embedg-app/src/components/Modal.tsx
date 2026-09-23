@@ -1,6 +1,6 @@
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 
 const maxWidths = {
   xs: "max-w-md",
@@ -26,6 +26,19 @@ export default function Modal({
   overflow = "hidden",
   onClose,
 }: Props) {
+  // Through a ref so that an inline onClose doesn't resubscribe on every render.
+  const close = useRef(onClose);
+  close.current = onClose;
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") close.current();
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   return (
     <div
       className="fixed h-[100dvh] w-[100vw] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center px-2 py-20 sm:px-5 md:px-10 lg:px-20 xl:px-32 z-30 top-0 left-0 overflow-hidden"
@@ -39,11 +52,14 @@ export default function Modal({
           overflow === "visible" ? "overflow-visible" : "overflow-y-hidden",
         )}
       >
-        <XMarkIcon
-          className="text-mist-400 hover:text-mist-100 h-7 w-7 cursor-pointer absolute top-3 right-3"
-          role="button"
+        <button
+          type="button"
+          aria-label="Close"
+          className="text-mist-400 hover:text-mist-100 cursor-pointer absolute top-3 right-3"
           onClick={onClose}
-        />
+        >
+          <XMarkIcon className="h-7 w-7" />
+        </button>
         {children}
       </div>
     </div>

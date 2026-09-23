@@ -34,10 +34,10 @@ export function RolesSelect({ guildId, roleIds, onChange }: Props) {
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
       <div className="px-3 h-10 flex items-center rounded-lg bg-ink-900 relative select-none">
-        <div
-          role="button"
+        <button
+          type="button"
           onClick={() => setOpen((prev) => !prev)}
-          className="flex-auto"
+          className="flex-auto text-left"
         >
           {firstRole ? (
             <div className="flex items-center space-x-2 cursor-pointer w-full">
@@ -63,18 +63,18 @@ export function RolesSelect({ guildId, roleIds, onChange }: Props) {
           ) : (
             <div className="text-mist-300">Select roles</div>
           )}
-        </div>
+        </button>
         {open && (
           <SelectDropdown>
             {roles?.success && roles.data.length ? (
               roles.data.map((r) => (
-                <div
+                <button
+                  type="button"
                   key={r.id}
                   className={clsx(
-                    "py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg cursor-pointer px-3",
+                    "py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg cursor-pointer px-3 w-full text-left",
                     roleIds.includes(r.id) && "bg-ink-700/50",
                   )}
-                  role="button"
                   onClick={() => toggleRole(r.id)}
                 >
                   <div
@@ -87,7 +87,7 @@ export function RolesSelect({ guildId, roleIds, onChange }: Props) {
                   {roleIds.includes(r.id) && (
                     <CheckIcon className="h-5 w-5 text-mist-300" />
                   )}
-                </div>
+                </button>
               ))
             ) : (
               <div className="p-2 text-mist-300">No roles found</div>

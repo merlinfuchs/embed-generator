@@ -118,16 +118,17 @@ export default function MessageRestoreButton() {
       : !!webhookInfo && webhookInfo.type === "discord");
 
   return (
-    <div
+    <button
+      type="button"
       className={`px-3 py-2 rounded-lg border-2 ${
         canRestore
           ? "border-white/15 hover:bg-white/5 hover:border-white/30 cursor-pointer text-mist-100"
           : "cursor-not-allowed text-mist-500 border-white/10"
       }`}
-      role="button"
+      disabled={!canRestore}
       onClick={restoreMessage}
     >
       Restore Message
-    </div>
+    </button>
   );
 }
