@@ -82,10 +82,12 @@ func Serve(ctx context.Context, env *Env, config APIConfig) {
 					slog.String("path", c.Path()),
 					slog.Any("error", err),
 				)
+				// The error is logged above; the text of a pgx, Discord or oauth2 failure says
+				// more about our internals than the client has any use for.
 				return c.Status(fiber.StatusInternalServerError).JSON(wire.Error{
 					Status:  fiber.StatusInternalServerError,
 					Code:    "internal_server_error",
-					Message: err.Error(),
+					Message: "Internal server error",
 				})
 			}
 		},

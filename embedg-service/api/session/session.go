@@ -20,6 +20,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
 	"github.com/ravener/discord-oauth2"
 	"golang.org/x/oauth2"
+	"golang.org/x/sync/singleflight"
 )
 
 // scopeGuildsMembersRead lets us fetch the session user's own member object with their token.
@@ -51,6 +52,9 @@ type SessionManager struct {
 	config       SessionManagerConfig
 	sessionStore store.SessionStore
 	oauth2Config *oauth2.Config
+
+	// Collapses concurrent refreshes of the same session, see UserToken.
+	refreshGroup singleflight.Group
 }
 
 func New(config SessionManagerConfig, sessionStore store.SessionStore) *SessionManager {
@@ -87,7 +91,8 @@ func (s *SessionManager) GetSession(c *fiber.Ctx) (*Session, error) {
 
 	tokenHash, err := hashSessionToken(token)
 	if err != nil {
-		return nil, err
+		// A cookie that isn't a session token at all is no session, not a server error.
+		return nil, nil
 	}
 
 	model, err := s.sessionStore.GetSession(c.UserContext(), tokenHash)
@@ -137,6 +142,28 @@ func (s *SessionManager) CreateSession(ctx context.Context, userID common.ID, gu
 	return token, nil
 }
 
+// sessionCleanupInterval is how often expired rows are swept. Nothing reads them in the meantime,
+// GetSession filters on expires_at, so this only keeps the table from growing.
+const sessionCleanupInterval = time.Hour
+
+// Run deletes expired sessions until the context is cancelled.
+func (s *SessionManager) Run(ctx context.Context) {
+	ticker := time.NewTicker(sessionCleanupInterval)
+	defer ticker.Stop()
+
+	for {
+		if err := s.sessionStore.DeleteExpiredSessions(ctx); err != nil {
+			slog.Error("Failed to delete expired sessions", slog.Any("error", err))
+		}
+
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
+	}
+}
+
 // ErrSessionInvalid means Discord no longer accepts the session's OAuth token, typically because the
 // user revoked the app. The session row is already gone when it's returned; the API maps it to a 401
 // so the app sends the user back to log in instead of showing an error.
@@ -148,6 +175,33 @@ func (s *SessionManager) UserToken(ctx context.Context, sess *Session) (string, 
 		return sess.AccessToken, nil
 	}
 
+	// Discord rotates the refresh token on every use, so of two concurrent refreshes for the same
+	// session the second one presents a token Discord has already consumed, reads the invalid_grant
+	// below as a revoked login and signs the user out. One request per session refreshes, the rest
+	// wait for its result.
+	result, err, _ := s.refreshGroup.Do(sess.TokenHash, func() (any, error) {
+		return s.refreshToken(ctx, sess)
+	})
+	if err != nil {
+		return "", err
+	}
+
+	tokenData := result.(*oauth2.Token)
+
+	// Each caller holds its own copy of the session, loaded per request.
+	sess.AccessToken = tokenData.AccessToken
+	sess.RefreshToken = tokenData.RefreshToken
+	sess.TokenExpiresAt = tokenData.Expiry
+
+	return tokenData.AccessToken, nil
+}
+
+func (s *SessionManager) refreshToken(ctx context.Context, sess *Session) (*oauth2.Token, error) {
+	// The request that happens to win the refresh may return before it finishes, and its context is
+	// cancelled when it does. Everyone waiting on this would then fail with it.
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
+	defer cancel()
+
 	// No access token on purpose: oauth2 only refreshes a token it considers expired, which is 10
 	// seconds before expiry, so passing the current one would return it unchanged for most of the
 	// window above. We've already decided to refresh, so leave it nothing to reuse.
@@ -158,9 +212,9 @@ func (s *SessionManager) UserToken(ctx context.Context, sess *Session) (string, 
 		var retrieveErr *oauth2.RetrieveError
 		if errors.As(err, &retrieveErr) && retrieveErr.Response != nil && retrieveErr.Response.StatusCode < 500 {
 			// invalid_grant and friends: the refresh token is dead, no retry will bring it back.
-			return "", s.InvalidateSession(ctx, sess)
+			return nil, s.InvalidateSession(ctx, sess)
 		}
-		return "", fmt.Errorf("failed to refresh access token: %w", err)
+		return nil, fmt.Errorf("failed to refresh access token: %w", err)
 	}
 
 	err = s.sessionStore.UpdateSessionTokens(ctx, store.UpdateSessionTokensParams{
@@ -170,14 +224,10 @@ func (s *SessionManager) UserToken(ctx context.Context, sess *Session) (string, 
 		TokenExpiresAt: tokenData.Expiry,
 	})
 	if err != nil {
-		return "", fmt.Errorf("failed to store refreshed access token: %w", err)
+		return nil, fmt.Errorf("failed to store refreshed access token: %w", err)
 	}
 
-	sess.AccessToken = tokenData.AccessToken
-	sess.RefreshToken = tokenData.RefreshToken
-	sess.TokenExpiresAt = tokenData.Expiry
-
-	return tokenData.AccessToken, nil
+	return tokenData, nil
 }
 
 // InvalidateSession deletes the session because Discord rejected its token, and returns
