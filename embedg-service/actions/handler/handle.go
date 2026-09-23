@@ -198,7 +198,6 @@ func (m *ActionHandler) HandleActionInteraction(restClient rest.Rest, i Interact
 				}
 			}
 
-			var err error
 			if member := interaction.Member(); member != nil {
 				roleID, err := snowflake.Parse(action.TargetID)
 				if err != nil {
@@ -227,12 +226,13 @@ func (m *ActionHandler) HandleActionInteraction(restClient rest.Rest, i Interact
 						}
 					}
 				}
-			}
-			if err != nil {
-				i.Respond(discord.MessageCreate{
-					Content: roleErrorMessage,
-					Flags:   discord.MessageFlagEphemeral,
-				})
+				if err != nil {
+					slog.Error("Failed to toggle role", slog.Any("error", err))
+					i.Respond(discord.MessageCreate{
+						Content: roleErrorMessage,
+						Flags:   discord.MessageFlagEphemeral,
+					})
+				}
 			}
 		case actions.ActionTypeAddRole:
 			if !legacyPermissions {
