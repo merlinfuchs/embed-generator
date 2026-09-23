@@ -82,7 +82,10 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 		return handlers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
 	}
 
+	// One off client for an unverified token, so it must not go into the shared cache, and its
+	// member cache janitor has to be stopped.
 	restClient := rest.NewRestClient(req.Token)
+	defer restClient.Close(c.UserContext())
 
 	app, err := restClient.GetCurrentApplication()
 	if err != nil {

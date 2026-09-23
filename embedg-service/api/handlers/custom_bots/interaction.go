@@ -65,8 +65,10 @@ func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 	}
 
 	if handle {
-		respCh := make(chan *discord.InteractionResponse)
-		client := rest.NewRestClient(customBot.Token)
+		// Buffered: this handler stops reading after three seconds, and the send must not block
+		// the goroutine below forever when it does.
+		respCh := make(chan *discord.InteractionResponse, 1)
+		client := rest.ClientForToken(customBot.Token)
 
 		ri := &handler.RestInteraction{
 			Inner:           interaction,
@@ -75,6 +77,18 @@ func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 		}
 
 		go func() {
+			// Nothing recovers a panic in here, and an interaction is something any member of the
+			// guild can trigger.
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error(
+						"Panic while handling custom bot interaction",
+						slog.String("custom_bot_id", customBotID),
+						slog.Any("panic", r),
+					)
+				}
+			}()
+
 			err := h.actionHandler.HandleActionInteraction(client, ri)
 			if err != nil {
 				slog.Error("Failed to handle action interaction", slog.Any("error", err))

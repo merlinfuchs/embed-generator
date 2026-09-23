@@ -110,9 +110,18 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 
 		if strings.HasPrefix(actionSetID, "options:") {
 			// Handle select menu values
-			if selectData, ok := data.(discord.StringSelectMenuInteractionData); ok {
-				actionSetID = selectData.Values[0][7:]
+			selectData, ok := data.(discord.StringSelectMenuInteractionData)
+			if !ok {
+				return nil
 			}
+
+			// A select menu with min_values 0 can be submitted with nothing selected, which leaves
+			// no action set to run.
+			if len(selectData.Values) == 0 || !strings.HasPrefix(selectData.Values[0], "action:") {
+				return nil
+			}
+
+			actionSetID = strings.TrimPrefix(selectData.Values[0], "action:")
 		}
 
 		col, err := m.actionSetStore.GetMessageActionSet(context.TODO(), compInteraction.Message.ID, actionSetID)

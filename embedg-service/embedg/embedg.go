@@ -126,7 +126,10 @@ func (g *EmbedGenerator) DispatchEvent(event bot.Event) {
 // may identify at once. Both are config defaults so neither has to be hardcoded and go stale as
 // the bot grows.
 func GatewayBot(token string) (*discord.GatewayBot, error) {
-	gatewayBot, err := rest.NewRestClient(token).GetGatewayBot()
+	client := rest.NewRestClient(token)
+	defer client.Close(context.Background())
+
+	gatewayBot, err := client.GetGatewayBot()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the gateway recommendation: %w", err)
 	}
