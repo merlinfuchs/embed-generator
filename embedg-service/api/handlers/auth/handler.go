@@ -64,19 +64,45 @@ func (h *AuthHandler) HandleAuthRedirect(c *fiber.Ctx) error {
 
 func (h *AuthHandler) HandleAuthCallback(c *fiber.Ctx) error {
 	state := h.getOauthStateCookie(c)
+
+	// Discord redirects back with an error instead of a code when the user cancels the flow
+	if errorCode := c.Query("error"); errorCode != "" {
+		slog.Debug(
+			"Discord OAuth2 flow was aborted",
+			slog.String("error", errorCode),
+			slog.String("error_description", c.Query("error_description")),
+		)
+		return h.redirectWithLoginError(c, errorCode)
+	}
+
 	if state == "" || c.Query("state") != state {
-		// TODO: redirect to error page
-		return h.HandleAuthRedirect(c)
+		slog.Error("Failed to login: Invalid state")
+		return h.redirectWithLoginError(c, "invalid_state")
 	}
 
 	_, _, err := h.authenticateWithCode(c, c.Query("code"))
 	if err != nil {
-		// TODO: redirect to error page
-		return h.HandleAuthRedirect(c)
+		slog.Error("Failed to authenticate with code", slog.Any("error", err))
+		return h.redirectWithLoginError(c, "server_error")
 	}
 
 	redirectURL := h.getOauthRedirectURL(c)
 	return c.Redirect(redirectURL, http.StatusTemporaryRedirect)
+}
+
+// redirectWithLoginError sends the user back to where they started the login flow
+// without creating a session, so the app can show an error message.
+func (h *AuthHandler) redirectWithLoginError(c *fiber.Ctx, errorCode string) error {
+	redirectURL, err := url.Parse(h.getOauthRedirectURL(c))
+	if err != nil {
+		return c.Redirect(h.config.AppPublicURL, http.StatusTemporaryRedirect)
+	}
+
+	query := redirectURL.Query()
+	query.Set("login_error", errorCode)
+	redirectURL.RawQuery = query.Encode()
+
+	return c.Redirect(redirectURL.String(), http.StatusTemporaryRedirect)
 }
 
 func (h *AuthHandler) HandleAuthExchange(c *fiber.Ctx, req wire.AuthExchangeRequestWire) error {
@@ -120,7 +146,7 @@ func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.T
 	client := h.oauth2Config.Client(c.UserContext(), tokenData)
 	resp, err := client.Get("https://discord.com/api/users/@me")
 	if err != nil {
-		return nil, "", h.HandleAuthRedirect(c)
+		return nil, "", fmt.Errorf("Failed to get user info: %w", err)
 	}
 
 	user := struct {

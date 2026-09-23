@@ -10,6 +10,7 @@ import ActivityLoadingScreen from "./components/ActivityLoadingScreen";
 import "./util/activity";
 import UpsellPopup from "./components/UpsellPopup";
 import ConfirmOnExit from "./components/ConfirmOnExit";
+import LoginErrorHandler from "./components/LoginErrorHandler";
 import { lazyView } from "./util/lazyView";
 
 const LazyJsonView = lazyView(() => import("./views/editor/json"));
@@ -44,6 +45,7 @@ function App() {
       <ActivityLoadingScreen />
       <UpsellPopup />
       <ConfirmOnExit />
+      <LoginErrorHandler />
       <div className="flex h-full">
         <EditorSideNav />
         <Routes>
