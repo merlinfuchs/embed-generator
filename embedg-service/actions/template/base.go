@@ -246,22 +246,11 @@ func (s Slice) StringSlice(flag ...bool) interface{} {
 	return StringSlice
 }
 
-func withOutputLimit(f func(...interface{}) string, limit int) func(...interface{}) (string, error) {
-	return func(args ...interface{}) (string, error) {
-		out := f(args...)
-		if len(out) > limit {
-			return "", fmt.Errorf("string grew too long: length %d (max %d)", len(out), limit)
-		}
-		return out, nil
+// limitOutput bounds what a template function may return, for the ones that can grow a string
+// without bound.
+func limitOutput(out string) (string, error) {
+	if len(out) > MaxStringLength {
+		return "", fmt.Errorf("string grew too long: length %d (max %d)", len(out), MaxStringLength)
 	}
-}
-
-func withOutputLimitF(f func(string, ...interface{}) string, limit int) func(string, ...interface{}) (string, error) {
-	return func(format string, args ...interface{}) (string, error) {
-		out := f(format, args...)
-		if len(out) > limit {
-			return "", fmt.Errorf("string grew too long: length %d (max %d)", len(out), limit)
-		}
-		return out, nil
-	}
+	return out, nil
 }
