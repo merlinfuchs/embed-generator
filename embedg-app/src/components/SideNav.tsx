@@ -275,11 +275,6 @@ function NavigationButton({
 
 function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
   const { data: guilds, isPending } = useGuildsQuery();
-  useEffect(() => {
-    if (guilds?.success) {
-      guilds.data.sort((a, b) => a.name.localeCompare(b.name));
-    }
-  }, [guilds]);
 
   const [guildId, setGuildId] = useSendSettingsStore(
     useShallow((state) => [state.guildId, state.setGuildId]),

@@ -63,12 +63,8 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
   }, [data]);
 
   const channels = useMemo(() => {
+    // Already sorted by position in the query, which the tree building below depends on.
     const rawChannels = data?.success ? data.data : [];
-
-    // Sort channels by position, this is important for the next steps
-    rawChannels.sort((a, b) =>
-      a.position === b.position && a.type === 4 ? 1 : a.position - b.position,
-    );
 
     const added = new Set<string>();
     const res = [];

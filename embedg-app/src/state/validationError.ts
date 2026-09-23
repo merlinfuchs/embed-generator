@@ -91,11 +91,11 @@ export const useValidationErrorStore = create<ValidationErrorStore>()(
 
       // A message that stays valid is the common case, and republishing the
       // index there would wake every subscriber for the same empty result.
-      if (
-        !error &&
-        state.index.issues.size === 0 &&
-        state.idToPath === idToPath
-      ) {
+      // The stale idToPath this leaves behind is never read: with no issues
+      // every lookup misses the empty index before it reaches the map, and the
+      // next error publishes both together. Comparing it here instead meant the
+      // check never fired, because editing rebuilds the map on every keystroke.
+      if (!error && state.index.issues.size === 0) {
         return;
       }
 

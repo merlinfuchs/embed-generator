@@ -54,12 +54,6 @@ export default function GuildSelect({ guildId, onChange }: Props) {
 
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    if (guilds?.success) {
-      guilds.data.sort((a, b) => a.name.localeCompare(b.name));
-    }
-  }, [guilds]);
-
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
       <div className="px-3 rounded-lg bg-ink-900 relative flex items-center h-10 select-none">

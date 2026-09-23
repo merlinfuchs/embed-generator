@@ -3,12 +3,27 @@ import { type ChangeEvent, useRef } from "react";
 import { useUploadImageMutation } from "../api/mutations";
 import { useToasts } from "../util/toasts";
 import { useSendSettingsStore } from "../state/sendSettings";
+import { usePremiumGuildFeatures } from "../util/premium";
 
 interface Props {
   onChange: (url: string | undefined) => void;
 }
 
-export default function ImageUploadButton({ onChange }: Props) {
+/**
+ * Renders nothing when the guild's plan has no image uploads. The check lives here rather than in
+ * the caller so that only inputs that actually offer an upload subscribe to the plan query: an
+ * editor has hundreds of inputs and each one was opening an observer for it. It is also the only
+ * hook this component runs, so an editor on a plan without uploads opens nothing else either.
+ */
+export default function ImageUploadButton(props: Props) {
+  const features = usePremiumGuildFeatures();
+
+  if (!features?.max_image_upload_size) return null;
+
+  return <UploadButton {...props} />;
+}
+
+function UploadButton({ onChange }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const selectedGuildId = useSendSettingsStore((state) => state.guildId);
@@ -42,7 +57,7 @@ export default function ImageUploadButton({ onChange }: Props) {
   }
 
   return (
-    <div>
+    <div className="flex-none">
       <input
         type="file"
         className="hidden"
