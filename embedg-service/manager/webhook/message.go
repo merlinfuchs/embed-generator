@@ -131,7 +131,7 @@ func (m *WebhookManager) UpdateMessageInChannel(ctx context.Context, channelID c
 		if customBot != nil && msg.Author.ID == customBot.UserID {
 			useCustomBot = true
 		} else {
-			return nil, fmt.Errorf("Message wasn't sent by a webhook and can therefore not be edited.")
+			return nil, common.NewUserError("Message wasn't sent by a webhook and can therefore not be edited.")
 		}
 	}
 
@@ -248,12 +248,12 @@ func (m *WebhookManager) getWebhookForChannel(ctx context.Context, target discor
 			if webhook != nil && webhook.Token != "" {
 				return webhook, nil
 			} else if webhook != nil {
-				return nil, fmt.Errorf("The webhook belongs to another application and can't be used by Embed Generator.")
+				return nil, common.NewUserError("The webhook belongs to another application and can't be used by Embed Generator.")
 			}
 		}
 	}
 
-	return nil, fmt.Errorf("No webhook found that matches the given ID.")
+	return nil, common.NewUserError("No webhook found that matches the given ID.")
 }
 
 func (m *WebhookManager) getWebhookForChannelWithRestClient(ctx context.Context, channelID common.ID, webhookID common.ID, restClient rest.Rest) (*discord.IncomingWebhook, error) {

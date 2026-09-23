@@ -26,7 +26,7 @@ func (m *ActionParser) DerivePermissionsForActions(ctx context.Context, member d
 		}
 
 		if channel.GuildID() != guildID {
-			return res, fmt.Errorf("Channel %s does not belong to guild %s", channelID, guildID)
+			return res, common.NewUserError(fmt.Sprintf("Channel %s does not belong to server %s.", channelID, guildID))
 		}
 	}
 

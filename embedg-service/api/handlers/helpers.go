@@ -51,7 +51,7 @@ func WithRequestBody[R any](handler func(c *fiber.Ctx, req R) error) fiber.Handl
 	return func(c *fiber.Ctx) error {
 		var req R
 		if err := c.BodyParser(&req); err != nil {
-			return fmt.Errorf("failed to parse request body: %w", err)
+			return BadRequest("invalid_body", fmt.Sprintf("Invalid request body: %s", err))
 		}
 		return handler(c, req)
 	}
@@ -70,7 +70,7 @@ func WithRequestBodyValidated[R RequestBodyValidatable](handler func(c *fiber.Ct
 	return func(c *fiber.Ctx) error {
 		var req R
 		if err := c.BodyParser(&req); err != nil {
-			return fmt.Errorf("failed to parse request body: %w", err)
+			return BadRequest("invalid_body", fmt.Sprintf("Invalid request body: %s", err))
 		}
 		if err := ValidateBody(c, req); err != nil {
 			return err
