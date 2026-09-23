@@ -17,6 +17,7 @@ import type {
 import { toHTML } from "../discord/markdown";
 import { emojiUrl } from "../discord/cdn";
 import { colorIntToHex } from "../util/discord";
+import { safeHref } from "../util/url";
 import Twemoji from "./Twemoji";
 
 const buttonColors = {
@@ -64,7 +65,7 @@ export function PreviewButton({ button }: { button: MessageComponentButton }) {
       <a
         className={className}
         target="_blank"
-        href={button.url}
+        href={safeHref(button.url)}
         rel="noreferrer"
       >
         {content}

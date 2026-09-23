@@ -3,6 +3,7 @@ import type { MessageEmbed } from "../discord/schema";
 // @ts-expect-error untyped
 import { toHTML } from "../discord/markdown";
 import { colorIntToHex } from "../util/discord";
+import { safeHref } from "../util/url";
 
 /** A classic embed, the body of a message that isn't using Components V2. */
 export default function MessagePreviewEmbed({
@@ -12,6 +13,9 @@ export default function MessagePreviewEmbed({
 }) {
   let inlineFieldIndex = 0;
   const hexColor = embed.color ? colorIntToHex(embed.color) : "#1f2225";
+  const providerUrl = safeHref(embed.provider?.url);
+  const authorUrl = safeHref(embed.author?.url);
+  const titleUrl = safeHref(embed.url);
   let timestamp = "";
   if (embed.timestamp) {
     const date = parseISO(embed.timestamp);
@@ -30,8 +34,8 @@ export default function MessagePreviewEmbed({
           <div className="discord-embed-grid">
             {!!embed.provider?.name && (
               <div className="discord-embed-provider overflow-hidden break-all">
-                {embed.provider.url ? (
-                  <a href={embed.provider.url}>{embed.provider.name}</a>
+                {providerUrl ? (
+                  <a href={providerUrl}>{embed.provider.name}</a>
                 ) : (
                   embed.provider.name
                 )}
@@ -46,8 +50,8 @@ export default function MessagePreviewEmbed({
                     className="discord-author-image"
                   />
                 )}
-                {embed.author.url ? (
-                  <a href={embed.author.url}>{embed.author.name}</a>
+                {authorUrl ? (
+                  <a href={authorUrl}>{embed.author.name}</a>
                 ) : (
                   embed.author.name
                 )}
@@ -55,9 +59,9 @@ export default function MessagePreviewEmbed({
             )}
             {!!embed.title && (
               <div className="discord-embed-title overflow-hidden break-all">
-                {embed.url ? (
+                {titleUrl ? (
                   <a
-                    href={embed.url}
+                    href={titleUrl}
                     dangerouslySetInnerHTML={{
                       __html: toHTML(embed.title || "", {
                         isTitle: true,
