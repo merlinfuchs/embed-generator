@@ -175,9 +175,9 @@ export default function ScheduledMessage({
                 )}
                 <div className="text-white truncate">{msg.name}</div>
               </div>
-              <div
+              <button
+                type="button"
                 className="flex items-center text-white cursor-pointer bg-azure-500 hover:bg-azure-400 rounded-lg px-2 py-1"
-                role="button"
                 onClick={save}
               >
                 <Tooltip text="Save Scheduled Message">
@@ -186,7 +186,7 @@ export default function ScheduledMessage({
                 <div className="ml-2">
                   Save <span className="hidden md:inline-block">Changes</span>
                 </div>
-              </div>
+              </button>
             </div>
             <div className="space-y-5">
               <div className="flex space-x-3">
@@ -351,26 +351,26 @@ export default function ScheduledMessage({
               </div>
             </div>
             <div className="flex flex-none items-center space-x-4 md:space-x-3">
-              <div
+              <button
+                type="button"
                 className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
-                role="button"
                 onClick={() => setDeleteModal(true)}
               >
                 <Tooltip text="Delete Scheduled Message">
                   <TrashIcon className="h-5 w-5" />
                 </Tooltip>
                 <div className="hidden md:block ml-2">Delete</div>
-              </div>
-              <div
+              </button>
+              <button
+                type="button"
                 className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
-                role="button"
                 onClick={() => setManage(true)}
               >
                 <Tooltip text="Manage Scheduled message">
                   <PencilSquareIcon className="h-5 w-5" />
                 </Tooltip>
                 <div className="hidden md:block ml-2">Manage</div>
-              </div>
+              </button>
             </div>
           </div>
         )}

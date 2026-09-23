@@ -29,14 +29,17 @@ export default function UpsellPopup() {
         <div className="text-base text-mist-100 font-bold mb-1.5">
           Embed Generator ♥️
         </div>
-        <XMarkIcon
-          className="text-mist-300 hover:text-mist-100 w-5 h-5 cursor-pointer"
-          role="button"
+        <button
+          type="button"
+          aria-label="Dismiss"
+          className="text-mist-300 hover:text-mist-100 cursor-pointer"
           onClick={() => {
             setUpsellClosed(true);
             setShowUpsell(false);
           }}
-        />
+        >
+          <XMarkIcon className="w-5 h-5" />
+        </button>
       </div>
       <div className="text-sm text-mist-300 mb-4">
         This is an open source project and free to use. If you like it, consider

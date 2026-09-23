@@ -57,10 +57,10 @@ export default function GuildSelect({ guildId, onChange }: Props) {
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
       <div className="px-3 rounded-lg bg-ink-900 relative flex items-center h-10 select-none">
-        <div
+        <button
+          type="button"
           onClick={() => setOpen((prev) => !prev)}
-          role="button"
-          className="flex-auto"
+          className="flex-auto text-left"
         >
           {!guilds ? (
             <div className="flex items-center space-x-2">
@@ -87,15 +87,15 @@ export default function GuildSelect({ guildId, onChange }: Props) {
           ) : (
             <div className="text-mist-300">Select server</div>
           )}
-        </div>
+        </button>
         {open && (
           <SelectDropdown>
             {guilds?.success &&
               guilds.data.map((g) => (
-                <div
+                <button
+                  type="button"
                   key={g.id}
-                  className="py-2 flex space-x-2 items-center rounded-lg px-3 hover:bg-ink-700 cursor-pointer"
-                  role="button"
+                  className="py-2 flex space-x-2 items-center rounded-lg px-3 hover:bg-ink-700 cursor-pointer w-full text-left"
                   onClick={() => selectGuild(g.id)}
                 >
                   <img
@@ -104,11 +104,10 @@ export default function GuildSelect({ guildId, onChange }: Props) {
                     className="h-7 w-7 rounded-full"
                   />
                   <div className="text-mist-300">{g.name}</div>
-                </div>
+                </button>
               ))}
             <a
-              className="py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg cursor-pointer px-3"
-              role="button"
+              className="py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg cursor-pointer px-3 w-full"
               href="/invite"
             >
               <PlusCircleIcon className="w-7 h-7 text-mist-300" />

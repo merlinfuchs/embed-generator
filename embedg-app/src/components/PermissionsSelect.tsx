@@ -89,10 +89,10 @@ export default function PermissionsSelect({ permissions, onChange }: Props) {
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
       <div className="px-3 h-10 flex items-center rounded-lg bg-ink-900 relative select-none">
-        <div
-          role="button"
+        <button
+          type="button"
           onClick={() => setOpen((prev) => !prev)}
-          className="flex-auto"
+          className="flex-auto text-left"
         >
           {activeFlags.length ? (
             <div className="flex items-center space-x-2 cursor-pointer w-full">
@@ -117,17 +117,17 @@ export default function PermissionsSelect({ permissions, onChange }: Props) {
           ) : (
             <div className="text-mist-300">Select permissions</div>
           )}
-        </div>
+        </button>
         {open && (
           <SelectDropdown>
             {Object.keys(permissionFlags).map((f) => (
-              <div
+              <button
+                type="button"
                 key={f}
                 className={clsx(
-                  "py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg cursor-pointer px-3",
+                  "py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg cursor-pointer px-3 w-full text-left",
                   activeFlags.includes(f) && "bg-ink-700/50",
                 )}
-                role="button"
                 onClick={() => togglePermission(f)}
               >
                 <ShieldExclamationIcon className="h-5 w-5 text-mist-500" />
@@ -137,7 +137,7 @@ export default function PermissionsSelect({ permissions, onChange }: Props) {
                 {activeFlags.includes(f) && (
                   <CheckIcon className="h-5 w-5 text-mist-300" />
                 )}
-              </div>
+              </button>
             ))}
           </SelectDropdown>
         )}

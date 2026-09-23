@@ -36,10 +36,10 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
       <div className="px-3 rounded-lg bg-ink-900 relative flex items-center h-12 select-none">
-        <div
+        <button
+          type="button"
           onClick={() => setOpen((prev) => !prev)}
-          role="button"
-          className="flex-auto"
+          className="flex-auto text-left"
         >
           {value === "user" && user?.success ? (
             <div className="flex items-center space-x-2 cursor-pointer w-full">
@@ -78,13 +78,13 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
           ) : (
             <div className="text-mist-300">Select guild</div>
           )}
-        </div>
+        </button>
         {open && (
           <SelectDropdown>
             {user?.success && (
-              <div
-                className="py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg cursor-pointer px-3"
-                role="button"
+              <button
+                type="button"
+                className="py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg cursor-pointer px-3 w-full text-left"
                 onClick={() => selectValue("user")}
               >
                 <img
@@ -100,14 +100,14 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
                     your personal account
                   </div>
                 </div>
-              </div>
+              </button>
             )}
             {guilds?.success && guilds.data.length ? (
               guilds.data.map((g) => (
-                <div
+                <button
+                  type="button"
                   key={g.id}
-                  className="py-2 flex space-x-2 items-center rounded-lg px-3 hover:bg-ink-700 cursor-pointer"
-                  role="button"
+                  className="py-2 flex space-x-2 items-center rounded-lg px-3 hover:bg-ink-700 cursor-pointer w-full text-left"
                   onClick={() => selectValue(g.id)}
                 >
                   <img
@@ -116,7 +116,7 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
                     className="h-8 w-8 rounded-full"
                   />
                   <div className="text-mist-300">{g.name}</div>
-                </div>
+                </button>
               ))
             ) : (
               <div className="p-2 text-mist-300">No servers found</div>
