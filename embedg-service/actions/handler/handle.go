@@ -9,8 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"log/slog"
-
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
@@ -22,8 +20,25 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
 )
 
-const roleErrorMessage = "Failed to add or remove role.\n\n" +
-	"Please make sure the role is below the 'Embed Generator' role and that the bot has the manage roles permission."
+const (
+	roleErrorMessage = "Failed to add or remove role.\n\n" +
+		"Please make sure the role is below the 'Embed Generator' role and that the bot has the manage roles permission."
+	dmErrorMessage       = "You have blocked the bot from sending you DMs. Please allow DMs from server members in your privacy settings."
+	internalErrorMessage = "Something went wrong while handling this interaction."
+)
+
+// userError is caused by misconfiguration or missing permissions. It's shown to the user instead of being logged.
+type userError struct {
+	message string
+}
+
+func (e *userError) Error() string {
+	return e.message
+}
+
+func userErr(format string, args ...any) error {
+	return &userError{message: fmt.Sprintf(format, args...)}
+}
 
 type ActionHandler struct {
 	customCommandStore store.CustomCommandStore
@@ -55,7 +70,29 @@ func New(
 	}
 }
 
+// HandleActionInteraction shows user errors to the interacting user and returns nil for them.
+// Internal errors are returned to the caller and the user only gets a generic message.
 func (m *ActionHandler) HandleActionInteraction(restClient rest.Rest, i Interaction) error {
+	err := m.handleActionInteraction(restClient, i)
+	if err == nil {
+		return nil
+	}
+
+	message := internalErrorMessage
+	var uErr *userError
+	if errors.As(err, &uErr) {
+		message = uErr.message
+		err = nil
+	}
+
+	i.Respond(discord.MessageCreate{
+		Content: message,
+		Flags:   discord.MessageFlagEphemeral,
+	})
+	return err
+}
+
+func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interaction) error {
 	interaction := i.Interaction()
 
 	var actionSet actions.ActionSet
@@ -84,8 +121,7 @@ func (m *ActionHandler) HandleActionInteraction(restClient rest.Rest, i Interact
 				return nil
 			}
 
-			slog.Error("Failed to get message action set", slog.Any("error", err))
-			return err
+			return fmt.Errorf("failed to get message action set: %w", err)
 		}
 		actionSet = col.Actions
 		derivedPerms = col.DerivedPermissions
@@ -110,8 +146,7 @@ func (m *ActionHandler) HandleActionInteraction(restClient rest.Rest, i Interact
 				return nil
 			}
 
-			slog.Error("Failed to get custom command action set", slog.Any("error", err))
-			return err
+			return fmt.Errorf("failed to get custom command action set: %w", err)
 		}
 		actionSet = col.Actions
 		derivedPerms = col.DerivedPermissions
@@ -149,9 +184,9 @@ func (m *ActionHandler) HandleActionInteraction(restClient rest.Rest, i Interact
 				flags = discord.MessageFlagEphemeral
 			}
 
-			content, ok := executeTemplate(i, templates, action.Text) // TODO: Fix variables.FillString
-			if !ok {
-				return nil
+			content, err := templates.ParseAndExecute(action.Text) // TODO: Fix variables.FillString
+			if err != nil {
+				return templateErr(err)
 			}
 
 			allowedMentions := []discord.AllowedMentionType{
@@ -173,162 +208,75 @@ func (m *ActionHandler) HandleActionInteraction(restClient rest.Rest, i Interact
 				},
 			})
 		case actions.ActionTypeToggleRole:
-			if !legacyPermissions {
-				roleID, err := snowflake.Parse(action.TargetID)
-				if err != nil {
-					slog.Error("Failed to parse role ID", slog.Any("error", err))
-					return err
+			member, roleID, err := roleTarget(interaction, action, derivedPerms, "toggle")
+			if err != nil {
+				return err
+			}
+
+			if slices.Contains(member.RoleIDs, roleID) {
+				if err := restClient.RemoveMemberRole(*interaction.GuildID(), member.User.ID, roleID); err != nil {
+					return roleErr(err, roleID)
 				}
-				if !derivedPerms.CanManageRole(roleID) {
+				if !action.DisableDefaultResponse {
 					i.Respond(discord.MessageCreate{
-						Content: fmt.Sprintf("The user that has created this message doesn't have permissions to toggle the role <@&%s>.", action.TargetID),
+						Content: fmt.Sprintf("Removed role <@&%s>", roleID),
 						Flags:   discord.MessageFlagEphemeral,
 					})
-					return nil
 				}
-			}
-
-			hasRole := false
-			if member := interaction.Member(); member != nil {
-				for _, roleID := range member.RoleIDs {
-					if roleID.String() == action.TargetID {
-						hasRole = true
-						break
-					}
+			} else {
+				if err := restClient.AddMemberRole(*interaction.GuildID(), member.User.ID, roleID); err != nil {
+					return roleErr(err, roleID)
 				}
-			}
-
-			if member := interaction.Member(); member != nil {
-				roleID, err := snowflake.Parse(action.TargetID)
-				if err != nil {
-					slog.Error("Failed to parse role ID", slog.Any("error", err))
-					return err
-				}
-
-				if hasRole {
-					err = restClient.RemoveMemberRole(*interaction.GuildID(), member.User.ID, roleID)
-					if err == nil {
-						if !action.DisableDefaultResponse {
-							i.Respond(discord.MessageCreate{
-								Content: fmt.Sprintf("Removed role <@&%s>", action.TargetID),
-								Flags:   discord.MessageFlagEphemeral,
-							})
-						}
-					}
-				} else {
-					err = restClient.AddMemberRole(*interaction.GuildID(), member.User.ID, roleID)
-					if err == nil {
-						if !action.DisableDefaultResponse {
-							i.Respond(discord.MessageCreate{
-								Content: fmt.Sprintf("Added role <@&%s>", action.TargetID),
-								Flags:   discord.MessageFlagEphemeral,
-							})
-						}
-					}
-				}
-				if err != nil {
-					slog.Error("Failed to toggle role", slog.Any("error", err))
+				if !action.DisableDefaultResponse {
 					i.Respond(discord.MessageCreate{
-						Content: roleErrorMessage,
+						Content: fmt.Sprintf("Added role <@&%s>", roleID),
 						Flags:   discord.MessageFlagEphemeral,
 					})
 				}
 			}
 		case actions.ActionTypeAddRole:
-			if !legacyPermissions {
-				roleID, err := snowflake.Parse(action.TargetID)
-				if err != nil {
-					slog.Error("Failed to parse role ID", slog.Any("error", err))
-					return err
-				}
-				if !derivedPerms.CanManageRole(roleID) {
-					i.Respond(discord.MessageCreate{
-						Content: fmt.Sprintf("The user that has created this message doesn't have permissions to assign the role <@&%s>.", action.TargetID),
-						Flags:   discord.MessageFlagEphemeral,
-					})
-					return nil
-				}
+			member, roleID, err := roleTarget(interaction, action, derivedPerms, "assign")
+			if err != nil {
+				return err
 			}
 
-			if member := interaction.Member(); member != nil {
-				roleID, err := snowflake.Parse(action.TargetID)
-				if err != nil {
-					slog.Error("Failed to parse role ID", slog.Any("error", err))
-					return err
-				}
-
-				err = restClient.AddMemberRole(*interaction.GuildID(), member.User.ID, roleID)
-				if err == nil {
-					if !action.DisableDefaultResponse {
-						i.Respond(discord.MessageCreate{
-							Content: fmt.Sprintf("Added role <@&%s>", action.TargetID),
-							Flags:   discord.MessageFlagEphemeral,
-						})
-					}
-				} else {
-					i.Respond(discord.MessageCreate{
-						Content: roleErrorMessage,
-						Flags:   discord.MessageFlagEphemeral,
-					})
-				}
+			if err := restClient.AddMemberRole(*interaction.GuildID(), member.User.ID, roleID); err != nil {
+				return roleErr(err, roleID)
+			}
+			if !action.DisableDefaultResponse {
+				i.Respond(discord.MessageCreate{
+					Content: fmt.Sprintf("Added role <@&%s>", roleID),
+					Flags:   discord.MessageFlagEphemeral,
+				})
 			}
 		case actions.ActionTypeRemoveRole:
-			if !legacyPermissions {
-				roleID, err := snowflake.Parse(action.TargetID)
-				if err != nil {
-					slog.Error("Failed to parse role ID", slog.Any("error", err))
-					return err
-				}
-				if !derivedPerms.CanManageRole(roleID) {
-					i.Respond(discord.MessageCreate{
-						Content: fmt.Sprintf("The user that has created this message doesn't have permissions to remove the role <@&%s>.", action.TargetID),
-						Flags:   discord.MessageFlagEphemeral,
-					})
-					return nil
-				}
+			member, roleID, err := roleTarget(interaction, action, derivedPerms, "remove")
+			if err != nil {
+				return err
 			}
 
-			if member := interaction.Member(); member != nil {
-				roleID, err := snowflake.Parse(action.TargetID)
-				if err != nil {
-					slog.Error("Failed to parse role ID", slog.Any("error", err))
-					return err
-				}
-
-				err = restClient.RemoveMemberRole(*interaction.GuildID(), member.User.ID, roleID)
-				if err == nil {
-					if !action.DisableDefaultResponse {
-						i.Respond(discord.MessageCreate{
-							Content: fmt.Sprintf("Removed role <@&%s>", action.TargetID),
-							Flags:   discord.MessageFlagEphemeral,
-						})
-					}
-				} else {
-					i.Respond(discord.MessageCreate{
-						Content: roleErrorMessage,
-						Flags:   discord.MessageFlagEphemeral,
-					})
-				}
+			if err := restClient.RemoveMemberRole(*interaction.GuildID(), member.User.ID, roleID); err != nil {
+				return roleErr(err, roleID)
+			}
+			if !action.DisableDefaultResponse {
+				i.Respond(discord.MessageCreate{
+					Content: fmt.Sprintf("Removed role <@&%s>", roleID),
+					Flags:   discord.MessageFlagEphemeral,
+				})
 			}
 		case actions.ActionTypeSavedMessageResponse:
 			if interaction.GuildID() == nil {
 				continue
 			}
 
-			msg, err := m.savedMessageStore.GetSavedMessageForGuild(context.TODO(), *interaction.GuildID(), action.TargetID)
-			if err != nil {
-				return err
-			}
-
-			data := &actions.MessageWithActions{}
-			err = json.Unmarshal(msg.Data, data)
+			data, err := m.savedMessage(*interaction.GuildID(), action.TargetID)
 			if err != nil {
 				return err
 			}
 
 			// TODO: Fix variables system - variables.FillMessage(data)
-			if !executeTemplateMessage(i, templates, data) {
-				return nil
+			if err := templates.ParseAndExecuteMessage(data); err != nil {
+				return templateErr(err)
 			}
 
 			if !action.Public {
@@ -339,7 +287,7 @@ func (m *ActionHandler) HandleActionInteraction(restClient rest.Rest, i Interact
 			if !legacyPermissions {
 				components, err = m.parser.ParseMessageComponents(data.Components, features.ComponentTypes)
 				if err != nil {
-					return fmt.Errorf("Invalid actions: %w", err)
+					return userErr("Invalid components: %s", err)
 				}
 			}
 
@@ -373,77 +321,60 @@ func (m *ActionHandler) HandleActionInteraction(restClient rest.Rest, i Interact
 			if newMsg != nil && !legacyPermissions {
 				err = m.parser.CreateActionsForMessage(context.TODO(), data.Actions, *derivedPerms, newMsg.ID, !action.Public)
 				if err != nil {
-					slog.Error("failed to create actions for message", slog.Any("error", err))
-					return err
+					return fmt.Errorf("failed to create actions for message: %w", err)
 				}
 			}
 		case actions.ActionTypeTextDM:
-			channel, err := restClient.CreateDMChannel(interaction.User().ID, rest.WithCtx(context.TODO()))
+			content, err := templates.ParseAndExecute(action.Text) // TODO: Fix variables system
 			if err != nil {
-				slog.Error("Failed to create DM channel", slog.Any("error", err))
-				return fmt.Errorf("failed to create DM channel: %w", err)
+				return templateErr(err)
 			}
 
-			_, err = restClient.CreateMessage(channel.ID(), discord.MessageCreate{
-				Content: action.Text,
-			}, rest.WithCtx(context.TODO()))
-			if err != nil {
-				if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeCannotSendMessagesToThisUser) {
-					i.Respond(discord.MessageCreate{
-						Content: "You have blocked the bot from sending you DMs. Please allow DMs from server members in your privacy settings.",
-						Flags:   discord.MessageFlagEphemeral,
-					})
-					return nil
-				}
-				return fmt.Errorf("failed to send DM: %w", err)
+			if err := sendDM(restClient, interaction.User().ID, discord.MessageCreate{Content: content}); err != nil {
+				return err
 			}
+			i.Respond(discord.MessageCreate{
+				Content: "You have received a DM!",
+				Flags:   discord.MessageFlagEphemeral,
+			})
 		case actions.ActionTypeSavedMessageDM:
 			if interaction.GuildID() == nil {
 				continue
 			}
 
-			msg, err := m.savedMessageStore.GetSavedMessageForGuild(context.TODO(), *interaction.GuildID(), action.TargetID)
-			if err != nil {
-				return err
-			}
-
-			data := &actions.MessageWithActions{}
-			err = json.Unmarshal(msg.Data, data)
+			data, err := m.savedMessage(*interaction.GuildID(), action.TargetID)
 			if err != nil {
 				return err
 			}
 
 			// TODO: Fix variables system - variables.FillMessage(data)
-			if !executeTemplateMessage(i, templates, data) {
-				return nil
+			if err := templates.ParseAndExecuteMessage(data); err != nil {
+				return templateErr(err)
 			}
 
 			// We support displaying components in DMs, but don't hook them up to actions
 			components, err := m.parser.ParseMessageComponents(data.Components, features.ComponentTypes)
 			if err != nil {
-				return fmt.Errorf("Invalid actions: %w", err)
+				return userErr("Invalid components: %s", err)
 			}
 
-			channel, err := restClient.CreateDMChannel(interaction.User().ID, rest.WithCtx(context.TODO()))
-			if err != nil {
-				slog.Error("Failed to create DM channel", slog.Any("error", err))
-				return fmt.Errorf("failed to create DM channel: %w", err)
-			}
-
-			_, err = restClient.CreateMessage(channel.ID(), discord.MessageCreate{
+			err = sendDM(restClient, interaction.User().ID, discord.MessageCreate{
 				Content:    data.Content,
 				Embeds:     data.Embeds,
 				Components: components,
 				Flags:      data.Flags,
-			}, rest.WithCtx(context.TODO()))
+			})
 			if err != nil {
-				slog.Error("Failed to send DM", slog.Any("error", err))
-				return fmt.Errorf("failed to send DM: %w", err)
+				return err
 			}
+			i.Respond(discord.MessageCreate{
+				Content: "You have received a DM!",
+				Flags:   discord.MessageFlagEphemeral,
+			})
 		case actions.ActionTypeTextEdit:
-			content, ok := executeTemplate(i, templates, action.Text) // TODO: Fix variables system
-			if !ok {
-				return nil
+			content, err := templates.ParseAndExecute(action.Text) // TODO: Fix variables system
+			if err != nil {
+				return templateErr(err)
 			}
 
 			i.Respond(discord.MessageUpdate{
@@ -454,27 +385,21 @@ func (m *ActionHandler) HandleActionInteraction(restClient rest.Rest, i Interact
 				continue
 			}
 
-			msg, err := m.savedMessageStore.GetSavedMessageForGuild(context.TODO(), *interaction.GuildID(), action.TargetID)
-			if err != nil {
-				return err
-			}
-
-			data := &actions.MessageWithActions{}
-			err = json.Unmarshal(msg.Data, data)
+			data, err := m.savedMessage(*interaction.GuildID(), action.TargetID)
 			if err != nil {
 				return err
 			}
 
 			// TODO: Fix variables system - variables.FillMessage(data)
-			if !executeTemplateMessage(i, templates, data) {
-				return nil
+			if err := templates.ParseAndExecuteMessage(data); err != nil {
+				return templateErr(err)
 			}
 
 			var components []discord.LayoutComponent
 			if !legacyPermissions {
 				components, err = m.parser.ParseMessageComponents(data.Components, features.ComponentTypes)
 				if err != nil {
-					return fmt.Errorf("Invalid actions: %w", err)
+					return userErr("Invalid components: %s", err)
 				}
 			}
 
@@ -493,8 +418,7 @@ func (m *ActionHandler) HandleActionInteraction(restClient rest.Rest, i Interact
 				ephemeral := newMsg.Flags&discord.MessageFlagEphemeral != 0
 				err = m.parser.CreateActionsForMessage(context.TODO(), data.Actions, *derivedPerms, newMsg.ID, ephemeral)
 				if err != nil {
-					slog.Error("failed to create actions for message", slog.Any("error", err))
-					return err
+					return fmt.Errorf("failed to create actions for message: %w", err)
 				}
 			}
 		case actions.ActionTypePermissionCheck:
@@ -502,7 +426,7 @@ func (m *ActionHandler) HandleActionInteraction(restClient rest.Rest, i Interact
 
 			member := interaction.Member()
 			if member == nil {
-				return fmt.Errorf("member not found")
+				return userErr("This can only be used in a server.")
 			}
 
 			if member.Permissions&discord.Permissions(perms) != discord.Permissions(perms) {
@@ -555,28 +479,72 @@ func (m *ActionHandler) HandleActionInteraction(restClient rest.Rest, i Interact
 	return nil
 }
 
-func executeTemplate(i Interaction, templates *template.TemplateContext, text string) (string, bool) {
-	res, err := templates.ParseAndExecute(text)
-	if err != nil {
-		slog.Error("Failed to execute template", slog.Any("error", err))
-		i.Respond(discord.MessageCreate{
-			Content: fmt.Sprintf("Failed to execute template variables:\n```%s```", err.Error()),
-			Flags:   discord.MessageFlagEphemeral,
-		})
-		return "", false
-	}
-	return res, true
+func templateErr(err error) error {
+	return userErr("Failed to execute template variables:\n```%s```", err)
 }
 
-func executeTemplateMessage(i Interaction, templates *template.TemplateContext, m *actions.MessageWithActions) bool {
-	if err := templates.ParseAndExecuteMessage(m); err != nil {
-		slog.Error("Failed to execute template", slog.Any("error", err))
-		i.Respond(discord.MessageCreate{
-			Content: fmt.Sprintf("Failed to execute template variables:\n```%s```", err.Error()),
-			Flags:   discord.MessageFlagEphemeral,
-		})
-		return false
+func (m *ActionHandler) savedMessage(guildID common.ID, id string) (*actions.MessageWithActions, error) {
+	msg, err := m.savedMessageStore.GetSavedMessageForGuild(context.TODO(), guildID, id)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return nil, userErr("The saved message used by this action doesn't exist anymore.")
+		}
+		return nil, fmt.Errorf("failed to get saved message: %w", err)
 	}
 
-	return true
+	data := &actions.MessageWithActions{}
+	if err := json.Unmarshal(msg.Data, data); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal saved message: %w", err)
+	}
+	return data, nil
+}
+
+// roleTarget resolves the member and role for a role action and checks that the message creator may manage the role.
+func roleTarget(
+	interaction discord.Interaction,
+	action actions.Action,
+	derivedPerms *actions.ActionDerivedPermissions,
+	verb string,
+) (*discord.ResolvedMember, snowflake.ID, error) {
+	member := interaction.Member()
+	if member == nil {
+		return nil, 0, userErr("Roles can only be assigned in a server.")
+	}
+
+	roleID, err := snowflake.Parse(action.TargetID)
+	if err != nil {
+		return nil, 0, userErr("This action has an invalid role configured.")
+	}
+
+	// For messages created before the permission context was added we don't run permission checks here
+	if derivedPerms != nil && !derivedPerms.CanManageRole(roleID) {
+		return nil, 0, userErr("The user that has created this message doesn't have permissions to %s the role <@&%s>.", verb, roleID)
+	}
+	return member, roleID, nil
+}
+
+func roleErr(err error, roleID snowflake.ID) error {
+	if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeLackPermissionsToPerformAction, rest.JSONErrorCodeMissingAccess) {
+		return userErr(roleErrorMessage)
+	}
+	if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeUnknownRole) {
+		return userErr("The role <@&%s> doesn't exist anymore.", roleID)
+	}
+	return fmt.Errorf("failed to update member role: %w", err)
+}
+
+func sendDM(restClient rest.Rest, userID snowflake.ID, msg discord.MessageCreate) error {
+	channel, err := restClient.CreateDMChannel(userID, rest.WithCtx(context.TODO()))
+	if err != nil {
+		return fmt.Errorf("failed to create DM channel: %w", err)
+	}
+
+	_, err = restClient.CreateMessage(channel.ID(), msg, rest.WithCtx(context.TODO()))
+	if err != nil {
+		if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeCannotSendMessagesToThisUser) {
+			return userErr(dmErrorMessage)
+		}
+		return fmt.Errorf("failed to send DM: %w", err)
+	}
+	return nil
 }
