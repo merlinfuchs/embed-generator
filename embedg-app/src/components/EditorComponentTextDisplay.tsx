@@ -44,6 +44,7 @@ export default function EditorComponentTextDisplay({
           onChange={(v) => update<TextDisplayNode>(id, { content: v })}
           className="flex-auto"
           validationPath={nodeField<TextDisplayNode>(id, "content")}
+          controls={true}
         />
       </div>
     </EditorComponentCollapsable>
