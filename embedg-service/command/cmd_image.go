@@ -2,7 +2,6 @@ package command
 
 import (
 	"fmt"
-	"log/slog"
 	"regexp"
 
 	"github.com/disgoorg/disgo/discord"
@@ -38,13 +37,13 @@ func (g *CommandHandler) handleImageAvatarCommand(e *handler.CommandEvent) error
 func (g *CommandHandler) handleImageIconCommand(e *handler.CommandEvent) error {
 	static := e.SlashCommandInteractionData().Bool("static")
 
-	guild, ok := e.Guild()
-	if !ok {
-		slog.Error("Guild for image command is not in cache", slog.Int64("guild_id", int64(*e.GuildID())))
-		return e.CreateMessage(discord.MessageCreate{
-			Content: "Server is not in cache, please report this!",
-		})
+	// Not e.Guild(): that reads disgo's cache, which this bot runs with disabled, so it never
+	// returned anything.
+	state, err := g.guildState.Guild(e.Ctx, *e.GuildID())
+	if err != nil {
+		return fmt.Errorf("failed to get guild: %w", err)
 	}
+	guild := state.Guild
 
 	opts := []discord.CDNOpt{
 		discord.WithSize(1024),
