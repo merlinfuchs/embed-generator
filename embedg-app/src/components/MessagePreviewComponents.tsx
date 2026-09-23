@@ -305,12 +305,14 @@ function PreviewContainer({
   return (
     <div
       className="discord-component-container"
-      style={{
-        borderLeftColor:
-          container.accent_color !== undefined
-            ? colorIntToHex(container.accent_color)
-            : "#4e5058",
-      }}
+      style={
+        container.accent_color !== undefined
+          ? {
+              borderLeftColor: colorIntToHex(container.accent_color),
+              borderLeftWidth: 4,
+            }
+          : undefined
+      }
     >
       <Spoiler spoiler={container.spoiler}>
         <PreviewComponents components={container.components} />

@@ -1216,8 +1216,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
 .discord-component-container {
   background-color: #2f3136;
   border: 1px solid rgba(46, 48, 54, 0.6);
-  border-left-style: solid;
-  border-left-width: 4px;
   border-radius: 4px;
   color: #dcddde;
   font-size: 13px;
