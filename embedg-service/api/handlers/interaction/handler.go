@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/ed25519"
 	"encoding/hex"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -49,7 +50,10 @@ func (h *InteractionHandler) HandleBotInteraction(c *fiber.Ctx) error {
 		})
 	}
 
-	respCh := make(chan *discord.InteractionResponse)
+	// Buffered, and only ever written once: the handler below holds the mutex across the send, and
+	// this request takes the same mutex when it stops waiting. A blocking send would deadlock the
+	// two against each other and strand both the request and the dispatch goroutine.
+	respCh := make(chan *discord.InteractionResponse, 1)
 
 	var (
 		responded bool
@@ -77,24 +81,40 @@ func (h *InteractionHandler) HandleBotInteraction(c *fiber.Ctx) error {
 		return nil
 	}
 
-	go h.dispatcher.DispatchEvent(&events.InteractionCreate{
-		GenericEvent: h.dispatcher.GenericEvent(),
-		Interaction:  interaction,
-		Respond:      respondFunc,
-	})
+	expire := func() {
+		mu.Lock()
+		expired = true
+		mu.Unlock()
+	}
+
+	go func() {
+		// Nothing above this recovers, and any guild member can trigger an interaction.
+		defer func() {
+			if r := recover(); r != nil {
+				slog.Error(
+					"Panic while handling bot interaction",
+					slog.Any("panic", r),
+				)
+			}
+		}()
+
+		h.dispatcher.DispatchEvent(&events.InteractionCreate{
+			GenericEvent: h.dispatcher.GenericEvent(),
+			Interaction:  interaction,
+			Respond:      respondFunc,
+		})
+	}()
 
 	select {
 	case resp := <-respCh:
-		mu.Lock()
-		expired = true
-		mu.Unlock()
+		expire()
 		return c.JSON(resp)
 	case <-c.Context().Done():
+		// Also expired: nothing reads respCh after this returns.
+		expire()
 		return c.SendStatus(fiber.StatusNoContent)
 	case <-time.After(3 * time.Second):
-		mu.Lock()
-		expired = true
-		mu.Unlock()
+		expire()
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 }

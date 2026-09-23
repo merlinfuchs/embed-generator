@@ -288,5 +288,5 @@ func (m *CustomBotManager) GetRestForGuild(ctx context.Context, guildID common.I
 		return m.rest, nil, nil
 	}
 
-	return rest.NewRestClient(customBot.Token), customBot, nil
+	return rest.ClientForToken(customBot.Token), customBot, nil
 }

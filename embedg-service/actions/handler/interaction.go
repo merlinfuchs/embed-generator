@@ -155,9 +155,15 @@ func (i *RestInteraction) Respond(data discord.InteractionResponseData, t ...dis
 	var msg *discord.Message
 
 	if !i.Responded {
-		i.InitialResponse <- &discord.InteractionResponse{
+		// Never block: the request that reads this channel gives up after three seconds, and this
+		// runs on a goroutine that outlives it.
+		select {
+		case i.InitialResponse <- &discord.InteractionResponse{
 			Type: responseType,
 			Data: data,
+		}:
+		default:
+			err = fmt.Errorf("nobody is waiting for the initial response anymore")
 		}
 	} else if responseType == discord.InteractionResponseTypeCreateMessage {
 		msgData, ok := data.(discord.MessageCreate)
