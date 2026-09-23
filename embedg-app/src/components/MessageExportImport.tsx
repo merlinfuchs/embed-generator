@@ -58,11 +58,14 @@ export default function MessageExportImport({ messages, guildId }: Props) {
   const importMutation = useImportSavedMessagesMutation();
 
   function handleImport(e: ChangeEvent<HTMLInputElement>) {
-    if (!e.target.files) return;
+    const input = e.target;
+    if (!input.files) return;
 
-    for (let i = 0; i < e.target.files.length; i++) {
-      const file = e.target.files[i];
+    const files = [...input.files];
+    // Reset, or picking the same file again after a failed import does nothing.
+    input.value = "";
 
+    for (const file of files) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -77,7 +80,16 @@ export default function MessageExportImport({ messages, guildId }: Props) {
                 req: parsed.data,
               },
               {
-                onSuccess: () => {
+                onSuccess: (res) => {
+                  if (!res.success) {
+                    createToast({
+                      title: "Failed to import",
+                      message: res.error.message,
+                      type: "error",
+                    });
+                    return;
+                  }
+
                   queryClient.invalidateQueries({
                     queryKey: ["saved-messages", guildId],
                   });

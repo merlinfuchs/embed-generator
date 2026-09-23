@@ -204,13 +204,14 @@ export default function SideNav() {
           onClick={() => setHidden(true)}
         ></div>
       )}
-      <div
+      <button
+        type="button"
+        aria-label="Toggle navigation"
         className="xl:hidden fixed w-12 h-12 rounded-full bg-azure-500 hover:bg-azure-400 shadow-lg bottom-3 left-3 flex items-center justify-center cursor-pointer z-10 transition-colors"
         onClick={() => setHidden((h) => !h)}
-        role="button"
       >
         <Bars3Icon className="text-white h-7 w-7" />
-      </div>
+      </button>
     </>
   );
 }
@@ -312,14 +313,14 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
       onClickOutside={() => setOpen(false)}
       className="relative"
     >
-      <div
+      <button
+        type="button"
         className={clsx(
-          "relative flex items-center cursor-pointer",
+          "relative flex items-center cursor-pointer w-full text-left",
           collapsed
             ? "group"
             : "bg-ink-800 border border-white/5 hover:border-white/15 transition-colors mx-3 rounded-xl px-2 py-1.5",
         )}
-        role="button"
         onClick={() => setOpen((prev) => !prev)}
       >
         {guild ? (
@@ -356,7 +357,7 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
             <ChevronDownIcon className="text-mist-300 h-8 w-8" />
           </div>
         )}
-      </div>
+      </button>
 
       {open && (
         <div
@@ -367,10 +368,10 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
         >
           {guilds?.success &&
             guilds.data.map((g) => (
-              <div
+              <button
+                type="button"
                 key={g.id}
-                className="py-2 flex space-x-2 items-center rounded-lg px-3 hover:bg-ink-800 cursor-pointer"
-                role="button"
+                className="py-2 flex space-x-2 items-center rounded-lg px-3 hover:bg-ink-800 cursor-pointer w-full text-left"
                 onClick={() => selectGuild(g.id)}
               >
                 <img
@@ -379,11 +380,10 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
                   className="h-7 w-7 rounded-full flex-none"
                 />
                 <div className="text-mist-300 truncate">{g.name}</div>
-              </div>
+              </button>
             ))}
           <a
             className="py-2 flex space-x-2 items-center hover:bg-ink-800 rounded-lg cursor-pointer px-3"
-            role="button"
             href="/invite"
           >
             <PlusCircleIcon className="w-7 h-7 text-mist-300" />

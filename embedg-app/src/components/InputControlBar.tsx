@@ -139,28 +139,37 @@ export default function InputControlBar({ onChange, inputRef }: Props) {
   return (
     <div className="flex space-x-2">
       {marks.map((mark) => (
-        <div
+        <button
           key={mark.key}
+          type="button"
+          aria-label={mark.label}
           className={CONTROL_CLASS}
-          role="button"
           onClick={() => surroundSelection(...mark.args)}
         >
           <div className={mark.className}>{mark.label[0]}</div>
-        </div>
+        </button>
       ))}
       <EditorMentionPicker onMentionInsert={onMentionInsert} guildId={guildId}>
-        <div className={CONTROL_CLASS} role="button">
+        <button
+          type="button"
+          aria-label="Insert mention"
+          className={CONTROL_CLASS}
+        >
           <AtSymbolIcon className="h-5 w-5" />
-        </div>
+        </button>
       </EditorMentionPicker>
       <EmojiPicker
         guildId={guildId}
         onEmojiSelect={onEmojiSelect}
         align="right"
       >
-        <div className={CONTROL_CLASS} role="button">
+        <button
+          type="button"
+          aria-label="Insert emoji"
+          className={CONTROL_CLASS}
+        >
           <FaceSmileIcon className="h-5 w-5" />
-        </div>
+        </button>
       </EmojiPicker>
     </div>
   );

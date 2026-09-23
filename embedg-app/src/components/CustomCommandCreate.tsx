@@ -80,20 +80,20 @@ export default function CustomCommandCreate({
         </div>
         <div className="flex flex-none items-center space-x-4 md:space-x-3">
           {cancelable && (
-            <div
+            <button
+              type="button"
               className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
-              role="button"
               onClick={() => setCreate(false)}
             >
               <Tooltip text="Cancel">
                 <XMarkIcon className="h-5 w-5" />
               </Tooltip>
               <div className="hidden md:block ml-2">Cancel</div>
-            </div>
+            </button>
           )}
-          <div
+          <button
+            type="button"
             className="flex items-center text-white cursor-pointer bg-azure-500 hover:bg-azure-400 rounded-lg px-2 py-1"
-            role="button"
             onClick={create}
           >
             <Tooltip text="Create Custom Command">
@@ -102,7 +102,7 @@ export default function CustomCommandCreate({
             <div className="ml-2">
               Create <span className="hidden md:inline-block">Command</span>
             </div>
-          </div>
+          </button>
         </div>
       </div>
       <div className="space-y-5 mb-5">

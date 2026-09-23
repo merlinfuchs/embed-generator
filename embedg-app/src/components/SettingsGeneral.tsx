@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useSettingsStore } from "../state/settings";
 import CheckBox from "./CheckBox";
+import ConfirmModal from "./ConfirmModal";
 
 export default function SettingsGeneral() {
   const [editHistoryEnabled, setEditHistoryEnabled] = useSettingsStore(
@@ -13,14 +15,11 @@ export default function SettingsGeneral() {
     useShallow((s) => [s.confirmOnExit, s.setConfirmOnExit]),
   );
 
+  const [clearModal, setClearModal] = useState(false);
+
   function clearAll() {
-    const ok = confirm(
-      "Are you sure you want to clear all local data? The message editor and all your app settings will be cleared. Your saved messages, scheduled messages, and custom commands will not be affected.",
-    );
-    if (ok) {
-      localStorage.clear();
-      window.location.reload();
-    }
+    localStorage.clear();
+    window.location.reload();
   }
 
   return (
@@ -82,11 +81,22 @@ export default function SettingsGeneral() {
       <div className="flex justify-end">
         <button
           className="px-3 py-2 rounded-lg text-white border-2 border-red/70 hover:bg-red hover:border-red transition-colors"
-          onClick={clearAll}
+          onClick={() => setClearModal(true)}
         >
           Clear Local Data
         </button>
       </div>
+      {clearModal && (
+        <ConfirmModal
+          title="Are you sure that you want to clear all local data?"
+          subTitle="The message editor and all your app settings will be cleared."
+          onClose={() => setClearModal(false)}
+          onConfirm={clearAll}
+        >
+          Your saved messages, scheduled messages and custom commands are stored
+          on the server and are not affected.
+        </ConfirmModal>
+      )}
     </div>
   );
 }

@@ -44,10 +44,10 @@ export default function SavedMessageSelect({
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
       <div className="px-3 rounded-lg bg-ink-900 relative flex items-center h-10 select-none">
-        <div
+        <button
+          type="button"
           onClick={() => setOpen((prev) => !prev)}
-          role="button"
-          className="flex-auto"
+          className="flex-auto text-left"
         >
           {!guildId ? (
             <div className="text-mist-300">Select server at the top</div>
@@ -67,20 +67,20 @@ export default function SavedMessageSelect({
           ) : (
             <div className="text-mist-300">Select saved message</div>
           )}
-        </div>
+        </button>
         {open && (
           <SelectDropdown>
             {messages?.success && messages.data.length > 0 ? (
               messages.data.map((m) => (
-                <div
+                <button
+                  type="button"
                   key={m.id}
-                  className="py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg cursor-pointer px-3"
-                  role="button"
+                  className="py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg cursor-pointer px-3 w-full text-left"
                   onClick={() => selectMessage(m.id)}
                 >
                   <div></div>
                   <div className="text-mist-300">{m.name}</div>
-                </div>
+                </button>
               ))
             ) : (
               <div className="text-mist-300 p-2">No saved messages</div>

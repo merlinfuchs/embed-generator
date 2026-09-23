@@ -36,9 +36,10 @@ export default function EditorComponentEmojiSelect({ emoji, onChange }: Props) {
             onEmojiSelect={onEmojiSelect}
             align="left"
           >
-            <div
+            <button
+              type="button"
+              aria-label="Select emoji"
               className="h-9 w-9 flex items-center justify-center cursor-pointer text-mist-300 hover:text-white"
-              role="button"
             >
               {emoji ? (
                 emoji.id ? (
@@ -55,7 +56,7 @@ export default function EditorComponentEmojiSelect({ emoji, onChange }: Props) {
               ) : (
                 <FaceSmileIcon className="h-7 w-7" />
               )}
-            </div>
+            </button>
           </EmojiPicker>
           {emoji && (
             <div
