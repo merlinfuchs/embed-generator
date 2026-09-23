@@ -2,6 +2,12 @@ import { create } from "zustand";
 import type { MessageAttachmentWire } from "../api/wire";
 import { immer } from "zustand/middleware/immer";
 
+/** Discord's per message attachment limit. */
+export const MAX_ATTACHMENTS = 10;
+
+/** Discord's per message attachment size limit, before any plan boost. */
+export const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;
+
 export interface MessageAttachment extends MessageAttachmentWire {
   id: number;
   size: number;

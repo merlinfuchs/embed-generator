@@ -4,6 +4,7 @@ import {
   ClipboardIcon,
   PencilSquareIcon,
   TrashIcon,
+  XMarkIcon,
 } from "@heroicons/react/20/solid";
 import { useEffect, useRef, useState } from "react";
 import { AutoAnimate } from "../util/autoAnimate";
@@ -48,8 +49,30 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
     }
   }, [cmd.id, cmd.actions]);
 
+  // Leaving manage mode without saving has to put the fields back, the edits live in local state.
+  // The actions belong to the shared store, so they are re-seeded from the server instead.
+  function cancel() {
+    setName(cmd.name);
+    setDescription(cmd.description);
+    setParameters(cmd.parameters);
+
+    const res = messageActionSetSchema.safeParse(cmd.actions);
+    if (res.success) {
+      useCommandActionsStore.getState().setActionSet(cmd.id, res.data);
+    }
+
+    setManage(false);
+  }
+
   function save() {
-    if (name.length === 0 || description.length === 0) return;
+    if (name.length === 0 || description.length === 0) {
+      createToast({
+        title: "Missing fields",
+        message: "A command needs both a name and a description.",
+        type: "error",
+      });
+      return;
+    }
 
     const actions = useCommandActionsStore.getState().actions[cmd.id];
 
@@ -123,18 +146,30 @@ export default function CustomCommand({ cmd }: { cmd: CustomCommandWire }) {
                   {cmd.name}
                 </div>
               </div>
-              <button
-                type="button"
-                className="flex items-center text-white cursor-pointer bg-azure-500 hover:bg-azure-400 rounded-lg px-2 py-1"
-                onClick={save}
-              >
-                <Tooltip text="Save Command">
-                  <ClipboardIcon className="h-5 w-5" />
-                </Tooltip>
-                <div className="ml-2">
-                  Save <span className="hidden md:inline-block">Changes</span>
-                </div>
-              </button>
+              <div className="flex flex-none items-center space-x-4 md:space-x-3">
+                <button
+                  type="button"
+                  className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
+                  onClick={cancel}
+                >
+                  <Tooltip text="Discard Changes">
+                    <XMarkIcon className="h-5 w-5" />
+                  </Tooltip>
+                  <div className="hidden md:block ml-2">Cancel</div>
+                </button>
+                <button
+                  type="button"
+                  className="flex items-center text-white cursor-pointer bg-azure-500 hover:bg-azure-400 rounded-lg px-2 py-1"
+                  onClick={save}
+                >
+                  <Tooltip text="Save Command">
+                    <ClipboardIcon className="h-5 w-5" />
+                  </Tooltip>
+                  <div className="ml-2">
+                    Save <span className="hidden md:inline-block">Changes</span>
+                  </div>
+                </button>
+              </div>
             </div>
             <div className="space-y-5">
               <EditorInput

@@ -1,12 +1,13 @@
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { SparklesIcon } from "@heroicons/react/24/solid";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AutoAnimate } from "../util/autoAnimate";
 import PremiumFeatures from "./PremiumFeatures";
 import { usePremiumUserEntitlementsQuery } from "../api/queries";
 import { usePremiumEntitlementConsumeMutation } from "../api/mutations";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { useToasts } from "../util/toasts";
+import ConfirmModal from "./ConfirmModal";
 
 interface Props {
   alwaysExpanded?: boolean;
@@ -14,6 +15,7 @@ interface Props {
 
 export default function PremiumSuggest({ alwaysExpanded }: Props) {
   const [collapsed, setCollapsed] = useState(!alwaysExpanded);
+  const [activateModal, setActivateModal] = useState(false);
 
   const { data } = usePremiumUserEntitlementsQuery();
 
@@ -29,13 +31,8 @@ export default function PremiumSuggest({ alwaysExpanded }: Props) {
 
   const createToast = useToasts((s) => s.create);
 
-  const activatePremium = useCallback(() => {
+  function activatePremium() {
     if (!consumableEntitlementId || !guildId) return;
-
-    const confirmed = confirm(
-      `You are about to activate Premium for the server with the id '${guildId}'. Once activated, you can't activate it for another server.`,
-    );
-    if (!confirmed) return;
 
     consumeMutation.mutate(
       {
@@ -52,15 +49,16 @@ export default function PremiumSuggest({ alwaysExpanded }: Props) {
             });
           } else {
             createToast({
-              title: "Failed to update command",
+              title: "Failed to activate premium",
               message: res.error.message,
               type: "error",
             });
           }
+          setActivateModal(false);
         },
       },
     );
-  }, [consumableEntitlementId, guildId]);
+  }
 
   return (
     <AutoAnimate className="relative overflow-hidden p-3 rounded-2xl border border-amber-400/10 bg-[linear-gradient(135deg,#2B2D31_0%,#2F2E2C_65%,#3A3222_100%)] select-none">
@@ -93,7 +91,7 @@ export default function PremiumSuggest({ alwaysExpanded }: Props) {
             {consumableEntitlementId ? (
               <button
                 className="bg-amber-400 px-4 py-2.5 rounded-lg transition-colors hover:bg-amber-300 text-ink-900 font-semibold w-full text-center"
-                onClick={activatePremium}
+                onClick={() => setActivateModal(true)}
               >
                 <div>Activate Premium</div>
               </button>
@@ -109,6 +107,15 @@ export default function PremiumSuggest({ alwaysExpanded }: Props) {
             )}
           </div>
         </div>
+      )}
+      {activateModal && (
+        <ConfirmModal
+          title="Are you sure that you want to activate premium for this server?"
+          subTitle={`Premium will be activated for the server with the id '${guildId}'. Once activated you can't move it to another server.`}
+          pending={consumeMutation.isPending}
+          onClose={() => setActivateModal(false)}
+          onConfirm={activatePremium}
+        />
       )}
     </AutoAnimate>
   );
