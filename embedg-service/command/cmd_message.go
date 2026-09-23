@@ -143,6 +143,29 @@ func (g *CommandHandler) getMessageFromCommand(e *handler.CommandEvent) (*discor
 				Flags:   discord.MessageFlagEphemeral,
 			})
 		}
+
+		// The message is fetched with the bot token, which sees every channel the bot is in, so
+		// the invoking member's own access to that channel has to be checked here. Without this
+		// any member could read a private channel by passing its message link.
+		member := e.Member()
+		if member == nil {
+			return nil, e.CreateMessage(discord.MessageCreate{
+				Content: "This command can only be used in a server.",
+				Flags:   discord.MessageFlagEphemeral,
+			})
+		}
+
+		permissions, err := g.accessManager.ComputeMemberPermissionsForChannel(e.Ctx, member.Member, channelID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute member permissions: %w", err)
+		}
+
+		if !permissions.Has(discord.PermissionViewChannel, discord.PermissionReadMessageHistory) {
+			return nil, e.CreateMessage(discord.MessageCreate{
+				Content: "You don't have access to the channel that message is in.",
+				Flags:   discord.MessageFlagEphemeral,
+			})
+		}
 	} else {
 		var err error
 		messageID, err = snowflake.Parse(messageIDOrURL)

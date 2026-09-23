@@ -122,6 +122,13 @@ func memberPermissions(guild *discord.Guild, roles []discord.Role, channel disco
 
 	if apermissions&discord.PermissionAdministrator == discord.PermissionAdministrator {
 		apermissions |= discord.PermissionsAll
+		return apermissions
+	}
+
+	// Discord voids every permission in a channel the member can't see, so a role with guild level
+	// Manage Webhooks must not keep it in a channel that hides itself from that role.
+	if apermissions&discord.PermissionViewChannel == 0 {
+		return 0
 	}
 
 	return apermissions

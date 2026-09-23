@@ -95,7 +95,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 	commandHandler := command.NewCommandHandler(command.CommandHandlerConfig{
 		DiscordLink:  cfg.Links.Discord,
 		AppPublicURL: cfg.App.PublicURL,
-	}, guildState, embedg.Rest(), embedg, pg, actionParser, webhookManager)
+	}, guildState, accessManager, embedg.Rest(), embedg, pg, actionParser, webhookManager)
 	embedg.Client().AddEventListeners(commandHandler)
 
 	scheduledMessageManager := scheduled_messages.NewScheduledMessageManager(
