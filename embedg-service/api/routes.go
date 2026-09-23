@@ -42,7 +42,6 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	}, env.UserStore, env.SessionManager, env.Rest)
 	app.Get("/api/auth/login", authHandler.HandleAuthRedirect)
 	app.Get("/api/auth/callback", authHandler.HandleAuthCallback)
-	app.Post("/api/auth/exchange", handlers.WithRequestBody(authHandler.HandleAuthExchange))
 	app.Get("/api/auth/logout", authHandler.HandleAuthLogout)
 
 	sessionMiddleware := session.NewSessionMiddleware(env.SessionManager)

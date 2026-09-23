@@ -80,7 +80,7 @@ func (s *SessionManager) AuthCodeURL(state string, extraScopes ...string) string
 }
 
 func (s *SessionManager) GetSession(c *fiber.Ctx) (*Session, error) {
-	token := c.Cookies("session_token", c.Get("Authorization"))
+	token := c.Cookies("session_token")
 	if token == "" {
 		return nil, nil
 	}
