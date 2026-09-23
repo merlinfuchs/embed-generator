@@ -65,6 +65,7 @@ export default function EditorComponentBaseTextDisplay({
           onChange={(v) => onChange({ content: v })}
           className="flex-auto"
           validationPath={`${validationPathPrefix}.content`}
+          controls={true}
         />
       </div>
     </EditorComponentCollapsable>
