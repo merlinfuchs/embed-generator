@@ -19,7 +19,7 @@ SELECT * FROM entitlements;
 SELECT * FROM entitlements WHERE id = $1 AND user_id = $2;
 
 -- name: UpdateEntitlementConsumedGuildID :one
-UPDATE entitlements SET consumed = true, consumed_guild_id = $2 WHERE id = $1 RETURNING *;
+UPDATE entitlements SET consumed = true, consumed_guild_id = $2 WHERE id = $1 AND consumed_guild_id IS NULL RETURNING *;
 
 -- name: UpsertEntitlement :one
 INSERT INTO entitlements (

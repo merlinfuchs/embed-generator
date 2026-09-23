@@ -176,7 +176,7 @@ func (q *Queries) GetEntitlements(ctx context.Context) ([]Entitlement, error) {
 }
 
 const updateEntitlementConsumedGuildID = `-- name: UpdateEntitlementConsumedGuildID :one
-UPDATE entitlements SET consumed = true, consumed_guild_id = $2 WHERE id = $1 RETURNING id, user_id, guild_id, updated_at, deleted, sku_id, starts_at, ends_at, consumed, consumed_guild_id
+UPDATE entitlements SET consumed = true, consumed_guild_id = $2 WHERE id = $1 AND consumed_guild_id IS NULL RETURNING id, user_id, guild_id, updated_at, deleted, sku_id, starts_at, ends_at, consumed, consumed_guild_id
 `
 
 type UpdateEntitlementConsumedGuildIDParams struct {

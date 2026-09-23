@@ -11,6 +11,15 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const deleteExpiredSessions = `-- name: DeleteExpiredSessions :exec
+DELETE FROM sessions WHERE expires_at < now()
+`
+
+func (q *Queries) DeleteExpiredSessions(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, deleteExpiredSessions)
+	return err
+}
+
 const deleteSession = `-- name: DeleteSession :exec
 DELETE FROM sessions WHERE token_hash = $1
 `
@@ -21,7 +30,7 @@ func (q *Queries) DeleteSession(ctx context.Context, tokenHash string) error {
 }
 
 const getSession = `-- name: GetSession :one
-SELECT token_hash, user_id, guild_ids, access_token, created_at, expires_at, refresh_token, token_expires_at, scopes FROM sessions WHERE token_hash = $1
+SELECT token_hash, user_id, guild_ids, access_token, created_at, expires_at, refresh_token, token_expires_at, scopes FROM sessions WHERE token_hash = $1 AND expires_at > now()
 `
 
 func (q *Queries) GetSession(ctx context.Context, tokenHash string) (Session, error) {

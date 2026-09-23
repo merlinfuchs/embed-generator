@@ -59,6 +59,10 @@ func (c *Client) DeleteSession(ctx context.Context, tokenHash string) error {
 	return err
 }
 
+func (c *Client) DeleteExpiredSessions(ctx context.Context) error {
+	return c.Q.DeleteExpiredSessions(ctx)
+}
+
 func (c *Client) GetSessionsForUser(ctx context.Context, userID string) ([]model.Session, error) {
 	rows, err := c.Q.GetSessionsForUser(ctx, userID)
 	if err != nil {

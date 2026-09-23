@@ -12,7 +12,10 @@ INSERT INTO sessions (
 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;
 
 -- name: GetSession :one
-SELECT * FROM sessions WHERE token_hash = $1;
+SELECT * FROM sessions WHERE token_hash = $1 AND expires_at > now();
+
+-- name: DeleteExpiredSessions :exec
+DELETE FROM sessions WHERE expires_at < now();
 
 -- name: UpdateSessionTokens :exec
 UPDATE sessions SET access_token = $2, refresh_token = $3, token_expires_at = $4 WHERE token_hash = $1;

@@ -229,7 +229,10 @@ func (h *AuthHandler) setOauthStateCookie(c *fiber.Ctx) string {
 		Name:     "oauth_state",
 		Value:    state,
 		HTTPOnly: true,
-		Secure:   h.config.InsecureCookies,
+		Secure:   !h.config.InsecureCookies,
+		// Lax, not strict: the callback is a cross site navigation from Discord, and a strict
+		// cookie wouldn't be sent with it.
+		SameSite: "lax",
 	})
 	return state
 }
@@ -269,6 +272,7 @@ func (h *AuthHandler) setOauthRedirectCookie(c *fiber.Ctx) {
 			Value:    redirectURL,
 			HTTPOnly: true,
 			Secure:   !h.config.InsecureCookies,
+			SameSite: "lax",
 		})
 	} else {
 		c.ClearCookie("oauth_redirect")

@@ -160,6 +160,10 @@ func (h *PremiumHandler) HandleConsumeEntitlement(c *fiber.Ctx, req wire.Consume
 		Valid: true,
 	})
 	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			// A concurrent request consumed it between the read above and this write.
+			return handlers.BadRequest("entitlement_already_consumed", "Entitlement already consumed")
+		}
 		return fmt.Errorf("failed to update entitlement: %w", err)
 	}
 
