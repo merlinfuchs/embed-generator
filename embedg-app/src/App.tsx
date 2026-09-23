@@ -6,8 +6,6 @@ import RequestLoadingIndicator from "./components/RequestLoadingIndicator";
 import ClearView from "./views/editor/clear";
 import ShareView from "./views/editor/share";
 import EditorSideNav from "./components/SideNav";
-import ActivityLoadingScreen from "./components/ActivityLoadingScreen";
-import "./util/activity";
 import UpsellPopup from "./components/UpsellPopup";
 import ConfirmOnExit from "./components/ConfirmOnExit";
 import LoginErrorHandler from "./components/LoginErrorHandler";
@@ -42,7 +40,6 @@ function App() {
   return (
     <div className="h-[100dvh] w-[100dvw] overflow-y-auto">
       <RequestLoadingIndicator />
-      <ActivityLoadingScreen />
       <UpsellPopup />
       <ConfirmOnExit />
       <LoginErrorHandler />
