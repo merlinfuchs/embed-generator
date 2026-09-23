@@ -33,6 +33,8 @@ function UploadButton({ onChange }: Props) {
 
   function onFileUpload(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    // Reset, or picking the same file again after a failure does nothing.
+    e.target.value = "";
     if (!file) return;
 
     uploadMutation.mutate(

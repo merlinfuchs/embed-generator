@@ -8,6 +8,7 @@ import {
   ClockIcon,
   PencilSquareIcon,
   TrashIcon,
+  XMarkIcon,
 } from "@heroicons/react/20/solid";
 import { useMemo, useState } from "react";
 import { AutoAnimate } from "../util/autoAnimate";
@@ -59,8 +60,21 @@ export default function ScheduledMessage({
   const [channelId, setChannelId] = useState<string | null>(msg.channel_id);
   const [threadName, setThreadName] = useState<string | null>(msg.thread_name);
 
-  // A thread name belongs to the channel it was typed for. This used to be an effect, which also
-  // ran on mount and so dropped the thread name already stored on a forum channel schedule.
+  // Leaving manage mode without saving has to put every field back, the edits live in local state.
+  function cancel() {
+    setEnabled(msg.enabled);
+    setName(msg.name);
+    setOnlyOnce(msg.only_once);
+    setStartAt(msg.start_at);
+    setEndAt(msg.end_at || undefined);
+    setCronExpression(msg.cron_expression);
+    setSavedMessageId(msg.saved_message_id);
+    setChannelId(msg.channel_id);
+    setThreadName(msg.thread_name);
+    setManage(false);
+  }
+
+  // A thread name belongs to the channel it was typed for.
   function selectChannel(id: string | null) {
     setChannelId(id);
     setThreadName(null);
@@ -175,18 +189,30 @@ export default function ScheduledMessage({
                 )}
                 <div className="text-white truncate">{msg.name}</div>
               </div>
-              <button
-                type="button"
-                className="flex items-center text-white cursor-pointer bg-azure-500 hover:bg-azure-400 rounded-lg px-2 py-1"
-                onClick={save}
-              >
-                <Tooltip text="Save Scheduled Message">
-                  <ClipboardIcon className="h-5 w-5" />
-                </Tooltip>
-                <div className="ml-2">
-                  Save <span className="hidden md:inline-block">Changes</span>
-                </div>
-              </button>
+              <div className="flex flex-none items-center space-x-4 md:space-x-3">
+                <button
+                  type="button"
+                  className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
+                  onClick={cancel}
+                >
+                  <Tooltip text="Discard Changes">
+                    <XMarkIcon className="h-5 w-5" />
+                  </Tooltip>
+                  <div className="hidden md:block ml-2">Cancel</div>
+                </button>
+                <button
+                  type="button"
+                  className="flex items-center text-white cursor-pointer bg-azure-500 hover:bg-azure-400 rounded-lg px-2 py-1"
+                  onClick={save}
+                >
+                  <Tooltip text="Save Scheduled Message">
+                    <ClipboardIcon className="h-5 w-5" />
+                  </Tooltip>
+                  <div className="ml-2">
+                    Save <span className="hidden md:inline-block">Changes</span>
+                  </div>
+                </button>
+              </div>
             </div>
             <div className="space-y-5">
               <div className="flex space-x-3">
@@ -336,7 +362,7 @@ export default function ScheduledMessage({
             <div className="flex-auto truncate">
               <div className="flex items-center space-x-2 truncate text-lg mb-1">
                 <div className="text-white truncate flex space-x-2 items-center">
-                  {onlyOnce ? (
+                  {msg.only_once ? (
                     <CalendarDaysIcon className="text-mist-500 h-6 w-6" />
                   ) : (
                     <ClockIcon className="text-mist-500 h-6 w-6" />

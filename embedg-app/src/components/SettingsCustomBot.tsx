@@ -14,6 +14,7 @@ import {
   useCustomBotUpdatePresenceMutation,
 } from "../api/mutations";
 import { useToasts } from "../util/toasts";
+import ConfirmModal from "./ConfirmModal";
 import PremiumSuggest from "./PremiumSuggest";
 import clsx from "clsx";
 
@@ -25,6 +26,7 @@ export default function SettingsCustomBot() {
   const customBotAllowed = usePremiumGuildFeatures()?.custom_bot;
 
   const [confiure, setConfigure] = useState(false);
+  const [disableModal, setDisableModal] = useState(false);
 
   const [token, setToken] = useState("");
 
@@ -85,6 +87,7 @@ export default function SettingsCustomBot() {
               type: "error",
             });
           }
+          setDisableModal(false);
         },
       },
     );
@@ -256,7 +259,8 @@ export default function SettingsCustomBot() {
                 <>
                   <XCircleIcon className="h-6 w-6 text-red" />
                   <div>
-                    The bot has handled its first interaction and is ready to go
+                    The bot hasn't handled an interaction yet, so it isn't
+                    confirmed working
                   </div>
                 </>
               )}
@@ -338,7 +342,7 @@ export default function SettingsCustomBot() {
           <div className="flex justify-end space-x-3">
             <button
               className="px-3 py-2 rounded-lg border-2 border-red/70 hover:bg-red hover:border-red transition-colors cursor-pointer text-white"
-              onClick={disable}
+              onClick={() => setDisableModal(true)}
             >
               Disable
             </button>
@@ -350,6 +354,15 @@ export default function SettingsCustomBot() {
             </button>
           </div>
         </div>
+      )}
+      {disableModal && (
+        <ConfirmModal
+          title="Are you sure that you want to disable the custom bot?"
+          subTitle="Your commands and components will stop working until you set a bot up again."
+          pending={disableMutation.isPending}
+          onClose={() => setDisableModal(false)}
+          onConfirm={disable}
+        />
       )}
     </div>
   );
