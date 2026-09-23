@@ -151,3 +151,45 @@ test("a components v2 message imports with its tree intact", () => {
   expect(container.type).toBe(17);
   expect(container.components.map((c) => c.type)).toEqual([10, 9, 14]);
 });
+
+test("buttons nested in a container get an action set", () => {
+  const message = parseMessageWithAction({
+    content: "",
+    flags: 1 << 15,
+    components: [
+      {
+        type: 17,
+        components: [
+          {
+            type: 9,
+            components: [{ type: 10, content: "Section" }],
+            accessory: { type: 2, style: 1, label: "Accessory" },
+          },
+          {
+            type: 1,
+            components: [
+              { type: 2, style: 1, label: "Nested" },
+              {
+                type: 3,
+                options: [{ label: "Option", value: "a" }],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+
+  // One for the accessory, one for the button, one for the select option.
+  expect(Object.keys(message.actions)).toHaveLength(3);
+});
+
+test("a container with no components imports", () => {
+  const message = parseMessageWithAction({
+    content: "",
+    flags: 1 << 15,
+    components: [{ type: 17, components: [] }],
+  });
+
+  expect(message.components).toHaveLength(1);
+});

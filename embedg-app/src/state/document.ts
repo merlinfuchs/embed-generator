@@ -628,7 +628,7 @@ export const useNodeIndex = (id: NodeId) =>
       const slot = parent && slotOfChild(parent, id);
       const ids = slot ? childIds(parent, slot) : [];
 
-      return { index: ids.indexOf(id), count: ids.length };
+      return { index: ids.indexOf(id), count: ids.length, slot };
     }),
   );
 
@@ -637,7 +637,7 @@ export const useNodeIndex = (id: NodeId) =>
  * slot and once `max` siblings exist.
  */
 export function useNodeActions(id: NodeId) {
-  const { index, count } = useNodeIndex(id);
+  const { index, count, slot } = useNodeIndex(id);
   const max = useSlotLimit(id);
   const { move, duplicate, remove } = useDocumentStoreApi().getState();
 
@@ -645,7 +645,9 @@ export function useNodeActions(id: NodeId) {
     moveUp: index > 0 ? () => move(id, -1) : undefined,
     moveDown: index < count - 1 ? () => move(id, 1) : undefined,
     duplicate: count < max ? () => duplicate(id) : undefined,
-    remove: () => remove(id),
+    // An accessory slot always holds exactly one node, so there is no valid state to remove it
+    // into: the section is invalid without one and the type dropdown can't put one back.
+    remove: slot === "accessory" ? undefined : () => remove(id),
   };
 }
 
