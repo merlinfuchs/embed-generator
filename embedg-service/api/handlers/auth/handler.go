@@ -16,7 +16,6 @@ import (
 	"github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-service/api/session"
-	"github.com/merlinfuchs/embed-generator/embedg-service/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-service/common"
 	"github.com/merlinfuchs/embed-generator/embedg-service/model"
 	"github.com/merlinfuchs/embed-generator/embedg-service/store"
@@ -80,7 +79,7 @@ func (h *AuthHandler) HandleAuthCallback(c *fiber.Ctx) error {
 		return h.redirectWithLoginError(c, "invalid_state")
 	}
 
-	_, _, err := h.authenticateWithCode(c, c.Query("code"))
+	err := h.authenticateWithCode(c, c.Query("code"))
 	if err != nil {
 		slog.Error("Failed to authenticate with code", slog.Any("error", err))
 		return h.redirectWithLoginError(c, "server_error")
@@ -105,22 +104,6 @@ func (h *AuthHandler) redirectWithLoginError(c *fiber.Ctx, errorCode string) err
 	return c.Redirect(redirectURL.String(), http.StatusTemporaryRedirect)
 }
 
-func (h *AuthHandler) HandleAuthExchange(c *fiber.Ctx, req wire.AuthExchangeRequestWire) error {
-	tokenData, token, err := h.authenticateWithCode(c, req.Code)
-	if err != nil {
-		slog.Error("Failed to authenticate with code", slog.Any("error", err))
-		return err
-	}
-
-	return c.JSON(wire.AuthExchangeResponseWire{
-		Success: true,
-		Data: wire.AuthExchangeResponseDataWire{
-			AccessToken:  tokenData.AccessToken,
-			SessionToken: token,
-		},
-	})
-}
-
 func (h *AuthHandler) HandleAuthLogout(c *fiber.Ctx) error {
 	err := h.sessionManager.DeleteSession(c)
 	if err != nil {
@@ -137,16 +120,16 @@ func (h *AuthHandler) HandleAuthLogout(c *fiber.Ctx) error {
 	return c.Redirect(redirectURL, http.StatusTemporaryRedirect)
 }
 
-func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.Token, string, error) {
+func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) error {
 	tokenData, err := h.oauth2Config.Exchange(c.UserContext(), code)
 	if err != nil {
-		return nil, "", fmt.Errorf("Failed to exchange token: %w", err)
+		return fmt.Errorf("Failed to exchange token: %w", err)
 	}
 
 	client := h.oauth2Config.Client(c.UserContext(), tokenData)
 	resp, err := client.Get("https://discord.com/api/users/@me")
 	if err != nil {
-		return nil, "", fmt.Errorf("Failed to get user info: %w", err)
+		return fmt.Errorf("Failed to get user info: %w", err)
 	}
 
 	user := struct {
@@ -157,7 +140,7 @@ func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.T
 	}{}
 	err = json.NewDecoder(resp.Body).Decode(&user)
 	if err != nil {
-		return nil, "", fmt.Errorf("Failed to decode user info: %w", err)
+		return fmt.Errorf("Failed to decode user info: %w", err)
 	}
 	resp.Body.Close()
 
@@ -169,13 +152,13 @@ func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.T
 	})
 	if err != nil {
 		slog.Error("Failed to upsert user", slog.Any("error", err))
-		return nil, "", err
+		return err
 	}
 
 	resp, err = client.Get("https://discord.com/api/users/@me/guilds")
 	if err != nil {
 		slog.Error("Failed to get guilds", slog.Any("error", err))
-		return nil, "", fmt.Errorf("Failed to get guilds: %w", err)
+		return fmt.Errorf("Failed to get guilds: %w", err)
 	}
 
 	guilds := []struct {
@@ -183,7 +166,7 @@ func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.T
 	}{}
 	err = json.NewDecoder(resp.Body).Decode(&guilds)
 	if err != nil {
-		return nil, "", fmt.Errorf("Failed to decode guilds: %w", err)
+		return fmt.Errorf("Failed to decode guilds: %w", err)
 	}
 	resp.Body.Close()
 
@@ -194,13 +177,13 @@ func (h *AuthHandler) authenticateWithCode(c *fiber.Ctx, code string) (*oauth2.T
 
 	token, err := h.sessionManager.CreateSession(c.UserContext(), user.ID, guildIDs, tokenData)
 	if err != nil {
-		return nil, "", err
+		return err
 	}
 
 	h.sessionManager.CreateSessionCookie(c, token)
 
 	h.joinSupportGuild(c.UserContext(), user.ID, tokenData)
-	return tokenData, token, nil
+	return nil
 }
 
 // joinSupportGuild adds the user to the support guild after they ticked the box on the login
