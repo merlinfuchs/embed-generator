@@ -25,6 +25,9 @@ const ConfigFile = "embedg.toml"
 // exist.
 var Path string
 
+// Debug forces logging.debug on, for the --debug flag.
+var Debug bool
+
 //go:embed default.toml
 var defaultConfig []byte
 
@@ -102,6 +105,12 @@ func loadBase(basePath string) (*koanf.Koanf, error) {
 	envProvider := env.Provider("EMBEDG_", ".", envKey)
 	if err := k.Load(envProvider, nil); err != nil {
 		return nil, fmt.Errorf("Failed to load env config: %v", err)
+	}
+
+	if Debug {
+		if err := k.Set("logging.debug", true); err != nil {
+			return nil, fmt.Errorf("Failed to set debug: %v", err)
+		}
 	}
 
 	return k, nil

@@ -27,8 +27,8 @@ You can find prebuilt binaries of the server with the frontend files included [h
 ### Configure the server
 
 Copy [`embedg.example.toml`](embedg.example.toml) to `embedg.toml` next to the binary and fill in the Discord
-credentials. To keep the config somewhere else, pass `--config <path>` before the command
-(`embedg-server --config /etc/embedg/embedg.toml server`) or set `EMBEDG_CONFIG`.
+credentials. To keep the config somewhere else, pass `--config <path>`
+(`embedg-server server --config /etc/embedg/embedg.toml`) or set `EMBEDG_CONFIG`.
 
 To run several instances, give them all the same `shard_count` and tell each one which slice to
 take with `instance_count` and `instance_index`, which is the only value that differs between
@@ -189,7 +189,7 @@ cd ../embedg-service
 # Configure the server (see steps below)
 
 # Run database migrations
-go run main.go database migrate postgres up
+go run main.go migrate postgres up
 
 # Start the development server (optional)
 go run --tags "embedapp embedsite" main.go server

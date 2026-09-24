@@ -4,148 +4,99 @@ import (
 	"fmt"
 
 	"github.com/merlinfuchs/embed-generator/embedg-service/entry/database"
-	"github.com/urfave/cli/v2"
+	"github.com/spf13/cobra"
 )
 
-var databases = []string{"postgres", "clickhouse"}
+var databases = []string{"postgres"}
 
-var databaseCMD cli.Command
+func migrateCmd() *cobra.Command {
+	root := &cobra.Command{
+		Use:   "migrate [store] [operation]",
+		Short: "Migrate given data store",
+	}
 
-func init() {
-	migrateCommands := []*cli.Command{}
-	backupCommands := []*cli.Command{}
 	for _, db := range databases {
-		migrateCommands = append(migrateCommands, &cli.Command{
-			Name:  db,
-			Usage: fmt.Sprintf("Run migrations against the %s database.", db),
-			Args:  true,
-			Subcommands: []*cli.Command{
-				{
-					Name:  "up",
-					Usage: "Migrate the database to the latest version.",
-					Action: func(c *cli.Context) error {
-						return database.Migrate(c.Context, db, "up", database.MigrateOpts{})
-					},
-				},
-				{
-					Name:  "down",
-					Usage: "Rollback the database to the earliest version.",
-					Flags: []cli.Flag{
-						&cli.BoolFlag{
-							Name:  "danger",
-							Usage: "Confirm that you want to run this command.",
-						},
-					},
-					Action: func(c *cli.Context) error {
-						if !c.Bool("danger") {
-							return fmt.Errorf("this command is dangerous, use --danger flag to confirm")
-						}
+		store := &cobra.Command{
+			Use:   db + " [operation]",
+			Short: "Migrate " + db + " with the given operation",
+		}
+		store.PersistentFlags().Bool("danger", false, "Pass --danger to acknowledge this is potentially dangerous.")
 
-						return database.Migrate(c.Context, db, "down", database.MigrateOpts{})
-					},
-				},
-				{
-					Name:  "version",
-					Usage: "Print the current database version.",
-					Action: func(c *cli.Context) error {
-						return database.Migrate(c.Context, db, "version", database.MigrateOpts{})
-					},
-				},
-				{
-					Name:  "list",
-					Usage: "List all available database migrations.",
-					Action: func(c *cli.Context) error {
-						return database.Migrate(c.Context, db, "list", database.MigrateOpts{})
-					},
-				},
-				{
-					Name:  "force",
-					Usage: "Force a specific migration version.",
-					Flags: []cli.Flag{
-						&cli.IntFlag{
-							Name:  "version",
-							Usage: "The target version to force to.",
-						},
-						&cli.BoolFlag{
-							Name:  "danger",
-							Usage: "Confirm that you want to run this command.",
-						},
-					},
-					Action: func(c *cli.Context) error {
-						if !c.Bool("danger") {
-							return fmt.Errorf("this command is dangerous, use --danger flag to confirm")
-						}
+		migrate := func(operation string, dangerous bool, withVersion bool) func(*cobra.Command, []string) error {
+			return func(cmd *cobra.Command, args []string) error {
+				if dangerous {
+					if danger, _ := cmd.Flags().GetBool("danger"); !danger {
+						return fmt.Errorf("this command is dangerous, use --danger flag to confirm")
+					}
+				}
 
-						return database.Migrate(c.Context, db, "force", database.MigrateOpts{
-							TargetVersion: c.Int("version"),
-						})
-					},
-				},
-				{
-					Name:  "to",
-					Usage: "Migrate the database to a specific version.",
-					Flags: []cli.Flag{
-						&cli.IntFlag{
-							Name:  "version",
-							Usage: "The target version to migrate to.",
-						},
-						&cli.BoolFlag{
-							Name:  "danger",
-							Usage: "Confirm that you want to run this command.",
-						},
-					},
-					Action: func(c *cli.Context) error {
-						if !c.Bool("danger") {
-							return fmt.Errorf("this command is dangerous, use --danger flag to confirm")
-						}
+				opts := database.MigrateOpts{}
+				if withVersion {
+					opts.TargetVersion, _ = cmd.Flags().GetInt("version")
+				}
+				return database.Migrate(cmd.Context(), db, operation, opts)
+			}
+		}
 
-						return database.Migrate(c.Context, db, "to", database.MigrateOpts{
-							TargetVersion: c.Int("version"),
-						})
-					},
-				},
-			},
-		})
+		force := &cobra.Command{
+			Use:   "force",
+			Short: "Forces the migration state to the given version",
+			RunE:  migrate("force", true, true),
+		}
+		force.Flags().Int("version", 0, "Version to set the state to")
+		force.MarkFlagRequired("version")
 
-		backupCommands = append(backupCommands, &cli.Command{
-			Name:  db,
-			Usage: fmt.Sprintf("Backup the %s database.", db),
-			Subcommands: []*cli.Command{
-				{
-					Name:  "create",
-					Usage: "Create a backup of the database.",
-					Flags: []cli.Flag{
-						&cli.StringFlag{
-							Name:     "name",
-							Usage:    "The name of the backup.",
-							Required: true,
-						},
-					},
-					Action: func(c *cli.Context) error {
-						return database.Backup(c.Context, db, database.BackupOpts{
-							Operation: "create",
-							Name:      c.String("name"),
-						})
-					},
-				},
-			},
-		})
+		to := &cobra.Command{
+			Use:   "to",
+			Short: "Migrates to the given version (up or down)",
+			RunE:  migrate("to", true, true),
+		}
+		to.Flags().Int("version", 0, "Version to migrate to")
+		to.MarkFlagRequired("version")
+
+		store.AddCommand(
+			&cobra.Command{Use: "up", Short: "Migrates the store to the latest version", RunE: migrate("up", false, false)},
+			&cobra.Command{Use: "down", Short: "Migrates the store to the earliest version", RunE: migrate("down", true, false)},
+			&cobra.Command{Use: "version", Short: "Prints the current version and \"dirty\" state", RunE: migrate("version", false, false)},
+			&cobra.Command{Use: "list", Short: "Lists the migrations known to the application", RunE: migrate("list", false, false)},
+			force,
+			to,
+		)
+		root.AddCommand(store)
 	}
 
-	databaseCMD = cli.Command{
-		Name:  "database",
-		Usage: "Manage and migrate databases used by Embed Generator.",
-		Subcommands: []*cli.Command{
-			{
-				Name:        "migrate",
-				Description: "Run database migrations.",
-				Subcommands: migrateCommands,
-			},
-			{
-				Name:        "backup",
-				Description: "Backup the database.",
-				Subcommands: backupCommands,
-			},
-		},
+	return root
+}
+
+func backupCmd() *cobra.Command {
+	root := &cobra.Command{
+		Use:   "backup [store] [operation]",
+		Short: "Backup given data store",
 	}
+
+	for _, db := range databases {
+		store := &cobra.Command{
+			Use:   db + " [operation]",
+			Short: "Backup " + db + " with the given operation",
+		}
+
+		create := &cobra.Command{
+			Use:   "create",
+			Short: "Create a backup of the store",
+			RunE: func(cmd *cobra.Command, args []string) error {
+				name, _ := cmd.Flags().GetString("name")
+				return database.Backup(cmd.Context(), db, database.BackupOpts{
+					Operation: "create",
+					Name:      name,
+				})
+			},
+		}
+		create.Flags().String("name", "", "Name of the backup")
+		create.MarkFlagRequired("name")
+
+		store.AddCommand(create)
+		root.AddCommand(store)
+	}
+
+	return root
 }

@@ -7,8 +7,7 @@ get to it.
 ## Config
 
 The config is TOML now. It's read from `embedg.toml` in the working directory, or from the path passed with
-`--config` (or `EMBEDG_CONFIG`). The flag goes before the command now: `embedg-server --config
-/etc/embedg/embedg.toml server`. [`embedg.example.toml`](embedg.example.toml) has every section.
+`--config` (or `EMBEDG_CONFIG`). [`embedg.example.toml`](embedg.example.toml) has every section.
 
 Until you convert, the server falls back to `config.yaml` when there is no `embedg.toml`, or reads the YAML
 file passed with `--config`. It maps the old keys below to their new names and logs a warning on startup.
@@ -92,20 +91,9 @@ If you copied the old `docker-compose.yaml`, switch the volume to `./embedg.toml
 you've converted. Its `EMBEDG_POSTGRES__DB` never matched a key, so drop it or use
 `EMBEDG_DATABASE__POSTGRES__DB_NAME`.
 
-## Binary and CLI
+## CLI
 
-The binary is still `embedg-server`, but migrations moved under `database`. If you run the binary yourself
-(systemd unit or similar), update the migrate command:
-
-```sh
-# before
-./embedg-server migrate postgres up
-
-# after
-./embedg-server database migrate postgres up
-```
-
-The Docker image runs both on start.
+The commands are unchanged apart from two removals: `backup postgres restore` and `admin impersonate`.
 
 ## Database
 

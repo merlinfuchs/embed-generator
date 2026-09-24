@@ -34,4 +34,4 @@ RUN apt-get update
 RUN apt-get install -y ca-certificates
 
 EXPOSE 8080
-CMD ./embedg-server database migrate postgres up; ./embedg-server server
+CMD ./embedg-server migrate postgres up; ./embedg-server server

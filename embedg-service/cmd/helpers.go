@@ -16,18 +16,13 @@ type env struct {
 	cfg  *config.RootConfig
 }
 
-func setupEnv(ctx context.Context, debug bool) (*env, error) {
+func setupEnv(ctx context.Context) (*env, error) {
 	cfg, err := config.LoadConfig[*config.RootConfig]()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load config: %w", err)
 	}
 
-	loggingConfig := logging.LoggerConfig(cfg.Logging)
-	if debug {
-		loggingConfig.Debug = true
-	}
-
-	logging.SetupLogger(loggingConfig)
+	logging.SetupLogger(logging.LoggerConfig(cfg.Logging))
 
 	pg, err := postgres.New(ctx, postgres.ClientConfig(cfg.Database.Postgres))
 	if err != nil {

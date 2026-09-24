@@ -6,43 +6,39 @@ import (
 	"syscall"
 
 	"github.com/merlinfuchs/embed-generator/embedg-service/entry/admin"
-	"github.com/urfave/cli/v2"
+	"github.com/spf13/cobra"
 )
 
-var adminCMD = cli.Command{
-	Name:  "admin",
-	Usage: "Manage admin tasks.",
-	Flags: []cli.Flag{
-		&cli.BoolFlag{
-			Name:  "debug",
-			Usage: "Enable debug logging.",
-		},
-	},
-	Subcommands: []*cli.Command{
-		{
-			Name:  "commands",
-			Usage: "Manage commands.",
-			Subcommands: []*cli.Command{
-				{
-					Name:  "sync",
-					Usage: "Sync commands.",
-					Action: func(c *cli.Context) error {
-						ctx, cancel := signal.NotifyContext(c.Context, syscall.SIGINT, syscall.SIGTERM)
-						defer cancel()
+func adminCmd() *cobra.Command {
+	root := &cobra.Command{
+		Use:   "admin",
+		Short: "Admin commands used for debugging and administration",
+	}
 
-						env, err := setupEnv(ctx, c.Bool("debug"))
-						if err != nil {
-							return fmt.Errorf("failed to setup environment: %w", err)
-						}
+	commands := &cobra.Command{
+		Use:   "commands",
+		Short: "Manage commands",
+	}
+	commands.AddCommand(&cobra.Command{
+		Use:   "sync",
+		Short: "Sync commands",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx, cancel := signal.NotifyContext(cmd.Context(), syscall.SIGINT, syscall.SIGTERM)
+			defer cancel()
 
-						err = admin.SyncCommands(ctx, env.pg, env.cfg)
-						if err != nil {
-							return fmt.Errorf("failed to delete gateway stream: %w", err)
-						}
-						return nil
-					},
-				},
-			},
+			env, err := setupEnv(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to setup environment: %w", err)
+			}
+
+			err = admin.SyncCommands(ctx, env.pg, env.cfg)
+			if err != nil {
+				return fmt.Errorf("failed to sync commands: %w", err)
+			}
+			return nil
 		},
-	},
+	})
+
+	root.AddCommand(commands)
+	return root
 }
