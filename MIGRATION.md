@@ -91,10 +91,6 @@ If you copied the old `docker-compose.yaml`, switch the volume to `./embedg.toml
 you've converted. Its `EMBEDG_POSTGRES__DB` never matched a key, so drop it or use
 `EMBEDG_DATABASE__POSTGRES__DB_NAME`.
 
-## CLI
-
-The commands are unchanged apart from two removals: `backup postgres restore` and `admin impersonate`.
-
 ## Database
 
 Migrations 001 to 018 are unchanged. v0.7 adds 019 to 022: a `guilds` table, OAuth fields on `sessions`, a
