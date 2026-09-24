@@ -145,15 +145,8 @@ You can also set the config values using environment variables, with `__` betwee
 
 ### Migrating from older versions
 
-Releases before this one ran the `embedg-server` binary on a `config.yaml`. The database schema is unchanged, so
-migrating is a config rewrite:
-
-- The config file is TOML now and is called `embedg.toml`.
-- Postgres and S3 moved under `database`, so `postgres.dbname` becomes `database.postgres.db_name`.
-- `log.use_json` is gone, `logging.debug` is what's left.
-- Environment variables keep the `EMBEDG_` prefix and the `__` separator, but follow the new sections.
-- Add `discord.shard_count`.
-- Run `embedg-service database migrate postgres up` once. Existing rows are kept, sessions are not: everyone has to log in again.
+Upgrading from v0.6 or older (`embedg-server` with a `config.yaml`) needs a config rewrite. See
+[MIGRATION.md](MIGRATION.md).
 
 ### Using Docker (docker-compose)
 
@@ -278,7 +271,7 @@ yourself, create a `postgres` user and an `embedg` database.
 
 #### Build the server (backend)
 
-Install Go `>=1.21` from [go.dev](https://go.dev/doc/install).
+Install Go `>=1.25` from [go.dev](https://go.dev/doc/install).
 
 ```sh
 # Switch to the backend directory
