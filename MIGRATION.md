@@ -4,6 +4,19 @@ v0.7 rewrites the server. The database carries over and an existing `config.yaml
 setups upgrade without changes. The YAML config is deprecated though, convert it to `embedg.toml` when you
 get to it.
 
+## Upgrading
+
+With Docker, pull the new image and restart. It runs the migrations on start.
+
+With the binary, replace it and run the migrations before starting it, as with earlier releases:
+
+```sh
+./embedg-server migrate postgres up
+./embedg-server server
+```
+
+Everyone has to log in again afterwards, see [Database](#database).
+
 ## Config
 
 The config is TOML now. It's read from `embedg.toml` in the working directory, or from the path passed with

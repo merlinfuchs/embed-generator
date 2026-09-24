@@ -110,7 +110,7 @@ func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 
 func verifyInteractionSignaure(c *fiber.Ctx, publicKey string) bool {
 	key, err := hex.DecodeString(publicKey)
-	if err != nil {
+	if err != nil || len(key) != ed25519.PublicKeySize {
 		return false
 	}
 

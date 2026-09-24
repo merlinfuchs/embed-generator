@@ -1,7 +1,7 @@
 [discord]
 client_id = ""
 client_secret = ""
-public_key = ""
+public_key = "" # only needed for an HTTP interactions endpoint (optional)
 token = ""
 
 # 0 asks Discord how many shards this bot needs and how many may identify at once, which is what

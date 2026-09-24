@@ -11,7 +11,6 @@ const legacyYAML = `
 discord:
   client_id: "123"
   client_secret: "secret"
-  public_key: "key"
   token: "token"
 postgres:
   host: "db.internal"

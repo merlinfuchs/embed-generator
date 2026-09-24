@@ -51,7 +51,9 @@ type DiscordConfig struct {
 	Token        string `toml:"token" validate:"required"`
 	ClientID     string `toml:"client_id" validate:"required"`
 	ClientSecret string `toml:"client_secret" validate:"required"`
-	PublicKey    string `toml:"public_key" validate:"required"`
+	// PublicKey verifies interactions sent to the HTTP interactions endpoint. Unset rejects them all,
+	// which is fine when interactions arrive over the gateway.
+	PublicKey string `toml:"public_key"`
 	// SupportGuildID is the guild users are added to when they opt into joining the support
 	// server while logging in. Unset skips the join.
 	SupportGuildID common.ID `toml:"support_guild_id"`
