@@ -28,7 +28,7 @@ You can find prebuilt binaries of the server with the frontend files included [h
 
 Copy [`embedg.example.toml`](embedg.example.toml) to `embedg.toml` next to the binary and fill in the Discord
 credentials. To keep the config somewhere else, pass `--config <path>` before the command
-(`embedg-service --config /etc/embedg/embedg.toml server`) or set `EMBEDG_CONFIG`.
+(`embedg-server --config /etc/embedg/embedg.toml server`) or set `EMBEDG_CONFIG`.
 
 To run several instances, give them all the same `shard_count` and tell each one which slice to
 take with `instance_count` and `instance_index`, which is the only value that differs between
@@ -52,8 +52,8 @@ You can also set the config values using environment variables, with `__` betwee
 
 ### Migrating from older versions
 
-Upgrading from v0.6 or older (`embedg-server` with a `config.yaml`) needs a config rewrite. See
-[MIGRATION.md](MIGRATION.md).
+Upgrading from v0.6 or older? An existing `config.yaml` still loads but is deprecated. See
+[MIGRATION.md](MIGRATION.md) for converting it and the other changes.
 
 ### Using Docker (docker-compose)
 
@@ -195,10 +195,10 @@ go run main.go database migrate postgres up
 go run --tags "embedapp embedsite" main.go server
 
 # Build and include the frontend files in the backend binary (build app and site first)
-go build --tags  "embedapp embedsite"
+go build -o embedg-server --tags "embedapp embedsite"
 
 # Build without including the frontend files in the backend binary (you need to serve yourself)
-go build
+go build -o embedg-server
 ```
 
 #### Run the binary

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -61,23 +62,58 @@ func loadBase(basePath string) (*koanf.Koanf, error) {
 	configPath := Path
 	if configPath == "" {
 		configPath = filepath.Join(basePath, ConfigFile)
+		legacyPath := filepath.Join(basePath, LegacyConfigFile)
+		if !fileExists(configPath) && fileExists(legacyPath) {
+			configPath = legacyPath
+		}
 	}
-	if err := k.Load(file.Provider(configPath), parser); err != nil {
+
+	var err error
+	if isLegacyConfigPath(configPath) {
+		err = loadLegacyFile(k, configPath)
+	} else {
+		err = k.Load(file.Provider(configPath), parser)
+	}
+	if err != nil {
 		var pathError *fs.PathError
 		if Path != "" || !errors.As(err, &pathError) {
 			return nil, fmt.Errorf("Failed to load config file: %v", err)
 		}
 	}
 
-	envProvider := env.Provider("EMBEDG_", ".", func(s string) string {
-		return strings.Replace(strings.ToLower(
-			strings.TrimPrefix(s, "EMBEDG_")), "__", ".", -1)
+	// Env vars named after the v0.6 layout load first so the current names win when both are set.
+	usedLegacyEnv := false
+	legacyEnvProvider := env.Provider("EMBEDG_", ".", func(s string) string {
+		key := envKey(s)
+		newKey := renameLegacyKey(key)
+		if newKey == key {
+			return ""
+		}
+		usedLegacyEnv = true
+		return newKey
 	})
+	if err := k.Load(legacyEnvProvider, nil); err != nil {
+		return nil, fmt.Errorf("Failed to load env config: %v", err)
+	}
+	if usedLegacyEnv {
+		slog.Warn("Some EMBEDG_ environment variables use the deprecated v0.6 names, see https://github.com/merlinfuchs/embed-generator/blob/main/MIGRATION.md")
+	}
+
+	envProvider := env.Provider("EMBEDG_", ".", envKey)
 	if err := k.Load(envProvider, nil); err != nil {
 		return nil, fmt.Errorf("Failed to load env config: %v", err)
 	}
 
 	return k, nil
+}
+
+func envKey(s string) string {
+	return strings.Replace(strings.ToLower(strings.TrimPrefix(s, "EMBEDG_")), "__", ".", -1)
+}
+
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }
 
 func ConfigExists(basePath string) bool {

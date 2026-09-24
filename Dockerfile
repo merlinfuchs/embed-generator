@@ -24,14 +24,14 @@ RUN cd embedg-site && pnpm install --frozen-lockfile && pnpm build && cd ..
 RUN cd embedg-app && pnpm install --frozen-lockfile && pnpm build && cd ..
 
 # Build backend
-RUN cd embedg-service && go build --tags "embedapp embedsite" && cd ..
+RUN cd embedg-service && go build -o embedg-server --tags "embedapp embedsite" && cd ..
 
 FROM debian:stable-slim
 WORKDIR /root/
-COPY --from=builder /root/embedg-service/embedg-service .
+COPY --from=builder /root/embedg-service/embedg-server .
 
 RUN apt-get update
 RUN apt-get install -y ca-certificates
 
 EXPOSE 8080
-CMD ./embedg-service database migrate postgres up; ./embedg-service server
+CMD ./embedg-server database migrate postgres up; ./embedg-server server

@@ -1,14 +1,17 @@
 # Migrating to v0.7
 
-v0.7 replaces the `embedg-server` binary with `embedg-service`. The database carries over, but the config
-format, the binary name and the CLI changed. If you run the Docker image, only the config and environment
-variables need attention.
+v0.7 rewrites the server. The database carries over and an existing `config.yaml` still loads, so most
+setups upgrade without changes. The YAML config is deprecated though, convert it to `embedg.toml` when you
+get to it.
 
 ## Config
 
 The config is TOML now. It's read from `embedg.toml` in the working directory, or from the path passed with
-`--config` (or `EMBEDG_CONFIG`). The flag goes before the command now: `embedg-service --config
+`--config` (or `EMBEDG_CONFIG`). The flag goes before the command now: `embedg-server --config
 /etc/embedg/embedg.toml server`. [`embedg.example.toml`](embedg.example.toml) has every section.
+
+Until you convert, the server falls back to `config.yaml` when there is no `embedg.toml`, or reads the YAML
+file passed with `--config`. It maps the old keys below to their new names and logs a warning on startup.
 
 The conversion is mechanical. A YAML section becomes a `[section]` header, `key: value` becomes
 `key = value`, strings need quotes, and nested sections join with a dot:
@@ -82,22 +85,24 @@ New optional keys:
 
 The `EMBEDG_` prefix and `__` separator stay, but the names follow the new sections, so
 `EMBEDG_POSTGRES__HOST` becomes `EMBEDG_DATABASE__POSTGRES__HOST` and `EMBEDG_S3__ENDPOINT` becomes
-`EMBEDG_DATABASE__S3__ENDPOINT`. If you copied the old `docker-compose.yaml`, also swap
-`EMBEDG_POSTGRES__DB` for `EMBEDG_DATABASE__POSTGRES__DB_NAME` and mount `./embedg.toml:/root/embedg.toml`
-instead of `config.yaml`.
+`EMBEDG_DATABASE__S3__ENDPOINT`. The old names still work for now and log a warning. When both are set,
+the new one wins.
+
+If you copied the old `docker-compose.yaml`, switch the volume to `./embedg.toml:/root/embedg.toml` once
+you've converted. Its `EMBEDG_POSTGRES__DB` never matched a key, so drop it or use
+`EMBEDG_DATABASE__POSTGRES__DB_NAME`.
 
 ## Binary and CLI
 
-If you run the binary yourself (systemd unit or similar), update the name and the migrate command:
+The binary is still `embedg-server`, but migrations moved under `database`. If you run the binary yourself
+(systemd unit or similar), update the migrate command:
 
 ```sh
 # before
 ./embedg-server migrate postgres up
-./embedg-server server
 
 # after
-./embedg-service database migrate postgres up
-./embedg-service server
+./embedg-server database migrate postgres up
 ```
 
 The Docker image runs both on start.

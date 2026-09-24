@@ -1,5 +1,5 @@
 builds:
-  - binary: embedg-service
+  - binary: embedg-server
     tags:
       - embedapp
       - embedsite
