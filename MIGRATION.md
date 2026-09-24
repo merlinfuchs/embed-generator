@@ -6,8 +6,49 @@ variables need attention.
 
 ## Config
 
-The config is TOML now and has to be called `embedg.toml`, in the directory the binary runs from. The
-`--config` flag is gone. See the README for a full example.
+The config is TOML now. It's read from `embedg.toml` in the working directory, or from the path passed with
+`--config` (or `EMBEDG_CONFIG`). The flag goes before the command now: `embedg-service --config
+/etc/embedg/embedg.toml server`. [`embedg.example.toml`](embedg.example.toml) has every section.
+
+The conversion is mechanical. A YAML section becomes a `[section]` header, `key: value` becomes
+`key = value`, strings need quotes, and nested sections join with a dot:
+
+```yaml
+# config.yaml
+discord:
+  client_id: "123"
+  token: "abc"
+postgres:
+  host: localhost
+  dbname: embedg
+premium:
+  plans:
+    - id: default
+      default: true
+      features:
+        max_saved_messages: 25
+```
+
+```toml
+# embedg.toml
+[discord]
+client_id = "123"
+token = "abc"
+
+[database.postgres]
+host = "localhost"
+db_name = "embedg"
+
+[[premium.plans]]
+id = "default"
+default = true
+
+[premium.plans.features]
+max_saved_messages = 25
+```
+
+Each plan in the `premium.plans` list becomes its own `[[premium.plans]]` block, followed by its
+`[premium.plans.features]` table.
 
 Renamed keys:
 
@@ -28,9 +69,6 @@ Renamed keys:
 | `debug`                  | `logging.debug`                    |
 
 Removed keys: `log.use_json`, `discord.log_level` and everything under `nats`. Everything else keeps its name.
-
-`premium.plans` becomes a TOML array of tables (`[[premium.plans]]` with a `[premium.plans.features]` table
-under each), with the same fields as before.
 
 New optional keys:
 

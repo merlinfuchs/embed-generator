@@ -1,0 +1,92 @@
+[discord]
+client_id = ""
+client_secret = ""
+public_key = ""
+token = ""
+
+# 0 asks Discord how many shards this bot needs and how many may identify at once, which is what
+# you want unless you run several instances. Lowering identify_concurrency below what Discord
+# grants spreads the guild burst at startup, worth doing if the process can't keep up coming up.
+shard_count = 0
+identify_concurrency = 0
+
+[openai]
+api_key = "" # for ChatGPT integration (optional)
+
+[database.postgres]
+host = "localhost"
+port = 5432
+db_name = "embedg"
+user = "postgres"
+password = ""
+
+[database.s3]
+endpoint = "localhost:9000"
+access_key_id = ""
+secret_access_key = ""
+
+[app]
+public_url = "http://localhost:5173/app"
+
+[api]
+# Make sure to add {public_url}/auth/callback to the OAuth2 Redirect URLs of your application in the Discord dev portal
+public_url = "http://localhost:5173/api"
+
+# Make sure to enable this when you don't have an SSL (HTTPS) certificate
+insecure_cookies = true
+
+host = "localhost"
+port = 8080
+
+[cdn]
+public_url = "http://localhost:8080/cdn"
+
+# These links are used in help commands and for redirects
+[links]
+discord = "https://discord.gg/CpHwbKQKHA"
+source = "https://github.com/merlinfuchs/embed-generator"
+
+[logging]
+debug = false
+
+# Here you can configure multiple tiers/plans which are linked to a Discord SKU
+# The default plan that all users automatically have
+[[premium.plans]]
+id = "default"
+default = true
+
+[premium.plans.features]
+max_saved_messages = 25
+max_actions_per_component = 3
+advanced_action_types = false
+ai_assistant = false
+is_premium = false
+custom_bot = false
+max_custom_commands = 0
+max_scheduled_messages = 5
+periodic_scheduled_messages = false
+max_template_ops = 1000
+max_kv_keys = 10
+components_v2 = true
+component_types = [1, 2, 3, 9, 10, 11, 12, 17]
+
+# An additional premium plan that will apply when the user or guild has the SKU
+[[premium.plans]]
+id = "premium_server"
+sku_id = "123"
+
+[premium.plans.features]
+max_saved_messages = 100
+max_actions_per_component = 10
+advanced_action_types = true
+ai_assistant = true
+is_premium = true # This is used for handing out cosmetics like a role on the support server
+custom_bot = true
+max_custom_commands = 25
+max_image_upload_size = 8000000
+max_scheduled_messages = 25
+periodic_scheduled_messages = true
+max_template_ops = 10000
+max_kv_keys = 1000
+components_v2 = true
+component_types = [1, 2, 3, 9, 10, 11, 12, 13, 14, 17]

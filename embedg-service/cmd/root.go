@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/merlinfuchs/embed-generator/embedg-service/config"
 	"github.com/merlinfuchs/embed-generator/embedg-service/entry/server"
 	"github.com/urfave/cli/v2"
 )
@@ -14,6 +15,18 @@ import (
 var CLI = cli.App{
 	Name:        "embedg",
 	Description: "Embed Generator CLI",
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:    "config",
+			Aliases: []string{"c"},
+			Usage:   "Path to the config file. Defaults to " + config.ConfigFile + " in the working directory.",
+			EnvVars: []string{"EMBEDG_CONFIG"},
+		},
+	},
+	Before: func(c *cli.Context) error {
+		config.Path = c.String("config")
+		return nil
+	},
 	Commands: []*cli.Command{
 		{
 			Name:  "server",

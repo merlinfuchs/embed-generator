@@ -20,6 +20,10 @@ import (
 
 const ConfigFile = "embedg.toml"
 
+// Path overrides where the config file is read from. Unlike the default, a file set here has to
+// exist.
+var Path string
+
 //go:embed default.toml
 var defaultConfig []byte
 
@@ -54,10 +58,13 @@ func loadBase(basePath string) (*koanf.Koanf, error) {
 		return nil, fmt.Errorf("Failed to load default config: %v", err)
 	}
 
-	configPath := filepath.Join(basePath, ConfigFile)
+	configPath := Path
+	if configPath == "" {
+		configPath = filepath.Join(basePath, ConfigFile)
+	}
 	if err := k.Load(file.Provider(configPath), parser); err != nil {
 		var pathError *fs.PathError
-		if !errors.As(err, &pathError) {
+		if Path != "" || !errors.As(err, &pathError) {
 			return nil, fmt.Errorf("Failed to load config file: %v", err)
 		}
 	}
