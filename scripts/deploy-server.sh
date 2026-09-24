@@ -6,9 +6,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 DEPLOY_HOST="${DEPLOY_HOST:-root@embedg-main}"
-REMOTE_BIN="${REMOTE_BIN:-/root/embedg-service}"
+REMOTE_BIN="${REMOTE_BIN:-/root/embedg-server}"
 
-out="$(mktemp -t embedg-service)"
+out="$(mktemp -t embedg-server)"
 trap 'rm -f "$out"' EXIT
 
 echo "==> building for linux/amd64"
@@ -22,5 +22,5 @@ scp -q "$out" "$DEPLOY_HOST:$REMOTE_BIN.new"
 ssh "$DEPLOY_HOST" "chown root:root '$REMOTE_BIN.new' && chmod 0755 '$REMOTE_BIN.new' && mv -f '$REMOTE_BIN.new' '$REMOTE_BIN'"
 
 echo "==> in place, still running the old binary. restart when you're ready:"
-echo "    ssh $DEPLOY_HOST 'systemctl restart embedg-service'"
+echo "    ssh $DEPLOY_HOST 'systemctl restart embedg-server'"
 echo "    curl -s https://message.style/api/health/shards | head -c 120"
