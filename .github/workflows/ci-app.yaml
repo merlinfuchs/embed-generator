@@ -1,0 +1,32 @@
+name: CI (app)
+
+on:
+  pull_request:
+    paths:
+      - "embedg-app/**"
+      - ".github/workflows/ci-app.yaml"
+
+concurrency:
+  group: ci-app-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typecheck:
+    name: embedg-app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: embedg-app/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile --prefer-offline
+        working-directory: embedg-app
+      - run: ./node_modules/.bin/tsc --noEmit
+        working-directory: embedg-app
+      - run: ./node_modules/.bin/biome ci .
+        working-directory: embedg-app
+      - run: ./node_modules/.bin/vitest run
+        working-directory: embedg-app

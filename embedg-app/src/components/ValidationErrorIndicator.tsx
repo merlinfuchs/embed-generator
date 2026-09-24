@@ -1,16 +1,16 @@
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
-import { useValidationErrorStore } from "../state/validationError";
+import {
+  type ValidationScope,
+  useValidationErrorStore,
+} from "../state/validationError";
 
 interface Props {
-  pathPrefix: string | string[];
+  /** A path prefix, or `{ nodeId, fields }` for the document store. */
+  scope: ValidationScope;
 }
 
-export default function ValidationErrorIndicator({ pathPrefix }: Props) {
-  const error = useValidationErrorStore((state) =>
-    typeof pathPrefix === "string"
-      ? state.checkIssueByPathPrefix(pathPrefix)
-      : pathPrefix.some((prefix) => state.checkIssueByPathPrefix(prefix))
-  );
+export default function ValidationErrorIndicator({ scope }: Props) {
+  const error = useValidationErrorStore((state) => state.hasIssue(scope));
 
   if (error) {
     return <ExclamationCircleIcon className="h-5 w-5 text-red" />;

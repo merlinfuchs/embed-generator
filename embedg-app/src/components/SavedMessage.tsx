@@ -4,7 +4,7 @@ import {
   TrashIcon,
 } from "@heroicons/react/20/solid";
 import Tooltip from "../components/Tooltip";
-import { SavedMessageWire } from "../api/wire";
+import type { SavedMessageWire } from "../api/wire";
 import { parseISO } from "date-fns";
 import {
   useDeleteSavedMessageMutation,
@@ -12,11 +12,11 @@ import {
 } from "../api/mutations";
 import { useToasts } from "../util/toasts";
 import { useNavigate } from "react-router-dom";
-import { parseMessageWithAction } from "../discord/restoreSchema";
-import { useCurrentMessageStore } from "../state/message";
+import { parseMessageWithAction } from "../discord/importSchema";
 import { useState } from "react";
-import { useQueryClient } from "react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import ConfirmModal from "./ConfirmModal";
+import { getCurrentMessage, setCurrentMessage } from "../state/currentMessage";
 
 function formatUpdatedAt(updatedAt: string): string {
   return parseISO(updatedAt).toLocaleString();
@@ -44,13 +44,15 @@ export default function SavedMessage({
         req: {
           name: message.name,
           description: message.description,
-          data: useCurrentMessageStore.getState(),
+          data: getCurrentMessage(),
         },
       },
       {
         onSuccess: (resp) => {
           if (resp.success) {
-            queryClient.invalidateQueries(["saved-messages", guildId]);
+            queryClient.invalidateQueries({
+              queryKey: ["saved-messages", guildId],
+            });
             setUpdateModal(false);
           } else {
             createToast({
@@ -60,7 +62,7 @@ export default function SavedMessage({
             });
           }
         },
-      }
+      },
     );
   }
 
@@ -69,7 +71,7 @@ export default function SavedMessage({
   function restoreMessageConfirm() {
     try {
       const data = parseMessageWithAction(message.data);
-      useCurrentMessageStore.setState(data);
+      setCurrentMessage(data);
       setRestoreModal(false);
       navigate("/editor");
     } catch (e) {
@@ -90,7 +92,9 @@ export default function SavedMessage({
       {
         onSuccess: (resp) => {
           if (resp.success) {
-            queryClient.invalidateQueries(["saved-messages", guildId]);
+            queryClient.invalidateQueries({
+              queryKey: ["saved-messages", guildId],
+            });
           } else {
             createToast({
               title: "Failed to delete message",
@@ -100,7 +104,7 @@ export default function SavedMessage({
           }
           setDeleteModal(false);
         },
-      }
+      },
     );
   }
 
@@ -108,52 +112,52 @@ export default function SavedMessage({
     <div>
       <div
         key={message.id}
-        className="bg-dark-3 p-3 rounded flex justify-between truncate space-x-3"
+        className="bg-ink-700 p-3 rounded-lg flex justify-between truncate space-x-3"
       >
         <div className="flex-auto truncate">
           <div className="flex items-center space-x-1 truncate">
             <div className="text-white truncate">{message.name}</div>
-            <div className="text-gray-500 text-xs hidden md:block">
+            <div className="text-mist-500 text-xs hidden md:block">
               {message.id}
             </div>
           </div>
-          <div className="text-gray-400 text-sm">
+          <div className="text-mist-400 text-sm">
             {formatUpdatedAt(message.updated_at)}
           </div>
         </div>
         <div className="flex flex-none items-center space-x-4 md:space-x-3">
-          <div
-            className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
-            role="button"
+          <button
+            type="button"
+            className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
             onClick={() => setRestoreModal(true)}
           >
             <Tooltip text="Restore Message">
               <ArrowDownTrayIcon className="h-5 w-5" />
             </Tooltip>
             <div className="hidden md:block ml-2">Restore</div>
-          </div>
+          </button>
 
-          <div
-            className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
-            role="button"
+          <button
+            type="button"
+            className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
             onClick={() => setUpdateModal(true)}
           >
             <Tooltip text="Overwrite Message">
               <ArrowUpTrayIcon className="h-5 w-5" />
             </Tooltip>
             <div className="hidden md:block ml-2">Overwrite</div>
-          </div>
+          </button>
 
-          <div
-            className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
-            role="button"
+          <button
+            type="button"
+            className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
             onClick={() => setDeleteModal(true)}
           >
             <Tooltip text="Delete Message">
               <TrashIcon className="h-5 w-5" />
             </Tooltip>
             <div className="hidden md:block ml-2">Delete</div>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -170,6 +174,7 @@ export default function SavedMessage({
           title="Are you sure that you want to update the message?"
           subTitle="The message will be overwritten and the previous data will be lost."
           onClose={() => setUpdateModal(false)}
+          pending={updateMessageMutation.isPending}
           onConfirm={updateMessageConfirm}
         />
       )}
@@ -178,6 +183,7 @@ export default function SavedMessage({
           title="Are you sure that you want to delete the message?"
           subTitle="The message will be deleted permanently and can't be restored."
           onClose={() => setDeleteModal(false)}
+          pending={deleteMessageMutation.isPending}
           onConfirm={deleteMessageConfirm}
         />
       )}

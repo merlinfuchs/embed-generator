@@ -1,9 +1,11 @@
+@reference "../index.css";
+
 .react-datetime-picker {
   @apply w-full;
 }
 
 .react-datetime-picker__wrapper {
-  @apply h-10 bg-dark-2 rounded border-none text-gray-100 px-3 w-full;
+  @apply h-10 bg-ink-900 rounded-lg border-none text-mist-100 px-3 w-full;
 }
 
 .react-datetime-picker__inputGroup {
@@ -11,37 +13,37 @@
 }
 
 .react-datetime-picker__inputGroup__input {
-  @apply focus:outline-none focus:bg-dark-3;
+  @apply focus:outline-none focus:bg-ink-700;
 }
 
 .react-datetime-picker__button svg {
-  @apply stroke-gray-100;
+  @apply stroke-mist-100;
 }
 
 .react-calendar {
-  @apply bg-dark-2 rounded border-none text-gray-100;
+  @apply bg-ink-900 rounded-lg border-none text-mist-100;
 }
 
 .react-calendar button {
-  @apply focus:bg-dark-3 hover:bg-dark-3 !important;
+  @apply focus:bg-ink-700! hover:bg-ink-700!;
 }
 
 .react-calendar__navigation__label {
-  @apply bg-dark-2 !important;
+  @apply bg-ink-900!;
 }
 
 .react-datetime-picker__clock {
-  @apply bg-dark-2 rounded border-none text-gray-100;
+  @apply bg-ink-900 rounded-lg border-none text-mist-100;
 }
 
 .react-clock__face {
-  @apply bg-dark-3 !important;
+  @apply bg-ink-700!;
 }
 
 .react-clock__face div {
-  @apply bg-gray-100 !important;
+  @apply bg-mist-100!;
 }
 
 .react-clock__hand div {
-  @apply bg-gray-100 !important;
+  @apply bg-mist-100!;
 }

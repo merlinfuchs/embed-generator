@@ -13,32 +13,32 @@ import (
 //go:embed migrations/*.sql
 var migrationsFS embed.FS
 
-type PostgresStoreMigrater struct {
+type Migrater struct {
 	m     *migrate.Migrate
 	close func() error
 }
 
-func (mig *PostgresStoreMigrater) Up() error {
+func (mig *Migrater) Up() error {
 	return mig.m.Up()
 }
 
-func (mig *PostgresStoreMigrater) Down() error {
+func (mig *Migrater) Down() error {
 	return mig.m.Down()
 }
 
-func (mig *PostgresStoreMigrater) Version() (uint, bool, error) {
+func (mig *Migrater) Version() (uint, bool, error) {
 	return mig.m.Version()
 }
 
-func (mig *PostgresStoreMigrater) To(version uint) error {
+func (mig *Migrater) To(version uint) error {
 	return mig.m.Migrate(version)
 }
 
-func (mig *PostgresStoreMigrater) Force(version int) error {
+func (mig *Migrater) Force(version int) error {
 	return mig.m.Force(version)
 }
 
-func (mig *PostgresStoreMigrater) List() ([]string, error) {
+func (mig *Migrater) List() ([]string, error) {
 	dirEntries, err := migrationsFS.ReadDir("migrations")
 	if err != nil {
 		return nil, err
@@ -51,27 +51,30 @@ func (mig *PostgresStoreMigrater) List() ([]string, error) {
 	return migrationFiles, nil
 }
 
-func (mig *PostgresStoreMigrater) Close() error {
+func (mig *Migrater) Close() error {
 	return mig.close()
 }
 
-func (mig *PostgresStoreMigrater) SetLogger(logger migrate.Logger) {
+func (mig *Migrater) SetLogger(logger migrate.Logger) {
 	mig.m.Log = logger
 }
 
-func (pgs *PostgresStore) GetMigrater() (*PostgresStoreMigrater, error) {
+func (pgs *Client) GetMigrater() (*Migrater, error) {
 	d, err := iofs.New(migrationsFS, "migrations")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open Postgres migrations iofs: %w", err)
 	}
 
-	connString := BuildConnectionDSN()
-	db, err := sql.Open("postgres", connString)
+	db, err := sql.Open("postgres", pgs.connectionDSN)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open postgres db with postgres driver: %w", err)
 	}
 	defer db.Close()
 
+	// The migrations create their tables in the connection's schema, so the version has to be
+	// tracked there too. A leftover from the Stateway fork tracked it in a "gateway" schema
+	// instead, which reads as version 0 against a database that is already migrated and replays
+	// everything from the start.
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to open postgres migration: %w", err)
@@ -92,7 +95,7 @@ func (pgs *PostgresStore) GetMigrater() (*PostgresStoreMigrater, error) {
 		return nil
 	}
 
-	return &PostgresStoreMigrater{
+	return &Migrater{
 		m:     m,
 		close: close,
 	}, nil

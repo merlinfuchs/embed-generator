@@ -9,8 +9,8 @@ interface Props {
 
 export default function CronExpressionBuilder({ value, onChange }: Props) {
   const sevenFieldExpression = useMemo(
-    () => (value ? "0 " + value + " *" : undefined),
-    [value]
+    () => (value ? `0 ${value} *` : undefined),
+    [value],
   );
 
   const setSevenFieldExpression = (v: string | null) => {
@@ -26,7 +26,7 @@ export default function CronExpressionBuilder({ value, onChange }: Props) {
   return (
     <div>
       <div className="mb-3 flex">
-        <div className="uppercase text-gray-300 text-sm font-medium">
+        <div className="uppercase text-mist-300 text-sm font-medium">
           Schedule
         </div>
       </div>

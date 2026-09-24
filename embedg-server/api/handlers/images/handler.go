@@ -1,48 +1,58 @@
 package images
 
 import (
-	"database/sql"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
+	"github.com/merlinfuchs/embed-generator/embedg-server/access"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/s3"
+	"github.com/merlinfuchs/embed-generator/embedg-server/common"
+	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
-	"github.com/merlinfuchs/embed-generator/embedg-server/util"
-	"github.com/spf13/viper"
-	"gopkg.in/guregu/null.v4"
 )
 
-var appPublicURL *url.URL
-
-type ImagesHandler struct {
-	pg        *postgres.PostgresStore
-	am        *access.AccessManager
-	planStore store.PlanStore
-	blob      *s3.BlobStore
+type ImagesHandlerConfig struct {
+	AppPublicURL string
+	CDNPublicURL string
 }
 
-func New(pg *postgres.PostgresStore, am *access.AccessManager, planStore store.PlanStore, blob *s3.BlobStore) *ImagesHandler {
+type ImagesHandler struct {
+	config     ImagesHandlerConfig
+	imageStore store.ImageStore
+	fileStore  store.FileStore
+	am         *access.AccessManager
+	planStore  store.PlanStore
+}
+
+func New(config ImagesHandlerConfig, imageStore store.ImageStore, fileStore store.FileStore, am *access.AccessManager, planStore store.PlanStore) *ImagesHandler {
 	return &ImagesHandler{
-		pg:        pg,
-		am:        am,
-		planStore: planStore,
-		blob:      blob,
+		config:     config,
+		imageStore: imageStore,
+		fileStore:  fileStore,
+		am:         am,
+		planStore:  planStore,
 	}
 }
 
 func (h *ImagesHandler) HandleUploadImage(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
-	guildID := c.Query("guild_id")
-	if guildID != "" {
+
+	rawGuildID := c.Query("guild_id")
+	var guildID common.ID
+
+	if rawGuildID != "" {
+		var err error
+		guildID, err = common.ParseID(c.Query("guild_id"))
+		if err != nil {
+			return handlers.BadRequest("invalid_guild_id", "Invalid guild ID")
+		}
+
 		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 			return err
 		}
@@ -54,21 +64,21 @@ func (h *ImagesHandler) HandleUploadImage(c *fiber.Ctx) error {
 	}
 
 	// If guildID is empty, this will be the default max upload size
-	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.UserContext(), guildID)
 	if err != nil {
 		return fmt.Errorf("could not get plan features: %w", err)
 	}
 
 	if file.Size > int64(features.MaxImageUploadSize) {
 		if !features.IsPremium {
-			return helpers.Forbidden("file_too_large", "File too large, consider upgrading to Premium.")
+			return handlers.Forbidden("file_too_large", "File too large, consider upgrading to Premium.")
 		}
-		return helpers.BadRequest("file_too_large", "File too large")
+		return handlers.BadRequest("file_too_large", "File too large")
 	}
 
 	contentType := file.Header.Get("Content-Type")
 	if !strings.HasPrefix(contentType, "image/") {
-		return helpers.BadRequest("invalid_file_type", "Invalid file type")
+		return handlers.BadRequest("invalid_file_type", "Invalid file type")
 	}
 
 	buffer, err := file.Open()
@@ -82,10 +92,10 @@ func (h *ImagesHandler) HandleUploadImage(c *fiber.Ctx) error {
 		return fmt.Errorf("could not read file: %w", err)
 	}
 
-	fileHash := util.HashBytes(body)
-	fileKey := fileHash + util.GetFileExtensionFromMimeType(contentType)
+	fileHash := common.HashBytes(body)
+	fileKey := fileHash + common.GetFileExtensionFromMimeType(contentType)
 
-	err = h.blob.UploadFileIfNotExists(c.Context(), &s3.Image{
+	err = h.fileStore.UploadFileIfNotExists(c.UserContext(), model.File{
 		FileName:    fileKey,
 		ContentType: contentType,
 		Body:        body,
@@ -94,16 +104,16 @@ func (h *ImagesHandler) HandleUploadImage(c *fiber.Ctx) error {
 		return fmt.Errorf("could not upload image: %w", err)
 	}
 
-	image, err := h.pg.Q.InsertImage(c.Context(), pgmodel.InsertImageParams{
-		ID:     util.UniqueID(),
+	image, err := h.imageStore.CreateImage(c.UserContext(), model.Image{
+		ID:     common.InternalID(),
 		UserID: session.UserID,
-		GuildID: sql.NullString{
-			String: guildID,
-			Valid:  guildID != "",
+		GuildID: common.NullID{
+			Valid: guildID != 0,
+			ID:    guildID,
 		},
 		FileName:        file.Filename,
 		FileHash:        fileHash,
-		FileSize:        int32(len(body)),
+		FileSize:        len(body),
 		FileContentType: contentType,
 		S3Key:           fileKey,
 	})
@@ -113,22 +123,22 @@ func (h *ImagesHandler) HandleUploadImage(c *fiber.Ctx) error {
 
 	return c.JSON(wire.UploadImageResponseWire{
 		Success: true,
-		Data:    imageToWire(image),
+		Data:    h.imageToWire(image),
 	})
 }
 
 func (h *ImagesHandler) HandleGetImage(c *fiber.Ctx) error {
-	image, err := h.pg.Q.GetImage(c.Context(), c.Params("imageID"))
+	image, err := h.imageStore.GetImage(c.UserContext(), c.Params("imageID"))
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return helpers.NotFound("unknown_image", "Unknown image")
+		if errors.Is(err, store.ErrNotFound) {
+			return handlers.NotFound("unknown_image", "Unknown image")
 		}
 		return fmt.Errorf("could not get image: %w", err)
 	}
 
 	return c.JSON(wire.GetImageResponseWire{
 		Success: true,
-		Data:    imageToWire(image),
+		Data:    h.imageToWire(image),
 	})
 }
 
@@ -140,23 +150,23 @@ func (h *ImagesHandler) HandleDownloadImage(c *fiber.Ctx) error {
 			return fmt.Errorf("could not parse referer: %w", err)
 		}
 
-		appURL, err := url.Parse(viper.GetString("app.public_url"))
+		appURL, err := url.Parse(h.config.AppPublicURL)
 		if err != nil {
 			return fmt.Errorf("could not parse app url: %w", err)
 		}
 
 		if refererURL.Host != appURL.Host {
-			return helpers.Forbidden("invalid_referer", "Invalid referer")
+			return handlers.Forbidden("invalid_referer", "Invalid referer")
 		}
 	}
 
-	file, err := h.blob.DownloadFile(c.Context(), c.Params("imageKey"))
+	file, err := h.fileStore.DownloadFile(c.UserContext(), c.Params("imageKey"))
 	if err != nil {
 		return fmt.Errorf("could not download image: %w", err)
 	}
 
 	if file == nil {
-		return helpers.NotFound("unknown_image", "Unknown image")
+		return handlers.NotFound("unknown_image", "Unknown image")
 	}
 
 	c.Set("Content-Type", file.ContentType)
@@ -170,13 +180,13 @@ func (h *ImagesHandler) HandleDownloadImage(c *fiber.Ctx) error {
 	return c.Send(file.Body)
 }
 
-func imageToWire(image pgmodel.Image) wire.ImageWire {
+func (h *ImagesHandler) imageToWire(image *model.Image) wire.ImageWire {
 	return wire.ImageWire{
 		ID:       image.ID,
 		UserID:   image.UserID,
-		GuildID:  null.String{NullString: image.GuildID},
+		GuildID:  image.GuildID,
 		FileName: image.FileName,
 		FileSize: image.FileSize,
-		CDNURL:   viper.GetString("cdn.public_url") + "/images/" + image.S3Key,
+		CDNURL:   h.config.CDNPublicURL + "/images/" + image.S3Key,
 	}
 }

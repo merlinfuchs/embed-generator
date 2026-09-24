@@ -3,10 +3,7 @@ import {
   ArrowUturnRightIcon,
 } from "@heroicons/react/20/solid";
 import { useEffect } from "react";
-import {
-  useCurrentMessageStore,
-  useCurrentMessageUndoStore,
-} from "../state/message";
+import { useDocumentStoreApi, useDocumentUndoStore } from "../state/document";
 import { useSettingsStore } from "../state/settings";
 import EditorIconButton from "./EditorIconButton";
 
@@ -14,14 +11,12 @@ export default function EditorUndoButtons() {
   const historyEnabled = useSettingsStore((s) => s.editHistoryEnabled);
 
   const { undo, redo, pause, resume } =
-    useCurrentMessageStore.temporal.getState();
+    useDocumentStoreApi().temporal.getState();
 
-  const isTracking = useCurrentMessageUndoStore((s) => s.isTracking);
-  const hasPastStates = useCurrentMessageUndoStore(
-    (s) => s.pastStates.length != 0
-  );
-  const hasFutureStates = useCurrentMessageUndoStore(
-    (s) => s.futureStates.length != 0
+  const isTracking = useDocumentUndoStore((s) => s.isTracking);
+  const hasPastStates = useDocumentUndoStore((s) => s.pastStates.length !== 0);
+  const hasFutureStates = useDocumentUndoStore(
+    (s) => s.futureStates.length !== 0,
   );
 
   useEffect(() => {

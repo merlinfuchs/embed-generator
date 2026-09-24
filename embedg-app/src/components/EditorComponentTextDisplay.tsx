@@ -1,57 +1,52 @@
-import { shallow } from "zustand/shallow";
-import { useCurrentMessageStore } from "../state/message";
-import EditorComponentBaseTextDisplay from "./EditorComponentBaseTextDisplay";
+import {
+  type TextDisplayNode,
+  type NodeId,
+  useNode,
+  useNodeActions,
+  useDocumentStoreApi,
+} from "../state/document";
+import { nodeField, nodeScope } from "../state/validationError";
+import EditorInput from "./EditorInput";
+import EditorComponentCollapsable from "./EditorComponentCollapsable";
 
 interface Props {
-  rootIndex: number;
-  rootId: number;
+  id: NodeId;
+  title?: string;
+  size?: "medium" | "large";
 }
 
 export default function EditorComponentTextDisplay({
-  rootIndex,
-  rootId,
+  id,
+  title = "Text Display",
+  size = "medium",
 }: Props) {
-  const componentCount = useCurrentMessageStore(
-    (state) => state.components.length
-  );
+  const data = useNode<TextDisplayNode>(id);
+  const actions = useNodeActions(id);
+  const { update } = useDocumentStoreApi().getState();
 
-  const textDisplay = useCurrentMessageStore(
-    (state) => state.getTextDisplay(rootIndex),
-    shallow
-  );
-  const updateTextDisplay = useCurrentMessageStore(
-    (state) => state.updateComponent
-  );
-
-  const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
-    (state) => [
-      state.moveComponentUp,
-      state.moveComponentDown,
-      state.duplicateComponent,
-      state.deleteComponent,
-    ],
-    shallow
-  );
-
-  if (!textDisplay) {
-    return null;
-  }
+  if (!data) return null;
 
   return (
-    <div className="bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow">
-      <EditorComponentBaseTextDisplay
-        id={`components.${rootId}`}
-        validationPathPrefix={`components.${rootIndex}`}
-        data={textDisplay}
-        onChange={(data) => updateTextDisplay(rootIndex, data)}
-        duplicate={componentCount < 5 ? () => duplicate(rootIndex) : undefined}
-        moveUp={rootIndex > 0 ? () => moveUp(rootIndex) : undefined}
-        moveDown={
-          rootIndex < componentCount - 1 ? () => moveDown(rootIndex) : undefined
-        }
-        remove={() => remove(rootIndex)}
-        size="large"
-      />
-    </div>
+    <EditorComponentCollapsable
+      id={id}
+      validationPathPrefix={nodeScope<TextDisplayNode>(id)}
+      title={title}
+      size={size}
+      {...actions}
+      subtitle={data.content}
+    >
+      <div className="space-y-4">
+        <EditorInput
+          type="textarea"
+          label="Content"
+          maxLength={4000}
+          value={data.content}
+          onChange={(v) => update<TextDisplayNode>(id, { content: v })}
+          className="flex-auto"
+          validationPath={nodeField<TextDisplayNode>(id, "content")}
+          controls={true}
+        />
+      </div>
+    </EditorComponentCollapsable>
   );
 }

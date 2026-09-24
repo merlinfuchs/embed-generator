@@ -38,14 +38,14 @@ services:
     environment:
       - EMBEDG_API__HOST=0.0.0.0
       - EMBEDG_API__INSECURE_COOKIES=true
-      - EMBEDG_POSTGRES__HOST=postgres
-      - EMBEDG_POSTGRES__USER=postgres
-      - EMBEDG_POSTGRES__DB=embedg
-      - EMBEDG_S3__ENDPOINT=minio:9000
+      - EMBEDG_DATABASE__POSTGRES__HOST=postgres
+      - EMBEDG_DATABASE__POSTGRES__USER=postgres
+      - EMBEDG_DATABASE__POSTGRES__DB_NAME=embedg
+      - EMBEDG_DATABASE__S3__ENDPOINT=minio:9000
       - EMBEDG_API__PUBLIC_URL=http://localhost:8080/api
       - EMBEDG_APP__PUBLIC_URL=http://localhost:8080/app
     volumes:
-      - ./config.yaml:/root/config.yaml
+      - ./embedg.toml:/root/embedg.toml
     depends_on:
       postgres:
         condition: service_healthy

@@ -1,20 +1,21 @@
 package database
 
 import (
-	"github.com/rs/zerolog"
+	"fmt"
+	"log/slog"
 )
 
-type migrationZeroLogger struct {
-	zerologger zerolog.Logger
-	verbose    bool
+type migrationSlogLogger struct {
+	logger  *slog.Logger
+	verbose bool
 }
 
 // Printf is like fmt.Printf
-func (ml migrationZeroLogger) Printf(format string, v ...interface{}) {
-	ml.zerologger.Info().Msgf(format, v...)
+func (ml migrationSlogLogger) Printf(format string, v ...interface{}) {
+	ml.logger.Info(fmt.Sprintf(format, v...))
 }
 
-// Printf is like fmt.Printf
-func (ml migrationZeroLogger) Verbose() bool {
+// Verbose returns whether verbose logging is enabled
+func (ml migrationSlogLogger) Verbose() bool {
 	return ml.verbose
 }

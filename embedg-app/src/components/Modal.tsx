@@ -1,14 +1,21 @@
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
-import { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { type ReactNode, useEffect, useRef } from "react";
+
+const maxWidths = {
+  xs: "max-w-md",
+  sm: "max-w-xl",
+  md: "max-w-3xl",
+  lg: "max-w-5xl",
+  xl: "max-w-7xl",
+} as const;
 
 interface Props {
   children: ReactNode;
-  width?: "xs" | "sm" | "md" | "lg" | "xl" | "full";
+  width?: keyof typeof maxWidths;
   height?: "auto" | "full";
-  closeButton?: boolean;
-  allowOverflow?: boolean;
+  /** Let content like dropdowns escape the modal instead of being cut off. */
+  overflow?: "hidden" | "visible";
   onClose: () => void;
 }
 
@@ -16,45 +23,43 @@ export default function Modal({
   children,
   width = "xl",
   height = "auto",
-  closeButton,
-  allowOverflow,
+  overflow = "hidden",
   onClose,
 }: Props) {
+  // Through a ref so that an inline onClose doesn't resubscribe on every render.
+  const close = useRef(onClose);
+  close.current = onClose;
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") close.current();
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   return (
     <div
-      className={clsx(
-        "fixed h-[100dvh] w-[100vw] bg-black bg-opacity-70 flex flex-col items-center justify-center px-2 py-20 sm:px-5 md:px-10 lg:px-20 xl:px-32 z-30 top-0 left-0",
-        !allowOverflow && "overflow-hidden"
-      )}
+      className="fixed h-[100dvh] w-[100vw] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center px-2 py-20 sm:px-5 md:px-10 lg:px-20 xl:px-32 z-30 top-0 left-0 overflow-hidden"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
         className={clsx(
-          "bg-dark-3 w-full rounded-xl flex-shrink",
-          allowOverflow
-            ? "overflow-x-hidden overflow-y-auto"
-            : "overflow-y-hidden",
-          width === "xl"
-            ? "max-w-7xl"
-            : width == "lg"
-            ? "max-w-5xl"
-            : width === "md"
-            ? "max-w-3xl"
-            : width === "sm"
-            ? "max-w-xl"
-            : width === "xs"
-            ? "max-w-md"
-            : "",
-          height === "full" && "h-full"
+          "bg-ink-700 border border-white/10 shadow-card w-full rounded-2xl flex-shrink",
+          maxWidths[width],
+          height === "full" && "h-full",
+          overflow === "visible" ? "overflow-visible" : "overflow-y-hidden",
         )}
       >
-        {closeButton !== false && (
-          <XMarkIcon
-            className="text-gray-400 h-8 w-8 cursor-pointer absolute top-2 right-2"
-            role="button"
-            onClick={onClose}
-          />
-        )}
+        <button
+          type="button"
+          aria-label="Close"
+          className="text-mist-400 hover:text-mist-100 cursor-pointer absolute top-3 right-3"
+          onClick={onClose}
+        >
+          <XMarkIcon className="h-7 w-7" />
+        </button>
         {children}
       </div>
     </div>

@@ -1,19 +1,26 @@
-import { useCurrentMessageStore } from "../state/message";
+import {
+  type MessageNode,
+  useNode,
+  useDocumentStoreApi,
+  useDocument,
+} from "../state/document";
+import { nodeField } from "../state/validationError";
 import EditorInput from "./EditorInput";
 
 export default function EditorMessageContentField() {
-  const content = useCurrentMessageStore((state) => state.content);
-  const setContent = useCurrentMessageStore((state) => state.setContent);
+  const rootId = useDocument((state) => state.rootId);
+  const root = useNode<MessageNode>(rootId);
+  const { update } = useDocumentStoreApi().getState();
 
   return (
     <div>
       <EditorInput
         type="textarea"
         label="Content"
-        value={content}
-        onChange={(v) => setContent(v)}
+        value={root?.content ?? ""}
+        onChange={(v) => update<MessageNode>(rootId, { content: v })}
         maxLength={2000}
-        validationPath={`content`}
+        validationPath={nodeField<MessageNode>(rootId, "content")}
         controls={true}
       />
     </div>

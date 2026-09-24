@@ -1,9 +1,9 @@
+import type { ValidationTarget } from "../state/validationError";
 import ValidationError from "./ValidationError";
 import TextareaAutosize from "react-textarea-autosize";
 import InputControlBar from "./InputControlBar";
 import { useRef } from "react";
 import ImageUploadButton from "./ImageUploadButton";
-import { usePremiumGuildFeatures } from "../util/premium";
 import clsx from "clsx";
 
 interface Props {
@@ -15,7 +15,7 @@ interface Props {
   type?: "text" | "url" | "textarea";
   props?: Record<string, any>;
   className?: string;
-  validationPath?: string;
+  validationPath?: ValidationTarget;
   controls?: boolean;
   imageUpload?: boolean;
 }
@@ -34,22 +34,21 @@ export default function EditorInput({
   imageUpload,
 }: Props) {
   const inputRef = useRef<HTMLInputElement & HTMLTextAreaElement>(null);
-  const features = usePremiumGuildFeatures();
 
   return (
     <div className={className}>
       <div
         className={clsx(
           "flex justify-between items-end",
-          !description && "mb-1.5"
+          !description && "mb-1.5",
         )}
       >
         <div className="flex">
-          <div className="uppercase text-gray-300 text-sm font-medium">
+          <div className="text-xs font-semibold uppercase tracking-wide text-mist-400">
             {label}
           </div>
           {maxLength && (
-            <div className="text-sm italic font-light text-gray-400 ml-2">
+            <div className="text-sm italic font-light text-mist-400 ml-2">
               {value.length} / {maxLength}
             </div>
           )}
@@ -66,7 +65,7 @@ export default function EditorInput({
       </div>
 
       {description && (
-        <div className="mb-1.5 text-gray-400 text-sm font-light">
+        <div className="mb-1.5 text-mist-400 text-sm font-light">
           {description}
         </div>
       )}
@@ -74,7 +73,8 @@ export default function EditorInput({
       <div className="flex space-x-2">
         {type === "textarea" ? (
           <TextareaAutosize
-            className="bg-dark-2 px-3 py-2 rounded w-full text-white ring-0 border-transparent focus:outline-none"
+            aria-label={label}
+            className="bg-ink-900 px-3 py-2 rounded-lg w-full text-white"
             value={value}
             onChange={(e) => onChange(e.target.value)}
             maxLength={maxLength}
@@ -85,8 +85,9 @@ export default function EditorInput({
           />
         ) : (
           <input
+            aria-label={label}
             type={type || "text"}
-            className="bg-dark-2 px-3 py-2 rounded w-full text-white ring-0 border-transparent focus:outline-none"
+            className="bg-ink-900 px-3 py-2 rounded-lg w-full text-white"
             value={value}
             onChange={(e) => onChange(e.target.value)}
             maxLength={maxLength}
@@ -94,13 +95,11 @@ export default function EditorInput({
             {...props}
           />
         )}
-        {imageUpload && !!features?.max_image_upload_size && (
-          <div className="flex-none">
-            <ImageUploadButton onChange={(url) => onChange(url || "")} />
-          </div>
+        {imageUpload && (
+          <ImageUploadButton onChange={(url) => onChange(url || "")} />
         )}
       </div>
-      {validationPath && <ValidationError path={validationPath} />}
+      <ValidationError target={validationPath} />
     </div>
   );
 }

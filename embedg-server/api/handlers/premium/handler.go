@@ -1,59 +1,66 @@
 package premium
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 
+	"log/slog"
+
+	"github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
+	"github.com/merlinfuchs/embed-generator/embedg-server/access"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
-	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
+	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
-	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
-	"gopkg.in/guregu/null.v4"
 )
 
 type PremiumHandler struct {
-	pg        *postgres.PostgresStore
-	bot       *bot.Bot
-	am        *access.AccessManager
-	planStore store.PlanStore
+	entitlementStore store.EntitlementStore
+	rest             rest.Rest
+	am               *access.AccessManager
+	planStore        store.PlanStore
+	appContext       store.AppContext
 }
 
-func New(pg *postgres.PostgresStore, bot *bot.Bot, am *access.AccessManager, planStore store.PlanStore) *PremiumHandler {
+func New(
+	entitlementStore store.EntitlementStore,
+	rest rest.Rest,
+	am *access.AccessManager,
+	planStore store.PlanStore,
+	appContext store.AppContext,
+) *PremiumHandler {
 	return &PremiumHandler{
-		pg:        pg,
-		bot:       bot,
-		am:        am,
-		planStore: planStore,
+		entitlementStore: entitlementStore,
+		rest:             rest,
+		am:               am,
+		planStore:        planStore,
+		appContext:       appContext,
 	}
 }
 
 func (h *PremiumHandler) HandleGetFeatures(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
-	guildID := c.Query("guild_id")
+	guildID, err := handlers.QueryNullID(c, "guild_id")
+	if err != nil {
+		return err
+	}
 
 	var features model.PlanFeatures
-	var err error
 
-	if guildID != "" {
-		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+	if guildID.Valid {
+		if err := h.am.CheckGuildAccessForRequest(c, guildID.ID); err != nil {
 			return err
 		}
-		features, err = h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
+		features, err = h.planStore.GetPlanFeaturesForGuild(c.UserContext(), guildID.ID)
 	} else {
-		features, err = h.planStore.GetPlanFeaturesForUser(c.Context(), session.UserID)
+		features, err = h.planStore.GetPlanFeaturesForUser(c.UserContext(), session.UserID)
 	}
 
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to get premium plan features")
+		slog.Error("Failed to get premium plan features", slog.Any("error", err))
 		return err
 	}
 
@@ -78,22 +85,24 @@ func (h *PremiumHandler) HandleGetFeatures(c *fiber.Ctx) error {
 
 func (h *PremiumHandler) HandleListEntitlements(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
-	guildID := c.Query("guild_id")
+	guildID, err := handlers.QueryNullID(c, "guild_id")
+	if err != nil {
+		return err
+	}
 
-	var entitlements []pgmodel.Entitlement
-	var err error
+	var entitlements []model.Entitlement
 
-	if guildID != "" {
-		if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+	if guildID.Valid {
+		if err := h.am.CheckGuildAccessForRequest(c, guildID.ID); err != nil {
 			return err
 		}
-		entitlements, err = h.pg.Q.GetActiveEntitlementsForGuild(c.Context(), sql.NullString{String: guildID, Valid: true})
+		entitlements, err = h.entitlementStore.GetActiveEntitlementsForGuild(c.UserContext(), guildID.ID)
 	} else {
-		entitlements, err = h.pg.Q.GetActiveEntitlementsForUser(c.Context(), sql.NullString{String: session.UserID, Valid: true})
+		entitlements, err = h.entitlementStore.GetActiveEntitlementsForUser(c.UserContext(), session.UserID)
 	}
 
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to get premium entitlements")
+		slog.Error("Failed to get premium entitlements", slog.Any("error", err))
 		return err
 	}
 
@@ -109,15 +118,15 @@ func (h *PremiumHandler) HandleListEntitlements(c *fiber.Ctx) error {
 		resp.Entitlements[i] = wire.PremiumEntitlementWire{
 			ID:              e.ID,
 			SkuID:           e.ID,
-			UserID:          null.NewString(e.UserID.String, e.UserID.Valid),
-			GuildID:         null.NewString(e.GuildID.String, e.GuildID.Valid),
+			UserID:          e.UserID,
+			GuildID:         e.GuildID,
 			UpdatedAt:       e.UpdatedAt,
 			Deleted:         e.Deleted,
-			StartsAt:        null.Time{NullTime: e.StartsAt},
-			EndsAt:          null.Time{NullTime: e.EndsAt},
+			StartsAt:        e.StartsAt,
+			EndsAt:          e.EndsAt,
 			Consumable:      consumable,
 			Consumed:        e.Consumed,
-			ConsumedGuildID: null.NewString(e.ConsumedGuildID.String, e.ConsumedGuildID.Valid),
+			ConsumedGuildID: e.ConsumedGuildID,
 		}
 	}
 
@@ -129,44 +138,39 @@ func (h *PremiumHandler) HandleListEntitlements(c *fiber.Ctx) error {
 
 func (h *PremiumHandler) HandleConsumeEntitlement(c *fiber.Ctx, req wire.ConsumeEntitlementRequestWire) error {
 	session := c.Locals("session").(*session.Session)
-	entitlementID := c.Params("entitlementID")
-
-	entitlement, err := h.pg.Q.GetEntitlement(c.Context(), pgmodel.GetEntitlementParams{
-		ID: entitlementID,
-		UserID: sql.NullString{
-			String: session.UserID,
-			Valid:  true,
-		},
-	})
+	entitlementID, err := handlers.ParamID(c, "entitlementID")
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return helpers.NotFound("entitlement_not_found", "Entitlement not found")
+		return err
+	}
+
+	entitlement, err := h.entitlementStore.GetEntitlement(c.UserContext(), entitlementID, session.UserID)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return handlers.NotFound("entitlement_not_found", "Entitlement not found")
 		}
 		return err
 	}
 
 	if entitlement.ConsumedGuildID.Valid {
-		return helpers.BadRequest("entitlement_already_consumed", "Entitlement already consumed")
+		return handlers.BadRequest("entitlement_already_consumed", "Entitlement already consumed")
 	}
 
-	_, err = h.pg.Q.UpdateEntitlementConsumedGuildID(c.Context(), pgmodel.UpdateEntitlementConsumedGuildIDParams{
-		ID: entitlementID,
-		ConsumedGuildID: sql.NullString{
-			String: req.GuildID,
-			Valid:  true,
-		},
+	_, err = h.entitlementStore.UpdateEntitlementConsumedGuildID(c.UserContext(), entitlementID, common.NullID{
+		ID:    req.GuildID,
+		Valid: true,
 	})
 	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			// A concurrent request consumed it between the read above and this write.
+			return handlers.BadRequest("entitlement_already_consumed", "Entitlement already consumed")
+		}
 		return fmt.Errorf("failed to update entitlement: %w", err)
 	}
 
 	if !entitlement.Consumed {
-		clientID := viper.GetString("discord.client_id")
-		url := fmt.Sprintf("https://discord.com/api/v10/applications/%s/entitlements/%s/consume", clientID, entitlement.ID)
-
-		_, err := h.bot.Session.Request("POST", url, nil)
+		err = h.rest.ConsumeEntitlement(h.appContext.ApplicationID(), entitlementID, rest.WithCtx(c.UserContext()))
 		if err != nil {
-			return fmt.Errorf("failed to do request: %w", err)
+			return fmt.Errorf("failed to consume entitlement: %w", err)
 		}
 	}
 

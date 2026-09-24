@@ -1,3 +1,4 @@
+import { localStorageJSON } from "./storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -26,6 +27,6 @@ export const useUpsellStateStore = create<UpsellStateStore>()(
         return Date.now() - get().pageFirstOpenedAt > upsellAfterSeconds * 1000;
       },
     }),
-    { name: "upselling", version: 0 }
-  )
+    { name: "upselling", version: 0, storage: localStorageJSON },
+  ),
 );

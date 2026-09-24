@@ -1,30 +1,29 @@
-import { shallow } from "zustand/shallow";
+import { useShallow } from "zustand/react/shallow";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { useMemo } from "react";
 import {
   useRestoreMessageFromChannelMutation,
   useRestoreMessageFromWebhookMutation,
 } from "../api/mutations";
-import { MessageRestoreResponseDataWire } from "../api/wire";
-import { parseMessageWithAction } from "../discord/restoreSchema";
-import { useCurrentMessageStore } from "../state/message";
+import type { MessageRestoreResponseDataWire } from "../api/wire";
+import { parseMessageWithAction } from "../discord/importSchema";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import { getUniqueId } from "../util";
 import { useToasts } from "../util/toasts";
 import { parseWebhookUrl } from "../discord/util";
+import { setCurrentMessage } from "../state/currentMessage";
 
 export default function MessageRestoreButton() {
   const [mode, webhookUrl, messageId, threadId, guildId, channelId] =
     useSendSettingsStore(
-      (state) => [
+      useShallow((state) => [
         state.mode,
         state.webhookUrl,
         state.messageId,
         state.threadId,
         state.guildId,
         state.channelId,
-      ],
-      shallow
+      ]),
     );
 
   const webhookInfo = useMemo(() => {
@@ -40,7 +39,7 @@ export default function MessageRestoreButton() {
   function restoreData(data: MessageRestoreResponseDataWire) {
     try {
       const parsedData = parseMessageWithAction(data.data);
-      useCurrentMessageStore.getState().replace(parsedData);
+      setCurrentMessage(parsedData);
 
       if (data.attachments) {
         useCurrentAttachmentsStore.getState().replaceAttachments(
@@ -49,7 +48,7 @@ export default function MessageRestoreButton() {
             .map((a) => ({
               id: getUniqueId(),
               ...a!,
-            }))
+            })),
         );
       }
     } catch (e) {
@@ -83,7 +82,7 @@ export default function MessageRestoreButton() {
               });
             }
           },
-        }
+        },
       );
     } else {
       if (!webhookInfo || !messageId) return;
@@ -107,7 +106,7 @@ export default function MessageRestoreButton() {
               });
             }
           },
-        }
+        },
       );
     }
   }
@@ -119,16 +118,17 @@ export default function MessageRestoreButton() {
       : !!webhookInfo && webhookInfo.type === "discord");
 
   return (
-    <div
-      className={`px-3 py-2 rounded border-2 ${
+    <button
+      type="button"
+      className={`px-3 py-2 rounded-lg border-2 ${
         canRestore
-          ? "border-dark-7 hover:bg-dark-6 cursor-pointer text-white"
-          : "cursor-not-allowed text-gray-300 border-dark-6"
+          ? "border-white/15 hover:bg-white/5 hover:border-white/30 cursor-pointer text-mist-100"
+          : "cursor-not-allowed text-mist-500 border-white/10"
       }`}
-      role="button"
+      disabled={!canRestore}
       onClick={restoreMessage}
     >
       Restore Message
-    </div>
+    </button>
   );
 }

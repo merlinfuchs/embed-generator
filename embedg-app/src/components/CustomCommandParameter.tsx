@@ -4,7 +4,7 @@ import {
   DocumentDuplicateIcon,
   TrashIcon,
 } from "@heroicons/react/20/solid";
-import { CustomCommandParameterWire } from "../api/wire";
+import type { CustomCommandParameterWire } from "../api/wire";
 import Collapsable from "./Collapsable";
 import { getUniqueId } from "../util";
 import EditorInput from "./EditorInput";
@@ -18,7 +18,7 @@ interface Props {
   setParameters: (p: CustomCommandParameterWire[]) => void;
 }
 
-const parameterTypes: Record<number, string> = {
+const _parameterTypes: Record<number, string> = {
   0: "Text",
 } as const;
 
@@ -36,7 +36,7 @@ export default function CustomCommandParameter({
     newParameters.splice(
       parameterIndex - 1,
       0,
-      newParameters.splice(parameterIndex, 1)[0]
+      newParameters.splice(parameterIndex, 1)[0],
     );
     setParameters(newParameters);
   }
@@ -46,7 +46,7 @@ export default function CustomCommandParameter({
     newParameters.splice(
       parameterIndex + 1,
       0,
-      newParameters.splice(parameterIndex, 1)[0]
+      newParameters.splice(parameterIndex, 1)[0],
     );
     setParameters(newParameters);
   }
@@ -66,62 +66,56 @@ export default function CustomCommandParameter({
     setParameters(newParameters);
   }
 
-  function setType(newType: string) {
+  // Replace the parameter rather than assigning into it: the objects in this array come from the
+  // query cache, so writing through them edited the cached command before anything was saved.
+  function updateParameter(values: Partial<CustomCommandParameterWire>) {
     const newParameters = [...parameters];
-    newParameters[parameterIndex].type = parseInt(newType);
+    newParameters[parameterIndex] = { ...parameter, ...values };
     setParameters(newParameters);
+  }
+
+  function setType(newType: string) {
+    updateParameter({ type: parseInt(newType, 10) });
   }
 
   function setName(newName: string) {
-    const newParameters = [...parameters];
-    newParameters[parameterIndex].name = newName;
-    setParameters(newParameters);
+    updateParameter({ name: newName });
   }
 
   function setDescription(newDescription: string) {
-    const newParameters = [...parameters];
-    newParameters[parameterIndex].description = newDescription;
-    setParameters(newParameters);
+    updateParameter({ description: newDescription });
   }
 
   return (
-    <div className="p-3 border-2 border-dark-6 rounded-md">
+    <div className="p-3 border-2 border-white/10 rounded-xl">
       <Collapsable
         id={`command.${cmdId}.parameters.${parameter.id}`}
         title={`Argument ${parameterIndex + 1}`}
         buttons={
-          <div className="flex-none text-gray-300 flex items-center space-x-2">
+          <div className="flex-none text-mist-300 flex items-center space-x-2">
             {parameterIndex > 0 && (
-              <ChevronUpIcon
-                className="h-6 w-6 flex-none"
-                role="button"
-                onClick={moveUp}
-              />
+              <button type="button" aria-label="Move up" onClick={moveUp}>
+                <ChevronUpIcon className="h-6 w-6 flex-none" />
+              </button>
             )}
             {parameterIndex < parameters.length - 1 && (
-              <ChevronDownIcon
-                className="h-6 w-6 flex-none"
-                role="button"
-                onClick={moveDown}
-              />
+              <button type="button" aria-label="Move down" onClick={moveDown}>
+                <ChevronDownIcon className="h-6 w-6 flex-none" />
+              </button>
             )}
             {parameters.length < maxParameters && (
-              <DocumentDuplicateIcon
-                className="h-5 w-5 flex-none"
-                role="button"
-                onClick={duplicate}
-              />
+              <button type="button" aria-label="Duplicate" onClick={duplicate}>
+                <DocumentDuplicateIcon className="h-5 w-5 flex-none" />
+              </button>
             )}
-            <TrashIcon
-              className="h-5 w-5 flex-none"
-              role="button"
-              onClick={remove}
-            />
+            <button type="button" aria-label="Remove" onClick={remove}>
+              <TrashIcon className="h-5 w-5 flex-none" />
+            </button>
           </div>
         }
         extra={
           parameter.name ? (
-            <div className="text-gray-500 truncate flex space-x-2 pl-2">
+            <div className="text-mist-500 truncate flex space-x-2 pl-2">
               <div>-</div>
               <div className="truncate">{parameter.name}</div>
             </div>
@@ -132,12 +126,12 @@ export default function CustomCommandParameter({
           <div className="flex flex-col space-y-3 lg:flex-row lg:space-x-3 lg:space-y-0">
             <div className="flex-none">
               <div className="mb-1.5 flex">
-                <div className="uppercase text-gray-300 text-sm font-medium">
+                <div className="uppercase text-mist-300 text-sm font-medium">
                   Type
                 </div>
               </div>
               <select
-                className="bg-dark-2 rounded p-2 w-full no-ring font-light cursor-pointer text-white"
+                className="bg-ink-900 rounded-lg p-2 w-full font-light cursor-pointer text-white"
                 value={parameter.type.toString()}
                 onChange={(v) => setType(v.target.value)}
               >

@@ -3,81 +3,95 @@ package custom_bots
 import (
 	"bytes"
 	"crypto/ed25519"
-	"database/sql"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"log/slog"
+
+	"github.com/disgoorg/disgo/discord"
 	"github.com/gofiber/fiber/v2"
-	"github.com/merlinfuchs/discordgo"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
-	"github.com/rs/zerolog/log"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers"
+	"github.com/merlinfuchs/embed-generator/embedg-server/embedg/rest"
+	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 )
 
 func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 	customBotID := c.Params("customBotID")
 
-	customBot, err := h.pg.Q.GetCustomBot(c.Context(), customBotID)
+	customBot, err := h.customBotManager.GetCustomBot(c.UserContext(), customBotID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return helpers.NotFound("unknown_bot", "Custom bot not found")
+		if errors.Is(err, store.ErrNotFound) {
+			return handlers.NotFound("unknown_bot", "Custom bot not found")
 		}
 		return err
 	}
 
 	if !verifyInteractionSignaure(c, customBot.PublicKey) {
-		return helpers.Unauthorized("invalid_signature", "Invalid signature")
+		return handlers.Unauthorized("invalid_signature", "Invalid signature")
 	}
 
-	interaction := &discordgo.InteractionCreate{}
-	err = c.BodyParser(interaction)
+	interaction, err := discord.UnmarshalInteraction(c.Body())
 	if err != nil {
 		return err
 	}
 
-	if interaction.AppID != customBot.ApplicationID {
+	if interaction.ApplicationID() != customBot.ApplicationID {
 		return fmt.Errorf("application id mismatch")
 	}
 
-	err = h.pg.Q.SetCustomBotHandledFirstInteraction(c.Context(), customBotID)
+	err = h.customBotManager.SetCustomBotHandledFirstInteraction(c.UserContext(), customBotID)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to set custom bot handled first interaction")
+		slog.Error("Failed to set custom bot handled first interaction", slog.Any("error", err))
 	}
 
-	if interaction.Type == discordgo.InteractionPing {
-		return c.JSON(discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponsePong,
+	if interaction.Type() == discord.InteractionTypePing {
+		return c.JSON(discord.InteractionResponse{
+			Type: discord.InteractionResponseTypePong,
 		})
 	}
 
 	handle := false
-	switch interaction.Type {
-	case discordgo.InteractionMessageComponent:
-		data := interaction.MessageComponentData()
-		if strings.HasPrefix(data.CustomID, "action:") {
+	switch i := interaction.(type) {
+	case discord.ComponentInteraction:
+		if strings.HasPrefix(i.Data.CustomID(), "action:") {
 			handle = true
 		}
-	case discordgo.InteractionApplicationCommand:
+	case discord.ApplicationCommandInteraction:
 		handle = true
 	}
 
 	if handle {
-		respCh := make(chan *discordgo.InteractionResponse)
+		// Buffered: this handler stops reading after three seconds, and the send must not block
+		// the goroutine below forever when it does.
+		respCh := make(chan *discord.InteractionResponse, 1)
+		client := rest.ClientForToken(customBot.Token)
 
 		ri := &handler.RestInteraction{
-			Inner:           interaction.Interaction,
-			Session:         h.bot.Session, // TODO?: Use custom bot session
+			Inner:           interaction,
+			Rest:            client,
 			InitialResponse: respCh,
 		}
 
 		go func() {
-			session, _ := discordgo.New("Bot " + customBot.Token)
+			// Nothing recovers a panic in here, and an interaction is something any member of the
+			// guild can trigger.
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error(
+						"Panic while handling custom bot interaction",
+						slog.String("custom_bot_id", customBotID),
+						slog.Any("panic", r),
+					)
+				}
+			}()
 
-			err := h.bot.ActionHandler.HandleActionInteraction(session, ri)
+			err := h.actionHandler.HandleActionInteraction(client, ri)
 			if err != nil {
-				log.Error().Err(err).Msg("Failed to handle action interaction")
+				slog.Error("Failed to handle action interaction", slog.Any("error", err))
 			}
 		}()
 
@@ -96,7 +110,7 @@ func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 
 func verifyInteractionSignaure(c *fiber.Ctx, publicKey string) bool {
 	key, err := hex.DecodeString(publicKey)
-	if err != nil {
+	if err != nil || len(key) != ed25519.PublicKeySize {
 		return false
 	}
 

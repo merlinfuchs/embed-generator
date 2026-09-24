@@ -1,51 +1,51 @@
-import { shallow } from "zustand/shallow";
-import { useCurrentMessageStore } from "../state/message";
+import {
+  type EmbedNode,
+  type FieldPath,
+  type NodeId,
+  useNode,
+  useDocumentStoreApi,
+} from "../state/document";
+import { nodeField, nodeScope } from "../state/validationError";
 import Collapsable from "./Collapsable";
 import EditorInput from "./EditorInput";
 
+const IMAGE_FIELDS: FieldPath<EmbedNode>[] = ["image", "thumbnail"];
+
 interface Props {
-  embedIndex: number;
-  embedId: number;
+  id: NodeId;
 }
 
-export default function EditorEmbedImages({ embedIndex, embedId }: Props) {
-  const [imageUrl, setImageUrl] = useCurrentMessageStore(
-    (state) => [state.embeds[embedIndex]?.image?.url, state.setEmbedImageUrl],
-    shallow
-  );
+export default function EditorEmbedImages({ id }: Props) {
+  const embed = useNode<EmbedNode>(id);
+  const { update } = useDocumentStoreApi().getState();
 
-  const [thumbnailUrl, setThumbnailUrl] = useCurrentMessageStore(
-    (state) => [
-      state.embeds[embedIndex]?.thumbnail?.url,
-      state.setEmbedThumbnailUrl,
-    ],
-    shallow
-  );
+  if (!embed) return null;
 
   return (
     <Collapsable
       title="Images"
-      id={`embeds.${embedId}.images`}
-      validationPathPrefix={[
-        `embeds.${embedIndex}.image`,
-        `embeds.${embedIndex}.thumbnail`,
-      ]}
+      id={`embeds.${id}.images`}
+      validationPathPrefix={nodeScope<EmbedNode>(id, IMAGE_FIELDS)}
     >
       <div className="space-y-3">
         <EditorInput
           label="Image URL"
           type="url"
-          value={imageUrl || ""}
-          onChange={(v) => setImageUrl(embedIndex, v || undefined)}
-          validationPath={`embeds.${embedIndex}.image.url`}
+          value={embed.image?.url || ""}
+          onChange={(v) =>
+            update<EmbedNode>(id, { image: v ? { url: v } : undefined })
+          }
+          validationPath={nodeField<EmbedNode>(id, "image.url")}
           imageUpload={true}
         />
         <EditorInput
           label="Thumbnail URL"
           type="url"
-          value={thumbnailUrl || ""}
-          onChange={(v) => setThumbnailUrl(embedIndex, v || undefined)}
-          validationPath={`embeds.${embedIndex}.thumbnail.url`}
+          value={embed.thumbnail?.url || ""}
+          onChange={(v) =>
+            update<EmbedNode>(id, { thumbnail: v ? { url: v } : undefined })
+          }
+          validationPath={nodeField<EmbedNode>(id, "thumbnail.url")}
           imageUpload={true}
         />
       </div>

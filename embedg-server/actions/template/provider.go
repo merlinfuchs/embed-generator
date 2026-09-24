@@ -2,11 +2,12 @@ package template
 
 import (
 	"context"
-	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
-	"github.com/merlinfuchs/discordgo"
+	"github.com/disgoorg/disgo/discord"
+	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 )
@@ -20,13 +21,13 @@ type ContextProvider interface {
 }
 
 type InteractionProvider struct {
-	state       *discordgo.State
-	interaction *discordgo.Interaction
+	src         Source
+	interaction discord.Interaction
 }
 
-func NewInteractionProvider(state *discordgo.State, interaction *discordgo.Interaction) *InteractionProvider {
+func NewInteractionProvider(src Source, interaction discord.Interaction) *InteractionProvider {
 	return &InteractionProvider{
-		state:       state,
+		src:         src,
 		interaction: interaction,
 	}
 }
@@ -34,24 +35,40 @@ func NewInteractionProvider(state *discordgo.State, interaction *discordgo.Inter
 func (p *InteractionProvider) ProvideFuncs(funcs map[string]interface{}) {}
 
 func (p *InteractionProvider) ProvideData(data map[string]interface{}) {
-	data["Interaction"] = NewInteractionData(p.state, p.interaction)
+	interactionData := NewInteractionData(p.src, p.interaction)
+	data["Interaction"] = interactionData
+	data["User"] = interactionData.User()
+	data["Member"] = interactionData.Member()
 
-	guildData := NewGuildData(p.state, p.interaction.GuildID, nil)
+	commandData := interactionData.Command()
+	if commandData != nil {
+		data["Command"] = commandData
+		data["Args"] = commandData.Args()
+	}
+
+	guildID := p.interaction.GuildID()
+	if guildID == nil {
+		return
+	}
+
+	guildData := NewGuildData(p.src, *guildID, nil)
 	data["Guild"] = guildData
 	data["Server"] = guildData
 
-	data["Channel"] = NewChannelData(p.state, p.interaction.ChannelID, nil)
+	// The interaction payload already carries the channel, so the common case costs no fetch.
+	interactionChannel, _ := p.interaction.Channel().MessageChannel.(discord.GuildChannel)
+	data["Channel"] = NewChannelData(p.src, p.interaction.Channel().ID(), interactionChannel)
 }
 
 type GuildProvider struct {
-	state   *discordgo.State
-	guildID string
-	guild   *discordgo.Guild
+	src     Source
+	guildID common.ID
+	guild   *discord.Guild
 }
 
-func NewGuildProvider(state *discordgo.State, guildID string, guild *discordgo.Guild) *GuildProvider {
+func NewGuildProvider(src Source, guildID common.ID, guild *discord.Guild) *GuildProvider {
 	return &GuildProvider{
-		state:   state,
+		src:     src,
 		guildID: guildID,
 		guild:   guild,
 	}
@@ -60,20 +77,20 @@ func NewGuildProvider(state *discordgo.State, guildID string, guild *discordgo.G
 func (p *GuildProvider) ProvideFuncs(funcs map[string]interface{}) {}
 
 func (p *GuildProvider) ProvideData(data map[string]interface{}) {
-	guildData := NewGuildData(p.state, p.guildID, p.guild)
+	guildData := NewGuildData(p.src, p.guildID, p.guild)
 	data["Guild"] = guildData
 	data["Server"] = guildData
 }
 
 type ChannelProvider struct {
-	state     *discordgo.State
-	channelID string
-	channel   *discordgo.Channel
+	src       Source
+	channelID common.ID
+	channel   discord.GuildChannel
 }
 
-func NewChannelProvider(state *discordgo.State, channelID string, channel *discordgo.Channel) *ChannelProvider {
+func NewChannelProvider(src Source, channelID common.ID, channel discord.GuildChannel) *ChannelProvider {
 	return &ChannelProvider{
-		state:     state,
+		src:       src,
 		channelID: channelID,
 		channel:   channel,
 	}
@@ -82,16 +99,16 @@ func NewChannelProvider(state *discordgo.State, channelID string, channel *disco
 func (p *ChannelProvider) ProvideFuncs(funcs map[string]interface{}) {}
 
 func (p *ChannelProvider) ProvideData(data map[string]interface{}) {
-	data["Channel"] = NewChannelData(p.state, p.channelID, p.channel)
+	data["Channel"] = NewChannelData(p.src, p.channelID, p.channel)
 }
 
 type KVProvider struct {
-	guildID      string
+	guildID      common.ID
 	kvStore      store.KVEntryStore
 	maxGuildKeys int
 }
 
-func NewKVProvider(guildID string, kvStore store.KVEntryStore, maxGuildKeys int) *KVProvider {
+func NewKVProvider(guildID common.ID, kvStore store.KVEntryStore, maxGuildKeys int) *KVProvider {
 	return &KVProvider{
 		guildID:      guildID,
 		kvStore:      kvStore,
@@ -154,7 +171,7 @@ func (kv *KVProvider) increaseKey(key string, delta int) (string, error) {
 		return "", err
 	}
 
-	entry, err := kv.kvStore.IncreaseKVEntry(context.TODO(), model.KVEntryIncreaseParams{
+	entry, err := kv.kvStore.IncreaseKVEntry(context.TODO(), store.KVEntryIncreaseParams{
 		GuildID:   kv.guildID,
 		Key:       key,
 		Delta:     delta,
@@ -162,7 +179,7 @@ func (kv *KVProvider) increaseKey(key string, delta int) (string, error) {
 		UpdatedAt: time.Now().UTC(),
 	})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, store.ErrNotFound) {
 			return "", nil
 		}
 		return "", err
@@ -173,7 +190,7 @@ func (kv *KVProvider) increaseKey(key string, delta int) (string, error) {
 func (kv *KVProvider) deleteKey(key string) (string, error) {
 	entry, err := kv.kvStore.DeleteKVEntry(context.TODO(), kv.guildID, key)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, store.ErrNotFound) {
 			return "", nil
 		}
 		return "", err

@@ -1,7 +1,8 @@
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import ClickOutsideHandler from "./ClickOutsideHandler";
+import SelectDropdown from "./SelectDropdown";
 import { useGuildRolesQuery } from "../api/queries";
 import { colorIntToHex } from "../util/discord";
 
@@ -16,7 +17,7 @@ export function RoleSelect({ guildId, roleId, onChange }: Props) {
 
   const role = useMemo(
     () => roles?.success && roles.data.find((r) => r.id === roleId),
-    [roles, roleId]
+    [roles, roleId],
   );
 
   function selectRole(roleId: string) {
@@ -26,19 +27,13 @@ export function RoleSelect({ guildId, roleId, onChange }: Props) {
 
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    if (roles?.success) {
-      roles.data.sort((a, b) => b.position - a.position);
-    }
-  }, [roles]);
-
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
-      <div className="px-3 h-10 flex items-center rounded bg-dark-2 relative select-none">
-        <div
-          role="button"
+      <div className="px-3 h-10 flex items-center rounded-lg bg-ink-900 relative select-none">
+        <button
+          type="button"
           onClick={() => setOpen((prev) => !prev)}
-          className="flex-auto"
+          className="flex-auto text-left"
         >
           {role ? (
             <div className="flex items-center space-x-2 cursor-pointer w-full">
@@ -46,41 +41,41 @@ export function RoleSelect({ guildId, roleId, onChange }: Props) {
                 className="h-4 w-4 rounded-full"
                 style={{ backgroundColor: colorIntToHex(role.color) }}
               ></div>
-              <div className="text-gray-300 flex-auto truncate">
+              <div className="text-mist-300 flex-auto truncate">
                 {role.name}
               </div>
               <ChevronDownIcon
                 className={clsx(
                   "text-white w-5 h-5 flex-none transition-transform",
-                  open && "rotate-180"
+                  open && "rotate-180",
                 )}
               />
             </div>
           ) : (
-            <div className="text-gray-300">Select role</div>
+            <div className="text-mist-300">Select role</div>
           )}
-        </div>
+        </button>
         {open && (
-          <div className="absolute bg-dark-2 top-14 left-0 rounded shadow-lg w-full border-2 border-dark-2 z-10 max-h-48 overflow-y-auto overflow-x-none">
+          <SelectDropdown>
             {roles?.success && roles.data.length ? (
               roles.data.map((r) => (
-                <div
+                <button
+                  type="button"
                   key={r.id}
-                  className="py-2 flex space-x-2 items-center hover:bg-dark-3 rounded cursor-pointer px-3"
-                  role="button"
+                  className="py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg cursor-pointer px-3 w-full text-left"
                   onClick={() => selectRole(r.id)}
                 >
                   <div
                     className="h-4 w-4 rounded-full"
                     style={{ backgroundColor: colorIntToHex(r.color) }}
                   ></div>
-                  <div className="text-gray-300 truncate">{r.name}</div>
-                </div>
+                  <div className="text-mist-300 truncate">{r.name}</div>
+                </button>
               ))
             ) : (
-              <div className="p-2 text-gray-300">No roles found</div>
+              <div className="p-2 text-mist-300">No roles found</div>
             )}
-          </div>
+          </SelectDropdown>
         )}
       </div>
     </ClickOutsideHandler>

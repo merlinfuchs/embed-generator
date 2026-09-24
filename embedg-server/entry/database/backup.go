@@ -11,8 +11,7 @@ import (
 
 	"github.com/merlinfuchs/embed-generator/embedg-server/config"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/s3"
-	"github.com/merlinfuchs/embed-generator/embedg-server/telemetry"
-	"github.com/spf13/viper"
+	"github.com/merlinfuchs/embed-generator/embedg-server/logging"
 )
 
 type BackupOpts struct {
@@ -29,10 +28,14 @@ func Backup(ctx context.Context, db string, opts BackupOpts) error {
 		return fmt.Errorf("operation %s is not supported for backup", opts.Operation)
 	}
 
-	config.InitConfig()
-	telemetry.SetupLogger()
+	cfg, err := config.LoadConfig[*config.RootConfig]()
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
 
-	s3, err := s3.New()
+	logging.SetupLogger(logging.LoggerConfig(cfg.Logging))
+
+	s3, err := s3.New(s3.ClientConfig(cfg.Database.S3))
 	if err != nil {
 		slog.With("error", err).Error("Failed to create s3 client")
 		return fmt.Errorf("failed to create s3 client: %w", err)
@@ -40,7 +43,7 @@ func Backup(ctx context.Context, db string, opts BackupOpts) error {
 
 	slog.Info("Creating database backup", "database", db, "operation", opts.Operation)
 
-	tmpFile, err := os.CreateTemp("", "xvault-pg-backup-*.tar")
+	tmpFile, err := os.CreateTemp("", "embedg-pg-backup-*.tar")
 	if err != nil {
 		return fmt.Errorf("failed to create temporary file: %w", err)
 	}
@@ -49,16 +52,16 @@ func Backup(ctx context.Context, db string, opts BackupOpts) error {
 	slog.Info("Creating database dump", "file", tmpFile.Name())
 
 	cmd := exec.Command("pg_dump",
-		"--host="+viper.GetString("postgres.host"),
-		"--username="+viper.GetString("postgres.user"),
-		"--port="+fmt.Sprintf("%d", viper.GetInt("postgres.port")),
-		"--dbname="+viper.GetString("postgres.dbname"),
+		"--host="+cfg.Database.Postgres.Host,
+		"--username="+cfg.Database.Postgres.User,
+		"--port="+fmt.Sprintf("%d", cfg.Database.Postgres.Port),
+		"--dbname="+cfg.Database.Postgres.DBName,
 		"--file="+tmpFile.Name(),
 		"--format=tar",
 	)
 
-	if viper.GetString("postgres.password") != "" {
-		cmd.Env = append(os.Environ(), "PGPASSWORD="+viper.GetString("postgres.password"))
+	if cfg.Database.Postgres.Password != "" {
+		cmd.Env = append(os.Environ(), "PGPASSWORD="+cfg.Database.Postgres.Password)
 	}
 
 	if output, err := cmd.CombinedOutput(); err != nil {
@@ -73,7 +76,7 @@ func Backup(ctx context.Context, db string, opts BackupOpts) error {
 	slog.Info("Successfully created database dump", "file", tmpFile.Name(), "size", stat.Size())
 
 	// Create a temporary gzipped file
-	gzipFile, err := os.CreateTemp("", "xvault-pg-backup-*.tar.gz")
+	gzipFile, err := os.CreateTemp("", "embedg-pg-backup-*.tar.gz")
 	if err != nil {
 		return fmt.Errorf("failed to create temporary gzip file: %w", err)
 	}

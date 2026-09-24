@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import Modal from "../../components/Modal";
-import { useCurrentMessageStore } from "../../state/message";
 import { useSharedMessageCreateMutation } from "../../api/mutations";
 import { useEffect, useRef, useState } from "react";
 import { useToasts } from "../../util/toasts";
+import { getCurrentMessage } from "../../state/currentMessage";
 
 export default function ShareView() {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ export default function ShareView() {
   useEffect(() => {
     shareCreateMutation.mutate(
       {
-        data: useCurrentMessageStore.getState(),
+        data: getCurrentMessage(),
       },
       {
         onSuccess: (resp) => {
@@ -31,7 +31,7 @@ export default function ShareView() {
             });
           }
         },
-      }
+      },
     );
   }, []);
 
@@ -59,19 +59,19 @@ export default function ShareView() {
         <input
           type="text"
           value={shareUrl}
-          className="px-3 py-2 bg-dark-2 rounded w-full focus:outline-none text-white mb-5"
+          className="px-3 py-2 bg-ink-900 rounded-lg w-full focus:outline-none text-white mb-5"
           readOnly
           ref={inputRef}
         />
         <div className="space-x-2 flex justify-end">
           <button
-            className="px-3 py-2 rounded text-white bg-blurple hover:bg-blurple-dark"
+            className="px-3 py-2 rounded-lg text-white bg-azure-500 hover:bg-azure-400"
             onClick={copy}
           >
             Copy URL
           </button>
           <button
-            className="px-3 py-2 rounded text-white bg-dark-6 hover:bg-dark-7"
+            className="px-3 py-2 rounded-lg text-white bg-ink-600 hover:bg-ink-500"
             onClick={() => navigate("/editor")}
           >
             Close

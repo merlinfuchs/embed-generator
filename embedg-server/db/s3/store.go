@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"strings"
+	"time"
+
+	"log/slog"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/minio/minio-go/v7/pkg/encrypt"
-	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
 )
 
 var requiredBuckets = []string{
@@ -18,41 +18,35 @@ var requiredBuckets = []string{
 	dbBackupBucket,
 }
 
-type BlobStore struct {
+// How long we wait for the object storage to respond during startup before
+// giving up and continuing without it.
+const bucketSetupTimeout = 10 * time.Second
+
+type ClientConfig struct {
+	Endpoint        string `toml:"endpoint" validate:"required"`
+	AccessKeyID     string `toml:"access_key_id" validate:"required"`
+	SecretAccessKey string `toml:"secret_access_key" validate:"required"`
+	Secure          bool   `toml:"secure"`
+	SSECKey         string `toml:"ssec_key"`
+}
+
+type Client struct {
 	client     *minio.Client
 	encryption encrypt.ServerSide
 }
 
-func New() (*BlobStore, error) {
-	client, err := minio.New(viper.GetString("s3.endpoint"), &minio.Options{
-		Creds:  credentials.NewStaticV4(viper.GetString("s3.access_key_id"), viper.GetString("s3.secret_access_key"), ""),
-		Secure: viper.GetBool("s3.secure"),
+func New(config ClientConfig) (*Client, error) {
+	client, err := minio.New(config.Endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(config.AccessKeyID, config.SecretAccessKey, ""),
+		Secure: config.Secure,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	for _, bucket := range requiredBuckets {
-		exists, err := client.BucketExists(context.Background(), bucket)
-		if err != nil {
-			if strings.Contains(err.Error(), "connection refused") {
-				log.Warn().Msgf("Failed to check if bucket %s exists, is S3 correctly configured?", bucket)
-				continue
-			}
-			return nil, fmt.Errorf("Failed to check if bucket %s exists: %w", bucket, err)
-		}
-
-		if !exists {
-			err = client.MakeBucket(context.Background(), bucket, minio.MakeBucketOptions{})
-			if err != nil {
-				return nil, fmt.Errorf("Failed to create bucket %s: %w", bucket, err)
-			}
-		}
-	}
-
 	var encryption encrypt.ServerSide
-	if viper.GetString("s3.ssec_key") != "" {
-		key, err := hex.DecodeString(viper.GetString("s3.ssec_key"))
+	if config.SSECKey != "" {
+		key, err := hex.DecodeString(config.SSECKey)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode S3 encryption key: %w", err)
 		}
@@ -63,8 +57,40 @@ func New() (*BlobStore, error) {
 		}
 	}
 
-	return &BlobStore{
+	ensureBuckets(client)
+
+	return &Client{
 		client:     client,
 		encryption: encryption,
 	}, nil
+}
+
+// ensureBuckets creates the buckets we need if they don't exist yet. Failures
+// are only logged so that the service still starts when the object storage is
+// unreachable or misconfigured.
+func ensureBuckets(client *minio.Client) {
+	ctx, cancel := context.WithTimeout(context.Background(), bucketSetupTimeout)
+	defer cancel()
+
+	for _, bucket := range requiredBuckets {
+		exists, err := client.BucketExists(ctx, bucket)
+		if err != nil {
+			slog.Warn(
+				"Failed to check if bucket exists, is S3 correctly configured?",
+				"bucket", bucket,
+				"error", err,
+			)
+			continue
+		}
+
+		if !exists {
+			if err := client.MakeBucket(ctx, bucket, minio.MakeBucketOptions{}); err != nil {
+				slog.Warn(
+					"Failed to create bucket, is S3 correctly configured?",
+					"bucket", bucket,
+					"error", err,
+				)
+			}
+		}
+	}
 }

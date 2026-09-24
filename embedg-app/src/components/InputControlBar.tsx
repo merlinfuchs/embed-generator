@@ -1,8 +1,11 @@
 import { AtSymbolIcon, FaceSmileIcon } from "@heroicons/react/24/outline";
 import { useSendSettingsStore } from "../state/sendSettings";
 import EmojiPicker from "./EmojiPicker";
-import { RefObject, useEffect } from "react";
+import { type RefObject, useEffect, useRef } from "react";
 import EditorMentionPicker from "./EditorMentionPicker";
+
+const CONTROL_CLASS =
+  "h-7 w-7 flex items-center justify-center bg-ink-900 rounded-lg cursor-pointer text-mist-300 hover:text-white";
 
 interface Props {
   value: string;
@@ -10,13 +13,13 @@ interface Props {
   inputRef: RefObject<HTMLInputElement & HTMLTextAreaElement>;
 }
 
-export default function InputControlBar({ value, onChange, inputRef }: Props) {
+export default function InputControlBar({ onChange, inputRef }: Props) {
   const guildId = useSendSettingsStore((state) => state.guildId);
 
   function surroundSelection(
     prefix: string,
     suffix: string,
-    placeholder: string
+    placeholder: string,
   ) {
     if (!inputRef.current) return;
 
@@ -25,7 +28,7 @@ export default function InputControlBar({ value, onChange, inputRef }: Props) {
     const startPos = element.selectionStart;
     const endPos = element.selectionEnd;
 
-    if (startPos == endPos) {
+    if (startPos === endPos) {
       insertAtCursor(prefix + placeholder + suffix);
       return;
     }
@@ -61,7 +64,7 @@ export default function InputControlBar({ value, onChange, inputRef }: Props) {
       insertAtCursor(emoji.native);
     } else {
       insertAtCursor(
-        `<${emoji.src.endsWith(".gif") ? "a" : ""}:${emoji.name}:${emoji.id}>`
+        `<${emoji.src.endsWith(".gif") ? "a" : ""}:${emoji.name}:${emoji.id}>`,
       );
     }
   }
@@ -70,47 +73,59 @@ export default function InputControlBar({ value, onChange, inputRef }: Props) {
     insertAtCursor(mention);
   }
 
-  function onBold() {
-    surroundSelection("**", "**", "bold text");
-  }
+  // Both the toolbar buttons and the keyboard shortcuts drive the same four marks.
+  const marks: {
+    key: string;
+    label: string;
+    className: string;
+    args: [string, string, string];
+  }[] = [
+    {
+      key: "b",
+      label: "Bold",
+      className: "font-bold",
+      args: ["**", "**", "bold text"],
+    },
+    {
+      key: "i",
+      label: "Italic",
+      className: "italic",
+      args: ["*", "*", "cursive text"],
+    },
+    {
+      key: "u",
+      label: "Underline",
+      className: "underline",
+      args: ["__", "__", "underlined text"],
+    },
+    {
+      key: "s",
+      label: "Strikethrough",
+      className: "line-through",
+      args: ["~~", "~~", "strikethrough text"],
+    },
+  ];
 
-  function onItalic() {
-    surroundSelection("*", "*", "cursive text");
-  }
-
-  function onUnderline() {
-    surroundSelection("__", "__", "underlined text");
-  }
-
-  function onStrikethrough() {
-    surroundSelection("~~", "~~", "strikethrough text");
-  }
+  // The listener below is attached once, so it has to reach surroundSelection through a ref.
+  // Closing over it froze the onChange of the first render, and for an action's text that one
+  // writes to whichever index the action had back then, so the shortcut edited the wrong action
+  // after a move.
+  const surround = useRef(surroundSelection);
+  surround.current = surroundSelection;
 
   useEffect(() => {
     const input = inputRef.current;
     if (!input) return;
 
     function onKeyDown(e: KeyboardEvent) {
-      if (!e.ctrlKey) return;
+      // metaKey too, ctrl isn't the modifier for this on macOS.
+      if (!e.ctrlKey && !e.metaKey) return;
 
-      switch (e.key) {
-        case "b":
-          e.preventDefault();
-          onBold();
-          break;
-        case "i":
-          e.preventDefault();
-          onItalic();
-          break;
-        case "u":
-          e.preventDefault();
-          onUnderline();
-          break;
-        case "s":
-          e.preventDefault();
-          onStrikethrough();
-          break;
-      }
+      const mark = marks.find((m) => m.key === e.key);
+      if (!mark) return;
+
+      e.preventDefault();
+      surround.current(...mark.args);
     }
 
     input.addEventListener("keydown", onKeyDown);
@@ -118,57 +133,43 @@ export default function InputControlBar({ value, onChange, inputRef }: Props) {
     return () => {
       input.removeEventListener("keydown", onKeyDown);
     };
-  }, [inputRef.current]);
+    // marks never changes and surroundSelection is reached through the ref.
+  }, [inputRef]);
 
   return (
     <div className="flex space-x-2">
-      <div
-        className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
-        role="button"
-        onClick={onBold}
-      >
-        <div className="font-bold">B</div>
-      </div>
-      <div
-        className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
-        role="button"
-        onClick={onItalic}
-      >
-        <div className="italic">I</div>
-      </div>
-      <div
-        className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
-        role="button"
-        onClick={onUnderline}
-      >
-        <div className="underline">U</div>
-      </div>
-      <div
-        className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
-        role="button"
-        onClick={onStrikethrough}
-      >
-        <div className="line-through">S</div>
-      </div>
+      {marks.map((mark) => (
+        <button
+          key={mark.key}
+          type="button"
+          aria-label={mark.label}
+          className={CONTROL_CLASS}
+          onClick={() => surroundSelection(...mark.args)}
+        >
+          <div className={mark.className}>{mark.label[0]}</div>
+        </button>
+      ))}
       <EditorMentionPicker onMentionInsert={onMentionInsert} guildId={guildId}>
-        <div
-          className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
-          role="button"
+        <button
+          type="button"
+          aria-label="Insert mention"
+          className={CONTROL_CLASS}
         >
           <AtSymbolIcon className="h-5 w-5" />
-        </div>
+        </button>
       </EditorMentionPicker>
       <EmojiPicker
         guildId={guildId}
         onEmojiSelect={onEmojiSelect}
         align="right"
       >
-        <div
-          className="h-7 w-7 flex items-center justify-center bg-dark-2 rounded cursor-pointer text-gray-300 hover:text-white"
-          role="button"
+        <button
+          type="button"
+          aria-label="Insert emoji"
+          className={CONTROL_CLASS}
         >
           <FaceSmileIcon className="h-5 w-5" />
-        </div>
+        </button>
       </EmojiPicker>
     </div>
   );

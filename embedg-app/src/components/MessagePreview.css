@@ -27,17 +27,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   padding: 0 2px;
   border-radius: 3px;
 }
-
-.discord-attachment .discord-image-wrapper {
-  display: block;
-  position: relative;
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
-  user-select: text;
-  overflow: hidden;
-  border-radius: 3px;
-}
 .discord-message .discord-attachments {
   display: grid;
   grid-auto-flow: row;
@@ -66,8 +55,12 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   height: 32px;
   min-width: 60px;
   min-height: 32px;
-  -webkit-transition: background-color 0.17s ease, color 0.17s ease;
-  transition: background-color 0.17s ease, color 0.17s ease;
+  -webkit-transition:
+    background-color 0.17s ease,
+    color 0.17s ease;
+  transition:
+    background-color 0.17s ease,
+    color 0.17s ease;
   border-radius: 3px;
   font-size: 14px;
   font-weight: 500;
@@ -156,21 +149,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   overflow: hidden;
 }
 
-.discord-replied-message.discord-executed-command .discord-command-name {
-  color: #00aff4;
-  font-weight: 500;
-}
-
-.discord-replied-message.discord-executed-command .discord-command-name:hover {
-  color: #00aff4;
-  text-decoration: underline;
-}
-
-.discord-replied-message.discord-executed-command
-  .discord-replied-message-username {
-  margin-right: 0;
-}
-
 .discord-replied-message {
   color: #b9bbbe;
   display: flex;
@@ -185,15 +163,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   position: relative;
   white-space: pre;
   user-select: none;
-}
-
-.discord-light-theme .discord-replied-message {
-  color: #4f5660;
-}
-
-.discord-compact-mode .discord-replied-message {
-  margin-left: 62px;
-  margin-bottom: 0;
 }
 
 .discord-replied-message:before {
@@ -215,12 +184,7 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   border-top-left-radius: 6px;
 }
 
-.discord-light-theme .discord-replied-message:before {
-  border-color: #747f8d;
-}
-
-.discord-replied-message .discord-replied-message-avatar,
-.discord-replied-message .discord-reply-badge {
+.discord-replied-message .discord-replied-message-avatar {
   -webkit-box-flex: 0;
   -ms-flex: 0 0 auto;
   flex: 0 0 auto;
@@ -229,19 +193,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   border-radius: 50%;
   user-select: none;
   margin-right: 0.25rem;
-}
-
-.discord-replied-message .discord-reply-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #b9bbbe;
-  background: #202225;
-}
-
-.discord-light-theme .discord-replied-message .discord-reply-badge {
-  color: #4f5660;
-  background: #e3e5e8;
 }
 
 .discord-replied-message .discord-application-tag {
@@ -293,27 +244,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   color: #fff;
 }
 
-.discord-light-theme
-  .discord-replied-message
-  .discord-replied-message-content:hover {
-  color: #000;
-}
-
-.discord-replied-message
-  .discord-replied-message-content
-  .discord-message-edited {
-  margin-left: 0.25rem;
-}
-
-.discord-replied-message .discord-replied-message-content-icon {
-  -webkit-box-flex: 0;
-  -ms-flex: 0 0 auto;
-  flex: 0 0 auto;
-  width: 20px;
-  height: 20px;
-  margin-left: 4px;
-}
-
 .discord-message .discord-author-info {
   display: inline-flex;
   align-items: center;
@@ -324,13 +254,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   color: #fff;
   font-size: 1em;
   font-weight: 500;
-}
-
-.discord-light-theme
-  .discord-message
-  .discord-author-info
-  .discord-author-username {
-  color: #23262a;
 }
 
 .discord-message .discord-author-info .discord-application-tag {
@@ -358,25 +281,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   margin-left: -0.25rem;
 }
 
-.discord-compact-mode
-  .discord-message
-  .discord-author-info
-  .discord-author-username {
-  margin-left: 8px;
-  margin-right: 4px;
-}
-
-.discord-compact-mode
-  .discord-message
-  .discord-author-info
-  .discord-application-tag {
-  margin-left: 0;
-  margin-left: 5px;
-  margin-right: 5px;
-  padding-left: 3px;
-  padding-right: 3px;
-}
-
 .discord-custom-emoji {
   display: inline-block;
   cursor: pointer;
@@ -396,16 +300,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   height: 1.375rem;
   vertical-align: bottom;
 }
-
-.discord-embed-custom-emoji {
-  display: inline-block;
-}
-
-.discord-embed-custom-emoji .discord-embed-custom-emoji-image {
-  width: 18px;
-  height: 18px;
-  vertical-align: bottom;
-}
 .discord-embed {
   color: #dcddde;
   display: flex;
@@ -415,19 +309,11 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   margin-top: 8px;
 }
 
-.discord-light-theme .discord-embed {
-  color: #2e3338;
-}
-
 .discord-embed .discord-left-border {
   background-color: #202225;
   border-radius: 4px 0 0 4px;
   flex-shrink: 0;
   width: 4px;
-}
-
-.discord-light-theme .discord-embed .discord-left-border {
-  background-color: #e3e5e8;
 }
 
 .discord-embed .discord-embed-root {
@@ -450,11 +336,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   box-sizing: border-box;
 }
 
-.discord-light-theme .discord-embed .discord-embed-wrapper {
-  background-color: rgba(249, 249, 249, 0.3);
-  border-color: rgba(205, 205, 205, 0.3);
-}
-
 .discord-embed .discord-embed-wrapper .discord-embed-grid {
   display: inline-grid;
   grid-template-columns: auto -webkit-min-content;
@@ -467,8 +348,8 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
 .discord-embed .discord-embed-thumbnail {
   border-radius: 4px;
   flex-shrink: 0;
-  grid-column: 2/2;
-  grid-row: 1/8;
+  grid-column: 2 / 2;
+  grid-row: 1 / 8;
   justify-self: end;
   margin-left: 16px;
   margin-top: 8px;
@@ -490,17 +371,9 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   min-width: 0;
 }
 
-.discord-light-theme .discord-embed .discord-embed-author {
-  color: #4f545c;
-}
-
 .discord-embed .discord-embed-author a {
   color: #fff;
   font-weight: 600;
-}
-
-.discord-light-theme .discord-embed .discord-embed-author a {
-  color: #4f545c;
 }
 
 .discord-embed .discord-embed-author .discord-author-image {
@@ -514,7 +387,7 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   font-size: 0.75rem;
   line-height: 1rem;
   font-weight: 400;
-  grid-column: 1/1;
+  grid-column: 1 / 1;
   margin-top: 8px;
   unicode-bidi: plaintext;
   text-align: left;
@@ -522,10 +395,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
 
 .discord-embed .discord-embed-provider a {
   color: inherit;
-}
-
-.discord-light-theme .discord-embed .discord-embed-provider {
-  color: #4f545c;
 }
 
 .discord-embed .discord-embed-title {
@@ -554,12 +423,8 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   border-radius: 4px;
   contain: paint;
   display: block;
-  grid-column: 1/1;
+  grid-column: 1 / 1;
   margin-top: 16px;
-}
-
-.discord-embed .discord-embed-media.discord-embed-media-video {
-  height: 225px;
 }
 
 .discord-embed .discord-embed.media .discord-embed-image {
@@ -567,38 +432,10 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   position: relative;
   user-select: text;
 }
-
-.discord-embed .discord-embed-media .discord-embed-video {
-  -webkit-box-align: center;
-  -webkit-box-pack: center;
-  align-items: center;
-  border-radius: 0;
-  cursor: pointer;
-  display: flex;
-  height: 100%;
-  justify-content: center;
-  max-height: 100%;
-  width: 100%;
-
-  width: 400px;
-  height: 225px;
-  left: 0px;
-  top: 0px;
-}
-
-.discord-embed-custom-emoji {
-  display: inline-block;
-}
-
-.discord-embed-custom-emoji .discord-embed-custom-emoji-image {
-  width: 18px;
-  height: 18px;
-  vertical-align: bottom;
-}
 .discord-embed .discord-embed-description {
   font-size: 0.875rem;
   font-weight: 400;
-  grid-column: 1/1;
+  grid-column: 1 / 1;
   line-height: 1.125rem;
   margin-top: 8px;
   min-width: 0;
@@ -612,10 +449,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   font-size: 0.875rem;
   font-weight: 400;
   line-height: 1.125rem;
-}
-
-.discord-light-theme .discord-embed code {
-  background-color: #e3e5e8;
 }
 
 .discord-embed code.multiline {
@@ -652,42 +485,26 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   background-color: #4f545c;
 }
 
-.discord-light-theme .discord-embed-description blockquote::before {
-  background-color: #c7ccd1;
-}
-
 .discord-embed .discord-embed-description .spoiler {
   background-color: #202225;
   color: transparent;
   cursor: pointer;
 }
 
-.discord-light-theme .discord-embed .discord-embed-description .spoiler {
-  background-color: #b9bbbe;
-}
-
 .discord-embed .discord-embed-description .spoiler:hover {
   background-color: rgba(32, 34, 37, 0.8);
-}
-
-.discord-light-theme .discord-embed .discord-embed-description .spoiler:hover {
-  background-color: rgba(185, 187, 190, 0.8);
 }
 
 .discord-embed .discord-embed-description .spoiler:active {
   color: inherit;
   background-color: hsla(0, 0%, 100%, 0.1);
 }
-
-.discord-light-theme .discord-embed .discord-embed-description .spoiler:active {
-  background-color: rgba(0, 0, 0, 0.1);
-}
 .discord-embed .discord-embed-field {
   font-size: 0.875rem;
   line-height: 1.125rem;
   min-width: 0;
   font-weight: 400;
-  grid-column: 1/13;
+  grid-column: 1 / 13;
 }
 
 .discord-embed .discord-embed-field .discord-field-title {
@@ -699,30 +516,20 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   margin-bottom: 2px;
 }
 
-.discord-embed .discord-embed-field.discord-inline-field {
-  flex-grow: 1;
-  flex-basis: auto;
-  min-width: 150px;
-}
-
-.discord-light-theme .discord-embed .discord-embed-field .discord-field-title {
-  color: #747f8d;
-}
-
 .discord-embed-inline-field-3 {
-  grid-column: 9/13 !important;
+  grid-column: 9 / 13 !important;
 }
 
 .discord-embed-inline-field-2 {
-  grid-column: 5/9 !important;
+  grid-column: 5 / 9 !important;
 }
 
 .discord-embed-inline-field-1 {
-  grid-column: 1/5 !important;
+  grid-column: 1 / 5 !important;
 }
 .discord-embed .discord-embed-fields {
   display: grid;
-  grid-column: 1/1;
+  grid-column: 1 / 1;
   margin-top: 8px;
   grid-gap: 8px;
 }
@@ -734,8 +541,8 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   font-size: 12px;
   line-height: 16px;
   font-weight: 500;
-  grid-column: 1/3;
-  grid-row: auto/auto;
+  grid-column: 1 / 3;
+  grid-row: auto / auto;
   margin-top: 8px;
 }
 
@@ -753,190 +560,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   display: inline-block;
   margin: 0 4px;
 }
-
-.discord-light-theme .discord-embed-footer .discord-footer-separator {
-  color: #e4e4e4;
-}
-.discord-invite {
-  background-color: #2f3136;
-  border-radius: 4px;
-  padding: 16px;
-  width: 432px;
-}
-
-.discord-light-theme .discord-invite {
-  background-color: #f2f3f5;
-}
-
-.discord-invite .discord-invite-header {
-  font-weight: 700;
-  font-size: 12px;
-  line-height: 16px;
-  margin-bottom: 12px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  text-transform: uppercase;
-  color: #b9bbbe;
-}
-
-.discord-light-theme .discord-invite .discord-invite-header {
-  color: #4f5660;
-}
-
-.discord-invite .discord-invite-root {
-  display: flex;
-  flex-flow: row nowrap;
-}
-
-.discord-invite .discord-invite-icon {
-  background-color: #36393f;
-  border-radius: 15px;
-  margin-right: 16px;
-  -webkit-box-flex: 0;
-  -ms-flex: 0 0 auto;
-  flex: 0 0 auto;
-  width: 50px;
-  height: 50px;
-}
-
-.discord-light-theme .discord-invite .discord-invite-icon {
-  background-color: #fff;
-}
-
-.discord-invite .discord-invite-info {
-  font-family: WhitneyMedium, Whitney, Roboto, "Helvetica Neue", Helvetica,
-    Arial, sans-serif;
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  flex-wrap: nowrap;
-  align-items: stretch;
-  justify-content: center;
-}
-
-.discord-invite .discord-invite-title {
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  margin-bottom: 2px;
-  color: white;
-  font-size: 16px;
-  line-height: 20px;
-  font-weight: 700;
-  display: flex;
-  flex-direction: row;
-}
-
-.discord-light-theme .discord-invite .discord-invite-title {
-  color: #060607;
-}
-
-.discord-invite .discord-invite-name {
-  flex: 1 1 auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.discord-invite .discord-invite-counts {
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  font-weight: 600;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  color: #b9bbbe;
-  line-height: 16px;
-}
-
-.discord-invite .discord-invite-status {
-  display: block;
-  margin-right: 4px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: #747f8d;
-}
-
-.discord-invite .discord-invite-status-online {
-  background-color: #3ba55d;
-}
-
-.discord-invite .discord-invite-count {
-  -webkit-box-flex: 0;
-  -ms-flex: 0 1 auto;
-  flex: 0 1 auto;
-  margin-right: 8px;
-  color: #b9bbbe;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-
-.discord-invite .discord-invite-join {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 40px;
-  padding: 0 20px;
-  align-self: center;
-  margin-left: 10px;
-  -webkit-box-flex: 0;
-  -ms-flex: 0 0 auto;
-  flex: 0 0 auto;
-  line-height: 20px;
-  border-radius: 3px;
-  font-size: 14px;
-  font-weight: 600;
-  color: white !important;
-  background-color: #3ba55d;
-  -webkit-transition: background-color 0.17s ease;
-  transition: background-color 0.17s ease;
-}
-
-.discord-invite .discord-invite-join:hover {
-  background-color: #2d7d46;
-  text-decoration: none;
-}
-
-.discord-invite .discord-invite-badge {
-  -webkit-box-flex: 0;
-  -ms-flex: 0 0 auto;
-  flex: 0 0 auto;
-  margin-right: 8px;
-  width: 16px;
-  height: 16px;
-  align-self: center;
-  position: relative;
-}
-
-.discord-invite .discord-invite-badge-verified {
-  color: #3ba55d;
-}
-
-.discord-invite .discord-invite-badge-partnered {
-  color: #5865f2;
-}
-
-.discord-invite .discord-invite-badge-container {
-  position: absolute;
-  top: -0.05px;
-  left: 0.05px;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  color: white;
-}
-
-.discord-light-theme .discord-invite .discord-invite-counts,
-.discord-light-theme .discord-invite .discord-invite-count {
-  color: #4f5660;
-}
 .discord-message .discord-mention {
   color: #e3e7f8;
   background-color: hsla(235, 85.6%, 64.7%, 0.3);
@@ -945,45 +568,18 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   border-radius: 3px;
   unicode-bidi: -moz-plaintext;
   unicode-bidi: plaintext;
-  -webkit-transition: background-color 50ms ease-out, color 50ms ease-out;
-  transition: background-color 50ms ease-out, color 50ms ease-out;
+  -webkit-transition:
+    background-color 50ms ease-out,
+    color 50ms ease-out;
+  transition:
+    background-color 50ms ease-out,
+    color 50ms ease-out;
   cursor: pointer;
 }
 
 .discord-message .discord-mention:hover {
   color: #fff;
   background-color: hsl(235, 85.6%, 64.7%);
-}
-
-.discord-message .discord-mention.discord-channel-mention {
-  padding-left: 1.2rem !important;
-  position: relative;
-}
-
-.discord-message .discord-mention.discord-voice-mention,
-.discord-message .discord-mention.discord-locked-mention,
-.discord-message .discord-mention.discord-thread-mention {
-  padding-left: 1.25rem !important;
-  position: relative;
-}
-
-.discord-light-theme .discord-message .discord-mention {
-  color: #687dc6;
-  background-color: hsla(235, 85.6%, 64.7%, 0.15);
-}
-
-.discord-light-theme .discord-message .discord-mention:hover {
-  color: #ffffff;
-  background-color: hsl(235, 85.6%, 64.7%);
-}
-
-.discord-message .discord-mention .discord-mention-icon {
-  width: 1rem;
-  height: 1rem;
-  object-fit: contain;
-  position: absolute;
-  left: 0.125rem;
-  top: 0.125rem;
 }
 .discord-message {
   color: #dcddde;
@@ -1013,13 +609,11 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   flex: 0 0 auto;
 }
 
-.discord-message.discord-highlight-mention,
 .discord-message.discord-highlight-ephemeral {
   padding-right: 5px;
   position: relative;
 }
 
-.discord-message.discord-highlight-mention::before,
 .discord-message.discord-highlight-ephemeral::before {
   content: "";
   position: absolute;
@@ -1031,32 +625,8 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   width: 2px;
 }
 
-.discord-message.discord-highlight-mention {
-  background-color: rgba(250, 166, 26, 0.1);
-}
-
-.discord-light-theme .discord-message.discord-highlight-mention {
-  background-color: rgba(250, 166, 26, 0.1);
-}
-
-.discord-message.discord-highlight-mention:hover {
-  background-color: rgba(250, 166, 26, 0.08);
-}
-
-.discord-light-theme .discord-message.discord-highlight-mention:hover {
-  background-color: rgba(250, 166, 26, 0.2);
-}
-
-.discord-message.discord-highlight-mention::before {
-  background-color: #faa61a;
-}
-
 .discord-message.discord-highlight-ephemeral {
   background-color: rgba(88, 101, 242, 0.05);
-}
-
-.discord-light-theme .discord-message.discord-highlight-ephemeral {
-  background-color: rgba(250, 166, 26, 0.1);
 }
 
 .discord-message.discord-highlight-ephemeral:hover {
@@ -1067,11 +637,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   background-color: #5865f2;
 }
 
-.discord-light-theme .discord-message {
-  color: #2e3338;
-  border-color: #eceeef;
-}
-
 .discord-message a {
   color: #00aff4;
   font-weight: normal;
@@ -1080,10 +645,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
 
 .discord-message a:hover {
   text-decoration: underline;
-}
-
-.discord-light-theme .discord-message a {
-  color: #00b0f4;
 }
 
 .discord-message a:hover {
@@ -1107,19 +668,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   color: #72767d;
   font-size: 12px;
   margin-left: 3px;
-}
-
-.discord-light-theme .discord-message .discord-message-timestamp {
-  color: #747f8d;
-}
-
-.discord-message .discord-message-edited {
-  color: #72767d;
-  font-size: 10px;
-}
-
-.discord-light-theme .discord-message .discord-message-edited {
-  color: #99aab5;
 }
 
 .discord-message .discord-message-content {
@@ -1163,7 +711,7 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
 
 .discord-message small {
   display: block;
-  font-size: .8125rem;
+  font-size: 0.8125rem;
   font-weight: 400;
   line-height: 1.11719rem;
   color: rgb(148, 155, 164);
@@ -1205,48 +753,20 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
 .discord-message .discord-message-body code {
   background: #2f3136;
   white-space: break-spaces;
-  font-family: Consolas, Andale Mono WT, Andale Mono, Lucida Console,
-    Lucida Sans Typewriter, DejaVu Sans Mono, Bitstream Vera Sans Mono,
-    Liberation Mono, Nimbus Mono L, Monaco, Courier New, Courier, monospace;
-}
-
-.discord-light-theme .discord-message .discord-message-timestamp,
-.discord-compact-mode .discord-message:hover .discord-message-timestamp,
-.discord-compact-mode.discord-light-theme
-  .discord-message:hover
-  .discord-message-timestamp {
-  color: #99aab5;
-}
-
-.discord-compact-mode.discord-light-theme
-  .discord-message
-  .discord-message-timestamp {
-  color: #d1d9de;
-}
-
-.discord-compact-mode .discord-message .discord-message-timestamp {
-  display: inline-block;
-  width: 3.1rem;
-  text-align: right;
-  font-size: 0.6875rem;
-  line-height: 1.375rem;
-  margin-right: 0.25rem;
-  margin-left: 0;
-  text-indent: 0;
-}
-
-.discord-compact-mode .discord-message {
-  margin-top: unset;
-}
-
-.discord-compact-mode .discord-message .discord-message-body {
-  line-height: 1.375rem;
-  padding-left: 10px;
-  text-indent: -6px;
-}
-
-.discord-compact-mode .discord-message .discord-message-compact-indent {
-  padding-left: 10px;
+  font-family:
+    Consolas,
+    Andale Mono WT,
+    Andale Mono,
+    Lucida Console,
+    Lucida Sans Typewriter,
+    DejaVu Sans Mono,
+    Bitstream Vera Sans Mono,
+    Liberation Mono,
+    Nimbus Mono L,
+    Monaco,
+    Courier New,
+    Courier,
+    monospace;
 }
 
 .discord-message:first-child {
@@ -1266,33 +786,9 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   font-weight: 400;
 }
 
-.discord-compact-mode .discord-author-avatar {
-  display: none;
-}
-
 /* .discord-message:hover {
   background-color: rgba(4, 4, 5, 0.07);
 } */
-
-.discord-light-theme .discord-message:hover {
-  background-color: rgba(6, 6, 7, 0.02);
-}
-
-.discord-message.discord-message-has-thread:after {
-  width: 2rem;
-  left: 2.2rem;
-  top: 1.75rem;
-  border-left: 2px solid #4f545c;
-  border-bottom: 2px solid #4f545c;
-  border-bottom-left-radius: 8px;
-  bottom: 29px;
-  content: "";
-  position: absolute;
-}
-
-.discord-light-theme .discord-message.discord-message-has-thread:after {
-  border-color: #747f8d;
-}
 
 .discord-message-ephemeral {
   color: #72767d;
@@ -1300,10 +796,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   font-size: 12px;
   font-weight: 400;
   color: #72767d;
-}
-
-.discord-light-theme .discord-message-ephemeral {
-  color: #747f8d;
 }
 
 .discord-message-ephemeral .discord-message-ephemeral-link {
@@ -1333,13 +825,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   font-weight: 500;
 }
 
-.discord-light-theme
-  .discord-message
-  .discord-author-info
-  .discord-author-username {
-  color: #23262a;
-}
-
 .discord-message .discord-author-info .discord-application-tag {
   background-color: #5865f2;
   color: #fff;
@@ -1363,25 +848,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   width: 0.9375rem;
   height: 0.9375rem;
   margin-left: -0.25rem;
-}
-
-.discord-compact-mode
-  .discord-message
-  .discord-author-info
-  .discord-author-username {
-  margin-left: 8px;
-  margin-right: 4px;
-}
-
-.discord-compact-mode
-  .discord-message
-  .discord-author-info
-  .discord-application-tag {
-  margin-left: 0;
-  margin-left: 5px;
-  margin-right: 5px;
-  padding-left: 3px;
-  padding-right: 3px;
 }
 
 /* New Whitney fonts to match rebrading */
@@ -1408,22 +874,11 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
 
 .discord-messages {
   color: #fff;
-  background-color: #36393e;
+  background-color: transparent;
   display: block;
   font-size: 16px;
   font-family: Whitney, Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
   line-height: 170%;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.discord-messages.discord-light-theme {
-  color: #747f8d;
-  background-color: #fff;
-  border-color: #dedede;
-}
-
-.discord-messages.discord-no-background {
-  background-color: unset;
 }
 .discord-message .discord-message-body .discord-quote-container {
   display: flex;
@@ -1450,88 +905,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   margin-inline-start: unset;
   padding: 0 8px 0 12px;
 }
-.discord-reaction {
-  border-radius: 0.5rem;
-  cursor: pointer;
-  flex-shrink: 0;
-  margin-right: 0.25rem;
-  margin-bottom: 0.25rem;
-  user-select: none;
-  transition: none 0.1s ease;
-  transition-property: background-color, border-color;
-  background-color: #2f3136;
-  border: 1px solid transparent;
-}
-
-.discord-light-theme .discord-reaction {
-  background-color: #f2f3f5;
-}
-
-.discord-reaction:hover {
-  background-color: #36393f;
-  border-color: #fff2;
-}
-
-.discord-light-theme .discord-reaction:not(.discord-reaction-reacted):hover {
-  background-color: white;
-  border-color: #0003;
-}
-
-.discord-reaction.discord-reaction-reacted {
-  background-color: rgba(88, 101, 242, 0.15);
-  border-color: #5865f2;
-}
-
-.discord-light-theme .discord-reaction.discord-reaction-reacted {
-  background-color: #e7e9fd;
-}
-
-.discord-reaction .discord-reaction-inner {
-  display: flex;
-  align-items: center;
-  padding: 0.125rem 0.375rem;
-}
-
-.discord-reaction img {
-  width: 1rem;
-  height: 1rem;
-  margin: 0.125rem 0;
-  min-width: auto;
-  min-height: auto;
-  object-fit: contain;
-  vertical-align: bottom;
-}
-
-.discord-reaction .discord-reaction-count {
-  font-size: 0.875rem;
-  font-weight: 500;
-  margin-left: 0.375rem;
-  text-align: center;
-  color: #b9bbbe;
-}
-
-.discord-light-theme .discord-reaction .discord-reaction-count {
-  color: #4f5660;
-}
-
-.discord-reaction.discord-reaction-reacted .discord-reaction-count {
-  color: #dee0fc;
-}
-
-.discord-light-theme
-  .discord-reaction.discord-reaction-reacted
-  .discord-reaction-count {
-  color: #5865f2;
-}
-.discord-message .discord-reactions,
-.discord-system-message .discord-reactions {
-  display: flex;
-  -webkit-box-flex: 1;
-  -ms-flex: 1 0 auto;
-  flex: 1 0 auto;
-  align-items: center;
-  flex-wrap: wrap;
-}
 .discord-replied-message {
   color: #b9bbbe;
   display: flex;
@@ -1546,15 +919,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   position: relative;
   white-space: pre;
   user-select: none;
-}
-
-.discord-light-theme .discord-replied-message {
-  color: #4f5660;
-}
-
-.discord-compact-mode .discord-replied-message {
-  margin-left: 62px;
-  margin-bottom: 0;
 }
 
 .discord-replied-message:before {
@@ -1576,12 +940,7 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   border-top-left-radius: 6px;
 }
 
-.discord-light-theme .discord-replied-message:before {
-  border-color: #747f8d;
-}
-
-.discord-replied-message .discord-replied-message-avatar,
-.discord-replied-message .discord-reply-badge {
+.discord-replied-message .discord-replied-message-avatar {
   -webkit-box-flex: 0;
   -ms-flex: 0 0 auto;
   flex: 0 0 auto;
@@ -1590,19 +949,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   border-radius: 50%;
   user-select: none;
   margin-right: 0.25rem;
-}
-
-.discord-replied-message .discord-reply-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #b9bbbe;
-  background: #202225;
-}
-
-.discord-light-theme .discord-replied-message .discord-reply-badge {
-  color: #4f5660;
-  background: #e3e5e8;
 }
 
 .discord-replied-message .discord-application-tag {
@@ -1654,27 +1000,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   color: #fff;
 }
 
-.discord-light-theme
-  .discord-replied-message
-  .discord-replied-message-content:hover {
-  color: #000;
-}
-
-.discord-replied-message
-  .discord-replied-message-content
-  .discord-message-edited {
-  margin-left: 0.25rem;
-}
-
-.discord-replied-message .discord-replied-message-content-icon {
-  -webkit-box-flex: 0;
-  -ms-flex: 0 0 auto;
-  flex: 0 0 auto;
-  width: 20px;
-  height: 20px;
-  margin-left: 4px;
-}
-
 .discord-message .discord-author-info {
   display: inline-flex;
   align-items: center;
@@ -1685,13 +1010,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   color: #fff;
   font-size: 1em;
   font-weight: 500;
-}
-
-.discord-light-theme
-  .discord-message
-  .discord-author-info
-  .discord-author-username {
-  color: #23262a;
 }
 
 .discord-message .discord-author-info .discord-application-tag {
@@ -1717,25 +1035,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   width: 0.9375rem;
   height: 0.9375rem;
   margin-left: -0.25rem;
-}
-
-.discord-compact-mode
-  .discord-message
-  .discord-author-info
-  .discord-author-username {
-  margin-left: 8px;
-  margin-right: 4px;
-}
-
-.discord-compact-mode
-  .discord-message
-  .discord-author-info
-  .discord-application-tag {
-  margin-left: 0;
-  margin-left: 5px;
-  margin-right: 5px;
-  padding-left: 3px;
-  padding-right: 3px;
 }
 
 .discord-message .discord-spoiler {
@@ -1745,163 +1044,13 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   border-radius: 5px;
 }
 
-.discord-light-theme .discord-message .discord-message-body .discord-spoiler {
-  background-color: #b9bbbe;
-}
-
 .discord-message .discord-spoiler:hover {
   background-color: rgba(32, 34, 37, 0.8);
-}
-
-.discord-light-theme .discord-message .discord-spoiler:hover {
-  background-color: rgba(185, 187, 190, 0.8);
 }
 
 .discord-message .discord-spoiler:active {
   color: inherit;
   background-color: hsla(0, 0%, 100%, 0.1);
-}
-
-.discord-light-theme .discord-message .discord-spoiler:active {
-  background-color: rgba(0, 0, 0, 0.1);
-}
-.discord-system-message {
-  color: #8e9297;
-  display: flex;
-  font-weight: 400;
-  font-size: 1rem;
-  font-family: Whitney, Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
-  padding: 0px 1em;
-
-  position: relative;
-  word-wrap: break-word;
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
-  user-select: text;
-  -webkit-box-flex: 0;
-  -ms-flex: 0 0 auto;
-  flex: 0 0 auto;
-  padding-right: 0;
-  min-height: 1.375rem;
-  padding-right: 48px !important;
-  margin-top: 1.0625rem;
-}
-
-.discord-light-theme .discord-system-message {
-  color: #2e3338;
-  border-color: #eceeef;
-}
-
-.discord-system-message.discord-channel-name-change {
-  color: #fff;
-}
-
-.discord-light-theme .discord-system-message.discord-channel-name-change {
-  color: #060607;
-}
-
-.discord-system-message.discord-boost-system-message svg {
-  color: #ff73fa;
-}
-
-.discord-system-message.discord-alert-system-message svg {
-  color: #faa81a;
-}
-
-.discord-system-message.discord-error-system-message svg {
-  color: #faa81a;
-}
-
-.discord-system-message:first-child {
-  margin-top: 0.5rem;
-}
-
-.discord-system-message:last-child {
-  margin-bottom: 0.5rem;
-  border-bottom-width: 0;
-}
-
-.discord-system-message .discord-message-icon {
-  margin-right: 16px;
-  margin-top: 5px;
-  min-width: 40px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-}
-
-.discord-system-message .discord-message-icon svg {
-  width: 16px;
-  height: 16px;
-}
-
-.discord-system-message .discord-message-timestamp {
-  color: #72767d;
-  font-size: 12px;
-  margin-left: 3px;
-}
-
-.discord-light-theme .discord-system-message .discord-message-timestamp {
-  color: #747f8d;
-}
-
-.discord-system-message .discord-message-system-edited {
-  color: #72767d;
-  font-size: 10px;
-}
-
-.discord-light-theme .discord-system-message .discord-message-edited {
-  color: #99aab5;
-}
-
-.discord-system-message .discord-message-content {
-  width: 100%;
-  line-height: 160%;
-  font-weight: normal;
-  padding-top: 2px;
-  display: flex;
-  flex-direction: column;
-}
-
-.discord-system-message .discord-message-content i {
-  font-style: normal;
-  cursor: pointer;
-  color: white;
-  font-weight: 500;
-}
-
-.discord-light-theme .discord-system-message .discord-message-content i {
-  color: #060607;
-}
-
-.discord-system-message .discord-message-content i:hover {
-  text-decoration: underline;
-}
-
-.discord-system-message:hover {
-  background-color: rgba(4, 4, 5, 0.07);
-}
-
-.discord-light-theme .discord-system-message:hover {
-  background-color: rgba(6, 6, 7, 0.02);
-}
-
-.discord-system-message.discord-system-message-has-thread:after {
-  width: 2rem;
-  left: 2.2rem;
-  top: 1.75rem;
-  border-left: 2px solid #4f545c;
-  border-bottom: 2px solid #4f545c;
-  border-bottom-left-radius: 8px;
-  bottom: 29px;
-  content: "";
-  position: absolute;
-}
-
-.discord-light-theme
-  .discord-system-message.discord-system-message-has-thread:after {
-  border-color: #747f8d;
 }
 
 .discord-message .discord-author-info {
@@ -1914,13 +1063,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   color: #fff;
   font-size: 1em;
   font-weight: 500;
-}
-
-.discord-light-theme
-  .discord-message
-  .discord-author-info
-  .discord-author-username {
-  color: #23262a;
 }
 
 .discord-message .discord-author-info .discord-application-tag {
@@ -1946,202 +1088,6 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   width: 0.9375rem;
   height: 0.9375rem;
   margin-left: -0.25rem;
-}
-
-.discord-compact-mode
-  .discord-message
-  .discord-author-info
-  .discord-author-username {
-  margin-left: 8px;
-  margin-right: 4px;
-}
-
-.discord-compact-mode
-  .discord-message
-  .discord-author-info
-  .discord-application-tag {
-  margin-left: 0;
-  margin-left: 5px;
-  margin-right: 5px;
-  padding-left: 3px;
-  padding-right: 3px;
-}
-
-.discord-tenor-video {
-  color: #dcddde;
-  display: flex;
-  font-size: 13px;
-  line-height: 150%;
-  margin-bottom: 8px;
-  margin-top: 8px;
-}
-
-.discord-tenor-video .discord-tenor-video-wrapper {
-  display: block;
-  position: relative;
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
-  user-select: text;
-  overflow: hidden;
-  border-radius: 4px;
-}
-
-.discord-tenor-video .discord-tenor-video-wrapper video {
-  -webkit-box-align: center;
-  -webkit-box-pack: center;
-  align-items: center;
-  border-radius: 0;
-  cursor: pointer;
-  display: flex;
-  height: 100%;
-  justify-content: center;
-  max-height: 100%;
-  width: 100%;
-  left: 0px;
-  top: 0px;
-}
-.discord-thread {
-  background-color: #2f3136;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 8px;
-  max-width: 480px;
-  min-width: 0;
-  padding: 8px;
-  display: inline-flex;
-  width: fit-content;
-  flex-direction: column;
-}
-
-.discord-light-theme .discord-thread {
-  background-color: #f2f3f5;
-}
-
-.discord-thread .discord-thread-top {
-  display: flex;
-}
-
-.discord-thread .discord-thread-bottom {
-  font-size: 0.875rem;
-  line-height: 1.125rem;
-  align-items: center;
-  color: #b9bbbe;
-  display: flex;
-  margin-top: 2px;
-  white-space: nowrap;
-}
-
-.discord-light-theme .discord-thread-bottom {
-  color: #4f5660;
-}
-
-.discord-thread .discord-thread-name {
-  font-size: 0.875rem;
-  font-weight: 600;
-  line-height: 1.125rem;
-  color: white;
-  margin-right: 8px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.discord-light-theme .discord-thread-name {
-  color: #060607;
-}
-
-.discord-thread .discord-thread-cta {
-  color: #00aff4;
-  flex-shrink: 0;
-  font-size: 0.875rem;
-  font-weight: 600;
-  line-height: 1.125rem;
-}
-
-.discord-thread:hover .discord-thread-cta {
-  text-decoration: underline;
-}
-.discord-thread-message {
-  height: 18px;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  font-size: 0.875rem;
-  line-height: 1.125rem;
-}
-
-.discord-thread-message .discord-thread-message-avatar {
-  margin-right: 8px;
-  flex: 0 0 auto;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  user-select: none;
-}
-
-.discord-thread-message .discord-thread-message-username {
-  flex-shrink: 0;
-  font-size: inherit;
-  line-height: inherit;
-  margin-right: 0.25rem;
-  opacity: 0.64;
-  color: white;
-  display: inline;
-  vertical-align: baseline;
-  position: relative;
-  overflow: hidden;
-}
-
-.discord-light-theme .discord-thread-message .discord-thread-message-username {
-  color: #060607;
-}
-
-.discord-thread-message .discord-application-tag {
-  background-color: #5865f2;
-  color: #fff;
-  font-size: 0.65em;
-  margin-right: 5px;
-  border-radius: 3px;
-  line-height: 100%;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  height: 0.9375rem;
-  padding: 0 0.275rem;
-  margin-top: 0.075em;
-  border-radius: 0.1875rem;
-}
-
-.discord-thread-message .discord-application-tag-verified {
-  display: inline-block;
-  width: 0.9375rem;
-  height: 0.9375rem;
-  margin-left: -0.25rem;
-}
-
-.discord-thread-message .discord-thread-message-content {
-  display: flex;
-  align-items: baseline;
-}
-
-.discord-thread-message .discord-message-edited {
-  color: #72767d;
-  font-size: 10px;
-  margin-left: 5px;
-}
-
-.discord-thread-message .discord-thread-message-timestamp {
-  color: #72767d;
-  flex-shrink: 0;
-  margin-left: 8px;
-  font-size: 0.875rem;
-  line-height: 1.125rem;
-}
-
-.discord-light-theme .discord-thread-message .discord-thread-message-timestamp,
-.discord-light-theme .discord-thread-message .discord-message-edited {
-  color: #747f8d;
 }
 .discord-time {
   background-color: #ffffff0f;
@@ -2246,7 +1192,138 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   border-radius: 3px;
   unicode-bidi: -moz-plaintext;
   unicode-bidi: plaintext;
-  -webkit-transition: background-color 50ms ease-out, color 50ms ease-out;
-  transition: background-color 50ms ease-out, color 50ms ease-out;
+  -webkit-transition:
+    background-color 50ms ease-out,
+    color 50ms ease-out;
+  transition:
+    background-color 50ms ease-out,
+    color 50ms ease-out;
   cursor: pointer;
+}
+
+/* Components V2 */
+
+.discord-components {
+  margin-bottom: 8px;
+  margin-top: 8px;
+  max-width: 600px;
+}
+
+.discord-components > * + * {
+  margin-top: 8px;
+}
+
+.discord-component-container {
+  background-color: #2f3136;
+  border: 1px solid rgba(46, 48, 54, 0.6);
+  border-radius: 8px;
+  color: #dcddde;
+  font-size: 13px;
+  line-height: 150%;
+  max-width: 520px;
+  padding: 8px 12px;
+}
+
+.discord-component-container > .discord-components {
+  margin: 0;
+}
+
+.discord-component-section {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.discord-component-section-content {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.discord-component-section-accessory {
+  flex: 0 0 auto;
+}
+
+.discord-component-thumbnail {
+  border-radius: 8px;
+  max-height: 80px;
+  max-width: 80px;
+  object-fit: cover;
+}
+
+.discord-component-gallery {
+  display: grid;
+  gap: 4px;
+}
+
+.discord-component-gallery-item {
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+/* A single image keeps its own shape rather than being cropped to the grid. */
+.discord-component-gallery-single .discord-component-gallery-item {
+  aspect-ratio: auto;
+  max-height: 350px;
+  max-width: 100%;
+  object-fit: contain;
+  width: auto;
+}
+
+.discord-component-file {
+  align-items: center;
+  background-color: #2b2d31;
+  border: 1px solid #1e1f22;
+  border-radius: 8px;
+  color: #dcddde;
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+/* Siblings are already 8px apart, so this is what a large separator adds. */
+.discord-component-separator-large {
+  padding: 8px 0;
+}
+
+.discord-component-divider {
+  background-color: #3f4147;
+  height: 1px;
+}
+
+/* Shrink wraps its content, so the blur is clipped to what it hides. */
+.discord-component-spoiler {
+  border-radius: 8px;
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  position: relative;
+  vertical-align: top;
+}
+
+.discord-component-gallery > .discord-component-spoiler,
+.discord-component-container > .discord-component-spoiler {
+  width: 100%;
+}
+
+/* Scaled up so the soft edge of the blur stays outside the clipped box. */
+.discord-component-spoiler > *:not(.discord-component-spoiler-label) {
+  filter: blur(16px);
+  transform: scale(1.1);
+}
+
+.discord-component-spoiler-label {
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 20px;
+  color: #f2f3f5;
+  font-size: 12px;
+  font-weight: 600;
+  left: 50%;
+  padding: 4px 12px;
+  position: absolute;
+  text-transform: uppercase;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }

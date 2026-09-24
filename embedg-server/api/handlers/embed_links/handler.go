@@ -1,52 +1,74 @@
 package embed_links
 
 import (
-	"database/sql"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
-	"github.com/merlinfuchs/embed-generator/embedg-server/util"
-	"github.com/spf13/viper"
+	"github.com/merlinfuchs/embed-generator/embedg-server/common"
+	"github.com/merlinfuchs/embed-generator/embedg-server/model"
+	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 )
 
-type EmbedLinksHandler struct {
-	pg *postgres.PostgresStore
+type EmbedLinksHandlerConfig struct {
+	APIPublicURL string
+	AppPublicURL string
 }
 
-func New(pg *postgres.PostgresStore) *EmbedLinksHandler {
+type EmbedLinksHandler struct {
+	embedLinkStore store.EmbedLinkStore
+	config         EmbedLinksHandlerConfig
+}
+
+func New(config EmbedLinksHandlerConfig, embedLinkStore store.EmbedLinkStore) *EmbedLinksHandler {
 	return &EmbedLinksHandler{
-		pg: pg,
+		config:         config,
+		embedLinkStore: embedLinkStore,
 	}
 }
 
 func (h *EmbedLinksHandler) HandleCreateEmbedLink(c *fiber.Ctx, req wire.EmbedLinkCreateRequestWire) error {
-	row, err := h.pg.Q.InsertEmbedLink(c.Context(), pgmodel.InsertEmbedLinkParams{
-		ID:             util.UniqueID(),
-		OgTitle:        req.OgTitle.NullString,
+	// Stored as the payload that goes into the page, not as the client sent it.
+	var componentEmbed []byte
+	if len(req.ComponentEmbed) != 0 {
+		parsed, err := model.ParseComponentEmbed(req.ComponentEmbed)
+		if err != nil {
+			return handlers.BadRequest("invalid_component_embed", err.Error())
+		}
+
+		componentEmbed, err = json.Marshal(parsed)
+		if err != nil {
+			return err
+		}
+	}
+
+	row, err := h.embedLinkStore.CreateEmbedLink(c.UserContext(), model.EmbedLink{
+		ID:             common.InternalID(),
+		OgTitle:        req.OgTitle,
 		Url:            req.Url,
-		ThemeColor:     req.ThemeColor.NullString,
-		OgSiteName:     req.OgSiteName.NullString,
-		OgDescription:  req.OgDescription.NullString,
-		OgImage:        req.OgImage.NullString,
-		OeType:         req.OeType.NullString,
-		OeAuthorName:   req.OeAuthorName.NullString,
-		OeAuthorUrl:    req.OeAuthorUrl.NullString,
-		OeProviderName: req.OeProviderName.NullString,
-		OeProviderUrl:  req.OeProviderUrl.NullString,
-		TwCard:         req.TwCard.NullString,
+		ThemeColor:     req.ThemeColor,
+		OgSiteName:     req.OgSiteName,
+		OgDescription:  req.OgDescription,
+		OgImage:        req.OgImage,
+		OeType:         req.OeType,
+		OeAuthorName:   req.OeAuthorName,
+		OeAuthorUrl:    req.OeAuthorUrl,
+		OeProviderName: req.OeProviderName,
+		OeProviderUrl:  req.OeProviderUrl,
+		TwCard:         req.TwCard,
+		ComponentEmbed: componentEmbed,
 		CreatedAt:      time.Now().UTC(),
 	})
 	if err != nil {
 		return err
 	}
 
-	publicURL := strings.TrimSuffix(viper.GetString("api.public_url"), "/api")
+	publicURL := strings.TrimSuffix(h.config.APIPublicURL, "/api")
 
 	return c.JSON(wire.EmbedLinkCreateResponseWire{
 		Success: true,
@@ -58,22 +80,22 @@ func (h *EmbedLinksHandler) HandleCreateEmbedLink(c *fiber.Ctx, req wire.EmbedLi
 }
 
 func (h *EmbedLinksHandler) HandleRenderEmbedLinkHTML(c *fiber.Ctx) error {
-	embedLink, err := h.pg.Q.GetEmbedLink(c.Context(), c.Params("linkID"))
+	embedLink, err := h.embedLinkStore.GetEmbedLink(c.UserContext(), c.Params("linkID"))
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return renderUnknownEmbedLinkHTML(c)
+		if errors.Is(err, store.ErrNotFound) {
+			return h.renderUnknownEmbedLinkHTML(c)
 		}
 		return err
 	}
 
-	return renderEmbedLinkHTML(c, embedLink)
+	return h.renderEmbedLinkHTML(c, embedLink)
 }
 
 func (h *EmbedLinksHandler) HandleRenderEmbedLinkJSON(c *fiber.Ctx) error {
-	embedLink, err := h.pg.Q.GetEmbedLink(c.Context(), c.Params("linkID"))
+	embedLink, err := h.embedLinkStore.GetEmbedLink(c.UserContext(), c.Params("linkID"))
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return helpers.NotFound("embed_link_not_found", "Embed link not found")
+		if errors.Is(err, store.ErrNotFound) {
+			return handlers.NotFound("embed_link_not_found", "Embed link not found")
 		}
 		return err
 	}

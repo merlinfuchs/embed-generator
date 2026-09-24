@@ -1,11 +1,11 @@
 import { useNavigate, useParams } from "react-router-dom";
 import Modal from "../../components/Modal";
-import { useCurrentMessageStore } from "../../state/message";
 import MessagePreview from "../../components/MessagePreview";
 import { useSharedMessageQuery } from "../../api/queries";
 import { useMemo } from "react";
 import { useToasts } from "../../util/toasts";
-import { parseMessageWithAction } from "../../discord/restoreSchema";
+import { parseMessageWithAction } from "../../discord/importSchema";
+import { setCurrentMessage } from "../../state/currentMessage";
 
 export default function ShareRestoreView() {
   const { sharedMessageId } = useParams();
@@ -13,7 +13,7 @@ export default function ShareRestoreView() {
   const navigate = useNavigate();
 
   const { data: sharedMessage } = useSharedMessageQuery(
-    sharedMessageId || null
+    sharedMessageId || null,
   );
 
   const createToast = useToasts((state) => state.create);
@@ -46,7 +46,7 @@ export default function ShareRestoreView() {
 
   function save() {
     if (parsedData) {
-      useCurrentMessageStore.setState(parsedData);
+      setCurrentMessage(parsedData);
       navigate("/editor");
     }
   }
@@ -54,20 +54,20 @@ export default function ShareRestoreView() {
   return (
     <Modal width="md" onClose={() => navigate("/editor")}>
       <div className="flex flex-col overflow-y-hidden">
-        <div className="rounded-r-xl bg-dark-4 overflow-y-scroll flex-auto max-h-[300px] sm:max-h-[500px]">
-          <div className="rounded text-white h-full px-5 py-3">
+        <div className="rounded-r-xl bg-ink-800 overflow-y-scroll flex-auto max-h-[300px] sm:max-h-[500px]">
+          <div className="rounded-lg text-white h-full px-5 py-3">
             {parsedData && <MessagePreview msg={parsedData} />}
           </div>
         </div>
         <div className="flex flex-none justify-end space-x-3 p-3">
           <button
-            className="text-white px-3 py-2 rounded border-2 border-red hover:bg-red"
+            className="text-white px-3 py-2 rounded-lg border-2 border-red/70 hover:bg-red hover:border-red transition-colors"
             onClick={() => navigate("/editor")}
           >
             Cancel
           </button>
           <button
-            className="text-white px-3 py-2 rounded border-2 border-green hover:bg-green"
+            className="text-white px-3 py-2 rounded-lg border-2 border-green/70 hover:bg-green hover:border-green hover:text-ink-900 transition-colors"
             onClick={save}
           >
             Restore

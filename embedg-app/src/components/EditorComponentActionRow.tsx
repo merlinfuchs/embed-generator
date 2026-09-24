@@ -1,121 +1,66 @@
-import { shallow } from "zustand/shallow";
-import { useCurrentMessageStore } from "../state/message";
-import { getUniqueId } from "../util";
-import EditorComponentBaseActionRow from "./EditorComponentBaseActionRow";
+import {
+  type ActionRowNode,
+  type NodeId,
+  useChildIds,
+  useNodeActions,
+  slotLimit,
+  useDocumentStoreApi,
+  useDocument,
+} from "../state/document";
+import { useEditorCapabilities } from "../state/editorCapabilities";
+import { nodeScope } from "../state/validationError";
+import { AutoAnimate } from "../util/autoAnimate";
+import EditorComponentCollapsable from "./EditorComponentCollapsable";
+import EditorComponentEntry from "./EditorComponentEntry";
+import EditorSlotButtons from "./EditorSlotButtons";
 
 interface Props {
-  rootIndex: number;
-  rootId: number;
+  id: NodeId;
+  title?: string;
 }
 
-export default function EditorComponentActionRow({ rootIndex, rootId }: Props) {
-  const componentCount = useCurrentMessageStore(
-    (state) => state.components.length
+export default function EditorComponentActionRow({
+  id,
+  title = "Action Row",
+}: Props) {
+  const childIds = useChildIds(id, "components");
+  const actions = useNodeActions(id);
+  const { insert, removeChildren } = useDocumentStoreApi().getState();
+  const { linkButtonsOnly } = useEditorCapabilities();
+  // A row holds either buttons or a single select menu, never both.
+  const isButtonRow = useDocument(
+    (state) => state.nodes[childIds[0]]?.type !== "selectMenu",
   );
-  const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
-    (state) => [
-      state.moveComponentUp,
-      state.moveComponentDown,
-      state.duplicateComponent,
-      state.deleteComponent,
-    ],
-    shallow
-  );
-
-  const [addSubComponent, clearSubComponents] = useCurrentMessageStore(
-    (state) => [state.addActionRowComponent, state.clearActionRowComponents],
-    shallow
-  );
-
-  const [
-    moveSubComponentUp,
-    moveSubComponentDown,
-    deleteSubComponent,
-    updateActionRowComponent,
-    duplicateActionRowComponent,
-    updateActionRowSelectMenuOption,
-    addActionRowSelectMenuOption,
-    duplicateActionRowSelectMenuOption,
-    moveActionRowSelectMenuOptionUp,
-    moveActionRowSelectMenuOptionDown,
-    deleteActionRowSelectMenuOption,
-    clearActionRowSelectMenuOptions,
-  ] = useCurrentMessageStore(
-    (state) => [
-      state.moveActionRowComponentUp,
-      state.moveActionRowComponentDown,
-      state.deleteActionRowComponent,
-      state.updateActionRowComponent,
-      state.duplicateActionRowComponent,
-      state.updateActionRowSelectMenuOption,
-      state.addActionRowSelectMenuOption,
-      state.duplicateActionRowSelectMenuOption,
-      state.moveActionRowSelectMenuOptionUp,
-      state.moveActionRowSelectMenuOptionDown,
-      state.deleteActionRowSelectMenuOption,
-      state.clearActionRowSelectMenuOptions,
-    ],
-    shallow
-  );
-
-  const actionRow = useCurrentMessageStore(
-    (state) => state.getActionRow(rootIndex),
-    shallow
-  );
-
-  if (!actionRow) {
-    return null;
-  }
 
   return (
-    <div className="bg-dark-3 p-3 rounded-md">
-      <EditorComponentBaseActionRow
-        id={`components.${rootId}`}
-        validationPathPrefix={`components.${rootIndex}`}
-        data={actionRow}
-        duplicate={() => duplicate(rootIndex)}
-        moveUp={rootIndex > 0 ? () => moveUp(rootIndex) : () => {}}
-        moveDown={
-          rootIndex < componentCount - 1 ? () => moveDown(rootIndex) : () => {}
-        }
-        remove={() => remove(rootIndex)}
-        addSubComponent={(component) => addSubComponent(rootIndex, component)}
-        clearSubComponents={() => clearSubComponents(rootIndex)}
-        moveSubComponentUp={(index) => moveSubComponentUp(rootIndex, index)}
-        moveSubComponentDown={(index) => moveSubComponentDown(rootIndex, index)}
-        deleteSubComponent={(index) => deleteSubComponent(rootIndex, index)}
-        onSubComponentChange={(index, data) =>
-          updateActionRowComponent(rootIndex, index, data)
-        }
-        duplicateSubComponent={(index) =>
-          duplicateActionRowComponent(rootIndex, index)
-        }
-        onSelectMenuOptionChange={(index, optionIndex, data) =>
-          updateActionRowSelectMenuOption(rootIndex, index, optionIndex, data)
-        }
-        addSelectMenuOption={(index) =>
-          addActionRowSelectMenuOption(rootIndex, index, {
-            id: getUniqueId(),
-            label: "",
-            action_set_id: getUniqueId().toString(),
-          })
-        }
-        duplicateSelectMenuOption={(index, optionIndex) =>
-          duplicateActionRowSelectMenuOption(rootIndex, index, optionIndex)
-        }
-        moveSelectMenuOptionUp={(index, optionIndex) =>
-          moveActionRowSelectMenuOptionUp(rootIndex, index, optionIndex)
-        }
-        moveSelectMenuOptionDown={(index, optionIndex) =>
-          moveActionRowSelectMenuOptionDown(rootIndex, index, optionIndex)
-        }
-        removeSelectMenuOption={(index, optionIndex) =>
-          deleteActionRowSelectMenuOption(rootIndex, index, optionIndex)
-        }
-        clearSelectMenuOptions={(index) =>
-          clearActionRowSelectMenuOptions(rootIndex, index)
-        }
-      />
-    </div>
+    <EditorComponentCollapsable
+      id={id}
+      validationPathPrefix={nodeScope<ActionRowNode>(id)}
+      title={title}
+      size="large"
+      {...actions}
+      subtitle={isButtonRow ? "Buttons" : "Select Menu"}
+    >
+      <AutoAnimate>
+        {childIds.map((childId) => (
+          <EditorComponentEntry key={childId} id={childId} />
+        ))}
+        {isButtonRow && (
+          <EditorSlotButtons
+            addLabel="Add Button"
+            clearLabel="Clear Buttons"
+            canAdd={childIds.length < slotLimit("actionRow", "components")}
+            onAdd={() =>
+              insert(id, "components", "end", {
+                type: "button",
+                style: linkButtonsOnly ? 5 : 2,
+                label: "",
+              })
+            }
+            onClear={() => removeChildren(id, "components")}
+          />
+        )}
+      </AutoAnimate>
+    </EditorComponentCollapsable>
   );
 }

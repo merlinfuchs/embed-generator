@@ -4,6 +4,7 @@ import (
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"gopkg.in/guregu/null.v4"
 )
 
@@ -27,17 +28,17 @@ type GetPremiumPlanFeaturesResponseDataWire struct {
 type GetPremiumPlanFeaturesResponseWire APIResponse[GetPremiumPlanFeaturesResponseDataWire]
 
 type PremiumEntitlementWire struct {
-	ID              string      `json:"id"`
-	SkuID           string      `json:"sku_id"`
-	UserID          null.String `json:"user_id"`
-	GuildID         null.String `json:"guild_id"`
-	UpdatedAt       time.Time   `json:"updated_at"`
-	Deleted         bool        `json:"deleted"`
-	StartsAt        null.Time   `json:"starts_at"`
-	EndsAt          null.Time   `json:"ends_at"`
-	Consumable      bool        `json:"consumable"`
-	Consumed        bool        `json:"consumed"`
-	ConsumedGuildID null.String `json:"consumed_guild_id"`
+	ID              string        `json:"id"`
+	SkuID           string        `json:"sku_id"`
+	UserID          common.NullID `json:"user_id"`
+	GuildID         common.NullID `json:"guild_id"`
+	UpdatedAt       time.Time     `json:"updated_at"`
+	Deleted         bool          `json:"deleted"`
+	StartsAt        null.Time     `json:"starts_at"`
+	EndsAt          null.Time     `json:"ends_at"`
+	Consumable      bool          `json:"consumable"`
+	Consumed        bool          `json:"consumed"`
+	ConsumedGuildID common.NullID `json:"consumed_guild_id"`
 }
 
 type ListPremiumEntitlementsResponseDataWire struct {
@@ -47,7 +48,7 @@ type ListPremiumEntitlementsResponseDataWire struct {
 type ListPremiumEntitlementsResponseWire APIResponse[ListPremiumEntitlementsResponseDataWire]
 
 type ConsumeEntitlementRequestWire struct {
-	GuildID string `json:"guild_id"`
+	GuildID common.ID `json:"guild_id"`
 }
 
 func (req ConsumeEntitlementRequestWire) Validate() error {

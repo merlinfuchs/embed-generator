@@ -15,6 +15,18 @@ import (
 )
 
 var standardFuncMap = map[string]interface{}{
+	// The template package's own print builtins have no bound on what they return, so a few rounds
+	// of {{$s = printf "%s%s" $s $s}} are enough to exhaust the machine. These shadow them.
+	"print": func(args ...interface{}) (string, error) {
+		return limitOutput(fmt.Sprint(args...))
+	},
+	"printf": func(format string, args ...interface{}) (string, error) {
+		return limitOutput(fmt.Sprintf(format, args...))
+	},
+	"println": func(args ...interface{}) (string, error) {
+		return limitOutput(fmt.Sprintln(args...))
+	},
+
 	// conversion functions
 	"toString": ToString,
 	"toInt":    tmplToInt,

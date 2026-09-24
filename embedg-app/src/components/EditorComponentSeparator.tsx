@@ -1,54 +1,77 @@
-import { shallow } from "zustand/shallow";
-import { useCurrentMessageStore } from "../state/message";
-import EditorComponentBaseSeparator from "./EditorComponentBaseSeparator";
+import {
+  type SeparatorNode,
+  type NodeId,
+  useNode,
+  useNodeActions,
+  useDocumentStoreApi,
+} from "../state/document";
+import { nodeScope } from "../state/validationError";
+import CheckBox from "./CheckBox";
+import EditorComponentCollapsable from "./EditorComponentCollapsable";
 
 interface Props {
-  rootIndex: number;
-  rootId: number;
+  id: NodeId;
+  title?: string;
+  size?: "medium" | "large";
 }
 
-export default function EditorComponentSeparator({ rootIndex, rootId }: Props) {
-  const componentCount = useCurrentMessageStore(
-    (state) => state.components.length
-  );
+export default function EditorComponentSeparator({
+  id,
+  title = "Separator",
+  size = "medium",
+}: Props) {
+  const data = useNode<SeparatorNode>(id);
+  const actions = useNodeActions(id);
+  const { update } = useDocumentStoreApi().getState();
 
-  const separator = useCurrentMessageStore(
-    (state) => state.getSeparator(rootIndex),
-    shallow
-  );
-  const updateSeparator = useCurrentMessageStore(
-    (state) => state.updateComponent
-  );
-
-  const [moveUp, moveDown, duplicate, remove] = useCurrentMessageStore(
-    (state) => [
-      state.moveComponentUp,
-      state.moveComponentDown,
-      state.duplicateComponent,
-      state.deleteComponent,
-    ],
-    shallow
-  );
-
-  if (!separator) {
-    return null;
-  }
+  if (!data) return null;
 
   return (
-    <div className="bg-dark-3 px-3 md:px-4 py-3 mb-3 rounded-md shadow">
-      <EditorComponentBaseSeparator
-        id={`components.${rootId}`}
-        validationPathPrefix={`components.${rootIndex}`}
-        data={separator}
-        onChange={(data) => updateSeparator(rootIndex, data)}
-        duplicate={componentCount < 5 ? () => duplicate(rootIndex) : undefined}
-        moveUp={rootIndex > 0 ? () => moveUp(rootIndex) : undefined}
-        moveDown={
-          rootIndex < componentCount - 1 ? () => moveDown(rootIndex) : undefined
-        }
-        remove={() => remove(rootIndex)}
-        size="large"
-      />
-    </div>
+    <EditorComponentCollapsable
+      id={id}
+      validationPathPrefix={nodeScope<SeparatorNode>(id)}
+      title={title}
+      {...actions}
+      size={size}
+    >
+      <div className="space-y-4">
+        <div className="flex space-x-3">
+          <div className="flex-auto">
+            <div className="mb-1.5 flex">
+              <div className="uppercase text-mist-300 text-sm font-medium">
+                Spacing
+              </div>
+            </div>
+            <select
+              aria-label="Spacing"
+              className="bg-ink-900 rounded-lg p-2 w-full font-light cursor-pointer text-white"
+              value={data.spacing.toString()}
+              onChange={(v) =>
+                update<SeparatorNode>(id, {
+                  spacing: parseInt(v.target.value, 10) as any,
+                })
+              }
+            >
+              <option value="1">Small</option>
+              <option value="2">Large</option>
+            </select>
+          </div>
+          <div className="flex-none">
+            <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
+              Divider
+            </div>
+            <CheckBox
+              label="Divider"
+              checked={data.divider ?? false}
+              onChange={(v) =>
+                update<SeparatorNode>(id, {
+                  divider: v,
+                })
+              }
+            />
+          </div>
+        </div>
+      </div>
+    </EditorComponentCollapsable>
   );
 }

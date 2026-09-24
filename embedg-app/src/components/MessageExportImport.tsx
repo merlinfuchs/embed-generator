@@ -1,10 +1,10 @@
-import { ChangeEvent, useRef } from "react";
-import { messageSchema } from "../discord/restoreSchema";
+import { type ChangeEvent, useRef } from "react";
+import { messageSchema } from "../discord/importSchema";
 import { z } from "zod";
 import { useToasts } from "../util/toasts";
-import { SavedMessageWire } from "../api/wire";
+import type { SavedMessageWire } from "../api/wire";
 import { useImportSavedMessagesMutation } from "../api/mutations";
-import { useQueryClient } from "react-query";
+import { useQueryClient } from "@tanstack/react-query";
 
 const messageExportSchema = z
   .object({
@@ -13,7 +13,7 @@ const messageExportSchema = z
         name: z.string(),
         description: z.string().nullable(),
         data: messageSchema,
-      })
+      }),
     ),
   })
   .or(
@@ -25,9 +25,9 @@ const messageExportSchema = z
             messages: z.array(
               z.object({
                 data: messageSchema,
-              })
+              }),
             ),
-          })
+          }),
         ),
       })
       .transform((data) => ({
@@ -36,9 +36,9 @@ const messageExportSchema = z
             name: b.name,
             description: null,
             data: m.data,
-          }))
+          })),
         ),
-      }))
+      })),
   );
 
 type MessageExport = z.infer<typeof messageExportSchema>;
@@ -50,7 +50,6 @@ interface Props {
 
 export default function MessageExportImport({ messages, guildId }: Props) {
   const importInputRef = useRef<HTMLInputElement>(null);
-  const exportAnchorRef = useRef<HTMLAnchorElement>(null);
 
   const queryClient = useQueryClient();
 
@@ -59,11 +58,14 @@ export default function MessageExportImport({ messages, guildId }: Props) {
   const importMutation = useImportSavedMessagesMutation();
 
   function handleImport(e: ChangeEvent<HTMLInputElement>) {
-    if (!e.target.files) return;
+    const input = e.target;
+    if (!input.files) return;
 
-    for (let i = 0; i < e.target.files.length; i++) {
-      const file = e.target.files[i];
+    const files = [...input.files];
+    // Reset, or picking the same file again after a failed import does nothing.
+    input.value = "";
 
+    for (const file of files) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -78,13 +80,24 @@ export default function MessageExportImport({ messages, guildId }: Props) {
                 req: parsed.data,
               },
               {
-                onSuccess: () => {
-                  queryClient.invalidateQueries(["saved-messages", guildId]);
+                onSuccess: (res) => {
+                  if (!res.success) {
+                    createToast({
+                      title: "Failed to import",
+                      message: res.error.message,
+                      type: "error",
+                    });
+                    return;
+                  }
+
+                  queryClient.invalidateQueries({
+                    queryKey: ["saved-messages", guildId],
+                  });
                 },
-              }
+              },
             );
           } else {
-            console.log(parsed.error);
+            console.error(parsed.error);
             createToast({
               title: "Failed to import",
               message: `Data did not match the expected format`,
@@ -116,19 +129,20 @@ export default function MessageExportImport({ messages, guildId }: Props) {
     const data = JSON.stringify(exportData, null, 2);
 
     const dataUrl = window.URL.createObjectURL(
-      new Blob([data], { type: "application/json" })
+      new Blob([data], { type: "application/json" }),
     );
 
-    if (exportAnchorRef.current) {
-      exportAnchorRef.current.href = dataUrl;
-      exportAnchorRef.current.click();
-    }
+    const anchor = document.createElement("a");
+    anchor.href = dataUrl;
+    anchor.download = "messages.json";
+    anchor.click();
+    window.URL.revokeObjectURL(dataUrl);
   }
 
   return (
     <div className="flex space-x-3 justify-end flex-none">
       <button
-        className="px-3 py-2 rounded text-white flex-none border-2 border-dark-7 hover:bg-dark-6"
+        className="px-3 py-2 rounded-lg text-white flex-none border-2 border-white/15 hover:bg-white/5 hover:border-white/30 transition-colors"
         onClick={() => importInputRef.current?.click()}
       >
         Import
@@ -142,16 +156,10 @@ export default function MessageExportImport({ messages, guildId }: Props) {
         />
       </button>
       <button
-        className="px-3 py-2 rounded text-white flex-none border-2 border-dark-7 hover:bg-dark-6"
+        className="px-3 py-2 rounded-lg text-white flex-none border-2 border-white/15 hover:bg-white/5 hover:border-white/30 transition-colors"
         onClick={handleExport}
       >
         Export All
-        <a
-          href=""
-          ref={exportAnchorRef}
-          download="messages.json"
-          className="hidden"
-        ></a>
       </button>
     </div>
   );

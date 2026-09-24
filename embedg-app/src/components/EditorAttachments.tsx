@@ -1,47 +1,73 @@
+import { useShallow } from "zustand/react/shallow";
 import clsx from "clsx";
-import { useCurrentAttachmentsStore } from "../state/attachments";
+import {
+  MAX_ATTACHMENTS,
+  MAX_ATTACHMENT_BYTES,
+  useCurrentAttachmentsStore,
+} from "../state/attachments";
 import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";
-import { ChangeEvent, useRef } from "react";
+import { type ChangeEvent, useRef } from "react";
 import { getUniqueId } from "../util";
 import EditorAttachment from "./EditorAttachment";
-import { shallow } from "zustand/shallow";
-import { useCurrentMessageStore } from "../state/message";
+import { useComponentsV2Enabled } from "../state/document";
+import { useToasts } from "../util/toasts";
 
 export default function EditorAttachments() {
-  const attachments = useCurrentAttachmentsStore((state) =>
-    state.attachments.map((a) => a.id)
+  const attachments = useCurrentAttachmentsStore(
+    useShallow((state) => state.attachments.map((a) => a.id)),
   );
 
-  const componentsV2Enabled = useCurrentMessageStore((state) =>
-    state.getComponentsV2Enabled()
-  );
+  const componentsV2Enabled = useComponentsV2Enabled();
 
   const totalBytes = useCurrentAttachmentsStore((state) =>
-    state.attachments.reduce((acc, curr) => acc + curr.size, 0)
+    state.attachments.reduce((acc, curr) => acc + curr.size, 0),
   );
 
   const [addAttachment, clearAttachments] = useCurrentAttachmentsStore(
-    (state) => [state.addAttachment, state.clearAttachments],
-    shallow
+    useShallow((state) => [state.addAttachment, state.clearAttachments]),
   );
+
+  const createToast = useToasts((s) => s.create);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
   function handleAddAttachment() {
-    if (attachments.length >= 10) return;
+    if (attachments.length >= MAX_ATTACHMENTS) return;
     inputRef.current?.click();
   }
 
   function handleFileSelected(e: ChangeEvent<HTMLInputElement>) {
-    if (!e.target.files) return;
+    const input = e.target;
+    if (!input.files) return;
 
-    for (let i = 0; i < e.target.files.length; i++) {
-      const file = e.target.files[i];
-      if (file.size > 25 * 1024 * 1024) {
-        alert("File too large! Max 25MB");
-        return;
+    const files = [...input.files];
+    // Reset, or picking the same file again after an error does nothing.
+    input.value = "";
+
+    let remaining = MAX_ATTACHMENTS - attachments.length;
+
+    for (const file of files) {
+      if (file.size > MAX_ATTACHMENT_BYTES) {
+        createToast({
+          title: "File too large",
+          message: `'${file.name}' is larger than the 25MB limit.`,
+          type: "error",
+        });
+        continue;
       }
+
+      // The count was only checked before the picker opened, so selecting several files at once
+      // could take it past the limit.
+      if (remaining <= 0) {
+        createToast({
+          title: "Too many attachments",
+          message: `A message can have at most ${MAX_ATTACHMENTS} attachments.`,
+          type: "error",
+        });
+        break;
+      }
+      remaining--;
 
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -66,13 +92,13 @@ export default function EditorAttachments() {
       validationPathPrefix="attachments"
       extra={
         <div className="flex space-x-2">
-          <div className="text-sm italic font-light text-gray-400">
-            {attachments.length} / 10
+          <div className="text-sm italic font-light text-mist-400">
+            {attachments.length} / {MAX_ATTACHMENTS}
           </div>
           <div
             className={clsx(
               "text-sm italic font-light",
-              totalBytes < 25 * 1024 * 1024 ? "text-gray-400" : "text-red"
+              totalBytes < MAX_ATTACHMENT_BYTES ? "text-mist-400" : "text-red",
             )}
           >
             {Math.round(totalBytes / 10_000) / 100} / 25MB
@@ -80,7 +106,7 @@ export default function EditorAttachments() {
         </div>
       }
     >
-      <div className="text-gray-400 mb-3">
+      <div className="text-mist-400 mb-3">
         {componentsV2Enabled
           ? "Attachments do not directly appear in the message. Instead, you can use them in File components."
           : "Attachments do currently not appear in the preview."}
@@ -93,17 +119,18 @@ export default function EditorAttachments() {
       <div className="space-x-3">
         <button
           className={clsx(
-            "px-3 py-2 rounded text-white",
-            attachments.length < 10
-              ? "bg-blurple hover:bg-blurple-dark"
-              : "bg-dark-3 cursor-not-allowed"
+            "px-3 py-2 rounded-lg text-white",
+            attachments.length < MAX_ATTACHMENTS
+              ? "bg-azure-500 hover:bg-azure-400"
+              : "bg-ink-700 cursor-not-allowed",
           )}
+          disabled={attachments.length >= MAX_ATTACHMENTS}
           onClick={handleAddAttachment}
         >
           Add Attachment
         </button>
         <button
-          className="px-3 py-2 rounded text-white border-red border-2 hover:bg-red"
+          className="px-3 py-2 rounded-lg text-white border-2 border-red/70 hover:bg-red hover:border-red transition-colors"
           onClick={clearAttachments}
         >
           Clear Attachments
@@ -115,7 +142,7 @@ export default function EditorAttachments() {
         className="hidden"
         ref={inputRef}
         onChange={handleFileSelected}
-        multiple={attachments.length < 9}
+        multiple={attachments.length < MAX_ATTACHMENTS - 1}
       />
     </Collapsable>
   );

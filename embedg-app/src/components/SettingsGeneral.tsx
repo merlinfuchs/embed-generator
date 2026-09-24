@@ -1,33 +1,29 @@
-import { shallow } from "zustand/shallow";
+import { useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { useSettingsStore } from "../state/settings";
 import CheckBox from "./CheckBox";
+import ConfirmModal from "./ConfirmModal";
 
 export default function SettingsGeneral() {
   const [editHistoryEnabled, setEditHistoryEnabled] = useSettingsStore(
-    (s) => [s.editHistoryEnabled, s.setEditHistoryEnabled],
-    shallow
+    useShallow((s) => [s.editHistoryEnabled, s.setEditHistoryEnabled]),
   );
   const [alwaysCollapseSidebar, setAlwaysCollapseSidebar] = useSettingsStore(
-    (s) => [s.alwaysCollapseSidebar, s.setAlwaysCollapseSidebar],
-    shallow
+    useShallow((s) => [s.alwaysCollapseSidebar, s.setAlwaysCollapseSidebar]),
   );
   const [confirmOnExit, setConfirmOnExit] = useSettingsStore(
-    (s) => [s.confirmOnExit, s.setConfirmOnExit],
-    shallow
+    useShallow((s) => [s.confirmOnExit, s.setConfirmOnExit]),
   );
 
+  const [clearModal, setClearModal] = useState(false);
+
   function clearAll() {
-    const ok = confirm(
-      "Are you sure you want to clear all local data? The message editor and all your app settings will be cleared. Your saved messages, scheduled messages, and custom commands will not be affected."
-    );
-    if (ok) {
-      localStorage.clear();
-      window.location.reload();
-    }
+    localStorage.clear();
+    window.location.reload();
   }
 
   return (
-    <div className="bg-dark-3 rounded-lg p-5">
+    <div className="bg-ink-700 rounded-lg p-5">
       <div className="text-white text-2xl font-medium mb-10">
         <div>App Settings</div>
       </div>
@@ -36,12 +32,13 @@ export default function SettingsGeneral() {
           <CheckBox
             checked={editHistoryEnabled}
             onChange={setEditHistoryEnabled}
+            label="Edit History"
           />
           <div>
             <div className="text-white font-medium text-lg ml-3">
               Edit History
             </div>
-            <div className="text-gray-400 font-light text-sm ml-3">
+            <div className="text-mist-400 font-light text-sm ml-3">
               Edit history allows you undo and redo the last 10 changes to a
               message. Disabling this may reduce the memory usage of the app.
             </div>
@@ -51,24 +48,29 @@ export default function SettingsGeneral() {
           <CheckBox
             checked={alwaysCollapseSidebar}
             onChange={setAlwaysCollapseSidebar}
+            label="Keep Sidebar Collapsed"
           />
           <div>
             <div className="text-white font-medium text-lg ml-3">
               Keep Sidebar Collapsed
             </div>
-            <div className="text-gray-400 font-light text-sm ml-3">
+            <div className="text-mist-400 font-light text-sm ml-3">
               This will keep the sidebar collapsed across page reloads even on
               large screens.
             </div>
           </div>
         </div>
         <div className="flex items-center">
-          <CheckBox checked={confirmOnExit} onChange={setConfirmOnExit} />
+          <CheckBox
+            checked={confirmOnExit}
+            onChange={setConfirmOnExit}
+            label="Confirm On Exit"
+          />
           <div>
             <div className="text-white font-medium text-lg ml-3">
               Confirm On Exit
             </div>
-            <div className="text-gray-400 font-light text-sm ml-3">
+            <div className="text-mist-400 font-light text-sm ml-3">
               This will show a confirmation dialog when you try to leave the
               app.
             </div>
@@ -78,12 +80,23 @@ export default function SettingsGeneral() {
 
       <div className="flex justify-end">
         <button
-          className="px-3 py-2 rounded text-white border-red border-2 hover:bg-red"
-          onClick={clearAll}
+          className="px-3 py-2 rounded-lg text-white border-2 border-red/70 hover:bg-red hover:border-red transition-colors"
+          onClick={() => setClearModal(true)}
         >
           Clear Local Data
         </button>
       </div>
+      {clearModal && (
+        <ConfirmModal
+          title="Are you sure that you want to clear all local data?"
+          subTitle="The message editor and all your app settings will be cleared."
+          onClose={() => setClearModal(false)}
+          onConfirm={clearAll}
+        >
+          Your saved messages, scheduled messages and custom commands are stored
+          on the server and are not affected.
+        </ConfirmModal>
+      )}
     </div>
   );
 }

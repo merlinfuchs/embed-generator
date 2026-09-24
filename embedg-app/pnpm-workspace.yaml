@@ -1,0 +1,6 @@
+# pnpm reads settings from this file, not package.json. embedg-app isn't a
+# workspace root, it just needs somewhere to allow the build scripts pnpm
+# blocks by default.
+allowBuilds:
+  "@swc/core": true
+  esbuild: true

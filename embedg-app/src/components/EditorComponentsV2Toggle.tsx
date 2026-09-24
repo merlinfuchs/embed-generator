@@ -1,17 +1,11 @@
 import clsx from "clsx";
 import { useState } from "react";
-import { useCurrentMessageStore } from "../state/message";
+import { useComponentsV2Enabled, useDocumentStoreApi } from "../state/document";
 import ConfirmModal from "./ConfirmModal";
-import { useSendSettingsStore } from "../state/sendSettings";
 
 export default function EditorComponentsV2Toggle() {
-  const componentsV2Enabled = useCurrentMessageStore((s) =>
-    s.getComponentsV2Enabled()
-  );
-  const setComponentV2Enabled = useCurrentMessageStore(
-    (s) => s.setComponentsV2Enabled
-  );
-
+  const store = useDocumentStoreApi();
+  const componentsV2Enabled = useComponentsV2Enabled();
   const [componentsV2EnableModal, setComponentsV2EnableModal] = useState(false);
   const [componentsV2DisableModal, setComponentsV2DisableModal] =
     useState(false);
@@ -20,18 +14,14 @@ export default function EditorComponentsV2Toggle() {
     setComponentsV2DisableModal(false);
     setComponentsV2EnableModal(false);
 
-    if (componentsV2Enabled) {
-      setComponentV2Enabled(false);
-    } else {
-      setComponentV2Enabled(true);
-    }
+    store.getState().setComponentsV2(!componentsV2Enabled);
   };
 
   return (
     <div>
       <div className="flex">
         <button
-          className="flex bg-dark-2 p-1 rounded text-white"
+          className="flex bg-ink-900 p-1 rounded-lg border border-white/10 text-sm font-medium text-mist-400"
           onClick={() => {
             if (componentsV2Enabled) {
               setComponentsV2DisableModal(true);
@@ -42,16 +32,16 @@ export default function EditorComponentsV2Toggle() {
         >
           <div
             className={clsx(
-              "py-1 px-2 rounded transition-colors",
-              !componentsV2Enabled && "bg-dark-3"
+              "py-1 px-3 rounded-md transition-colors",
+              !componentsV2Enabled && "bg-ink-700 text-mist-100",
             )}
           >
             Embeds V1
           </div>
           <div
             className={clsx(
-              "py-1 px-2 rounded transition-colors",
-              componentsV2Enabled && "bg-dark-3"
+              "py-1 px-3 rounded-md transition-colors",
+              componentsV2Enabled && "bg-ink-700 text-mist-100",
             )}
           >
             Components V2
@@ -68,8 +58,10 @@ export default function EditorComponentsV2Toggle() {
         >
           <a
             href="https://message.style/docs/features/components-v2"
+            aria-label="Learn more about Components V2"
             className="text-blue-400 hover:underline"
             target="_blank"
+            rel="noopener"
           >
             Learn More
           </a>
@@ -84,8 +76,10 @@ export default function EditorComponentsV2Toggle() {
         >
           <a
             href="https://message.style/docs/features/components-v2"
+            aria-label="Learn more about Components V2"
             className="text-blue-400 hover:underline"
             target="_blank"
+            rel="noopener"
           >
             Learn More
           </a>

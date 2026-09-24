@@ -8,13 +8,15 @@ import (
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
+	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"gopkg.in/guregu/null.v4"
 )
 
 type CustomBotInfoWire struct {
 	ID                string      `json:"id"`
-	ApplicationID     string      `json:"application_id"`
-	UserID            string      `json:"user_id"`
+	ApplicationID     common.ID   `json:"application_id"`
+	UserID            common.ID   `json:"user_id"`
 	UserName          string      `json:"user_name"`
 	UserDiscriminator string      `json:"user_discriminator"`
 	UserAvatar        null.String `json:"user_avatar"`
@@ -85,7 +87,7 @@ type CustomCommandWire struct {
 	Description string                       `json:"description"`
 	Enabled     bool                         `json:"enabled"`
 	Parameters  []CustomCommandParameterWire `json:"parameters"`
-	Actions     json.RawMessage              `json:"actions"`
+	Actions     actions.ActionSet            `json:"actions"`
 	CreatedAt   time.Time                    `json:"created_at"`
 	UpdatedAt   time.Time                    `json:"updated_at"`
 	DeployedAt  null.Time                    `json:"deployed_at"`

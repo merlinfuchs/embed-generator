@@ -1,11 +1,12 @@
 package wire
 
 import (
+	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"gopkg.in/guregu/null.v4"
 )
 
 type UserWire struct {
-	ID            string      `json:"id"`
+	ID            common.ID   `json:"id"`
 	Name          string      `json:"name"`
 	Discriminator string      `json:"discriminator"`
 	Avatar        null.String `json:"avatar"`

@@ -1,44 +1,50 @@
 package users
 
 import (
-	"database/sql"
+	"errors"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
+	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
-	"github.com/rs/zerolog/log"
-	"gopkg.in/guregu/null.v4"
+	"log/slog"
 )
 
 type UsersHandler struct {
-	pg        *postgres.PostgresStore
+	userStore store.UserStore
 	planStore store.PlanStore
 }
 
-func New(pg *postgres.PostgresStore, planStore store.PlanStore) *UsersHandler {
+func New(userStore store.UserStore, planStore store.PlanStore) *UsersHandler {
 	return &UsersHandler{
-		pg:        pg,
+		userStore: userStore,
 		planStore: planStore,
 	}
 }
 
 func (h *UsersHandler) HandleGetUser(c *fiber.Ctx) error {
 	session := c.Locals("session").(*session.Session)
-	userID := c.Params("userID")
+	rawUserID := c.Params("userID")
 
-	if userID == "@me" {
+	var userID common.ID
+	if rawUserID == "@me" {
 		userID = session.UserID
+	} else {
+		var err error
+		userID, err = common.ParseID(rawUserID)
+		if err != nil {
+			return handlers.BadRequest("invalid_user_id", "Invalid user ID")
+		}
 	}
 
-	user, err := h.pg.Q.GetUser(c.Context(), userID)
+	user, err := h.userStore.GetUser(c.UserContext(), userID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return helpers.NotFound("unknown_user", "The user does not exist.")
+		if errors.Is(err, store.ErrNotFound) {
+			return handlers.NotFound("unknown_user", "The user does not exist.")
 		}
-		log.Error().Err(err).Msg("Failed to get user")
+		slog.Error("Failed to get user", slog.Any("error", err))
 		return err
 	}
 
@@ -48,7 +54,7 @@ func (h *UsersHandler) HandleGetUser(c *fiber.Ctx) error {
 			ID:            user.ID,
 			Name:          user.Name,
 			Discriminator: user.Discriminator,
-			Avatar:        null.NewString(user.Avatar.String, user.Avatar.Valid),
+			Avatar:        user.Avatar,
 			IsTester:      user.IsTester,
 		},
 	})

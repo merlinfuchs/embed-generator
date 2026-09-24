@@ -1,14 +1,14 @@
 package wire
 
-import "gopkg.in/guregu/null.v4"
+import "github.com/merlinfuchs/embed-generator/embedg-server/common"
 
 type ImageWire struct {
-	ID       string      `json:"id"`
-	UserID   string      `json:"user_id"`
-	GuildID  null.String `json:"guild_id"`
-	FileName string      `json:"file_name"`
-	FileSize int32       `json:"file_size"`
-	CDNURL   string      `json:"cdn_url"`
+	ID       string        `json:"id"`
+	UserID   common.ID     `json:"user_id"`
+	GuildID  common.NullID `json:"guild_id"`
+	FileName string        `json:"file_name"`
+	FileSize int           `json:"file_size"`
+	CDNURL   string        `json:"cdn_url"`
 }
 
 type UploadImageResponseWire APIResponse[ImageWire]

@@ -1,65 +1,48 @@
-import { useCurrentMessageStore } from "../state/message";
-import EditorEmbed from "./EditorEmbed";
-import { shallow } from "zustand/shallow";
-import { useCollapsedStatesStore } from "../state/collapsed";
-import { getUniqueId } from "../util";
+import {
+  slotLimit,
+  useChildIds,
+  useDocumentStoreApi,
+  useDocument,
+} from "../state/document";
 import { AutoAnimate } from "../util/autoAnimate";
+import { slotScope } from "../state/validationError";
 import Collapsable from "./Collapsable";
-import clsx from "clsx";
+import EditorSlotButtons from "./EditorSlotButtons";
+import EditorEmbed from "./EditorEmbed";
 
 export default function EditorEmbeds() {
-  const embeds = useCurrentMessageStore(
-    (state) => state.embeds.map((e) => e.id),
-    shallow
-  );
-  const addEmbed = useCurrentMessageStore((state) => state.addEmbed);
-  const clearEmbeds = useCurrentMessageStore((state) => state.clearEmbeds);
+  const rootId = useDocument((state) => state.rootId);
+  const embedIds = useChildIds(rootId, "embeds");
+  const { insert, removeChildren } = useDocumentStoreApi().getState();
 
   return (
     <Collapsable
       id="embeds"
       title="Embeds"
       size="large"
-      validationPathPrefix="embeds"
+      validationPathPrefix={slotScope(rootId, "embeds")}
       extra={
-        <div className="text-sm italic font-light text-gray-400">
-          {embeds.length} / 10
+        <div className="text-sm italic font-light text-mist-400">
+          {embedIds.length} / {slotLimit("message", "embeds")}
         </div>
       }
     >
       <AutoAnimate className="space-y-3 mb-3">
-        {embeds.map((id, i) => (
+        {embedIds.map((id) => (
           <div key={id}>
-            <EditorEmbed embedIndex={i} embedId={id} />
+            <EditorEmbed id={id} />
           </div>
         ))}
       </AutoAnimate>
-      <div className="space-x-3">
-        <button
-          className={clsx(
-            "px-3 py-2 rounded text-white",
-            embeds.length < 10
-              ? "bg-blurple hover:bg-blurple-dark"
-              : "bg-dark-3 cursor-not-allowed"
-          )}
-          onClick={() =>
-            embeds.length < 10 &&
-            addEmbed({
-              id: getUniqueId(),
-              description: "",
-              fields: [],
-            })
-          }
-        >
-          Add Embed
-        </button>
-        <button
-          className="px-3 py-2 rounded text-white border-red border-2 hover:bg-red"
-          onClick={clearEmbeds}
-        >
-          Clear Embeds
-        </button>
-      </div>
+      <EditorSlotButtons
+        addLabel="Add Embed"
+        clearLabel="Clear Embeds"
+        canAdd={embedIds.length < slotLimit("message", "embeds")}
+        onAdd={() =>
+          insert(rootId, "embeds", "end", { type: "embed", description: "" })
+        }
+        onClear={() => removeChildren(rootId, "embeds")}
+      />
     </Collapsable>
   );
 }

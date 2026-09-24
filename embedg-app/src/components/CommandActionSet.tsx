@@ -1,4 +1,4 @@
-import { shallow } from "zustand/shallow";
+import { useShallow } from "zustand/react/shallow";
 import CommandAction from "./CommandAction";
 import Collapsable from "./Collapsable";
 import { getUniqueId } from "../util";
@@ -15,13 +15,11 @@ export default function ActionSet({ cmdId }: Props) {
   const maxActions = features?.max_actions_per_component || 0;
 
   const actions = useCommandActionsStore(
-    (state) => state.actions[cmdId]?.actions.map((a) => a.id) || [],
-    shallow
+    useShallow((state) => state.actions[cmdId]?.actions.map((a) => a.id) || []),
   );
 
   const [addAction, clearActions] = useCommandActionsStore(
-    (state) => [state.addAction, state.clearActions],
-    shallow
+    useShallow((state) => [state.addAction, state.clearActions]),
   );
 
   function add() {
@@ -40,7 +38,7 @@ export default function ActionSet({ cmdId }: Props) {
       validationPathPrefix={`actions.${cmdId}`}
       title="Actions"
       extra={
-        <div className="text-sm italic font-light text-gray-400">
+        <div className="text-sm italic font-light text-mist-400">
           {actions.length} / {maxActions}
         </div>
       }
@@ -53,7 +51,7 @@ export default function ActionSet({ cmdId }: Props) {
       <div className="space-x-3 mt-3 text-sm">
         {actions.length < maxActions ? (
           <button
-            className="bg-blurple px-3 py-2 rounded transition-colors hover:bg-blurple-dark text-white"
+            className="bg-azure-500 px-3 py-2 rounded-lg transition-colors hover:bg-azure-400 text-white"
             onClick={add}
           >
             Add Action
@@ -61,13 +59,13 @@ export default function ActionSet({ cmdId }: Props) {
         ) : (
           <button
             disabled
-            className="bg-dark-2 px-3 py-2 rounded transition-colors cursor-not-allowed text-gray-300"
+            className="bg-ink-900 px-3 py-2 rounded-lg transition-colors cursor-not-allowed text-mist-300"
           >
             Add Action
           </button>
         )}
         <button
-          className="px-3 py-2 rounded border-2 border-red hover:bg-red transition-colors text-white"
+          className="px-3 py-2 rounded-lg border-2 border-red/70 hover:bg-red hover:border-red transition-colors text-white"
           onClick={() => clearActions(cmdId)}
         >
           Clear Actions

@@ -26,87 +26,34 @@ You can find prebuilt binaries of the server with the frontend files included [h
 
 ### Configure the server
 
-To configure the server you can create a file called `config.yaml` with the following fields:
+Copy [`embedg.example.toml`](embedg.example.toml) to `embedg.toml` next to the binary and fill in the Discord
+credentials. To keep the config somewhere else, pass `--config <path>`
+(`embedg-server server --config /etc/embedg/embedg.toml`) or set `EMBEDG_CONFIG`.
 
-```yaml
-discord:
-  client_id: ""
-  client_secret: ""
-  token: ""
+To run several instances, give them all the same `shard_count` and tell each one which slice to
+take with `instance_count` and `instance_index`, which is the only value that differs between
+them:
 
-openai:
-  api_key: "" # for ChatGPT integration (optional)
-
-postgres:
-  host: "localhost"
-  port: 5432
-  dbname: "embedg"
-  user: "postgres"
-  password: ""
-
-app:
-  public_url: "http://localhost:5173/app"
-
-api:
-  # Make sure to add {public_url}/auth/callback to the OAuth2 Redirect URLs of your application in the Discord dev portal
-  public_url: "http://localhost:5173/api"
-
-  # Make sure to enable this when you don't have an SSL (HTTPS) certificate
-  insecure_cookies: true
-
-  host: "localhost"
-  port: 8080
-
-# These links are used in help commands and for redirects
-links:
-  discord: https://discord.gg/CpHwbKQKHA
-  source: https://github.com/merlinfuchs/embed-generator
-
-log:
-  use_json: false # Enable to this to have easily parsable JSON log messages (you usually don't want this)
-
-# Here you can configure multiple tiers/plans which are linked to a Discord SKU
-premium:
-  plans:
-    # The default plan that all users automatically have
-    - id: default
-      default: true
-      features:
-        max_saved_messages: 25
-        max_actions_per_component: 3
-        advanced_action_types: false
-        ai_assistant: false
-        is_premium: false
-        custom_bot: false
-        max_custom_commands: 0
-        max_scheduled_messages: 5
-        periodic_scheduled_messages: false
-        max_template_ops: 1000
-        max_kv_keys: 10
-        components_v2: true
-        component_types: [1, 2, 3, 9, 10, 11, 12, 17]
-    # An additional premium plan that will apply when the user or guild has the SKU
-    - id: premium_server
-      sku_id: "123"
-      features:
-        max_saved_messages: 100
-        max_actions_per_component: 10
-        advanced_action_types: true
-        ai_assistant: true
-        is_premium: true # This is used for handing out cosmetics like a role on the support server
-        custom_bot: true
-        max_custom_commands: 25
-        max_image_upload_size: 8000000
-        max_scheduled_messages: 25
-        periodic_scheduled_messages: true
-        max_template_ops: 10000
-        max_kv_keys: 1000
-        components_v2: true
-        component_types: [1, 2, 3, 9, 10, 11, 12, 13, 14, 17]
+```toml
+[discord]
+shard_count = 250
+instance_count = 5
+instance_index = 0   # 1, 2, 3, 4 on the others; EMBEDG_DISCORD__INSTANCE_INDEX works too
 ```
 
-You can also set the config values using environment variables. For example `EMBEDG_DISCORD__TOKEN` will set the discord
-token.
+Instance `i` of `n` runs every `n`-th shard, so together they cover every shard exactly once even
+when the count doesn't divide evenly. Instance 0 holds shard 0 and runs the work that happens once
+per deployment rather than once per guild. `shard_ids` is still there for an irregular split.
+
+The S3 credentials are required; image uploads go there. The docker-compose setup below runs MinIO for it.
+
+You can also set the config values using environment variables, with `__` between the sections. For example
+`EMBEDG_DISCORD__TOKEN` sets the Discord token and `EMBEDG_DATABASE__POSTGRES__HOST` the Postgres host.
+
+### Migrating from older versions
+
+Upgrading from v0.6 or older? An existing `config.yaml` still loads but is deprecated. See
+[MIGRATION.md](MIGRATION.md) for converting it and the other changes.
 
 ### Using Docker (docker-compose)
 
@@ -153,14 +100,14 @@ services:
     environment:
       - EMBEDG_API__HOST=0.0.0.0
       - EMBEDG_API__INSECURE_COOKIES=true
-      - EMBEDG_POSTGRES__HOST=postgres
-      - EMBEDG_POSTGRES__USER=postgres
-      - EMBEDG_POSTGRES__DB=embedg
-      - EMBEDG_S3__ENDPOINT=minio:9000
+      - EMBEDG_DATABASE__POSTGRES__HOST=postgres
+      - EMBEDG_DATABASE__POSTGRES__USER=postgres
+      - EMBEDG_DATABASE__POSTGRES__DB_NAME=embedg
+      - EMBEDG_DATABASE__S3__ENDPOINT=minio:9000
       - EMBEDG_API__PUBLIC_URL=http://localhost:8080/api
       - EMBEDG_APP__PUBLIC_URL=http://localhost:8080/app
     volumes:
-      - ./config.yaml:/root/config.yaml
+      - ./embedg.toml:/root/embedg.toml
     depends_on:
       postgres:
         condition: service_healthy
@@ -170,7 +117,7 @@ volumes:
   embedg-local-minio:
 ```
 
-Run the file using `docker-compose up`. It will automatically mount the `config.yaml` file into the container. You should not configure postgres in your config file as it's using the postgres instance from the container.
+Run the file using `docker-compose up`. It will automatically mount the `embedg.toml` file into the container. You should not configure postgres in your config file as it's using the postgres instance from the container.
 
 Embed Generator should now be accessible in your browser at [http://localhost:8080](http://localhost:8080).
 
@@ -184,17 +131,17 @@ You can download NodeJS and NPM from [nodejs.org](https://nodejs.org/en/download
 # Switch to the embedg-app directory
 cd embedg-app
 
-# Install yarn globally
-npm install -g yarn
+# Enable pnpm (Corepack ships with NodeJS)
+corepack enable
 
 # Install dependencies
-yarn install
+pnpm install
 
 # Start the development server (optional)
-yarn dev
+pnpm dev
 
 # Build for production use
-yarn build
+pnpm build
 ```
 
 #### Build the site (home page & docs)
@@ -203,22 +150,35 @@ yarn build
 # Switch to the embedg-app directory
 cd embedg-site
 
-# Install yarn globally
-npm install -g yarn
+# Enable pnpm (Corepack ships with NodeJS)
+corepack enable
 
 # Install dependencies
-yarn install
+pnpm install
 
 # Start the development server (optional)
-yarn start
+pnpm start
 
 # Build for production use
-yarn build
+pnpm build
 ```
+
+#### Run the databases
+
+`docker-compose.dev.yaml` in the repository root starts Postgres and MinIO and nothing else, so the
+service itself runs from source against them:
+
+```sh
+docker compose -f docker-compose.dev.yaml up -d
+```
+
+The credentials match the defaults in `embedg-server/config/default.toml`, so `embedg.toml` only
+needs the Discord section. MinIO creates its buckets on startup. If you'd rather install Postgres
+yourself, create a `postgres` user and an `embedg` database.
 
 #### Build the server (backend)
 
-Install Go `>=1.21` from [go.dev](https://go.dev/doc/install).
+Install Go `>=1.25` from [go.dev](https://go.dev/doc/install).
 
 ```sh
 # Switch to the backend directory
@@ -235,15 +195,11 @@ go run main.go migrate postgres up
 go run --tags "embedapp embedsite" main.go server
 
 # Build and include the frontend files in the backend binary (build app and site first)
-go build --tags  "embedapp embedsite"
+go build -o embedg-server --tags "embedapp embedsite"
 
 # Build without including the frontend files in the backend binary (you need to serve yourself)
-go build
+go build -o embedg-server
 ```
-
-#### Install databases
-
-If you are not using Docker you need to Install PostgreSQL on your device and create a user and database. I'm sure you can find instructions online!
 
 #### Run the binary
 

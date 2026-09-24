@@ -13,6 +13,7 @@ INSERT INTO embed_links (
     oe_provider_name,
     oe_provider_url,
     tw_card,
+    component_embed,
     expires_at,
     created_at
 ) VALUES (
@@ -30,7 +31,8 @@ INSERT INTO embed_links (
     $12,
     $13,
     $14,
-    $15
+    $15,
+    $16
 ) RETURNING *;
 
 -- name: GetEmbedLink :one

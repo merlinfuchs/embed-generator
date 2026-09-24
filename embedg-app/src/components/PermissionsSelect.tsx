@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import ClickOutsideHandler from "./ClickOutsideHandler";
+import SelectDropdown from "./SelectDropdown";
 import {
   CheckIcon,
   ChevronDownIcon,
@@ -69,9 +70,9 @@ export default function PermissionsSelect({ permissions, onChange }: Props) {
   const activeFlags = useMemo(
     () =>
       Object.keys(permissionFlags).filter(
-        (f) => permissionsInt & permissionFlags[f]
+        (f) => permissionsInt & permissionFlags[f],
       ),
-    [permissionsInt]
+    [permissionsInt],
   );
 
   function togglePermission(flag: string) {
@@ -87,21 +88,21 @@ export default function PermissionsSelect({ permissions, onChange }: Props) {
 
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
-      <div className="px-3 h-10 flex items-center rounded bg-dark-2 relative select-none">
-        <div
-          role="button"
+      <div className="px-3 h-10 flex items-center rounded-lg bg-ink-900 relative select-none">
+        <button
+          type="button"
           onClick={() => setOpen((prev) => !prev)}
-          className="flex-auto"
+          className="flex-auto text-left"
         >
           {activeFlags.length ? (
             <div className="flex items-center space-x-2 cursor-pointer w-full">
               <div className="flex-auto flex space-x-2 items-center">
-                <ShieldExclamationIcon className="h-5 w-5 text-gray-500" />
-                <div className="text-gray-300 truncate">
+                <ShieldExclamationIcon className="h-5 w-5 text-mist-500" />
+                <div className="text-mist-300 truncate">
                   {activeFlags[0].replaceAll("_", " ")}
                 </div>
                 {activeFlags.length > 1 && (
-                  <div className="text-gray-400 font-light">
+                  <div className="text-mist-400 font-light">
                     + {activeFlags.length - 1} others
                   </div>
                 )}
@@ -109,36 +110,36 @@ export default function PermissionsSelect({ permissions, onChange }: Props) {
               <ChevronDownIcon
                 className={clsx(
                   "text-white w-5 h-5 flex-none transition-transform",
-                  open && "rotate-180"
+                  open && "rotate-180",
                 )}
               />
             </div>
           ) : (
-            <div className="text-gray-300">Select permissions</div>
+            <div className="text-mist-300">Select permissions</div>
           )}
-        </div>
+        </button>
         {open && (
-          <div className="absolute bg-dark-2 top-14 left-0 rounded shadow-lg w-full border-2 border-dark-2 z-10 max-h-48 overflow-y-auto overflow-x-none">
+          <SelectDropdown>
             {Object.keys(permissionFlags).map((f) => (
-              <div
+              <button
+                type="button"
                 key={f}
                 className={clsx(
-                  "py-2 flex space-x-2 items-center hover:bg-dark-3 hover:bg-opacity-100 rounded cursor-pointer px-3",
-                  activeFlags.includes(f) && "bg-dark-3 bg-opacity-50"
+                  "py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg cursor-pointer px-3 w-full text-left",
+                  activeFlags.includes(f) && "bg-ink-700/50",
                 )}
-                role="button"
                 onClick={() => togglePermission(f)}
               >
-                <ShieldExclamationIcon className="h-5 w-5 text-gray-500" />
-                <div className="text-gray-300 truncate flex-auto">
+                <ShieldExclamationIcon className="h-5 w-5 text-mist-500" />
+                <div className="text-mist-300 truncate flex-auto">
                   {f.replaceAll("_", " ")}
                 </div>
                 {activeFlags.includes(f) && (
-                  <CheckIcon className="h-5 w-5 text-gray-300" />
+                  <CheckIcon className="h-5 w-5 text-mist-300" />
                 )}
-              </div>
+              </button>
             ))}
-          </div>
+          </SelectDropdown>
         )}
       </div>
     </ClickOutsideHandler>

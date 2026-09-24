@@ -1,76 +1,53 @@
-import { shallow } from "zustand/shallow";
-import { useCurrentMessageStore } from "../state/message";
-import { getUniqueId } from "../util";
+import {
+  type NodeId,
+  slotLimit,
+  useChildIds,
+  useDocumentStoreApi,
+} from "../state/document";
 import { AutoAnimate } from "../util/autoAnimate";
+import { slotScope } from "../state/validationError";
 import Collapsable from "./Collapsable";
+import EditorSlotButtons from "./EditorSlotButtons";
 import EditorEmbedField from "./EditorEmbedField";
-import clsx from "clsx";
 
 interface Props {
-  embedIndex: number;
-  embedId: number;
+  id: NodeId;
 }
 
-export default function EditorEmbedFields({ embedIndex, embedId }: Props) {
-  const fields = useCurrentMessageStore(
-    (state) => state.embeds[embedIndex].fields.map((e) => e.id),
-    shallow
-  );
-
-  const [addField, clearFields] = useCurrentMessageStore((state) => [
-    state.addEmbedField,
-    state.clearEmbedFields,
-  ]);
+export default function EditorEmbedFields({ id }: Props) {
+  const fieldIds = useChildIds(id, "fields");
+  const { insert, removeChildren } = useDocumentStoreApi().getState();
 
   return (
     <Collapsable
-      id={`embeds.${embedId}.fields`}
-      validationPathPrefix={`embeds.${embedIndex}.fields`}
+      id={`embeds.${id}.fields`}
+      validationPathPrefix={slotScope(id, "fields")}
       title="Fields"
       extra={
-        <div className="text-sm italic font-light text-gray-400">
-          {fields.length} / 25
+        <div className="text-sm italic font-light text-mist-400">
+          {fieldIds.length} / {slotLimit("embed", "fields")}
         </div>
       }
     >
       <div>
         <AutoAnimate className="space-y-2 mb-3">
-          {fields.map((fieldId, fieldIndex) => (
-            <EditorEmbedField
-              embedIndex={embedIndex}
-              embedId={embedId}
-              fieldIndex={fieldIndex}
-              fieldId={fieldId}
-              key={fieldId}
-            />
+          {fieldIds.map((fieldId) => (
+            <EditorEmbedField id={fieldId} key={fieldId} />
           ))}
         </AutoAnimate>
-        <div className="space-x-3">
-          <button
-            className={clsx(
-              "px-3 py-2 rounded text-white",
-              fields.length < 25
-                ? "bg-blurple hover:bg-blurple-dark"
-                : "bg-dark-3 cursor-not-allowed"
-            )}
-            onClick={() =>
-              fields.length < 25 &&
-              addField(embedIndex, {
-                id: getUniqueId(),
-                name: "",
-                value: "",
-              })
-            }
-          >
-            Add Field
-          </button>
-          <button
-            className="px-3 py-2 rounded text-white border-red border-2 hover:bg-red"
-            onClick={() => clearFields(embedIndex)}
-          >
-            Clear Fields
-          </button>
-        </div>
+        <EditorSlotButtons
+          addLabel="Add Field"
+          clearLabel="Clear Fields"
+          canAdd={fieldIds.length < slotLimit("embed", "fields")}
+          onAdd={() =>
+            insert(id, "fields", "end", {
+              type: "embedField",
+              name: "",
+              value: "",
+            })
+          }
+          onClear={() => removeChildren(id, "fields")}
+        />
       </div>
     </Collapsable>
   );

@@ -1,48 +1,51 @@
 package shared_messages
 
 import (
-	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
+	"log/slog"
+
 	"github.com/gofiber/fiber/v2"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
-	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
-	"github.com/merlinfuchs/embed-generator/embedg-server/util"
-	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
+	"github.com/merlinfuchs/embed-generator/embedg-server/common"
+	"github.com/merlinfuchs/embed-generator/embedg-server/model"
+	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 )
 
-type SharedMessageHandler struct {
-	bot *bot.Bot
-	pg  *postgres.PostgresStore
+type SharedMessageHandlerConfig struct {
+	AppPublicURL string
 }
 
-func New(bot *bot.Bot, pg *postgres.PostgresStore) *SharedMessageHandler {
+type SharedMessageHandler struct {
+	config             SharedMessageHandlerConfig
+	sharedMessageStore store.SharedMessageStore
+}
+
+func New(config SharedMessageHandlerConfig, sharedMessageStore store.SharedMessageStore) *SharedMessageHandler {
 	return &SharedMessageHandler{
-		bot: bot,
-		pg:  pg,
+		config:             config,
+		sharedMessageStore: sharedMessageStore,
 	}
 }
 
 func (h *SharedMessageHandler) HandleCreateSharedMessage(c *fiber.Ctx, req wire.SharedMessageCreateRequestWire) error {
-	msg, err := h.pg.Q.InsertSharedMessage(c.Context(), pgmodel.InsertSharedMessageParams{
-		ID:        util.UniqueID(),
+	msg, err := h.sharedMessageStore.CreateSharedMessage(c.UserContext(), model.SharedMessage{
+		ID:        common.InternalID(),
 		CreatedAt: time.Now().UTC(),
 		ExpiresAt: time.Now().UTC().Add(time.Hour * 24 * 7),
 		Data:      req.Data,
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to create shared message")
+		slog.Error("Failed to create shared message", slog.Any("error", err))
 		return err
 	}
 
-	err = h.pg.Q.DeleteExpiredSharedMessages(c.Context(), time.Now().UTC())
+	err = h.sharedMessageStore.DeleteExpiredSharedMessages(c.UserContext(), time.Now().UTC())
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to delete expired shared messages")
+		slog.Error("Failed to delete expired shared messages", slog.Any("error", err))
 	}
 
 	return c.JSON(wire.SharedMessageCreateResponseWire{
@@ -52,7 +55,7 @@ func (h *SharedMessageHandler) HandleCreateSharedMessage(c *fiber.Ctx, req wire.
 			CreatedAt: msg.CreatedAt,
 			ExpiresAt: msg.ExpiresAt,
 			Data:      msg.Data,
-			URL:       fmt.Sprintf("%s/editor/share/%s", viper.GetString("app.public_url"), msg.ID),
+			URL:       fmt.Sprintf("%s/editor/share/%s", h.config.AppPublicURL, msg.ID),
 		},
 	})
 }
@@ -60,12 +63,12 @@ func (h *SharedMessageHandler) HandleCreateSharedMessage(c *fiber.Ctx, req wire.
 func (h *SharedMessageHandler) HandleGetSharedMessage(c *fiber.Ctx) error {
 	messageID := c.Params("messageID")
 
-	msg, err := h.pg.Q.GetSharedMessage(c.Context(), messageID)
+	msg, err := h.sharedMessageStore.GetSharedMessage(c.UserContext(), messageID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return helpers.NotFound("unknown_message", "The shared message does not exist or has expired.")
+		if errors.Is(err, store.ErrNotFound) {
+			return handlers.NotFound("unknown_message", "The shared message does not exist or has expired.")
 		}
-		log.Error().Err(err).Msg("Failed to get shared message")
+		slog.Error("Failed to get shared message", slog.Any("error", err))
 		return err
 	}
 
@@ -76,7 +79,7 @@ func (h *SharedMessageHandler) HandleGetSharedMessage(c *fiber.Ctx) error {
 			CreatedAt: msg.CreatedAt,
 			ExpiresAt: msg.ExpiresAt,
 			Data:      msg.Data,
-			URL:       fmt.Sprintf("%s/editor/share/%s", viper.GetString("app.public_url"), msg.ID),
+			URL:       fmt.Sprintf("%s/editor/share/%s", h.config.AppPublicURL, msg.ID),
 		},
 	})
 }

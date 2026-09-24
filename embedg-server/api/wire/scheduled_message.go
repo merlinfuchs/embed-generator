@@ -4,28 +4,29 @@ import (
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"gopkg.in/guregu/null.v4"
 )
 
 type ScheduledMessageWire struct {
-	ID             string      `json:"id"`
-	CreatorID      string      `json:"creator_id"`
-	GuildID        string      `json:"guild_id"`
-	ChannelID      string      `json:"channel_id"`
-	MessageID      null.String `json:"message_id"`
-	ThreadName     null.String `json:"thread_name"`
-	SavedMessageID string      `json:"saved_message_id"`
-	Name           string      `json:"name"`
-	Description    null.String `json:"description"`
-	CronExpression null.String `json:"cron_expression"`
-	CronTimezone   null.String `json:"cron_timezone"`
-	StartAt        time.Time   `json:"start_at"`
-	EndAt          null.Time   `json:"end_at"`
-	NextAt         time.Time   `json:"next_at"`
-	OnlyOnce       bool        `json:"only_once"`
-	Enabled        bool        `json:"enabled"`
-	CreatedAt      time.Time   `json:"created_at"`
-	UpdatedAt      time.Time   `json:"updated_at"`
+	ID             string        `json:"id"`
+	CreatorID      common.ID     `json:"creator_id"`
+	GuildID        common.ID     `json:"guild_id"`
+	ChannelID      common.ID     `json:"channel_id"`
+	MessageID      common.NullID `json:"message_id"`
+	ThreadName     null.String   `json:"thread_name"`
+	SavedMessageID string        `json:"saved_message_id"`
+	Name           string        `json:"name"`
+	Description    null.String   `json:"description"`
+	CronExpression null.String   `json:"cron_expression"`
+	CronTimezone   null.String   `json:"cron_timezone"`
+	StartAt        time.Time     `json:"start_at"`
+	EndAt          null.Time     `json:"end_at"`
+	NextAt         time.Time     `json:"next_at"`
+	OnlyOnce       bool          `json:"only_once"`
+	Enabled        bool          `json:"enabled"`
+	CreatedAt      time.Time     `json:"created_at"`
+	UpdatedAt      time.Time     `json:"updated_at"`
 }
 
 type ScheduledMessageListResponseWire APIResponse[[]ScheduledMessageWire]
@@ -33,18 +34,18 @@ type ScheduledMessageListResponseWire APIResponse[[]ScheduledMessageWire]
 type ScheduledMessageGetResponseWire APIResponse[ScheduledMessageWire]
 
 type ScheduledMessageCreateRequestWire struct {
-	ChannelID      string      `json:"channel_id"`
-	MessageID      null.String `json:"message_id"`
-	ThreadName     null.String `json:"thread_name"`
-	SavedMessageID string      `json:"saved_message_id"`
-	Name           string      `json:"name"`
-	Description    null.String `json:"description"`
-	CronExpression null.String `json:"cron_expression"`
-	CronTimezone   null.String `json:"cron_timezone"`
-	StartAt        time.Time   `json:"start_at"`
-	EndAt          null.Time   `json:"end_at"`
-	OnlyOnce       bool        `json:"only_once"`
-	Enabled        bool        `json:"enabled"`
+	ChannelID      common.ID     `json:"channel_id"`
+	MessageID      common.NullID `json:"message_id"`
+	ThreadName     null.String   `json:"thread_name"`
+	SavedMessageID string        `json:"saved_message_id"`
+	Name           string        `json:"name"`
+	Description    null.String   `json:"description"`
+	CronExpression null.String   `json:"cron_expression"`
+	CronTimezone   null.String   `json:"cron_timezone"`
+	StartAt        time.Time     `json:"start_at"`
+	EndAt          null.Time     `json:"end_at"`
+	OnlyOnce       bool          `json:"only_once"`
+	Enabled        bool          `json:"enabled"`
 }
 
 func (req ScheduledMessageCreateRequestWire) Validate() error {
@@ -63,18 +64,18 @@ func (req ScheduledMessageCreateRequestWire) Validate() error {
 type ScheduledMessageCreateResponseWire APIResponse[ScheduledMessageWire]
 
 type ScheduledMessageUpdateRequestWire struct {
-	ChannelID      string      `json:"channel_id"`
-	MessageID      null.String `json:"message_id"`
-	ThreadName     null.String `json:"thread_name"`
-	SavedMessageID string      `json:"saved_message_id"`
-	Name           string      `json:"name"`
-	Description    null.String `json:"description"`
-	CronExpression null.String `json:"cron_expression"`
-	CronTimezone   null.String `json:"cron_timezone"`
-	StartAt        time.Time   `json:"start_at"`
-	EndAt          null.Time   `json:"end_at"`
-	OnlyOnce       bool        `json:"only_once"`
-	Enabled        bool        `json:"enabled"`
+	ChannelID      common.ID     `json:"channel_id"`
+	MessageID      common.NullID `json:"message_id"`
+	ThreadName     null.String   `json:"thread_name"`
+	SavedMessageID string        `json:"saved_message_id"`
+	Name           string        `json:"name"`
+	Description    null.String   `json:"description"`
+	CronExpression null.String   `json:"cron_expression"`
+	CronTimezone   null.String   `json:"cron_timezone"`
+	StartAt        time.Time     `json:"start_at"`
+	EndAt          null.Time     `json:"end_at"`
+	OnlyOnce       bool          `json:"only_once"`
+	Enabled        bool          `json:"enabled"`
 }
 
 func (req ScheduledMessageUpdateRequestWire) Validate() error {

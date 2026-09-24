@@ -4,45 +4,50 @@ import (
 	"context"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
+	"github.com/merlinfuchs/embed-generator/embedg-server/access"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	openai "github.com/sashabaranov/go-openai"
-	"github.com/spf13/viper"
 )
 
-// TODO: investigate https://github.com/1rgs/jsonformer
+// TODO?: investigate https://github.com/1rgs/jsonformer
 
 type AssistantHandler struct {
-	pg        *postgres.PostgresStore
-	am        *access.AccessManager
-	planStore store.PlanStore
+	am           *access.AccessManager
+	planStore    store.PlanStore
+	openaiClient *openai.Client
 }
 
-func New(pg *postgres.PostgresStore, am *access.AccessManager, planStore store.PlanStore) *AssistantHandler {
+func New(
+	am *access.AccessManager,
+	planStore store.PlanStore,
+	openaiClient *openai.Client,
+) *AssistantHandler {
 	return &AssistantHandler{
-		pg:        pg,
-		am:        am,
-		planStore: planStore,
+		am:           am,
+		planStore:    planStore,
+		openaiClient: openaiClient,
 	}
 }
 
 func (h *AssistantHandler) HandleAssistantGenerateMessage(c *fiber.Ctx, req wire.AssistantGenerateMessageRequestWire) error {
-	guildID := c.Query("guild_id")
+	guildID, err := handlers.QueryID(c, "guild_id")
+	if err != nil {
+		return err
+	}
 
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
-	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.UserContext(), guildID)
 	if err != nil {
 		return err
 	}
 
 	if !features.AIAssistant {
-		return helpers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
+		return handlers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
 	}
 
 	messages := []openai.ChatCompletionMessage{
@@ -63,8 +68,7 @@ func (h *AssistantHandler) HandleAssistantGenerateMessage(c *fiber.Ctx, req wire
 		}}, messages...)
 	}
 
-	client := openai.NewClient(viper.GetString("openai.api_key"))
-	resp, err := client.CreateChatCompletion(
+	resp, err := h.openaiClient.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{
 			FrequencyPenalty: 0,

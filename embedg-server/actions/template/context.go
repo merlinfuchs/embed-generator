@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/botlabs-gg/yagpdb/v2/lib/template"
+	"github.com/disgoorg/disgo/discord"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 )
 
@@ -68,104 +69,144 @@ func (c *TemplateContext) ParseAndExecuteMessage(m *actions.MessageWithActions) 
 		return err
 	}
 
-	for _, embed := range m.Embeds {
-		embed.Title, err = c.ParseAndExecute(embed.Title)
-		if err != nil {
+	for i := range m.Embeds {
+		if err := c.parseAndExecuteEmbed(&m.Embeds[i]); err != nil {
 			return err
-		}
-		embed.Description, err = c.ParseAndExecute(embed.Description)
-		if err != nil {
-			return err
-		}
-		embed.URL, err = c.ParseAndExecute(embed.URL)
-		if err != nil {
-			return err
-		}
-
-		if embed.Author != nil {
-			embed.Author.Name, err = c.ParseAndExecute(embed.Author.Name)
-			if err != nil {
-				return err
-			}
-			embed.Author.URL, err = c.ParseAndExecute(embed.Author.URL)
-			if err != nil {
-				return err
-			}
-			embed.Author.IconURL, err = c.ParseAndExecute(embed.Author.IconURL)
-			if err != nil {
-				return err
-			}
-		}
-
-		if embed.Footer != nil {
-			embed.Footer.Text, err = c.ParseAndExecute(embed.Footer.Text)
-			if err != nil {
-				return err
-			}
-			embed.Footer.IconURL, err = c.ParseAndExecute(embed.Footer.IconURL)
-			if err != nil {
-				return err
-			}
-		}
-
-		if embed.Image != nil {
-			embed.Image.URL, err = c.ParseAndExecute(embed.Image.URL)
-			if err != nil {
-				return err
-			}
-		}
-
-		if embed.Thumbnail != nil {
-			embed.Thumbnail.URL, err = c.ParseAndExecute(embed.Thumbnail.URL)
-			if err != nil {
-				return err
-			}
-		}
-
-		for _, field := range embed.Fields {
-			field.Name, err = c.ParseAndExecute(field.Name)
-			if err != nil {
-				return err
-			}
-			field.Value, err = c.ParseAndExecute(field.Value)
-			if err != nil {
-				return err
-			}
 		}
 	}
 
-	for _, row := range m.Components {
-		for _, component := range row.Components {
-			component.Label, err = c.ParseAndExecute(component.Label)
-			if err != nil {
-				return err
-			}
+	return c.parseAndExecuteComponents(m.Components)
+}
 
-			component.URL, err = c.ParseAndExecute(component.URL)
-			if err != nil {
-				return err
-			}
+// parseAndExecuteEmbed renders every templatable string of one embed in place. Everything below
+// takes a pointer: ranging over the slices by value rendered a copy and threw it away, so nothing
+// outside the message content ever came out templated.
+func (c *TemplateContext) parseAndExecuteEmbed(embed *discord.Embed) error {
+	var err error
 
-			component.Placeholder, err = c.ParseAndExecute(component.Placeholder)
-			if err != nil {
-				return err
-			}
+	if embed.Title, err = c.ParseAndExecute(embed.Title); err != nil {
+		return err
+	}
+	if embed.Description, err = c.ParseAndExecute(embed.Description); err != nil {
+		return err
+	}
+	if embed.URL, err = c.ParseAndExecute(embed.URL); err != nil {
+		return err
+	}
 
-			for _, option := range component.Options {
-				option.Label, err = c.ParseAndExecute(option.Label)
-				if err != nil {
-					return err
-				}
+	if embed.Author != nil {
+		if embed.Author.Name, err = c.ParseAndExecute(embed.Author.Name); err != nil {
+			return err
+		}
+		if embed.Author.URL, err = c.ParseAndExecute(embed.Author.URL); err != nil {
+			return err
+		}
+		if embed.Author.IconURL, err = c.ParseAndExecute(embed.Author.IconURL); err != nil {
+			return err
+		}
+	}
 
-				option.Description, err = c.ParseAndExecute(option.Description)
-				if err != nil {
-					return err
-				}
-			}
+	if embed.Footer != nil {
+		if embed.Footer.Text, err = c.ParseAndExecute(embed.Footer.Text); err != nil {
+			return err
+		}
+		if embed.Footer.IconURL, err = c.ParseAndExecute(embed.Footer.IconURL); err != nil {
+			return err
+		}
+	}
+
+	if embed.Image != nil {
+		if embed.Image.URL, err = c.ParseAndExecute(embed.Image.URL); err != nil {
+			return err
+		}
+	}
+
+	if embed.Thumbnail != nil {
+		if embed.Thumbnail.URL, err = c.ParseAndExecute(embed.Thumbnail.URL); err != nil {
+			return err
+		}
+	}
+
+	for i := range embed.Fields {
+		field := &embed.Fields[i]
+		if field.Name, err = c.ParseAndExecute(field.Name); err != nil {
+			return err
+		}
+		if field.Value, err = c.ParseAndExecute(field.Value); err != nil {
+			return err
 		}
 	}
 
 	return nil
+}
+
+func (c *TemplateContext) parseAndExecuteComponents(components []actions.ComponentWithActions) error {
+	for i := range components {
+		if err := c.parseAndExecuteComponent(&components[i]); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// parseAndExecuteComponent renders one component and everything nested under it. Components v2 puts
+// the text of a message inside containers and sections, so this has to recurse to reach it.
+func (c *TemplateContext) parseAndExecuteComponent(component *actions.ComponentWithActions) error {
+	var err error
+
+	if component.Label, err = c.ParseAndExecute(component.Label); err != nil {
+		return err
+	}
+	if component.URL, err = c.ParseAndExecute(component.URL); err != nil {
+		return err
+	}
+	if component.Placeholder, err = c.ParseAndExecute(component.Placeholder); err != nil {
+		return err
+	}
+	if component.Content, err = c.ParseAndExecute(component.Content); err != nil {
+		return err
+	}
+	if component.Description, err = c.ParseAndExecute(component.Description); err != nil {
+		return err
+	}
+
+	for i := range component.Options {
+		option := &component.Options[i]
+		if option.Label, err = c.ParseAndExecute(option.Label); err != nil {
+			return err
+		}
+		if option.Description, err = c.ParseAndExecute(option.Description); err != nil {
+			return err
+		}
+	}
+
+	for _, media := range []*actions.UnfurledMediaItem{component.Media, component.File} {
+		if media == nil {
+			continue
+		}
+		if media.URL, err = c.ParseAndExecute(media.URL); err != nil {
+			return err
+		}
+	}
+
+	for i := range component.Items {
+		item := &component.Items[i]
+		if item.Media.URL, err = c.ParseAndExecute(item.Media.URL); err != nil {
+			return err
+		}
+		if item.Description, err = c.ParseAndExecute(item.Description); err != nil {
+			return err
+		}
+	}
+
+	if component.Accessory != nil {
+		if err := c.parseAndExecuteComponent(component.Accessory); err != nil {
+			return err
+		}
+	}
+
+	return c.parseAndExecuteComponents(component.Components)
 }
 
 func (c *TemplateContext) ParseAndExecute(text string) (string, error) {

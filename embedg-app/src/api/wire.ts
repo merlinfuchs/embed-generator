@@ -14,18 +14,6 @@ export interface AssistantGenerateMessageResponseDataWire {
 export type AssistantGenerateMessageResponseWire = APIResponse<AssistantGenerateMessageResponseDataWire>;
 
 //////////
-// source: auth.go
-
-export interface AuthExchangeRequestWire {
-  code: string;
-}
-export interface AuthExchangeResponseDataWire {
-  access_token: string;
-  session_token: string;
-}
-export type AuthExchangeResponseWire = APIResponse<AuthExchangeResponseDataWire>;
-
-//////////
 // source: custom_bots.go
 
 export interface CustomBotInfoWire {
@@ -119,6 +107,7 @@ export interface EmbedLinkCreateRequestWire {
   oe_provider_name: null | string;
   oe_provider_url: null | string;
   tw_card: null | string;
+  component_embed: Record<string, any> | null;
 }
 export interface EmbedLinkCreateResponseDataWire {
   id: string;
@@ -141,8 +130,6 @@ export interface GuildWire {
   id: string;
   name: string;
   icon: null | string;
-  has_channel_with_user_access: boolean;
-  has_channel_with_bot_access: boolean;
 }
 export type ListGuildsResponseWire = APIResponse<GuildWire[]>;
 export type GetGuildResponseWire = APIResponse<GuildWire>;
@@ -196,7 +183,7 @@ export interface ImageWire {
   user_id: string;
   guild_id: null | string;
   file_name: string;
-  file_size: number /* int32 */;
+  file_size: number /* int */;
   cdn_url: string;
 }
 export type UploadImageResponseWire = APIResponse<ImageWire>;

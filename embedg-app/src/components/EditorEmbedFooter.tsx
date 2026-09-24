@@ -1,74 +1,67 @@
-import { shallow } from "zustand/shallow";
-import { useCurrentMessageStore } from "../state/message";
+import {
+  type EmbedNode,
+  type FieldPath,
+  type NodeId,
+  useNode,
+  useDocumentStoreApi,
+} from "../state/document";
+import { patchGroup } from "../util/patch";
+import { nodeField, nodeScope } from "../state/validationError";
 import Collapsable from "./Collapsable";
-import EditorInput from "./EditorInput";
 import DateTimePicker from "./DateTimePicker";
+import EditorInput from "./EditorInput";
+
+const FOOTER_FIELDS: FieldPath<EmbedNode>[] = ["footer", "timestamp"];
 
 interface Props {
-  embedIndex: number;
-  embedId: number;
+  id: NodeId;
 }
 
-export default function EditorEmbedFooter({ embedIndex, embedId }: Props) {
-  const [footerText, setFooterText] = useCurrentMessageStore(
-    (state) => [
-      state.embeds[embedIndex]?.footer?.text,
-      state.setEmbedFooterText,
-    ],
-    shallow
-  );
+export default function EditorEmbedFooter({ id }: Props) {
+  const embed = useNode<EmbedNode>(id);
+  const { update } = useDocumentStoreApi().getState();
 
-  const [footerIconUrl, setFooterIconUrl] = useCurrentMessageStore(
-    (state) => [
-      state.embeds[embedIndex]?.footer?.icon_url,
-      state.setEmbedFooterIconUrl,
-    ],
-    shallow
-  );
+  if (!embed) return null;
 
-  const [timestamp, setTimestamp] = useCurrentMessageStore(
-    (state) => [state.embeds[embedIndex]?.timestamp, state.setEmbedTimestamp],
-    shallow
-  );
+  const footer = embed.footer;
 
-  console.log("render footer", embedIndex);
+  function patchFooter(patch: Partial<NonNullable<EmbedNode["footer"]>>) {
+    update<EmbedNode>(id, { footer: patchGroup(footer, patch) });
+  }
 
   return (
     <Collapsable
       title="Footer"
-      id={`embeds.${embedId}.footer`}
-      validationPathPrefix={[
-        `embeds.${embedIndex}.footer`,
-        `embeds.${embedIndex}.timestamp`,
-      ]}
+      id={`embeds.${id}.footer`}
+      validationPathPrefix={nodeScope<EmbedNode>(id, FOOTER_FIELDS)}
     >
       <div className="space-y-3">
         <EditorInput
           label="Footer"
-          value={footerText || ""}
-          onChange={(v) => setFooterText(embedIndex, v || undefined)}
+          value={footer?.text || ""}
+          onChange={(v) => patchFooter({ text: v || undefined })}
           maxLength={2048}
-          validationPath={`embeds.${embedIndex}.footer.text`}
+          validationPath={nodeField<EmbedNode>(id, "footer.text")}
         />
         <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3">
           <EditorInput
             type="url"
             label="Footer Icon URL"
-            value={footerIconUrl || ""}
-            onChange={(v) => setFooterIconUrl(embedIndex, v || undefined)}
+            value={footer?.icon_url || ""}
+            onChange={(v) => patchFooter({ icon_url: v || undefined })}
             className="md:w-1/2"
-            validationPath={`embeds.${embedIndex}.footer.icon_url`}
+            validationPath={nodeField<EmbedNode>(id, "footer.icon_url")}
             imageUpload={true}
           />
           <div className="md:w-1/2">
             <div className="mb-1.5 flex">
-              <div className="uppercase text-gray-300 text-sm font-medium">
+              <div className="uppercase text-mist-300 text-sm font-medium">
                 Timestamp
               </div>
             </div>
             <DateTimePicker
-              onChange={(v) => setTimestamp(embedIndex, v)}
-              value={timestamp}
+              onChange={(v) => update<EmbedNode>(id, { timestamp: v })}
+              value={embed.timestamp}
               clearable={true}
             />
           </div>

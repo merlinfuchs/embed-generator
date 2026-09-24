@@ -1,99 +1,129 @@
 package custom_bots
 
 import (
-	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
 	"slices"
 
+	"log/slog"
+
+	"github.com/disgoorg/disgo/discord"
+	disrest "github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
-	"github.com/merlinfuchs/discordgo"
+	"github.com/merlinfuchs/embed-generator/embedg-server/access"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/access"
-	"github.com/merlinfuchs/embed-generator/embedg-server/api/helpers"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
-	"github.com/merlinfuchs/embed-generator/embedg-server/bot"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
-	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
+	"github.com/merlinfuchs/embed-generator/embedg-server/common"
+	"github.com/merlinfuchs/embed-generator/embedg-server/embedg/rest"
+	"github.com/merlinfuchs/embed-generator/embedg-server/guildstate"
+	"github.com/merlinfuchs/embed-generator/embedg-server/manager/custom_bot"
+	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
-	"github.com/merlinfuchs/embed-generator/embedg-server/util"
-	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
 	"gopkg.in/guregu/null.v4"
 )
 
-type CustomBotsHandler struct {
-	pg           *postgres.PostgresStore
-	bot          *bot.Bot
-	am           *access.AccessManager
-	planStore    store.PlanStore
-	actionParser *parser.ActionParser
+type CustomBotsHandlerConfig struct {
+	APIPublicURL string
 }
 
-func New(pg *postgres.PostgresStore, bot *bot.Bot, am *access.AccessManager, planStore store.PlanStore, actionParser *parser.ActionParser) *CustomBotsHandler {
+type CustomBotsHandler struct {
+	config             CustomBotsHandlerConfig
+	customBotManager   *custom_bot.CustomBotManager
+	customCommandStore store.CustomCommandStore
+	guildState         *guildstate.Provider
+	am                 *access.AccessManager
+	planStore          store.PlanStore
+	actionParser       *parser.ActionParser
+	actionHandler      *handler.ActionHandler
+}
+
+func New(
+	config CustomBotsHandlerConfig,
+	customBotManager *custom_bot.CustomBotManager,
+	customCommandStore store.CustomCommandStore,
+	guildState *guildstate.Provider,
+	am *access.AccessManager,
+	planStore store.PlanStore,
+	actionParser *parser.ActionParser,
+	actionHandler *handler.ActionHandler,
+) *CustomBotsHandler {
 	return &CustomBotsHandler{
-		pg:           pg,
-		bot:          bot,
-		am:           am,
-		planStore:    planStore,
-		actionParser: actionParser,
+		config:             config,
+		customBotManager:   customBotManager,
+		customCommandStore: customCommandStore,
+		guildState:         guildState,
+		am:                 am,
+		planStore:          planStore,
+		actionParser:       actionParser,
+		actionHandler:      actionHandler,
 	}
 }
 
 func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.CustomBotConfigureRequestWire) error {
-	guildID := c.Query("guild_id")
+	guildID, err := handlers.QueryID(c, "guild_id")
+	if err != nil {
+		return err
+	}
+
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
-	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.UserContext(), guildID)
 	if err != nil {
 		return err
 	}
 
 	if !features.CustomBot {
-		return helpers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
+		return handlers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
 	}
 
-	session, err := discordgo.New("Bot " + req.Token)
-	if err != nil {
-		return err
-	}
+	// One off client for an unverified token, so it must not go into the shared cache, and its
+	// member cache janitor has to be stopped.
+	restClient := rest.NewRestClient(req.Token)
+	defer restClient.Close(c.UserContext())
 
-	app, err := session.Application("@me")
+	app, err := restClient.GetCurrentApplication()
 	if err != nil {
-		if derr, ok := err.(*discordgo.RESTError); ok && derr.Response.StatusCode == 401 {
+		if common.IsDiscordRestStatusCode(err, 401) {
 			return fmt.Errorf("Invalid bot token, please check it again.")
 		}
 		return err
 	}
 
-	user, err := session.User("@me")
+	user, err := restClient.GetCurrentUser("")
 	if err != nil {
 		return err
 	}
 
 	isMember := true
-	member, err := session.GuildMember(guildID, user.ID)
+	member, err := restClient.GetMember(guildID, user.ID)
 	if err != nil {
-		if util.IsDiscordRestErrorCode(err, discordgo.ErrCodeMissingAccess, discordgo.ErrCodeUnknownGuild) {
+		if common.IsDiscordRestErrorCode(err, disrest.JSONErrorCodeMissingAccess, disrest.JSONErrorCodeUnknownGuild) {
 			isMember = false
 		} else {
 			return fmt.Errorf("Failed to check if custom bot is member of guild: %w", err)
 		}
 	}
 
-	guild, err := h.bot.State.Guild(guildID)
-	if err != nil {
-		return err
+	// A guild the main bot can't see means no roles to check, not a failed request.
+	var roles []discord.Role
+	state, err := h.guildState.Guild(c.UserContext(), guildID)
+	if err != nil && !errors.Is(err, store.ErrNotFound) {
+		return fmt.Errorf("Failed to get guild state: %w", err)
+	} else if state != nil {
+		roles = state.Roles
 	}
 
 	hasPermissions := false
 	if isMember {
-		for _, role := range guild.Roles {
-			if slices.Contains(member.Roles, role.ID) || role.ID == guildID {
-				if role.Permissions&discordgo.PermissionManageWebhooks != 0 {
+		for _, role := range roles {
+			if slices.Contains(member.RoleIDs, role.ID) || role.ID == guildID {
+				if role.Permissions&discord.PermissionManageWebhooks != 0 {
 					hasPermissions = true
 					break
 				}
@@ -101,20 +131,20 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 		}
 	}
 
-	customBot, err := h.pg.Q.UpsertCustomBot(c.Context(), pgmodel.UpsertCustomBotParams{
-		ID:                util.UniqueID(),
+	customBot, err := h.customBotManager.UpsertCustomBot(c.UserContext(), model.CustomBot{
+		ID:                common.InternalID(),
 		GuildID:           guildID,
 		ApplicationID:     app.ID,
 		UserID:            user.ID,
 		UserName:          user.Username,
 		UserDiscriminator: user.Discriminator,
-		UserAvatar:        sql.NullString{String: user.Avatar, Valid: user.Avatar != ""},
+		UserAvatar:        null.StringFromPtr(user.Avatar),
 		Token:             req.Token,
 		PublicKey:         app.VerifyKey,
 		CreatedAt:         time.Now().UTC(),
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to upsert custom bot: %w", err)
 	}
 
 	return c.JSON(wire.CustomBotConfigureResponseWire{
@@ -125,55 +155,56 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 			UserID:            customBot.UserID,
 			UserName:          customBot.UserName,
 			UserDiscriminator: customBot.UserDiscriminator,
-			UserAvatar:        null.String{NullString: customBot.UserAvatar},
+			UserAvatar:        customBot.UserAvatar,
 
 			TokenValid:              true,
 			IsMember:                isMember,
 			HasPermissions:          hasPermissions,
 			HandledFirstInteraction: customBot.HandledFirstInteraction,
-			InviteURL:               botInvite(customBot.ApplicationID, guildID),
-			InteractionEndpointURL:  interactionEndpointURL(customBot.ID),
+			InviteURL:               h.botInvite(customBot.ApplicationID, guildID),
+			InteractionEndpointURL:  h.interactionEndpointURL(customBot.ID),
 
 			GatewayStatus:        customBot.GatewayStatus,
-			GatewayActivityType:  null.NewInt(int64(customBot.GatewayActivityType.Int16), customBot.GatewayActivityType.Valid),
-			GatewayActivityName:  null.String{NullString: customBot.GatewayActivityName},
-			GatewayActivityState: null.String{NullString: customBot.GatewayActivityState},
-			GatewayActivityURL:   null.String{NullString: customBot.GatewayActivityUrl},
+			GatewayActivityType:  customBot.GatewayActivityType,
+			GatewayActivityName:  customBot.GatewayActivityName,
+			GatewayActivityState: customBot.GatewayActivityState,
+			GatewayActivityURL:   customBot.GatewayActivityUrl,
 		},
 	})
 }
 
 func (h *CustomBotsHandler) HandleUpdateCustomBotPresence(c *fiber.Ctx, req wire.CustomBotUpdatePresenceRequestWire) error {
-	guildID := c.Query("guild_id")
+	guildID, err := handlers.QueryID(c, "guild_id")
+	if err != nil {
+		return err
+	}
+
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
-	features, err := h.planStore.GetPlanFeaturesForGuild(c.Context(), guildID)
+	features, err := h.planStore.GetPlanFeaturesForGuild(c.UserContext(), guildID)
 	if err != nil {
 		return err
 	}
 
 	if !features.CustomBot {
-		return helpers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
+		return handlers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
 	}
 
-	_, err = h.pg.Q.UpdateCustomBotPresence(c.Context(), pgmodel.UpdateCustomBotPresenceParams{
-		GuildID:       guildID,
-		GatewayStatus: req.GatewayStatus,
-		GatewayActivityType: sql.NullInt16{
-			Int16: int16(req.GatewayActivityType),
-			Valid: true,
-		},
-		GatewayActivityName:  sql.NullString{String: req.GatewayActivityName, Valid: req.GatewayActivityName != ""},
-		GatewayActivityState: sql.NullString{String: req.GatewayActivityState, Valid: req.GatewayActivityState != ""},
-		GatewayActivityUrl:   sql.NullString{String: req.GatewayActivityURL, Valid: req.GatewayActivityURL != ""},
+	_, err = h.customBotManager.UpdateCustomBotPresence(c.UserContext(), store.UpdateCustomBotPresenceParams{
+		GuildID:              guildID,
+		GatewayStatus:        req.GatewayStatus,
+		GatewayActivityType:  null.IntFrom(int64(req.GatewayActivityType)),
+		GatewayActivityName:  null.NewString(req.GatewayActivityName, req.GatewayActivityName != ""),
+		GatewayActivityState: null.NewString(req.GatewayActivityState, req.GatewayActivityState != ""),
+		GatewayActivityUrl:   null.NewString(req.GatewayActivityURL, req.GatewayActivityURL != ""),
 	})
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return helpers.NotFound("not_configured", "There is no custom bot configured right now")
+		if errors.Is(err, store.ErrNotFound) {
+			return handlers.NotFound("not_configured", "There is no custom bot configured right now")
 		}
-		return err
+		return fmt.Errorf("failed to update custom bot presence: %w", err)
 	}
 
 	return c.JSON(wire.CustomBotUpdatePresenceResponseWire{
@@ -183,17 +214,21 @@ func (h *CustomBotsHandler) HandleUpdateCustomBotPresence(c *fiber.Ctx, req wire
 }
 
 func (h *CustomBotsHandler) HandleDisableCustomBot(c *fiber.Ctx) error {
-	guildID := c.Query("guild_id")
+	guildID, err := handlers.QueryID(c, "guild_id")
+	if err != nil {
+		return err
+	}
+
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
-	_, err := h.pg.Q.DeleteCustomBot(c.Context(), guildID)
+	_, err = h.customBotManager.DeleteCustomBot(c.UserContext(), guildID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return helpers.NotFound("not_configured", "There is no custom bot configured right now")
+		if errors.Is(err, store.ErrNotFound) {
+			return handlers.NotFound("not_configured", "There is no custom bot configured right now")
 		}
-		return err
+		return fmt.Errorf("failed to delete custom bot: %w", err)
 	}
 
 	return c.JSON(wire.CustomBotDisableResponseWire{
@@ -203,67 +238,64 @@ func (h *CustomBotsHandler) HandleDisableCustomBot(c *fiber.Ctx) error {
 }
 
 func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
-	guildID := c.Query("guild_id")
+	guildID, err := handlers.QueryID(c, "guild_id")
+	if err != nil {
+		return err
+	}
+
 	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
 		return err
 	}
 
-	customBot, err := h.pg.Q.GetCustomBotByGuildID(c.Context(), guildID)
+	restClient, customBot, err := h.customBotManager.GetRestForGuild(c.UserContext(), guildID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return helpers.NotFound("not_configured", "There is no custom bot configured right now")
-		}
 		return err
 	}
 
-	session, err := discordgo.New("Bot " + customBot.Token)
-	if err != nil {
-		return err
+	if customBot == nil {
+		return handlers.NotFound("not_configured", "There is no custom bot configured right now")
 	}
 
 	isMember := true
 	tokenValid := true
-	member, err := session.GuildMember(guildID, customBot.UserID)
+	member, err := restClient.GetMember(guildID, customBot.UserID)
 	if err != nil {
-		if derr, ok := err.(*discordgo.RESTError); ok {
-			if derr.Response.StatusCode == 401 {
-				tokenValid = false
-				isMember = false
-			} else if derr.Response.StatusCode == 403 || derr.Response.StatusCode == 404 {
-				isMember = false
-			} else {
-				return err
-			}
+		if common.IsDiscordRestStatusCode(err, 401) {
+			tokenValid = false
+			isMember = false
+		} else if common.IsDiscordRestStatusCode(err, 403) || common.IsDiscordRestStatusCode(err, 404) {
+			isMember = false
 		} else {
 			return err
 		}
 	}
 
 	if member != nil {
-		customBot, err = h.pg.Q.UpdateCustomBotUser(c.Context(), pgmodel.UpdateCustomBotUserParams{
+		customBot, err = h.customBotManager.UpdateCustomBotUser(c.UserContext(), store.UpdateCustomBotUserParams{
 			GuildID:           guildID,
 			UserName:          member.User.Username,
 			UserDiscriminator: member.User.Discriminator,
-			UserAvatar: sql.NullString{
-				String: member.User.Avatar,
-				Valid:  member.User.Avatar != "",
-			},
+			UserAvatar:        null.StringFromPtr(member.User.Avatar),
 		})
 		if err != nil {
-			log.Error().Err(err).Msg("Failed to update custom bot user info")
+			slog.Error("Failed to update custom bot user info", slog.Any("error", err))
 		}
 	}
 
-	guild, err := h.bot.State.Guild(guildID)
-	if err != nil {
-		return err
+	// A guild the main bot can't see means no roles to check, not a failed request.
+	var roles []discord.Role
+	state, err := h.guildState.Guild(c.UserContext(), guildID)
+	if err != nil && !errors.Is(err, store.ErrNotFound) {
+		return fmt.Errorf("Failed to get guild state: %w", err)
+	} else if state != nil {
+		roles = state.Roles
 	}
 
 	hasPermissions := false
 	if member != nil {
-		for _, role := range guild.Roles {
-			if slices.Contains(member.Roles, role.ID) || role.ID == guildID {
-				if role.Permissions&discordgo.PermissionManageWebhooks != 0 {
+		for _, role := range roles {
+			if slices.Contains(member.RoleIDs, role.ID) || role.ID == guildID {
+				if role.Permissions&discord.PermissionManageWebhooks != 0 {
 					hasPermissions = true
 					break
 				}
@@ -279,28 +311,28 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 			UserID:            customBot.UserID,
 			UserName:          customBot.UserName,
 			UserDiscriminator: customBot.UserDiscriminator,
-			UserAvatar:        null.String{NullString: customBot.UserAvatar},
+			UserAvatar:        customBot.UserAvatar,
 
 			TokenValid:              tokenValid,
 			IsMember:                isMember,
 			HasPermissions:          hasPermissions,
 			HandledFirstInteraction: customBot.HandledFirstInteraction,
-			InviteURL:               botInvite(customBot.ApplicationID, guildID),
-			InteractionEndpointURL:  interactionEndpointURL(customBot.ID),
+			InviteURL:               h.botInvite(customBot.ApplicationID, guildID),
+			InteractionEndpointURL:  h.interactionEndpointURL(customBot.ID),
 
 			GatewayStatus:        customBot.GatewayStatus,
-			GatewayActivityType:  null.NewInt(int64(customBot.GatewayActivityType.Int16), customBot.GatewayActivityType.Valid),
-			GatewayActivityName:  null.String{NullString: customBot.GatewayActivityName},
-			GatewayActivityState: null.String{NullString: customBot.GatewayActivityState},
-			GatewayActivityURL:   null.String{NullString: customBot.GatewayActivityUrl},
+			GatewayActivityType:  customBot.GatewayActivityType,
+			GatewayActivityName:  customBot.GatewayActivityName,
+			GatewayActivityState: customBot.GatewayActivityState,
+			GatewayActivityURL:   customBot.GatewayActivityUrl,
 		},
 	})
 }
 
-func botInvite(clientID, guildID string) string {
+func (h *CustomBotsHandler) botInvite(clientID common.ID, guildID common.ID) string {
 	return fmt.Sprintf("https://discord.com/oauth2/authorize?client_id=%s&scope=bot&permissions=805306368&guild_id=%s", clientID, guildID)
 }
 
-func interactionEndpointURL(id string) string {
-	return fmt.Sprintf("%s/gateway/%s", viper.GetString("api.public_url"), id)
+func (h *CustomBotsHandler) interactionEndpointURL(id string) string {
+	return fmt.Sprintf("%s/gateway/%s", h.config.APIPublicURL, id)
 }

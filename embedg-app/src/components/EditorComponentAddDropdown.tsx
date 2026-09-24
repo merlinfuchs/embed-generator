@@ -1,130 +1,73 @@
 import { ChevronUpIcon, StarIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
-import { useCurrentMessageStore } from "../state/message";
-import { getUniqueId } from "../util";
+import {
+  type NewNode,
+  type NodeId,
+  useComponentsV2Enabled,
+  useDocumentStoreApi,
+} from "../state/document";
 import { useState } from "react";
+import { useEditorCapabilities } from "../state/editorCapabilities";
 import ClickOutsideHandler from "./ClickOutsideHandler";
-import { MessageComponent } from "../discord/schema";
 import { usePremiumGuildFeatures } from "../util/premium";
 import { useNavigate } from "react-router-dom";
 
 interface Props {
   context: "root" | "container";
-  addComponent: (component: MessageComponent) => void;
+  parentId: NodeId;
   disabled?: boolean;
   size?: "small" | "large";
 }
 
 export default function EditorComponentAddDropdown({
   context,
-  addComponent,
+  parentId,
   disabled,
   size = "small",
 }: Props) {
   const [open, setOpen] = useState(false);
 
-  const navigate = useNavigate();
+  const { insert } = useDocumentStoreApi().getState();
 
-  const componentsV2Enabled = useCurrentMessageStore((state) =>
-    state.getComponentsV2Enabled()
-  );
-
-  const features = usePremiumGuildFeatures();
-  const allowedComponentTypes = features?.component_types ?? [];
-
-  function addButtonRow() {
+  function addComponent(node: NewNode) {
+    insert(parentId, "components", "end", node);
     setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 1,
-      components: [],
-    });
   }
 
+  const navigate = useNavigate();
+
+  const componentsV2Enabled = useComponentsV2Enabled();
+  const { componentTypes: allowedTypes } = useEditorCapabilities();
+
+  const features = usePremiumGuildFeatures();
+  const unlockedTypes = features?.component_types ?? [];
+
+  // A surface with its own component types isn't part of what a plan unlocks.
+  const unlocked = (componentType: number) =>
+    allowedTypes !== null || unlockedTypes.includes(componentType);
+
   function addSelectMenuRow() {
+    const rowId = insert(parentId, "components", "end", { type: "actionRow" });
+    insert(rowId, "components", "end", { type: "selectMenu" });
     setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 1,
-      components: [
-        {
-          id: getUniqueId(),
-          type: 3,
-          options: [],
-        },
-      ],
-    });
   }
 
   function addSection() {
-    setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 9,
-      components: [],
-      accessory: {
-        id: getUniqueId(),
-        type: 11,
-        media: {
-          url: "",
-        },
-      },
+    const sectionId = insert(parentId, "components", "end", {
+      type: "section",
     });
-  }
-
-  function addTextDisplay() {
-    setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 10,
-      content: "",
+    insert(sectionId, "accessory", "end", {
+      type: "thumbnail",
+      media: { url: "" },
     });
-  }
-
-  function addMediaGallery() {
     setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 12,
-      items: [],
-    });
-  }
-
-  function addSeparator() {
-    setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 14,
-      spacing: 1,
-      divider: true,
-    });
-  }
-
-  function addFile() {
-    setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 13,
-      file: {
-        url: "",
-      },
-    });
-  }
-
-  function addContainer() {
-    setOpen(false);
-    addComponent({
-      id: getUniqueId(),
-      type: 17,
-      components: [],
-    });
   }
 
   const componentTypes = [
     {
       label: "Button Row",
       type: 1,
-      handler: addButtonRow,
+      node: { type: "actionRow" } as NewNode,
     },
     {
       label: "Select Menu",
@@ -141,36 +84,37 @@ export default function EditorComponentAddDropdown({
       label: "Text Display",
       type: 10,
       v2Only: true,
-      handler: addTextDisplay,
+      node: { type: "textDisplay", content: "" } as NewNode,
     },
     {
       label: "Media Gallery",
       type: 12,
       v2Only: true,
-      handler: addMediaGallery,
+      node: { type: "mediaGallery" } as NewNode,
     },
     {
       label: "File",
       type: 13,
       v2Only: true,
-      handler: addFile,
+      node: { type: "file", file: { url: "" } } as NewNode,
     },
     {
       label: "Separator",
       type: 14,
       v2Only: true,
-      handler: addSeparator,
+      node: { type: "separator", spacing: 1, divider: true } as NewNode,
     },
     {
       label: "Container",
       type: 17,
       v2Only: true,
       rootOnly: true,
-      handler: addContainer,
+      node: { type: "container" } as NewNode,
     },
   ].filter((c) => {
     if (c.v2Only && !componentsV2Enabled) return false;
     if (c.rootOnly && context !== "root") return false;
+    if (allowedTypes && !allowedTypes.includes(c.type)) return false;
 
     return true;
   });
@@ -180,11 +124,11 @@ export default function EditorComponentAddDropdown({
       <div className="relative">
         <button
           className={clsx(
-            "rounded text-white flex items-center space-x-2",
+            "rounded-lg text-white flex items-center space-x-2",
             size === "large" ? "py-3 px-3" : "py-2 px-2",
             disabled
-              ? "bg-dark-3 cursor-not-allowed"
-              : "bg-blurple hover:bg-blurple-dark"
+              ? "bg-ink-700 cursor-not-allowed"
+              : "bg-azure-500 hover:bg-azure-400",
           )}
           onClick={() => {
             if (disabled) return;
@@ -196,21 +140,27 @@ export default function EditorComponentAddDropdown({
           <ChevronUpIcon className="w-5 h-5" />
         </button>
         {open && (
-          <div className="absolute bg-dark-2 bottom-full mb-1 left-0 rounded shadow-lg border-2 border-dark-2 z-10 text-white">
+          <div className="absolute bg-ink-900 bottom-full mb-1 left-0 rounded-lg shadow-lg border-2 border-white/10 z-10 text-white">
             {componentTypes.map((componentType) => (
               <button
                 key={componentType.type}
-                className="px-3 py-2 rounded text-white hover:bg-dark-3 w-full text-left flex items-center gap-2"
+                type="button"
+                aria-label={componentType.label}
+                className="px-3 py-2 rounded-lg text-white hover:bg-ink-700 w-full text-left flex items-center gap-2"
                 onClick={() => {
-                  if (allowedComponentTypes.includes(componentType.type)) {
-                    componentType.handler();
+                  if (unlocked(componentType.type)) {
+                    if (componentType.handler) {
+                      componentType.handler();
+                    } else if (componentType.node) {
+                      addComponent(componentType.node);
+                    }
                   } else {
                     navigate("/premium");
                   }
                 }}
               >
-                {!allowedComponentTypes.includes(componentType.type) && (
-                  <div className="text-yellow">
+                {!unlocked(componentType.type) && (
+                  <div className="text-amber-300">
                     <StarIcon className="w-4 h-4" />
                   </div>
                 )}

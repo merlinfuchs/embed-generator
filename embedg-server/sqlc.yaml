@@ -7,4 +7,5 @@ sql:
     gen:
       go:
         package: "pgmodel"
+        sql_package: "pgx/v5"
         out: "db/postgres/pgmodel"

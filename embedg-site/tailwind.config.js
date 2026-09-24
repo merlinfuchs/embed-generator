@@ -1,23 +1,64 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./src/**/*.{js,jsx,ts,tsx}", "./docusaurus.config.js"],
+  content: ["./src/**/*.{js,jsx,ts,tsx}", "./docusaurus.config.ts"],
   darkMode: "class",
   theme: {
     extend: {
       colors: {
-        blurple: "#5865F2",
-        "blurple-dark": "#4650c7",
-        green: "#57F287",
-        yellow: "#FEE75C",
-        fuchsia: "#EB459E",
-        red: "#ED4245",
-        "dark-1": "#18191c",
-        "dark-2": "#1f2225",
-        "dark-3": "#2e3136",
-        "dark-4": "#36393e",
-        "dark-5": "#3e4247",
-        "dark-6": "#45494f",
-        "dark-7": "#71757d",
+        // Brand palette derived from the logo (navy + azure), not Discord blurple.
+        // Neutral grays close to Discord's own dark theme, accent stays azure.
+        ink: {
+          950: "#111214",
+          900: "#1E1F22",
+          800: "#2B2D31",
+          700: "#313338",
+          600: "#404249",
+          500: "#4E5058",
+        },
+        // Accent between the logo azure and Discord blurple.
+        azure: {
+          300: "#A3B6FF",
+          400: "#6F8CFF",
+          500: "#4E6EF2",
+          600: "#3F5BD9",
+          700: "#3349B3",
+        },
+        amber: {
+          300: "#FFD27A",
+          400: "#F5B544",
+          500: "#E09B1F",
+        },
+        mist: {
+          100: "#F2F3F5",
+          300: "#DBDEE1",
+          400: "#B5BAC1",
+          500: "#949BA4",
+        },
+        // Discord semantic colors, used inside the message mockup only.
+        discord: {
+          bg: "#313338",
+          embed: "#2B2D31",
+          text: "#DBDEE1",
+          muted: "#949BA4",
+          link: "#00A8FC",
+          button: "#5865F2",
+          success: "#248046",
+        },
+      },
+      fontFamily: {
+        sans: [
+          "Inter Variable",
+          "Inter",
+          "ui-sans-serif",
+          "system-ui",
+          "-apple-system",
+          "Segoe UI",
+          "Roboto",
+          "sans-serif",
+        ],
+      },
+      boxShadow: {
+        card: "0 1px 0 0 rgba(255,255,255,0.04) inset, 0 20px 40px -24px rgba(0,0,0,0.6)",
       },
     },
   },

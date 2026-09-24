@@ -1,7 +1,18 @@
 package store
 
-import "context"
+import (
+	"context"
+
+	"github.com/merlinfuchs/embed-generator/embedg-server/common"
+	"github.com/merlinfuchs/embed-generator/embedg-server/model"
+)
 
 type EntitlementStore interface {
-	GetEntitledUserIDs(ctx context.Context) ([]string, error)
+	GetActiveEntitlementsForGuild(ctx context.Context, guildID common.ID) ([]model.Entitlement, error)
+	GetActiveEntitlementsForUser(ctx context.Context, userID common.ID) ([]model.Entitlement, error)
+	GetEntitlements(ctx context.Context) ([]model.Entitlement, error)
+	GetEntitlement(ctx context.Context, id common.ID, userID common.ID) (*model.Entitlement, error)
+	UpdateEntitlementConsumedGuildID(ctx context.Context, id common.ID, consumedGuildID common.NullID) (*model.Entitlement, error)
+	UpsertEntitlement(ctx context.Context, entitlement model.Entitlement) (*model.Entitlement, error)
+	GetEntitledUserIDs(ctx context.Context) ([]common.ID, error)
 }

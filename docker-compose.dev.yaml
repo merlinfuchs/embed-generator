@@ -1,0 +1,39 @@
+# Postgres and MinIO for local development. The service itself runs from source with
+# `go run main.go server`, so nothing here pulls the Embed Generator image.
+# The credentials match the defaults in embedg-server/config/default.toml.
+
+services:
+  postgres:
+    image: postgres
+    restart: always
+    ports:
+      - "${PG_HOST_PORT:-5432}:5432"
+    volumes:
+      - embedg-local-postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: embedg
+      PGUSER: postgres
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_HOST_AUTH_METHOD: trust
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 3s
+      timeout: 30s
+      retries: 3
+
+  minio:
+    image: quay.io/minio/minio
+    command: server --console-address ":9001" /data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: embedg
+      MINIO_ROOT_PASSWORD: 1234567890
+    volumes:
+      - embedg-local-minio:/data
+
+volumes:
+  embedg-local-postgres:
+  embedg-local-minio:

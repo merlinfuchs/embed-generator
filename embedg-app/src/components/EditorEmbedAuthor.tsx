@@ -1,67 +1,65 @@
-import { shallow } from "zustand/shallow";
-import { useCurrentMessageStore } from "../state/message";
+import {
+  type EmbedNode,
+  type FieldPath,
+  type NodeId,
+  useNode,
+  useDocumentStoreApi,
+} from "../state/document";
+import { patchGroup } from "../util/patch";
+import { nodeField, nodeScope } from "../state/validationError";
 import Collapsable from "./Collapsable";
 import EditorInput from "./EditorInput";
 
+const AUTHOR_FIELDS: FieldPath<EmbedNode>[] = ["author"];
+
 interface Props {
-  embedIndex: number;
-  embedId: number;
+  id: NodeId;
 }
 
-export default function EditorEmbedAuthor({ embedIndex, embedId }: Props) {
-  const [authorName, setAuthorName] = useCurrentMessageStore(
-    (state) => [
-      state.embeds[embedIndex]?.author?.name,
-      state.setEmbedAuthorName,
-    ],
-    shallow
-  );
+export default function EditorEmbedAuthor({ id }: Props) {
+  const embed = useNode<EmbedNode>(id);
+  const { update } = useDocumentStoreApi().getState();
 
-  const [authorIconUrl, setAuthorIconUrl] = useCurrentMessageStore(
-    (state) => [
-      state.embeds[embedIndex]?.author?.icon_url,
-      state.setEmbedAuthorIconUrl,
-    ],
-    shallow
-  );
+  if (!embed) return null;
 
-  const [authorUrl, setAuthorUrl] = useCurrentMessageStore(
-    (state) => [state.embeds[embedIndex]?.author?.url, state.setEmbedAuthorUrl],
-    shallow
-  );
+  const author = embed.author;
 
-  console.log("render author", embedIndex);
+  function patchAuthor(patch: Partial<NonNullable<EmbedNode["author"]>>) {
+    update<EmbedNode>(id, {
+      author: patchGroup(author ?? { name: "" }, patch),
+    });
+  }
 
   return (
     <Collapsable
       title="Author"
-      id={`embeds.${embedId}.author`}
-      validationPathPrefix={`embeds.${embedIndex}.author`}
+      id={`embeds.${id}.author`}
+      validationPathPrefix={nodeScope<EmbedNode>(id, AUTHOR_FIELDS)}
     >
       <div className="space-y-3">
         <EditorInput
           label="Author"
-          value={authorName || ""}
-          onChange={(v) => setAuthorName(embedIndex, v)}
+          value={author?.name || ""}
+          onChange={(v) => patchAuthor({ name: v })}
           maxLength={256}
-          validationPath={`embeds.${embedIndex}.author.name`}
+          validationPath={nodeField<EmbedNode>(id, "author.name")}
         />
         <div className="flex space-x-3">
           <EditorInput
             type="url"
             label="Author URL"
-            value={authorUrl || ""}
-            onChange={(v) => setAuthorUrl(embedIndex, v || undefined)}
+            value={author?.url || ""}
+            onChange={(v) => patchAuthor({ url: v || undefined })}
             className="w-1/2"
-            validationPath={`embeds.${embedIndex}.author.url`}
+            validationPath={nodeField<EmbedNode>(id, "author.url")}
           />
           <EditorInput
             type="url"
             label="Author Icon URL"
-            value={authorIconUrl || ""}
-            onChange={(v) => setAuthorIconUrl(embedIndex, v || undefined)}
+            value={author?.icon_url || ""}
+            onChange={(v) => patchAuthor({ icon_url: v || undefined })}
             className="w-1/2"
-            validationPath={`embeds.${embedIndex}.author.icon_url`}
+            validationPath={nodeField<EmbedNode>(id, "author.icon_url")}
             imageUpload={true}
           />
         </div>

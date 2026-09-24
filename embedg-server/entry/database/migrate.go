@@ -1,15 +1,15 @@
 package database
 
 import (
+	"context"
+	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/merlinfuchs/embed-generator/embedg-server/config"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
-	"github.com/merlinfuchs/embed-generator/embedg-server/telemetry"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
+	"github.com/merlinfuchs/embed-generator/embedg-server/logging"
 )
 
 type MigrateOpts struct {
@@ -29,38 +29,48 @@ type Migrater interface {
 	SetLogger(logger migrate.Logger)
 }
 
-func Migrate(storeName string, operation string, opts MigrateOpts) {
-	config.InitConfig()
+func Migrate(ctx context.Context, storeName string, operation string, opts MigrateOpts) error {
+	cfg, err := config.LoadConfig[*config.RootConfig]()
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
 
-	telemetry.SetupLogger()
+	logging.SetupLogger(logging.LoggerConfig(cfg.Logging))
 
 	// Contextual logger
-	l := log.With().Str("entry", "migrate").Str("store", storeName).Str("operation", operation).Logger()
-	l.Debug().Msg("Starting migration")
+	l := slog.Default().With(
+		slog.String("entry", "migrate"),
+		slog.String("store", storeName),
+		slog.String("operation", operation),
+	)
+	l.Debug("Starting migration")
 
 	var migrater Migrater
 
 	switch storeName {
 	case "postgres":
-		pg := postgres.NewPostgresStore()
+		pg, err := postgres.New(ctx, postgres.ClientConfig(cfg.Database.Postgres))
+		if err != nil {
+			return fmt.Errorf("failed to create postgres client: %w", err)
+		}
+
 		pgMigrater, err := pg.GetMigrater()
 		if err != nil {
-			l.Error().Err(err).Msg("Failed to get migrater")
+			l.Error("Failed to get migrater", slog.Any("error", err))
 			os.Exit(1)
 		}
 		migrater = pgMigrater
 		defer migrater.Close()
 	default:
-		l.WithLevel(zerolog.FatalLevel).Msg("Unknown store, can't migrate")
+		l.Error("Unknown store, can't migrate")
 		os.Exit(1)
 	}
 
-	migrater.SetLogger(migrationZeroLogger{
-		zerologger: l,
-		verbose:    viper.GetBool("debug"),
+	migrater.SetLogger(migrationSlogLogger{
+		logger:  l,
+		verbose: cfg.Logging.Debug,
 	})
 
-	var err error
 	switch operation {
 	case "up":
 		err = migrater.Up()
@@ -72,7 +82,7 @@ func Migrate(storeName string, operation string, opts MigrateOpts) {
 		if err != nil {
 			break
 		}
-		l.Info().Strs("migrations", migrations).Msg("")
+		l.Info("", slog.Any("migrations", migrations))
 	case "version":
 		var version uint
 		var dirty bool
@@ -80,19 +90,19 @@ func Migrate(storeName string, operation string, opts MigrateOpts) {
 		if err != nil {
 			break
 		}
-		l.Info().Uint("version", version).Bool("dirty", dirty).Msg("")
+		l.Info("", slog.Uint64("version", uint64(version)), slog.Bool("dirty", dirty))
 
 	case "force":
-		l = l.With().Int("target_version", opts.TargetVersion).Logger()
+		l = l.With(slog.Int("target_version", opts.TargetVersion))
 		err = migrater.Force(opts.TargetVersion)
 		if err != nil {
 			break
 		}
 
 	case "to":
-		l = l.With().Int("target_version", opts.TargetVersion).Logger()
+		l = l.With(slog.Int("target_version", opts.TargetVersion))
 		if opts.TargetVersion < 0 {
-			l.WithLevel(zerolog.FatalLevel).Err(err).Msg("Invalid target version for migrate")
+			l.Error("Invalid target version for migrate")
 		}
 		err = migrater.To(uint(opts.TargetVersion))
 		if err != nil {
@@ -101,12 +111,14 @@ func Migrate(storeName string, operation string, opts MigrateOpts) {
 	}
 
 	if err == migrate.ErrNoChange {
-		l.Warn().Msg("Already at the correct version, migration was skipped")
+		l.Warn("Already at the correct version, migration was skipped")
 	} else if err == migrate.ErrNilVersion {
-		l.Warn().Msg("Migration is at nil version (no migrations have been performed)")
+		l.Warn("Migration is at nil version (no migrations have been performed)")
 	} else if err != nil {
-		l.WithLevel(zerolog.FatalLevel).Err(err).Msg("Migration operation failed")
+		l.Error("Migration operation failed", slog.Any("error", err))
 	}
 
-	l.Debug().Msg("Migration end")
+	l.Debug("Migration end")
+
+	return nil
 }

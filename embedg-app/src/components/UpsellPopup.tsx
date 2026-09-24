@@ -24,21 +24,24 @@ export default function UpsellPopup() {
   }
 
   return (
-    <div className="fixed bottom-5 right-5 w-80 bg-dark-2 shadow-xl rounded-lg hidden lg:block px-5 py-4 z-10">
+    <div className="fixed bottom-5 right-5 w-80 bg-ink-700 border border-white/10 shadow-card rounded-xl hidden lg:block px-5 py-4 z-10">
       <div className="flex justify-between">
-        <div className="text-base text-gray-100 font-bold mb-1.5">
+        <div className="text-base text-mist-100 font-bold mb-1.5">
           Embed Generator ♥️
         </div>
-        <XMarkIcon
-          className="text-gray-300 hover:text-gray-100 w-5 h-5 cursor-pointer"
-          role="button"
+        <button
+          type="button"
+          aria-label="Dismiss"
+          className="text-mist-300 hover:text-mist-100 cursor-pointer"
           onClick={() => {
             setUpsellClosed(true);
             setShowUpsell(false);
           }}
-        />
+        >
+          <XMarkIcon className="w-5 h-5" />
+        </button>
       </div>
-      <div className="text-sm text-gray-300 mb-4">
+      <div className="text-sm text-mist-300 mb-4">
         This is an open source project and free to use. If you like it, consider
         supporting the project by getting premium or starring the project on
         GitHub.
@@ -46,14 +49,15 @@ export default function UpsellPopup() {
       <div className="flex space-x-3 text-center text-sm font-medium">
         <Link
           to="/premium"
-          className="bg-yellow px-3 py-2 rounded block w-full"
+          className="bg-amber-400 hover:bg-amber-300 text-ink-900 px-3 py-2 rounded-lg block w-full transition-colors"
         >
           Get Premium
         </Link>
         <a
           href="/source"
           target="_blank"
-          className="bg-blurple px-3 py-2 rounded block w-full text-gray-100"
+          className="bg-azure-500 hover:bg-azure-400 px-3 py-2 rounded-lg block w-full text-white transition-colors"
+          rel="noopener"
         >
           Star on GitHub
         </a>

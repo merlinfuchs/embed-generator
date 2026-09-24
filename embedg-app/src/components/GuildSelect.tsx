@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useGuildsQuery } from "../api/queries";
 import { guildIconUrl } from "../discord/cdn";
 import ClickOutsideHandler from "./ClickOutsideHandler";
+import SelectDropdown from "./SelectDropdown";
+import { useToasts } from "../util/toasts";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 
 interface Props {
   guildId: string | null;
@@ -11,29 +14,38 @@ interface Props {
 }
 
 export default function GuildSelect({ guildId, onChange }: Props) {
-  const { data: guilds, isLoading } = useGuildsQuery();
+  const { data: guilds, isPending } = useGuildsQuery();
+  const toast = useToasts((state) => state.create);
+
+  useEffect(() => {
+    if (guilds?.success === false) {
+      toast({
+        title: "Failed to load guilds",
+        message: guilds.error.message,
+        type: "error",
+      });
+    }
+  }, [guilds]);
 
   const guild = useMemo(
     () => guilds?.success && guilds.data.find((g) => g.id === guildId),
-    [guilds, guildId]
+    [guilds, guildId],
   );
 
   useEffect(() => {
     if (!guildId) {
       if (guilds?.success) {
-        const defaultGuild = guilds.data.find(
-          (g) => g.has_channel_with_bot_access
-        );
+        const defaultGuild = guilds.data[0];
         if (defaultGuild) {
           onChange(defaultGuild.id);
         }
       }
-    } else if (!isLoading) {
+    } else if (!isPending) {
       if (!guilds?.success || !guilds.data.find((g) => g.id === guildId)) {
         onChange(null);
       }
     }
-  }, [guilds, guildId, isLoading]);
+  }, [guilds, guildId, isPending]);
 
   function selectGuild(guildId: string) {
     onChange(guildId);
@@ -42,77 +54,66 @@ export default function GuildSelect({ guildId, onChange }: Props) {
 
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    if (guilds?.success) {
-      guilds.data.sort((a, b) => a.name.localeCompare(b.name));
-    }
-  }, [guilds]);
-
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
-      <div className="px-3 rounded bg-dark-2 relative flex items-center h-10 select-none">
-        <div
+      <div className="px-3 rounded-lg bg-ink-900 relative flex items-center h-10 select-none">
+        <button
+          type="button"
           onClick={() => setOpen((prev) => !prev)}
-          role="button"
-          className="flex-auto"
+          className="flex-auto text-left"
         >
-          {guild ? (
+          {!guilds ? (
+            <div className="flex items-center space-x-2">
+              <ArrowPathIcon className="h-5 w-5 text-mist-300 animate-spin" />
+              <div className="text-mist-400">Loading...</div>
+            </div>
+          ) : guild ? (
             <div className="flex items-center space-x-2 cursor-pointer w-full">
               <img
+                alt=""
                 src={guildIconUrl(guild)}
                 className="guild icon url w-7 h-7 rounded-full flex-none"
               />
-              <div className="text-lg text-gray-300 flex-auto truncate">
+              <div className="text-lg text-mist-300 flex-auto truncate">
                 {guild.name}
               </div>
               <ChevronDownIcon
                 className={clsx(
                   "text-white w-5 h-5 flex-none transition-transform",
-                  open && "rotate-180"
+                  open && "rotate-180",
                 )}
               />
             </div>
           ) : (
-            <div className="text-gray-300">Select server</div>
+            <div className="text-mist-300">Select server</div>
           )}
-        </div>
+        </button>
         {open && (
-          <div className="absolute bg-dark-2 top-14 left-0 rounded shadow-lg w-full border-2 border-dark-2 z-10">
+          <SelectDropdown>
             {guilds?.success &&
               guilds.data.map((g) => (
-                <div
+                <button
+                  type="button"
                   key={g.id}
-                  className={clsx(
-                    "py-2 flex space-x-2 items-center rounded px-3",
-                    g.has_channel_with_bot_access &&
-                      g.has_channel_with_user_access
-                      ? "hover:bg-dark-3 cursor-pointer"
-                      : "opacity-60 cursor-not-allowed"
-                  )}
-                  role="button"
-                  onClick={() =>
-                    g.has_channel_with_bot_access &&
-                    g.has_channel_with_user_access &&
-                    selectGuild(g.id)
-                  }
+                  className="py-2 flex space-x-2 items-center rounded-lg px-3 hover:bg-ink-700 cursor-pointer w-full text-left"
+                  onClick={() => selectGuild(g.id)}
                 >
                   <img
                     src={guildIconUrl(g)}
                     alt="icon"
                     className="h-7 w-7 rounded-full"
                   />
-                  <div className="text-gray-300">{g.name}</div>
-                </div>
+                  <div className="text-mist-300">{g.name}</div>
+                </button>
               ))}
             <a
-              className="py-2 flex space-x-2 items-center hover:bg-dark-3 rounded cursor-pointer px-3"
-              role="button"
+              className="py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg cursor-pointer px-3 w-full"
               href="/invite"
             >
-              <PlusCircleIcon className="w-7 h-7 text-gray-300" />
-              <div className="text-gray-300">Invite the bot</div>
+              <PlusCircleIcon className="w-7 h-7 text-mist-300" />
+              <div className="text-mist-300">Invite the bot</div>
             </a>
-          </div>
+          </SelectDropdown>
         )}
       </div>
     </ClickOutsideHandler>

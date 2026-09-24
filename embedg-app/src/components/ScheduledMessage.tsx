@@ -1,5 +1,5 @@
 import { parseISO } from "date-fns";
-import { ScheduledMessageWire } from "../api/wire";
+import type { ScheduledMessageWire } from "../api/wire";
 import Tooltip from "./Tooltip";
 import {
   ArrowRightIcon,
@@ -8,15 +8,16 @@ import {
   ClockIcon,
   PencilSquareIcon,
   TrashIcon,
+  XMarkIcon,
 } from "@heroicons/react/20/solid";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AutoAnimate } from "../util/autoAnimate";
 import {
   useScheduledMessageDeleteMutation,
   useScheduledMessageUpdateMutation,
 } from "../api/mutations";
 import { useSendSettingsStore } from "../state/sendSettings";
-import { useQueryClient } from "react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useToasts } from "../util/toasts";
 import EditorInput from "./EditorInput";
 import ConfirmModal from "./ConfirmModal";
@@ -50,23 +51,39 @@ export default function ScheduledMessage({
   const [onlyOnce, setOnlyOnce] = useState(msg.only_once);
   const [startAt, setStartAt] = useState<string | undefined>(msg.start_at);
   const [endAt, setEndAt] = useState<string | undefined>(
-    msg.end_at || undefined
+    msg.end_at || undefined,
   );
   const [cronExpression, setCronExpression] = useState(msg.cron_expression);
   const [savedMessageId, setSavedMessageId] = useState<string | null>(
-    msg.saved_message_id
+    msg.saved_message_id,
   );
   const [channelId, setChannelId] = useState<string | null>(msg.channel_id);
   const [threadName, setThreadName] = useState<string | null>(msg.thread_name);
 
-  useEffect(() => {
+  // Leaving manage mode without saving has to put every field back, the edits live in local state.
+  function cancel() {
+    setEnabled(msg.enabled);
+    setName(msg.name);
+    setOnlyOnce(msg.only_once);
+    setStartAt(msg.start_at);
+    setEndAt(msg.end_at || undefined);
+    setCronExpression(msg.cron_expression);
+    setSavedMessageId(msg.saved_message_id);
+    setChannelId(msg.channel_id);
+    setThreadName(msg.thread_name);
+    setManage(false);
+  }
+
+  // A thread name belongs to the channel it was typed for.
+  function selectChannel(id: string | null) {
+    setChannelId(id);
     setThreadName(null);
-  }, [channelId, setThreadName]);
+  }
 
   const selectedChannel = useMemo(
     () =>
       channels?.success ? channels.data.find((c) => c.id === channelId) : null,
-    [channels, channelId]
+    [channels, channelId],
   );
 
   const queryClient = useQueryClient();
@@ -74,7 +91,7 @@ export default function ScheduledMessage({
 
   function save() {
     if (
-      name.length == 0 ||
+      name.length === 0 ||
       !guildId ||
       !channelId ||
       !savedMessageId ||
@@ -101,7 +118,11 @@ export default function ScheduledMessage({
           thread_name: threadName,
           saved_message_id: savedMessageId,
           cron_expression: cronExpression,
-          cron_timezone: getCurrentTimezone(),
+          // keep the stored timezone unless the schedule itself was edited
+          cron_timezone:
+            cronExpression !== msg.cron_expression
+              ? getCurrentTimezone()
+              : (msg.cron_timezone ?? getCurrentTimezone()),
           start_at: startAt,
           end_at: endAt ?? null,
           only_once: onlyOnce,
@@ -112,7 +133,9 @@ export default function ScheduledMessage({
         onSuccess(res) {
           if (res.success) {
             setManage(false);
-            queryClient.invalidateQueries(["scheduled-messages", guildId]);
+            queryClient.invalidateQueries({
+              queryKey: ["scheduled-messages", guildId],
+            });
           } else {
             createToast({
               title: "Failed to update scheduled message",
@@ -121,7 +144,7 @@ export default function ScheduledMessage({
             });
           }
         },
-      }
+      },
     );
   }
 
@@ -137,7 +160,9 @@ export default function ScheduledMessage({
       {
         onSuccess: (resp) => {
           if (resp.success) {
-            queryClient.invalidateQueries(["scheduled-messages", guildId]);
+            queryClient.invalidateQueries({
+              queryKey: ["scheduled-messages", guildId],
+            });
           } else {
             createToast({
               title: "Failed to delete scheduled message",
@@ -146,35 +171,47 @@ export default function ScheduledMessage({
             });
           }
         },
-      }
+      },
     );
   }
 
   return (
     <div>
-      <AutoAnimate className="bg-dark-3 rounded">
+      <AutoAnimate className="bg-ink-700 rounded-lg">
         {manage ? (
           <div className="px-5 py-4" key="1">
             <div className="flex justify-between items-start">
               <div className="flex items-center space-x-2 truncate text-lg mb-5">
                 {onlyOnce ? (
-                  <CalendarDaysIcon className="text-gray-500 h-6 w-6" />
+                  <CalendarDaysIcon className="text-mist-500 h-6 w-6" />
                 ) : (
-                  <ClockIcon className="text-gray-500 h-6 w-6" />
+                  <ClockIcon className="text-mist-500 h-6 w-6" />
                 )}
                 <div className="text-white truncate">{msg.name}</div>
               </div>
-              <div
-                className="flex items-center text-white cursor-pointer bg-blurple hover:bg-blurple-dark rounded px-2 py-1"
-                role="button"
-                onClick={save}
-              >
-                <Tooltip text="Save Scheduled Message">
-                  <ClipboardIcon className="h-5 w-5" />
-                </Tooltip>
-                <div className="ml-2">
-                  Save <span className="hidden md:inline-block">Changes</span>
-                </div>
+              <div className="flex flex-none items-center space-x-4 md:space-x-3">
+                <button
+                  type="button"
+                  className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
+                  onClick={cancel}
+                >
+                  <Tooltip text="Discard Changes">
+                    <XMarkIcon className="h-5 w-5" />
+                  </Tooltip>
+                  <div className="hidden md:block ml-2">Cancel</div>
+                </button>
+                <button
+                  type="button"
+                  className="flex items-center text-white cursor-pointer bg-azure-500 hover:bg-azure-400 rounded-lg px-2 py-1"
+                  onClick={save}
+                >
+                  <Tooltip text="Save Scheduled Message">
+                    <ClipboardIcon className="h-5 w-5" />
+                  </Tooltip>
+                  <div className="ml-2">
+                    Save <span className="hidden md:inline-block">Changes</span>
+                  </div>
+                </button>
               </div>
             </div>
             <div className="space-y-5">
@@ -188,10 +225,11 @@ export default function ScheduledMessage({
                   className="flex-auto"
                 />
                 <div>
-                  <div className="uppercase text-gray-300 text-sm font-medium mb-1.5">
+                  <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
                     Enabled
                   </div>
                   <CheckBox
+                    label="Enabled"
                     checked={enabled}
                     onChange={setEnabled}
                     height={10}
@@ -201,7 +239,7 @@ export default function ScheduledMessage({
               <div className="flex space-x-3 pb-3 items-end">
                 <div className="flex-auto w-1/2">
                   <div className="mb-1.5 flex">
-                    <div className="uppercase text-gray-300 text-sm font-medium">
+                    <div className="uppercase text-mist-300 text-sm font-medium">
                       Saved Message
                     </div>
                   </div>
@@ -212,18 +250,18 @@ export default function ScheduledMessage({
                   />
                 </div>
                 <div className="flex-none pb-2">
-                  <ArrowRightIcon className="h-5 w-5 text-gray-300" />
+                  <ArrowRightIcon className="h-5 w-5 text-mist-300" />
                 </div>
                 <div className="flex-auto w-1/2">
                   <div className="mb-1.5 flex">
-                    <div className="uppercase text-gray-300 text-sm font-medium">
+                    <div className="uppercase text-mist-300 text-sm font-medium">
                       Channel
                     </div>
                   </div>
                   <ChannelSelect
                     guildId={guildId}
                     channelId={channelId}
-                    onChange={setChannelId}
+                    onChange={selectChannel}
                   />
                 </div>
               </div>
@@ -235,7 +273,7 @@ export default function ScheduledMessage({
                     value={threadName ?? ""}
                     onChange={(v) => setThreadName(v || null)}
                   />
-                  <div className="mt-2 text-gray-400 text-sm font-light">
+                  <div className="mt-2 text-mist-400 text-sm font-light">
                     When sending to a Forum Channel you have to set a name for
                     the thread that is being created.
                   </div>
@@ -243,21 +281,21 @@ export default function ScheduledMessage({
               )}
               <div className="flex">
                 <button
-                  className="flex bg-dark-2 p-1 rounded text-white"
+                  className="flex bg-ink-900 p-1 rounded-lg text-white"
                   onClick={() => setOnlyOnce((v) => !v)}
                 >
                   <div
                     className={clsx(
-                      "py-1 px-2 rounded transition-colors",
-                      onlyOnce && "bg-dark-3"
+                      "py-1 px-2 rounded-lg transition-colors",
+                      onlyOnce && "bg-ink-700",
                     )}
                   >
                     Send Once
                   </div>
                   <div
                     className={clsx(
-                      "py-1 px-2 rounded transition-colors",
-                      !onlyOnce && "bg-dark-3"
+                      "py-1 px-2 rounded-lg transition-colors",
+                      !onlyOnce && "bg-ink-700",
                     )}
                   >
                     Send Periodically
@@ -268,7 +306,7 @@ export default function ScheduledMessage({
                 <div>
                   <div>
                     <div className="mb-1.5 flex">
-                      <div className="uppercase text-gray-300 text-sm font-medium">
+                      <div className="uppercase text-mist-300 text-sm font-medium">
                         Send at
                       </div>
                     </div>
@@ -284,7 +322,7 @@ export default function ScheduledMessage({
                   <div className="flex flex-col md:flex-row md:space-x-3 space-y-5 md:space-y-0">
                     <div className="flex-auto">
                       <div className="mb-1.5 flex">
-                        <div className="uppercase text-gray-300 text-sm font-medium">
+                        <div className="uppercase text-mist-300 text-sm font-medium">
                           Start at
                         </div>
                       </div>
@@ -296,7 +334,7 @@ export default function ScheduledMessage({
                     </div>
                     <div className="flex-auto">
                       <div className="mb-1.5 flex">
-                        <div className="uppercase text-gray-300 text-sm font-medium">
+                        <div className="uppercase text-mist-300 text-sm font-medium">
                           End at
                         </div>
                       </div>
@@ -324,41 +362,41 @@ export default function ScheduledMessage({
             <div className="flex-auto truncate">
               <div className="flex items-center space-x-2 truncate text-lg mb-1">
                 <div className="text-white truncate flex space-x-2 items-center">
-                  {onlyOnce ? (
-                    <CalendarDaysIcon className="text-gray-500 h-6 w-6" />
+                  {msg.only_once ? (
+                    <CalendarDaysIcon className="text-mist-500 h-6 w-6" />
                   ) : (
-                    <ClockIcon className="text-gray-500 h-6 w-6" />
+                    <ClockIcon className="text-mist-500 h-6 w-6" />
                   )}
                   <div>{msg.name}</div>
                 </div>
               </div>
-              <div className="text-gray-400 text-sm font-light whitespace-normal">
+              <div className="text-mist-400 text-sm font-light whitespace-normal">
                 {!msg.only_once
                   ? cronToString(msg.cron_expression)
                   : formatDateTime(msg.start_at)}
               </div>
             </div>
             <div className="flex flex-none items-center space-x-4 md:space-x-3">
-              <div
-                className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
-                role="button"
+              <button
+                type="button"
+                className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
                 onClick={() => setDeleteModal(true)}
               >
                 <Tooltip text="Delete Scheduled Message">
                   <TrashIcon className="h-5 w-5" />
                 </Tooltip>
                 <div className="hidden md:block ml-2">Delete</div>
-              </div>
-              <div
-                className="flex items-center text-gray-300 hover:text-white cursor-pointer md:bg-dark-2 md:rounded md:px-2 md:py-1"
-                role="button"
+              </button>
+              <button
+                type="button"
+                className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
                 onClick={() => setManage(true)}
               >
                 <Tooltip text="Manage Scheduled message">
                   <PencilSquareIcon className="h-5 w-5" />
                 </Tooltip>
                 <div className="hidden md:block ml-2">Manage</div>
-              </div>
+              </button>
             </div>
           </div>
         )}
@@ -368,6 +406,7 @@ export default function ScheduledMessage({
           title="Are you sure that you want to delete the scheduled message?"
           subTitle="The scheduled message will be deleted permanently and can't be restored."
           onClose={() => setDeleteModal(false)}
+          pending={deleteMutation.isPending}
           onConfirm={deleteScheduledMessageConfirm}
         />
       )}

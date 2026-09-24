@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"gopkg.in/guregu/null.v4"
 )
 
 type SavedMessageWire struct {
 	ID          string          `json:"id"`
-	CreatorID   string          `json:"owner_id"`
-	GuildID     null.String     `json:"guild_id"`
+	CreatorID   common.ID       `json:"owner_id"`
+	GuildID     common.NullID   `json:"guild_id"`
 	UpdatedAt   time.Time       `json:"updated_at"`
 	Name        string          `json:"name"`
 	Description null.String     `json:"description"`
@@ -67,8 +68,8 @@ type MessageSendToWebhookRequestWire struct {
 	WebhookType  string                   `json:"webhook_type"`
 	WebhookID    string                   `json:"webhook_id"`
 	WebhookToken string                   `json:"webhook_token"`
-	ThreadID     null.String              `json:"thread_id"`
-	MessageID    null.String              `json:"message_id"`
+	ThreadID     common.NullID            `json:"thread_id"`
+	MessageID    common.NullID            `json:"message_id"`
 	Data         json.RawMessage          `json:"data"`
 	Attachments  []*MessageAttachmentWire `json:"attachments"`
 }
@@ -78,10 +79,10 @@ func (req MessageSendToWebhookRequestWire) Validate() error {
 }
 
 type MessageSendToChannelRequestWire struct {
-	GuildID     string                   `json:"guild_id"`
-	ChannelID   string                   `json:"channel_id"`
+	GuildID     common.ID                `json:"guild_id"`
+	ChannelID   common.ID                `json:"channel_id"`
 	ThreadName  null.String              `json:"thread_name"`
-	MessageID   null.String              `json:"message_id"`
+	MessageID   common.NullID            `json:"message_id"`
 	Data        json.RawMessage          `json:"data"`
 	Attachments []*MessageAttachmentWire `json:"attachments"`
 }
@@ -98,17 +99,17 @@ type MessageAttachmentWire struct {
 }
 
 type MessageSendResponseDataWire struct {
-	MessageID string `json:"message_id"`
-	ChannelID string `json:"channel_id"`
+	MessageID common.ID `json:"message_id"`
+	ChannelID common.ID `json:"channel_id"`
 }
 
 type MessageSendResponseWire APIResponse[MessageSendResponseDataWire]
 
 type MessageRestoreFromWebhookRequestWire struct {
-	WebhookID    string      `json:"webhook_id"`
+	WebhookID    common.ID   `json:"webhook_id"`
 	WebhookToken string      `json:"webhook_token"`
 	ThreadID     null.String `json:"thread_id"`
-	MessageID    string      `json:"message_id"`
+	MessageID    common.ID   `json:"message_id"`
 }
 
 func (req MessageRestoreFromWebhookRequestWire) Validate() error {
@@ -116,9 +117,9 @@ func (req MessageRestoreFromWebhookRequestWire) Validate() error {
 }
 
 type MessageRestoreFromChannelRequestWire struct {
-	GuildID   string `json:"guild_id"`
-	ChannelID string `json:"channel_id"`
-	MessageID string `json:"message_id"`
+	GuildID   common.ID `json:"guild_id"`
+	ChannelID common.ID `json:"channel_id"`
+	MessageID common.ID `json:"message_id"`
 }
 
 func (req MessageRestoreFromChannelRequestWire) Validate() error {
