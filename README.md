@@ -5,7 +5,7 @@
 
 [![Release](https://img.shields.io/github/v/release/merlinfuchs/embed-generator)](https://github.com/merlinfuchs/embed-generator/releases/latest)
 [![MIT License](https://img.shields.io/github/license/merlinfuchs/embed-generator)](LICENSE)
-[![Status](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fstatus.message.style%2Findex.json&query=%24.data.attributes.aggregate_state&label=status)](https://status.message.style/)
+[![Status](https://uptime.betterstack.com/status-badges/v2/monitor/2y8eg.svg)](https://status.message.style/)
 [![Discord Server](https://img.shields.io/discord/730045476459642900)](https://message.style/discord)
 
 A powerful tool for creating rich-embed Discord messages using webhooks.
