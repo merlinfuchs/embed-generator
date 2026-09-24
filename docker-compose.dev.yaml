@@ -1,6 +1,6 @@
 # Postgres and MinIO for local development. The service itself runs from source with
 # `go run main.go server`, so nothing here pulls the Embed Generator image.
-# The credentials match the defaults in embedg-service/config/default.toml.
+# The credentials match the defaults in embedg-server/config/default.toml.
 
 services:
   postgres:

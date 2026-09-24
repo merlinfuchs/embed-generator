@@ -33,7 +33,7 @@ jobs:
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v4
         with:
-          workdir: embedg-service
+          workdir: embedg-server
           distribution: goreleaser
           version: latest
           args: release --clean

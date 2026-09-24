@@ -12,7 +12,7 @@ out="$(mktemp -t embedg-service)"
 trap 'rm -f "$out"' EXIT
 
 echo "==> building for linux/amd64"
-(cd embedg-service && GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o "$out" .)
+(cd embedg-server && GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o "$out" .)
 
 echo "==> copying to $DEPLOY_HOST:$REMOTE_BIN"
 # Uploaded next to the live binary and renamed into place: writing over a running

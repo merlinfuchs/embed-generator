@@ -172,7 +172,7 @@ service itself runs from source against them:
 docker compose -f docker-compose.dev.yaml up -d
 ```
 
-The credentials match the defaults in `embedg-service/config/default.toml`, so `embedg.toml` only
+The credentials match the defaults in `embedg-server/config/default.toml`, so `embedg.toml` only
 needs the Discord section. MinIO creates its buckets on startup. If you'd rather install Postgres
 yourself, create a `postgres` user and an `embedg` database.
 
@@ -182,9 +182,9 @@ Install Go `>=1.25` from [go.dev](https://go.dev/doc/install).
 
 ```sh
 # Switch to the backend directory
-cd embedg-service
+cd embedg-server
 # or if you are in the frontend directoy
-cd ../embedg-service
+cd ../embedg-server
 
 # Configure the server (see steps below)
 

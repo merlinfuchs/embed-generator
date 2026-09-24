@@ -3,7 +3,7 @@ name: CI (service)
 on:
   pull_request:
     paths:
-      - "embedg-service/**"
+      - "embedg-server/**"
       - "go.work"
       - "go.work.sum"
       - ".github/workflows/ci-service.yaml"
@@ -14,15 +14,15 @@ concurrency:
 
 jobs:
   build:
-    name: embedg-service
+    name: embedg-server
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version-file: embedg-service/go.mod
+          go-version-file: embedg-server/go.mod
           cache-dependency-path: |
-            embedg-service/go.sum
+            embedg-server/go.sum
             go.work.sum
       - run: go build ./... && go vet ./... && go test ./...
-        working-directory: embedg-service
+        working-directory: embedg-server

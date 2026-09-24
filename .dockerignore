@@ -6,5 +6,4 @@
 **/node_modules
 **/dist
 **/.docusaurus
-embedg-service/embedg-server
-embedg-service/embedg-service
+embedg-server/embedg-server

@@ -1,5 +1,5 @@
 packages:
-  - path: "github.com/merlinfuchs/embed-generator/embedg-service/api/wire"
+  - path: "github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
     output_path: "embedg-app/src/api/wire.ts"
     type_mappings:
       common.ID: "string"
