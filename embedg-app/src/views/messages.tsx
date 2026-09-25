@@ -13,6 +13,7 @@ import {
 } from "../util/premium";
 import { useSendSettingsStore } from "../state/sendSettings";
 import SavedMessage from "../components/SavedMessage";
+import { MAX_SAVED_MESSAGE_NAME_LENGTH } from "../api/limits";
 import { getCurrentMessage } from "../state/currentMessage";
 
 export default function MessagesView() {
@@ -132,7 +133,7 @@ export default function MessagesView() {
             <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3 items-end flex-none mb-5">
               <EditorInput
                 label="New Message Name"
-                maxLength={25}
+                maxLength={MAX_SAVED_MESSAGE_NAME_LENGTH}
                 value={newMessageName}
                 onChange={setNewMessageName}
                 className="w-full"
