@@ -1,10 +1,18 @@
 package access
 
 import (
+	"time"
+
 	"github.com/disgoorg/disgo/discord"
-	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"github.com/merlinfuchs/embed-generator/embedg-server/guildstate"
 )
+
+// TimedOutPermissions is all a timed out member keeps. Owners and administrators are exempt.
+const TimedOutPermissions = discord.PermissionViewChannel | discord.PermissionReadMessageHistory
+
+func IsTimedOut(member discord.Member) bool {
+	return member.CommunicationDisabledUntil != nil && member.CommunicationDisabledUntil.After(time.Now())
+}
 
 // permissionSource returns the channel whose overwrites decide access. For a thread that's its
 // parent: disgo returns no overwrites for threads at all, so computing permissions from the thread
@@ -33,7 +41,7 @@ func permissionSource(channel discord.GuildChannel, state *guildstate.State) dis
 // maxChannelPermissions ORs the member's permissions over every channel they could send in, which
 // is what "has access to this guild" means here. It stops as soon as stopAt is satisfied, so a
 // guild with hundreds of channels usually costs a handful of iterations.
-func maxChannelPermissions(state *guildstate.State, userID common.ID, roleIDs []common.ID, stopAt discord.Permissions) discord.Permissions {
+func maxChannelPermissions(state *guildstate.State, member discord.Member, stopAt discord.Permissions) discord.Permissions {
 	var permissions discord.Permissions
 
 	for _, channel := range state.Channels {
@@ -42,7 +50,7 @@ func maxChannelPermissions(state *guildstate.State, userID common.ID, roleIDs []
 			continue
 		}
 
-		permissions |= memberPermissions(&state.Guild, state.Roles, channel, userID, roleIDs)
+		permissions |= memberPermissions(&state.Guild, state.Roles, channel, member)
 		if permissions&stopAt == stopAt {
 			break
 		}
@@ -51,7 +59,10 @@ func maxChannelPermissions(state *guildstate.State, userID common.ID, roleIDs []
 	return permissions
 }
 
-func memberPermissions(guild *discord.Guild, roles []discord.Role, channel discord.GuildChannel, userID common.ID, roleIDs []common.ID) (apermissions discord.Permissions) {
+func memberPermissions(guild *discord.Guild, roles []discord.Role, channel discord.GuildChannel, member discord.Member) (apermissions discord.Permissions) {
+	userID := member.User.ID
+	roleIDs := member.RoleIDs
+
 	if userID == guild.OwnerID {
 		apermissions = discord.PermissionsAll
 		return
@@ -79,6 +90,9 @@ func memberPermissions(guild *discord.Guild, roles []discord.Role, channel disco
 	}
 
 	if channel == nil {
+		if IsTimedOut(member) {
+			apermissions &= TimedOutPermissions
+		}
 		return
 	}
 
@@ -129,6 +143,10 @@ func memberPermissions(guild *discord.Guild, roles []discord.Role, channel disco
 	// Manage Webhooks must not keep it in a channel that hides itself from that role.
 	if apermissions&discord.PermissionViewChannel == 0 {
 		return 0
+	}
+
+	if IsTimedOut(member) {
+		apermissions &= TimedOutPermissions
 	}
 
 	return apermissions

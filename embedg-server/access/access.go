@@ -108,7 +108,7 @@ func (m *AccessManager) GetGuildAccessForSession(ctx context.Context, sess *sess
 		return res, nil, fmt.Errorf("Failed to get guild state: %w", err)
 	}
 
-	res.CombinedBotPermissions = maxChannelPermissions(state, m.appContext.ApplicationID(), botMember.RoleIDs, RequiredPermissions)
+	res.CombinedBotPermissions = maxChannelPermissions(state, *botMember, RequiredPermissions)
 	if !res.HasChannelWithBotAccess() {
 		// No point in checking user access if the bot doesn't have access to any channels
 		return res, &state.Guild, nil
@@ -123,7 +123,7 @@ func (m *AccessManager) GetGuildAccessForSession(ctx context.Context, sess *sess
 		return res, nil, fmt.Errorf("Failed to get guild member: %w", err)
 	}
 
-	res.CombinedUserPermissions = maxChannelPermissions(state, sess.UserID, member.RoleIDs, RequiredPermissions)
+	res.CombinedUserPermissions = maxChannelPermissions(state, *member, RequiredPermissions)
 	return res, &state.Guild, nil
 }
 
@@ -183,10 +183,10 @@ func (m *AccessManager) channelAccess(state *guildstate.State, channel discord.G
 	source := permissionSource(channel, state)
 
 	res := ChannelAccess{
-		BotPermissions: memberPermissions(&state.Guild, state.Roles, source, botMember.User.ID, botMember.RoleIDs),
+		BotPermissions: memberPermissions(&state.Guild, state.Roles, source, *botMember),
 	}
 	if userMember != nil {
-		res.UserPermissions = memberPermissions(&state.Guild, state.Roles, source, userMember.User.ID, userMember.RoleIDs)
+		res.UserPermissions = memberPermissions(&state.Guild, state.Roles, source, *userMember)
 	}
 	return res
 }
@@ -250,7 +250,7 @@ func (m *AccessManager) memberPermissionsInChannel(ctx context.Context, member d
 		return 0, err
 	}
 
-	return memberPermissions(&state.Guild, state.Roles, permissionSource(channel, state), member.User.ID, member.RoleIDs), nil
+	return memberPermissions(&state.Guild, state.Roles, permissionSource(channel, state), member), nil
 }
 
 func (m *AccessManager) ComputeBotPermissionsForChannel(ctx context.Context, channelID common.ID) (discord.Permissions, error) {

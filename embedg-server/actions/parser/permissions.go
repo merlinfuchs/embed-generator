@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/disgoorg/disgo/discord"
+	"github.com/merlinfuchs/embed-generator/embedg-server/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 )
@@ -45,14 +46,9 @@ func (m *ActionParser) DerivePermissionsForActions(ctx context.Context, member d
 		res.ChannelPermissions = uint64(channelPermissions)
 	}
 
-	highestRolePosition := 0
-
 	// The @everyone role has the guild's id.
-	defaultRole, ok := state.Role(guildID)
-	if ok {
-		highestRolePosition = defaultRole.Position
-		res.GuildPermissions = uint64(defaultRole.Permissions)
-	}
+	highestRole, _ := state.Role(guildID)
+	res.GuildPermissions = uint64(highestRole.Permissions)
 
 	// Every role the member has grants its permissions, whatever its position. Only the hierarchy
 	// below depends on the highest one, so the two must be tracked separately: member.RoleIDs is in
@@ -65,16 +61,30 @@ func (m *ActionParser) DerivePermissionsForActions(ctx context.Context, member d
 		}
 
 		res.GuildPermissions |= uint64(role.Permissions)
-		if role.Position > highestRolePosition {
-			highestRolePosition = role.Position
+		if roleBelow(highestRole, role) {
+			highestRole = role
 		}
 	}
 
+	guildPerms := discord.Permissions(res.GuildPermissions)
+	if !res.GuildIsOwner && !guildPerms.Has(discord.PermissionAdministrator) && access.IsTimedOut(member) {
+		res.GuildPermissions = uint64(guildPerms & access.TimedOutPermissions)
+	}
+
 	for _, role := range state.Roles {
-		if role.Position < highestRolePosition {
+		if roleBelow(role, highestRole) {
 			res.AllowedRoleIDs = append(res.AllowedRoleIDs, role.ID)
 		}
 	}
 
 	return res, nil
+}
+
+// roleBelow orders roles the way Discord does: by position, and on equal positions the role with
+// the higher id is the lower one.
+func roleBelow(a, b discord.Role) bool {
+	if a.Position != b.Position {
+		return a.Position < b.Position
+	}
+	return a.ID > b.ID
 }
