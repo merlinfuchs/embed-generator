@@ -28,21 +28,3 @@ test("unchecking a mention type stops only it from pinging", () => {
   );
   expect(allowedMentions()?.parse).toEqual(["users", "roles"]);
 });
-
-test("checking it again goes back to Discord's default", () => {
-  loadMessage({
-    content: "",
-    allowed_mentions: {
-      parse: ["users"],
-      users: [],
-      roles: [],
-      replied_user: false,
-    },
-  });
-  renderEditor(<EditorAllowedMentions />);
-
-  fireEvent.click(checkbox("Roles"));
-  fireEvent.click(checkbox("@everyone and @here"));
-
-  expect(allowedMentions()).toBeUndefined();
-});

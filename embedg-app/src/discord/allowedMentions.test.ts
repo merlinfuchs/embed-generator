@@ -1,5 +1,9 @@
 import { expect, test } from "vitest";
-import { mentionPings, setMentionPings } from "./allowedMentions";
+import {
+  type MentionType,
+  mentionPings,
+  setMentionPings,
+} from "./allowedMentions";
 
 test("without allowed_mentions every mention pings", () => {
   expect(mentionPings(undefined, "everyone")).toBe(true);
@@ -26,7 +30,7 @@ test("turning every type back on goes back to Discord's default", () => {
 
 test("a type with specific ids counts as pinging, and toggling it clears them", () => {
   const imported = {
-    parse: [] as ("users" | "roles" | "everyone")[],
+    parse: [] as MentionType[],
     users: [],
     roles: ["1"],
     replied_user: false,

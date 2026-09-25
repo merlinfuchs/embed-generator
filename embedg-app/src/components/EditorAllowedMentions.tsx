@@ -8,8 +8,8 @@ import {
   type MessageNode,
   useDocument,
   useDocumentStoreApi,
-  useNode,
 } from "../state/document";
+import { nodeScope } from "../state/validationError";
 import CheckBox from "./CheckBox";
 import Collapsable from "./Collapsable";
 
@@ -21,7 +21,11 @@ const labels: Record<MentionType, string> = {
 
 export default function EditorAllowedMentions() {
   const rootId = useDocument((state) => state.rootId);
-  const allowedMentions = useNode<MessageNode>(rootId)?.allowed_mentions;
+  // Just the field: the root node changes with every keystroke in the content.
+  const allowedMentions = useDocument(
+    (state) =>
+      (state.nodes[state.rootId] as MessageNode | undefined)?.allowed_mentions,
+  );
   const { update } = useDocumentStoreApi().getState();
 
   return (
@@ -30,7 +34,9 @@ export default function EditorAllowedMentions() {
       title="Mentions"
       size="large"
       defaultCollapsed={true}
-      validationPathPrefix="allowed_mentions"
+      validationPathPrefix={nodeScope<MessageNode>(rootId, [
+        "allowed_mentions",
+      ])}
     >
       <div className="text-mist-400 mb-3">
         Choose which mentions ping. The others still show, but notify no one.

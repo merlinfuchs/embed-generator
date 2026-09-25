@@ -47,9 +47,9 @@ export default function EditorView() {
               <EditorWebhookFields />
               {!componentsV2Enabled && <EditorMessageContentField />}
               <EditorAttachments />
-              <EditorAllowedMentions />
               {!componentsV2Enabled && <EditorEmbeds />}
               <EditorComponents defaultCollapsed={!componentsV2Enabled} />
+              <EditorAllowedMentions />
             </div>
           </div>
           <div className="hidden lg:block w-1/2 h-full bg-ink-800 lg:border-l border-white/5 px-5 py-2 overflow-y-auto no-scrollbar">
