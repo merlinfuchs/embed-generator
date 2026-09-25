@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { HexColorPicker } from "react-colorful";
 import ClickOutsideHandler from "./ClickOutsideHandler";
 
@@ -7,26 +7,16 @@ interface Props {
   onChange: (newValue: number | undefined) => void;
 }
 
+/** undefined clears the color, null means the text isn't a color (yet). */
+function parseHexColor(text: string): number | undefined | null {
+  const raw = text.trim().replace(/^#/, "");
+  if (!raw) return undefined;
+  if (!/^[0-9a-f]{6}$/i.test(raw)) return null;
+  return parseInt(raw, 16);
+}
+
 export default function ColorPicker({ value, onChange }: Props) {
   const [show, setShow] = useState(false);
-
-  function setHexColor(newColor: string) {
-    let raw = newColor.trim();
-    while (raw.startsWith("#")) {
-      raw = raw.substring(1);
-    }
-
-    if (raw) {
-      const value = parseInt(raw, 16);
-      if (!Number.isNaN(value)) {
-        onChange(value);
-      } else {
-        onChange(undefined);
-      }
-    } else {
-      onChange(undefined);
-    }
-  }
 
   const hexColor = useMemo(() => {
     if (value || value === 0) {
@@ -35,6 +25,20 @@ export default function ColorPicker({ value, onChange }: Props) {
       return "";
     }
   }, [value]);
+
+  // The text input edits a draft so that a half typed color isn't replaced
+  // with the value it happens to parse to.
+  const [draft, setDraft] = useState(hexColor);
+
+  useEffect(() => {
+    if (parseHexColor(draft) !== value) setDraft(hexColor);
+  }, [value]);
+
+  function setDraftColor(text: string) {
+    setDraft(text);
+    const color = parseHexColor(text);
+    if (color !== null && color !== value) onChange(color);
+  }
 
   const displayColor = hexColor ? `#${hexColor}` : "#1f2225";
 
@@ -46,9 +50,11 @@ export default function ColorPicker({ value, onChange }: Props) {
         </div>
         <input
           type="text"
+          aria-label="Hex color"
           className="bg-ink-900 rounded-r-lg p-2 w-full font-light text-white focus:outline-none"
-          value={hexColor}
-          onChange={(e) => setHexColor(e.target.value)}
+          value={draft}
+          onChange={(e) => setDraftColor(e.target.value)}
+          onBlur={() => setDraft(hexColor)}
           placeholder="rrggbb"
         />
       </div>
@@ -65,7 +71,10 @@ export default function ColorPicker({ value, onChange }: Props) {
         />
         {show && (
           <div className="absolute bottom-14 right-0">
-            <HexColorPicker color={`#${hexColor}`} onChange={setHexColor} />
+            <HexColorPicker
+              color={`#${hexColor}`}
+              onChange={(color) => setDraftColor(color.slice(1))}
+            />
           </div>
         )}
       </ClickOutsideHandler>
