@@ -55,7 +55,14 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 		return handlers.Forbidden("insufficient_plan", "Periodic scheduled messages are not available on your plan.")
 	}
 
-	// TODO: validate max scheduled messages
+	existingCount, err := h.scheduledMessageStore.CountScheduledMessages(c.UserContext(), guildID)
+	if err != nil {
+		return err
+	}
+
+	if int(existingCount) >= features.MaxScheduledMessages {
+		return handlers.Forbidden("insufficient_plan", "You have reached the maximum number of scheduled messages for your plan!")
+	}
 
 	if req.EndAt.Valid && req.EndAt.Time.Before(req.StartAt) {
 		return handlers.BadRequest("invalid_end_at", "The end_at field must be after the start_at field.")

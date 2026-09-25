@@ -11,6 +11,28 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countSavedMessagesForCreator = `-- name: CountSavedMessagesForCreator :one
+SELECT COUNT(*) FROM saved_messages WHERE creator_id = $1 AND guild_id IS NULL
+`
+
+func (q *Queries) CountSavedMessagesForCreator(ctx context.Context, creatorID string) (int64, error) {
+	row := q.db.QueryRow(ctx, countSavedMessagesForCreator, creatorID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countSavedMessagesForGuild = `-- name: CountSavedMessagesForGuild :one
+SELECT COUNT(*) FROM saved_messages WHERE guild_id = $1
+`
+
+func (q *Queries) CountSavedMessagesForGuild(ctx context.Context, guildID pgtype.Text) (int64, error) {
+	row := q.db.QueryRow(ctx, countSavedMessagesForGuild, guildID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const deleteSavedMessageForCreator = `-- name: DeleteSavedMessageForCreator :exec
 DELETE FROM saved_messages WHERE id = $1 AND creator_id = $2
 `

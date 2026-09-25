@@ -19,12 +19,14 @@ import (
 type SavedMessagesHandler struct {
 	savedMessageStore store.SavedMessageStore
 	am                *access.AccessManager
+	planStore         store.PlanStore
 }
 
-func New(savedMessageStore store.SavedMessageStore, am *access.AccessManager) *SavedMessagesHandler {
+func New(savedMessageStore store.SavedMessageStore, am *access.AccessManager, planStore store.PlanStore) *SavedMessagesHandler {
 	return &SavedMessagesHandler{
 		savedMessageStore: savedMessageStore,
 		am:                am,
+		planStore:         planStore,
 	}
 }
 
@@ -74,6 +76,10 @@ func (h *SavedMessagesHandler) HandleCreateSavedMessage(c *fiber.Ctx, req wire.S
 		if err := h.am.CheckGuildAccessForRequest(c, guildID.ID); err != nil {
 			return err
 		}
+	}
+
+	if err := h.checkSavedMessageLimit(c, session.UserID, guildID, 1); err != nil {
+		return err
 	}
 
 	message, err := h.savedMessageStore.CreateSavedMessage(c.UserContext(), model.SavedMessage{
@@ -192,6 +198,10 @@ func (h *SavedMessagesHandler) HandleImportSavedMessages(c *fiber.Ctx, req wire.
 		}
 	}
 
+	if err := h.checkSavedMessageLimit(c, session.UserID, guildID, len(req.Messages)); err != nil {
+		return err
+	}
+
 	res := make([]wire.SavedMessageWire, len(req.Messages))
 
 	for i, msg := range req.Messages {
@@ -215,6 +225,36 @@ func (h *SavedMessagesHandler) HandleImportSavedMessages(c *fiber.Ctx, req wire.
 		Success: true,
 		Data:    res,
 	})
+}
+
+// checkSavedMessageLimit checks that adding messages stays within the plan of the guild, or of the
+// user for their personal messages.
+func (h *SavedMessagesHandler) checkSavedMessageLimit(c *fiber.Ctx, userID common.ID, guildID common.NullID, adding int) error {
+	var features model.PlanFeatures
+	var count int64
+	var err error
+	if guildID.Valid {
+		features, err = h.planStore.GetPlanFeaturesForGuild(c.UserContext(), guildID.ID)
+		if err != nil {
+			return err
+		}
+		count, err = h.savedMessageStore.CountSavedMessagesForGuild(c.UserContext(), guildID.ID)
+	} else {
+		features, err = h.planStore.GetPlanFeaturesForUser(c.UserContext(), userID)
+		if err != nil {
+			return err
+		}
+		count, err = h.savedMessageStore.CountSavedMessagesForCreator(c.UserContext(), userID)
+	}
+	if err != nil {
+		return err
+	}
+
+	if int(count)+adding > features.MaxSavedMessages {
+		return handlers.Forbidden("insufficient_plan", "You have reached the maximum number of saved messages for your plan!")
+	}
+
+	return nil
 }
 
 func savedMessageModelToWire(model *model.SavedMessage) wire.SavedMessageWire {

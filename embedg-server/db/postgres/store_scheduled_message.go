@@ -32,6 +32,10 @@ func (c *Client) GetScheduledMessages(ctx context.Context, guildID common.ID) ([
 	return rowsToScheduledMessages(rows), nil
 }
 
+func (c *Client) CountScheduledMessages(ctx context.Context, guildID common.ID) (int64, error) {
+	return c.Q.CountScheduledMessages(ctx, guildID.String())
+}
+
 func (c *Client) GetScheduledMessage(ctx context.Context, guildID common.ID, id string) (*model.ScheduledMessage, error) {
 	row, err := c.Q.GetScheduledMessage(ctx, pgmodel.GetScheduledMessageParams{
 		ID:      id,

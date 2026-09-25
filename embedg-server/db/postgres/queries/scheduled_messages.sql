@@ -57,3 +57,6 @@ UPDATE scheduled_messages SET next_at = $3, updated_at = $4 WHERE id = $1 AND gu
 
 -- name: UpdateScheduledMessageEnabled :one
 UPDATE scheduled_messages SET enabled = $3, updated_at = $4 WHERE id = $1 AND guild_id = $2 RETURNING *;
+
+-- name: CountScheduledMessages :one
+SELECT COUNT(*) FROM scheduled_messages WHERE guild_id = $1;

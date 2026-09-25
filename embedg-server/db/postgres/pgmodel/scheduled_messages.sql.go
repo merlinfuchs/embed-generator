@@ -11,6 +11,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countScheduledMessages = `-- name: CountScheduledMessages :one
+SELECT COUNT(*) FROM scheduled_messages WHERE guild_id = $1
+`
+
+func (q *Queries) CountScheduledMessages(ctx context.Context, guildID string) (int64, error) {
+	row := q.db.QueryRow(ctx, countScheduledMessages, guildID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const deleteScheduledMessage = `-- name: DeleteScheduledMessage :exec
 DELETE FROM scheduled_messages WHERE id = $1 AND guild_id = $2
 `

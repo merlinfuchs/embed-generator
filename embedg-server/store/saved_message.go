@@ -16,4 +16,6 @@ type SavedMessageStore interface {
 	GetSavedMessagesForCreator(ctx context.Context, creatorID common.ID) ([]model.SavedMessage, error)
 	GetSavedMessagesForGuild(ctx context.Context, guildID common.ID) ([]model.SavedMessage, error)
 	GetSavedMessageForGuild(ctx context.Context, guildID common.ID, id string) (*model.SavedMessage, error)
+	CountSavedMessagesForCreator(ctx context.Context, creatorID common.ID) (int64, error)
+	CountSavedMessagesForGuild(ctx context.Context, guildID common.ID) (int64, error)
 }
