@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   fromZonedDate,
   listTimezones,
@@ -8,6 +8,14 @@ import {
 } from "./time";
 
 describe("zoned dates", () => {
+  // Pin the local zone so the picker's local Dates cross a DST change in the tests below.
+  beforeAll(() => {
+    vi.stubEnv("TZ", "America/New_York");
+  });
+  afterAll(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("reads the picker's wall clock in the timezone", () => {
     const nine = new Date(2026, 8, 25, 9, 0);
     expect(fromZonedDate(nine, "Europe/Berlin")).toBe(
@@ -42,6 +50,19 @@ describe("zoned dates", () => {
     expect(rezone("2027-03-14T02:30:00.000Z", "UTC", "Europe/London")).toBe(
       "2027-03-14T02:30:00.000Z",
     );
+  });
+
+  it("moves wall clocks skipped by DST forward", () => {
+    // 02:30 doesn't exist in New York on 2027-03-14 or in Berlin on 2027-03-28
+    expect(rezone("2027-03-14T02:30:00.000Z", "UTC", "America/New_York")).toBe(
+      "2027-03-14T07:30:00.000Z",
+    );
+    expect(rezone("2027-03-28T02:30:00.000Z", "UTC", "Europe/Berlin")).toBe(
+      "2027-03-28T01:30:00.000Z",
+    );
+    expect(
+      fromZonedDate(new Date(2027, 2, 14, 2, 30), "America/New_York"),
+    ).toBe("2027-03-14T07:30:00.000Z");
   });
 
   it("keeps the wall clock when switching timezones", () => {

@@ -6,7 +6,7 @@ export function listTimezones(): string[] {
     const supported =
       typeof Intl.supportedValuesOf === "function"
         ? Intl.supportedValuesOf("timeZone")
-        : [];
+        : [getCurrentTimezone()];
     timezones = ["UTC", ...supported.filter((tz) => tz !== "UTC")];
   }
   return timezones;
@@ -107,5 +107,7 @@ export function rezone(iso: string, from: string, to: string): string {
 function wallClockToInstant(wall: number, timezone: string): number {
   // The offset at the guess can differ from the one at the result around DST changes.
   const guess = wall - offsetAt(wall, timezone);
-  return wall - offsetAt(guess, timezone);
+  const res = wall - offsetAt(guess, timezone);
+  // A wall clock skipped by a DST change moves forward, like local Dates do.
+  return wallClockAt(res, timezone) === wall ? res : Math.max(guess, res);
 }
