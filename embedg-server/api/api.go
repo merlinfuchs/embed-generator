@@ -122,7 +122,9 @@ func Serve(ctx context.Context, env *Env, config APIConfig) {
 				})
 			}
 		},
-		BodyLimit: 1024 * 1024 * 32, // 32 MB
+		// Attachments arrive base64 encoded, which is a third larger, so the 24.5 MiB of files the
+		// editor allows under Discord's 25 MiB per message need about 32.7 MiB plus the message.
+		BodyLimit: 1024 * 1024 * 35,
 	})
 
 	// We don't want the whole app to crash but panics are still very bad
