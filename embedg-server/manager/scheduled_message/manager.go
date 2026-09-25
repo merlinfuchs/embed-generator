@@ -267,7 +267,12 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 			return fmt.Errorf("channel not in cache: %w", err)
 		}
 
-		if errors.Is(err, webhook.ErrMessageNotEditable) || common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeUnknownMessage) {
+		// Another user's message is one the custom bot sent before it was replaced by another bot.
+		if errors.Is(err, webhook.ErrMessageNotEditable) || common.IsDiscordRestErrorCode(
+			err,
+			rest.JSONErrorCodeUnknownMessage,
+			rest.JSONErrorCodeCannotEditMessageAuthoredByAnotherUser,
+		) {
 			return m.disable(ctx, scheduledMessage, "message to edit is gone or can't be edited")
 		}
 
