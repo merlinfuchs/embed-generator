@@ -30,12 +30,12 @@ All personal information that you provide to us must be true, complete, and accu
 
 ## Information Collected Automatically
 
-Some information is collected automatically when you visit or use the Services. It does not reveal your identity, but may include:
+Some information is collected automatically when you visit or use the Services. It may include:
 
 - **Log and usage data.** Service-related, diagnostic, usage, and performance information our servers record in log files. Depending on how you interact with us, this may include your IP address, device information, browser type and settings, the pages and features you use, timestamps, and error reports.
 - **Device data.** Information about the computer, phone, tablet, or other device you use to access the Services, such as your IP address, browser type, hardware model, operating system, internet service provider, and system configuration.
 
-This information is primarily needed to maintain the security and operation of the Services, and for our internal analytics and reporting. Our analytics run on software we host ourselves, so usage data is not sent to a third-party analytics provider. We also collect information through cookies and similar technologies, which is described in our [Cookie Policy](/cookies).
+This information is primarily needed to maintain the security and operation of the Services, and for our internal analytics and reporting. Our analytics run on software we host ourselves, so usage data is not sent to a third-party analytics provider. While you are logged in to the editor, we link this usage data to your Discord user ID and username, as described in the [Cookie Policy](/cookies#analytics). We also collect information through cookies and similar technologies, which is described in our [Cookie Policy](/cookies).
 
 ## How We Use Your Information
 
@@ -43,6 +43,7 @@ We process your personal information to:
 
 - create and authenticate your account and keep it in working order
 - provide the Services you request
+- understand how the Services are used, so we can improve them
 - fulfill and manage your orders, payments, and refunds
 - protect the Services against abuse, fraud, and security incidents
 - comply with our legal obligations
@@ -56,6 +57,7 @@ If you are located in the EU or UK, the GDPR and UK GDPR require us to explain t
 
 - **Consent.** You gave us permission to use your information for a specific purpose. You can [withdraw your consent](#withdrawing-your-consent) at any time.
 - **Performance of a contract.** Processing is necessary to fulfill our contractual obligations to you, including providing the Services.
+- **Legitimate interests.** Processing is necessary for our legitimate interests, such as understanding how the Services are used to improve them and protecting them against abuse, and those interests are not outweighed by your interests and rights. You can object to this processing at any time.
 - **Legal obligations.** Processing is necessary to comply with our legal obligations, to cooperate with law enforcement or a regulatory agency, to exercise or defend our legal rights, or to disclose information as evidence in litigation.
 - **Vital interests.** Processing is necessary to protect your vital interests or those of a third party, such as situations involving potential threats to the safety of any person.
 
@@ -152,4 +154,4 @@ Alte Str. 5
 04229 Leipzig  
 Germany
 
-_Last updated September 20, 2026_
+_Last updated September 25, 2026_
