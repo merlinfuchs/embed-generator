@@ -475,12 +475,14 @@ export const createDocumentStore = (
             clear: () => set(fromMessage(initialMessage)),
 
             // The two modes cannot hold each other's content, so the toggle
-            // replaces the message rather than editing it.
+            // replaces the message rather than editing it. Who gets pinged is
+            // not content and carries over.
             setComponentsV2: (enabled) =>
               set(
-                fromMessage(
-                  enabled ? emptyComponentsV2Message : defaultMessage,
-                ),
+                fromMessage({
+                  ...(enabled ? emptyComponentsV2Message : defaultMessage),
+                  allowed_mentions: selectAllowedMentions(get()),
+                }),
               ),
           }),
           {
@@ -650,6 +652,14 @@ export function useNodeActions(id: NodeId) {
     remove: slot === "accessory" ? undefined : () => remove(id),
   };
 }
+
+/** Just the field: the root node changes with every keystroke in the content. */
+export function selectAllowedMentions(state: DocumentData) {
+  const root = state.nodes[state.rootId];
+  return root?.type === "message" ? root.allowed_mentions : undefined;
+}
+
+export const useAllowedMentions = () => useDocument(selectAllowedMentions);
 
 export const useComponentsV2Enabled = () =>
   useDocument((state) => {

@@ -3,7 +3,10 @@ import {
   CodeBracketSquareIcon,
   SparklesIcon,
   LinkIcon,
+  Cog6ToothIcon,
 } from "@heroicons/react/20/solid";
+import { isDefaultAllowedMentions } from "../discord/allowedMentions";
+import { useAllowedMentions } from "../state/document";
 import { usePremiumGuildFeatures } from "../util/premium";
 import EditorUndoButtons from "./EditorUndoButtons";
 import EditorIconButton from "./EditorIconButton";
@@ -12,6 +15,8 @@ import EditorComponentsV2Toggle from "./EditorComponentsV2Toggle";
 export default function EditorMenuBar() {
   const aiAssistantAllowed = usePremiumGuildFeatures()?.ai_assistant;
   const componentsV2Allowed = usePremiumGuildFeatures()?.components_v2;
+  // Easy to forget behind a modal otherwise.
+  const settingsChanged = !isDefaultAllowedMentions(useAllowedMentions());
 
   return (
     <div className="flex flex-col-reverse md:flex-row gap-5 justify-between md:items-center mb-5 mt-5">
@@ -25,6 +30,15 @@ export default function EditorMenuBar() {
         </EditorIconButton>
         <EditorIconButton label="Share Message" href="/editor/share">
           <LinkIcon />
+        </EditorIconButton>
+        <EditorIconButton
+          label={
+            settingsChanged ? "Message Settings (changed)" : "Message Settings"
+          }
+          href="/editor/settings"
+          indicator={settingsChanged}
+        >
+          <Cog6ToothIcon />
         </EditorIconButton>
         {aiAssistantAllowed && (
           <EditorIconButton

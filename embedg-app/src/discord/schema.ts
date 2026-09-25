@@ -537,11 +537,11 @@ export const messageTtsSchema = z.boolean();
 
 export type MessageTts = z.infer<typeof messageTtsSchema>;
 
+export const mentionTypeSchema = z.enum(["users", "roles", "everyone"]);
+
 export const messageAllowedMentionsSchema = z.optional(
   z.object({
-    parse: z.array(
-      z.literal("users").or(z.literal("roles")).or(z.literal("everyone")),
-    ),
+    parse: z.array(mentionTypeSchema),
     roles: z.array(z.string()),
     users: z.array(z.string()),
     replied_user: z.boolean(),

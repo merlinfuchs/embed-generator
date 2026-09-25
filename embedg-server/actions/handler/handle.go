@@ -200,23 +200,10 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				return templateErr(err)
 			}
 
-			allowedMentions := []discord.AllowedMentionType{
-				discord.AllowedMentionTypeUsers,
-			}
-			if action.AllowRoleMentions {
-				allowedMentions = append(
-					allowedMentions,
-					discord.AllowedMentionTypeRoles,
-					discord.AllowedMentionTypeEveryone,
-				)
-			}
-
 			i.Respond(discord.MessageCreate{
-				Content: content,
-				Flags:   flags,
-				AllowedMentions: &discord.AllowedMentions{
-					Parse: allowedMentions,
-				},
+				Content:         content,
+				Flags:           flags,
+				AllowedMentions: actionAllowedMentions(action, nil),
 			})
 		case actions.ActionTypeToggleRole:
 			member, roleID, err := roleTarget(interaction, action, derivedPerms, "toggle")
@@ -302,17 +289,6 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				}
 			}
 
-			allowedMentions := []discord.AllowedMentionType{
-				discord.AllowedMentionTypeUsers,
-			}
-			if action.AllowRoleMentions {
-				allowedMentions = append(
-					allowedMentions,
-					discord.AllowedMentionTypeRoles,
-					discord.AllowedMentionTypeEveryone,
-				)
-			}
-
 			// We need to get the message id of the response, so it has to be a followup response
 			if !i.HasResponded() {
 				i.Respond(discord.MessageCreate{
@@ -321,13 +297,11 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 			}
 
 			newMsg := i.Respond(discord.MessageCreate{
-				Content:    data.Content,
-				Embeds:     data.Embeds,
-				Components: components,
-				Flags:      data.Flags,
-				AllowedMentions: &discord.AllowedMentions{
-					Parse: allowedMentions,
-				},
+				Content:         data.Content,
+				Embeds:          data.Embeds,
+				Components:      components,
+				Flags:           data.Flags,
+				AllowedMentions: actionAllowedMentions(action, data.AllowedMentions),
 			})
 			if newMsg != nil && !legacyPermissions {
 				err = m.parser.CreateActionsForMessage(context.TODO(), data.Actions, *derivedPerms, newMsg.ID, !action.Public)
@@ -489,6 +463,29 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 	}
 
 	return nil
+}
+
+// actionAllowedMentions is who an action's response may ping: users, and roles and @everyone only
+// when the action allows role mentions. A saved message's own setting can narrow that further.
+func actionAllowedMentions(action actions.Action, saved *discord.AllowedMentions) *discord.AllowedMentions {
+	mentions := &discord.AllowedMentions{Parse: []discord.AllowedMentionType{discord.AllowedMentionTypeUsers}}
+	if action.AllowRoleMentions {
+		mentions.Parse = append(mentions.Parse, discord.AllowedMentionTypeRoles, discord.AllowedMentionTypeEveryone)
+	}
+
+	if saved != nil {
+		mentions.Parse = slices.DeleteFunc(mentions.Parse, func(t discord.AllowedMentionType) bool {
+			return !slices.Contains(saved.Parse, t)
+		})
+		// Discord rejects an id list for a type that parse already covers.
+		if !slices.Contains(mentions.Parse, discord.AllowedMentionTypeUsers) {
+			mentions.Users = saved.Users
+		}
+		if action.AllowRoleMentions && !slices.Contains(mentions.Parse, discord.AllowedMentionTypeRoles) {
+			mentions.Roles = saved.Roles
+		}
+	}
+	return mentions
 }
 
 func templateErr(err error) error {

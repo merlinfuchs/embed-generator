@@ -4,6 +4,7 @@ import { ToastContainer } from "./util/toasts";
 import EditorView from "./views/editor/editor";
 import RequestLoadingIndicator from "./components/RequestLoadingIndicator";
 import ClearView from "./views/editor/clear";
+import MessageSettingsView from "./views/editor/messageSettings";
 import ShareView from "./views/editor/share";
 import EditorSideNav from "./components/SideNav";
 import UpsellPopup from "./components/UpsellPopup";
@@ -66,6 +67,7 @@ function App() {
             />
 
             <Route path="share" element={<ShareView />} />
+            <Route path="settings" element={<MessageSettingsView />} />
             <Route
               path="share/:sharedMessageId"
               element={
