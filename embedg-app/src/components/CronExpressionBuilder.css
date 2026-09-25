@@ -59,3 +59,9 @@
 .cron_builder .cron-builder-bg {
   @apply bg-azure-500! rounded-lg! my-2!;
 }
+
+/* The server's cron parser rejects "last weekday of the month" (LW) and "N days before the end of the month" (L-N). */
+.cron_builder .well:has(> input[name="DailyRadio"][value="3"]),
+.cron_builder .well:has(> input[name="MonthlyRadio"][value="4"]) {
+  @apply hidden!;
+}

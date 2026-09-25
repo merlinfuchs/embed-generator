@@ -1,6 +1,7 @@
 package wire
 
 import (
+	"errors"
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -60,6 +61,7 @@ func (req ScheduledMessageCreateRequestWire) Validate() error {
 			validation.Required,
 		)),
 		validation.Field(&req.StartAt, validation.Required),
+		validation.Field(&req.CronTimezone, validation.By(validateTimezone)),
 	)
 }
 
@@ -92,9 +94,22 @@ func (req ScheduledMessageUpdateRequestWire) Validate() error {
 			validation.Required,
 		)),
 		validation.Field(&req.StartAt, validation.Required),
+		validation.Field(&req.CronTimezone, validation.By(validateTimezone)),
 	)
 }
 
 type ScheduledMessageUpdateResponseWire APIResponse[ScheduledMessageWire]
 
 type ScheduledMessageDeleteResponseWire APIResponse[struct{}]
+
+func validateTimezone(v any) error {
+	tz := v.(null.String).String
+	if tz == "" {
+		return nil
+	}
+	// "Local" would load the server's own timezone.
+	if _, err := time.LoadLocation(tz); err != nil || tz == "Local" {
+		return errors.New("unknown timezone")
+	}
+	return nil
+}

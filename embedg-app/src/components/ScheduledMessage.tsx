@@ -1,4 +1,3 @@
-import { parseISO } from "date-fns";
 import type { ScheduledMessageWire } from "../api/wire";
 import Tooltip from "./Tooltip";
 import {
@@ -30,7 +29,8 @@ import cronstrue from "cronstrue";
 import CronExpressionBuilder from "./CronExpressionBuilder";
 import { usePremiumGuildFeatures } from "../util/premium";
 import PremiumSuggest from "./PremiumSuggest";
-import { getCurrentTimezone } from "../util/time";
+import { formatInTimezone, rezone } from "../util/time";
+import TimezoneSelect from "./TimezoneSelect";
 import CheckBox from "./CheckBox";
 import { useGuildChannelsQuery } from "../api/queries";
 
@@ -54,6 +54,7 @@ export default function ScheduledMessage({
   const [endAt, setEndAt] = useState<string | undefined>(
     msg.end_at || undefined,
   );
+  const [timezone, setTimezone] = useState(scheduleTimezone(msg));
   const [cronExpression, setCronExpression] = useState(msg.cron_expression);
   const [savedMessageId, setSavedMessageId] = useState<string | null>(
     msg.saved_message_id,
@@ -69,6 +70,7 @@ export default function ScheduledMessage({
     setOnlyOnce(msg.only_once);
     setStartAt(msg.start_at);
     setEndAt(msg.end_at || undefined);
+    setTimezone(scheduleTimezone(msg));
     setCronExpression(msg.cron_expression);
     setSavedMessageId(msg.saved_message_id);
     setChannelId(msg.channel_id);
@@ -82,6 +84,13 @@ export default function ScheduledMessage({
     setChannelId(id);
     setThreadName(null);
     setMessageId(null);
+  }
+
+  // The picked times were meant in the new timezone, so keep their wall clock.
+  function changeTimezone(tz: string) {
+    setStartAt((v) => v && rezone(v, timezone, tz));
+    setEndAt((v) => v && rezone(v, timezone, tz));
+    setTimezone(tz);
   }
 
   const selectedChannel = useMemo(
@@ -122,11 +131,7 @@ export default function ScheduledMessage({
           thread_name: threadName,
           saved_message_id: savedMessageId,
           cron_expression: cronExpression,
-          // keep the stored timezone unless the schedule itself was edited
-          cron_timezone:
-            cronExpression !== msg.cron_expression
-              ? getCurrentTimezone()
-              : (msg.cron_timezone ?? getCurrentTimezone()),
+          cron_timezone: timezone,
           start_at: startAt,
           end_at: endAt ?? null,
           only_once: onlyOnce,
@@ -321,6 +326,16 @@ export default function ScheduledMessage({
                   </div>
                 </button>
               </div>
+              {(onlyOnce || features?.periodic_scheduled_messages) && (
+                <div>
+                  <div className="mb-1.5 flex">
+                    <div className="uppercase text-mist-300 text-sm font-medium">
+                      Timezone
+                    </div>
+                  </div>
+                  <TimezoneSelect value={timezone} onChange={changeTimezone} />
+                </div>
+              )}
               {onlyOnce ? (
                 <div>
                   <div>
@@ -333,6 +348,7 @@ export default function ScheduledMessage({
                       value={startAt}
                       onChange={setStartAt}
                       clearable={false}
+                      timezone={timezone}
                     />
                   </div>
                 </div>
@@ -349,6 +365,7 @@ export default function ScheduledMessage({
                         value={startAt}
                         onChange={setStartAt}
                         clearable={false}
+                        timezone={timezone}
                       />
                     </div>
                     <div className="flex-auto">
@@ -361,6 +378,7 @@ export default function ScheduledMessage({
                         value={endAt}
                         onChange={setEndAt}
                         clearable={true}
+                        timezone={timezone}
                       />
                     </div>
                   </div>
@@ -392,8 +410,15 @@ export default function ScheduledMessage({
               <div className="text-mist-400 text-sm font-light whitespace-normal">
                 {!msg.only_once
                   ? cronToString(msg.cron_expression)
-                  : formatDateTime(msg.start_at)}
+                  : formatInTimezone(msg.start_at, scheduleTimezone(msg))}{" "}
+                ({scheduleTimezone(msg)})
               </div>
+              {!msg.only_once && msg.enabled && (
+                <div className="text-mist-400 text-sm font-light whitespace-normal">
+                  Next run in your time:{" "}
+                  {new Date(msg.next_at).toLocaleString()}
+                </div>
+              )}
             </div>
             <div className="flex flex-none items-center space-x-4 md:space-x-3">
               <button
@@ -433,8 +458,9 @@ export default function ScheduledMessage({
   );
 }
 
-function formatDateTime(v: string): string {
-  return parseISO(v).toLocaleString();
+// Schedules from before timezones were stored run in UTC.
+function scheduleTimezone(msg: ScheduledMessageWire): string {
+  return msg.cron_timezone || "UTC";
 }
 
 function cronToString(v: string | null): string {

@@ -20,7 +20,8 @@ import { ChannelSelect } from "./ChannelSelect";
 import CronExpressionBuilder from "./CronExpressionBuilder";
 import { usePremiumGuildFeatures } from "../util/premium";
 import PremiumSuggest from "./PremiumSuggest";
-import { getCurrentTimezone } from "../util/time";
+import { getCurrentTimezone, rezone } from "../util/time";
+import TimezoneSelect from "./TimezoneSelect";
 import { useGuildChannelsQuery } from "../api/queries";
 
 export default function ScheduledMessageCreate({
@@ -40,6 +41,7 @@ export default function ScheduledMessageCreate({
   const [onlyOnce, setOnlyOnce] = useState(true);
   const [startAt, setStartAt] = useState<string | undefined>();
   const [endAt, setEndAt] = useState<string | undefined>();
+  const [timezone, setTimezone] = useState(getCurrentTimezone);
   const [cronExpression, setCronExpression] = useState<string | null>(
     "* * * * *",
   );
@@ -53,6 +55,13 @@ export default function ScheduledMessageCreate({
     setChannelId(id);
     setThreadName(null);
     setMessageId(null);
+  }
+
+  // The picked times were meant in the new timezone, so keep their wall clock.
+  function changeTimezone(tz: string) {
+    setStartAt((v) => v && rezone(v, timezone, tz));
+    setEndAt((v) => v && rezone(v, timezone, tz));
+    setTimezone(tz);
   }
 
   const selectedChannel = useMemo(
@@ -92,7 +101,7 @@ export default function ScheduledMessageCreate({
           thread_name: threadName,
           saved_message_id: savedMessageId,
           cron_expression: cronExpression,
-          cron_timezone: getCurrentTimezone(),
+          cron_timezone: timezone,
           start_at: startAt,
           end_at: endAt ?? null,
           only_once: onlyOnce,
@@ -246,6 +255,16 @@ export default function ScheduledMessageCreate({
             </div>
           </button>
         </div>
+        {(onlyOnce || features?.periodic_scheduled_messages) && (
+          <div>
+            <div className="mb-1.5 flex">
+              <div className="uppercase text-mist-300 text-sm font-medium">
+                Timezone
+              </div>
+            </div>
+            <TimezoneSelect value={timezone} onChange={changeTimezone} />
+          </div>
+        )}
         {onlyOnce ? (
           <div>
             <div>
@@ -258,6 +277,7 @@ export default function ScheduledMessageCreate({
                 value={startAt}
                 onChange={setStartAt}
                 clearable={false}
+                timezone={timezone}
               />
             </div>
           </div>
@@ -274,6 +294,7 @@ export default function ScheduledMessageCreate({
                   value={startAt}
                   onChange={setStartAt}
                   clearable={false}
+                  timezone={timezone}
                 />
               </div>
               <div className="flex-auto">
@@ -286,6 +307,7 @@ export default function ScheduledMessageCreate({
                   value={endAt}
                   onChange={setEndAt}
                   clearable={true}
+                  timezone={timezone}
                 />
               </div>
             </div>

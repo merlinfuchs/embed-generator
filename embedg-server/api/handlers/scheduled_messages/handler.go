@@ -17,6 +17,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/manager/webhook"
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
+	"gopkg.in/guregu/null.v4"
 )
 
 type ScheduledMessageHandler struct {
@@ -87,22 +88,9 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 		req.StartAt = time.Now().UTC()
 	}
 
-	nextAt := req.StartAt
-	if !req.OnlyOnce {
-		var err error
-		nextAt, err = scheduled_messages.GetFirstCronTick(req.CronExpression.String, req.StartAt, req.CronTimezone.String)
-		if err != nil {
-			return handlers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
-		}
-
-		nextNextAt, err := scheduled_messages.GetNextCronTick(req.CronExpression.String, nextAt, req.CronTimezone.String)
-		if err != nil {
-			return handlers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
-		}
-
-		if nextNextAt.Sub(nextAt) < time.Minute {
-			return handlers.BadRequest("invalid_cron_expression", "The cron expression is too tight and will trigger too often.")
-		}
+	nextAt, err := firstRun(req.OnlyOnce, req.CronExpression, req.CronTimezone, req.StartAt)
+	if err != nil {
+		return err
 	}
 
 	existingCount, err := h.scheduledMessageStore.CountScheduledMessages(c.UserContext(), guildID)
@@ -265,21 +253,9 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 			req.StartAt = now
 		}
 
-		nextAt = req.StartAt
-		if !req.OnlyOnce {
-			nextAt, err = scheduled_messages.GetFirstCronTick(req.CronExpression.String, req.StartAt, req.CronTimezone.String)
-			if err != nil {
-				return handlers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
-			}
-
-			nextNextAt, err := scheduled_messages.GetNextCronTick(req.CronExpression.String, nextAt, req.CronTimezone.String)
-			if err != nil {
-				return handlers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
-			}
-
-			if nextNextAt.Sub(nextAt) < time.Minute {
-				return handlers.BadRequest("invalid_cron_expression", "The cron expression is too tight and will trigger too often.")
-			}
+		nextAt, err = firstRun(req.OnlyOnce, req.CronExpression, req.CronTimezone, req.StartAt)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -346,6 +322,29 @@ func (h *ScheduledMessageHandler) HandleDeleteScheduledMessage(c *fiber.Ctx) err
 		Success: true,
 		Data:    struct{}{},
 	})
+}
+
+// firstRun validates the schedule and returns when it first runs, at or after startAt.
+func firstRun(onlyOnce bool, cronExpression null.String, cronTimezone null.String, startAt time.Time) (time.Time, error) {
+	if onlyOnce {
+		return startAt, nil
+	}
+
+	nextAt, err := scheduled_messages.GetFirstCronTick(cronExpression.String, startAt, cronTimezone.String)
+	if err != nil {
+		return time.Time{}, handlers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
+	}
+
+	nextNextAt, err := scheduled_messages.GetNextCronTick(cronExpression.String, nextAt, cronTimezone.String)
+	if err != nil {
+		return time.Time{}, handlers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
+	}
+
+	if nextNextAt.Sub(nextAt) < time.Minute {
+		return time.Time{}, handlers.BadRequest("invalid_cron_expression", "The cron expression is too tight and will trigger too often.")
+	}
+
+	return nextAt, nil
 }
 
 func scheduledMessageModelToWire(model *model.ScheduledMessage) wire.ScheduledMessageWire {

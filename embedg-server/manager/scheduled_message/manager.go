@@ -135,7 +135,13 @@ func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, s
 		scheduledMessage.CronTimezone.String,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to parse cron expression %s from scheduled message: %w", scheduledMessage.CronExpression.String, err)
+		// Leaving next_at in the past would send it again on every tick.
+		slog.Error(
+			"Failed to compute next run of scheduled message",
+			slog.Any("error", err),
+			slog.String("scheduled_message_id", scheduledMessage.ID),
+		)
+		return m.disable(ctx, scheduledMessage, "invalid schedule")
 	}
 
 	err = m.scheduledMessageStore.UpdateScheduledMessageNextAt(ctx, scheduledMessage.GuildID, scheduledMessage.ID, nextAt, now)
