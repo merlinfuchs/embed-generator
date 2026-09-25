@@ -311,7 +311,7 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
   return (
     <ClickOutsideHandler
       onClickOutside={() => setOpen(false)}
-      className="relative"
+      className={clsx("relative", !collapsed && "px-3")}
     >
       <button
         type="button"
@@ -319,7 +319,7 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
           "relative flex items-center cursor-pointer w-full text-left",
           collapsed
             ? "group"
-            : "bg-ink-800 border border-white/5 hover:border-white/15 transition-colors mx-3 rounded-xl px-2 py-1.5",
+            : "bg-ink-800 border border-white/5 hover:border-white/15 transition-colors rounded-xl px-2 py-1.5",
         )}
         onClick={() => setOpen((prev) => !prev)}
       >
