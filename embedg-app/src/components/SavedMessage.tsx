@@ -1,7 +1,10 @@
 import {
   ArrowDownTrayIcon,
   ArrowUpTrayIcon,
+  ClipboardIcon,
+  PencilSquareIcon,
   TrashIcon,
+  XMarkIcon,
 } from "@heroicons/react/20/solid";
 import Tooltip from "../components/Tooltip";
 import type { SavedMessageWire } from "../api/wire";
@@ -13,7 +16,7 @@ import {
 import { useToasts } from "../util/toasts";
 import { useNavigate } from "react-router-dom";
 import { parseMessageWithAction } from "../discord/importSchema";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import ConfirmModal from "./ConfirmModal";
 import { getCurrentMessage, setCurrentMessage } from "../state/currentMessage";
@@ -57,6 +60,52 @@ export default function SavedMessage({
           } else {
             createToast({
               title: "Failed to update message",
+              message: resp.error.message,
+              type: "error",
+            });
+          }
+        },
+      },
+    );
+  }
+
+  const renameMessageMutation = useUpdateSavedMessageMutation();
+  // null while not renaming
+  const [newName, setNewName] = useState<string | null>(null);
+  const renaming = newName !== null;
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (renaming) nameInputRef.current?.select();
+  }, [renaming]);
+
+  function renameMessage() {
+    if (!newName) return;
+    if (newName === message.name) {
+      setNewName(null);
+      return;
+    }
+
+    renameMessageMutation.mutate(
+      {
+        messageId: message.id,
+        guildId: guildId,
+        req: {
+          name: newName,
+          description: message.description,
+          data: message.data,
+        },
+      },
+      {
+        onSuccess: (resp) => {
+          if (resp.success) {
+            queryClient.invalidateQueries({
+              queryKey: ["saved-messages", guildId],
+            });
+            setNewName(null);
+          } else {
+            createToast({
+              title: "Failed to rename message",
               message: resp.error.message,
               type: "error",
             });
@@ -114,51 +163,104 @@ export default function SavedMessage({
         key={message.id}
         className="bg-ink-700 p-3 rounded-lg flex justify-between truncate space-x-3"
       >
-        <div className="flex-auto truncate">
-          <div className="flex items-center space-x-1 truncate">
-            <div className="text-white truncate">{message.name}</div>
-            <div className="text-mist-500 text-xs hidden md:block">
-              {message.id}
+        {renaming ? (
+          <>
+            <input
+              ref={nameInputRef}
+              aria-label="Message Name"
+              className="flex-auto bg-ink-900 px-3 py-2 rounded-lg w-full text-white"
+              value={newName}
+              maxLength={25}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") renameMessage();
+                else if (e.key === "Escape") setNewName(null);
+              }}
+            />
+            <div className="flex flex-none items-center space-x-4 md:space-x-3">
+              <button
+                type="button"
+                className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
+                onClick={() => setNewName(null)}
+              >
+                <Tooltip text="Discard Changes">
+                  <XMarkIcon className="h-5 w-5" />
+                </Tooltip>
+                <div className="hidden md:block ml-2">Cancel</div>
+              </button>
+              <button
+                type="button"
+                className="flex items-center text-white cursor-pointer bg-azure-500 hover:bg-azure-400 rounded-lg px-2 py-1 disabled:bg-ink-900 disabled:cursor-not-allowed"
+                disabled={!newName || renameMessageMutation.isPending}
+                onClick={renameMessage}
+              >
+                <Tooltip text="Save Name">
+                  <ClipboardIcon className="h-5 w-5" />
+                </Tooltip>
+                <div className="ml-2">Save</div>
+              </button>
             </div>
-          </div>
-          <div className="text-mist-400 text-sm">
-            {formatUpdatedAt(message.updated_at)}
-          </div>
-        </div>
-        <div className="flex flex-none items-center space-x-4 md:space-x-3">
-          <button
-            type="button"
-            className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
-            onClick={() => setRestoreModal(true)}
-          >
-            <Tooltip text="Restore Message">
-              <ArrowDownTrayIcon className="h-5 w-5" />
-            </Tooltip>
-            <div className="hidden md:block ml-2">Restore</div>
-          </button>
+          </>
+        ) : (
+          <>
+            <div className="flex-auto truncate">
+              <div className="flex items-center space-x-1 truncate">
+                <div className="text-white truncate">{message.name}</div>
+                <div className="text-mist-500 text-xs hidden md:block">
+                  {message.id}
+                </div>
+              </div>
+              <div className="text-mist-400 text-sm">
+                {formatUpdatedAt(message.updated_at)}
+              </div>
+            </div>
+            <div className="flex flex-none items-center space-x-4 md:space-x-3">
+              <button
+                type="button"
+                className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
+                onClick={() => setRestoreModal(true)}
+              >
+                <Tooltip text="Restore Message">
+                  <ArrowDownTrayIcon className="h-5 w-5" />
+                </Tooltip>
+                <div className="hidden md:block ml-2">Restore</div>
+              </button>
 
-          <button
-            type="button"
-            className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
-            onClick={() => setUpdateModal(true)}
-          >
-            <Tooltip text="Overwrite Message">
-              <ArrowUpTrayIcon className="h-5 w-5" />
-            </Tooltip>
-            <div className="hidden md:block ml-2">Overwrite</div>
-          </button>
+              <button
+                type="button"
+                className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
+                onClick={() => setUpdateModal(true)}
+              >
+                <Tooltip text="Overwrite Message">
+                  <ArrowUpTrayIcon className="h-5 w-5" />
+                </Tooltip>
+                <div className="hidden md:block ml-2">Overwrite</div>
+              </button>
 
-          <button
-            type="button"
-            className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
-            onClick={() => setDeleteModal(true)}
-          >
-            <Tooltip text="Delete Message">
-              <TrashIcon className="h-5 w-5" />
-            </Tooltip>
-            <div className="hidden md:block ml-2">Delete</div>
-          </button>
-        </div>
+              <button
+                type="button"
+                className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
+                onClick={() => setNewName(message.name)}
+              >
+                <Tooltip text="Rename Message">
+                  <PencilSquareIcon className="h-5 w-5" />
+                </Tooltip>
+                <div className="hidden md:block ml-2">Rename</div>
+              </button>
+
+              <button
+                type="button"
+                className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
+                onClick={() => setDeleteModal(true)}
+              >
+                <Tooltip text="Delete Message">
+                  <TrashIcon className="h-5 w-5" />
+                </Tooltip>
+                <div className="hidden md:block ml-2">Delete</div>
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       {restoreModal && (
