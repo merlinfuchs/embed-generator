@@ -20,19 +20,27 @@ Some cookies are required for technical reasons in order for the website to oper
 
 | Name | Type | Provider | Purpose | Expires |
 | --- | --- | --- | --- | --- |
+| `session_token` | Cookie | message.style | Keeps you logged in | 30 days |
 | `oauth_state` | Cookie | message.style | Protects the Discord login flow against request forgery | Session |
+| `oauth_redirect` | Cookie | message.style | Returns you to the page you came from after logging in | Session |
+| `current-document` | Local storage | message.style | Remembers the message you are currently editing | Persistent |
+| `current-message` | Local storage | message.style | Where older versions of the editor kept your message, read once to carry it over | Persistent |
 | `send-settings` | Local storage | message.style | Remembers your message sending settings | Persistent |
-| `current-message` | Local storage | message.style | Remembers the message you are currently editing | Persistent |
-| `__cfruid` | Cookie | .discord.com | Used by Cloudflare to identify trusted web traffic ([privacy policy](https://www.cloudflare.com/privacypolicy/)) | Session |
-| `__dcfduid`, `__sdcfduid` | Cookie | discord.com | Set by Discord when its resources are loaded | 1 year 1 month 4 days |
+| `settings` | Local storage | message.style | Remembers your editor settings | Persistent |
+| `custom-commands-actions` | Local storage | message.style | Remembers the actions of the custom command you are editing | Persistent |
+| `upselling` | Local storage | message.style | Remembers when you first opened the editor and whether you closed the premium notice | Persistent |
+| `embedg-chunk-reload` | Session storage | message.style | Reloads the page once when a new version was deployed while you had it open | Session |
+| `__cf_bm` | Cookie | discordapp.com | Set by Cloudflare on behalf of Discord when the editor loads avatars, server icons, or emojis from Discord, to tell people from bots ([Discord privacy policy](https://discord.com/privacy)) | 30 minutes |
 
-The specific cookies served may vary depending on which parts of the site you visit.
+The specific cookies served may vary depending on which parts of the site you visit. Images you add to a message are loaded from wherever they are hosted, which may set cookies of its own.
 
 ## Analytics
 
-We measure how the site is used with OpenPanel, which we run on our own infrastructure. The data stays with us, no analytics data is sent to a third-party provider.
+We measure how the website and the editor are used with OpenPanel, which we run on our own infrastructure, including the script your browser loads for it. The data stays with us, no analytics data is sent to a third-party provider.
 
-OpenPanel does not set cookies and does not store an identifier in your browser, so there is nothing to opt out of on the cookie level. It records page views along with the technical information every web request carries, such as your IP address, user agent, and referrer. Visitors are counted using a hash derived from that data, which cannot be used to recognize you on other websites.
+OpenPanel does not set cookies and does not store an identifier in your browser, so there is nothing to opt out of on the cookie level. It records page views and clicks on links to other websites, along with the technical information every web request carries, such as your IP address, user agent, and referrer. Visitors who are not logged in are counted using a hash derived from that data, which cannot be used to recognize you on other websites.
+
+When you are logged in to the editor, we also send your Discord user ID and username with these events. That links your usage to your account across visits and devices, so we can see how the people who use the editor use its features. You can object to this, or ask us to delete that data, by emailing privacy@message.style.
 
 ## How to Control Cookies
 
@@ -63,4 +71,4 @@ Alte Str. 5
 04229 Leipzig  
 Germany
 
-_Last updated September 20, 2026_
+_Last updated September 25, 2026_
