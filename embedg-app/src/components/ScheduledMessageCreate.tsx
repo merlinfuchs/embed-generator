@@ -4,6 +4,7 @@ import { useSendSettingsStore } from "../state/sendSettings";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToasts } from "../util/toasts";
 import EditorInput from "./EditorInput";
+import { parseMessageId } from "../discord/util";
 import Tooltip from "./Tooltip";
 import {
   ArrowUpTrayIcon,
@@ -45,10 +46,13 @@ export default function ScheduledMessageCreate({
   const [savedMessageId, setSavedMessageId] = useState<string | null>(null);
   const [channelId, setChannelId] = useState<string | null>(null);
   const [threadName, setThreadName] = useState<string | null>(null);
+  const [messageId, setMessageId] = useState<string | null>(null);
 
+  // Both belong to the channel they were set for.
   useEffect(() => {
     setThreadName(null);
-  }, [channelId, setThreadName]);
+    setMessageId(null);
+  }, [channelId]);
 
   const selectedChannel = useMemo(
     () =>
@@ -83,7 +87,7 @@ export default function ScheduledMessageCreate({
           name,
           description: null,
           channel_id: channelId,
-          message_id: null,
+          message_id: messageId,
           thread_name: threadName,
           saved_message_id: savedMessageId,
           cron_expression: cronExpression,
@@ -189,6 +193,20 @@ export default function ScheduledMessageCreate({
             />
           </div>
         </div>
+        {selectedChannel && selectedChannel.type !== 15 && (
+          <div>
+            <EditorInput
+              label="Message ID or URL"
+              type="text"
+              value={messageId ?? ""}
+              onChange={(v) => setMessageId(parseMessageId(v))}
+            />
+            <div className="mt-2 text-mist-400 text-sm font-light">
+              Leave empty to send a new message every time. Set it to a message
+              sent by Embed Generator to edit that message instead.
+            </div>
+          </div>
+        )}
         {selectedChannel?.type === 15 && (
           <div>
             <EditorInput

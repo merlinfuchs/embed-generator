@@ -240,7 +240,25 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		}
 	}
 
-	msg, err := m.webhookManager.SendMessageToChannel(ctx, scheduledMessage.ChannelID, params)
+	var msg *discord.Message
+	if scheduledMessage.MessageID.Valid {
+		msg, err = m.webhookManager.UpdateMessageInChannel(ctx, scheduledMessage.ChannelID, scheduledMessage.MessageID.ID, discord.WebhookMessageUpdate{
+			Content:         &params.Content,
+			Embeds:          &params.Embeds,
+			Components:      &params.Components,
+			AllowedMentions: params.AllowedMentions,
+		})
+		if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeUnknownMessage) {
+			return m.disable(ctx, scheduledMessage, "message to edit not found")
+		}
+		var userErr *common.UserError
+		if errors.As(err, &userErr) {
+			// E.g. the message wasn't sent by a webhook, which won't change by trying again.
+			return m.disable(ctx, scheduledMessage, userErr.Message)
+		}
+	} else {
+		msg, err = m.webhookManager.SendMessageToChannel(ctx, scheduledMessage.ChannelID, params)
+	}
 	if err != nil {
 		if errors.Is(err, webhook.ErrChannelNotFound) {
 			if m.channelGone(ctx, scheduledMessage.ChannelID) {
@@ -259,7 +277,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 			return m.disable(ctx, scheduledMessage, "channel inaccessible")
 		}
 
-		return fmt.Errorf("failed to send message: %w", err)
+		return fmt.Errorf("failed to send or edit message: %w", err)
 	}
 
 	// The message is out at this point, failures below must not trigger a resend.

@@ -20,6 +20,7 @@ import { useSendSettingsStore } from "../state/sendSettings";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToasts } from "../util/toasts";
 import EditorInput from "./EditorInput";
+import { parseMessageId } from "../discord/util";
 import ConfirmModal from "./ConfirmModal";
 import SavedMessageSelect from "./SavedMessageSelect";
 import { ChannelSelect } from "./ChannelSelect";
@@ -59,6 +60,7 @@ export default function ScheduledMessage({
   );
   const [channelId, setChannelId] = useState<string | null>(msg.channel_id);
   const [threadName, setThreadName] = useState<string | null>(msg.thread_name);
+  const [messageId, setMessageId] = useState<string | null>(msg.message_id);
 
   // Leaving manage mode without saving has to put every field back, the edits live in local state.
   function cancel() {
@@ -71,13 +73,15 @@ export default function ScheduledMessage({
     setSavedMessageId(msg.saved_message_id);
     setChannelId(msg.channel_id);
     setThreadName(msg.thread_name);
+    setMessageId(msg.message_id);
     setManage(false);
   }
 
-  // A thread name belongs to the channel it was typed for.
+  // Both belong to the channel they were set for.
   function selectChannel(id: string | null) {
     setChannelId(id);
     setThreadName(null);
+    setMessageId(null);
   }
 
   const selectedChannel = useMemo(
@@ -114,7 +118,7 @@ export default function ScheduledMessage({
           name,
           description: null,
           channel_id: channelId,
-          message_id: null,
+          message_id: messageId,
           thread_name: threadName,
           saved_message_id: savedMessageId,
           cron_expression: cronExpression,
@@ -265,6 +269,21 @@ export default function ScheduledMessage({
                   />
                 </div>
               </div>
+              {selectedChannel && selectedChannel.type !== 15 && (
+                <div>
+                  <EditorInput
+                    label="Message ID or URL"
+                    type="text"
+                    value={messageId ?? ""}
+                    onChange={(v) => setMessageId(parseMessageId(v))}
+                  />
+                  <div className="mt-2 text-mist-400 text-sm font-light">
+                    Leave empty to send a new message every time. Set it to a
+                    message sent by Embed Generator to edit that message
+                    instead.
+                  </div>
+                </div>
+              )}
               {selectedChannel?.type === 15 && (
                 <div>
                   <EditorInput

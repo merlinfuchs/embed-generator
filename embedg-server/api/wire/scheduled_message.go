@@ -52,6 +52,8 @@ func (req ScheduledMessageCreateRequestWire) Validate() error {
 	return validation.ValidateStruct(&req,
 		validation.Field(&req.ChannelID, validation.Required),
 		validation.Field(&req.SavedMessageID, validation.Required),
+		// Editing a message can't create a thread.
+		validation.Field(&req.ThreadName, validation.When(req.MessageID.Valid, validation.Empty)),
 		validation.Field(&req.Name, validation.Required, validation.Length(1, 32)),
 		validation.Field(&req.CronExpression, validation.When(
 			!req.OnlyOnce,
@@ -82,6 +84,8 @@ func (req ScheduledMessageUpdateRequestWire) Validate() error {
 	return validation.ValidateStruct(&req,
 		validation.Field(&req.ChannelID, validation.Required),
 		validation.Field(&req.SavedMessageID, validation.Required),
+		// Editing a message can't create a thread.
+		validation.Field(&req.ThreadName, validation.When(req.MessageID.Valid, validation.Empty)),
 		validation.Field(&req.Name, validation.Required, validation.Length(1, 32)),
 		validation.Field(&req.CronExpression, validation.When(
 			!req.OnlyOnce,

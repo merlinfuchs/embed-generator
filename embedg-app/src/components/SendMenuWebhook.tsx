@@ -5,7 +5,7 @@ import { useValidationErrorStore } from "../state/validationError";
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import { useSendSettingsStore } from "../state/sendSettings";
-import { messageUrlRegex, parseWebhookUrl } from "../discord/util";
+import { parseMessageId, parseWebhookUrl } from "../discord/util";
 import MessageRestoreButton from "./MessageRestoreButton";
 import { useToasts } from "../util/toasts";
 import { getCurrentMessage } from "../state/currentMessage";
@@ -33,17 +33,7 @@ export default function SendMenuWebhook() {
   const sendToWebhookMutation = useSendMessageToWebhookMutation();
 
   function handleMessageId(val: string) {
-    if (!val) {
-      setMessageId(null);
-      return;
-    }
-
-    const match = val.match(messageUrlRegex);
-    if (match) {
-      setMessageId(match[2]);
-    } else {
-      setMessageId(val);
-    }
+    setMessageId(parseMessageId(val));
   }
 
   const createToast = useToasts((state) => state.create);
