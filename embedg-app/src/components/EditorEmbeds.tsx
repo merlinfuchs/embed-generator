@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import {
   type EmbedFieldNode,
   slotLimit,
@@ -18,18 +17,6 @@ export default function EditorEmbeds() {
   const embedIds = useChildIds(rootId, "embeds");
   const { insert, removeChildren } = useDocumentStoreApi().getState();
 
-  const textLength = useDocument((state) =>
-    embedIds.reduce((sum, id) => {
-      const embed = state.nodes[id];
-      if (embed?.type !== "embed") return sum;
-
-      const fields = embed.fieldIds.map(
-        (fieldId) => state.nodes[fieldId] as EmbedFieldNode,
-      );
-      return sum + embedTextLength(embed, fields);
-    }, 0),
-  );
-
   return (
     <Collapsable
       id="embeds"
@@ -37,18 +24,11 @@ export default function EditorEmbeds() {
       size="large"
       validationPathPrefix={slotScope(rootId, "embeds")}
       extra={
-        <div className="flex space-x-2">
-          <div className="text-sm italic font-light text-mist-400">
+        <div className="flex space-x-2 text-sm italic font-light">
+          <div className="text-mist-400">
             {embedIds.length} / {slotLimit("message", "embeds")}
           </div>
-          <div
-            className={clsx(
-              "text-sm italic font-light",
-              textLength <= EMBEDS_TEXT_LIMIT ? "text-mist-400" : "text-red",
-            )}
-          >
-            {textLength} / {EMBEDS_TEXT_LIMIT} characters
-          </div>
+          <EmbedsTextLength embedIds={embedIds} />
         </div>
       }
     >
@@ -69,5 +49,26 @@ export default function EditorEmbeds() {
         onClear={() => removeChildren(rootId, "embeds")}
       />
     </Collapsable>
+  );
+}
+
+/** Its own component, so that typing in an embed only re-renders the count. */
+function EmbedsTextLength({ embedIds }: { embedIds: string[] }) {
+  const length = useDocument((state) =>
+    embedIds.reduce((sum, id) => {
+      const embed = state.nodes[id];
+      if (embed?.type !== "embed") return sum;
+
+      const fields = embed.fieldIds.map(
+        (fieldId) => state.nodes[fieldId] as EmbedFieldNode,
+      );
+      return sum + embedTextLength(embed, fields);
+    }, 0),
+  );
+
+  return (
+    <div className={length <= EMBEDS_TEXT_LIMIT ? "text-mist-400" : "text-red"}>
+      {length} / {EMBEDS_TEXT_LIMIT} characters
+    </div>
   );
 }

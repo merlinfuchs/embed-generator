@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { HexColorPicker } from "react-colorful";
 import ClickOutsideHandler from "./ClickOutsideHandler";
 
@@ -26,16 +26,11 @@ export default function ColorPicker({ value, onChange }: Props) {
     }
   }, [value]);
 
-  // The text input edits a draft so that a half typed color isn't replaced
-  // with the value it happens to parse to.
-  const [draft, setDraft] = useState(hexColor);
+  // What is typed while the input has focus, so that a half typed color isn't
+  // replaced with the value it happens to parse to. null shows the value.
+  const [draft, setDraft] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (parseHexColor(draft) !== value) setDraft(hexColor);
-  }, [value]);
-
-  function setDraftColor(text: string) {
-    setDraft(text);
+  function setColor(text: string) {
     const color = parseHexColor(text);
     if (color !== null && color !== value) onChange(color);
   }
@@ -52,9 +47,12 @@ export default function ColorPicker({ value, onChange }: Props) {
           type="text"
           aria-label="Hex color"
           className="bg-ink-900 rounded-r-lg p-2 w-full font-light text-white focus:outline-none"
-          value={draft}
-          onChange={(e) => setDraftColor(e.target.value)}
-          onBlur={() => setDraft(hexColor)}
+          value={draft ?? hexColor}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            setColor(e.target.value);
+          }}
+          onBlur={() => setDraft(null)}
           placeholder="rrggbb"
         />
       </div>
@@ -73,7 +71,7 @@ export default function ColorPicker({ value, onChange }: Props) {
           <div className="absolute bottom-14 right-0">
             <HexColorPicker
               color={`#${hexColor}`}
-              onChange={(color) => setDraftColor(color.slice(1))}
+              onChange={(color) => setColor(color)}
             />
           </div>
         )}

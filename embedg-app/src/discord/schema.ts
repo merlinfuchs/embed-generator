@@ -551,7 +551,7 @@ export const messageAllowedMentionsSchema = z.optional(
 export const messageThreadName = z.optional(z.string().max(100));
 
 /** How much text Discord allows across all text displays of a message. */
-export const TEXT_DISPLAYS_TEXT_LIMIT = 4000;
+const TEXT_DISPLAYS_TEXT_LIMIT = 4000;
 
 /** Every text display in the components, with the path to it. */
 function textDisplays(
@@ -612,6 +612,18 @@ export const messageSchema = z
           code: z.ZodIssueCode.custom,
           path: ["content"],
           message: "Content is required when no other fields are set",
+        });
+      }
+
+      const length = data.embeds.reduce(
+        (sum, embed) => sum + embedTextLength(embed, embed.fields),
+        0,
+      );
+      if (length > EMBEDS_TEXT_LIMIT) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["embeds"],
+          message: `All embeds together can't have more than ${EMBEDS_TEXT_LIMIT} characters (currently ${length})`,
         });
       }
     }

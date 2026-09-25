@@ -1,10 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, expect, test } from "vitest";
-import { useColoredTextStore } from "../state/coloredText";
+import {
+  DEFAULT_COLORED_TEXT,
+  useColoredTextStore,
+} from "../state/coloredText";
 import ToolsColoredText from "./ToolsColoredText";
 
 beforeEach(() => {
-  useColoredTextStore.setState({ text: null });
+  useColoredTextStore.setState({ text: DEFAULT_COLORED_TEXT });
   localStorage.clear();
 });
 

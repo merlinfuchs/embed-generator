@@ -74,3 +74,23 @@ test("every text display is flagged when they go over 4000 together", () => {
   ]);
   expect(issues[0].message).toContain("(currently 4001)");
 });
+
+function embedsMessage(...descriptionLengths: number[]) {
+  return {
+    embeds: descriptionLengths.map((length) => ({
+      description: "a".repeat(length),
+    })),
+  };
+}
+
+test("embeds can have 6000 characters in total", () => {
+  expect(messageSchema.safeParse(embedsMessage(4000, 2000)).success).toBe(true);
+});
+
+test("embeds going over 6000 characters together are flagged", () => {
+  const result = messageSchema.safeParse(embedsMessage(4000, 2001));
+  const issues = result.success ? [] : result.error.issues;
+
+  expect(issues.map((issue) => issue.path)).toEqual([["embeds"]]);
+  expect(issues[0].message).toContain("(currently 6001)");
+});

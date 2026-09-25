@@ -7,7 +7,10 @@ import {
   XMarkIcon,
 } from "@heroicons/react/20/solid";
 import Tooltip from "../components/Tooltip";
-import type { SavedMessageWire } from "../api/wire";
+import type {
+  SavedMessageUpdateRequestWire,
+  SavedMessageWire,
+} from "../api/wire";
 import { parseISO } from "date-fns";
 import {
   useDeleteSavedMessageMutation,
@@ -20,6 +23,8 @@ import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import ConfirmModal from "./ConfirmModal";
 import { getCurrentMessage, setCurrentMessage } from "../state/currentMessage";
+
+export const MAX_SAVED_MESSAGE_NAME_LENGTH = 25;
 
 function formatUpdatedAt(updatedAt: string): string {
   return parseISO(updatedAt).toLocaleString();
@@ -39,16 +44,17 @@ export default function SavedMessage({
   const updateMessageMutation = useUpdateSavedMessageMutation();
   const [updateModal, setUpdateModal] = useState(false);
 
-  function updateMessageConfirm() {
+  // The update replaces the whole message, so a rename sends the data back too.
+  function updateMessage(
+    req: Pick<SavedMessageUpdateRequestWire, "name" | "data">,
+    errorTitle: string,
+    onDone: () => void,
+  ) {
     updateMessageMutation.mutate(
       {
         messageId: message.id,
         guildId: guildId,
-        req: {
-          name: message.name,
-          description: message.description,
-          data: getCurrentMessage(),
-        },
+        req: { ...req, description: message.description },
       },
       {
         onSuccess: (resp) => {
@@ -56,10 +62,10 @@ export default function SavedMessage({
             queryClient.invalidateQueries({
               queryKey: ["saved-messages", guildId],
             });
-            setUpdateModal(false);
+            onDone();
           } else {
             createToast({
-              title: "Failed to update message",
+              title: errorTitle,
               message: resp.error.message,
               type: "error",
             });
@@ -69,7 +75,14 @@ export default function SavedMessage({
     );
   }
 
-  const renameMessageMutation = useUpdateSavedMessageMutation();
+  function updateMessageConfirm() {
+    updateMessage(
+      { name: message.name, data: getCurrentMessage() },
+      "Failed to update message",
+      () => setUpdateModal(false),
+    );
+  }
+
   // null while not renaming
   const [newName, setNewName] = useState<string | null>(null);
   const renaming = newName !== null;
@@ -86,32 +99,10 @@ export default function SavedMessage({
       return;
     }
 
-    renameMessageMutation.mutate(
-      {
-        messageId: message.id,
-        guildId: guildId,
-        req: {
-          name: newName,
-          description: message.description,
-          data: message.data,
-        },
-      },
-      {
-        onSuccess: (resp) => {
-          if (resp.success) {
-            queryClient.invalidateQueries({
-              queryKey: ["saved-messages", guildId],
-            });
-            setNewName(null);
-          } else {
-            createToast({
-              title: "Failed to rename message",
-              message: resp.error.message,
-              type: "error",
-            });
-          }
-        },
-      },
+    updateMessage(
+      { name: newName, data: message.data },
+      "Failed to rename message",
+      () => setNewName(null),
     );
   }
 
@@ -170,7 +161,7 @@ export default function SavedMessage({
               aria-label="Message Name"
               className="flex-auto bg-ink-900 px-3 py-2 rounded-lg w-full text-white"
               value={newName}
-              maxLength={25}
+              maxLength={MAX_SAVED_MESSAGE_NAME_LENGTH}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") renameMessage();
@@ -178,20 +169,16 @@ export default function SavedMessage({
               }}
             />
             <div className="flex flex-none items-center space-x-4 md:space-x-3">
-              <button
-                type="button"
-                className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
+              <RowButton
+                icon={XMarkIcon}
+                tooltip="Discard Changes"
+                label="Cancel"
                 onClick={() => setNewName(null)}
-              >
-                <Tooltip text="Discard Changes">
-                  <XMarkIcon className="h-5 w-5" />
-                </Tooltip>
-                <div className="hidden md:block ml-2">Cancel</div>
-              </button>
+              />
               <button
                 type="button"
                 className="flex items-center text-white cursor-pointer bg-azure-500 hover:bg-azure-400 rounded-lg px-2 py-1 disabled:bg-ink-900 disabled:cursor-not-allowed"
-                disabled={!newName || renameMessageMutation.isPending}
+                disabled={!newName || updateMessageMutation.isPending}
                 onClick={renameMessage}
               >
                 <Tooltip text="Save Name">
@@ -215,49 +202,33 @@ export default function SavedMessage({
               </div>
             </div>
             <div className="flex flex-none items-center space-x-4 md:space-x-3">
-              <button
-                type="button"
-                className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
+              <RowButton
+                icon={ArrowDownTrayIcon}
+                tooltip="Restore Message"
+                label="Restore"
                 onClick={() => setRestoreModal(true)}
-              >
-                <Tooltip text="Restore Message">
-                  <ArrowDownTrayIcon className="h-5 w-5" />
-                </Tooltip>
-                <div className="hidden md:block ml-2">Restore</div>
-              </button>
+              />
 
-              <button
-                type="button"
-                className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
+              <RowButton
+                icon={ArrowUpTrayIcon}
+                tooltip="Overwrite Message"
+                label="Overwrite"
                 onClick={() => setUpdateModal(true)}
-              >
-                <Tooltip text="Overwrite Message">
-                  <ArrowUpTrayIcon className="h-5 w-5" />
-                </Tooltip>
-                <div className="hidden md:block ml-2">Overwrite</div>
-              </button>
+              />
 
-              <button
-                type="button"
-                className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
+              <RowButton
+                icon={PencilSquareIcon}
+                tooltip="Rename Message"
+                label="Rename"
                 onClick={() => setNewName(message.name)}
-              >
-                <Tooltip text="Rename Message">
-                  <PencilSquareIcon className="h-5 w-5" />
-                </Tooltip>
-                <div className="hidden md:block ml-2">Rename</div>
-              </button>
+              />
 
-              <button
-                type="button"
-                className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
+              <RowButton
+                icon={TrashIcon}
+                tooltip="Delete Message"
+                label="Delete"
                 onClick={() => setDeleteModal(true)}
-              >
-                <Tooltip text="Delete Message">
-                  <TrashIcon className="h-5 w-5" />
-                </Tooltip>
-                <div className="hidden md:block ml-2">Delete</div>
-              </button>
+              />
             </div>
           </>
         )}
@@ -290,5 +261,30 @@ export default function SavedMessage({
         />
       )}
     </div>
+  );
+}
+
+function RowButton({
+  icon: Icon,
+  tooltip,
+  label,
+  onClick,
+}: {
+  icon: typeof TrashIcon;
+  tooltip: string;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
+      onClick={onClick}
+    >
+      <Tooltip text={tooltip}>
+        <Icon className="h-5 w-5" />
+      </Tooltip>
+      <div className="hidden md:block ml-2">{label}</div>
+    </button>
   );
 }

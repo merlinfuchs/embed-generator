@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { type ANSISegment, parseANSI } from "../util/ansi";
+import { parseANSI } from "../util/ansi";
 import { useColoredTextStore } from "../state/coloredText";
 
 const foregroundColors = [30, 31, 32, 33, 34, 35, 36, 37];
@@ -56,9 +56,18 @@ function editorToANSI(editor: HTMLElement) {
   return nodesToANSI(editor.childNodes, [{ fg: 2, bg: 2, st: 2 }]);
 }
 
+/** The span the style buttons wrap text in, and nodesToANSI reads back. */
+function ansiSpan(code: number): HTMLSpanElement {
+  const span = document.createElement("span");
+  span.classList.add(styles[`ansi${code}`]);
+  span.setAttribute("data-ansi", code.toString());
+  return span;
+}
+
 /** The reverse of nodesToANSI, nesting the spans the way the buttons do. */
-function segmentsToNodes(segments: ANSISegment[]): Node[] {
-  return segments.map(({ text, style }) => {
+function ansiToNodes(ansi: string): DocumentFragment {
+  const fragment = document.createDocumentFragment();
+  for (const { text, style } of parseANSI(ansi)) {
     let node: Node = document.createDocumentFragment();
     text.split("\n").forEach((line, i) => {
       if (i > 0) node.appendChild(document.createElement("br"));
@@ -67,14 +76,13 @@ function segmentsToNodes(segments: ANSISegment[]): Node[] {
 
     for (const code of [style.st, style.fg, style.bg]) {
       if (!code) continue;
-      const span = document.createElement("span");
-      span.classList.add(styles[`ansi${code}`]);
-      span.setAttribute("data-ansi", code.toString());
+      const span = ansiSpan(code);
       span.appendChild(node);
       node = span;
     }
-    return node;
-  });
+    fragment.appendChild(node);
+  }
+  return fragment;
 }
 
 export default function ToolsColoredText() {
@@ -82,14 +90,12 @@ export default function ToolsColoredText() {
 
   const [copyButtonText, setCopyButtonText] = useState("Copy Format");
 
-  // Only read on mount, the editor's DOM is the source of truth after that.
-  const [savedText] = useState(() => useColoredTextStore.getState().text);
   const setSavedText = useColoredTextStore((state) => state.setText);
 
+  // Only read on mount, the editor's DOM is the source of truth after that.
   useLayoutEffect(() => {
-    if (savedText === null) return;
     editorRef.current?.replaceChildren(
-      ...segmentsToNodes(parseANSI(savedText)),
+      ansiToNodes(useColoredTextStore.getState().text),
     );
   }, []);
 
@@ -107,12 +113,9 @@ export default function ToolsColoredText() {
     if (!selection?.rangeCount) return;
     e.preventDefault();
 
-    const fragment = document.createDocumentFragment();
-    fragment.append(...segmentsToNodes(parseANSI(text)));
-
     const range = selection.getRangeAt(0);
     range.deleteContents();
-    range.insertNode(fragment);
+    range.insertNode(ansiToNodes(text));
     range.collapse(false);
     selection.removeAllRanges();
     selection.addRange(range);
@@ -159,10 +162,8 @@ export default function ToolsColoredText() {
 
     const text = selection.toString();
 
-    const span = document.createElement("span");
+    const span = ansiSpan(style);
     span.innerText = text;
-    span.classList.add(styles[`ansi${style}`]);
-    span.setAttribute("data-ansi", style.toString());
 
     const range = selection.getRangeAt(0);
     range.deleteContents();
@@ -266,33 +267,7 @@ export default function ToolsColoredText() {
         suppressContentEditableWarning={true}
         onInput={save}
         onPaste={pasteANSI}
-      >
-        {savedText === null && (
-          <>
-            <span className={styles.ansi45} data-ansi="45">
-              Just select
-            </span>{" "}
-            <span className={styles.ansi34} data-ansi="34">
-              some text
-            </span>{" "}
-            and{" "}
-            <span className={styles.ansi32} data-ansi="32">
-              click
-            </span>{" "}
-            on the{" "}
-            <span className={styles.ansi31} data-ansi="31">
-              <span className={styles.ansi1} data-ansi="1">
-                color
-              </span>
-            </span>{" "}
-            or{" "}
-            <span className={styles.ansi4} data-ansi="4">
-              format that you like
-            </span>
-            !
-          </>
-        )}
-      </div>
+      ></div>
       <div className="flex flex-col md:flex-row md:items-center md:space-x-3 space-y-3 md:space-y-0">
         <button
           className="px-3 py-2 rounded-lg border-2 border-white/15 text-mist-100 hover:bg-white/5 hover:border-white/30 transition-colors cursor-pointer flex-none"
