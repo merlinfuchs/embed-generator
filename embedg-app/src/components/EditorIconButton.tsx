@@ -8,6 +8,8 @@ interface Props {
   href?: string;
   onClick?: () => void;
   highlight?: boolean;
+  /** A dot on the button, for settings that differ from their defaults. */
+  indicator?: boolean;
   disabled?: boolean;
   className?: string;
 }
@@ -18,6 +20,7 @@ export default function EditorIconButton({
   href,
   onClick,
   highlight,
+  indicator,
   disabled,
   className,
 }: Props) {
@@ -25,6 +28,7 @@ export default function EditorIconButton({
     <Tooltip text={label}>
       {href ? (
         <Link
+          aria-label={label}
           className={clsx(
             "rounded-lg p-2 block transition-colors",
             highlight ? "text-amber-300" : "text-mist-300 hover:text-mist-100",
@@ -35,7 +39,12 @@ export default function EditorIconButton({
           )}
           to={href}
         >
-          <div className="flex-none h-5 w-5">{children}</div>
+          <div className="flex-none h-5 w-5 relative">
+            {children}
+            {indicator && (
+              <div className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-azure-400" />
+            )}
+          </div>
         </Link>
       ) : (
         <button
@@ -52,7 +61,12 @@ export default function EditorIconButton({
           )}
           onClick={() => !disabled && onClick?.()}
         >
-          <div className="flex-none h-5 w-5">{children}</div>
+          <div className="flex-none h-5 w-5 relative">
+            {children}
+            {indicator && (
+              <div className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-azure-400" />
+            )}
+          </div>
         </button>
       )}
     </Tooltip>

@@ -655,6 +655,13 @@ export function useNodeActions(id: NodeId) {
   };
 }
 
+/** Just the field: the root node changes with every keystroke in the content. */
+export const useAllowedMentions = () =>
+  useDocument((state) => {
+    const root = state.nodes[state.rootId];
+    return root?.type === "message" ? root.allowed_mentions : undefined;
+  });
+
 export const useComponentsV2Enabled = () =>
   useDocument((state) => {
     const root = state.nodes[state.rootId];

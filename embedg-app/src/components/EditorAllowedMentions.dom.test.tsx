@@ -10,9 +10,6 @@ function allowedMentions() {
 }
 
 function checkbox(name: string) {
-  if (!screen.queryByRole("checkbox", { name })) {
-    fireEvent.click(screen.getByText("Mentions"));
-  }
   return screen.getByRole("checkbox", { name });
 }
 
