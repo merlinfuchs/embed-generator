@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"log/slog"
 
@@ -65,16 +64,9 @@ func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 	}
 
 	if handle {
-		// Buffered: this handler stops reading after three seconds, and the send must not block
-		// the goroutine below forever when it does.
-		respCh := make(chan *discord.InteractionResponse, 1)
+		responder := handlers.NewInteractionResponder()
 		client := rest.ClientForToken(customBot.Token)
-
-		ri := &handler.RestInteraction{
-			Inner:           interaction,
-			Rest:            client,
-			InitialResponse: respCh,
-		}
+		ri := handler.NewInteraction(interaction, client, responder.Respond)
 
 		go func() {
 			// Nothing recovers a panic in here, and an interaction is something any member of the
@@ -95,14 +87,7 @@ func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 			}
 		}()
 
-		select {
-		case resp := <-respCh:
-			return c.JSON(resp)
-		case <-c.Context().Done():
-			return c.SendStatus(fiber.StatusNoContent)
-		case <-time.After(3 * time.Second):
-			return c.SendStatus(fiber.StatusInternalServerError)
-		}
+		return responder.Wait(c)
 	} else {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}

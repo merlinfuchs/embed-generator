@@ -76,13 +76,9 @@ func (g *EventHandler) onMessageDelete(event *events.MessageDelete) {
 func (g *EventHandler) onComponentInteractionCreate(event *events.ComponentInteractionCreate) {
 	isAction := strings.HasPrefix(event.Data.CustomID(), "action:")
 	if isAction {
-		gi := &handler.GenericInteraction{
-			Rest:        g.rest,
-			Inner:       event.ComponentInteraction,
-			RespondFunc: event.Respond,
-		}
+		i := handler.NewInteraction(event.ComponentInteraction, g.rest, event.Respond)
 
-		err := g.actionHandler.HandleActionInteraction(g.rest, gi)
+		err := g.actionHandler.HandleActionInteraction(g.rest, i)
 		if err != nil {
 			slog.Error("Failed to handle action interaction", slog.Any("error", err))
 		}
