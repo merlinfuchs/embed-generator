@@ -22,3 +22,7 @@ You can also select messages to be sent periodically, so every hour, day or week
 Sending a message once is free. Repeating schedules are only available to [Embed Generator Premium](../premium) subscribers.
 
 ![Scheduled Messages Periodic](./scheduled-messages-periodic.png)
+
+## Timezone
+
+All times of a scheduled message are in the timezone you select for it, which defaults to the timezone of your browser. Pick UTC if you'd rather enter times in UTC. Repeating schedules follow daylight saving time changes of their timezone, so a message sent every day at 9:00 stays at 9:00.

@@ -1,12 +1,10 @@
 package scheduled_messages
 
 import (
-	"fmt"
 	"time"
 
-	_ "time/tzdata"
-
 	"github.com/adhocore/gronx"
+	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 )
 
 // GetNextCronTick returns the first tick strictly after last, evaluated in the given timezone. The result is in UTC.
@@ -20,7 +18,7 @@ func GetFirstCronTick(cronExpression string, start time.Time, timezone string) (
 }
 
 func nextTick(cronExpression string, ref time.Time, timezone string, inclusive bool) (time.Time, error) {
-	loc, err := loadLocation(timezone)
+	loc, err := common.LoadTimezone(timezone)
 	if err != nil {
 		return time.Time{}, err
 	}
@@ -51,16 +49,4 @@ func tickInLocation(cronExpression string, ref time.Time, inclusive bool) (time.
 	}
 
 	return time.Date(res.Year(), res.Month(), res.Day(), res.Hour(), res.Minute(), res.Second(), 0, ref.Location()).UTC(), nil
-}
-
-func loadLocation(timezone string) (*time.Location, error) {
-	if timezone == "" {
-		return time.UTC, nil
-	}
-
-	loc, err := time.LoadLocation(timezone)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load timezone %q: %w", timezone, err)
-	}
-	return loc, nil
 }

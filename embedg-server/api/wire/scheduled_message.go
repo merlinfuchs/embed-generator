@@ -60,6 +60,7 @@ func (req ScheduledMessageCreateRequestWire) Validate() error {
 			validation.Required,
 		)),
 		validation.Field(&req.StartAt, validation.Required),
+		validation.Field(&req.CronTimezone, validation.By(validateTimezone)),
 	)
 }
 
@@ -92,9 +93,15 @@ func (req ScheduledMessageUpdateRequestWire) Validate() error {
 			validation.Required,
 		)),
 		validation.Field(&req.StartAt, validation.Required),
+		validation.Field(&req.CronTimezone, validation.By(validateTimezone)),
 	)
 }
 
 type ScheduledMessageUpdateResponseWire APIResponse[ScheduledMessageWire]
 
 type ScheduledMessageDeleteResponseWire APIResponse[struct{}]
+
+func validateTimezone(v any) error {
+	_, err := common.LoadTimezone(v.(null.String).String)
+	return err
+}
