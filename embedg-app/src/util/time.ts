@@ -1,34 +1,21 @@
 let timezones: string[] | undefined;
 
 export function listTimezones(): string[] {
-  // Missing in browsers before Safari 15.4, they only get UTC and their own zone.
-  const supported =
-    typeof Intl.supportedValuesOf === "function"
-      ? Intl.supportedValuesOf("timeZone")
-      : [];
-  timezones ??= ["UTC", ...supported.filter((tz) => tz !== "UTC")];
-  return timezones;
-}
-
-export function isValidTimezone(timezone: string): boolean {
-  try {
-    new Intl.DateTimeFormat("en-US", { timeZone: timezone });
-    return true;
-  } catch {
-    return false;
+  if (!timezones) {
+    // Missing in browsers before Safari 15.4, they only get UTC and their own zone.
+    const supported =
+      typeof Intl.supportedValuesOf === "function"
+        ? Intl.supportedValuesOf("timeZone")
+        : [];
+    timezones = ["UTC", ...supported.filter((tz) => tz !== "UTC")];
   }
-}
-
-// Some browsers report zones like "Etc/Unknown" that can't be loaded.
-export function getCurrentTimezone(): string {
-  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  return tz && isValidTimezone(tz) ? tz : "UTC";
+  return timezones;
 }
 
 const formatters = new Map<string, Intl.DateTimeFormat>();
 
-// The wall clock of the instant in the timezone, as milliseconds of a UTC date with the same fields.
-function wallClockAt(ms: number, timezone: string): number {
+// Throws a RangeError for zones the browser doesn't know.
+function formatterFor(timezone: string): Intl.DateTimeFormat {
   let formatter = formatters.get(timezone);
   if (!formatter) {
     formatter = new Intl.DateTimeFormat("en-US", {
@@ -43,8 +30,27 @@ function wallClockAt(ms: number, timezone: string): number {
     });
     formatters.set(timezone, formatter);
   }
+  return formatter;
+}
 
-  const parts = formatter.formatToParts(ms);
+// Formatting with a zone the browser doesn't know throws, e.g. "Etc/Unknown" that some browsers report.
+export function timezoneOrUTC(timezone: string | null | undefined): string {
+  if (!timezone) return "UTC";
+  try {
+    formatterFor(timezone);
+    return timezone;
+  } catch {
+    return "UTC";
+  }
+}
+
+export function getCurrentTimezone(): string {
+  return timezoneOrUTC(Intl.DateTimeFormat().resolvedOptions().timeZone);
+}
+
+// The wall clock of the instant in the timezone, as milliseconds of a UTC date with the same fields.
+function wallClockAt(ms: number, timezone: string): number {
+  const parts = formatterFor(timezone).formatToParts(ms);
   const get = (type: Intl.DateTimeFormatPartTypes) =>
     Number(parts.find((p) => p.type === type)?.value);
 

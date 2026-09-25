@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { fromZonedDate, listTimezones, rezone, toZonedDate } from "./time";
+import {
+  fromZonedDate,
+  listTimezones,
+  rezone,
+  timezoneOrUTC,
+  toZonedDate,
+} from "./time";
 
 describe("zoned dates", () => {
   it("reads the picker's wall clock in the timezone", () => {
@@ -51,5 +57,14 @@ describe("listTimezones", () => {
     expect(tzs[0]).toBe("UTC");
     expect(tzs.filter((tz) => tz === "UTC")).toHaveLength(1);
     expect(tzs).toContain("Europe/Berlin");
+  });
+});
+
+describe("timezoneOrUTC", () => {
+  it("falls back to UTC for missing and unknown zones", () => {
+    expect(timezoneOrUTC("Europe/Berlin")).toBe("Europe/Berlin");
+    expect(timezoneOrUTC(null)).toBe("UTC");
+    expect(timezoneOrUTC("")).toBe("UTC");
+    expect(timezoneOrUTC("Etc/Unknown")).toBe("UTC");
   });
 });

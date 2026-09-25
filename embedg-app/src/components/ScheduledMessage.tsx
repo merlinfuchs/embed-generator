@@ -29,7 +29,7 @@ import cronstrue from "cronstrue";
 import CronExpressionBuilder from "./CronExpressionBuilder";
 import { usePremiumGuildFeatures } from "../util/premium";
 import PremiumSuggest from "./PremiumSuggest";
-import { isValidTimezone, rezone } from "../util/time";
+import { rezone, timezoneOrUTC } from "../util/time";
 import TimezoneSelect from "./TimezoneSelect";
 import CheckBox from "./CheckBox";
 import { useGuildChannelsQuery } from "../api/queries";
@@ -54,7 +54,8 @@ export default function ScheduledMessage({
   const [endAt, setEndAt] = useState<string | undefined>(
     msg.end_at || undefined,
   );
-  const [timezone, setTimezone] = useState(scheduleTimezone(msg));
+  const storedTimezone = timezoneOrUTC(msg.cron_timezone);
+  const [timezone, setTimezone] = useState(storedTimezone);
   const [cronExpression, setCronExpression] = useState(msg.cron_expression);
   const [savedMessageId, setSavedMessageId] = useState<string | null>(
     msg.saved_message_id,
@@ -70,7 +71,7 @@ export default function ScheduledMessage({
     setOnlyOnce(msg.only_once);
     setStartAt(msg.start_at);
     setEndAt(msg.end_at || undefined);
-    setTimezone(scheduleTimezone(msg));
+    setTimezone(storedTimezone);
     setCronExpression(msg.cron_expression);
     setSavedMessageId(msg.saved_message_id);
     setChannelId(msg.channel_id);
@@ -411,9 +412,9 @@ export default function ScheduledMessage({
                 {!msg.only_once
                   ? cronToString(msg.cron_expression)
                   : new Date(msg.start_at).toLocaleString(undefined, {
-                      timeZone: scheduleTimezone(msg),
+                      timeZone: storedTimezone,
                     })}{" "}
-                ({scheduleTimezone(msg)})
+                ({storedTimezone})
               </div>
               {!msg.only_once && msg.enabled && (
                 <div className="text-mist-400 text-sm font-light whitespace-normal">
@@ -458,12 +459,6 @@ export default function ScheduledMessage({
       )}
     </div>
   );
-}
-
-// Formatting with a zone the browser doesn't know throws, which would take down the list.
-function scheduleTimezone(msg: ScheduledMessageWire): string {
-  const tz = msg.cron_timezone;
-  return tz && isValidTimezone(tz) ? tz : "UTC";
 }
 
 function cronToString(v: string | null): string {
