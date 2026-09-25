@@ -60,7 +60,7 @@ func (m *WebhookManager) SendMessageToChannel(ctx context.Context, channelID com
 	useCustomBot := false
 	restClient, customBot, err := m.customBotManager.GetRestForGuild(ctx, channel.GuildID())
 	if err != nil {
-		slog.Error("failed to get custom bot for message username and avatar", slog.Any("error", err))
+		return nil, fmt.Errorf("Failed to get custom bot: %w", err)
 	} else if customBot != nil && params.Username == "" && params.AvatarURL == "" {
 		useCustomBot = true
 	} else if customBot != nil {
@@ -88,7 +88,7 @@ func (m *WebhookManager) SendMessageToChannel(ctx context.Context, channelID com
 			return nil, fmt.Errorf("Failed to send message: %w", err)
 		}
 	} else {
-		newMessage, err = m.sendWithWebhook(ctx, channel, restClient, params)
+		newMessage, err = m.sendWithWebhook(ctx, channel, restClient, customBot, params)
 		if err != nil {
 			return nil, err
 		}
@@ -146,118 +146,105 @@ func (m *WebhookManager) UpdateMessageInChannel(ctx context.Context, channelID c
 	return newMessage, nil
 }
 
-// sendWithWebhook sends through the channel's webhook. A cached webhook can have been deleted or
-// moved to another channel since, so either is detected and the send retried with a fresh one.
-func (m *WebhookManager) sendWithWebhook(ctx context.Context, channel discord.GuildChannel, restClient rest.Rest, params discord.WebhookMessageCreate) (*discord.Message, error) {
-	for attempt := 0; ; attempt++ {
-		webhook, key, cached, err := m.findWebhookForChannel(ctx, channel)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to find webhook: %w", err)
-		}
+var errWebhookMoved = errors.New("webhook was moved to another channel")
 
-		var threadID common.ID
-		if webhook.ChannelID != channel.ID() {
-			// The webhook was requested for a thread, but belongs to the parent channel
-			threadID = channel.ID()
-		}
-
-		msg, err := restClient.CreateWebhookMessage(webhook.ID(), webhook.Token, params, rest.CreateWebhookMessageParams{
-			Wait:           true,
-			ThreadID:       threadID,
-			WithComponents: true,
-		}, rest.WithCtx(ctx))
-
-		retry := cached && attempt == 0
-		if err != nil {
-			if retry && isStaleWebhookError(err) {
-				m.webhooks.Delete(key)
-				continue
-			}
-			return nil, fmt.Errorf("Failed to send message: %w", err)
-		}
-
-		// A forum post lands in the thread it creates, so only other sends can be checked. Sends to a
-		// thread of the webhook's old channel fail instead and are covered above.
-		if retry && params.ThreadName == "" && msg.ChannelID != channel.ID() {
-			if err := restClient.DeleteWebhookMessage(webhook.ID(), webhook.Token, msg.ID, 0, rest.WithCtx(ctx)); err != nil {
-				slog.Error("Failed to delete message sent through a moved webhook", slog.Any("error", err))
-			}
-			m.webhooks.Delete(key)
-			continue
-		}
-
-		return msg, nil
-	}
-}
-
-func (m *WebhookManager) updateWithWebhook(ctx context.Context, channel discord.GuildChannel, restClient rest.Rest, webhookID common.ID, messageID common.ID, params discord.WebhookMessageUpdate) (*discord.Message, error) {
-	for attempt := 0; ; attempt++ {
-		webhook, key, cached, err := m.getWebhookForChannel(ctx, channel, webhookID)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to get the webhook that was used to create the message: %w", err)
-		}
-
-		var threadID common.ID
-		if webhook.ChannelID != channel.ID() {
-			// The webhook was requested for a thread, but belongs to the parent channel
-			threadID = channel.ID()
-		}
-
-		msg, err := restClient.UpdateWebhookMessage(webhook.ID(), webhook.Token, messageID, params, rest.UpdateWebhookMessageParams{
-			ThreadID:       threadID,
-			WithComponents: true,
-		}, rest.WithCtx(ctx))
-		if err != nil {
-			if cached && attempt == 0 && isStaleWebhookError(err) {
-				m.webhooks.Delete(key)
-				continue
-			}
-			return nil, fmt.Errorf("Failed to edit message: %w", err)
-		}
-
-		return msg, nil
-	}
-}
-
-func isStaleWebhookError(err error) bool {
-	return common.IsDiscordRestStatusCode(err, http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound)
-}
-
-// cachedWebhook reports whether the webhook came from the cache, as only then can a failure using it
-// mean it went stale.
-func (m *WebhookManager) cachedWebhook(key string, fetch func() (*discord.IncomingWebhook, error)) (*discord.IncomingWebhook, bool, error) {
-	if item := m.webhooks.Get(key); item != nil {
-		return item.Value(), true, nil
-	}
-
-	webhook, err := common.GetOrSet(&m.singleFlight, key, m.webhooks, fetch)
-	return webhook, false, err
-}
-
-// findWebhookForChannel returns a webhook of the application that sends to the channel, creating one
-// if there is none. The application matters beyond having a token: component interactions on the
-// message go to the webhook's application.
-func (m *WebhookManager) findWebhookForChannel(ctx context.Context, target discord.GuildChannel) (*discord.IncomingWebhook, string, bool, error) {
-	channel, err := m.webhookChannel(ctx, target)
+// sendWithWebhook sends through the channel's webhook of the application that sends to it. The
+// application matters beyond having a token: component interactions on the message go to the
+// webhook's application.
+func (m *WebhookManager) sendWithWebhook(ctx context.Context, channel discord.GuildChannel, restClient rest.Rest, customBot *model.CustomBot, params discord.WebhookMessageCreate) (*discord.Message, error) {
+	webhookChannel, err := m.webhookChannel(ctx, channel)
 	if err != nil {
-		return nil, "", false, err
-	}
-
-	restClient, customBot, err := m.customBotManager.GetRestForGuild(ctx, channel.GuildID())
-	if err != nil {
-		return nil, "", false, fmt.Errorf("Failed to get custom bot: %w", err)
+		return nil, fmt.Errorf("Failed to find webhook: %w", err)
 	}
 
 	appKey := "main"
 	if customBot != nil {
 		appKey = customBot.ApplicationID.String()
 	}
-	key := "send:" + channel.ID().String() + ":" + appKey
 
-	webhook, cached, err := m.cachedWebhook(key, func() (*discord.IncomingWebhook, error) {
-		return m.fetchOrCreateWebhook(ctx, channel, restClient, customBot)
+	return m.withCachedWebhook("send:"+webhookChannel.ID().String()+":"+appKey, func() (*discord.IncomingWebhook, error) {
+		webhook, err := m.fetchOrCreateWebhook(ctx, webhookChannel, restClient, customBot)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to find webhook: %w", err)
+		}
+		return webhook, nil
+	}, func(webhook *discord.IncomingWebhook) (*discord.Message, error) {
+		msg, err := restClient.CreateWebhookMessage(webhook.ID(), webhook.Token, params, rest.CreateWebhookMessageParams{
+			Wait:           true,
+			ThreadID:       threadID(webhook, channel),
+			WithComponents: true,
+		}, rest.WithCtx(ctx))
+		if err != nil {
+			return nil, fmt.Errorf("Failed to send message: %w", err)
+		}
+
+		// A forum post lands in the thread it creates, so only other sends can be checked. Sends to a
+		// thread of the webhook's old channel fail instead.
+		if params.ThreadName == "" && msg.ChannelID != channel.ID() {
+			if err := restClient.DeleteWebhookMessage(webhook.ID(), webhook.Token, msg.ID, 0, rest.WithCtx(ctx)); err != nil {
+				slog.Error("Failed to delete message sent through a moved webhook", slog.Any("error", err))
+			}
+			return nil, errWebhookMoved
+		}
+
+		return msg, nil
 	})
-	return webhook, key, cached, err
+}
+
+func (m *WebhookManager) updateWithWebhook(ctx context.Context, channel discord.GuildChannel, restClient rest.Rest, webhookID common.ID, messageID common.ID, params discord.WebhookMessageUpdate) (*discord.Message, error) {
+	webhookChannel, err := m.webhookChannel(ctx, channel)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get the webhook that was used to create the message: %w", err)
+	}
+
+	return m.withCachedWebhook("edit:"+webhookChannel.ID().String()+":"+webhookID.String(), func() (*discord.IncomingWebhook, error) {
+		webhook, err := m.fetchWebhook(ctx, webhookChannel, webhookID)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to get the webhook that was used to create the message: %w", err)
+		}
+		return webhook, nil
+	}, func(webhook *discord.IncomingWebhook) (*discord.Message, error) {
+		msg, err := restClient.UpdateWebhookMessage(webhook.ID(), webhook.Token, messageID, params, rest.UpdateWebhookMessageParams{
+			ThreadID:       threadID(webhook, channel),
+			WithComponents: true,
+		}, rest.WithCtx(ctx))
+		if err != nil {
+			return nil, fmt.Errorf("Failed to edit message: %w", err)
+		}
+		return msg, nil
+	})
+}
+
+// withCachedWebhook runs use with the webhook cached under key, fetching it on a miss. A cached
+// webhook can have been deleted or moved since, so when use fails like that it is dropped and use
+// retried once with a fresh one.
+func (m *WebhookManager) withCachedWebhook(key string, fetch func() (*discord.IncomingWebhook, error), use func(*discord.IncomingWebhook) (*discord.Message, error)) (*discord.Message, error) {
+	if item := m.webhooks.Get(key); item != nil {
+		msg, err := use(item.Value())
+		if !isStaleWebhookError(err) {
+			return msg, err
+		}
+		m.webhooks.Delete(key)
+	}
+
+	webhook, err := common.GetOrSet(&m.singleFlight, key, m.webhooks, fetch)
+	if err != nil {
+		return nil, err
+	}
+	return use(webhook)
+}
+
+func isStaleWebhookError(err error) bool {
+	return errors.Is(err, errWebhookMoved) ||
+		common.IsDiscordRestStatusCode(err, http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound)
+}
+
+// threadID is the thread to post in when the target is one, as its webhook belongs to the parent.
+func threadID(webhook *discord.IncomingWebhook, target discord.GuildChannel) common.ID {
+	if webhook.ChannelID != target.ID() {
+		return target.ID()
+	}
+	return 0
 }
 
 func (m *WebhookManager) fetchOrCreateWebhook(ctx context.Context, channel discord.GuildChannel, restClient rest.Rest, customBot *model.CustomBot) (*discord.IncomingWebhook, error) {
@@ -290,19 +277,6 @@ func (m *WebhookManager) fetchOrCreateWebhook(ctx context.Context, channel disco
 	}
 
 	return webhook, nil
-}
-
-func (m *WebhookManager) getWebhookForChannel(ctx context.Context, target discord.GuildChannel, webhookID common.ID) (*discord.IncomingWebhook, string, bool, error) {
-	channel, err := m.webhookChannel(ctx, target)
-	if err != nil {
-		return nil, "", false, err
-	}
-
-	key := "edit:" + channel.ID().String() + ":" + webhookID.String()
-	webhook, cached, err := m.cachedWebhook(key, func() (*discord.IncomingWebhook, error) {
-		return m.fetchWebhook(ctx, channel, webhookID)
-	})
-	return webhook, key, cached, err
 }
 
 func (m *WebhookManager) fetchWebhook(ctx context.Context, channel discord.GuildChannel, webhookID common.ID) (*discord.IncomingWebhook, error) {
