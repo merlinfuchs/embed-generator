@@ -29,7 +29,7 @@ import cronstrue from "cronstrue";
 import CronExpressionBuilder from "./CronExpressionBuilder";
 import { usePremiumGuildFeatures } from "../util/premium";
 import PremiumSuggest from "./PremiumSuggest";
-import { rezone } from "../util/time";
+import { isValidTimezone, rezone } from "../util/time";
 import TimezoneSelect from "./TimezoneSelect";
 import CheckBox from "./CheckBox";
 import { useGuildChannelsQuery } from "../api/queries";
@@ -460,8 +460,10 @@ export default function ScheduledMessage({
   );
 }
 
+// Formatting with a zone the browser doesn't know throws, which would take down the list.
 function scheduleTimezone(msg: ScheduledMessageWire): string {
-  return msg.cron_timezone || "UTC";
+  const tz = msg.cron_timezone;
+  return tz && isValidTimezone(tz) ? tz : "UTC";
 }
 
 function cronToString(v: string | null): string {

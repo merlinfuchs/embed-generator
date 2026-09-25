@@ -58,8 +58,8 @@ func (c *Client) DeleteScheduledMessage(ctx context.Context, guildID common.ID, 
 	return err
 }
 
-// Start and end come from the client and may carry an offset. pgx writes the wall clock of a
-// TIMESTAMP, not the instant, so they have to be in UTC.
+// Start and end, and next for one-time messages, come from the client and may carry an offset.
+// pgx writes the wall clock of a TIMESTAMP, not the instant, so they have to be in UTC.
 func (c *Client) CreateScheduledMessage(ctx context.Context, msg model.ScheduledMessage) (*model.ScheduledMessage, error) {
 	row, err := c.Q.InsertScheduledMessage(ctx, pgmodel.InsertScheduledMessageParams{
 		ID:               msg.ID,
@@ -76,7 +76,7 @@ func (c *Client) CreateScheduledMessage(ctx context.Context, msg model.Scheduled
 		CronTimezone:     pgtype.Text{String: msg.CronTimezone.String, Valid: msg.CronTimezone.Valid},
 		StartAt:          pgtype.Timestamp{Time: msg.StartAt.UTC(), Valid: true},
 		EndAt:            pgtype.Timestamp{Time: msg.EndAt.Time.UTC(), Valid: msg.EndAt.Valid},
-		NextAt:           pgtype.Timestamp{Time: msg.NextAt, Valid: true},
+		NextAt:           pgtype.Timestamp{Time: msg.NextAt.UTC(), Valid: true},
 		OnlyOnce:         msg.OnlyOnce,
 		Enabled:          msg.Enabled,
 		CreatedAt:        pgtype.Timestamp{Time: msg.CreatedAt, Valid: true},
@@ -100,7 +100,7 @@ func (c *Client) UpdateScheduledMessage(ctx context.Context, msg model.Scheduled
 		Name:             msg.Name,
 		Description:      pgtype.Text{String: msg.Description.String, Valid: msg.Description.Valid},
 		CronExpression:   pgtype.Text{String: msg.CronExpression.String, Valid: msg.CronExpression.Valid},
-		NextAt:           pgtype.Timestamp{Time: msg.NextAt, Valid: true},
+		NextAt:           pgtype.Timestamp{Time: msg.NextAt.UTC(), Valid: true},
 		StartAt:          pgtype.Timestamp{Time: msg.StartAt.UTC(), Valid: true},
 		EndAt:            pgtype.Timestamp{Time: msg.EndAt.Time.UTC(), Valid: msg.EndAt.Valid},
 		OnlyOnce:         msg.OnlyOnce,

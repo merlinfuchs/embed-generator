@@ -1,17 +1,28 @@
 let timezones: string[] | undefined;
 
 export function listTimezones(): string[] {
-  timezones ??= [
-    "UTC",
-    ...Intl.supportedValuesOf("timeZone").filter((tz) => tz !== "UTC"),
-  ];
+  // Missing in browsers before Safari 15.4, they only get UTC and their own zone.
+  const supported =
+    typeof Intl.supportedValuesOf === "function"
+      ? Intl.supportedValuesOf("timeZone")
+      : [];
+  timezones ??= ["UTC", ...supported.filter((tz) => tz !== "UTC")];
   return timezones;
 }
 
-// Some browsers report zones like "Etc/Unknown" that the server can't load.
+export function isValidTimezone(timezone: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: timezone });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Some browsers report zones like "Etc/Unknown" that can't be loaded.
 export function getCurrentTimezone(): string {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  return listTimezones().includes(tz) ? tz : "UTC";
+  return tz && isValidTimezone(tz) ? tz : "UTC";
 }
 
 const formatters = new Map<string, Intl.DateTimeFormat>();
@@ -77,14 +88,18 @@ export function fromZonedDate(date: Date, timezone: string): string {
     date.getMinutes(),
     date.getSeconds(),
   );
-
-  // The offset at the guess can differ from the one at the result around DST changes.
-  let res = wall - offsetAt(wall, timezone);
-  res = wall - offsetAt(res, timezone);
-  return new Date(res).toISOString();
+  return new Date(wallClockToInstant(wall, timezone)).toISOString();
 }
 
 // Moves the instant so that it keeps its wall clock when switching timezones.
+// Stays off local Dates, which would shift wall clocks inside the browser's own DST gap.
 export function rezone(iso: string, from: string, to: string): string {
-  return fromZonedDate(toZonedDate(iso, from), to);
+  const wall = wallClockAt(new Date(iso).getTime(), from);
+  return new Date(wallClockToInstant(wall, to)).toISOString();
+}
+
+function wallClockToInstant(wall: number, timezone: string): number {
+  // The offset at the guess can differ from the one at the result around DST changes.
+  const guess = wall - offsetAt(wall, timezone);
+  return wall - offsetAt(guess, timezone);
 }

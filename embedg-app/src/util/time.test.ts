@@ -31,6 +31,13 @@ describe("zoned dates", () => {
     }
   });
 
+  it("rezones wall clocks that don't exist in the local timezone", () => {
+    // 02:30 is skipped in America/New_York that night, but exists in UTC and London
+    expect(rezone("2027-03-14T02:30:00.000Z", "UTC", "Europe/London")).toBe(
+      "2027-03-14T02:30:00.000Z",
+    );
+  });
+
   it("keeps the wall clock when switching timezones", () => {
     expect(rezone("2026-09-25T07:00:00.000Z", "Europe/Berlin", "UTC")).toBe(
       "2026-09-25T09:00:00.000Z",
