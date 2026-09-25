@@ -2,13 +2,17 @@ package handler
 
 import (
 	"fmt"
+	"sync"
+	"time"
 
 	"log/slog"
 
 	"github.com/disgoorg/disgo/discord"
-	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/rest"
 )
+
+// autoDeferAfter leaves a second of Discord's three for the defer itself to arrive.
+const autoDeferAfter = 2 * time.Second
 
 type Interaction interface {
 	Interaction() discord.Interaction
@@ -16,22 +20,70 @@ type Interaction interface {
 	Respond(data discord.InteractionResponseData, t ...discord.InteractionResponseType) *discord.Message
 }
 
-type GenericInteraction struct {
-	Responded   bool
-	Rest        rest.Rest
-	Inner       discord.Interaction
-	RespondFunc events.InteractionResponderFunc
+// InitialResponder sends the initial response. For interactions received over HTTP it is the
+// response to Discord's request, which is why it can't be sent through REST like the rest.
+type InitialResponder func(discord.InteractionResponse) error
+
+type restInteraction struct {
+	inner   discord.Interaction
+	rest    rest.Rest
+	initial InitialResponder
+
+	mu sync.Mutex
+	// acknowledged is set once an initial response went out, the handler's or the automatic defer.
+	acknowledged bool
+	// responded is set once the handler responded, which the automatic defer doesn't count as.
+	responded bool
 }
 
-func (i *GenericInteraction) Interaction() discord.Interaction {
-	return i.Inner
+// NewInteraction defers the interaction when the handler hasn't responded within autoDeferAfter,
+// so slow actions don't run into Discord's three second limit. The handler's responses after
+// that go out as followups and edits of the original response.
+func NewInteraction(inner discord.Interaction, rest rest.Rest, initial InitialResponder) Interaction {
+	i := &restInteraction{inner: inner, rest: rest, initial: initial}
+	time.AfterFunc(autoDeferAfter, i.autoDefer)
+	return i
 }
 
-func (i *GenericInteraction) HasResponded() bool {
-	return i.Responded
+func (i *restInteraction) Interaction() discord.Interaction {
+	return i.inner
 }
 
-func (i *GenericInteraction) Respond(data discord.InteractionResponseData, t ...discord.InteractionResponseType) *discord.Message {
+func (i *restInteraction) HasResponded() bool {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	return i.responded
+}
+
+func (i *restInteraction) autoDefer() {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+
+	if i.acknowledged {
+		return
+	}
+
+	resp := discord.InteractionResponse{Type: discord.InteractionResponseTypeDeferredUpdateMessage}
+	if i.inner.Type() != discord.InteractionTypeComponent {
+		// Whether the response will be public isn't known yet, and a private one must not end up
+		// public, so the placeholder it replaces is ephemeral.
+		resp = discord.InteractionResponse{
+			Type: discord.InteractionResponseTypeDeferredCreateMessage,
+			Data: discord.MessageCreate{Flags: discord.MessageFlagEphemeral},
+		}
+	}
+
+	if err := i.initial(resp); err != nil {
+		slog.Error("Failed to defer interaction", slog.Any("error", err))
+		return
+	}
+	i.acknowledged = true
+}
+
+func (i *restInteraction) Respond(data discord.InteractionResponseData, t ...discord.InteractionResponseType) *discord.Message {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+
 	responseType := discord.InteractionResponseTypeCreateMessage
 	if len(t) > 0 {
 		responseType = t[0]
@@ -40,154 +92,41 @@ func (i *GenericInteraction) Respond(data discord.InteractionResponseData, t ...
 	var err error
 	var msg *discord.Message
 
-	if !i.Responded {
-		err = i.RespondFunc(responseType, data)
-	} else if responseType == discord.InteractionResponseTypeCreateMessage {
+	switch {
+	case !i.acknowledged:
+		err = i.initial(discord.InteractionResponse{Type: responseType, Data: data})
+		if err == nil {
+			i.acknowledged = true
+		}
+	case !i.responded && isDeferred(responseType):
+		// The automatic defer already did this.
+	case responseType == discord.InteractionResponseTypeCreateMessage:
 		msgData, ok := data.(discord.MessageCreate)
 		if !ok {
 			err = fmt.Errorf("can't create followup message, data is not a MessageCreate")
 		} else {
-			msg, err = i.Rest.CreateFollowupMessage(i.Inner.ApplicationID(), i.Inner.Token(), msgData)
+			msg, err = i.rest.CreateFollowupMessage(i.inner.ApplicationID(), i.inner.Token(), msgData)
 		}
-	} else if responseType == discord.InteractionResponseTypeUpdateMessage {
+	case responseType == discord.InteractionResponseTypeUpdateMessage:
 		msgData, ok := data.(discord.MessageUpdate)
 		if !ok {
 			err = fmt.Errorf("can't update followup message, data is not a MessageUpdate")
 		} else {
-			msg, err = i.Rest.UpdateInteractionResponse(i.Inner.ApplicationID(), i.Inner.Token(), msgData)
+			msg, err = i.rest.UpdateInteractionResponse(i.inner.ApplicationID(), i.inner.Token(), msgData)
 		}
-	} else {
+	default:
 		err = fmt.Errorf("invalid response type after initial response, %d", responseType)
 	}
 
 	if err != nil {
 		slog.Error("Failed to respond to interaction", slog.Any("error", err))
 	} else {
-		i.Responded = true
+		i.responded = true
 	}
 
 	return msg
 }
 
-type GatewayInteraction struct {
-	Responded bool
-	Rest      rest.Rest
-	Inner     discord.Interaction
-}
-
-func (i *GatewayInteraction) Interaction() discord.Interaction {
-	return i.Inner
-}
-
-func (i *GatewayInteraction) HasResponded() bool {
-	return i.Responded
-}
-
-func (i *GatewayInteraction) Respond(data discord.InteractionResponseData, t ...discord.InteractionResponseType) *discord.Message {
-	var err error
-
-	responseType := discord.InteractionResponseTypeCreateMessage
-	if len(t) > 0 {
-		responseType = t[0]
-	}
-
-	var msg *discord.Message
-
-	if !i.Responded {
-		err = i.Rest.CreateInteractionResponse(
-			i.Inner.ID(),
-			i.Inner.Token(),
-			discord.InteractionResponse{
-				Type: responseType,
-				Data: data,
-			},
-		)
-	} else if responseType == discord.InteractionResponseTypeCreateMessage {
-		msgData, ok := data.(discord.MessageCreate)
-		if !ok {
-			err = fmt.Errorf("can't create followup message, data is not a MessageCreate")
-		} else {
-			msg, err = i.Rest.CreateFollowupMessage(i.Inner.ApplicationID(), i.Inner.Token(), msgData)
-		}
-	} else if responseType == discord.InteractionResponseTypeUpdateMessage {
-		msgData, ok := data.(discord.MessageUpdate)
-		if !ok {
-			err = fmt.Errorf("can't update followup message, data is not a MessageUpdate")
-		} else {
-			msg, err = i.Rest.UpdateInteractionResponse(i.Inner.ApplicationID(), i.Inner.Token(), msgData)
-		}
-	} else {
-		err = fmt.Errorf("invalid response type after initial response, %d", responseType)
-	}
-
-	if err != nil {
-		slog.Error("Failed to respond to interaction", slog.Any("error", err))
-	} else {
-		i.Responded = true
-	}
-
-	return msg
-}
-
-type RestInteraction struct {
-	Responded       bool
-	InitialResponse chan *discord.InteractionResponse
-	Rest            rest.Rest
-	Inner           discord.Interaction
-}
-
-func (i *RestInteraction) Interaction() discord.Interaction {
-	return i.Inner
-}
-
-func (i *RestInteraction) HasResponded() bool {
-	return i.Responded
-}
-
-func (i *RestInteraction) Respond(data discord.InteractionResponseData, t ...discord.InteractionResponseType) *discord.Message {
-	var err error
-
-	responseType := discord.InteractionResponseTypeCreateMessage
-	if len(t) > 0 {
-		responseType = t[0]
-	}
-
-	var msg *discord.Message
-
-	if !i.Responded {
-		// Never block: the request that reads this channel gives up after three seconds, and this
-		// runs on a goroutine that outlives it.
-		select {
-		case i.InitialResponse <- &discord.InteractionResponse{
-			Type: responseType,
-			Data: data,
-		}:
-		default:
-			err = fmt.Errorf("nobody is waiting for the initial response anymore")
-		}
-	} else if responseType == discord.InteractionResponseTypeCreateMessage {
-		msgData, ok := data.(discord.MessageCreate)
-		if !ok {
-			err = fmt.Errorf("can't create followup message, data is not a MessageCreate")
-		} else {
-			msg, err = i.Rest.CreateFollowupMessage(i.Inner.ApplicationID(), i.Inner.Token(), msgData)
-		}
-	} else if responseType == discord.InteractionResponseTypeUpdateMessage {
-		msgData, ok := data.(discord.MessageUpdate)
-		if !ok {
-			err = fmt.Errorf("can't update followup message, data is not a MessageUpdate")
-		} else {
-			msg, err = i.Rest.UpdateInteractionResponse(i.Inner.ApplicationID(), i.Inner.Token(), msgData)
-		}
-	} else {
-		err = fmt.Errorf("invalid response type after initial response, %d", responseType)
-	}
-
-	if err != nil {
-		slog.Error("Failed to respond to interaction", slog.Any("error", err))
-	} else {
-		i.Responded = true
-	}
-
-	return msg
+func isDeferred(t discord.InteractionResponseType) bool {
+	return t == discord.InteractionResponseTypeDeferredCreateMessage || t == discord.InteractionResponseTypeDeferredUpdateMessage
 }

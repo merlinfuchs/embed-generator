@@ -70,11 +70,16 @@ func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 		respCh := make(chan *discord.InteractionResponse, 1)
 		client := rest.ClientForToken(customBot.Token)
 
-		ri := &handler.RestInteraction{
-			Inner:           interaction,
-			Rest:            client,
-			InitialResponse: respCh,
-		}
+		ri := handler.NewInteraction(interaction, client, func(resp discord.InteractionResponse) error {
+			// Never block: the request that reads this channel gives up after three seconds, and
+			// this runs on a goroutine that outlives it.
+			select {
+			case respCh <- &resp:
+				return nil
+			default:
+				return fmt.Errorf("nobody is waiting for the initial response anymore")
+			}
+		})
 
 		go func() {
 			// Nothing recovers a panic in here, and an interaction is something any member of the
