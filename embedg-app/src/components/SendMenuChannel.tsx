@@ -43,10 +43,6 @@ export default function SendMenuChannel() {
 
   const sendToChannelMutation = useSendMessageToChannelMutation();
 
-  function handleMessageId(val: string) {
-    setMessageId(parseMessageId(val));
-  }
-
   const createToast = useToasts((state) => state.create);
 
   // One predicate per button, used for both the styling and the disabled attribute. A forum
@@ -147,7 +143,7 @@ export default function SendMenuChannel() {
               type="text"
               className="bg-ink-900 px-3 py-2 rounded-lg w-full focus:outline-none text-white"
               value={messageId ?? ""}
-              onChange={(e) => handleMessageId(e.target.value)}
+              onChange={(e) => setMessageId(parseMessageId(e.target.value))}
             />
           </div>
         )}

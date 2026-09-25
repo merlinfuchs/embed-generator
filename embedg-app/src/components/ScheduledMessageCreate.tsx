@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useScheduledMessageCreateMutation } from "../api/mutations";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { useQueryClient } from "@tanstack/react-query";
@@ -49,10 +49,11 @@ export default function ScheduledMessageCreate({
   const [messageId, setMessageId] = useState<string | null>(null);
 
   // Both belong to the channel they were set for.
-  useEffect(() => {
+  function selectChannel(id: string | null) {
+    setChannelId(id);
     setThreadName(null);
     setMessageId(null);
-  }, [channelId]);
+  }
 
   const selectedChannel = useMemo(
     () =>
@@ -189,7 +190,7 @@ export default function ScheduledMessageCreate({
             <ChannelSelect
               guildId={guildId}
               channelId={channelId}
-              onChange={setChannelId}
+              onChange={selectChannel}
             />
           </div>
         </div>

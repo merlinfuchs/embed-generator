@@ -248,14 +248,6 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 			Components:      &params.Components,
 			AllowedMentions: params.AllowedMentions,
 		})
-		if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeUnknownMessage) {
-			return m.disable(ctx, scheduledMessage, "message to edit not found")
-		}
-		var userErr *common.UserError
-		if errors.As(err, &userErr) {
-			// E.g. the message wasn't sent by a webhook, which won't change by trying again.
-			return m.disable(ctx, scheduledMessage, userErr.Message)
-		}
 	} else {
 		msg, err = m.webhookManager.SendMessageToChannel(ctx, scheduledMessage.ChannelID, params)
 	}
@@ -265,6 +257,10 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 				return m.disable(ctx, scheduledMessage, "channel not found")
 			}
 			return fmt.Errorf("channel not in cache: %w", err)
+		}
+
+		if errors.Is(err, webhook.ErrMessageNotEditable) || common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeUnknownMessage) {
+			return m.disable(ctx, scheduledMessage, "message to edit is gone or can't be edited")
 		}
 
 		if common.IsDiscordRestErrorCode(

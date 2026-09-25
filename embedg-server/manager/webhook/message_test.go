@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"testing"
@@ -274,5 +276,17 @@ func TestEditDropsDeletedWebhook(t *testing.T) {
 	}
 	if m.webhooks.Get(editWebhookKey(channelID, webhookID)) != nil {
 		t.Fatal("want the deleted webhook dropped from the cache")
+	}
+}
+
+func TestNotEditableIsAUserError(t *testing.T) {
+	err := fmt.Errorf("Failed to edit: %w", notEditable("No webhook"))
+
+	var userErr *common.UserError
+	if !errors.As(err, &userErr) || userErr.Message != "No webhook" {
+		t.Fatalf("want the user error for the API, got %v", err)
+	}
+	if !errors.Is(err, ErrMessageNotEditable) {
+		t.Fatal("want ErrMessageNotEditable for callers that stop retrying")
 	}
 }

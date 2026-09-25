@@ -32,10 +32,6 @@ export default function SendMenuWebhook() {
 
   const sendToWebhookMutation = useSendMessageToWebhookMutation();
 
-  function handleMessageId(val: string) {
-    setMessageId(parseMessageId(val));
-  }
-
   const createToast = useToasts((state) => state.create);
 
   // One predicate per button, used for both the styling and the disabled attribute. Only Discord
@@ -114,7 +110,7 @@ export default function SendMenuWebhook() {
           <input
             type="text"
             className="bg-ink-900 px-3 py-2 rounded-lg w-full focus:outline-none text-white"
-            onChange={(e) => handleMessageId(e.target.value)}
+            onChange={(e) => setMessageId(parseMessageId(e.target.value))}
             value={messageId ?? ""}
           />
         </div>

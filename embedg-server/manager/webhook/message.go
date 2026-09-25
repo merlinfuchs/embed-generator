@@ -21,6 +21,14 @@ import (
 
 var ErrChannelNotFound = errors.New("channel not found")
 
+// ErrMessageNotEditable marks a message Embed Generator can't edit, which trying again won't change.
+var ErrMessageNotEditable = errors.New("message not editable")
+
+// notEditable is a user error, so the API shows its message, that is also ErrMessageNotEditable.
+func notEditable(message string) error {
+	return fmt.Errorf("%w: %w", ErrMessageNotEditable, common.NewUserError(message))
+}
+
 // channel resolves a channel, reporting a channel the bot can no longer see as ErrChannelNotFound
 // so callers can tell that apart from a failed request.
 func (m *WebhookManager) channel(ctx context.Context, channelID common.ID) (discord.GuildChannel, error) {
@@ -120,7 +128,7 @@ func (m *WebhookManager) UpdateMessageInChannel(ctx context.Context, channelID c
 		if customBot != nil && msg.Author.ID == customBot.UserID {
 			useCustomBot = true
 		} else {
-			return nil, common.NewUserError("Message wasn't sent by a webhook and can therefore not be edited.")
+			return nil, notEditable("Message wasn't sent by a webhook and can therefore not be edited.")
 		}
 	}
 
@@ -348,12 +356,12 @@ func (m *WebhookManager) fetchWebhook(ctx context.Context, channel discord.Guild
 			if webhook != nil && webhook.Token != "" {
 				return webhook, nil
 			} else if webhook != nil {
-				return nil, common.NewUserError("The webhook belongs to another application and can't be used by Embed Generator.")
+				return nil, notEditable("The webhook belongs to another application and can't be used by Embed Generator.")
 			}
 		}
 	}
 
-	return nil, common.NewUserError("No webhook found that matches the given ID.")
+	return nil, notEditable("No webhook found that matches the given ID.")
 }
 
 func (m *WebhookManager) getWebhookForChannelWithRestClient(ctx context.Context, channelID common.ID, webhookID common.ID, restClient rest.Rest) (*discord.IncomingWebhook, error) {
