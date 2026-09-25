@@ -209,6 +209,23 @@ export const embedSchema = z
 
 export type MessageEmbed = z.infer<typeof embedSchema>;
 
+/** How much text Discord allows across all embeds of a message. */
+export const EMBEDS_TEXT_LIMIT = 6000;
+
+/** The text of an embed that counts towards `EMBEDS_TEXT_LIMIT`. */
+export function embedTextLength(
+  embed: Pick<MessageEmbed, "title" | "description" | "footer" | "author">,
+  fields: { name: string; value: string }[],
+): number {
+  return (
+    (embed.title?.length ?? 0) +
+    (embed.description?.length ?? 0) +
+    (embed.footer?.text?.length ?? 0) +
+    (embed.author?.name.length ?? 0) +
+    fields.reduce((sum, f) => sum + f.name.length + f.value.length, 0)
+  );
+}
+
 export const emojiSchema = z
   .object({
     id: z.optional(z.string()),
@@ -533,6 +550,25 @@ export const messageAllowedMentionsSchema = z.optional(
 
 export const messageThreadName = z.optional(z.string().max(100));
 
+/** How much text Discord allows across all text displays of a message. */
+export const TEXT_DISPLAYS_TEXT_LIMIT = 4000;
+
+/** Every text display in the components, with the path to it. */
+function textDisplays(
+  components: MessageComponent[],
+  path: (string | number)[],
+): { content: string; path: (string | number)[] }[] {
+  return components.flatMap((component, i) => {
+    if (component.type === 10) {
+      return [{ content: component.content, path: [...path, i] }];
+    }
+    if ("components" in component) {
+      return textDisplays(component.components, [...path, i, "components"]);
+    }
+    return [];
+  });
+}
+
 export const messageSchema = z
   .object({
     content: messageContentSchema.default(""),
@@ -556,7 +592,19 @@ export const messageSchema = z
           message: "Components are required when components v2 is enabled",
         });
       }
-      // TODO: check total text display length <= 4000
+
+      const displays = textDisplays(data.components, ["components"]);
+      const length = displays.reduce((sum, d) => sum + d.content.length, 0);
+      if (length > TEXT_DISPLAYS_TEXT_LIMIT) {
+        // On every text display, as any of them can be shortened to fix it.
+        for (const display of displays) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [...display.path, "content"],
+            message: `All text displays together can't have more than ${TEXT_DISPLAYS_TEXT_LIMIT} characters (currently ${length})`,
+          });
+        }
+      }
     } else {
       // this currently doesn't take attachments into account
       if (!data.content && !data.embeds.length && !data.components.length) {
