@@ -2,6 +2,7 @@ import { DocumentMagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { Drawer } from "vaul";
+import EditorAllowedMentions from "../../components/EditorAllowedMentions";
 import EditorAttachments from "../../components/EditorAttachments";
 import EditorComponents from "../../components/EditorComponents";
 import EditorEmbeds from "../../components/EditorEmbeds";
@@ -46,6 +47,7 @@ export default function EditorView() {
               <EditorWebhookFields />
               {!componentsV2Enabled && <EditorMessageContentField />}
               <EditorAttachments />
+              <EditorAllowedMentions />
               {!componentsV2Enabled && <EditorEmbeds />}
               <EditorComponents defaultCollapsed={!componentsV2Enabled} />
             </div>
