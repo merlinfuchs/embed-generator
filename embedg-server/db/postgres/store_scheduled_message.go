@@ -60,24 +60,25 @@ func (c *Client) DeleteScheduledMessage(ctx context.Context, guildID common.ID, 
 
 func (c *Client) CreateScheduledMessage(ctx context.Context, msg model.ScheduledMessage) (*model.ScheduledMessage, error) {
 	row, err := c.Q.InsertScheduledMessage(ctx, pgmodel.InsertScheduledMessageParams{
-		ID:             msg.ID,
-		CreatorID:      msg.CreatorID.String(),
-		GuildID:        msg.GuildID.String(),
-		ChannelID:      msg.ChannelID.String(),
-		MessageID:      pgtype.Text{String: msg.MessageID.ID.String(), Valid: msg.MessageID.Valid},
-		ThreadName:     pgtype.Text{String: msg.ThreadName.String, Valid: msg.ThreadName.Valid},
-		SavedMessageID: msg.SavedMessageID,
-		Name:           msg.Name,
-		Description:    pgtype.Text{String: msg.Description.String, Valid: msg.Description.Valid},
-		CronExpression: pgtype.Text{String: msg.CronExpression.String, Valid: msg.CronExpression.Valid},
-		CronTimezone:   pgtype.Text{String: msg.CronTimezone.String, Valid: msg.CronTimezone.Valid},
-		StartAt:        pgtype.Timestamp{Time: msg.StartAt, Valid: true},
-		EndAt:          pgtype.Timestamp{Time: msg.EndAt.Time, Valid: msg.EndAt.Valid},
-		NextAt:         pgtype.Timestamp{Time: msg.NextAt, Valid: true},
-		OnlyOnce:       msg.OnlyOnce,
-		Enabled:        msg.Enabled,
-		CreatedAt:      pgtype.Timestamp{Time: msg.CreatedAt, Valid: true},
-		UpdatedAt:      pgtype.Timestamp{Time: msg.UpdatedAt, Valid: true},
+		ID:               msg.ID,
+		CreatorID:        msg.CreatorID.String(),
+		GuildID:          msg.GuildID.String(),
+		ChannelID:        msg.ChannelID.String(),
+		MessageID:        pgtype.Text{String: msg.MessageID.ID.String(), Valid: msg.MessageID.Valid},
+		MessageWebhookID: pgtype.Text{String: msg.MessageWebhookID.ID.String(), Valid: msg.MessageWebhookID.Valid},
+		ThreadName:       pgtype.Text{String: msg.ThreadName.String, Valid: msg.ThreadName.Valid},
+		SavedMessageID:   msg.SavedMessageID,
+		Name:             msg.Name,
+		Description:      pgtype.Text{String: msg.Description.String, Valid: msg.Description.Valid},
+		CronExpression:   pgtype.Text{String: msg.CronExpression.String, Valid: msg.CronExpression.Valid},
+		CronTimezone:     pgtype.Text{String: msg.CronTimezone.String, Valid: msg.CronTimezone.Valid},
+		StartAt:          pgtype.Timestamp{Time: msg.StartAt, Valid: true},
+		EndAt:            pgtype.Timestamp{Time: msg.EndAt.Time, Valid: msg.EndAt.Valid},
+		NextAt:           pgtype.Timestamp{Time: msg.NextAt, Valid: true},
+		OnlyOnce:         msg.OnlyOnce,
+		Enabled:          msg.Enabled,
+		CreatedAt:        pgtype.Timestamp{Time: msg.CreatedAt, Valid: true},
+		UpdatedAt:        pgtype.Timestamp{Time: msg.UpdatedAt, Valid: true},
 	})
 	if err != nil {
 		return nil, err
@@ -87,22 +88,23 @@ func (c *Client) CreateScheduledMessage(ctx context.Context, msg model.Scheduled
 
 func (c *Client) UpdateScheduledMessage(ctx context.Context, msg model.ScheduledMessage) (*model.ScheduledMessage, error) {
 	row, err := c.Q.UpdateScheduledMessage(ctx, pgmodel.UpdateScheduledMessageParams{
-		ID:             msg.ID,
-		GuildID:        msg.GuildID.String(),
-		ChannelID:      msg.ChannelID.String(),
-		MessageID:      pgtype.Text{String: msg.MessageID.ID.String(), Valid: msg.MessageID.Valid},
-		ThreadName:     pgtype.Text{String: msg.ThreadName.String, Valid: msg.ThreadName.Valid},
-		SavedMessageID: msg.SavedMessageID,
-		Name:           msg.Name,
-		Description:    pgtype.Text{String: msg.Description.String, Valid: msg.Description.Valid},
-		CronExpression: pgtype.Text{String: msg.CronExpression.String, Valid: msg.CronExpression.Valid},
-		NextAt:         pgtype.Timestamp{Time: msg.NextAt, Valid: true},
-		StartAt:        pgtype.Timestamp{Time: msg.StartAt, Valid: true},
-		EndAt:          pgtype.Timestamp{Time: msg.EndAt.Time, Valid: msg.EndAt.Valid},
-		OnlyOnce:       msg.OnlyOnce,
-		Enabled:        msg.Enabled,
-		UpdatedAt:      pgtype.Timestamp{Time: msg.UpdatedAt, Valid: true},
-		CronTimezone:   pgtype.Text{String: msg.CronTimezone.String, Valid: msg.CronTimezone.Valid},
+		ID:               msg.ID,
+		GuildID:          msg.GuildID.String(),
+		ChannelID:        msg.ChannelID.String(),
+		MessageID:        pgtype.Text{String: msg.MessageID.ID.String(), Valid: msg.MessageID.Valid},
+		MessageWebhookID: pgtype.Text{String: msg.MessageWebhookID.ID.String(), Valid: msg.MessageWebhookID.Valid},
+		ThreadName:       pgtype.Text{String: msg.ThreadName.String, Valid: msg.ThreadName.Valid},
+		SavedMessageID:   msg.SavedMessageID,
+		Name:             msg.Name,
+		Description:      pgtype.Text{String: msg.Description.String, Valid: msg.Description.Valid},
+		CronExpression:   pgtype.Text{String: msg.CronExpression.String, Valid: msg.CronExpression.Valid},
+		NextAt:           pgtype.Timestamp{Time: msg.NextAt, Valid: true},
+		StartAt:          pgtype.Timestamp{Time: msg.StartAt, Valid: true},
+		EndAt:            pgtype.Timestamp{Time: msg.EndAt.Time, Valid: msg.EndAt.Valid},
+		OnlyOnce:         msg.OnlyOnce,
+		Enabled:          msg.Enabled,
+		UpdatedAt:        pgtype.Timestamp{Time: msg.UpdatedAt, Valid: true},
+		CronTimezone:     pgtype.Text{String: msg.CronTimezone.String, Valid: msg.CronTimezone.Valid},
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -141,33 +143,34 @@ func rowsToScheduledMessages(rows []pgmodel.ScheduledMessage) []model.ScheduledM
 	return messages
 }
 
-func rowToScheduledMessage(row pgmodel.ScheduledMessage) *model.ScheduledMessage {
-	var messageID common.NullID
-	if row.MessageID.Valid {
-		messageID = common.NullID{
-			Valid: true,
-			ID:    common.DefinitelyID(row.MessageID.String),
-		}
+func nullID(text pgtype.Text) common.NullID {
+	if !text.Valid {
+		return common.NullID{}
 	}
+	return common.NullID{Valid: true, ID: common.DefinitelyID(text.String)}
+}
+
+func rowToScheduledMessage(row pgmodel.ScheduledMessage) *model.ScheduledMessage {
 
 	return &model.ScheduledMessage{
-		ID:             row.ID,
-		CreatorID:      common.DefinitelyID(row.CreatorID),
-		GuildID:        common.DefinitelyID(row.GuildID),
-		ChannelID:      common.DefinitelyID(row.ChannelID),
-		MessageID:      messageID,
-		SavedMessageID: row.SavedMessageID,
-		Name:           row.Name,
-		Description:    null.NewString(row.Description.String, row.Description.Valid),
-		CronExpression: null.NewString(row.CronExpression.String, row.CronExpression.Valid),
-		OnlyOnce:       row.OnlyOnce,
-		StartAt:        row.StartAt.Time,
-		EndAt:          null.NewTime(row.EndAt.Time, row.EndAt.Valid),
-		NextAt:         row.NextAt.Time,
-		Enabled:        row.Enabled,
-		CreatedAt:      row.CreatedAt.Time,
-		UpdatedAt:      row.UpdatedAt.Time,
-		CronTimezone:   null.NewString(row.CronTimezone.String, row.CronTimezone.Valid),
-		ThreadName:     null.NewString(row.ThreadName.String, row.ThreadName.Valid),
+		ID:               row.ID,
+		CreatorID:        common.DefinitelyID(row.CreatorID),
+		GuildID:          common.DefinitelyID(row.GuildID),
+		ChannelID:        common.DefinitelyID(row.ChannelID),
+		MessageID:        nullID(row.MessageID),
+		MessageWebhookID: nullID(row.MessageWebhookID),
+		SavedMessageID:   row.SavedMessageID,
+		Name:             row.Name,
+		Description:      null.NewString(row.Description.String, row.Description.Valid),
+		CronExpression:   null.NewString(row.CronExpression.String, row.CronExpression.Valid),
+		OnlyOnce:         row.OnlyOnce,
+		StartAt:          row.StartAt.Time,
+		EndAt:            null.NewTime(row.EndAt.Time, row.EndAt.Valid),
+		NextAt:           row.NextAt.Time,
+		Enabled:          row.Enabled,
+		CreatedAt:        row.CreatedAt.Time,
+		UpdatedAt:        row.UpdatedAt.Time,
+		CronTimezone:     null.NewString(row.CronTimezone.String, row.CronTimezone.Valid),
+		ThreadName:       null.NewString(row.ThreadName.String, row.ThreadName.Valid),
 	}
 }

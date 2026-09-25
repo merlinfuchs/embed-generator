@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useScheduledMessageCreateMutation } from "../api/mutations";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToasts } from "../util/toasts";
 import EditorInput from "./EditorInput";
+import { isThreadOnlyChannel, parseMessageId } from "../discord/util";
 import Tooltip from "./Tooltip";
 import {
   ArrowUpTrayIcon,
@@ -45,10 +46,14 @@ export default function ScheduledMessageCreate({
   const [savedMessageId, setSavedMessageId] = useState<string | null>(null);
   const [channelId, setChannelId] = useState<string | null>(null);
   const [threadName, setThreadName] = useState<string | null>(null);
+  const [messageId, setMessageId] = useState<string | null>(null);
 
-  useEffect(() => {
+  // Both belong to the channel they were set for.
+  function selectChannel(id: string | null) {
+    setChannelId(id);
     setThreadName(null);
-  }, [channelId, setThreadName]);
+    setMessageId(null);
+  }
 
   const selectedChannel = useMemo(
     () =>
@@ -83,7 +88,7 @@ export default function ScheduledMessageCreate({
           name,
           description: null,
           channel_id: channelId,
-          message_id: null,
+          message_id: messageId,
           thread_name: threadName,
           saved_message_id: savedMessageId,
           cron_expression: cronExpression,
@@ -185,11 +190,26 @@ export default function ScheduledMessageCreate({
             <ChannelSelect
               guildId={guildId}
               channelId={channelId}
-              onChange={setChannelId}
+              onChange={selectChannel}
             />
           </div>
         </div>
-        {selectedChannel?.type === 15 && (
+        {channelId && !isThreadOnlyChannel(selectedChannel?.type) && (
+          <div>
+            <EditorInput
+              label="Message ID or URL"
+              type="text"
+              value={messageId ?? ""}
+              onChange={(v) => setMessageId(parseMessageId(v))}
+            />
+            <div className="mt-2 text-mist-400 text-sm font-light">
+              Leave empty to send a new message every time. Set it to a message
+              sent by Embed Generator to edit that message instead, which keeps
+              its username and avatar.
+            </div>
+          </div>
+        )}
+        {isThreadOnlyChannel(selectedChannel?.type) && (
           <div>
             <EditorInput
               label="Thread Name"

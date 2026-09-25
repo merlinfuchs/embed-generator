@@ -205,14 +205,17 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 	}
 
 	params := discord.WebhookMessageCreate{
-		Content:         data.Content,
 		Username:        data.Username,
 		AvatarURL:       data.AvatarURL,
-		TTS:             data.TTS,
-		Embeds:          data.Embeds,
 		AllowedMentions: data.AllowedMentions,
 		ThreadName:      scheduledMessage.ThreadName.String,
 		Flags:           data.Flags,
+	}
+	// Discord rejects content and embeds on a components v2 message.
+	if !data.ComponentsV2Enabled() {
+		params.Content = data.Content
+		params.Embeds = data.Embeds
+		params.TTS = data.TTS
 	}
 
 	params.Components, err = m.actionParser.ParseMessageComponents(data.Components, features.ComponentTypes)
@@ -240,13 +243,37 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		}
 	}
 
-	msg, err := m.webhookManager.SendMessageToChannel(ctx, scheduledMessage.ChannelID, params)
+	var msg *discord.Message
+	if scheduledMessage.MessageID.Valid {
+		update := discord.WebhookMessageUpdate{
+			Content:         &params.Content,
+			Embeds:          &params.Embeds,
+			Components:      &params.Components,
+			AllowedMentions: params.AllowedMentions,
+		}
+		// Only when needed, the flags of a message can't be taken away by an edit.
+		if data.ComponentsV2Enabled() {
+			update.Flags = &params.Flags
+		}
+		msg, err = m.webhookManager.UpdateMessageAsSender(ctx, scheduledMessage.ChannelID, scheduledMessage.MessageID.ID, scheduledMessage.MessageWebhookID, update)
+	} else {
+		msg, err = m.webhookManager.SendMessageToChannel(ctx, scheduledMessage.ChannelID, params)
+	}
 	if err != nil {
 		if errors.Is(err, webhook.ErrChannelNotFound) {
 			if m.channelGone(ctx, scheduledMessage.ChannelID) {
 				return m.disable(ctx, scheduledMessage, "channel not found")
 			}
 			return fmt.Errorf("channel not in cache: %w", err)
+		}
+
+		// Another user's message is one the custom bot sent before it was replaced by another bot.
+		if errors.Is(err, webhook.ErrMessageNotEditable) || common.IsDiscordRestErrorCode(
+			err,
+			rest.JSONErrorCodeUnknownMessage,
+			rest.JSONErrorCodeCannotEditMessageAuthoredByAnotherUser,
+		) {
+			return m.disable(ctx, scheduledMessage, "message to edit is gone or can't be edited")
 		}
 
 		if common.IsDiscordRestErrorCode(
@@ -259,11 +286,21 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 			return m.disable(ctx, scheduledMessage, "channel inaccessible")
 		}
 
-		return fmt.Errorf("failed to send message: %w", err)
+		return fmt.Errorf("failed to send or edit message: %w", err)
 	}
 
 	// The message is out at this point, failures below must not trigger a resend.
 	if !hasActions {
+		// An edited message may still have the action sets of what it was before.
+		if scheduledMessage.MessageID.Valid {
+			if err := m.actionParser.DeleteActionsForMessage(ctx, msg.ID); err != nil {
+				slog.Error(
+					"Failed to delete actions of edited scheduled message",
+					slog.Any("error", err),
+					slog.String("scheduled_message_id", scheduledMessage.ID),
+				)
+			}
+		}
 		return nil
 	}
 
