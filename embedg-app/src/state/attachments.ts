@@ -9,10 +9,10 @@ export const MAX_ATTACHMENTS = 10;
 export const MAX_FILE_BYTES = 20 * 1024 * 1024;
 
 /**
- * Ours, not Discord's: what one request to the server can carry once the files
- * are base64 encoded, see BodyLimit in embedg-server/api/api.go.
+ * Discord takes at most 25 MiB per message request, which also carries the
+ * message itself, so the files leave it some room.
  */
-export const MAX_TOTAL_ATTACHMENT_BYTES = 25 * 1024 * 1024;
+export const MAX_TOTAL_ATTACHMENT_BYTES = 24.5 * 1024 * 1024;
 
 export interface MessageAttachment extends MessageAttachmentWire {
   id: number;

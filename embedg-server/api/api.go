@@ -122,8 +122,8 @@ func Serve(ctx context.Context, env *Env, config APIConfig) {
 				})
 			}
 		},
-		// Attachments arrive base64 encoded, which is a third larger, so the 25 MB Discord takes
-		// per message needs about 33.3 MB plus the rest of the message.
+		// Attachments arrive base64 encoded, which is a third larger, so the 24.5 MiB of files the
+		// editor allows under Discord's 25 MiB per message need about 32.7 MiB plus the message.
 		BodyLimit: 1024 * 1024 * 35,
 	})
 

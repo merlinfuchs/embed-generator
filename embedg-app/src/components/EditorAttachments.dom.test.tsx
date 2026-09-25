@@ -37,7 +37,7 @@ test("a file over Discord's 20 MB is refused", () => {
   ]);
 });
 
-test("files that go over 25 MB together are refused", async () => {
+test("files that go over the per message limit together are refused", async () => {
   select(fileOfSize("a.mp4", 15 * MiB), fileOfSize("b.mp4", 15 * MiB));
 
   expect(useToasts.getState().toasts).toMatchObject([
