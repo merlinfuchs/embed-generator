@@ -2,7 +2,8 @@ import { useShallow } from "zustand/react/shallow";
 import clsx from "clsx";
 import {
   MAX_ATTACHMENTS,
-  MAX_ATTACHMENT_BYTES,
+  MAX_FILE_BYTES,
+  MAX_TOTAL_ATTACHMENT_BYTES,
   useCurrentAttachmentsStore,
 } from "../state/attachments";
 import { AutoAnimate } from "../util/autoAnimate";
@@ -46,12 +47,21 @@ export default function EditorAttachments() {
     input.value = "";
 
     let remaining = MAX_ATTACHMENTS - attachments.length;
+    let total = totalBytes;
 
     for (const file of files) {
-      if (file.size > MAX_ATTACHMENT_BYTES) {
+      if (file.size > MAX_FILE_BYTES) {
         createToast({
           title: "File too large",
-          message: `'${file.name}' is larger than the 25MB limit.`,
+          message: `'${file.name}' is larger than the ${formatMB(MAX_FILE_BYTES)} limit.`,
+          type: "error",
+        });
+        continue;
+      }
+      if (total + file.size > MAX_TOTAL_ATTACHMENT_BYTES) {
+        createToast({
+          title: "Attachments too large",
+          message: `All attachments together can't be larger than ${formatMB(MAX_TOTAL_ATTACHMENT_BYTES)}.`,
           type: "error",
         });
         continue;
@@ -68,6 +78,7 @@ export default function EditorAttachments() {
         break;
       }
       remaining--;
+      total += file.size;
 
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -98,10 +109,12 @@ export default function EditorAttachments() {
           <div
             className={clsx(
               "text-sm italic font-light",
-              totalBytes < MAX_ATTACHMENT_BYTES ? "text-mist-400" : "text-red",
+              totalBytes <= MAX_TOTAL_ATTACHMENT_BYTES
+                ? "text-mist-400"
+                : "text-red",
             )}
           >
-            {Math.round(totalBytes / 10_000) / 100} / 25MB
+            {formatMB(totalBytes)} / {formatMB(MAX_TOTAL_ATTACHMENT_BYTES)}
           </div>
         </div>
       }
@@ -146,4 +159,8 @@ export default function EditorAttachments() {
       />
     </Collapsable>
   );
+}
+
+function formatMB(bytes: number) {
+  return `${Math.round((bytes / 1024 / 1024) * 100) / 100} MB`;
 }
