@@ -30,10 +30,9 @@ Some cookies are required for technical reasons in order for the website to oper
 | `custom-commands-actions` | Local storage | message.style | Remembers the actions of the custom command you are editing | Persistent |
 | `upselling` | Local storage | message.style | Remembers when you first opened the editor and whether you closed the premium notice | Persistent |
 | `embedg-chunk-reload` | Session storage | message.style | Reloads the page once when a new version was deployed while you had it open | Session |
-| `__cfruid` | Cookie | .discord.com | Used by Cloudflare to identify trusted web traffic ([privacy policy](https://www.cloudflare.com/privacypolicy/)) | Session |
-| `__dcfduid`, `__sdcfduid` | Cookie | discord.com | Set by Discord when its resources are loaded | 1 year 1 month 4 days |
+| `__cf_bm` | Cookie | discordapp.com | Set by Cloudflare on behalf of Discord when the editor loads avatars, server icons, or emojis from Discord, to tell people from bots ([Discord privacy policy](https://discord.com/privacy)) | 30 minutes |
 
-The specific cookies served may vary depending on which parts of the site you visit.
+The specific cookies served may vary depending on which parts of the site you visit. Images you add to a message are loaded from wherever they are hosted, which may set cookies of its own.
 
 ## Analytics
 
