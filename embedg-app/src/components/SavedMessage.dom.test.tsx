@@ -72,10 +72,10 @@ test("renaming keeps the message data and refreshes the list", async () => {
   const [url, init] = fetchMock.mock.calls[0];
   expect(url).toBe("/api/saved-messages/msg-1");
   expect(init.method).toBe("PUT");
+  // No data, so the server keeps what is saved, even if it is newer.
   expect(JSON.parse(init.body)).toEqual({
     name: "Goodbye",
     description: null,
-    data: { content: "Hello" },
   });
   expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
 });

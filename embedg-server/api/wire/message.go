@@ -35,9 +35,10 @@ func (req SavedMessageCreateRequestWire) Validate() error {
 type SavedMessageCreateResponseWire APIResponse[SavedMessageWire]
 
 type SavedMessageUpdateRequestWire struct {
-	Name        string          `json:"name"`
-	Description null.String     `json:"description"`
-	Data        json.RawMessage `json:"data"`
+	Name        string      `json:"name"`
+	Description null.String `json:"description"`
+	// Data is left as it is when omitted, so a rename can't undo a newer overwrite.
+	Data json.RawMessage `json:"data,omitempty"`
 }
 
 func (req SavedMessageUpdateRequestWire) Validate() error {

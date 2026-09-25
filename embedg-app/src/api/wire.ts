@@ -212,7 +212,10 @@ export type SavedMessageCreateResponseWire = APIResponse<SavedMessageWire>;
 export interface SavedMessageUpdateRequestWire {
   name: string;
   description: null | string;
-  data: Record<string, any> | null;
+  /**
+   * Data is left as it is when omitted, so a rename can't undo a newer overwrite.
+   */
+  data?: Record<string, any> | null;
 }
 export type SavedMessageUpdateResponseWire = APIResponse<SavedMessageWire>;
 export type SavedMessageDeleteResponseWire = APIResponse<{

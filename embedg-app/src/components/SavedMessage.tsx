@@ -43,7 +43,6 @@ export default function SavedMessage({
   const updateMessageMutation = useUpdateSavedMessageMutation();
   const [updateModal, setUpdateModal] = useState(false);
 
-  // The update replaces the whole message, so a rename sends the data back too.
   function updateMessage(
     req: Pick<SavedMessageUpdateRequestWire, "name" | "data">,
     errorTitle: string,
@@ -98,10 +97,8 @@ export default function SavedMessage({
       return;
     }
 
-    updateMessage(
-      { name: newName, data: message.data },
-      "Failed to rename message",
-      () => setNewName(null),
+    updateMessage({ name: newName }, "Failed to rename message", () =>
+      setNewName(null),
     );
   }
 

@@ -24,6 +24,7 @@ import type {
   MessageSendToChannelRequestWire,
   MessageSendToWebhookRequestWire,
   SavedMessageCreateRequestWire,
+  SavedMessageUpdateRequestWire,
   SavedMessageCreateResponseWire,
   SavedMessageDeleteResponseWire,
   SavedMessageUpdateResponseWire,
@@ -157,7 +158,7 @@ export function useUpdateSavedMessageMutation() {
       guildId,
     }: {
       messageId: string;
-      req: SavedMessageCreateRequestWire;
+      req: SavedMessageUpdateRequestWire;
       guildId: string | null;
     }) => {
       let url = `/api/saved-messages/${messageId}`;
