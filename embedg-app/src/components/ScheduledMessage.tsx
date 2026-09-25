@@ -29,7 +29,7 @@ import cronstrue from "cronstrue";
 import CronExpressionBuilder from "./CronExpressionBuilder";
 import { usePremiumGuildFeatures } from "../util/premium";
 import PremiumSuggest from "./PremiumSuggest";
-import { formatInTimezone, rezone } from "../util/time";
+import { rezone } from "../util/time";
 import TimezoneSelect from "./TimezoneSelect";
 import CheckBox from "./CheckBox";
 import { useGuildChannelsQuery } from "../api/queries";
@@ -410,7 +410,9 @@ export default function ScheduledMessage({
               <div className="text-mist-400 text-sm font-light whitespace-normal">
                 {!msg.only_once
                   ? cronToString(msg.cron_expression)
-                  : formatInTimezone(msg.start_at, scheduleTimezone(msg))}{" "}
+                  : new Date(msg.start_at).toLocaleString(undefined, {
+                      timeZone: scheduleTimezone(msg),
+                    })}{" "}
                 ({scheduleTimezone(msg)})
               </div>
               {!msg.only_once && msg.enabled && (
@@ -458,7 +460,6 @@ export default function ScheduledMessage({
   );
 }
 
-// Schedules from before timezones were stored run in UTC.
 function scheduleTimezone(msg: ScheduledMessageWire): string {
   return msg.cron_timezone || "UTC";
 }

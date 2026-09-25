@@ -88,7 +88,3 @@ export function fromZonedDate(date: Date, timezone: string): string {
 export function rezone(iso: string, from: string, to: string): string {
   return fromZonedDate(toZonedDate(iso, from), to);
 }
-
-export function formatInTimezone(iso: string, timezone: string): string {
-  return new Date(iso).toLocaleString(undefined, { timeZone: timezone });
-}
