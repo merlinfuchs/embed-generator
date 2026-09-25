@@ -39,3 +39,17 @@ test("a type with specific ids counts as pinging, and toggling it clears them", 
   expect(mentionPings(imported, "roles")).toBe(true);
   expect(setMentionPings(imported, "roles", true)?.roles).toEqual([]);
 });
+
+test("unchecking a type that pings only specific ids stops those too", () => {
+  const imported = {
+    parse: ["users"] as MentionType[],
+    users: [],
+    roles: ["1"],
+    replied_user: false,
+  };
+
+  const next = setMentionPings(imported, "roles", false);
+
+  expect(next?.roles).toEqual([]);
+  expect(mentionPings(next, "roles")).toBe(false);
+});

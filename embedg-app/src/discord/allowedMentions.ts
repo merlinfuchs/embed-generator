@@ -38,6 +38,9 @@ export function setMentionPings(
   if (type !== "everyone") next[type] = [];
 
   const isDefault =
-    MENTION_TYPES.every((t) => next.parse.includes(t)) && !next.replied_user;
+    MENTION_TYPES.every((t) => next.parse.includes(t)) &&
+    next.users.length === 0 &&
+    next.roles.length === 0 &&
+    !next.replied_user;
   return isDefault ? undefined : next;
 }

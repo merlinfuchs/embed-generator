@@ -234,3 +234,22 @@ test("replaceAll swaps the whole document", () => {
   expect(Object.keys(state().nodes)).toEqual([state().rootId]);
   expect(toMessage(state()).message.content).toBe("Replaced");
 });
+
+test("switching to components v2 keeps who gets pinged", () => {
+  const allowedMentions = {
+    parse: ["users" as const],
+    users: [],
+    roles: [],
+    replied_user: false,
+  };
+  const store = createDocumentStore(
+    "test-mentions",
+    messageSchema.parse({ content: "hi", allowed_mentions: allowedMentions }),
+  );
+
+  store.getState().setComponentsV2(true);
+
+  expect(toMessage(store.getState()).message.allowed_mentions).toEqual(
+    allowedMentions,
+  );
+});

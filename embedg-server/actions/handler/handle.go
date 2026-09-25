@@ -320,14 +320,26 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				}, discord.InteractionResponseTypeDeferredCreateMessage)
 			}
 
+			mentions := &discord.AllowedMentions{Parse: allowedMentions}
+			// The saved message's own setting can narrow who gets pinged, the action's stays the limit.
+			if data.AllowedMentions != nil {
+				mentions = &discord.AllowedMentions{
+					Parse: slices.DeleteFunc(allowedMentions, func(t discord.AllowedMentionType) bool {
+						return !slices.Contains(data.AllowedMentions.Parse, t)
+					}),
+					Users: data.AllowedMentions.Users,
+				}
+				if action.AllowRoleMentions {
+					mentions.Roles = data.AllowedMentions.Roles
+				}
+			}
+
 			newMsg := i.Respond(discord.MessageCreate{
-				Content:    data.Content,
-				Embeds:     data.Embeds,
-				Components: components,
-				Flags:      data.Flags,
-				AllowedMentions: &discord.AllowedMentions{
-					Parse: allowedMentions,
-				},
+				Content:         data.Content,
+				Embeds:          data.Embeds,
+				Components:      components,
+				Flags:           data.Flags,
+				AllowedMentions: mentions,
 			})
 			if newMsg != nil && !legacyPermissions {
 				err = m.parser.CreateActionsForMessage(context.TODO(), data.Actions, *derivedPerms, newMsg.ID, !action.Public)

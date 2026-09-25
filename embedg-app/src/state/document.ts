@@ -475,12 +475,16 @@ export const createDocumentStore = (
             clear: () => set(fromMessage(initialMessage)),
 
             // The two modes cannot hold each other's content, so the toggle
-            // replaces the message rather than editing it.
+            // replaces the message rather than editing it. Who gets pinged is
+            // not content and carries over.
             setComponentsV2: (enabled) =>
               set(
-                fromMessage(
-                  enabled ? emptyComponentsV2Message : defaultMessage,
-                ),
+                fromMessage({
+                  ...(enabled ? emptyComponentsV2Message : defaultMessage),
+                  allowed_mentions: (
+                    get().nodes[get().rootId] as MessageNode | undefined
+                  )?.allowed_mentions,
+                }),
               ),
           }),
           {
