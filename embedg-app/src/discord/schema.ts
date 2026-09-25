@@ -4,7 +4,7 @@ import { getUniqueId } from "../util";
 export const COMPONENTS_V2_FLAG = 1 << 15;
 
 const VARIABLE_RE = /\{\{[^}]+\}\}/;
-const ATTACHMENT_RE = /attachment:\/\/\.+/;
+const ATTACHMENT_RE = /^attachment:\/\/.+/;
 
 const HOSTNAME_RE = /\.[a-zA-Z]{2,}$/;
 const urlRefinement: [(v: string) => boolean, string] = [
