@@ -73,6 +73,8 @@ func New(
 // HandleActionInteraction shows user errors to the interacting user and returns nil for them.
 // Internal errors are returned to the caller and the user only gets a generic message.
 func (m *ActionHandler) HandleActionInteraction(restClient rest.Rest, i Interaction) error {
+	defer i.Done()
+
 	err := m.handleActionInteraction(restClient, i)
 	if err == nil {
 		return nil

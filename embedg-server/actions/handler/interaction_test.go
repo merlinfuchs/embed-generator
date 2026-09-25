@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
@@ -52,9 +54,9 @@ func commandInteraction(t *testing.T) discord.Interaction {
 }
 
 // newTestInteraction doesn't start the timer, the tests defer by calling autoDefer themselves.
-func newTestInteraction(inner discord.Interaction) (*restInteraction, *fakeRest) {
+func newTestInteraction(inner discord.Interaction) (*actionInteraction, *fakeRest) {
 	f := &fakeRest{}
-	return &restInteraction{inner: inner, rest: f, initial: f.respond}, f
+	return &actionInteraction{inner: inner, rest: f, initial: f.respond}, f
 }
 
 func TestRespondInTime(t *testing.T) {
@@ -131,5 +133,49 @@ func TestSlowCommandDefersEphemeral(t *testing.T) {
 	}
 	if len(f.followups) != 1 {
 		t.Fatalf("want the response as a followup, got %d", len(f.followups))
+	}
+}
+
+func TestAutoDeferDelay(t *testing.T) {
+	tests := []struct {
+		name         string
+		sinceCreated time.Duration
+		want         time.Duration
+	}{
+		{"just created", 0, 2 * time.Second},
+		{"a bit old", 500 * time.Millisecond, 1500 * time.Millisecond},
+		{"clock behind discord", -5 * time.Second, 2 * time.Second},
+		{"clock ahead of discord", 5 * time.Second, time.Second},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := autoDeferDelay(tt.sinceCreated); got != tt.want {
+				t.Fatalf("want %s, got %s", tt.want, got)
+			}
+		})
+	}
+}
+
+func TestAutoDeferRacingRespondSendsOneInitialResponse(t *testing.T) {
+	for range 100 {
+		i, f := newTestInteraction(componentInteraction(t))
+
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() { defer wg.Done(); i.autoDefer() }()
+		go func() { defer wg.Done(); i.Respond(discord.MessageCreate{Content: "hi"}) }()
+		wg.Wait()
+
+		if len(f.initial) != 1 {
+			t.Fatalf("want one initial response, got %+v", f.initial)
+		}
+		sent := len(f.followups)
+		if f.initial[0].Type == discord.InteractionResponseTypeCreateMessage {
+			sent++
+		}
+		if sent != 1 {
+			t.Fatalf("want the message sent once, got %+v and %+v", f.initial, f.followups)
+		}
 	}
 }

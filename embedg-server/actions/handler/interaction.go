@@ -12,19 +12,27 @@ import (
 	"github.com/disgoorg/disgo/rest"
 )
 
-// autoDeferAfter leaves a second of Discord's three, which count from when the interaction was
-// created, for the defer itself to arrive.
-const autoDeferAfter = 2 * time.Second
+const (
+	// autoDeferAfter leaves a second of Discord's three, which count from when the interaction was
+	// created, for the defer itself to arrive.
+	autoDeferAfter = 2 * time.Second
+	// minAutoDeferAfter keeps a server clock ahead of Discord's from deferring fast responses too.
+	minAutoDeferAfter = time.Second
+)
 
 type Interaction interface {
 	Interaction() discord.Interaction
 	HasResponded() bool
 	Respond(data discord.InteractionResponseData, t ...discord.InteractionResponseType) *discord.Message
+	// Done stops the automatic defer, which a handler that returned without responding doesn't
+	// want: a command would show "thinking" until the token expires.
+	Done()
 }
 
-type restInteraction struct {
+type actionInteraction struct {
 	inner discord.Interaction
 	rest  rest.Rest
+	timer *time.Timer
 	// initial sends the initial response. For interactions received over HTTP it is the response
 	// to Discord's request, which is why it can't go through REST like the rest.
 	initial events.InteractionResponderFunc
@@ -39,24 +47,33 @@ type restInteraction struct {
 // NewInteraction defers the interaction when the handler hasn't responded within autoDeferAfter,
 // so slow actions don't run into Discord's three second limit. The handler's responses after
 // that go out as followups and edits of the original response.
-func NewInteraction(inner discord.Interaction, rest rest.Rest, initial events.InteractionResponderFunc) Interaction {
-	i := &restInteraction{inner: inner, rest: rest, initial: initial}
-	// Also bounded from now, so a server clock behind Discord's can't push the defer past the limit.
-	time.AfterFunc(min(time.Until(inner.CreatedAt().Add(autoDeferAfter)), autoDeferAfter), i.autoDefer)
+func NewInteraction(inner discord.Interaction, restClient rest.Rest, initial events.InteractionResponderFunc) Interaction {
+	i := &actionInteraction{inner: inner, rest: restClient, initial: initial}
+	i.timer = time.AfterFunc(autoDeferDelay(time.Since(inner.CreatedAt())), i.autoDefer)
 	return i
 }
 
-func (i *restInteraction) Interaction() discord.Interaction {
+// autoDeferDelay counts from the interaction's creation, but only within bounds that a server
+// clock off from Discord's can't push it out of.
+func autoDeferDelay(sinceCreated time.Duration) time.Duration {
+	return max(min(autoDeferAfter-sinceCreated, autoDeferAfter), minAutoDeferAfter)
+}
+
+func (i *actionInteraction) Done() {
+	i.timer.Stop()
+}
+
+func (i *actionInteraction) Interaction() discord.Interaction {
 	return i.inner
 }
 
-func (i *restInteraction) HasResponded() bool {
+func (i *actionInteraction) HasResponded() bool {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	return i.responded
 }
 
-func (i *restInteraction) autoDefer() {
+func (i *actionInteraction) autoDefer() {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
@@ -79,7 +96,7 @@ func (i *restInteraction) autoDefer() {
 	i.acknowledged = true
 }
 
-func (i *restInteraction) Respond(data discord.InteractionResponseData, t ...discord.InteractionResponseType) *discord.Message {
+func (i *actionInteraction) Respond(data discord.InteractionResponseData, t ...discord.InteractionResponseType) *discord.Message {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 

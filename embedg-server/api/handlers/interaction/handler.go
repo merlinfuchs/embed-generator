@@ -5,8 +5,6 @@ import (
 	"crypto/ed25519"
 	"encoding/hex"
 	"log/slog"
-	"sync"
-	"time"
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
@@ -50,42 +48,7 @@ func (h *InteractionHandler) HandleBotInteraction(c *fiber.Ctx) error {
 		})
 	}
 
-	// Buffered, and only ever written once: the handler below holds the mutex across the send, and
-	// this request takes the same mutex when it stops waiting. A blocking send would deadlock the
-	// two against each other and strand both the request and the dispatch goroutine.
-	respCh := make(chan *discord.InteractionResponse, 1)
-
-	var (
-		responded bool
-		expired   bool
-		mu        sync.Mutex
-	)
-
-	respondFunc := func(responseType discord.InteractionResponseType, data discord.InteractionResponseData, opts ...rest.RequestOpt) error {
-		mu.Lock()
-		defer mu.Unlock()
-
-		if responded {
-			return discord.ErrInteractionAlreadyReplied
-		}
-
-		if expired {
-			return discord.ErrInteractionExpired
-		}
-
-		respCh <- &discord.InteractionResponse{
-			Type: responseType,
-			Data: data,
-		}
-		responded = true
-		return nil
-	}
-
-	expire := func() {
-		mu.Lock()
-		expired = true
-		mu.Unlock()
-	}
+	responder := handlers.NewInteractionResponder()
 
 	go func() {
 		// Nothing above this recovers, and any guild member can trigger an interaction.
@@ -101,22 +64,11 @@ func (h *InteractionHandler) HandleBotInteraction(c *fiber.Ctx) error {
 		h.dispatcher.DispatchEvent(&events.InteractionCreate{
 			GenericEvent: h.dispatcher.GenericEvent(),
 			Interaction:  interaction,
-			Respond:      respondFunc,
+			Respond:      responder.Respond,
 		})
 	}()
 
-	select {
-	case resp := <-respCh:
-		expire()
-		return c.JSON(resp)
-	case <-c.Context().Done():
-		// Also expired: nothing reads respCh after this returns.
-		expire()
-		return c.SendStatus(fiber.StatusNoContent)
-	case <-time.After(3 * time.Second):
-		expire()
-		return c.SendStatus(fiber.StatusInternalServerError)
-	}
+	return responder.Wait(c)
 }
 
 func verifyInteractionSignaure(c *fiber.Ctx, publicKey string) bool {

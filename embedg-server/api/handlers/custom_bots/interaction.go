@@ -7,12 +7,10 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"log/slog"
 
 	"github.com/disgoorg/disgo/discord"
-	disrest "github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers"
@@ -66,16 +64,9 @@ func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 	}
 
 	if handle {
-		// Buffered: this handler stops reading after three seconds, and the send must not block
-		// the goroutine below forever when it does.
-		respCh := make(chan *discord.InteractionResponse, 1)
+		responder := handlers.NewInteractionResponder()
 		client := rest.ClientForToken(customBot.Token)
-
-		// Called once at most, so the buffer always has room.
-		ri := handler.NewInteraction(interaction, client, func(responseType discord.InteractionResponseType, data discord.InteractionResponseData, _ ...disrest.RequestOpt) error {
-			respCh <- &discord.InteractionResponse{Type: responseType, Data: data}
-			return nil
-		})
+		ri := handler.NewInteraction(interaction, client, responder.Respond)
 
 		go func() {
 			// Nothing recovers a panic in here, and an interaction is something any member of the
@@ -96,14 +87,7 @@ func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 			}
 		}()
 
-		select {
-		case resp := <-respCh:
-			return c.JSON(resp)
-		case <-c.Context().Done():
-			return c.SendStatus(fiber.StatusNoContent)
-		case <-time.After(3 * time.Second):
-			return c.SendStatus(fiber.StatusInternalServerError)
-		}
+		return responder.Wait(c)
 	} else {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
