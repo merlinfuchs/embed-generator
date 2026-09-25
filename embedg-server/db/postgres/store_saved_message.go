@@ -100,6 +100,14 @@ func (c *Client) GetSavedMessagesForGuild(ctx context.Context, guildID common.ID
 	return rowsToSavedMessages(rows), nil
 }
 
+func (c *Client) CountSavedMessagesForCreator(ctx context.Context, creatorID common.ID) (int64, error) {
+	return c.Q.CountSavedMessagesForCreator(ctx, creatorID.String())
+}
+
+func (c *Client) CountSavedMessagesForGuild(ctx context.Context, guildID common.ID) (int64, error) {
+	return c.Q.CountSavedMessagesForGuild(ctx, pgtype.Text{String: guildID.String(), Valid: true})
+}
+
 func (c *Client) GetSavedMessageForGuild(ctx context.Context, guildID common.ID, id string) (*model.SavedMessage, error) {
 	row, err := c.Q.GetSavedMessageForGuild(ctx, pgmodel.GetSavedMessageForGuildParams{
 		GuildID: pgtype.Text{String: guildID.String(), Valid: true},

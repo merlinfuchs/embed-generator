@@ -122,6 +122,16 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return handlers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
 	}
 
+	actionSet := actions.ActionSet{}
+	err = json.Unmarshal(req.Actions, &actionSet)
+	if err != nil {
+		return err
+	}
+
+	if err := handlers.CheckActionSetLimit(actionSet, features); err != nil {
+		return err
+	}
+
 	existingCount, err := h.customCommandStore.CountCustomCommands(c.UserContext(), guildID)
 	if err != nil {
 		return err
@@ -129,12 +139,6 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 
 	if int(existingCount) >= features.MaxCustomCommands {
 		return handlers.Forbidden("insufficient_plan", "You have reached the maximum number of custom commands for your plan!")
-	}
-
-	actionSet := actions.ActionSet{}
-	err = json.Unmarshal(req.Actions, &actionSet)
-	if err != nil {
-		return err
 	}
 
 	derivedPerms, err := h.derivePermissionsForUser(c, session, guildID)
@@ -203,6 +207,10 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 	actionSet := actions.ActionSet{}
 	err = json.Unmarshal(req.Actions, &actionSet)
 	if err != nil {
+		return err
+	}
+
+	if err := handlers.CheckActionSetLimit(actionSet, features); err != nil {
 		return err
 	}
 

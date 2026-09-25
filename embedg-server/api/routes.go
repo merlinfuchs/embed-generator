@@ -50,7 +50,7 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	usersGroup := app.Group("/api/users", sessionMiddleware.SessionRequired())
 	usersGroup.Get("/:userID", usersHandler.HandleGetUser)
 
-	savedMessagesHandler := saved_messages.New(env.SavedMessageStore, env.AccessManager)
+	savedMessagesHandler := saved_messages.New(env.SavedMessageStore, env.AccessManager, env.PremiumManager)
 	savedMessagesGroup := app.Group("/api/saved-messages", sessionMiddleware.SessionRequired())
 	savedMessagesGroup.Get("/", savedMessagesHandler.HandleListSavedMessages)
 	savedMessagesGroup.Post("/", handlers.WithRequestBodyValidated(savedMessagesHandler.HandleCreateSavedMessage))

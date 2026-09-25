@@ -21,6 +21,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"github.com/merlinfuchs/embed-generator/embedg-server/guildstate"
 	"github.com/merlinfuchs/embed-generator/embedg-server/manager/webhook"
+	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 	"github.com/vincent-petithory/dataurl"
 )
@@ -86,6 +87,10 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 	data := &actions.MessageWithActions{}
 	err = json.Unmarshal([]byte(req.Data), data)
 	if err != nil {
+		return err
+	}
+
+	if err := checkMessageLimits(data, features); err != nil {
 		return err
 	}
 
@@ -257,4 +262,18 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 			ChannelID: msg.ChannelID,
 		},
 	})
+}
+
+func checkMessageLimits(data *actions.MessageWithActions, features model.PlanFeatures) error {
+	if data.ComponentsV2Enabled() && !features.ComponentsV2 {
+		return handlers.Forbidden("insufficient_plan", "Components V2 are not available on your plan!")
+	}
+
+	for _, actionSet := range data.Actions {
+		if err := handlers.CheckActionSetLimit(actionSet, features); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
