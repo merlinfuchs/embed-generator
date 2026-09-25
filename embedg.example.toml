@@ -20,10 +20,11 @@ db_name = "embedg"
 user = "postgres"
 password = ""
 
+# Matches the MinIO root user in docker-compose.yaml
 [database.s3]
 endpoint = "localhost:9000"
-access_key_id = ""
-secret_access_key = ""
+access_key_id = "embedg"
+secret_access_key = "1234567890"
 
 [app]
 public_url = "http://localhost:5173/app"
