@@ -205,14 +205,17 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 	}
 
 	params := discord.WebhookMessageCreate{
-		Content:         data.Content,
 		Username:        data.Username,
 		AvatarURL:       data.AvatarURL,
-		TTS:             data.TTS,
-		Embeds:          data.Embeds,
 		AllowedMentions: data.AllowedMentions,
 		ThreadName:      scheduledMessage.ThreadName.String,
 		Flags:           data.Flags,
+	}
+	// Discord rejects content and embeds on a components v2 message.
+	if !data.ComponentsV2Enabled() {
+		params.Content = data.Content
+		params.Embeds = data.Embeds
+		params.TTS = data.TTS
 	}
 
 	params.Components, err = m.actionParser.ParseMessageComponents(data.Components, features.ComponentTypes)
@@ -242,12 +245,17 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 
 	var msg *discord.Message
 	if scheduledMessage.MessageID.Valid {
-		msg, err = m.webhookManager.UpdateMessageInChannel(ctx, scheduledMessage.ChannelID, scheduledMessage.MessageID.ID, discord.WebhookMessageUpdate{
+		update := discord.WebhookMessageUpdate{
 			Content:         &params.Content,
 			Embeds:          &params.Embeds,
 			Components:      &params.Components,
 			AllowedMentions: params.AllowedMentions,
-		})
+		}
+		// Only when needed, the flags of a message can't be taken away by an edit.
+		if data.ComponentsV2Enabled() {
+			update.Flags = &params.Flags
+		}
+		msg, err = m.webhookManager.UpdateMessageInChannel(ctx, scheduledMessage.ChannelID, scheduledMessage.MessageID.ID, update)
 	} else {
 		msg, err = m.webhookManager.SendMessageToChannel(ctx, scheduledMessage.ChannelID, params)
 	}
@@ -278,6 +286,16 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 
 	// The message is out at this point, failures below must not trigger a resend.
 	if !hasActions {
+		// An edited message may still have the action sets of what it was before.
+		if scheduledMessage.MessageID.Valid {
+			if err := m.actionParser.DeleteActionsForMessage(ctx, msg.ID); err != nil {
+				slog.Error(
+					"Failed to delete actions of edited scheduled message",
+					slog.Any("error", err),
+					slog.String("scheduled_message_id", scheduledMessage.ID),
+				)
+			}
+		}
 		return nil
 	}
 

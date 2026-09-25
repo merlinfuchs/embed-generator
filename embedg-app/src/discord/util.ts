@@ -4,11 +4,16 @@ export const discordWebhookUrlRegex =
 export const messageUrlRegex =
   /https?:\/\/(?:canary\.|ptb\.)?discord(?:app)?\.com\/channels\/[0-9]+\/([0-9]+)\/([0-9]+)/;
 
-/** A message id, typed or taken from a message link. */
+/** A message id, typed or taken from a message link, null for anything else. */
 export function parseMessageId(input: string): string | null {
   const value = input.trim();
-  if (!value) return null;
-  return value.match(messageUrlRegex)?.[2] ?? value;
+  const id = value.match(messageUrlRegex)?.[2] ?? value;
+  return /^\d+$/.test(id) ? id : null;
+}
+
+/** Forum and media channels, where a message can only be sent as a new thread. */
+export function isThreadOnlyChannel(type: number | undefined): boolean {
+  return type === 15 || type === 16;
 }
 
 export const guildedWebhookUrlRegex =

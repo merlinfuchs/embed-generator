@@ -12,3 +12,8 @@ test("a message link gives its message id", () => {
 test("nothing typed is no message", () => {
   expect(parseMessageId("  ")).toBeNull();
 });
+
+test("anything that isn't an id or a message link is no message", () => {
+  expect(parseMessageId("abc")).toBeNull();
+  expect(parseMessageId("https://discord.com/channels/1/2")).toBeNull();
+});

@@ -20,7 +20,7 @@ import { useSendSettingsStore } from "../state/sendSettings";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToasts } from "../util/toasts";
 import EditorInput from "./EditorInput";
-import { parseMessageId } from "../discord/util";
+import { isThreadOnlyChannel, parseMessageId } from "../discord/util";
 import ConfirmModal from "./ConfirmModal";
 import SavedMessageSelect from "./SavedMessageSelect";
 import { ChannelSelect } from "./ChannelSelect";
@@ -269,7 +269,7 @@ export default function ScheduledMessage({
                   />
                 </div>
               </div>
-              {selectedChannel && selectedChannel.type !== 15 && (
+              {channelId && !isThreadOnlyChannel(selectedChannel?.type) && (
                 <div>
                   <EditorInput
                     label="Message ID or URL"
@@ -280,11 +280,11 @@ export default function ScheduledMessage({
                   <div className="mt-2 text-mist-400 text-sm font-light">
                     Leave empty to send a new message every time. Set it to a
                     message sent by Embed Generator to edit that message
-                    instead.
+                    instead, which keeps its username and avatar.
                   </div>
                 </div>
               )}
-              {selectedChannel?.type === 15 && (
+              {isThreadOnlyChannel(selectedChannel?.type) && (
                 <div>
                   <EditorInput
                     label="Thread Name"
