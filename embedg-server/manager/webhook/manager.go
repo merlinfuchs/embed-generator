@@ -7,8 +7,10 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/jellydator/ttlcache/v3"
+	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"github.com/merlinfuchs/embed-generator/embedg-server/guildstate"
 	"github.com/merlinfuchs/embed-generator/embedg-server/manager/custom_bot"
+	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"golang.org/x/sync/singleflight"
 )
 
@@ -44,3 +46,18 @@ func NewWebhookManager(rest rest.Rest, guildState *guildstate.Provider, customBo
 }
 
 func (m *WebhookManager) OnEvent(event bot.Event) {}
+
+// sendWebhookKey is per application, not just per channel: component interactions on a message go
+// to the application that owns the webhook it was sent with.
+func sendWebhookKey(channelID common.ID, customBot *model.CustomBot) string {
+	app := "main"
+	if customBot != nil {
+		app = customBot.ApplicationID.String()
+	}
+	return "send:" + channelID.String() + ":" + app
+}
+
+// editWebhookKey is per webhook, as a message can only be edited through the webhook that sent it.
+func editWebhookKey(channelID common.ID, webhookID common.ID) string {
+	return "edit:" + channelID.String() + ":" + webhookID.String()
+}

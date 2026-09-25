@@ -1,9 +1,11 @@
 package webhook
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
 	_ "embed"
@@ -106,7 +108,7 @@ func (m *WebhookManager) UpdateMessageInChannel(ctx context.Context, channelID c
 	useCustomBot := false
 	restClient, customBot, err := m.customBotManager.GetRestForGuild(ctx, channel.GuildID())
 	if err != nil {
-		slog.Error("failed to get custom bot for message username and avatar", slog.Any("error", err))
+		return nil, fmt.Errorf("Failed to get custom bot: %w", err)
 	}
 
 	msg, err := restClient.GetMessage(channelID, messageID, rest.WithCtx(ctx))
@@ -134,7 +136,7 @@ func (m *WebhookManager) UpdateMessageInChannel(ctx context.Context, channelID c
 			Attachments:     params.Attachments,
 		}, rest.WithCtx(ctx))
 		if err != nil {
-			return nil, fmt.Errorf("Failed to edt message: %w", err)
+			return nil, fmt.Errorf("Failed to edit message: %w", err)
 		}
 	} else {
 		newMessage, err = m.updateWithWebhook(ctx, channel, restClient, *msg.WebhookID, messageID, params)
@@ -148,27 +150,29 @@ func (m *WebhookManager) UpdateMessageInChannel(ctx context.Context, channelID c
 
 var errWebhookMoved = errors.New("webhook was moved to another channel")
 
-// sendWithWebhook sends through the channel's webhook of the application that sends to it. The
-// application matters beyond having a token: component interactions on the message go to the
-// webhook's application.
+// sendWithWebhook sends through the channel's webhook of the sending application, creating one if
+// there is none.
 func (m *WebhookManager) sendWithWebhook(ctx context.Context, channel discord.GuildChannel, restClient rest.Rest, customBot *model.CustomBot, params discord.WebhookMessageCreate) (*discord.Message, error) {
 	webhookChannel, err := m.webhookChannel(ctx, channel)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to find webhook: %w", err)
 	}
 
-	appKey := "main"
-	if customBot != nil {
-		appKey = customBot.ApplicationID.String()
+	if err := makeFilesRewindable(params.Files); err != nil {
+		return nil, fmt.Errorf("Failed to read attachments: %w", err)
 	}
 
-	return m.withCachedWebhook("send:"+webhookChannel.ID().String()+":"+appKey, func() (*discord.IncomingWebhook, error) {
+	return m.withCachedWebhook(sendWebhookKey(webhookChannel.ID(), customBot), func() (*discord.IncomingWebhook, error) {
 		webhook, err := m.fetchOrCreateWebhook(ctx, webhookChannel, restClient, customBot)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to find webhook: %w", err)
 		}
 		return webhook, nil
 	}, func(webhook *discord.IncomingWebhook) (*discord.Message, error) {
+		if err := rewindFiles(params.Files); err != nil {
+			return nil, fmt.Errorf("Failed to read attachments: %w", err)
+		}
+
 		msg, err := restClient.CreateWebhookMessage(webhook.ID(), webhook.Token, params, rest.CreateWebhookMessageParams{
 			Wait:           true,
 			ThreadID:       threadID(webhook, channel),
@@ -197,13 +201,21 @@ func (m *WebhookManager) updateWithWebhook(ctx context.Context, channel discord.
 		return nil, fmt.Errorf("Failed to get the webhook that was used to create the message: %w", err)
 	}
 
-	return m.withCachedWebhook("edit:"+webhookChannel.ID().String()+":"+webhookID.String(), func() (*discord.IncomingWebhook, error) {
+	if err := makeFilesRewindable(params.Files); err != nil {
+		return nil, fmt.Errorf("Failed to read attachments: %w", err)
+	}
+
+	return m.withCachedWebhook(editWebhookKey(webhookChannel.ID(), webhookID), func() (*discord.IncomingWebhook, error) {
 		webhook, err := m.fetchWebhook(ctx, webhookChannel, webhookID)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get the webhook that was used to create the message: %w", err)
 		}
 		return webhook, nil
 	}, func(webhook *discord.IncomingWebhook) (*discord.Message, error) {
+		if err := rewindFiles(params.Files); err != nil {
+			return nil, fmt.Errorf("Failed to read attachments: %w", err)
+		}
+
 		msg, err := restClient.UpdateWebhookMessage(webhook.ID(), webhook.Token, messageID, params, rest.UpdateWebhookMessageParams{
 			ThreadID:       threadID(webhook, channel),
 			WithComponents: true,
@@ -234,9 +246,38 @@ func (m *WebhookManager) withCachedWebhook(key string, fetch func() (*discord.In
 	return use(webhook)
 }
 
+// isStaleWebhookError reports failures a deleted or moved webhook causes: an unknown webhook or
+// token, a thread that isn't in the webhook's new channel, or a new channel that is a forum and
+// wants a thread.
 func isStaleWebhookError(err error) bool {
 	return errors.Is(err, errWebhookMoved) ||
-		common.IsDiscordRestStatusCode(err, http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound)
+		common.IsDiscordRestStatusCode(err, http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound) ||
+		common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeUnknownChannel, rest.JSONErrorCodeWebhooksPostedToForumChannelsMustHaveThreadNameOrID)
+}
+
+// makeFilesRewindable buffers attachments that can't be read twice, as every attempt reads them.
+func makeFilesRewindable(files []*discord.File) error {
+	for _, file := range files {
+		if _, ok := file.Reader.(io.Seeker); ok {
+			continue
+		}
+		data, err := io.ReadAll(file.Reader)
+		if err != nil {
+			return err
+		}
+		file.Reader = bytes.NewReader(data)
+	}
+	return nil
+}
+
+// rewindFiles resets the attachments so a retry sends them again, not what the last attempt left.
+func rewindFiles(files []*discord.File) error {
+	for _, file := range files {
+		if _, err := file.Reader.(io.Seeker).Seek(0, io.SeekStart); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // threadID is the thread to post in when the target is one, as its webhook belongs to the parent.

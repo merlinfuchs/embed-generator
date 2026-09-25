@@ -1,8 +1,10 @@
 package webhook
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"testing"
 
@@ -29,8 +31,8 @@ func (noCustomBots) GetCustomBotByGuildID(context.Context, snowflake.ID) (*model
 	return nil, store.ErrNotFound
 }
 
-// fakeRest serves one text channel and its webhooks. sendErrs and sendChannels are consumed one per
-// send, so a test can make the next send fail or land somewhere else.
+// fakeRest serves one text channel and its webhooks. sendErrs, sendChannels and editErrs are
+// consumed one per request, so a test can make the next one fail or land somewhere else.
 type fakeRest struct {
 	rest.Rest
 
@@ -41,6 +43,21 @@ type fakeRest struct {
 	deleted      []snowflake.ID
 	sendErrs     []error
 	sendChannels []snowflake.ID
+	editErrs     []error
+	// messageWebhook is the webhook GetMessage reports as the sender.
+	messageWebhook snowflake.ID
+	// sentFiles is what each send read from its attachments, which disgo does before every request.
+	sentFiles []string
+}
+
+func pop[T any](queue *[]T) (T, bool) {
+	var zero T
+	if len(*queue) == 0 {
+		return zero, false
+	}
+	v := (*queue)[0]
+	*queue = (*queue)[1:]
+	return v, true
 }
 
 func (f *fakeRest) GetChannel(id snowflake.ID, _ ...rest.RequestOpt) (discord.Channel, error) {
@@ -72,19 +89,19 @@ func (f *fakeRest) CreateWebhook(channelID snowflake.ID, _ discord.WebhookCreate
 	return &webhook, nil
 }
 
-func (f *fakeRest) CreateWebhookMessage(webhookID snowflake.ID, _ string, _ discord.WebhookMessageCreate, _ rest.CreateWebhookMessageParams, _ ...rest.RequestOpt) (*discord.Message, error) {
-	if len(f.sendErrs) > 0 {
-		err := f.sendErrs[0]
-		f.sendErrs = f.sendErrs[1:]
-		if err != nil {
-			return nil, err
-		}
+func (f *fakeRest) CreateWebhookMessage(webhookID snowflake.ID, _ string, params discord.WebhookMessageCreate, _ rest.CreateWebhookMessageParams, _ ...rest.RequestOpt) (*discord.Message, error) {
+	for _, file := range params.Files {
+		data, _ := io.ReadAll(file.Reader)
+		f.sentFiles = append(f.sentFiles, string(data))
+	}
+
+	if err, ok := pop(&f.sendErrs); ok && err != nil {
+		return nil, err
 	}
 
 	landed := channelID
-	if len(f.sendChannels) > 0 {
-		landed = f.sendChannels[0]
-		f.sendChannels = f.sendChannels[1:]
+	if c, ok := pop(&f.sendChannels); ok {
+		landed = c
 	}
 	f.nextID++
 	return &discord.Message{ID: 1000 + f.nextID, ChannelID: landed, WebhookID: &webhookID}, nil
@@ -95,8 +112,23 @@ func (f *fakeRest) DeleteWebhookMessage(_ snowflake.ID, _ string, messageID snow
 	return nil
 }
 
+func (f *fakeRest) GetMessage(channelID snowflake.ID, messageID snowflake.ID, _ ...rest.RequestOpt) (*discord.Message, error) {
+	return &discord.Message{ID: messageID, ChannelID: channelID, WebhookID: &f.messageWebhook}, nil
+}
+
+func (f *fakeRest) UpdateWebhookMessage(_ snowflake.ID, _ string, messageID snowflake.ID, _ discord.WebhookMessageUpdate, _ rest.UpdateWebhookMessageParams, _ ...rest.RequestOpt) (*discord.Message, error) {
+	if err, ok := pop(&f.editErrs); ok && err != nil {
+		return nil, err
+	}
+	return &discord.Message{ID: messageID, ChannelID: channelID}, nil
+}
+
+func restError(status int, code rest.JSONErrorCode) error {
+	return &rest.Error{Response: &http.Response{StatusCode: status}, Code: code}
+}
+
 func notFound() error {
-	return &rest.Error{Response: &http.Response{StatusCode: http.StatusNotFound}, Code: rest.JSONErrorCodeUnknownWebhook}
+	return restError(http.StatusNotFound, rest.JSONErrorCodeUnknownWebhook)
 }
 
 func newTestManager(f *fakeRest) *WebhookManager {
@@ -167,5 +199,80 @@ func TestSendDeletesMessageOfMovedWebhook(t *testing.T) {
 	}
 	if f.createCalls != 2 {
 		t.Fatalf("want a new webhook for the channel, got %d creates", f.createCalls)
+	}
+}
+
+func TestSendReplacesWebhookMovedToForum(t *testing.T) {
+	f := &fakeRest{}
+	m := newTestManager(f)
+
+	send(t, m)
+	f.webhooks = nil
+	f.sendErrs = []error{restError(http.StatusBadRequest, rest.JSONErrorCodeWebhooksPostedToForumChannelsMustHaveThreadNameOrID)}
+	send(t, m)
+
+	if f.createCalls != 2 {
+		t.Fatalf("want a new webhook for the channel, got %d creates", f.createCalls)
+	}
+}
+
+func TestSendDoesNotRetryOtherErrors(t *testing.T) {
+	f := &fakeRest{}
+	m := newTestManager(f)
+
+	send(t, m)
+	f.sendErrs = []error{restError(http.StatusBadRequest, rest.JSONErrorCodeInvalidFormBody)}
+	if _, err := m.SendMessageToChannel(context.Background(), channelID, discord.WebhookMessageCreate{}); err == nil {
+		t.Fatal("want the error returned")
+	}
+
+	if f.listCalls != 1 {
+		t.Fatalf("want the cached webhook kept, got %d lists", f.listCalls)
+	}
+}
+
+func TestSendResendsAttachmentsOnRetry(t *testing.T) {
+	f := &fakeRest{}
+	m := newTestManager(f)
+
+	send(t, m)
+	f.sendErrs = []error{notFound()}
+	params := discord.WebhookMessageCreate{Files: []*discord.File{
+		{Name: "a.txt", Reader: bytes.NewReader([]byte("data"))},
+		{Name: "b.txt", Reader: io.NopCloser(bytes.NewReader([]byte("more")))},
+	}}
+	if _, err := m.SendMessageToChannel(context.Background(), channelID, params); err != nil {
+		t.Fatalf("send: %v", err)
+	}
+
+	want := []string{"data", "more", "data", "more"}
+	if len(f.sentFiles) != len(want) {
+		t.Fatalf("want %v, got %v", want, f.sentFiles)
+	}
+	for i := range want {
+		if f.sentFiles[i] != want[i] {
+			t.Fatalf("want %v, got %v", want, f.sentFiles)
+		}
+	}
+}
+
+func TestEditDropsDeletedWebhook(t *testing.T) {
+	f := &fakeRest{}
+	m := newTestManager(f)
+
+	msg := send(t, m)
+	webhookID := f.webhooks[0].ID()
+	f.messageWebhook = webhookID
+	if _, err := m.UpdateMessageInChannel(context.Background(), channelID, msg.ID, discord.WebhookMessageUpdate{}); err != nil {
+		t.Fatalf("edit: %v", err)
+	}
+
+	f.editErrs = []error{notFound()}
+	f.webhooks = nil
+	if _, err := m.UpdateMessageInChannel(context.Background(), channelID, msg.ID, discord.WebhookMessageUpdate{}); err == nil {
+		t.Fatal("want an error for the deleted webhook")
+	}
+	if m.webhooks.Get(editWebhookKey(channelID, webhookID)) != nil {
+		t.Fatal("want the deleted webhook dropped from the cache")
 	}
 }
