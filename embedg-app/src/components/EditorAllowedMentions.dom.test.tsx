@@ -1,12 +1,11 @@
 import { fireEvent, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
-import { type MessageNode, messageDocumentStore } from "../state/document";
-import { loadMessage, renderEditor, rootId } from "../test/editor";
+import { messageDocumentStore, selectAllowedMentions } from "../state/document";
+import { loadMessage, renderEditor } from "../test/editor";
 import EditorAllowedMentions from "./EditorAllowedMentions";
 
 function allowedMentions() {
-  const { nodes } = messageDocumentStore.getState();
-  return (nodes[rootId()] as MessageNode).allowed_mentions;
+  return selectAllowedMentions(messageDocumentStore.getState());
 }
 
 function checkbox(name: string) {

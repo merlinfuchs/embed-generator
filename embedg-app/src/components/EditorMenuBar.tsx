@@ -5,6 +5,7 @@ import {
   LinkIcon,
   Cog6ToothIcon,
 } from "@heroicons/react/20/solid";
+import { isDefaultAllowedMentions } from "../discord/allowedMentions";
 import { useAllowedMentions } from "../state/document";
 import { usePremiumGuildFeatures } from "../util/premium";
 import EditorUndoButtons from "./EditorUndoButtons";
@@ -14,8 +15,8 @@ import EditorComponentsV2Toggle from "./EditorComponentsV2Toggle";
 export default function EditorMenuBar() {
   const aiAssistantAllowed = usePremiumGuildFeatures()?.ai_assistant;
   const componentsV2Allowed = usePremiumGuildFeatures()?.components_v2;
-  // Unset is Discord's default, anything else is easy to forget behind a modal.
-  const settingsChanged = useAllowedMentions() !== undefined;
+  // Easy to forget behind a modal otherwise.
+  const settingsChanged = !isDefaultAllowedMentions(useAllowedMentions());
 
   return (
     <div className="flex flex-col-reverse md:flex-row gap-5 justify-between md:items-center mb-5 mt-5">

@@ -28,3 +28,20 @@ test("it stays plain with the defaults", () => {
     screen.getByRole("link", { name: "Message Settings" }),
   ).toBeInTheDocument();
 });
+
+test("an imported setting that matches the defaults isn't marked", () => {
+  loadMessage({
+    content: "",
+    allowed_mentions: {
+      parse: ["users", "roles", "everyone"],
+      users: [],
+      roles: [],
+      replied_user: false,
+    },
+  });
+  renderEditor(<EditorMenuBar />);
+
+  expect(
+    screen.getByRole("link", { name: "Message Settings" }),
+  ).toBeInTheDocument();
+});

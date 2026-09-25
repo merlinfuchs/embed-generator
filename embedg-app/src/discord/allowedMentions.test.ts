@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import {
+  isDefaultAllowedMentions,
   type MentionType,
   mentionPings,
   setMentionPings,
@@ -28,19 +29,7 @@ test("turning every type back on goes back to Discord's default", () => {
   expect(setMentionPings(off, "roles", true)).toBeUndefined();
 });
 
-test("a type with specific ids counts as pinging, and toggling it clears them", () => {
-  const imported = {
-    parse: [] as MentionType[],
-    users: [],
-    roles: ["1"],
-    replied_user: false,
-  };
-
-  expect(mentionPings(imported, "roles")).toBe(true);
-  expect(setMentionPings(imported, "roles", true)?.roles).toEqual([]);
-});
-
-test("unchecking a type that pings only specific ids stops those too", () => {
+test("a type with specific ids counts as pinging, and toggling it either way clears them", () => {
   const imported = {
     parse: ["users"] as MentionType[],
     users: [],
@@ -48,8 +37,22 @@ test("unchecking a type that pings only specific ids stops those too", () => {
     replied_user: false,
   };
 
-  const next = setMentionPings(imported, "roles", false);
+  expect(mentionPings(imported, "roles")).toBe(true);
+  for (const pings of [true, false]) {
+    expect(setMentionPings(imported, "roles", pings)?.roles ?? []).toEqual([]);
+  }
+  expect(mentionPings(setMentionPings(imported, "roles", false), "roles")).toBe(
+    false,
+  );
+});
 
-  expect(next?.roles).toEqual([]);
-  expect(mentionPings(next, "roles")).toBe(false);
+test("an explicit setting that matches Discord's default counts as default", () => {
+  expect(
+    isDefaultAllowedMentions({
+      parse: ["users", "roles", "everyone"],
+      users: [],
+      roles: [],
+      replied_user: false,
+    }),
+  ).toBe(true);
 });

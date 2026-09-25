@@ -481,9 +481,7 @@ export const createDocumentStore = (
               set(
                 fromMessage({
                   ...(enabled ? emptyComponentsV2Message : defaultMessage),
-                  allowed_mentions: (
-                    get().nodes[get().rootId] as MessageNode | undefined
-                  )?.allowed_mentions,
+                  allowed_mentions: selectAllowedMentions(get()),
                 }),
               ),
           }),
@@ -656,11 +654,12 @@ export function useNodeActions(id: NodeId) {
 }
 
 /** Just the field: the root node changes with every keystroke in the content. */
-export const useAllowedMentions = () =>
-  useDocument((state) => {
-    const root = state.nodes[state.rootId];
-    return root?.type === "message" ? root.allowed_mentions : undefined;
-  });
+export function selectAllowedMentions(state: DocumentData) {
+  const root = state.nodes[state.rootId];
+  return root?.type === "message" ? root.allowed_mentions : undefined;
+}
+
+export const useAllowedMentions = () => useDocument(selectAllowedMentions);
 
 export const useComponentsV2Enabled = () =>
   useDocument((state) => {

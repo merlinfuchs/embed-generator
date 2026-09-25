@@ -37,10 +37,18 @@ export function setMentionPings(
   // type the list would still ping those ids.
   if (type !== "everyone") next[type] = [];
 
-  const isDefault =
-    MENTION_TYPES.every((t) => next.parse.includes(t)) &&
-    next.users.length === 0 &&
-    next.roles.length === 0 &&
-    !next.replied_user;
-  return isDefault ? undefined : next;
+  return isDefaultAllowedMentions(next) ? undefined : next;
+}
+
+/** Whether the setting does what leaving allowed_mentions out does. */
+export function isDefaultAllowedMentions(
+  allowedMentions: AllowedMentions | undefined,
+): boolean {
+  return (
+    !allowedMentions ||
+    (MENTION_TYPES.every((t) => allowedMentions.parse.includes(t)) &&
+      allowedMentions.users.length === 0 &&
+      allowedMentions.roles.length === 0 &&
+      !allowedMentions.replied_user)
+  );
 }
