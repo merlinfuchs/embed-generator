@@ -19,6 +19,9 @@ function applyCodes(style: ANSIStyle, params: string): ANSIStyle {
     const code = Number(param || 0);
     if (code === 0) next = {};
     else if (code === 1 || code === 4) next.st = code;
+    else if (code === 22 || code === 24) delete next.st;
+    else if (code === 39) delete next.fg;
+    else if (code === 49) delete next.bg;
     else if (code >= 30 && code <= 37) next.fg = code;
     else if (code >= 40 && code <= 47) next.bg = code;
   }

@@ -78,3 +78,13 @@ test("leaving a half typed color puts the current one back", async () => {
   expect(input).toHaveValue("ff0000");
   expect(onChange).not.toHaveBeenCalled();
 });
+
+test("starting a new color with # keeps the current one", async () => {
+  const { user, input } = setup();
+
+  await user.tripleClick(input);
+  await user.keyboard("#");
+
+  expect(input).toHaveValue("#");
+  expect(onChange).not.toHaveBeenCalled();
+});

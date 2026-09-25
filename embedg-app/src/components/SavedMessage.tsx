@@ -17,14 +17,13 @@ import {
   useUpdateSavedMessageMutation,
 } from "../api/mutations";
 import { useToasts } from "../util/toasts";
+import { MAX_SAVED_MESSAGE_NAME_LENGTH } from "../api/limits";
 import { useNavigate } from "react-router-dom";
 import { parseMessageWithAction } from "../discord/importSchema";
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import ConfirmModal from "./ConfirmModal";
 import { getCurrentMessage, setCurrentMessage } from "../state/currentMessage";
-
-export const MAX_SAVED_MESSAGE_NAME_LENGTH = 25;
 
 function formatUpdatedAt(updatedAt: string): string {
   return parseISO(updatedAt).toLocaleString();
@@ -93,7 +92,7 @@ export default function SavedMessage({
   }, [renaming]);
 
   function renameMessage() {
-    if (!newName) return;
+    if (!newName || updateMessageMutation.isPending) return;
     if (newName === message.name) {
       setNewName(null);
       return;

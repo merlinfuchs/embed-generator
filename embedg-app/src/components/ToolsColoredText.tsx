@@ -105,9 +105,10 @@ export default function ToolsColoredText() {
     setSavedText(editorToANSI(editor));
   }
 
-  function pasteANSI(e: ClipboardEvent<HTMLDivElement>) {
+  // Every paste goes through here, plain text too: the browser's own paste
+  // brings markup that nodesToANSI can't read back.
+  function paste(e: ClipboardEvent<HTMLDivElement>) {
     const text = e.clipboardData.getData("text/plain");
-    if (!text.includes("\x1b[")) return;
 
     const selection = window.getSelection();
     if (!selection?.rangeCount) return;
@@ -266,7 +267,7 @@ export default function ToolsColoredText() {
         contentEditable={true}
         suppressContentEditableWarning={true}
         onInput={save}
-        onPaste={pasteANSI}
+        onPaste={paste}
       ></div>
       <div className="flex flex-col md:flex-row md:items-center md:space-x-3 space-y-3 md:space-y-0">
         <button

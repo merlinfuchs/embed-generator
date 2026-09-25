@@ -36,3 +36,11 @@ test("line breaks survive and the code block is optional", () => {
     { text: "\n", style: {} },
   ]);
 });
+
+test("codes that turn a style off end it", () => {
+  expect(parseANSI("\x1b[1;31mbold red\x1b[39m bold\x1b[22m plain")).toEqual([
+    { text: "bold red", style: { st: 1, fg: 31 } },
+    { text: " bold", style: { st: 1 } },
+    { text: " plain", style: {} },
+  ]);
+});

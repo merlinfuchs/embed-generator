@@ -62,3 +62,16 @@ test("pasting copied colored text brings back the colors", () => {
     "\x1b[2;44m\x1b[1;2mbold on blue\x1b[0m\x1b[2;44m\x1b[0m done",
   );
 });
+
+test("pasted plain text keeps its line breaks", () => {
+  const editor = renderEditor();
+  const range = document.createRange();
+  range.selectNodeContents(editor);
+  window.getSelection()!.removeAllRanges();
+  window.getSelection()!.addRange(range);
+
+  fireEvent.paste(editor, { clipboardData: { getData: () => "one\ntwo" } });
+
+  expect(editor.querySelector("br")).not.toBeNull();
+  expect(storedText()).toBe("one\ntwo");
+});

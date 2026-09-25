@@ -1,0 +1,1 @@
+export const MAX_SAVED_MESSAGE_NAME_LENGTH = 25;

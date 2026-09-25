@@ -9,8 +9,8 @@ interface Props {
 
 /** undefined clears the color, null means the text isn't a color (yet). */
 function parseHexColor(text: string): number | undefined | null {
+  if (!text.trim()) return undefined;
   const raw = text.trim().replace(/^#/, "");
-  if (!raw) return undefined;
   if (!/^[0-9a-f]{6}$/i.test(raw)) return null;
   return parseInt(raw, 16);
 }
@@ -69,10 +69,7 @@ export default function ColorPicker({ value, onChange }: Props) {
         />
         {show && (
           <div className="absolute bottom-14 right-0">
-            <HexColorPicker
-              color={`#${hexColor}`}
-              onChange={(color) => setColor(color)}
-            />
+            <HexColorPicker color={`#${hexColor}`} onChange={setColor} />
           </div>
         )}
       </ClickOutsideHandler>

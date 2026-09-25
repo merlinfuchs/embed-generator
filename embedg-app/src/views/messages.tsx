@@ -12,9 +12,8 @@ import {
   usePremiumUserFeatures,
 } from "../util/premium";
 import { useSendSettingsStore } from "../state/sendSettings";
-import SavedMessage, {
-  MAX_SAVED_MESSAGE_NAME_LENGTH,
-} from "../components/SavedMessage";
+import SavedMessage from "../components/SavedMessage";
+import { MAX_SAVED_MESSAGE_NAME_LENGTH } from "../api/limits";
 import { getCurrentMessage } from "../state/currentMessage";
 
 export default function MessagesView() {
