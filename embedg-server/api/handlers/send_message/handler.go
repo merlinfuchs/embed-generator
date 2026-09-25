@@ -270,8 +270,8 @@ func checkPlanLimits(data *actions.MessageWithActions, features model.PlanFeatur
 	}
 
 	for _, actionSet := range data.Actions {
-		if len(actionSet.Actions) > features.MaxActionsPerComponent {
-			return handlers.Forbidden("insufficient_plan", fmt.Sprintf("Your plan allows up to %d actions per component!", features.MaxActionsPerComponent))
+		if err := handlers.CheckActionSetLimit(actionSet, features); err != nil {
+			return err
 		}
 	}
 

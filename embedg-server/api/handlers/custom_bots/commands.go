@@ -137,8 +137,8 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return err
 	}
 
-	if len(actionSet.Actions) > features.MaxActionsPerComponent {
-		return handlers.Forbidden("insufficient_plan", fmt.Sprintf("Your plan allows up to %d actions per command!", features.MaxActionsPerComponent))
+	if err := handlers.CheckActionSetLimit(actionSet, features); err != nil {
+		return err
 	}
 
 	derivedPerms, err := h.derivePermissionsForUser(c, session, guildID)
@@ -210,8 +210,8 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return err
 	}
 
-	if len(actionSet.Actions) > features.MaxActionsPerComponent {
-		return handlers.Forbidden("insufficient_plan", fmt.Sprintf("Your plan allows up to %d actions per command!", features.MaxActionsPerComponent))
+	if err := handlers.CheckActionSetLimit(actionSet, features); err != nil {
+		return err
 	}
 
 	derivedPerms, err := h.derivePermissionsForUser(c, session, guildID)
