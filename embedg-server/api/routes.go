@@ -138,6 +138,7 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 		env.ScheduledMessageStore,
 		env.AccessManager,
 		env.PremiumManager,
+		env.WebhookManager,
 	)
 	scheduledMessagesGroup := app.Group("/api/scheduled-messages", sessionMiddleware.SessionRequired())
 	scheduledMessagesGroup.Get("/", scheduledMessagesHandler.HandleListScheduledMessages)

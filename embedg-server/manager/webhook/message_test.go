@@ -48,6 +48,7 @@ type fakeRest struct {
 	editErrs     []error
 	// messageWebhook is the webhook GetMessage reports as the sender.
 	messageWebhook snowflake.ID
+	getMessages    int
 	// sentFiles is what each send read from its attachments, which disgo does before every request.
 	sentFiles []string
 }
@@ -115,6 +116,7 @@ func (f *fakeRest) DeleteWebhookMessage(_ snowflake.ID, _ string, messageID snow
 }
 
 func (f *fakeRest) GetMessage(channelID snowflake.ID, messageID snowflake.ID, _ ...rest.RequestOpt) (*discord.Message, error) {
+	f.getMessages++
 	return &discord.Message{ID: messageID, ChannelID: channelID, WebhookID: &f.messageWebhook}, nil
 }
 
@@ -288,5 +290,26 @@ func TestNotEditableIsAUserError(t *testing.T) {
 	}
 	if !errors.Is(err, ErrMessageNotEditable) {
 		t.Fatal("want ErrMessageNotEditable for callers that stop retrying")
+	}
+}
+
+func TestEditAsKnownSenderDoesNotFetchTheMessage(t *testing.T) {
+	f := &fakeRest{}
+	m := newTestManager(f)
+
+	msg := send(t, m)
+	f.messageWebhook = f.webhooks[0].ID()
+
+	sender, err := m.MessageSender(context.Background(), channelID, msg.ID)
+	if err != nil || !sender.Valid || sender.ID != f.messageWebhook {
+		t.Fatalf("want the webhook that sent it, got %v, %v", sender, err)
+	}
+
+	f.getMessages = 0
+	if _, err := m.UpdateMessageAsSender(context.Background(), channelID, msg.ID, sender, discord.WebhookMessageUpdate{}); err != nil {
+		t.Fatalf("edit: %v", err)
+	}
+	if f.getMessages != 0 {
+		t.Fatalf("want no message fetch, got %d", f.getMessages)
 	}
 }

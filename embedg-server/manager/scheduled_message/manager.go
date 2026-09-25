@@ -255,7 +255,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		if data.ComponentsV2Enabled() {
 			update.Flags = &params.Flags
 		}
-		msg, err = m.webhookManager.UpdateMessageInChannel(ctx, scheduledMessage.ChannelID, scheduledMessage.MessageID.ID, update)
+		msg, err = m.webhookManager.UpdateMessageAsSender(ctx, scheduledMessage.ChannelID, scheduledMessage.MessageID.ID, scheduledMessage.MessageWebhookID, update)
 	} else {
 		msg, err = m.webhookManager.SendMessageToChannel(ctx, scheduledMessage.ChannelID, params)
 	}

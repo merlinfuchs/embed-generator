@@ -108,51 +108,92 @@ func (m *WebhookManager) SendMessageToChannel(ctx context.Context, channelID com
 }
 
 func (m *WebhookManager) UpdateMessageInChannel(ctx context.Context, channelID common.ID, messageID common.ID, params discord.WebhookMessageUpdate) (*discord.Message, error) {
-	channel, err := m.channel(ctx, channelID)
+	channel, restClient, customBot, err := m.editContext(ctx, channelID)
 	if err != nil {
 		return nil, err
 	}
 
-	useCustomBot := false
+	sender, err := messageSender(ctx, restClient, customBot, channelID, messageID)
+	if err != nil {
+		return nil, err
+	}
+
+	return m.updateAsSender(ctx, channel, restClient, customBot, messageID, sender, params)
+}
+
+// MessageSender finds who can edit a message: the webhook that sent it, or the custom bot when it
+// sent the message itself, which is reported as an invalid id. It fetches the message, which
+// Discord only allows with Read Message History, so callers that edit the same message again
+// should keep the result and use UpdateMessageAsSender.
+func (m *WebhookManager) MessageSender(ctx context.Context, channelID common.ID, messageID common.ID) (common.NullID, error) {
+	_, restClient, customBot, err := m.editContext(ctx, channelID)
+	if err != nil {
+		return common.NullID{}, err
+	}
+
+	return messageSender(ctx, restClient, customBot, channelID, messageID)
+}
+
+// UpdateMessageAsSender edits a message whose sender MessageSender found.
+func (m *WebhookManager) UpdateMessageAsSender(ctx context.Context, channelID common.ID, messageID common.ID, sender common.NullID, params discord.WebhookMessageUpdate) (*discord.Message, error) {
+	channel, restClient, customBot, err := m.editContext(ctx, channelID)
+	if err != nil {
+		return nil, err
+	}
+
+	return m.updateAsSender(ctx, channel, restClient, customBot, messageID, sender, params)
+}
+
+func (m *WebhookManager) editContext(ctx context.Context, channelID common.ID) (discord.GuildChannel, rest.Rest, *model.CustomBot, error) {
+	channel, err := m.channel(ctx, channelID)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
 	restClient, customBot, err := m.customBotManager.GetRestForGuild(ctx, channel.GuildID())
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get custom bot: %w", err)
+		return nil, nil, nil, fmt.Errorf("Failed to get custom bot: %w", err)
 	}
 
+	return channel, restClient, customBot, nil
+}
+
+func messageSender(ctx context.Context, restClient rest.Rest, customBot *model.CustomBot, channelID common.ID, messageID common.ID) (common.NullID, error) {
 	msg, err := restClient.GetMessage(channelID, messageID, rest.WithCtx(ctx))
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get message from channel: %w", err)
+		return common.NullID{}, fmt.Errorf("Failed to get message from channel: %w", err)
 	}
 
-	if msg.WebhookID == nil {
-		if customBot != nil && msg.Author.ID == customBot.UserID {
-			useCustomBot = true
-		} else {
-			return nil, notEditable("Message wasn't sent by a webhook and can therefore not be edited.")
-		}
+	if msg.WebhookID != nil {
+		return common.NullID{ID: *msg.WebhookID, Valid: true}, nil
+	}
+	if customBot != nil && msg.Author.ID == customBot.UserID {
+		return common.NullID{}, nil
+	}
+	return common.NullID{}, notEditable("Message wasn't sent by a webhook and can therefore not be edited.")
+}
+
+func (m *WebhookManager) updateAsSender(ctx context.Context, channel discord.GuildChannel, restClient rest.Rest, customBot *model.CustomBot, messageID common.ID, sender common.NullID, params discord.WebhookMessageUpdate) (*discord.Message, error) {
+	if sender.Valid {
+		return m.updateWithWebhook(ctx, channel, restClient, sender.ID, messageID, params)
 	}
 
-	var newMessage *discord.Message
-
-	if useCustomBot {
-		newMessage, err = restClient.UpdateMessage(channelID, messageID, discord.MessageUpdate{
-			Content:         params.Content,
-			Embeds:          params.Embeds,
-			Components:      params.Components,
-			Files:           params.Files,
-			AllowedMentions: params.AllowedMentions,
-			Attachments:     params.Attachments,
-		}, rest.WithCtx(ctx))
-		if err != nil {
-			return nil, fmt.Errorf("Failed to edit message: %w", err)
-		}
-	} else {
-		newMessage, err = m.updateWithWebhook(ctx, channel, restClient, *msg.WebhookID, messageID, params)
-		if err != nil {
-			return nil, err
-		}
+	// Sent by the custom bot itself, which may have been removed or replaced since.
+	if customBot == nil {
+		return nil, notEditable("The custom bot that sent this message isn't set up anymore.")
 	}
 
+	newMessage, err := restClient.UpdateMessage(channel.ID(), messageID, discord.MessageUpdate{
+		Content:         params.Content,
+		Embeds:          params.Embeds,
+		Components:      params.Components,
+		Files:           params.Files,
+		AllowedMentions: params.AllowedMentions,
+		Attachments:     params.Attachments,
+	}, rest.WithCtx(ctx))
+	if err != nil {
+		return nil, fmt.Errorf("Failed to edit message: %w", err)
+	}
 	return newMessage, nil
 }
 

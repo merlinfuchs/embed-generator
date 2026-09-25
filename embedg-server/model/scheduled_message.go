@@ -8,22 +8,24 @@ import (
 )
 
 type ScheduledMessage struct {
-	ID             string
-	CreatorID      common.ID
-	GuildID        common.ID
-	ChannelID      common.ID
-	MessageID      common.NullID
-	SavedMessageID string
-	Name           string
-	Description    null.String
-	CronExpression null.String
-	OnlyOnce       bool
-	StartAt        time.Time
-	EndAt          null.Time
-	NextAt         time.Time
-	Enabled        bool
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	CronTimezone   null.String
-	ThreadName     null.String
+	ID        string
+	CreatorID common.ID
+	GuildID   common.ID
+	ChannelID common.ID
+	MessageID common.NullID
+	// MessageWebhookID is the webhook that sent MessageID, invalid when the custom bot sent it.
+	MessageWebhookID common.NullID
+	SavedMessageID   string
+	Name             string
+	Description      null.String
+	CronExpression   null.String
+	OnlyOnce         bool
+	StartAt          time.Time
+	EndAt            null.Time
+	NextAt           time.Time
+	Enabled          bool
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+	CronTimezone     null.String
+	ThreadName       null.String
 }

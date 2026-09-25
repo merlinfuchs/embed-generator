@@ -6,6 +6,7 @@ import (
 
 	"log/slog"
 
+	"github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers"
@@ -13,6 +14,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	scheduled_messages "github.com/merlinfuchs/embed-generator/embedg-server/manager/scheduled_message"
+	"github.com/merlinfuchs/embed-generator/embedg-server/manager/webhook"
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 )
@@ -21,14 +23,36 @@ type ScheduledMessageHandler struct {
 	scheduledMessageStore store.ScheduledMessageStore
 	am                    *access.AccessManager
 	planStore             store.PlanStore
+	webhookManager        *webhook.WebhookManager
 }
 
-func New(scheduledMessageStore store.ScheduledMessageStore, am *access.AccessManager, planStore store.PlanStore) *ScheduledMessageHandler {
+func New(scheduledMessageStore store.ScheduledMessageStore, am *access.AccessManager, planStore store.PlanStore, webhookManager *webhook.WebhookManager) *ScheduledMessageHandler {
 	return &ScheduledMessageHandler{
 		scheduledMessageStore: scheduledMessageStore,
 		am:                    am,
 		planStore:             planStore,
+		webhookManager:        webhookManager,
 	}
+}
+
+// messageSender checks that the message to edit exists in the channel and can be edited, and finds
+// who sent it, once here rather than on every run.
+func (h *ScheduledMessageHandler) messageSender(c *fiber.Ctx, channelID common.ID, messageID common.NullID) (common.NullID, error) {
+	if !messageID.Valid {
+		return common.NullID{}, nil
+	}
+
+	sender, err := h.webhookManager.MessageSender(c.UserContext(), channelID, messageID.ID)
+	if err != nil {
+		if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeUnknownMessage) {
+			return common.NullID{}, handlers.BadRequest("unknown_message", "The message to edit doesn't exist in the selected channel.")
+		}
+		if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeMissingAccess, rest.JSONErrorCodeLackPermissionsToPerformAction) {
+			return common.NullID{}, handlers.BadRequest("missing_permissions", "Embed Generator needs the Read Message History permission in the channel to find the message to edit.")
+		}
+		return common.NullID{}, err
+	}
+	return sender, nil
 }
 
 func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req wire.ScheduledMessageCreateRequestWire) error {
@@ -90,25 +114,31 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 		return handlers.Forbidden("insufficient_plan", "You have reached the maximum number of scheduled messages for your plan!")
 	}
 
+	messageSender, err := h.messageSender(c, req.ChannelID, req.MessageID)
+	if err != nil {
+		return err
+	}
+
 	msg, err := h.scheduledMessageStore.CreateScheduledMessage(c.UserContext(), model.ScheduledMessage{
-		ID:             common.InternalID(),
-		CreatorID:      session.UserID,
-		GuildID:        guildID,
-		ChannelID:      req.ChannelID,
-		MessageID:      req.MessageID,
-		ThreadName:     req.ThreadName,
-		SavedMessageID: req.SavedMessageID,
-		Name:           req.Name,
-		Description:    req.Description,
-		CronExpression: req.CronExpression,
-		CronTimezone:   req.CronTimezone,
-		StartAt:        req.StartAt,
-		EndAt:          req.EndAt,
-		NextAt:         nextAt,
-		OnlyOnce:       req.OnlyOnce,
-		CreatedAt:      time.Now().UTC(),
-		UpdatedAt:      time.Now().UTC(),
-		Enabled:        req.Enabled,
+		ID:               common.InternalID(),
+		CreatorID:        session.UserID,
+		GuildID:          guildID,
+		ChannelID:        req.ChannelID,
+		MessageID:        req.MessageID,
+		MessageWebhookID: messageSender,
+		ThreadName:       req.ThreadName,
+		SavedMessageID:   req.SavedMessageID,
+		Name:             req.Name,
+		Description:      req.Description,
+		CronExpression:   req.CronExpression,
+		CronTimezone:     req.CronTimezone,
+		StartAt:          req.StartAt,
+		EndAt:            req.EndAt,
+		NextAt:           nextAt,
+		OnlyOnce:         req.OnlyOnce,
+		CreatedAt:        time.Now().UTC(),
+		UpdatedAt:        time.Now().UTC(),
+		Enabled:          req.Enabled,
 	})
 	if err != nil {
 		slog.Error("Failed to create scheduled message", slog.Any("error", err))
@@ -253,23 +283,29 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		}
 	}
 
+	messageSender, err := h.messageSender(c, req.ChannelID, req.MessageID)
+	if err != nil {
+		return err
+	}
+
 	msg, err := h.scheduledMessageStore.UpdateScheduledMessage(c.UserContext(), model.ScheduledMessage{
-		ID:             messageID,
-		GuildID:        guildID,
-		ChannelID:      req.ChannelID,
-		MessageID:      req.MessageID,
-		ThreadName:     req.ThreadName,
-		SavedMessageID: req.SavedMessageID,
-		Name:           req.Name,
-		Description:    req.Description,
-		CronExpression: req.CronExpression,
-		CronTimezone:   req.CronTimezone,
-		StartAt:        req.StartAt,
-		EndAt:          req.EndAt,
-		NextAt:         nextAt,
-		OnlyOnce:       req.OnlyOnce,
-		Enabled:        req.Enabled,
-		UpdatedAt:      time.Now().UTC(),
+		ID:               messageID,
+		GuildID:          guildID,
+		ChannelID:        req.ChannelID,
+		MessageID:        req.MessageID,
+		MessageWebhookID: messageSender,
+		ThreadName:       req.ThreadName,
+		SavedMessageID:   req.SavedMessageID,
+		Name:             req.Name,
+		Description:      req.Description,
+		CronExpression:   req.CronExpression,
+		CronTimezone:     req.CronTimezone,
+		StartAt:          req.StartAt,
+		EndAt:            req.EndAt,
+		NextAt:           nextAt,
+		OnlyOnce:         req.OnlyOnce,
+		Enabled:          req.Enabled,
+		UpdatedAt:        time.Now().UTC(),
 	})
 
 	if err != nil {
