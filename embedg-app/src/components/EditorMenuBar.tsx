@@ -19,8 +19,8 @@ export default function EditorMenuBar() {
   const settingsChanged = !isDefaultAllowedMentions(useAllowedMentions());
 
   return (
-    <div className="flex flex-col-reverse md:flex-row gap-5 justify-between md:items-center mb-5 mt-5">
-      <div className="space-x-3.5 flex items-center">
+    <div className="flex flex-wrap-reverse gap-x-5 gap-y-3 justify-between items-center mb-5 mt-5">
+      <div className="flex flex-wrap gap-2.5 items-center">
         <EditorUndoButtons />
         <EditorIconButton label="Clear Message" href="/editor/clear">
           <TrashIcon />
@@ -51,7 +51,7 @@ export default function EditorMenuBar() {
         )}
       </div>
 
-      <div className="space-x-3.5 flex items-center">
+      <div className="flex items-center">
         {componentsV2Allowed && <EditorComponentsV2Toggle />}
       </div>
     </div>

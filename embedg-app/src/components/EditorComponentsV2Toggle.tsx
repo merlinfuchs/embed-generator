@@ -21,7 +21,7 @@ export default function EditorComponentsV2Toggle() {
     <div>
       <div className="flex">
         <button
-          className="flex bg-ink-900 p-1 rounded-lg border border-white/10 text-sm font-medium text-mist-400"
+          className="flex bg-ink-900 p-1 rounded-lg border border-white/10 text-sm font-medium text-mist-400 whitespace-nowrap"
           onClick={() => {
             if (componentsV2Enabled) {
               setComponentsV2DisableModal(true);
