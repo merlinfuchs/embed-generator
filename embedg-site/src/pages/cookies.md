@@ -28,6 +28,7 @@ Some cookies are required for technical reasons in order for the website to oper
 | `send-settings` | Local storage | message.style | Remembers your message sending settings | Persistent |
 | `settings` | Local storage | message.style | Remembers your editor settings | Persistent |
 | `custom-commands-actions` | Local storage | message.style | Remembers the actions of the custom command you are editing | Persistent |
+| `colored-text` | Local storage | message.style | Remembers the text in the colored text tool | Persistent |
 | `upselling` | Local storage | message.style | Remembers when you first opened the editor and whether you closed the premium notice | Persistent |
 | `embedg-chunk-reload` | Session storage | message.style | Reloads the page once when a new version was deployed while you had it open | Session |
 | `__cf_bm` | Cookie | discordapp.com | Set by Cloudflare on behalf of Discord when the editor loads avatars, server icons, or emojis from Discord, to tell people from bots ([Discord privacy policy](https://discord.com/privacy)) | 30 minutes |
