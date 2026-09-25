@@ -11,8 +11,14 @@ import (
 type fakeRest struct {
 	rest.Rest
 
+	initial   []discord.InteractionResponse
 	followups []discord.MessageCreate
 	edits     []discord.MessageUpdate
+}
+
+func (f *fakeRest) respond(responseType discord.InteractionResponseType, data discord.InteractionResponseData, _ ...rest.RequestOpt) error {
+	f.initial = append(f.initial, discord.InteractionResponse{Type: responseType, Data: data})
+	return nil
 }
 
 func (f *fakeRest) CreateFollowupMessage(_ snowflake.ID, _ string, msg discord.MessageCreate, _ ...rest.RequestOpt) (*discord.Message, error) {
@@ -46,24 +52,19 @@ func commandInteraction(t *testing.T) discord.Interaction {
 }
 
 // newTestInteraction doesn't start the timer, the tests defer by calling autoDefer themselves.
-func newTestInteraction(inner discord.Interaction) (*restInteraction, *fakeRest, *[]discord.InteractionResponse) {
+func newTestInteraction(inner discord.Interaction) (*restInteraction, *fakeRest) {
 	f := &fakeRest{}
-	var initial []discord.InteractionResponse
-	i := &restInteraction{inner: inner, rest: f, initial: func(resp discord.InteractionResponse) error {
-		initial = append(initial, resp)
-		return nil
-	}}
-	return i, f, &initial
+	return &restInteraction{inner: inner, rest: f, initial: f.respond}, f
 }
 
 func TestRespondInTime(t *testing.T) {
-	i, f, initial := newTestInteraction(componentInteraction(t))
+	i, f := newTestInteraction(componentInteraction(t))
 
 	i.Respond(discord.MessageCreate{Content: "hi"})
 	i.autoDefer()
 
-	if len(*initial) != 1 || (*initial)[0].Type != discord.InteractionResponseTypeCreateMessage {
-		t.Fatalf("want the response as the only initial response, got %+v", *initial)
+	if len(f.initial) != 1 || f.initial[0].Type != discord.InteractionResponseTypeCreateMessage {
+		t.Fatalf("want the response as the only initial response, got %+v", f.initial)
 	}
 	if len(f.followups) != 0 {
 		t.Fatalf("want no followups, got %d", len(f.followups))
@@ -71,7 +72,7 @@ func TestRespondInTime(t *testing.T) {
 }
 
 func TestSlowComponentResponseIsFollowup(t *testing.T) {
-	i, f, initial := newTestInteraction(componentInteraction(t))
+	i, f := newTestInteraction(componentInteraction(t))
 
 	i.autoDefer()
 	if i.HasResponded() {
@@ -79,8 +80,8 @@ func TestSlowComponentResponseIsFollowup(t *testing.T) {
 	}
 	i.Respond(discord.MessageCreate{Content: "slow"})
 
-	if len(*initial) != 1 || (*initial)[0].Type != discord.InteractionResponseTypeDeferredUpdateMessage {
-		t.Fatalf("want a deferred update, got %+v", *initial)
+	if len(f.initial) != 1 || f.initial[0].Type != discord.InteractionResponseTypeDeferredUpdateMessage {
+		t.Fatalf("want a deferred update, got %+v", f.initial)
 	}
 	if len(f.followups) != 1 || f.followups[0].Content != "slow" {
 		t.Fatalf("want the response as a followup, got %+v", f.followups)
@@ -91,7 +92,7 @@ func TestSlowComponentResponseIsFollowup(t *testing.T) {
 }
 
 func TestSlowComponentEditsItsMessage(t *testing.T) {
-	i, f, _ := newTestInteraction(componentInteraction(t))
+	i, f := newTestInteraction(componentInteraction(t))
 
 	i.autoDefer()
 	content := "edited"
@@ -103,14 +104,14 @@ func TestSlowComponentEditsItsMessage(t *testing.T) {
 }
 
 func TestDeferAfterAutoDeferIsNoop(t *testing.T) {
-	i, f, initial := newTestInteraction(componentInteraction(t))
+	i, f := newTestInteraction(componentInteraction(t))
 
 	i.autoDefer()
 	i.Respond(discord.MessageCreate{}, discord.InteractionResponseTypeDeferredCreateMessage)
 	msg := i.Respond(discord.MessageCreate{Content: "saved"})
 
-	if len(*initial) != 1 {
-		t.Fatalf("want only the automatic defer, got %+v", *initial)
+	if len(f.initial) != 1 {
+		t.Fatalf("want only the automatic defer, got %+v", f.initial)
 	}
 	if msg == nil || len(f.followups) != 1 {
 		t.Fatalf("want the saved message as a followup with its message returned, got %v and %+v", msg, f.followups)
@@ -118,12 +119,12 @@ func TestDeferAfterAutoDeferIsNoop(t *testing.T) {
 }
 
 func TestSlowCommandDefersEphemeral(t *testing.T) {
-	i, f, initial := newTestInteraction(commandInteraction(t))
+	i, f := newTestInteraction(commandInteraction(t))
 
 	i.autoDefer()
 	i.Respond(discord.MessageCreate{Content: "No response", Flags: discord.MessageFlagEphemeral})
 
-	resp := (*initial)[0]
+	resp := f.initial[0]
 	data, _ := resp.Data.(discord.MessageCreate)
 	if resp.Type != discord.InteractionResponseTypeDeferredCreateMessage || !data.Flags.Has(discord.MessageFlagEphemeral) {
 		t.Fatalf("want an ephemeral deferred message, got %+v", resp)

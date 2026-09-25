@@ -12,6 +12,7 @@ import (
 	"log/slog"
 
 	"github.com/disgoorg/disgo/discord"
+	disrest "github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers"
@@ -70,15 +71,10 @@ func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 		respCh := make(chan *discord.InteractionResponse, 1)
 		client := rest.ClientForToken(customBot.Token)
 
-		ri := handler.NewInteraction(interaction, client, func(resp discord.InteractionResponse) error {
-			// Never block: the request that reads this channel gives up after three seconds, and
-			// this runs on a goroutine that outlives it.
-			select {
-			case respCh <- &resp:
-				return nil
-			default:
-				return fmt.Errorf("nobody is waiting for the initial response anymore")
-			}
+		// Called once at most, so the buffer always has room.
+		ri := handler.NewInteraction(interaction, client, func(responseType discord.InteractionResponseType, data discord.InteractionResponseData, _ ...disrest.RequestOpt) error {
+			respCh <- &discord.InteractionResponse{Type: responseType, Data: data}
+			return nil
 		})
 
 		go func() {

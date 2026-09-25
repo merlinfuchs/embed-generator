@@ -76,9 +76,7 @@ func (g *EventHandler) onMessageDelete(event *events.MessageDelete) {
 func (g *EventHandler) onComponentInteractionCreate(event *events.ComponentInteractionCreate) {
 	isAction := strings.HasPrefix(event.Data.CustomID(), "action:")
 	if isAction {
-		i := handler.NewInteraction(event.ComponentInteraction, g.rest, func(resp discord.InteractionResponse) error {
-			return event.Respond(resp.Type, resp.Data)
-		})
+		i := handler.NewInteraction(event.ComponentInteraction, g.rest, event.Respond)
 
 		err := g.actionHandler.HandleActionInteraction(g.rest, i)
 		if err != nil {
