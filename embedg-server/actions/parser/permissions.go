@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/disgoorg/disgo/discord"
+	"github.com/merlinfuchs/embed-generator/embedg-server/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 )
@@ -45,36 +46,31 @@ func (m *ActionParser) DerivePermissionsForActions(ctx context.Context, member d
 		res.ChannelPermissions = uint64(channelPermissions)
 	}
 
-	highestRolePosition := 0
+	res.GuildPermissions = uint64(access.GuildPermissions(state, member))
 
-	// The @everyone role has the guild's id.
-	defaultRole, ok := state.Role(guildID)
-	if ok {
-		highestRolePosition = defaultRole.Position
-		res.GuildPermissions = uint64(defaultRole.Permissions)
-	}
-
-	// Every role the member has grants its permissions, whatever its position. Only the hierarchy
-	// below depends on the highest one, so the two must be tracked separately: member.RoleIDs is in
-	// no particular order, so folding them together dropped the permissions of every role that
-	// happened to sit below one listed before it.
+	// member.RoleIDs is in no particular order, so the highest role has to be searched for. The
+	// @everyone role has the guild's id.
+	highestRole, _ := state.Role(guildID)
 	for _, roleID := range member.RoleIDs {
-		role, ok := state.Role(roleID)
-		if !ok {
-			continue
-		}
-
-		res.GuildPermissions |= uint64(role.Permissions)
-		if role.Position > highestRolePosition {
-			highestRolePosition = role.Position
+		if role, ok := state.Role(roleID); ok && roleBelow(highestRole, role) {
+			highestRole = role
 		}
 	}
 
 	for _, role := range state.Roles {
-		if role.Position < highestRolePosition {
+		if roleBelow(role, highestRole) {
 			res.AllowedRoleIDs = append(res.AllowedRoleIDs, role.ID)
 		}
 	}
 
 	return res, nil
+}
+
+// roleBelow orders roles the way Discord does: by position, and on equal positions the role with
+// the higher id is the lower one.
+func roleBelow(a, b discord.Role) bool {
+	if a.Position != b.Position {
+		return a.Position < b.Position
+	}
+	return a.ID > b.ID
 }
