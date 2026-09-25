@@ -52,7 +52,7 @@ test("an explicit setting that matches Discord's default counts as default", () 
       parse: ["users", "roles", "everyone"],
       users: [],
       roles: [],
-      replied_user: false,
+      replied_user: true,
     }),
   ).toBe(true);
 });

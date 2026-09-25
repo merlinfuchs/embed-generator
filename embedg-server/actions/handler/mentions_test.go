@@ -36,6 +36,17 @@ func TestActionAllowedMentions(t *testing.T) {
 			want:              discord.AllowedMentions{Parse: []discord.AllowedMentionType{roles}},
 		},
 		{
+			name:              "ids of a type parse doesn't cover pass through",
+			allowRoleMentions: true,
+			saved:             &discord.AllowedMentions{Parse: []discord.AllowedMentionType{everyone}, Users: []snowflake.ID{1}, Roles: []snowflake.ID{2}},
+			want:              discord.AllowedMentions{Parse: []discord.AllowedMentionType{everyone}, Users: []snowflake.ID{1}, Roles: []snowflake.ID{2}},
+		},
+		{
+			name:  "ids of a type parse covers are dropped",
+			saved: &discord.AllowedMentions{Parse: []discord.AllowedMentionType{users}, Users: []snowflake.ID{1}},
+			want:  discord.AllowedMentions{Parse: []discord.AllowedMentionType{users}},
+		},
+		{
 			name:  "the saved message can't widen it",
 			saved: &discord.AllowedMentions{Parse: []discord.AllowedMentionType{users, everyone}, Roles: []snowflake.ID{1}},
 			want:  discord.AllowedMentions{Parse: []discord.AllowedMentionType{users}},

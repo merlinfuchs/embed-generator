@@ -40,7 +40,10 @@ export function setMentionPings(
   return isDefaultAllowedMentions(next) ? undefined : next;
 }
 
-/** Whether the setting does what leaving allowed_mentions out does. */
+/**
+ * Whether the setting does what leaving allowed_mentions out does. replied_user
+ * doesn't count: webhook messages and action responses are never replies.
+ */
 export function isDefaultAllowedMentions(
   allowedMentions: AllowedMentions | undefined,
 ): boolean {
@@ -48,7 +51,6 @@ export function isDefaultAllowedMentions(
     !allowedMentions ||
     (MENTION_TYPES.every((t) => allowedMentions.parse.includes(t)) &&
       allowedMentions.users.length === 0 &&
-      allowedMentions.roles.length === 0 &&
-      !allowedMentions.replied_user)
+      allowedMentions.roles.length === 0)
   );
 }

@@ -477,8 +477,11 @@ func actionAllowedMentions(action actions.Action, saved *discord.AllowedMentions
 		mentions.Parse = slices.DeleteFunc(mentions.Parse, func(t discord.AllowedMentionType) bool {
 			return !slices.Contains(saved.Parse, t)
 		})
-		mentions.Users = saved.Users
-		if action.AllowRoleMentions {
+		// Discord rejects an id list for a type that parse already covers.
+		if !slices.Contains(mentions.Parse, discord.AllowedMentionTypeUsers) {
+			mentions.Users = saved.Users
+		}
+		if action.AllowRoleMentions && !slices.Contains(mentions.Parse, discord.AllowedMentionTypeRoles) {
 			mentions.Roles = saved.Roles
 		}
 	}
