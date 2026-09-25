@@ -1,0 +1,1 @@
+DROP INDEX scheduled_messages_guild_id_idx;

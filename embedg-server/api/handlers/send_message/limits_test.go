@@ -8,7 +8,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 )
 
-func TestCheckPlanLimits(t *testing.T) {
+func TestCheckMessageLimits(t *testing.T) {
 	features := model.PlanFeatures{MaxActionsPerComponent: 2}
 
 	tests := []struct {
@@ -33,7 +33,7 @@ func TestCheckPlanLimits(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := checkPlanLimits(&tt.data, features)
+			err := checkMessageLimits(&tt.data, features)
 			if (err == nil) != tt.ok {
 				t.Fatalf("want ok=%v, got %v", tt.ok, err)
 			}

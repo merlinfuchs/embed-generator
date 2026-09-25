@@ -1,6 +1,7 @@
 package saved_messages
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -78,7 +79,7 @@ func (h *SavedMessagesHandler) HandleCreateSavedMessage(c *fiber.Ctx, req wire.S
 		}
 	}
 
-	if err := h.checkSavedMessageLimit(c, session.UserID, guildID, 1); err != nil {
+	if err := h.checkSavedMessageLimit(c.UserContext(), session.UserID, guildID, 1); err != nil {
 		return err
 	}
 
@@ -198,7 +199,7 @@ func (h *SavedMessagesHandler) HandleImportSavedMessages(c *fiber.Ctx, req wire.
 		}
 	}
 
-	if err := h.checkSavedMessageLimit(c, session.UserID, guildID, len(req.Messages)); err != nil {
+	if err := h.checkSavedMessageLimit(c.UserContext(), session.UserID, guildID, len(req.Messages)); err != nil {
 		return err
 	}
 
@@ -229,22 +230,20 @@ func (h *SavedMessagesHandler) HandleImportSavedMessages(c *fiber.Ctx, req wire.
 
 // checkSavedMessageLimit checks that adding messages stays within the plan of the guild, or of the
 // user for their personal messages.
-func (h *SavedMessagesHandler) checkSavedMessageLimit(c *fiber.Ctx, userID common.ID, guildID common.NullID, adding int) error {
-	ctx := c.UserContext()
-
+func (h *SavedMessagesHandler) checkSavedMessageLimit(ctx context.Context, userID common.ID, guildID common.NullID, adding int) error {
 	var features model.PlanFeatures
 	var existing int64
 	var err error
 	if guildID.Valid {
-		features, err = h.planStore.GetPlanFeaturesForGuild(ctx, guildID.ID)
-		if err == nil {
-			existing, err = h.savedMessageStore.CountSavedMessagesForGuild(ctx, guildID.ID)
+		if features, err = h.planStore.GetPlanFeaturesForGuild(ctx, guildID.ID); err != nil {
+			return err
 		}
+		existing, err = h.savedMessageStore.CountSavedMessagesForGuild(ctx, guildID.ID)
 	} else {
-		features, err = h.planStore.GetPlanFeaturesForUser(ctx, userID)
-		if err == nil {
-			existing, err = h.savedMessageStore.CountSavedMessagesForCreator(ctx, userID)
+		if features, err = h.planStore.GetPlanFeaturesForUser(ctx, userID); err != nil {
+			return err
 		}
+		existing, err = h.savedMessageStore.CountSavedMessagesForCreator(ctx, userID)
 	}
 	if err != nil {
 		return err

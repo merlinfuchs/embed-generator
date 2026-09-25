@@ -90,7 +90,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return err
 	}
 
-	if err := checkPlanLimits(data, features); err != nil {
+	if err := checkMessageLimits(data, features); err != nil {
 		return err
 	}
 
@@ -264,7 +264,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 	})
 }
 
-func checkPlanLimits(data *actions.MessageWithActions, features model.PlanFeatures) error {
+func checkMessageLimits(data *actions.MessageWithActions, features model.PlanFeatures) error {
 	if data.ComponentsV2Enabled() && !features.ComponentsV2 {
 		return handlers.Forbidden("insufficient_plan", "Components V2 are not available on your plan!")
 	}
