@@ -134,3 +134,13 @@ func TestPermissionSource(t *testing.T) {
 		t.Fatalf("plain channel resolved to %d", got.ID())
 	}
 }
+
+func TestGuildPermissionsTimedOut(t *testing.T) {
+	state := stateWith(t)
+	future := time.Now().Add(time.Hour)
+
+	member := discord.Member{User: discord.User{ID: userID}, RoleIDs: []common.ID{staffRole}, CommunicationDisabledUntil: &future}
+	if got := GuildPermissions(state, member); got != discord.PermissionViewChannel {
+		t.Fatalf("permissions = %d, want %d", got, discord.PermissionViewChannel)
+	}
+}

@@ -46,29 +46,15 @@ func (m *ActionParser) DerivePermissionsForActions(ctx context.Context, member d
 		res.ChannelPermissions = uint64(channelPermissions)
 	}
 
-	// The @everyone role has the guild's id.
+	res.GuildPermissions = uint64(access.GuildPermissions(state, member))
+
+	// member.RoleIDs is in no particular order, so the highest role has to be searched for. The
+	// @everyone role has the guild's id.
 	highestRole, _ := state.Role(guildID)
-	res.GuildPermissions = uint64(highestRole.Permissions)
-
-	// Every role the member has grants its permissions, whatever its position. Only the hierarchy
-	// below depends on the highest one, so the two must be tracked separately: member.RoleIDs is in
-	// no particular order, so folding them together dropped the permissions of every role that
-	// happened to sit below one listed before it.
 	for _, roleID := range member.RoleIDs {
-		role, ok := state.Role(roleID)
-		if !ok {
-			continue
-		}
-
-		res.GuildPermissions |= uint64(role.Permissions)
-		if roleBelow(highestRole, role) {
+		if role, ok := state.Role(roleID); ok && roleBelow(highestRole, role) {
 			highestRole = role
 		}
-	}
-
-	guildPerms := discord.Permissions(res.GuildPermissions)
-	if !res.GuildIsOwner && !guildPerms.Has(discord.PermissionAdministrator) && access.IsTimedOut(member) {
-		res.GuildPermissions = uint64(guildPerms & access.TimedOutPermissions)
 	}
 
 	for _, role := range state.Roles {

@@ -431,14 +431,15 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				}
 			}
 		case actions.ActionTypePermissionCheck:
-			perms, _ := strconv.ParseInt(action.Permissions, 10, 64)
+			rawPerms, _ := strconv.ParseInt(action.Permissions, 10, 64)
+			perms := discord.Permissions(rawPerms)
 
 			member := interaction.Member()
 			if member == nil {
 				return userErr("This can only be used in a server.")
 			}
 
-			if !member.Permissions.Has(discord.PermissionAdministrator) && member.Permissions&discord.Permissions(perms) != discord.Permissions(perms) {
+			if !member.Permissions.Has(discord.PermissionAdministrator) && !member.Permissions.Has(perms) {
 				responseText := "You don't have the required permissions to use this component or command."
 				if action.DisableDefaultResponse {
 					responseText = action.Text

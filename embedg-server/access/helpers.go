@@ -1,16 +1,18 @@
 package access
 
 import (
+	"slices"
 	"time"
 
 	"github.com/disgoorg/disgo/discord"
+	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"github.com/merlinfuchs/embed-generator/embedg-server/guildstate"
 )
 
-// TimedOutPermissions is all a timed out member keeps. Owners and administrators are exempt.
-const TimedOutPermissions = discord.PermissionViewChannel | discord.PermissionReadMessageHistory
+// timedOutPermissions is all a timed out member keeps. Owners and administrators are exempt.
+const timedOutPermissions = discord.PermissionViewChannel | discord.PermissionReadMessageHistory
 
-func IsTimedOut(member discord.Member) bool {
+func isTimedOut(member discord.Member) bool {
 	return member.CommunicationDisabledUntil != nil && member.CommunicationDisabledUntil.After(time.Now())
 }
 
@@ -59,95 +61,69 @@ func maxChannelPermissions(state *guildstate.State, member discord.Member, stopA
 	return permissions
 }
 
-func memberPermissions(guild *discord.Guild, roles []discord.Role, channel discord.GuildChannel, member discord.Member) (apermissions discord.Permissions) {
-	userID := member.User.ID
-	roleIDs := member.RoleIDs
+// GuildPermissions is the member's guild level permissions, before any channel overwrites.
+func GuildPermissions(state *guildstate.State, member discord.Member) discord.Permissions {
+	return memberPermissions(&state.Guild, state.Roles, nil, member)
+}
 
-	if userID == guild.OwnerID {
-		apermissions = discord.PermissionsAll
-		return
+// memberPermissions follows Discord's algorithm. A nil channel gives the guild level permissions.
+func memberPermissions(guild *discord.Guild, roles []discord.Role, channel discord.GuildChannel, member discord.Member) discord.Permissions {
+	if member.User.ID == guild.OwnerID {
+		return discord.PermissionsAll
 	}
 
+	var permissions discord.Permissions
 	for _, role := range roles {
-		if role.ID == guild.ID {
-			apermissions |= role.Permissions
-			break
+		if role.ID == guild.ID || slices.Contains(member.RoleIDs, role.ID) {
+			permissions |= role.Permissions
 		}
 	}
 
-	for _, role := range roles {
-		for _, roleID := range roleIDs {
-			if role.ID == roleID {
-				apermissions |= role.Permissions
-				break
-			}
+	// Administrator bypasses overwrites and timeouts.
+	if permissions.Has(discord.PermissionAdministrator) {
+		return discord.PermissionsAll
+	}
+
+	if channel != nil {
+		permissions = applyOverwrites(permissions, guild.ID, channel, member)
+
+		// Discord voids every permission in a channel the member can't see, so a role with guild level
+		// Manage Webhooks must not keep it in a channel that hides itself from that role.
+		if !permissions.Has(discord.PermissionViewChannel) {
+			return 0
 		}
 	}
 
-	if apermissions&discord.PermissionAdministrator == discord.PermissionAdministrator {
-		apermissions |= discord.PermissionsAll
-		return // Administrator bypasses all overrides
+	if isTimedOut(member) {
+		permissions &= timedOutPermissions
 	}
 
-	if channel == nil {
-		if IsTimedOut(member) {
-			apermissions &= TimedOutPermissions
-		}
-		return
+	return permissions
+}
+
+func applyOverwrites(permissions discord.Permissions, guildID common.ID, channel discord.GuildChannel, member discord.Member) discord.Permissions {
+	overwrites := channel.PermissionOverwrites()
+
+	if overwrite, ok := overwrites.Role(guildID); ok {
+		permissions &= ^overwrite.Deny
+		permissions |= overwrite.Allow
 	}
 
-	// Apply @everyone overrides from the channel.
-	for _, overwrite := range channel.PermissionOverwrites() {
-		if roleOverwrite, ok := overwrite.(discord.RolePermissionOverwrite); ok {
-			if guild.ID == roleOverwrite.ID() {
-				apermissions &= ^roleOverwrite.Deny
-				apermissions |= roleOverwrite.Allow
-				break
-			}
-		}
-	}
-
+	// Role overwrites are combined before applying, so an allow on any role beats a deny on another.
 	var denies, allows discord.Permissions
-	// Member overwrites can override role overrides, so do two passes
-	for _, overwrite := range channel.PermissionOverwrites() {
-		if roleOverwrite, ok := overwrite.(discord.RolePermissionOverwrite); ok {
-			for _, roleID := range roleIDs {
-				if roleOverwrite.ID() == roleID {
-					denies |= roleOverwrite.Deny
-					allows |= roleOverwrite.Allow
-					break
-				}
-			}
+	for _, roleID := range member.RoleIDs {
+		if overwrite, ok := overwrites.Role(roleID); ok {
+			denies |= overwrite.Deny
+			allows |= overwrite.Allow
 		}
 	}
+	permissions &= ^denies
+	permissions |= allows
 
-	apermissions &= ^denies
-	apermissions |= allows
-
-	for _, overwrite := range channel.PermissionOverwrites() {
-		if memberOverwrite, ok := overwrite.(discord.MemberPermissionOverwrite); ok {
-			if memberOverwrite.ID() == userID {
-				apermissions &= ^memberOverwrite.Deny
-				apermissions |= memberOverwrite.Allow
-				break
-			}
-		}
+	if overwrite, ok := overwrites.Member(member.User.ID); ok {
+		permissions &= ^overwrite.Deny
+		permissions |= overwrite.Allow
 	}
 
-	if apermissions&discord.PermissionAdministrator == discord.PermissionAdministrator {
-		apermissions |= discord.PermissionsAll
-		return apermissions
-	}
-
-	// Discord voids every permission in a channel the member can't see, so a role with guild level
-	// Manage Webhooks must not keep it in a channel that hides itself from that role.
-	if apermissions&discord.PermissionViewChannel == 0 {
-		return 0
-	}
-
-	if IsTimedOut(member) {
-		apermissions &= TimedOutPermissions
-	}
-
-	return apermissions
+	return permissions
 }
