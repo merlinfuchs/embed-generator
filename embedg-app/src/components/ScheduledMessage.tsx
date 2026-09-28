@@ -299,8 +299,8 @@ export default function ScheduledMessage({
                     onChange={(v) => setThreadName(v || null)}
                   />
                   <div className="mt-2 text-mist-400 text-sm font-light">
-                    When sending to a Forum Channel you have to set a name for
-                    the thread that is being created.
+                    When sending to a forum or media channel you have to set a
+                    name for the thread that is being created.
                   </div>
                 </div>
               )}

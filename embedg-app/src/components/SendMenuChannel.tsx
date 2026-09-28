@@ -8,7 +8,7 @@ import { useValidationErrorStore } from "../state/validationError";
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import { useSendSettingsStore } from "../state/sendSettings";
-import { parseMessageId } from "../discord/util";
+import { isThreadOnlyChannel, parseMessageId } from "../discord/util";
 import MessageRestoreButton from "./MessageRestoreButton";
 import { useToasts } from "../util/toasts";
 import { getCurrentMessage } from "../state/currentMessage";
@@ -45,15 +45,16 @@ export default function SendMenuChannel() {
 
   const createToast = useToasts((state) => state.create);
 
-  // One predicate per button, used for both the styling and the disabled attribute. A forum
-  // channel needs a thread name, and can't have an existing message edited in it.
+  // One predicate per button, used for both the styling and the disabled attribute. A forum or
+  // media channel needs a thread name, and can't have an existing message edited in it.
+  const threadOnly = isThreadOnlyChannel(selectedChannel?.type);
   const ready =
     !validationError &&
     !!selectedGuildId &&
     !!selectedChannnelId &&
     !sendToChannelMutation.isPending;
-  const canSend = ready && !(selectedChannel?.type === 15 && !threadName);
-  const canEdit = ready && selectedChannel?.type !== 15;
+  const canSend = ready && !(threadOnly && !threadName);
+  const canEdit = ready && !threadOnly;
 
   function send(edit: boolean) {
     if (edit ? !canEdit : !canSend) return;
@@ -64,7 +65,7 @@ export default function SendMenuChannel() {
       {
         guild_id: selectedGuildId,
         channel_id: selectedChannnelId,
-        thread_name: selectedChannel?.type === 15 ? threadName : null,
+        thread_name: threadOnly ? threadName : null,
         message_id: edit ? messageId : null,
         data: getCurrentMessage(),
         attachments: useCurrentAttachmentsStore.getState().attachments,
@@ -115,7 +116,7 @@ export default function SendMenuChannel() {
           />
         </div>
 
-        {selectedChannel?.type === 15 ? (
+        {threadOnly ? (
           <div className="flex-auto sm:w-1/2">
             <div className="flex-auto">
               <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
@@ -129,8 +130,8 @@ export default function SendMenuChannel() {
                 onChange={(e) => setThreadName(e.target.value || null)}
               />
               <div className="mt-2 text-mist-400 text-sm font-light">
-                When sending to a Forum Channel you have to set a name for the
-                thread that is being created.
+                When sending to a forum or media channel you have to set a name
+                for the thread that is being created.
               </div>
             </div>
           </div>
@@ -170,11 +171,7 @@ export default function SendMenuChannel() {
                   ? "bg-azure-500 hover:bg-azure-400 cursor-pointer"
                   : "cursor-not-allowed bg-ink-900"
               }`}
-              disabled={
-                !!validationError ||
-                !selectedChannnelId ||
-                selectedChannel?.type === 15
-              }
+              disabled={!!validationError || !selectedChannnelId || threadOnly}
               onClick={() => send(true)}
             >
               {sendToChannelMutation.isPending && (
@@ -193,7 +190,7 @@ export default function SendMenuChannel() {
             disabled={
               !!validationError ||
               !selectedChannnelId ||
-              (selectedChannel?.type === 15 && !threadName)
+              (threadOnly && !threadName)
             }
             onClick={() => send(false)}
           >
