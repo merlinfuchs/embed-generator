@@ -169,19 +169,22 @@ func (m *AccessManager) ChannelAccessForGuild(ctx context.Context, sess *session
 		})
 	}
 
+	byID := channelsByID(state.Channels)
 	for _, thread := range threads {
+		source, ok := permissionSource(thread, byID)
+		if !ok {
+			continue
+		}
 		res = append(res, GuildChannelAccess{
 			Channel: thread,
-			Access:  m.channelAccess(state, thread, userMember, botMember),
+			Access:  m.channelAccess(state, source, userMember, botMember),
 		})
 	}
 
 	return res, nil
 }
 
-func (m *AccessManager) channelAccess(state *guildstate.State, channel discord.GuildChannel, userMember *discord.Member, botMember *discord.Member) ChannelAccess {
-	source := permissionSource(channel, state)
-
+func (m *AccessManager) channelAccess(state *guildstate.State, source discord.GuildChannel, userMember *discord.Member, botMember *discord.Member) ChannelAccess {
 	res := ChannelAccess{
 		BotPermissions: memberPermissions(&state.Guild, state.Roles, source, *botMember),
 	}
@@ -250,7 +253,22 @@ func (m *AccessManager) memberPermissionsInChannel(ctx context.Context, member d
 		return 0, err
 	}
 
-	return memberPermissions(&state.Guild, state.Roles, permissionSource(channel, state), member), nil
+	// The channel was just fetched with the bot token, so the bot can see it and a thread's parent.
+	// Fetching the parent rather than looking it up in the guild's channel list keeps a list that
+	// predates the parent from denying access.
+	source := channel
+	if thread, ok := channel.(discord.GuildThread); ok && thread.ParentID() != nil {
+		parent, err := m.guildState.Channel(ctx, *thread.ParentID())
+		if err != nil {
+			if errors.Is(err, store.ErrNotFound) {
+				return 0, nil
+			}
+			return 0, err
+		}
+		source = parent
+	}
+
+	return memberPermissions(&state.Guild, state.Roles, source, member), nil
 }
 
 func (m *AccessManager) ComputeBotPermissionsForChannel(ctx context.Context, channelID common.ID) (discord.Permissions, error) {

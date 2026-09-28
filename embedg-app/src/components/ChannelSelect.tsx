@@ -68,10 +68,12 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
 
     const added = new Set<string>();
     const res = [];
+    const ids = new Set(rawChannels.map((c) => c.id));
 
     // This is really inefficient but it should be fine because there are never more than 500 channels
     for (const rootChannel of rawChannels) {
-      if (rootChannel.parent_id) continue;
+      // Discord leaves out categories the bot can't view, so their children become root channels.
+      if (rootChannel.parent_id && ids.has(rootChannel.parent_id)) continue;
 
       if (
         rootChannel.type === 0 ||
