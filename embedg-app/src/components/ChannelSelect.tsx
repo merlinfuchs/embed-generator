@@ -2,6 +2,8 @@ import {
   ArrowPathIcon,
   ChatBubbleLeftRightIcon,
   ChevronDownIcon,
+  PhotoIcon,
+  SpeakerWaveIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -16,16 +18,34 @@ interface Props {
   onChange: (channelId: string | null) => void;
 }
 
+// text, voice, announcement, announcement thread, public thread, private thread, stage, forum, media.
+// Voice and stage channels have a text chat that webhooks can post in.
+const selectableChannelTypes = new Set([0, 2, 5, 10, 11, 12, 13, 15, 16]);
+
+// Top level of the list: the selectable types plus categories, minus threads, which are listed
+// under their channel.
+const rootChannelTypes = new Set([0, 2, 4, 5, 13, 15, 16]);
+
+const threadChannelTypes = new Set([10, 11, 12]);
+
 function canSelectChannelType(type: number) {
-  // text, announcement, announcement thread, text thread, forum
-  return (
-    type === 0 ||
-    type === 5 ||
-    type === 10 ||
-    type === 11 ||
-    type === 12 ||
-    type === 15
-  );
+  return selectableChannelTypes.has(type);
+}
+
+function ChannelIcon({ type }: { type: number }) {
+  if (type === 4) {
+    return <ChevronDownIcon className="h-5 w-5 text-mist-300" />;
+  }
+  if (type === 15) {
+    return <ChatBubbleLeftRightIcon className="h-5 w-5 text-mist-300" />;
+  }
+  if (type === 16) {
+    return <PhotoIcon className="h-5 w-5 text-mist-300" />;
+  }
+  if (type === 2 || type === 13) {
+    return <SpeakerWaveIcon className="h-5 w-5 text-mist-300" />;
+  }
+  return <div className="text-xl italic text-mist-400 font-light pl-1">#</div>;
 }
 
 export function ChannelSelect({ guildId, channelId, onChange }: Props) {
@@ -73,14 +93,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
     for (const rootChannel of rawChannels) {
       if (rootChannel.parent_id) continue;
 
-      if (
-        rootChannel.type === 0 ||
-        rootChannel.type === 4 ||
-        rootChannel.type === 5 ||
-        rootChannel.type === 13 ||
-        rootChannel.type === 15
-      ) {
-        // text, category, announcement, stage, forum
+      if (rootChannelTypes.has(rootChannel.type)) {
         added.add(rootChannel.id);
         res.push({
           ...rootChannel,
@@ -95,16 +108,8 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
       for (const childChannel of rawChannels) {
         if (childChannel.parent_id !== rootChannel.id) continue;
 
-        if (
-          childChannel.type === 0 ||
-          childChannel.type === 5 ||
-          childChannel.type === 10 ||
-          childChannel.type === 11 ||
-          childChannel.type === 12 ||
-          childChannel.type === 13 ||
-          childChannel.type === 15
-        ) {
-          // text, announcement, announcement thread, text thread, stage, forum
+        // A channel in a category, or a thread of a channel outside one.
+        if (canSelectChannelType(childChannel.type)) {
           added.add(childChannel.id);
           res.push({
             ...childChannel,
@@ -119,12 +124,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
         for (const childThread of rawChannels) {
           if (childThread.parent_id !== childChannel.id) continue;
 
-          if (
-            childThread.type === 10 ||
-            childThread.type === 11 ||
-            childThread.type === 12
-          ) {
-            // announcement thread, text thread
+          if (threadChannelTypes.has(childThread.type)) {
             added.add(childThread.id);
             res.push({
               ...childThread,
@@ -204,13 +204,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
               </div>
             ) : channel ? (
               <div className="flex items-center space-x-2 cursor-pointer w-full">
-                {channel.type === 15 ? (
-                  <ChatBubbleLeftRightIcon className="h-5 w-5 text-mist-300" />
-                ) : (
-                  <div className="text-xl italic text-mist-400 font-light pl-1">
-                    #
-                  </div>
-                )}
+                <ChannelIcon type={channel.type} />
                 <div className="text-mist-300 flex-auto truncate">
                   {channel.name}
                 </div>
@@ -243,15 +237,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
                   disabled={!c.canSelect}
                   onClick={() => selectChannel(c.id)}
                 >
-                  {c.type === 4 ? (
-                    <ChevronDownIcon className="h-5 w-5 text-mist-300" />
-                  ) : c.type === 15 ? (
-                    <ChatBubbleLeftRightIcon className="h-5 w-5 text-mist-300" />
-                  ) : (
-                    <div className="text-xl italic text-mist-400 font-light pl-1">
-                      #
-                    </div>
-                  )}
+                  <ChannelIcon type={c.type} />
                   <div
                     className={clsx(
                       "truncate",
