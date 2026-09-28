@@ -119,13 +119,13 @@ func TestPermissionSource(t *testing.T) {
 	parent := channel(t, `{"id":"10","type":0,"guild_id":"1","name":"parent","permission_overwrites":[]}`)
 	thread := channel(t, `{"id":"20","type":11,"guild_id":"1","name":"thread","parent_id":"10"}`)
 
-	withParent := stateWith(t, parent)
+	withParent := channelsByID([]discord.GuildChannel{parent})
 	if got, ok := permissionSource(thread, withParent); !ok || got.ID() != parent.ID() {
 		t.Fatalf("thread did not inherit from its parent, got %v", got)
 	}
 
 	// The parent is missing when the bot can't view it, so the bot can't use the thread either.
-	if got, ok := permissionSource(thread, stateWith(t)); ok {
+	if got, ok := permissionSource(thread, nil); ok {
 		t.Fatalf("orphan thread resolved to %d", got.ID())
 	}
 
