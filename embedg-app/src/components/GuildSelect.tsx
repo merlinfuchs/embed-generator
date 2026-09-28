@@ -7,6 +7,7 @@ import ClickOutsideHandler from "./ClickOutsideHandler";
 import SelectDropdown from "./SelectDropdown";
 import { useToasts } from "../util/toasts";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import { defaultGuild, missingManageWebhooksHint } from "../util/guilds";
 
 interface Props {
   guildId: string | null;
@@ -35,9 +36,9 @@ export default function GuildSelect({ guildId, onChange }: Props) {
   useEffect(() => {
     if (!guildId) {
       if (guilds?.success) {
-        const defaultGuild = guilds.data[0];
-        if (defaultGuild) {
-          onChange(defaultGuild.id);
+        const guild = defaultGuild(guilds.data);
+        if (guild) {
+          onChange(guild.id);
         }
       }
     } else if (!isPending) {
@@ -95,7 +96,15 @@ export default function GuildSelect({ guildId, onChange }: Props) {
                 <button
                   type="button"
                   key={g.id}
-                  className="py-2 flex space-x-2 items-center rounded-lg px-3 hover:bg-ink-700 cursor-pointer w-full text-left"
+                  className={clsx(
+                    "py-2 flex space-x-2 items-center rounded-lg px-3 hover:bg-ink-700 cursor-pointer w-full text-left",
+                    !g.can_manage_webhooks && "opacity-60",
+                  )}
+                  title={
+                    g.can_manage_webhooks
+                      ? undefined
+                      : missingManageWebhooksHint
+                  }
                   onClick={() => selectGuild(g.id)}
                 >
                   <img

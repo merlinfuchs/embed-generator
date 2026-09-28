@@ -23,6 +23,7 @@ import ClickOutsideHandler from "./ClickOutsideHandler";
 import { useGuildsQuery, useUserQuery } from "../api/queries";
 import { guildIconUrl } from "../discord/cdn";
 import { useSendSettingsStore } from "../state/sendSettings";
+import { defaultGuild, missingManageWebhooksHint } from "../util/guilds";
 import LoginLink from "./LoginLink";
 import LogoutLink from "./LogoutLink";
 import { useSettingsStore } from "../state/settings";
@@ -289,9 +290,9 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
   useEffect(() => {
     if (!guildId) {
       if (guilds?.success) {
-        const defaultGuild = guilds.data[0];
-        if (defaultGuild) {
-          setGuildId(defaultGuild.id);
+        const guild = defaultGuild(guilds.data);
+        if (guild) {
+          setGuildId(guild.id);
         }
       }
     } else if (!isPending) {
@@ -371,7 +372,13 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
               <button
                 type="button"
                 key={g.id}
-                className="py-2 flex space-x-2 items-center rounded-lg px-3 hover:bg-ink-800 cursor-pointer w-full text-left"
+                className={clsx(
+                  "py-2 flex space-x-2 items-center rounded-lg px-3 hover:bg-ink-800 cursor-pointer w-full text-left",
+                  !g.can_manage_webhooks && "opacity-60",
+                )}
+                title={
+                  g.can_manage_webhooks ? undefined : missingManageWebhooksHint
+                }
                 onClick={() => selectGuild(g.id)}
               >
                 <img

@@ -6,6 +6,7 @@ import (
 
 	"log/slog"
 
+	"github.com/disgoorg/disgo/discord"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers"
@@ -46,8 +47,12 @@ func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 	}
 
 	guildIDs := make([]common.ID, 0, len(userGuilds))
+	canManageWebhooks := make(map[common.ID]bool, len(userGuilds))
 	for _, guild := range userGuilds {
 		guildIDs = append(guildIDs, guild.ID)
+		canManageWebhooks[guild.ID] = guild.Owner ||
+			guild.Permissions.Has(discord.PermissionAdministrator) ||
+			guild.Permissions.Has(discord.PermissionManageWebhooks)
 	}
 
 	// Intersect with the guilds the bot is in. Name and icon come from there so the list shows what
@@ -61,9 +66,10 @@ func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 	res := make([]wire.GuildWire, 0, len(guilds))
 	for _, guild := range guilds {
 		res = append(res, wire.GuildWire{
-			ID:   guild.ID,
-			Name: guild.Name,
-			Icon: guild.Icon,
+			ID:                guild.ID,
+			Name:              guild.Name,
+			Icon:              guild.Icon,
+			CanManageWebhooks: canManageWebhooks[guild.ID],
 		})
 	}
 
@@ -102,6 +108,8 @@ func (h *GuildsHanlder) HandleGetGuild(c *fiber.Ctx) error {
 			ID:   guilds[0].ID,
 			Name: guilds[0].Name,
 			Icon: guilds[0].Icon,
+			// Passing the access check means the user can manage webhooks in at least one channel.
+			CanManageWebhooks: true,
 		},
 	})
 }

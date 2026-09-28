@@ -13,17 +13,25 @@ import (
 func (m *AccessManager) CheckGuildAccessForRequest(c *fiber.Ctx, guildID common.ID) error {
 	session := c.Locals("session").(*session.Session)
 
-	access, _, err := m.GetGuildAccessForSession(c.UserContext(), session, guildID)
+	access, guild, err := m.GetGuildAccessForSession(c.UserContext(), session, guildID)
 	if err != nil {
 		return err
 	}
 
+	// No guild means whoever was being checked when it gave up isn't in it, as opposed to being in it
+	// without the permissions.
 	if !access.HasChannelWithBotAccess() {
-		return handlers.Forbidden("bot_missing_access", "The bot doesn't have access to this guild")
+		if guild == nil {
+			return handlers.Forbidden("bot_missing_access", "The bot isn't in this server.")
+		}
+		return handlers.Forbidden("bot_missing_access", "The bot needs the View Channel and Manage Webhooks permissions in at least one channel of this server.")
 	}
 
 	if !access.HasChannelWithUserAccess() {
-		return handlers.Forbidden("missing_access", "You don't have access to this guild")
+		if guild == nil {
+			return handlers.Forbidden("missing_access", "You aren't a member of this server.")
+		}
+		return handlers.Forbidden("missing_access", "You need the View Channel and Manage Webhooks permissions in at least one channel of this server.")
 	}
 
 	return nil
@@ -38,11 +46,11 @@ func (m *AccessManager) CheckChannelAccessForRequest(c *fiber.Ctx, channelID com
 	}
 
 	if !access.BotAccess() {
-		return handlers.Forbidden("bot_missing_access", "The bot doesn't have access to this channel")
+		return handlers.Forbidden("bot_missing_access", "The bot needs the View Channel and Manage Webhooks permissions in this channel.")
 	}
 
 	if !access.UserAccess() {
-		return handlers.Forbidden("missing_access", "You don't have access to this channel")
+		return handlers.Forbidden("missing_access", "You need the View Channel and Manage Webhooks permissions in this channel.")
 	}
 
 	return nil

@@ -170,13 +170,6 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
     [channels, channelId],
   );
 
-  // The guild list no longer knows whether the bot can post anywhere, so say it here instead of
-  // showing a list where nothing can be picked.
-  const botHasNoAccess = useMemo(
-    () => channels.length > 0 && !channels.some((c) => c.bot_access),
-    [channels],
-  );
-
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
       <div className="px-3 h-10 flex items-center rounded-lg bg-ink-900 relative select-none">
@@ -223,12 +216,6 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
         </div>
         {open && (
           <SelectDropdown>
-            {botHasNoAccess && (
-              <div className="p-2 text-mist-400 text-sm">
-                The bot can't post in any channel in this server. Give it the
-                Manage Webhooks permission.
-              </div>
-            )}
             {filteredChannels.length ? (
               filteredChannels.map((c) => (
                 <button
@@ -263,7 +250,11 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
                 </button>
               ))
             ) : (
-              <div className="p-2 text-mist-300">No channels found</div>
+              <div className="p-2 text-mist-300">
+                {data?.success === false
+                  ? data.error.message
+                  : "No channels found"}
+              </div>
             )}
           </SelectDropdown>
         )}
