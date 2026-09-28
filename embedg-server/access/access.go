@@ -170,18 +170,20 @@ func (m *AccessManager) ChannelAccessForGuild(ctx context.Context, sess *session
 	}
 
 	for _, thread := range threads {
+		source, ok := permissionSource(thread, state)
+		if !ok {
+			continue
+		}
 		res = append(res, GuildChannelAccess{
 			Channel: thread,
-			Access:  m.channelAccess(state, thread, userMember, botMember),
+			Access:  m.channelAccess(state, source, userMember, botMember),
 		})
 	}
 
 	return res, nil
 }
 
-func (m *AccessManager) channelAccess(state *guildstate.State, channel discord.GuildChannel, userMember *discord.Member, botMember *discord.Member) ChannelAccess {
-	source := permissionSource(channel, state)
-
+func (m *AccessManager) channelAccess(state *guildstate.State, source discord.GuildChannel, userMember *discord.Member, botMember *discord.Member) ChannelAccess {
 	res := ChannelAccess{
 		BotPermissions: memberPermissions(&state.Guild, state.Roles, source, *botMember),
 	}
@@ -250,7 +252,12 @@ func (m *AccessManager) memberPermissionsInChannel(ctx context.Context, member d
 		return 0, err
 	}
 
-	return memberPermissions(&state.Guild, state.Roles, permissionSource(channel, state), member), nil
+	source, ok := permissionSource(channel, state)
+	if !ok {
+		return 0, nil
+	}
+
+	return memberPermissions(&state.Guild, state.Roles, source, member), nil
 }
 
 func (m *AccessManager) ComputeBotPermissionsForChannel(ctx context.Context, channelID common.ID) (discord.Permissions, error) {

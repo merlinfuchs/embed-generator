@@ -18,26 +18,27 @@ func isTimedOut(member discord.Member) bool {
 
 // permissionSource returns the channel whose overwrites decide access. For a thread that's its
 // parent: disgo returns no overwrites for threads at all, so computing permissions from the thread
-// itself silently ignores everything the parent allows or denies. Falling back to the thread only
-// matters when its parent isn't in the guild's channel list.
-func permissionSource(channel discord.GuildChannel, state *guildstate.State) discord.GuildChannel {
-	thread, ok := channel.(discord.GuildThread)
-	if !ok {
-		return channel
+// itself silently ignores everything the parent allows or denies. Discord leaves channels the bot
+// can't view out of the guild's channel list, so a thread whose parent is missing is one the bot
+// can't see either, and ok is false.
+func permissionSource(channel discord.GuildChannel, state *guildstate.State) (source discord.GuildChannel, ok bool) {
+	thread, isThread := channel.(discord.GuildThread)
+	if !isThread {
+		return channel, true
 	}
 
 	parentID := thread.ParentID()
 	if parentID == nil {
-		return channel
+		return channel, true
 	}
 
 	for _, candidate := range state.Channels {
 		if candidate.ID() == *parentID {
-			return candidate
+			return candidate, true
 		}
 	}
 
-	return channel
+	return nil, false
 }
 
 // maxChannelPermissions ORs the member's permissions over every channel they could send in, which
