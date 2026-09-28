@@ -23,7 +23,7 @@ import ClickOutsideHandler from "./ClickOutsideHandler";
 import { useGuildsQuery, useUserQuery } from "../api/queries";
 import { guildIconUrl } from "../discord/cdn";
 import { useSendSettingsStore } from "../state/sendSettings";
-import { defaultGuild, missingManageWebhooksHint } from "../util/guilds";
+import { guildOptionProps, useDefaultGuild } from "../util/guilds";
 import LoginLink from "./LoginLink";
 import LogoutLink from "./LogoutLink";
 import { useSettingsStore } from "../state/settings";
@@ -276,7 +276,7 @@ function NavigationButton({
 }
 
 function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
-  const { data: guilds, isPending } = useGuildsQuery();
+  const { data: guilds } = useGuildsQuery();
 
   const [guildId, setGuildId] = useSendSettingsStore(
     useShallow((state) => [state.guildId, state.setGuildId]),
@@ -287,20 +287,7 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
     [guilds, guildId],
   );
 
-  useEffect(() => {
-    if (!guildId) {
-      if (guilds?.success) {
-        const guild = defaultGuild(guilds.data);
-        if (guild) {
-          setGuildId(guild.id);
-        }
-      }
-    } else if (!isPending) {
-      if (!guilds?.success || !guilds.data.find((g) => g.id === guildId)) {
-        setGuildId(null);
-      }
-    }
-  }, [guilds, guildId, isPending]);
+  useDefaultGuild(guildId, setGuildId);
 
   function selectGuild(guildId: string) {
     setGuildId(guildId);
@@ -372,13 +359,10 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
               <button
                 type="button"
                 key={g.id}
-                className={clsx(
+                {...guildOptionProps(
+                  g,
                   "py-2 flex space-x-2 items-center rounded-lg px-3 hover:bg-ink-800 cursor-pointer w-full text-left",
-                  !g.can_manage_webhooks && "opacity-60",
                 )}
-                title={
-                  g.can_manage_webhooks ? undefined : missingManageWebhooksHint
-                }
                 onClick={() => selectGuild(g.id)}
               >
                 <img

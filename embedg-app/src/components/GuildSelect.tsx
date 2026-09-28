@@ -7,7 +7,7 @@ import ClickOutsideHandler from "./ClickOutsideHandler";
 import SelectDropdown from "./SelectDropdown";
 import { useToasts } from "../util/toasts";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
-import { defaultGuild, missingManageWebhooksHint } from "../util/guilds";
+import { guildOptionProps, useDefaultGuild } from "../util/guilds";
 
 interface Props {
   guildId: string | null;
@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default function GuildSelect({ guildId, onChange }: Props) {
-  const { data: guilds, isPending } = useGuildsQuery();
+  const { data: guilds } = useGuildsQuery();
   const toast = useToasts((state) => state.create);
 
   useEffect(() => {
@@ -33,20 +33,7 @@ export default function GuildSelect({ guildId, onChange }: Props) {
     [guilds, guildId],
   );
 
-  useEffect(() => {
-    if (!guildId) {
-      if (guilds?.success) {
-        const guild = defaultGuild(guilds.data);
-        if (guild) {
-          onChange(guild.id);
-        }
-      }
-    } else if (!isPending) {
-      if (!guilds?.success || !guilds.data.find((g) => g.id === guildId)) {
-        onChange(null);
-      }
-    }
-  }, [guilds, guildId, isPending]);
+  useDefaultGuild(guildId, onChange);
 
   function selectGuild(guildId: string) {
     onChange(guildId);
@@ -96,15 +83,10 @@ export default function GuildSelect({ guildId, onChange }: Props) {
                 <button
                   type="button"
                   key={g.id}
-                  className={clsx(
+                  {...guildOptionProps(
+                    g,
                     "py-2 flex space-x-2 items-center rounded-lg px-3 hover:bg-ink-700 cursor-pointer w-full text-left",
-                    !g.can_manage_webhooks && "opacity-60",
                   )}
-                  title={
-                    g.can_manage_webhooks
-                      ? undefined
-                      : missingManageWebhooksHint
-                  }
                   onClick={() => selectGuild(g.id)}
                 >
                   <img

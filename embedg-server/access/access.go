@@ -18,6 +18,15 @@ import (
 
 const RequiredPermissions = discord.PermissionManageWebhooks
 
+// requiredPermissionsName is RequiredPermissions as users know it. View Channel is part of it
+// because Discord voids every other permission in a channel the member can't see.
+const requiredPermissionsName = "the View Channel and Manage Webhooks permissions"
+
+// HasRequiredPermissions reports whether permissions allow sending, administrators included.
+func HasRequiredPermissions(permissions discord.Permissions) bool {
+	return permissions&(RequiredPermissions|discord.PermissionAdministrator) != 0
+}
+
 type AccessManager struct {
 	guildState     *guildstate.Provider
 	guildStore     store.GuildStore
@@ -57,16 +66,20 @@ func New(
 }
 
 type GuildAccess struct {
+	// BotInGuild and UserInGuild tell "not in the server" apart from "in it without permissions".
+	// The user is only looked up once the bot has access.
+	BotInGuild              bool
+	UserInGuild             bool
 	CombinedUserPermissions discord.Permissions
 	CombinedBotPermissions  discord.Permissions
 }
 
 func (g *GuildAccess) HasChannelWithUserAccess() bool {
-	return g.CombinedUserPermissions&(RequiredPermissions|discord.PermissionAdministrator) != 0
+	return HasRequiredPermissions(g.CombinedUserPermissions)
 }
 
 func (g *GuildAccess) HasChannelWithBotAccess() bool {
-	return g.CombinedBotPermissions&(RequiredPermissions|discord.PermissionAdministrator) != 0
+	return HasRequiredPermissions(g.CombinedBotPermissions)
 }
 
 type ChannelAccess struct {
@@ -75,15 +88,15 @@ type ChannelAccess struct {
 }
 
 func (c *ChannelAccess) UserAccess() bool {
-	return c.UserPermissions&(RequiredPermissions|discord.PermissionAdministrator) != 0
+	return HasRequiredPermissions(c.UserPermissions)
 }
 
 func (c *ChannelAccess) BotAccess() bool {
-	return c.BotPermissions&(RequiredPermissions|discord.PermissionAdministrator) != 0
+	return HasRequiredPermissions(c.BotPermissions)
 }
 
 // GetGuildAccessForSession resolves the user's member with their own OAuth token.
-func (m *AccessManager) GetGuildAccessForSession(ctx context.Context, sess *session.Session, guildID common.ID) (GuildAccess, *discord.Guild, error) {
+func (m *AccessManager) GetGuildAccessForSession(ctx context.Context, sess *session.Session, guildID common.ID) (GuildAccess, error) {
 	res := GuildAccess{}
 
 	botMember, err := m.GetGuildMember(ctx, guildID, m.appContext.ApplicationID())
@@ -95,36 +108,38 @@ func (m *AccessManager) GetGuildAccessForSession(ctx context.Context, sess *sess
 			rest.JSONErrorCodeUnknownMember,
 		) {
 			// The bot is not in the server, so we can't compute the permissions
-			return res, nil, nil
+			return res, nil
 		}
-		return res, nil, fmt.Errorf("Failed to get bot member: %w", err)
+		return res, fmt.Errorf("Failed to get bot member: %w", err)
 	}
 
 	state, err := m.guildState.Guild(ctx, guildID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			return res, nil, nil
+			return res, nil
 		}
-		return res, nil, fmt.Errorf("Failed to get guild state: %w", err)
+		return res, fmt.Errorf("Failed to get guild state: %w", err)
 	}
 
+	res.BotInGuild = true
 	res.CombinedBotPermissions = maxChannelPermissions(state, *botMember, RequiredPermissions)
 	if !res.HasChannelWithBotAccess() {
 		// No point in checking user access if the bot doesn't have access to any channels
-		return res, &state.Guild, nil
+		return res, nil
 	}
 
 	member, err := m.GetMemberForUser(ctx, sess, guildID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			// The user is not in the server, so we can't compute the permissions
-			return res, nil, nil
+			return res, nil
 		}
-		return res, nil, fmt.Errorf("Failed to get guild member: %w", err)
+		return res, fmt.Errorf("Failed to get guild member: %w", err)
 	}
 
+	res.UserInGuild = true
 	res.CombinedUserPermissions = maxChannelPermissions(state, *member, RequiredPermissions)
-	return res, &state.Guild, nil
+	return res, nil
 }
 
 // GuildChannelAccess pairs a channel with what the user and the bot may do in it.

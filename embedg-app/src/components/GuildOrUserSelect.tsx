@@ -5,7 +5,7 @@ import { useGuildsQuery, useUserQuery } from "../api/queries";
 import { guildIconUrl, userAvatarUrl } from "../discord/cdn";
 import ClickOutsideHandler from "./ClickOutsideHandler";
 import SelectDropdown from "./SelectDropdown";
-import { missingManageWebhooksHint } from "../util/guilds";
+import { guildOptionProps } from "../util/guilds";
 
 interface Props {
   value: string | null;
@@ -108,15 +108,10 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
                 <button
                   type="button"
                   key={g.id}
-                  className={clsx(
+                  {...guildOptionProps(
+                    g,
                     "py-2 flex space-x-2 items-center rounded-lg px-3 hover:bg-ink-700 cursor-pointer w-full text-left",
-                    !g.can_manage_webhooks && "opacity-60",
                   )}
-                  title={
-                    g.can_manage_webhooks
-                      ? undefined
-                      : missingManageWebhooksHint
-                  }
                   onClick={() => selectValue(g.id)}
                 >
                   <img
