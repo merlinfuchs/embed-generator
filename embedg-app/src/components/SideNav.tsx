@@ -23,7 +23,7 @@ import ClickOutsideHandler from "./ClickOutsideHandler";
 import { useGuildsQuery, useUserQuery } from "../api/queries";
 import { guildIconUrl } from "../discord/cdn";
 import { useSendSettingsStore } from "../state/sendSettings";
-import { guildOptionProps, useDefaultGuild } from "../util/guilds";
+import { useDefaultGuild } from "../util/guilds";
 import LoginLink from "./LoginLink";
 import LogoutLink from "./LogoutLink";
 import { useSettingsStore } from "../state/settings";
@@ -359,10 +359,7 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
               <button
                 type="button"
                 key={g.id}
-                {...guildOptionProps(
-                  g,
-                  "py-2 flex space-x-2 items-center rounded-lg px-3 hover:bg-ink-800 cursor-pointer w-full text-left",
-                )}
+                className="py-2 flex space-x-2 items-center rounded-lg px-3 hover:bg-ink-800 cursor-pointer w-full text-left"
                 onClick={() => selectGuild(g.id)}
               >
                 <img

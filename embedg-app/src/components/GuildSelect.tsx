@@ -7,7 +7,7 @@ import ClickOutsideHandler from "./ClickOutsideHandler";
 import SelectDropdown from "./SelectDropdown";
 import { useToasts } from "../util/toasts";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
-import { guildOptionProps, useDefaultGuild } from "../util/guilds";
+import { useDefaultGuild } from "../util/guilds";
 
 interface Props {
   guildId: string | null;
@@ -83,10 +83,7 @@ export default function GuildSelect({ guildId, onChange }: Props) {
                 <button
                   type="button"
                   key={g.id}
-                  {...guildOptionProps(
-                    g,
-                    "py-2 flex space-x-2 items-center rounded-lg px-3 hover:bg-ink-700 cursor-pointer w-full text-left",
-                  )}
+                  className="py-2 flex space-x-2 items-center rounded-lg px-3 hover:bg-ink-700 cursor-pointer w-full text-left"
                   onClick={() => selectGuild(g.id)}
                 >
                   <img

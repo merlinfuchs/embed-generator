@@ -12,6 +12,7 @@ import type {
   UserResponseWire,
   ListEmojisResponseWire,
   GetGuildBrandingResponseWire,
+  GuildWire,
   ScheduledMessageListResponseWire,
 } from "./wire";
 import type { APIResponse } from "./base";
@@ -31,6 +32,12 @@ function sorted<T, R extends APIResponse<T[]>>(
 
 const byGuildName = (a: { name: string }, b: { name: string }) =>
   a.name.localeCompare(b.name);
+
+// Servers where the user's roles grant Manage Webhooks come first, as the ones they can most likely
+// post in. A channel overwrite can still allow it in the rest, so those stay in the list.
+const byManageWebhooksThenName = (a: GuildWire, b: GuildWire) =>
+  Number(b.can_manage_webhooks) - Number(a.can_manage_webhooks) ||
+  byGuildName(a, b);
 
 const byRolePosition = (a: { position: number }, b: { position: number }) =>
   b.position - a.position;
@@ -83,7 +90,7 @@ export function useGuildsQuery() {
     queryFn: () => {
       return fetch(`/api/guilds`)
         .then((res) => handleApiResponse(res.json()))
-        .then((res) => sorted(res, byGuildName));
+        .then((res) => sorted(res, byManageWebhooksThenName));
     },
   });
 }
