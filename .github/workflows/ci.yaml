@@ -64,7 +64,7 @@ jobs:
             go.work.sum
       - uses: sqlc-dev/setup-sqlc@v4
         with:
-          sqlc-version: "1.29.0"
+          sqlc-version: "1.31.1"
       - name: Generate TypeScript types
         run: go run github.com/gzuidhof/tygo@v0.2.19 generate
       - name: Generate database code

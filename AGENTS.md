@@ -21,7 +21,7 @@ go test ./...
 
 # Generated files, must leave no diff (see below)
 go run github.com/gzuidhof/tygo@v0.2.19 generate   # in the repo root
-sqlc generate                                      # in embedg-server, sqlc v1.29.0
+sqlc generate                                      # in embedg-server, sqlc v1.31.1
 
 # App
 cd embedg-app
