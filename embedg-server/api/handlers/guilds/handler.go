@@ -5,7 +5,9 @@ import (
 	"fmt"
 
 	"log/slog"
+	"slices"
 
+	"github.com/disgoorg/disgo/discord"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers"
@@ -46,8 +48,10 @@ func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 	}
 
 	guildIDs := make([]common.ID, 0, len(userGuilds))
+	canManageWebhooks := make(map[common.ID]bool, len(userGuilds))
 	for _, guild := range userGuilds {
 		guildIDs = append(guildIDs, guild.ID)
+		canManageWebhooks[guild.ID] = userCanManageWebhooks(guild)
 	}
 
 	// Intersect with the guilds the bot is in. Name and icon come from there so the list shows what
@@ -61,9 +65,10 @@ func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 	res := make([]wire.GuildWire, 0, len(guilds))
 	for _, guild := range guilds {
 		res = append(res, wire.GuildWire{
-			ID:   guild.ID,
-			Name: guild.Name,
-			Icon: guild.Icon,
+			ID:                guild.ID,
+			Name:              guild.Name,
+			Icon:              guild.Icon,
+			CanManageWebhooks: canManageWebhooks[guild.ID],
 		})
 	}
 
@@ -73,7 +78,14 @@ func (h *GuildsHanlder) HandleListGuilds(c *fiber.Ctx) error {
 	})
 }
 
+// userCanManageWebhooks is the server level hint the guild list carries. Discord leaves the owner's
+// implicit permissions out of the field, so ownership is checked on its own.
+func userCanManageWebhooks(guild discord.OAuth2Guild) bool {
+	return guild.Owner || access.HasRequiredPermissions(guild.Permissions)
+}
+
 func (h *GuildsHanlder) HandleGetGuild(c *fiber.Ctx) error {
+	session := c.Locals("session").(*session.Session)
 	guildID, err := handlers.ParamID(c, "guildID")
 	if err != nil {
 		return err
@@ -96,12 +108,20 @@ func (h *GuildsHanlder) HandleGetGuild(c *fiber.Ctx) error {
 		return handlers.NotFound("unknown_guild", "The guild does not exist.")
 	}
 
+	// The same source the list uses, so both endpoints agree. Cached per session.
+	userGuilds, err := h.am.GetGuildsForUser(c.UserContext(), session)
+	if err != nil {
+		return err
+	}
+	i := slices.IndexFunc(userGuilds, func(g discord.OAuth2Guild) bool { return g.ID == guildID })
+
 	return c.JSON(wire.GetGuildResponseWire{
 		Success: true,
 		Data: wire.GuildWire{
-			ID:   guilds[0].ID,
-			Name: guilds[0].Name,
-			Icon: guilds[0].Icon,
+			ID:                guilds[0].ID,
+			Name:              guilds[0].Name,
+			Icon:              guilds[0].Icon,
+			CanManageWebhooks: i >= 0 && userCanManageWebhooks(userGuilds[i]),
 		},
 	})
 }

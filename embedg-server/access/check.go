@@ -13,20 +13,12 @@ import (
 func (m *AccessManager) CheckGuildAccessForRequest(c *fiber.Ctx, guildID common.ID) error {
 	session := c.Locals("session").(*session.Session)
 
-	access, _, err := m.GetGuildAccessForSession(c.UserContext(), session, guildID)
+	access, err := m.GetGuildAccessForSession(c.UserContext(), session, guildID)
 	if err != nil {
 		return err
 	}
 
-	if !access.HasChannelWithBotAccess() {
-		return handlers.Forbidden("bot_missing_access", "The bot doesn't have access to this guild")
-	}
-
-	if !access.HasChannelWithUserAccess() {
-		return handlers.Forbidden("missing_access", "You don't have access to this guild")
-	}
-
-	return nil
+	return access.Denied()
 }
 
 func (m *AccessManager) CheckChannelAccessForRequest(c *fiber.Ctx, channelID common.ID) error {
@@ -37,15 +29,43 @@ func (m *AccessManager) CheckChannelAccessForRequest(c *fiber.Ctx, channelID com
 		return err
 	}
 
-	if !access.BotAccess() {
-		return handlers.Forbidden("bot_missing_access", "The bot doesn't have access to this channel")
-	}
+	return access.Denied()
+}
 
-	if !access.UserAccess() {
-		return handlers.Forbidden("missing_access", "You don't have access to this channel")
+// Denied says what keeps the user from sending in the guild, or nil if nothing does.
+func (g *GuildAccess) Denied() error {
+	switch {
+	case !g.BotInGuild:
+		return handlers.Forbidden("bot_missing_access", "The bot isn't in this server.")
+	case !g.HasChannelWithBotAccess():
+		return handlers.Forbidden("bot_missing_access", "The bot needs "+requiredPermissionsName+" in at least one channel of this server.")
+	case !g.UserInGuild:
+		return handlers.Forbidden("missing_access", "You aren't a member of this server.")
+	case g.HasChannelWithUserAccess():
+		return nil
+	case g.UserTimedOut:
+		return handlers.Forbidden("missing_access", "You're timed out in this server.")
+	default:
+		return handlers.Forbidden("missing_access", "You need "+requiredPermissionsName+" in at least one channel of this server.")
 	}
+}
 
-	return nil
+// Denied says what keeps the user from sending in the channel, or nil if nothing does.
+func (c *ChannelAccess) Denied() error {
+	switch {
+	case !c.ChannelFound:
+		return handlers.NotFound("unknown_channel", "The channel doesn't exist, or the bot can't see it.")
+	case !c.BotAccess():
+		return handlers.Forbidden("bot_missing_access", "The bot needs "+requiredPermissionsName+" in this channel.")
+	case !c.UserInGuild:
+		return handlers.Forbidden("missing_access", "You aren't a member of this server.")
+	case c.UserAccess():
+		return nil
+	case c.UserTimedOut:
+		return handlers.Forbidden("missing_access", "You're timed out in this server.")
+	default:
+		return handlers.Forbidden("missing_access", "You need "+requiredPermissionsName+" in this channel.")
+	}
 }
 
 // CheckChannelAccessForRequestInGuild is CheckChannelAccessForRequest for endpoints that carry a

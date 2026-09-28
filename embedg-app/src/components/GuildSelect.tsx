@@ -7,6 +7,7 @@ import ClickOutsideHandler from "./ClickOutsideHandler";
 import SelectDropdown from "./SelectDropdown";
 import { useToasts } from "../util/toasts";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import { useDefaultGuild } from "../util/guilds";
 
 interface Props {
   guildId: string | null;
@@ -14,7 +15,7 @@ interface Props {
 }
 
 export default function GuildSelect({ guildId, onChange }: Props) {
-  const { data: guilds, isPending } = useGuildsQuery();
+  const { data: guilds } = useGuildsQuery();
   const toast = useToasts((state) => state.create);
 
   useEffect(() => {
@@ -32,20 +33,7 @@ export default function GuildSelect({ guildId, onChange }: Props) {
     [guilds, guildId],
   );
 
-  useEffect(() => {
-    if (!guildId) {
-      if (guilds?.success) {
-        const defaultGuild = guilds.data[0];
-        if (defaultGuild) {
-          onChange(defaultGuild.id);
-        }
-      }
-    } else if (!isPending) {
-      if (!guilds?.success || !guilds.data.find((g) => g.id === guildId)) {
-        onChange(null);
-      }
-    }
-  }, [guilds, guildId, isPending]);
+  useDefaultGuild(guildId, onChange);
 
   function selectGuild(guildId: string) {
     onChange(guildId);

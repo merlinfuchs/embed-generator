@@ -23,6 +23,7 @@ import ClickOutsideHandler from "./ClickOutsideHandler";
 import { useGuildsQuery, useUserQuery } from "../api/queries";
 import { guildIconUrl } from "../discord/cdn";
 import { useSendSettingsStore } from "../state/sendSettings";
+import { useDefaultGuild } from "../util/guilds";
 import LoginLink from "./LoginLink";
 import LogoutLink from "./LogoutLink";
 import { useSettingsStore } from "../state/settings";
@@ -275,7 +276,7 @@ function NavigationButton({
 }
 
 function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
-  const { data: guilds, isPending } = useGuildsQuery();
+  const { data: guilds } = useGuildsQuery();
 
   const [guildId, setGuildId] = useSendSettingsStore(
     useShallow((state) => [state.guildId, state.setGuildId]),
@@ -286,20 +287,7 @@ function NavigationGuildSelect({ collapsed }: { collapsed: boolean }) {
     [guilds, guildId],
   );
 
-  useEffect(() => {
-    if (!guildId) {
-      if (guilds?.success) {
-        const defaultGuild = guilds.data[0];
-        if (defaultGuild) {
-          setGuildId(defaultGuild.id);
-        }
-      }
-    } else if (!isPending) {
-      if (!guilds?.success || !guilds.data.find((g) => g.id === guildId)) {
-        setGuildId(null);
-      }
-    }
-  }, [guilds, guildId, isPending]);
+  useDefaultGuild(guildId, setGuildId);
 
   function selectGuild(guildId: string) {
     setGuildId(guildId);

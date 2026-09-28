@@ -9,6 +9,9 @@ type GuildWire struct {
 	ID   common.ID   `json:"id"`
 	Name string      `json:"name"`
 	Icon null.String `json:"icon"`
+	// CanManageWebhooks comes from the user's server level permissions. A channel overwrite can still
+	// grant it in a single channel, so it only puts likely servers first, it isn't an access check.
+	CanManageWebhooks bool `json:"can_manage_webhooks"`
 }
 
 type ListGuildsResponseWire APIResponse[[]GuildWire]

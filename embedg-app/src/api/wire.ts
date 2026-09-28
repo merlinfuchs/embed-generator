@@ -130,6 +130,11 @@ export interface GuildWire {
   id: string;
   name: string;
   icon: null | string;
+  /**
+   * CanManageWebhooks comes from the user's server level permissions. A channel overwrite can still
+   * grant it in a single channel, so it only puts likely servers first, it isn't an access check.
+   */
+  can_manage_webhooks: boolean;
 }
 export type ListGuildsResponseWire = APIResponse<GuildWire[]>;
 export type GetGuildResponseWire = APIResponse<GuildWire>;
