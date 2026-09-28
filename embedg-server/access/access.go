@@ -68,8 +68,10 @@ func New(
 type GuildAccess struct {
 	// BotInGuild and UserInGuild tell "not in the server" apart from "in it without permissions".
 	// The user is only looked up once the bot has access.
-	BotInGuild              bool
-	UserInGuild             bool
+	BotInGuild   bool
+	UserInGuild  bool
+	UserTimedOut bool
+
 	CombinedUserPermissions discord.Permissions
 	CombinedBotPermissions  discord.Permissions
 }
@@ -83,6 +85,12 @@ func (g *GuildAccess) HasChannelWithBotAccess() bool {
 }
 
 type ChannelAccess struct {
+	// Only GetChannelAccessForSession fills these in. The bot can't load a channel that was deleted
+	// or that it can't see, and Discord doesn't say which.
+	ChannelFound bool
+	UserInGuild  bool
+	UserTimedOut bool
+
 	UserPermissions discord.Permissions
 	BotPermissions  discord.Permissions
 }
@@ -138,6 +146,7 @@ func (m *AccessManager) GetGuildAccessForSession(ctx context.Context, sess *sess
 	}
 
 	res.UserInGuild = true
+	res.UserTimedOut = isTimedOut(*member)
 	res.CombinedUserPermissions = maxChannelPermissions(state, *member, RequiredPermissions)
 	return res, nil
 }
@@ -210,13 +219,30 @@ func (m *AccessManager) channelAccess(state *guildstate.State, channel discord.G
 func (m *AccessManager) GetChannelAccessForSession(ctx context.Context, sess *session.Session, channelID common.ID) (ChannelAccess, error) {
 	res := ChannelAccess{}
 
-	userPermissions, err := m.computePermissionsForChannel(ctx, channelID, func(guildID common.ID) (*discord.Member, error) {
-		return m.GetMemberForUser(ctx, sess, guildID)
-	})
+	channel, err := m.guildState.Channel(ctx, channelID)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return res, nil
+		}
+		return res, err
+	}
+	if channel.GuildID() == 0 {
+		return res, nil
+	}
+	res.ChannelFound = true
+
+	member, err := m.GetMemberForUser(ctx, sess, channel.GuildID())
 	if err != nil && !errors.Is(err, store.ErrNotFound) {
 		return res, err
 	}
-	res.UserPermissions = userPermissions
+	if member != nil {
+		res.UserInGuild = true
+		res.UserTimedOut = isTimedOut(*member)
+		res.UserPermissions, err = m.memberPermissionsInChannel(ctx, *member, channel)
+		if err != nil {
+			return res, err
+		}
+	}
 
 	res.BotPermissions, err = m.ComputeBotPermissionsForChannel(ctx, channelID)
 	if err != nil {
