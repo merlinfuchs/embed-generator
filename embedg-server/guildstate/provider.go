@@ -57,21 +57,27 @@ type Provider struct {
 }
 
 func New(rest rest.Rest) *Provider {
+	// ttlcache pushes an entry's expiry back on every read unless told not to. A guild in use would
+	// then never be refetched, and a missed event or a cached not-found would stick for as long as
+	// someone keeps asking.
 	guilds := ttlcache.New(
 		ttlcache.WithTTL[string, *State](stateTTL),
 		ttlcache.WithCapacity[string, *State](guildCapacity),
+		ttlcache.WithDisableTouchOnHit[string, *State](),
 	)
 	go guilds.Start()
 
 	channels := ttlcache.New(
 		ttlcache.WithTTL[string, discord.GuildChannel](stateTTL),
 		ttlcache.WithCapacity[string, discord.GuildChannel](channelCapacity),
+		ttlcache.WithDisableTouchOnHit[string, discord.GuildChannel](),
 	)
 	go channels.Start()
 
 	threads := ttlcache.New(
 		ttlcache.WithTTL[string, []discord.GuildThread](stateTTL),
 		ttlcache.WithCapacity[string, []discord.GuildThread](threadCapacity),
+		ttlcache.WithDisableTouchOnHit[string, []discord.GuildThread](),
 	)
 	go threads.Start()
 
@@ -179,6 +185,11 @@ func (p *Provider) Channel(ctx context.Context, channelID common.ID) (discord.Gu
 // in hundreds of thousands of guilds, so this must not scan anything.
 func (p *Provider) Invalidate(guildID common.ID) {
 	p.guilds.Delete(guildKey(guildID))
+}
+
+func (p *Provider) invalidateGuildAndThreads(guildID common.ID) {
+	p.Invalidate(guildID)
+	p.threads.Delete(threadsKey(guildID))
 }
 
 func (p *Provider) InvalidateChannel(channelID common.ID) {

@@ -9,6 +9,11 @@ import (
 // instances pick the change up when the entry expires.
 func (p *Provider) OnEvent(event bot.Event) {
 	switch e := event.(type) {
+	case *events.GuildJoin:
+		// A not-found cached while the bot was out would otherwise outlive the rejoin.
+		p.invalidateGuildAndThreads(e.GuildID)
+	case *events.GuildLeave:
+		p.invalidateGuildAndThreads(e.GuildID)
 	case *events.GuildUpdate:
 		p.Invalidate(e.GuildID)
 	case *events.GuildChannelCreate:

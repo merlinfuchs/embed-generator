@@ -33,12 +33,15 @@ type EmbedGenerator struct {
 }
 
 func NewEmbedGenerator(config EmbedGeneratorConfig) (*EmbedGenerator, error) {
+	restClient := rest.NewRestClient(config.Token)
+
 	opts := []bot.ConfigOpt{
 		// No guild, channel or role cache: 250k guilds would be around 9 GB. Reads go through
 		// the guild state provider instead.
 		bot.WithCacheConfigOpts(cache.WithCaches(cache.FlagsNone)),
 		bot.WithEventManagerConfigOpts(bot.WithAsyncEventsEnabled()),
-		bot.WithRest(rest.NewRestClient(config.Token)),
+		bot.WithRest(restClient),
+		bot.WithEventListeners(restClient),
 	}
 
 	if config.Shards.Count > 0 {
