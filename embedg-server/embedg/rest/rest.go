@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/jellydator/ttlcache/v3"
@@ -59,9 +61,12 @@ type RestClient struct {
 }
 
 func NewRestClient(token string, opts ...rest.ClientConfigOpt) *RestClient {
+	// Touch on hit off: permission checks read the bot's own member on every request, so with it on
+	// a guild in use would never see the bot's roles change.
 	memberCache := ttlcache.New(
 		ttlcache.WithTTL[string, *discord.Member](5*time.Minute),
 		ttlcache.WithCapacity[string, *discord.Member](memberCapacity),
+		ttlcache.WithDisableTouchOnHit[string, *discord.Member](),
 	)
 	go memberCache.Start()
 
@@ -85,6 +90,22 @@ func (c *RestClient) GetMember(guildID snowflake.ID, userID snowflake.ID, opts .
 		}
 		return member, nil
 	})
+}
+
+// OnEvent drops cached members that Discord says changed. Without the members intent the member
+// events may only ever arrive for the bot itself, which is the member permission checks depend on.
+func (c *RestClient) OnEvent(event bot.Event) {
+	switch e := event.(type) {
+	case *events.GuildMemberUpdate:
+		c.memberCache.Delete(memberCacheKey(e.GuildID, e.Member.User.ID))
+	case *events.GuildMemberLeave:
+		c.memberCache.Delete(memberCacheKey(e.GuildID, e.User.ID))
+	case *events.GuildJoin:
+		// A rejoin gives the bot a new managed role, and its cached member still lists the deleted one.
+		c.memberCache.Delete(memberCacheKey(e.GuildID, e.Client().ApplicationID))
+	case *events.GuildLeave:
+		c.memberCache.Delete(memberCacheKey(e.GuildID, e.Client().ApplicationID))
+	}
 }
 
 // Close stops the member cache's janitor goroutine on top of what the embedded client does. A

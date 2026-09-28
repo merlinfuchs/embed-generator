@@ -38,10 +38,18 @@ func New(
 	appContext store.AppContext,
 	sessionManager *session.SessionManager,
 ) *AccessManager {
-	userMemberCache := ttlcache.New(ttlcache.WithTTL[string, *discord.Member](time.Minute))
+	// Without disabling touch on hit every read extends the entry, so a user retrying after a role
+	// change would keep their stale member for as long as they keep retrying.
+	userMemberCache := ttlcache.New(
+		ttlcache.WithTTL[string, *discord.Member](time.Minute),
+		ttlcache.WithDisableTouchOnHit[string, *discord.Member](),
+	)
 	go userMemberCache.Start()
 
-	userGuildsCache := ttlcache.New(ttlcache.WithTTL[string, []discord.OAuth2Guild](time.Minute))
+	userGuildsCache := ttlcache.New(
+		ttlcache.WithTTL[string, []discord.OAuth2Guild](time.Minute),
+		ttlcache.WithDisableTouchOnHit[string, []discord.OAuth2Guild](),
+	)
 	go userGuildsCache.Start()
 
 	return &AccessManager{
