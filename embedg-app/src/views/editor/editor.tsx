@@ -1,6 +1,7 @@
 import { DocumentMagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
-import { Outlet } from "react-router-dom";
+import clsx from "clsx";
+import { Outlet, useMatch } from "react-router-dom";
 import { Drawer } from "vaul";
 import EditorAttachments from "../../components/EditorAttachments";
 import EditorComponents from "../../components/EditorComponents";
@@ -29,6 +30,7 @@ export default function EditorView() {
   }, [document, setValidationError]);
 
   const componentsV2Enabled = useComponentsV2Enabled();
+  const assistantOpen = !!useMatch("/editor/assistant");
 
   // TODO: also validate actions stores
 
@@ -36,9 +38,18 @@ export default function EditorView() {
 
   return (
     <EditorErrorBoundary>
-      <div className="flex h-full w-full">
-        <div className="flex flex-col lg:flex-row h-full flex-auto w-full">
-          <div className="lg:w-1/2 lg:h-full bg-ink-800 lg:overflow-y-auto no-scrollbar">
+      {/* min-w-0 lets the columns shrink below their content, so the chat
+          panel next to them doesn't push the page wider than the screen. */}
+      <div className="flex h-full w-full min-w-0">
+        <div className="flex flex-col lg:flex-row h-full flex-1 min-w-0">
+          <div
+            className={clsx(
+              "lg:flex-1 lg:min-w-0 lg:h-full bg-ink-800 lg:overflow-y-auto no-scrollbar",
+              // Three columns are too narrow on smaller screens, and while the
+              // chat is open it edits the message, so the preview stays.
+              assistantOpen && "lg:hidden min-[87.5rem]:block",
+            )}
+          >
             <div className="px-5 pt-5 pb-20 space-y-5">
               <SendMenu />
               <div className="border border-ink-600"></div>
@@ -50,7 +61,7 @@ export default function EditorView() {
               <EditorComponents defaultCollapsed={!componentsV2Enabled} />
             </div>
           </div>
-          <div className="hidden lg:block w-1/2 h-full bg-ink-800 lg:border-l border-white/5 px-5 py-2 overflow-y-auto no-scrollbar">
+          <div className="hidden lg:block lg:flex-1 lg:min-w-0 h-full bg-ink-800 lg:border-l border-white/5 px-5 py-2 overflow-y-auto no-scrollbar">
             <EditorMessagePreview />
           </div>
 
