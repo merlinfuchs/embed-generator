@@ -13,6 +13,7 @@ import EditorWebhookFields from "../../components/EditorWebhookFields";
 import SendMenu from "../../components/SendMenu";
 import { messageSchema } from "../../discord/schema";
 import {
+  currentMessageIsBlank,
   takeFirstVisit,
   useDebouncedCurrentDocument,
 } from "../../state/currentMessage";
@@ -36,11 +37,14 @@ export default function EditorView() {
   const assistantOpen = !!useMatch("/editor/assistant");
 
   // Taken on any editor route, so opening a shared message first doesn't
-  // bring the templates up once it's loaded.
+  // bring the templates up once it's loaded. A message restored before the
+  // editor opened isn't blank anymore.
   const navigate = useNavigate();
   const editorRoot = !!useMatch("/editor");
   useEffect(() => {
-    if (takeFirstVisit() && editorRoot) navigate("/editor/new");
+    if (takeFirstVisit() && editorRoot && currentMessageIsBlank()) {
+      navigate("/editor/new", { replace: true });
+    }
   }, []);
 
   // TODO: also validate actions stores

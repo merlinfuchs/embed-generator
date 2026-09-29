@@ -150,14 +150,15 @@ test("a stored draft means it isn't a first visit", async () => {
   expect(takeFirstVisit()).toBe(false);
 });
 
-test("loading a message before the editor opens skips the templates", async () => {
+test("only a message without content is blank", async () => {
   await seedWith({});
-  const { setCurrentMessage, takeFirstVisit } = await import(
+  const { currentMessageIsBlank, setCurrentMessage } = await import(
     "./currentMessage"
   );
   const { defaultMessage } = await import("../discord/defaultMessage");
 
-  setCurrentMessage({ ...defaultMessage, content: "Restored" });
+  expect(currentMessageIsBlank()).toBe(true);
 
-  expect(takeFirstVisit()).toBe(false);
+  setCurrentMessage({ ...defaultMessage, content: "Restored" });
+  expect(currentMessageIsBlank()).toBe(false);
 });

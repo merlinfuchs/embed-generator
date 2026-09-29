@@ -7,9 +7,16 @@ import {
   type MessageComponent,
 } from "./schema";
 
+/** The groups the templates are listed in, in order. */
+export const templateGroups = [
+  "Embeds",
+  "Components V2",
+  "Interactive",
+] as const;
+
 export interface MessageTemplate {
   id: string;
-  group: "Embeds" | "Components V2" | "Interactive";
+  group: (typeof templateGroups)[number];
   name: string;
   description: string;
   /** Builds the message with fresh ids, so using a template twice doesn't share action sets. */

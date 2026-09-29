@@ -30,13 +30,15 @@ function logIn() {
   useSendSettingsStore.setState({ guildId: "123" });
 }
 
-test("a template replaces the message", async () => {
+test("a template replaces the message after confirming", async () => {
   loadMessage({ content: "Old message" });
   renderEditor(<NewMessageView />);
   const user = editorUser();
 
   await user.click(screen.getByRole("button", { name: /Patch notes/ }));
   await user.click(screen.getByRole("button", { name: "Use template" }));
+  expect(currentMessage().content).toBe("Old message");
+  await user.click(screen.getByRole("button", { name: "Confirm" }));
 
   expect(currentMessage()).toMatchObject({
     content: "",
@@ -47,17 +49,18 @@ test("a template replaces the message", async () => {
 test("blank starts over", async () => {
   loadMessage({ content: "Old message", embeds: [{ title: "Old embed" }] });
   renderEditor(<NewMessageView />);
+  const user = editorUser();
 
-  await editorUser().click(
-    screen.getByRole("button", { name: /Blank message/ }),
-  );
+  await user.click(screen.getByRole("button", { name: /Blank message/ }));
+  await user.click(screen.getByRole("button", { name: "Confirm" }));
 
   expect(currentMessage()).toMatchObject({ content: "", embeds: [] });
 });
 
-test("logged out it offers the embed templates and a login", () => {
+test("logged out it offers the embed templates and a login", async () => {
   loadMessage({ content: "" });
   renderEditor(<NewMessageView />);
+  const login = await screen.findByRole("link", { name: "Log in" });
 
   expect(
     screen.getByRole("button", { name: /Server rules/ }),
@@ -65,7 +68,7 @@ test("logged out it offers the embed templates and a login", () => {
   expect(screen.queryByRole("button", { name: /Server guide/ })).toBeNull();
   expect(screen.queryByRole("button", { name: /Role selection/ })).toBeNull();
   expect(screen.queryByRole("button", { name: /AI/ })).toBeNull();
-  expect(screen.getByRole("link", { name: "Log in" })).toHaveAttribute(
+  expect(login).toHaveAttribute(
     "href",
     expect.stringContaining("/api/auth/login"),
   );

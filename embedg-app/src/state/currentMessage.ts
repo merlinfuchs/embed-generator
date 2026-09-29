@@ -51,13 +51,12 @@ export function useDebouncedCurrentDocument(wait: number) {
   return document;
 }
 
-/** Set by seeding when nothing was stored, and cleared once a message is loaded. */
+/** Set by seeding when nothing was stored before this page load. */
 let firstVisit = false;
 
 /**
- * Whether the editor should offer the templates: nothing was stored before
- * this page load and no message was loaded since. True only once, so the
- * dialog doesn't come back when the editor is opened again.
+ * Whether nothing was stored before this page load. True only once, so the
+ * templates don't come back when the editor is opened again.
  */
 export function takeFirstVisit(): boolean {
   const first = firstVisit;
@@ -65,8 +64,13 @@ export function takeFirstVisit(): boolean {
   return first;
 }
 
+/** Whether there is nothing in the message that replacing it would lose. */
+export function currentMessageIsBlank(): boolean {
+  const { content, embeds, components } = getCurrentMessage();
+  return !content && embeds.length === 0 && components.length === 0;
+}
+
 export function setCurrentMessage(message: Message) {
-  firstVisit = false;
   messageDocumentStore.getState().replaceAll(message);
 }
 
