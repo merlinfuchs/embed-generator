@@ -78,7 +78,12 @@ export default function AssistantView() {
         const res = await runAssistantPrompt({
           messages,
           getMessage: getCurrentMessage,
-          applyMessage: setCurrentMessage,
+          applyMessage: (message) => {
+            // The message was for the server the chat was about.
+            if (useAssistantStore.getState().guildId === guildId) {
+              setCurrentMessage(message);
+            }
+          },
           send: (req) => chat.mutateAsync({ guildId, req }),
         });
         addEntry(guildId, {
@@ -114,7 +119,13 @@ export default function AssistantView() {
   const left = usage?.success
     ? Math.max(usage.data.prompts_limit - usage.data.prompts_used, 0)
     : undefined;
-  const unavailable = !guildId || limit === 0 || left === 0;
+  // Why no prompt can be sent, like the limit being reached.
+  const unavailableReason = !guildId
+    ? "Select a server at the top to use the AI assistant."
+    : usage?.success
+      ? usage.data.unavailable
+      : "";
+  const unavailable = !!unavailableReason;
 
   const lastEntry = entries.at(-1);
 
@@ -204,11 +215,7 @@ export default function AssistantView() {
               }
             }}
             placeholder={
-              !guildId
-                ? "Select a server at the top to use the AI assistant."
-                : limit === 0
-                  ? "Your plan doesn't include the AI assistant."
-                  : "Ask for a message or a change..."
+              unavailableReason || "Ask for a message or a change..."
             }
             maxLength={4000}
             minRows={2}

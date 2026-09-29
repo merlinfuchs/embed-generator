@@ -28,7 +28,7 @@ type AssistantChatRequestWire struct {
 func (req AssistantChatRequestWire) Validate() error {
 	err := validation.ValidateStruct(&req,
 		validation.Field(&req.Message, validation.Required, validation.Length(1, 100_000)),
-		validation.Field(&req.Messages, validation.Required, validation.Length(1, 20)),
+		validation.Field(&req.Messages, validation.Required, validation.Length(1, 50)),
 	)
 	if err != nil {
 		return err
@@ -63,6 +63,8 @@ type AssistantChatResponseWire APIResponse[AssistantChatResponseDataWire]
 type AssistantUsageWire struct {
 	PromptsUsed  int `json:"prompts_used"`
 	PromptsLimit int `json:"prompts_limit"`
+	// Unavailable says why the assistant can't be used right now, or is empty if it can.
+	Unavailable string `json:"unavailable"`
 }
 
 type AssistantUsageResponseWire APIResponse[AssistantUsageWire]

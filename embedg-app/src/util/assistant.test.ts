@@ -58,7 +58,7 @@ async function run(
           fields: [],
           issues: [],
           repairs: 0,
-          usage: { prompts_used: 1, prompts_limit: 5 },
+          usage: { prompts_used: 1, prompts_limit: 5, unavailable: "" },
           ...answer,
         },
       };

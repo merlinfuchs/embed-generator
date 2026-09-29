@@ -9,8 +9,9 @@ import type {
 import { parseMessageWithAction } from "../discord/importSchema";
 import { type Message, messageSchema } from "../discord/schema";
 
-// The limits of the API.
-const maxMessages = 20;
+// The limits of the API. The server trims the chat itself, in steps that keep
+// the start of it the same for prompt caching, so as much as it takes is sent.
+const maxMessages = 50;
 const maxMessageLength = 4000;
 
 export interface AssistantResult {

@@ -26,6 +26,11 @@ import (
 // a free chatbot.
 const answerLimitFactor = 3
 
+// respondTimeout bounds a prompt, repairs included.
+const respondTimeout = 90 * time.Second
+
+const notSetUpMessage = "The AI assistant isn't set up on this server."
+
 // maxSavedMessages is how many of the guild's saved messages the assistant is told about.
 const maxSavedMessages = 100
 
@@ -77,11 +82,17 @@ func (h *AssistantHandler) HandleGetUsage(c *fiber.Ctx) error {
 		return err
 	}
 
+	unavailable := limitMessage(features.MaxAIPromptsPerMonth, count)
+	if h.assistant == nil {
+		unavailable = notSetUpMessage
+	}
+
 	return c.JSON(wire.AssistantUsageResponseWire{
 		Success: true,
 		Data: wire.AssistantUsageWire{
 			PromptsUsed:  count.Edited,
 			PromptsLimit: features.MaxAIPromptsPerMonth,
+			Unavailable:  unavailable,
 		},
 	})
 }
@@ -98,7 +109,7 @@ func (h *AssistantHandler) HandleChat(c *fiber.Ctx, req wire.AssistantChatReques
 	}
 
 	if h.assistant == nil {
-		return handlers.ServiceUnavailable("assistant_unavailable", "The AI assistant isn't set up on this server.")
+		return handlers.ServiceUnavailable("assistant_unavailable", notSetUpMessage)
 	}
 
 	features, err := h.planStore.GetPlanFeaturesForGuild(c.UserContext(), guildID)
@@ -112,13 +123,13 @@ func (h *AssistantHandler) HandleChat(c *fiber.Ctx, req wire.AssistantChatReques
 		return handlers.Forbidden("insufficient_plan", "This feature is not available on your plan!")
 	}
 
+	// Checked before loading the guild, so requests over the limit are cheap.
 	count, err := h.promptCount(c.UserContext(), guildID)
 	if err != nil {
 		return err
 	}
-	used := count.Edited
-	if err := checkLimits(limit, count); err != nil {
-		return err
+	if message := limitMessage(limit, count); message != "" {
+		return handlers.BadRequest("resource_limit", message)
 	}
 
 	// Loaded before the prompt is recorded, so failing doesn't use it up.
@@ -127,8 +138,8 @@ func (h *AssistantHandler) HandleChat(c *fiber.Ctx, req wire.AssistantChatReques
 		return err
 	}
 
-	// The prompt is recorded, and counted as edited, before the model is called, so requests sent
-	// while it runs count it. Requests sent at the same moment can still all pass the limits.
+	// The prompt is recorded, and counted as edited, before the model is called. The limits are
+	// then checked again with it, so requests sent at the same time can't all pass them.
 	now := time.Now().UTC()
 	prompt := model.AssistantPrompt{
 		ID:        common.InternalID(),
@@ -143,13 +154,28 @@ func (h *AssistantHandler) HandleChat(c *fiber.Ctx, req wire.AssistantChatReques
 	if err := h.promptStore.CreateAssistantPrompt(c.UserContext(), prompt); err != nil {
 		return fmt.Errorf("failed to create assistant prompt: %w", err)
 	}
+	count, err = h.promptCount(c.UserContext(), guildID)
+	if err != nil {
+		return err
+	}
+	// The counts include this prompt now.
+	if message := limitMessage(limit, model.AssistantPromptCount{Edited: count.Edited - 1, Total: count.Total - 1}); message != "" {
+		if err := h.promptStore.DeleteAssistantPrompt(c.UserContext(), guildID, prompt.ID); err != nil {
+			slog.Error("Failed to delete assistant prompt", slog.String("guild_id", guildID.String()), slog.Any("error", err))
+		}
+		return handlers.BadRequest("resource_limit", message)
+	}
+	used := count.Edited
 
 	messages := make([]ai.Message, len(req.Messages))
 	for i, m := range req.Messages {
 		messages[i] = ai.Message{Role: m.Role, Content: m.Content}
 	}
 
-	res, err := h.assistant.Respond(c.UserContext(), ai.Request{
+	// Bounded, so a slow model or repairs can't outlast proxies in front of the API.
+	ctx, cancel := context.WithTimeout(c.UserContext(), respondTimeout)
+	defer cancel()
+	res, err := h.assistant.Respond(ctx, ai.Request{
 		Message:  req.Message,
 		Messages: messages,
 		Guild:    guild,
@@ -182,8 +208,8 @@ func (h *AssistantHandler) HandleChat(c *fiber.Ctx, req wire.AssistantChatReques
 		return handlers.ServiceUnavailable("assistant_unavailable", "The AI assistant isn't available right now. Please try again later.")
 	}
 
-	if prompt.Edited {
-		used++
+	if !prompt.Edited {
+		used--
 	}
 
 	fields := make([]wire.AssistantFieldWire, len(res.Fields))
@@ -200,20 +226,27 @@ func (h *AssistantHandler) HandleChat(c *fiber.Ctx, req wire.AssistantChatReques
 			Fields:      fields,
 			Issues:      res.Issues,
 			Repairs:     res.Repairs,
-			Usage:       wire.AssistantUsageWire{PromptsUsed: used, PromptsLimit: limit},
+			Usage: wire.AssistantUsageWire{
+				PromptsUsed:  used,
+				PromptsLimit: limit,
+				Unavailable:  limitMessage(limit, model.AssistantPromptCount{Edited: used, Total: count.Total}),
+			},
 		},
 	})
 }
 
-// checkLimits returns an error if the guild can't send another prompt this month.
-func checkLimits(limit int, count model.AssistantPromptCount) error {
+// limitMessage says why the guild can't send another prompt this month, or is empty if it can.
+func limitMessage(limit int, count model.AssistantPromptCount) string {
+	if limit == 0 {
+		return "Your plan doesn't include the AI assistant."
+	}
 	if count.Edited >= limit {
-		return handlers.BadRequest("resource_limit", fmt.Sprintf("You've used all %d AI prompts for this month.", limit))
+		return fmt.Sprintf("You've used all %d AI prompts for this month.", limit)
 	}
 	if count.Total >= answerLimitFactor*limit {
-		return handlers.BadRequest("resource_limit", "You've asked the AI too many questions this month.")
+		return "You've asked the AI too many questions this month."
 	}
-	return nil
+	return ""
 }
 
 func (h *AssistantHandler) promptCount(ctx context.Context, guildID common.ID) (model.AssistantPromptCount, error) {

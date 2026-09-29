@@ -48,6 +48,10 @@ export type AssistantChatResponseWire = APIResponse<AssistantChatResponseDataWir
 export interface AssistantUsageWire {
   prompts_used: number /* int */;
   prompts_limit: number /* int */;
+  /**
+   * Unavailable says why the assistant can't be used right now, or is empty if it can.
+   */
+  unavailable: string;
 }
 export type AssistantUsageResponseWire = APIResponse<AssistantUsageWire>;
 /**

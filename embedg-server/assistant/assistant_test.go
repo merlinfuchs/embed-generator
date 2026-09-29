@@ -206,6 +206,10 @@ func TestRespondKeepsProblemsOfTheUser(t *testing.T) {
 	if len(*bodies) != 1 || res.Repairs != 0 || len(res.Issues) != 0 {
 		t.Errorf("requests = %d, repairs = %d, issues = %v", len(*bodies), res.Repairs, res.Issues)
 	}
+	// It sent the message back as it was, which isn't a change.
+	if res.MessageJSON != "" {
+		t.Errorf("message json = %q", res.MessageJSON)
+	}
 }
 
 func TestRespondStopsWhenRepairChangesNothing(t *testing.T) {

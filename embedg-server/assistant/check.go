@@ -153,9 +153,13 @@ func check(msg map[string]any, guild Guild) []string {
 		issues = append(issues, "flags: The plan doesn't include components v2.")
 	}
 
-	walkComponents(msg, func(c map[string]any, path string) {
-		if t := typeOf(c); !slices.Contains(f.ComponentTypes, int(t)) {
-			issues = append(issues, fmt.Sprintf("%s: The plan doesn't include components of type %d.", path, t))
+	// Once per type and without a path, so a problem the message already had stays the same when
+	// the model moves components around.
+	var types []int
+	walkComponents(msg, func(c map[string]any, _ string) {
+		if t := int(typeOf(c)); !slices.Contains(f.ComponentTypes, t) && !slices.Contains(types, t) {
+			types = append(types, t)
+			issues = append(issues, fmt.Sprintf("The plan doesn't include components of type %d.", t))
 		}
 	})
 

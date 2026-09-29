@@ -144,7 +144,8 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 	// The assistant stays off without an API key, as it's optional for self hosters.
 	var aiAssistant *assistant.Assistant
 	if cfg.OpenAI.APIKey != "" {
-		client := openai.NewClient(option.WithAPIKey(cfg.OpenAI.APIKey))
+		// One retry, as the handler bounds the whole prompt anyway.
+		client := openai.NewClient(option.WithAPIKey(cfg.OpenAI.APIKey), option.WithMaxRetries(1))
 		aiAssistant = assistant.New(&client, assistant.Config{
 			Model:           cfg.Assistant.Model,
 			ReasoningEffort: cfg.Assistant.ReasoningEffort,

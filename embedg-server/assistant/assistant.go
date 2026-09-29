@@ -123,7 +123,7 @@ func (e *ErrResponse) Error() string {
 // along with a response that only has the usage.
 func (a *Assistant) Respond(ctx context.Context, req Request) (*Response, error) {
 	// Problems the message had before are the user's, and the model keeps them as they are.
-	_, before := inspect(req.Message, nil, req.Guild)
+	current, before := inspect(req.Message, nil, req.Guild)
 
 	res, err := a.respond(ctx, req, nil)
 	if err != nil {
@@ -131,6 +131,10 @@ func (a *Assistant) Respond(ctx context.Context, req Request) (*Response, error)
 	}
 	res.MessageJSON, res.Issues = inspect(res.MessageJSON, res.Issues, req.Guild)
 	res.Issues = withoutIssues(res.Issues, before)
+	// The model sometimes sends the message back as it was, which isn't a change.
+	if res.MessageJSON == current {
+		res.MessageJSON = ""
+	}
 
 	for len(res.Issues) > 0 && res.Repairs < a.config.MaxRepairs {
 		message := res.MessageJSON
@@ -138,8 +142,8 @@ func (a *Assistant) Respond(ctx context.Context, req Request) (*Response, error)
 			message = req.Message
 		}
 		next, err := a.respond(ctx, req, &repair{answer: res.Message, message: message, issues: res.Issues})
-		res.Repairs++
 		if next != nil {
+			res.Repairs++
 			res.Usage = res.Usage.Add(next.Usage)
 		}
 		if err != nil {
