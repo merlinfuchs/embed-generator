@@ -1,5 +1,5 @@
 import {
-  TrashIcon,
+  DocumentPlusIcon,
   CodeBracketSquareIcon,
   SparklesIcon,
   LinkIcon,
@@ -22,8 +22,8 @@ export default function EditorMenuBar() {
     <div className="flex flex-wrap-reverse gap-x-5 gap-y-3 justify-between items-center mb-5 mt-5">
       <div className="flex flex-wrap gap-2.5 items-center">
         <EditorUndoButtons />
-        <EditorIconButton label="Clear Message" href="/editor/clear">
-          <TrashIcon />
+        <EditorIconButton label="New Message" href="/editor/new">
+          <DocumentPlusIcon />
         </EditorIconButton>
         <EditorIconButton label="JSON Code" href="/editor/json">
           <CodeBracketSquareIcon />

@@ -74,6 +74,19 @@ function legacyDraft(): Message | null {
   }
 }
 
+let firstVisit = persistedDocument() === "none" && legacyDraft() === null;
+
+/**
+ * Whether nothing was stored before this page load, so the editor should offer
+ * the templates. True only once, so the dialog doesn't come back when the
+ * editor is opened again.
+ */
+export function takeFirstVisit(): boolean {
+  const first = firstVisit;
+  firstVisit = false;
+  return first;
+}
+
 /**
  * Takes over whatever the message store still owned, which depends on how far
  * the document store had got when the draft was last written: version 1 owned
