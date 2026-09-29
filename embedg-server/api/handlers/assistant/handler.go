@@ -82,18 +82,15 @@ func (h *AssistantHandler) HandleGetUsage(c *fiber.Ctx) error {
 		return err
 	}
 
-	unavailable := limitMessage(features.MaxAIPromptsPerMonth, count)
+	usage := usageWire(features.MaxAIPromptsPerMonth, count)
 	if h.assistant == nil {
-		unavailable = notSetUpMessage
+		usage.Unavailable = notSetUpMessage
+		usage.LimitReached = false
 	}
 
 	return c.JSON(wire.AssistantUsageResponseWire{
 		Success: true,
-		Data: wire.AssistantUsageWire{
-			PromptsUsed:  count.Edited,
-			PromptsLimit: features.MaxAIPromptsPerMonth,
-			Unavailable:  unavailable,
-		},
+		Data:    usage,
 	})
 }
 
@@ -226,11 +223,7 @@ func (h *AssistantHandler) HandleChat(c *fiber.Ctx, req wire.AssistantChatReques
 			Fields:      fields,
 			Issues:      res.Issues,
 			Repairs:     res.Repairs,
-			Usage: wire.AssistantUsageWire{
-				PromptsUsed:  used,
-				PromptsLimit: limit,
-				Unavailable:  limitMessage(limit, model.AssistantPromptCount{Edited: used, Total: count.Total}),
-			},
+			Usage:       usageWire(limit, model.AssistantPromptCount{Edited: used, Total: count.Total}),
 		},
 	})
 }
@@ -249,11 +242,25 @@ func limitMessage(limit int, count model.AssistantPromptCount) string {
 	return ""
 }
 
-func (h *AssistantHandler) promptCount(ctx context.Context, guildID common.ID) (model.AssistantPromptCount, error) {
-	now := time.Now().UTC()
-	start := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+func usageWire(limit int, count model.AssistantPromptCount) wire.AssistantUsageWire {
+	message := limitMessage(limit, count)
+	return wire.AssistantUsageWire{
+		PromptsUsed:  count.Edited,
+		PromptsLimit: limit,
+		Unavailable:  message,
+		LimitReached: message != "" && limit > 0,
+		ResetsAt:     monthStart(time.Now()).AddDate(0, 1, 0),
+	}
+}
 
-	count, err := h.promptStore.CountAssistantPromptsSince(ctx, guildID, start)
+// monthStart is when the prompts of the month t is in started being counted.
+func monthStart(t time.Time) time.Time {
+	t = t.UTC()
+	return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC)
+}
+
+func (h *AssistantHandler) promptCount(ctx context.Context, guildID common.ID) (model.AssistantPromptCount, error) {
+	count, err := h.promptStore.CountAssistantPromptsSince(ctx, guildID, monthStart(time.Now()))
 	if err != nil {
 		return count, fmt.Errorf("failed to count assistant prompts: %w", err)
 	}

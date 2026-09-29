@@ -58,7 +58,13 @@ async function run(
           fields: [],
           issues: [],
           repairs: 0,
-          usage: { prompts_used: 1, prompts_limit: 5, unavailable: "" },
+          usage: {
+            prompts_used: 1,
+            prompts_limit: 5,
+            unavailable: "",
+            limit_reached: false,
+            resets_at: "2026-10-01T00:00:00Z",
+          },
           ...answer,
         },
       };

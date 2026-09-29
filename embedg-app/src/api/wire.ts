@@ -52,6 +52,11 @@ export interface AssistantUsageWire {
    * Unavailable says why the assistant can't be used right now, or is empty if it can.
    */
   unavailable: string;
+  /**
+   * LimitReached is whether it's unavailable because of the monthly limits, until ResetsAt.
+   */
+  limit_reached: boolean;
+  resets_at: string /* RFC3339 */;
 }
 export type AssistantUsageResponseWire = APIResponse<AssistantUsageWire>;
 /**

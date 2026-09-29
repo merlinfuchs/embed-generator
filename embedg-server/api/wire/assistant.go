@@ -2,6 +2,7 @@ package wire
 
 import (
 	"errors"
+	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
@@ -65,6 +66,9 @@ type AssistantUsageWire struct {
 	PromptsLimit int `json:"prompts_limit"`
 	// Unavailable says why the assistant can't be used right now, or is empty if it can.
 	Unavailable string `json:"unavailable"`
+	// LimitReached is whether it's unavailable because of the monthly limits, until ResetsAt.
+	LimitReached bool      `json:"limit_reached"`
+	ResetsAt     time.Time `json:"resets_at"`
 }
 
 type AssistantUsageResponseWire APIResponse[AssistantUsageWire]

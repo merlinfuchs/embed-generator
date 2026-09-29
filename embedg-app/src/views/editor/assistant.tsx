@@ -1,4 +1,6 @@
 import {
+  ClockIcon,
+  InformationCircleIcon,
   PaperAirplaneIcon,
   PencilSquareIcon,
   SparklesIcon,
@@ -203,51 +205,105 @@ export default function AssistantView() {
       </div>
 
       <div className="flex-none px-5 pb-5 pt-2 space-y-2">
-        <div className="relative">
-          <TextareaAutosize
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                submit();
-              }
-            }}
-            placeholder={
-              unavailableReason || "Ask for a message or a change..."
+        {unavailable ? (
+          <UnavailableCard
+            reason={unavailableReason}
+            resetsAt={
+              usage?.success && usage.data.limit_reached
+                ? usage.data.resets_at
+                : null
             }
-            maxLength={4000}
-            minRows={2}
-            maxRows={8}
-            disabled={unavailable}
-            className="bg-ink-900 pl-3 pr-12 py-2 rounded-lg w-full text-white text-sm focus:outline-none resize-none disabled:cursor-not-allowed"
+            showPremium={
+              !!usage?.success &&
+              usage.data.limit_reached &&
+              !features?.is_premium
+            }
           />
-          <button
-            type="button"
-            title="Send"
-            aria-label="Send"
-            disabled={busy || unavailable || !input.trim()}
-            className="absolute bottom-3 right-2 p-1.5 rounded-lg bg-azure-500 hover:bg-azure-400 text-white disabled:bg-ink-600 disabled:cursor-not-allowed"
-            onClick={submit}
-          >
-            <PaperAirplaneIcon className="h-4 w-4" />
-          </button>
-        </div>
-        {limit !== undefined && limit > 0 && (
-          <div className="text-xs text-mist-400">
-            {left} of {limit} prompts left this month
-            {left === 0 && !features?.is_premium && (
-              <>
-                {", "}
-                <Link to="/premium" className="text-azure-400 hover:underline">
-                  get more with Premium
-                </Link>
-              </>
+        ) : (
+          <>
+            <div className="relative">
+              <TextareaAutosize
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    submit();
+                  }
+                }}
+                placeholder="Ask for a message or a change..."
+                maxLength={4000}
+                minRows={2}
+                maxRows={8}
+                className="bg-ink-900 pl-3 pr-12 py-2 rounded-lg w-full text-white text-sm focus:outline-none resize-none"
+              />
+              <button
+                type="button"
+                title="Send"
+                aria-label="Send"
+                disabled={busy || !input.trim()}
+                className="absolute bottom-3 right-2 p-1.5 rounded-lg bg-azure-500 hover:bg-azure-400 text-white disabled:bg-ink-600 disabled:cursor-not-allowed"
+                onClick={submit}
+              >
+                <PaperAirplaneIcon className="h-4 w-4" />
+              </button>
+            </div>
+            {!!limit && (
+              <div className="text-xs text-mist-400">
+                {left} of {limit} prompts left this month
+              </div>
             )}
-          </div>
+          </>
         )}
       </div>
+    </div>
+  );
+}
+
+/** Takes the place of the input when no prompt can be sent. */
+function UnavailableCard({
+  reason,
+  resetsAt,
+  showPremium,
+}: {
+  reason: string;
+  // When the monthly limits start over, if they are the reason.
+  resetsAt: string | null;
+  showPremium: boolean;
+}) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-ink-700 p-4 space-y-3 text-sm">
+      <div className="flex space-x-3">
+        {resetsAt ? (
+          <ClockIcon className="h-5 w-5 flex-none text-amber-300" />
+        ) : (
+          <InformationCircleIcon className="h-5 w-5 flex-none text-mist-400" />
+        )}
+        <div className="space-y-1">
+          <div className="text-mist-100 font-medium">{reason}</div>
+          {resetsAt && (
+            <div className="text-mist-400">
+              You can use the AI assistant again on{" "}
+              {/* The app is in English, and the limits start over at midnight UTC. */}
+              {new Date(resetsAt).toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+                timeZone: "UTC",
+              })}
+              .
+            </div>
+          )}
+        </div>
+      </div>
+      {showPremium && (
+        <Link
+          to="/premium"
+          className="bg-amber-400 hover:bg-amber-300 text-ink-900 font-medium px-3 py-2 rounded-lg block w-full text-center transition-colors"
+        >
+          Get more prompts with Premium
+        </Link>
+      )}
     </div>
   );
 }
