@@ -6,8 +6,6 @@ export const defaultPlanFeatures: GetPremiumPlanFeaturesResponseDataWire = {
   max_actions_per_component: 3,
   advanced_action_types: false,
   max_ai_prompts_per_month: 5,
-  components_v2: true,
-  component_types: [1, 2, 3, 9, 10, 11, 12, 17],
   custom_bot: false,
   max_custom_commands: 0,
   is_premium: false,

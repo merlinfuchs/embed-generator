@@ -36,8 +36,8 @@ export default function NewMessageView() {
   const guildId = useSendSettingsStore((s) => s.guildId);
   const features = usePremiumGuildFeatures();
   const aiAllowed = !!features?.max_ai_prompts_per_month;
-  // Why the templates with components can't be used yet. Nothing while that
-  // is still loading.
+  // Why the templates that need the bot can't be used yet. Nothing while
+  // that is still loading.
   const lockedReason: LockedReason | null = userPending
     ? null
     : !user?.success
@@ -173,10 +173,7 @@ function TemplateCard({
             transform: `scale(${THUMBNAIL_SCALE})`,
           }}
         >
-          <MessagePreview
-            msg={template.message}
-            sendMode={needsBot(template.message) ? "channel" : undefined}
-          />
+          <MessagePreview msg={template.message} />
         </div>
         <div className="absolute inset-x-0 bottom-0 h-12 bg-linear-to-t from-ink-800" />
       </div>

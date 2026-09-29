@@ -56,17 +56,18 @@ test("blank starts over", async () => {
   expect(currentMessage()).toMatchObject({ content: "", embeds: [] });
 });
 
-test("logged out the templates with components ask to log in", async () => {
+test("logged out only the templates that need the bot ask to log in", async () => {
   loadMessage({ content: "" });
   renderEditor(<NewMessageView />);
   const logins = await screen.findAllByRole("link", { name: "Log in to use" });
 
   expect(
-    screen.getByRole("button", { name: "Use Server rules" }),
+    screen.getByRole("button", { name: "Use Server guide" }),
   ).toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Use Server guide" })).toBeNull();
-  expect(screen.getByText("Server guide")).toBeInTheDocument();
-  expect(logins).toHaveLength(4);
+  expect(
+    screen.queryByRole("button", { name: "Use Role selection" }),
+  ).toBeNull();
+  expect(logins).toHaveLength(1);
   expect(logins[0]).toHaveAttribute(
     "href",
     expect.stringContaining("/api/auth/login"),
@@ -80,7 +81,7 @@ test("logged in with a server it offers everything", async () => {
   renderEditor(<NewMessageView />);
 
   expect(
-    await screen.findByRole("button", { name: "Use Server guide" }),
+    await screen.findByRole("button", { name: "Use Role selection" }),
   ).toBeInTheDocument();
   expect(
     screen.getByRole("button", { name: /Describe it to the AI/ }),
@@ -88,7 +89,7 @@ test("logged in with a server it offers everything", async () => {
   expect(screen.queryByRole("link", { name: "Log in to use" })).toBeNull();
 });
 
-test("a template with components switches to sending through the bot", async () => {
+test("a template that needs the bot switches to sending through it", async () => {
   logIn();
   loadMessage({ content: "" });
   renderEditor(<NewMessageView />);
@@ -100,4 +101,16 @@ test("a template with components switches to sending through the bot", async () 
 
   expect(useSendSettingsStore.getState().mode).toBe("channel");
   expect(currentMessage().components).toHaveLength(1);
+});
+
+test("a Components V2 template stays on the webhook", async () => {
+  logIn();
+  loadMessage({ content: "" });
+  renderEditor(<NewMessageView />);
+
+  await editorUser().click(
+    await screen.findByRole("button", { name: "Use Server guide" }),
+  );
+
+  expect(useSendSettingsStore.getState().mode).toBe("webhook");
 });

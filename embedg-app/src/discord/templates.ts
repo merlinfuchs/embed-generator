@@ -375,44 +375,31 @@ export const messageTemplates: MessageTemplate[] = [
   },
 ];
 
-function componentTypes(components: MessageComponent[], types: Set<number>) {
-  for (const component of components) {
-    types.add(component.type);
-    if ("components" in component) {
-      componentTypes(component.components, types);
-    }
-    if ("accessory" in component) {
-      types.add(component.accessory.type);
-    }
-  }
-  return types;
-}
-
-/** Whether the message has components, which webhooks drop, so only the bot can send it. */
-export function needsBot(message: Message): boolean {
-  return message.components.length > 0;
+function hasInteractive(components: MessageComponent[]): boolean {
+  return components.some(
+    (c) =>
+      c.type === 3 ||
+      (c.type === 2 && c.style !== 5) ||
+      ("accessory" in c && hasInteractive([c.accessory])) ||
+      ("components" in c && hasInteractive(c.components)),
+  );
 }
 
 /**
- * Whether the plan lets the message be sent. Without features, which takes
- * logging in and selecting a server, messages are sent to webhooks, and those
- * drop all components.
+ * Whether the message has buttons with actions or select menus. Webhooks send
+ * everything else, but only the bot can handle those.
  */
+export function needsBot(message: Message): boolean {
+  return hasInteractive(message.components);
+}
+
+/** Whether the message can be sent, which for one that needs the bot takes a plan to check. */
 export function templateAvailable(
   message: Message,
   features: GetPremiumPlanFeaturesResponseDataWire | null,
 ): boolean {
-  if (!features) {
-    return !needsBot(message);
-  }
-
-  if ((message.flags ?? 0) & COMPONENTS_V2_FLAG && !features.components_v2) {
-    return false;
-  }
-
-  for (const type of componentTypes(message.components, new Set())) {
-    if (!features.component_types.includes(type)) return false;
-  }
+  if (!needsBot(message)) return true;
+  if (!features) return false;
 
   return Object.values(message.actions).every(
     (set) => set.actions.length <= features.max_actions_per_component,

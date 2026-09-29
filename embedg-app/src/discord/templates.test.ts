@@ -32,15 +32,14 @@ test("every build gets its own action sets", () => {
   expect(first.some((id) => second.includes(id))).toBe(false);
 });
 
-test("without a login only templates a webhook can send are offered", () => {
-  const offered = messageTemplates.filter((t) =>
-    templateAvailable(t.build(), null),
-  );
+test("without a login everything but the templates that need the bot is offered", () => {
+  const offered = messageTemplates
+    .filter((t) => templateAvailable(t.build(), null))
+    .map((t) => t.id);
 
-  expect(offered.length).toBeGreaterThanOrEqual(5);
-  for (const t of offered) {
-    expect(t.build().components).toEqual([]);
-  }
+  expect(offered).toContain("v2-guide");
+  expect(offered).toContain("rules");
+  expect(offered).not.toContain("roles");
 });
 
 test("the default plan can send every template", () => {
@@ -49,21 +48,12 @@ test("the default plan can send every template", () => {
   }
 });
 
-test("a plan without Components V2 or a component type doesn't get them", () => {
-  const withoutV2 = { ...defaultPlan, components_v2: false };
-  expect(
-    messageTemplates
-      .filter((t) => templateAvailable(t.build(), withoutV2))
-      .map((t) => t.id),
-  ).not.toContain("v2-guide");
+test("a plan with fewer actions per button than a template uses leaves it out", () => {
+  const noActions = { ...defaultPlan, max_actions_per_component: 0 };
 
-  const withoutSections = {
-    ...defaultPlan,
-    component_types: defaultPlan.component_types.filter((c) => c !== 9),
-  };
   expect(
     messageTemplates
-      .filter((t) => templateAvailable(t.build(), withoutSections))
+      .filter((t) => templateAvailable(t.build(), noActions))
       .map((t) => t.id),
-  ).not.toContain("v2-guide");
+  ).not.toContain("roles");
 });
