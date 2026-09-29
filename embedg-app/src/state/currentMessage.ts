@@ -51,7 +51,22 @@ export function useDebouncedCurrentDocument(wait: number) {
   return document;
 }
 
+/** Set by seeding when nothing was stored, and cleared once a message is loaded. */
+let firstVisit = false;
+
+/**
+ * Whether the editor should offer the templates: nothing was stored before
+ * this page load and no message was loaded since. True only once, so the
+ * dialog doesn't come back when the editor is opened again.
+ */
+export function takeFirstVisit(): boolean {
+  const first = firstVisit;
+  firstVisit = false;
+  return first;
+}
+
 export function setCurrentMessage(message: Message) {
+  firstVisit = false;
   messageDocumentStore.getState().replaceAll(message);
 }
 
@@ -74,19 +89,6 @@ function legacyDraft(): Message | null {
   }
 }
 
-let firstVisit = persistedDocument() === "none" && legacyDraft() === null;
-
-/**
- * Whether nothing was stored before this page load, so the editor should offer
- * the templates. True only once, so the dialog doesn't come back when the
- * editor is opened again.
- */
-export function takeFirstVisit(): boolean {
-  const first = firstVisit;
-  firstVisit = false;
-  return first;
-}
-
 /**
  * Takes over whatever the message store still owned, which depends on how far
  * the document store had got when the draft was last written: version 1 owned
@@ -98,7 +100,10 @@ export function seedDocumentStore() {
   if (persisted === "current") return;
 
   const draft = legacyDraft();
-  if (!draft) return;
+  if (!draft) {
+    firstVisit = persisted === "none";
+    return;
+  }
 
   const current = getCurrentDocument().message;
   const owned =

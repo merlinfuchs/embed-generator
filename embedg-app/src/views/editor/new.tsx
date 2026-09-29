@@ -10,14 +10,16 @@ import { useUserQuery } from "../../api/queries";
 import LoginLink from "../../components/LoginLink";
 import MessagePreview from "../../components/MessagePreview";
 import Modal from "../../components/Modal";
-import { defaultMessage } from "../../discord/defaultMessage";
-import { COMPONENTS_V2_FLAG, type Message } from "../../discord/schema";
 import {
+  type MessageTemplate,
   messageTemplates,
+  needsBot,
   templateAvailable,
-  usesBot,
 } from "../../discord/templates";
-import { setCurrentMessage } from "../../state/currentMessage";
+import {
+  clearCurrentMessage,
+  setCurrentMessage,
+} from "../../state/currentMessage";
 import { useSendSettingsStore } from "../../state/sendSettings";
 import { usePremiumGuildFeatures } from "../../util/premium";
 
@@ -38,7 +40,6 @@ export default function NewMessageView() {
   const available = templates.filter((t) =>
     templateAvailable(t.message, features),
   );
-  const locked = available.length < templates.length;
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // On small screens the preview is below the list, out of sight.
@@ -53,32 +54,26 @@ export default function NewMessageView() {
   const selected =
     available.find((t) => t.id === selectedId) ?? available[0] ?? null;
 
-  function start(message: Message, path = "/editor") {
-    setCurrentMessage(message);
-    // Webhooks drop the components, so only the bot can send them.
-    if (message.components.length > 0) {
+  const selectedNeedsBot = !!selected && needsBot(selected.message);
+
+  function applyTemplate() {
+    if (!selected) return;
+    setCurrentMessage(selected.message);
+    if (selectedNeedsBot) {
       useSendSettingsStore.getState().setMode("channel");
     }
+    navigate("/editor");
+  }
+
+  function startBlank(path: string) {
+    clearCurrentMessage();
     navigate(path);
   }
 
-  const groups = [
-    {
-      label: "Embeds",
-      templates: available.filter(
-        (t) => !isComponentsV2(t.message) && !usesBot(t.message),
-      ),
-    },
-    {
-      label: "Components V2",
-      templates: available.filter(
-        (t) => isComponentsV2(t.message) && !usesBot(t.message),
-      ),
-    },
-    {
-      label: "Interactive",
-      templates: available.filter((t) => usesBot(t.message)),
-    },
+  const groups: MessageTemplate["group"][] = [
+    "Embeds",
+    "Components V2",
+    "Interactive",
   ];
 
   return (
@@ -98,25 +93,26 @@ export default function NewMessageView() {
               icon={<DocumentIcon />}
               label="Blank message"
               description="Start from scratch"
-              onClick={() => start(defaultMessage)}
+              onClick={() => startBlank("/editor")}
             />
             {aiAllowed && (
               <OptionButton
                 icon={<SparklesIcon className="text-amber-300" />}
                 label="Describe it to the AI"
                 description="The assistant builds it for you"
-                onClick={() => start(defaultMessage, "/editor/assistant")}
+                onClick={() => startBlank("/editor/assistant")}
               />
             )}
 
-            {groups.map(
-              (group) =>
-                group.templates.length > 0 && (
-                  <div key={group.label} className="pt-3">
+            {groups.map((group) => {
+              const inGroup = available.filter((t) => t.group === group);
+              return (
+                inGroup.length > 0 && (
+                  <div key={group} className="pt-3">
                     <div className="px-3 pb-1 uppercase text-xs font-medium text-mist-400">
-                      {group.label}
+                      {group}
                     </div>
-                    {group.templates.map((t) => (
+                    {inGroup.map((t) => (
                       <OptionButton
                         key={t.id}
                         label={t.name}
@@ -126,10 +122,11 @@ export default function NewMessageView() {
                       />
                     ))}
                   </div>
-                ),
-            )}
+                )
+              );
+            })}
 
-            {locked && !features && (
+            {!features && (
               <div className="mt-3 p-3 rounded-lg bg-ink-800 border border-white/5 text-sm text-mist-300 space-y-2">
                 <div className="flex items-center space-x-2 text-mist-100">
                   <LockClosedIcon className="h-4 w-4 flex-none text-azure-400" />
@@ -163,20 +160,21 @@ export default function NewMessageView() {
               <div className="flex-auto md:overflow-y-auto bg-ink-800 px-5 py-3">
                 <MessagePreview
                   msg={selected.message}
-                  sendMode={usesBot(selected.message) ? "channel" : undefined}
+                  sendMode={selectedNeedsBot ? "channel" : undefined}
                 />
               </div>
               <div className="flex-none flex items-center justify-end gap-3 px-5 py-3 border-t border-white/5">
-                {usesBot(selected.message) && (
+                {selectedNeedsBot && (
                   <div className="text-sm text-mist-400">
-                    Needs the bot on your server. Pick the roles for each button
-                    before sending.
+                    {selected.group === "Interactive"
+                      ? "Needs the bot on your server. Pick the roles for each button before sending."
+                      : "Sent through the bot, as webhooks can't send components."}
                   </div>
                 )}
                 <button
                   type="button"
                   className="flex-none bg-azure-500 hover:bg-azure-400 transition-colors px-4 py-2 rounded-lg text-white font-medium"
-                  onClick={() => start(selected.message)}
+                  onClick={applyTemplate}
                 >
                   Use template
                 </button>
@@ -187,10 +185,6 @@ export default function NewMessageView() {
       </div>
     </Modal>
   );
-}
-
-function isComponentsV2(message: Message) {
-  return ((message.flags ?? 0) & COMPONENTS_V2_FLAG) !== 0;
 }
 
 function OptionButton({

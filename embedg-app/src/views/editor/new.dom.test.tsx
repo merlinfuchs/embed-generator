@@ -1,6 +1,7 @@
 import { screen } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 import { useSendSettingsStore } from "../../state/sendSettings";
+import { defaultPlanFeatures } from "../../test/plan";
 import {
   currentMessage,
   editorUser,
@@ -17,12 +18,7 @@ afterEach(() => {
 function logIn() {
   const responses: Record<string, unknown> = {
     "/api/users/@me": { id: "1", name: "Tester" },
-    "/api/premium/features": {
-      max_actions_per_component: 3,
-      max_ai_prompts_per_month: 5,
-      components_v2: true,
-      component_types: [1, 2, 3, 9, 10, 11, 12, 17],
-    },
+    "/api/premium/features": defaultPlanFeatures,
   };
   vi.stubGlobal("fetch", async (url: string) => {
     const data = responses[url.split("?")[0]];

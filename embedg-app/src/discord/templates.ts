@@ -9,6 +9,7 @@ import {
 
 export interface MessageTemplate {
   id: string;
+  group: "Embeds" | "Components V2" | "Interactive";
   name: string;
   description: string;
   /** Builds the message with fresh ids, so using a template twice doesn't share action sets. */
@@ -47,9 +48,16 @@ const linkButton = (label: string, emoji: string) => ({
   url: PLACEHOLDER_URL,
 });
 
+const linkSection = (content: string, label: string, emoji: string) => ({
+  type: 9,
+  components: [textDisplay(content)],
+  accessory: linkButton(label, emoji),
+});
+
 export const messageTemplates: MessageTemplate[] = [
   {
     id: "rules",
+    group: "Embeds",
     name: "Server rules",
     description: "A numbered list of rules with a footer",
     build: () =>
@@ -94,6 +102,7 @@ export const messageTemplates: MessageTemplate[] = [
   },
   {
     id: "welcome",
+    group: "Embeds",
     name: "Welcome",
     description: "Greets new members and points them around",
     build: () =>
@@ -129,6 +138,7 @@ export const messageTemplates: MessageTemplate[] = [
   },
   {
     id: "announcement",
+    group: "Embeds",
     name: "Announcement",
     description: "News for your members with a date",
     build: () =>
@@ -147,6 +157,7 @@ export const messageTemplates: MessageTemplate[] = [
   },
   {
     id: "patch-notes",
+    group: "Embeds",
     name: "Patch notes",
     description: "What's new, changed and fixed in an update",
     build: () =>
@@ -177,6 +188,7 @@ export const messageTemplates: MessageTemplate[] = [
   },
   {
     id: "event",
+    group: "Embeds",
     name: "Event",
     description: "Time and place, shown in each member's timezone",
     build: () => {
@@ -200,6 +212,7 @@ export const messageTemplates: MessageTemplate[] = [
   },
   {
     id: "v2-guide",
+    group: "Components V2",
     name: "Server guide",
     description: "Sections with buttons that link to the important places",
     build: () =>
@@ -211,37 +224,28 @@ export const messageTemplates: MessageTemplate[] = [
             textDisplay(
               "# Welcome to Your Server\nEverything you need to find your way around.",
             ),
-            {
-              type: 9,
-              components: [
-                textDisplay(
-                  "### 📜 Rules\nRead them before you start chatting.",
-                ),
-              ],
-              accessory: linkButton("Rules", "📜"),
-            },
-            {
-              type: 9,
-              components: [
-                textDisplay(
-                  "### 🎭 Roles\nPick the roles for what you're into.",
-                ),
-              ],
-              accessory: linkButton("Roles", "🎭"),
-            },
-            {
-              type: 9,
-              components: [
-                textDisplay("### 💬 Support\nStuck? Ask us anything."),
-              ],
-              accessory: linkButton("Support", "💬"),
-            },
+            linkSection(
+              "### 📜 Rules\nRead them before you start chatting.",
+              "Rules",
+              "📜",
+            ),
+            linkSection(
+              "### 🎭 Roles\nPick the roles for what you're into.",
+              "Roles",
+              "🎭",
+            ),
+            linkSection(
+              "### 💬 Support\nStuck? Ask us anything.",
+              "Support",
+              "💬",
+            ),
           ],
         },
       ]),
   },
   {
     id: "v2-news",
+    group: "Components V2",
     name: "News card",
     description: "An announcement in a container with a link",
     build: () =>
@@ -264,6 +268,7 @@ export const messageTemplates: MessageTemplate[] = [
   },
   {
     id: "v2-event",
+    group: "Components V2",
     name: "Event card",
     description: "Event details with a button to the event",
     build: () => {
@@ -290,6 +295,7 @@ export const messageTemplates: MessageTemplate[] = [
   },
   {
     id: "roles",
+    group: "Interactive",
     name: "Role selection",
     description: "Buttons that give or take roles when clicked",
     build: () => {
@@ -341,9 +347,9 @@ function componentTypes(components: MessageComponent[], types: Set<number>) {
   return types;
 }
 
-/** Whether the message uses actions, which only the bot can run. */
-export function usesBot(message: Message): boolean {
-  return Object.values(message.actions).some((set) => set.actions.length > 0);
+/** Whether the message has components, which webhooks drop, so only the bot can send it. */
+export function needsBot(message: Message): boolean {
+  return message.components.length > 0;
 }
 
 /**
@@ -356,7 +362,7 @@ export function templateAvailable(
   features: GetPremiumPlanFeaturesResponseDataWire | null,
 ): boolean {
   if (!features) {
-    return message.components.length === 0;
+    return !needsBot(message);
   }
 
   if ((message.flags ?? 0) & COMPONENTS_V2_FLAG && !features.components_v2) {
