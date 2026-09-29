@@ -13,7 +13,8 @@ import EditorIconButton from "./EditorIconButton";
 import EditorComponentsV2Toggle from "./EditorComponentsV2Toggle";
 
 export default function EditorMenuBar() {
-  const aiAssistantAllowed = usePremiumGuildFeatures()?.ai_assistant;
+  const aiAssistantAllowed =
+    !!usePremiumGuildFeatures()?.max_ai_prompts_per_month;
   const componentsV2Allowed = usePremiumGuildFeatures()?.components_v2;
   // Easy to forget behind a modal otherwise.
   const settingsChanged = !isDefaultAllowedMentions(useAllowedMentions());

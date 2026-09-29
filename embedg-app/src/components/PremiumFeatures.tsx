@@ -16,9 +16,9 @@ export default function PremiumFeatures() {
           <CpuChipIcon className="h-4 w-4" />
         </span>
         <div className="text-mist-300 text-sm">
-          Get a personal{" "}
+          Get way more prompts for the{" "}
           <span className="font-medium text-white">AI assistant</span> that
-          helps you creating beautiful and unique messages
+          builds and changes your messages
         </div>
       </div>
       <div className="flex items-center gap-4">

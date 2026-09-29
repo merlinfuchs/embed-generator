@@ -85,6 +85,40 @@ func (q *Queries) GetSavedMessageForGuild(ctx context.Context, arg GetSavedMessa
 	return i, err
 }
 
+const getSavedMessageNamesForGuild = `-- name: GetSavedMessageNamesForGuild :many
+SELECT id, name FROM saved_messages WHERE guild_id = $1 ORDER BY updated_at DESC LIMIT $2
+`
+
+type GetSavedMessageNamesForGuildParams struct {
+	GuildID  pgtype.Text
+	MaxCount int32
+}
+
+type GetSavedMessageNamesForGuildRow struct {
+	ID   string
+	Name string
+}
+
+func (q *Queries) GetSavedMessageNamesForGuild(ctx context.Context, arg GetSavedMessageNamesForGuildParams) ([]GetSavedMessageNamesForGuildRow, error) {
+	rows, err := q.db.Query(ctx, getSavedMessageNamesForGuild, arg.GuildID, arg.MaxCount)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetSavedMessageNamesForGuildRow
+	for rows.Next() {
+		var i GetSavedMessageNamesForGuildRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getSavedMessagesForCreator = `-- name: GetSavedMessagesForCreator :many
 SELECT id, creator_id, guild_id, updated_at, name, description, data FROM saved_messages WHERE creator_id = $1 AND guild_id IS NULL ORDER BY updated_at DESC
 `

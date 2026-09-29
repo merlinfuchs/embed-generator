@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type {
-  AssistantGenerateMessageRequestWire,
-  AssistantGenerateMessageResponseWire,
+  AssistantChatRequestWire,
+  AssistantChatResponseWire,
   ConsumeEntitlementRequestWire,
   ConsumeEntitlementResponseWire,
   CustomBotConfigureRequestWire,
@@ -41,24 +41,39 @@ import type {
 } from "./wire";
 import { handleApiResponse } from "./queries";
 
-export function useAssistantGenerateMessageMutation() {
+export function useAssistantChatMutation() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: ({
       guildId,
       req,
     }: {
-      req: AssistantGenerateMessageRequestWire;
       guildId: string;
+      req: AssistantChatRequestWire;
     }) => {
-      return fetch(`/api/assistant/message?guild_id=${guildId}`, {
+      return fetch(`/api/assistant/chat?guild_id=${guildId}`, {
         method: "POST",
         body: JSON.stringify(req),
         headers: {
           "Content-Type": "application/json",
         },
       }).then((res) =>
-        handleApiResponse<AssistantGenerateMessageResponseWire>(res.json()),
+        handleApiResponse<AssistantChatResponseWire>(res.json()),
       );
+    },
+    onSettled: (res, _err, { guildId }) => {
+      if (res?.success) {
+        queryClient.setQueryData(["assistant", "usage", guildId], {
+          success: true,
+          data: res.data.usage,
+        });
+      } else {
+        // Answers that failed can still have used up a prompt.
+        queryClient.invalidateQueries({
+          queryKey: ["assistant", "usage", guildId],
+        });
+      }
     },
   });
 }

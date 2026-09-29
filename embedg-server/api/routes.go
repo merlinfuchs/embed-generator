@@ -65,8 +65,18 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	sharedMessagesGroup.Post("/", handlers.WithRequestBodyValidated(sharedMessageHandler.HandleCreateSharedMessage))
 	sharedMessagesGroup.Get("/:messageID", sharedMessageHandler.HandleGetSharedMessage)
 
-	assistantHandler := assistant.New(env.AccessManager, env.PremiumManager, env.OpenAIClient)
-	app.Post("/api/assistant/message", sessionMiddleware.SessionRequired(), handlers.WithRequestBody(assistantHandler.HandleAssistantGenerateMessage))
+	assistantHandler := assistant.New(
+		env.AccessManager,
+		env.PremiumManager,
+		env.AssistantPromptStore,
+		env.SavedMessageStore,
+		env.GuildState,
+		env.Assistant,
+		config.AssistantMaxRepairs,
+	)
+	assistantGroup := app.Group("/api/assistant", sessionMiddleware.SessionRequired())
+	assistantGroup.Get("/usage", assistantHandler.HandleGetUsage)
+	assistantGroup.Post("/chat", handlers.WithRequestBodyValidated(assistantHandler.HandleChat))
 
 	guildsHanlder := guilds.New(env.CustomBotStore, env.GuildStore, env.GuildState, env.AccessManager, env.PremiumManager)
 	guildsGroup := app.Group("/api/guilds", sessionMiddleware.SessionRequired())

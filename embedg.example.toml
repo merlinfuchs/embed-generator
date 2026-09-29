@@ -11,7 +11,14 @@ shard_count = 0
 identify_concurrency = 0
 
 [openai]
-api_key = "" # for ChatGPT integration (optional)
+api_key = "" # for the AI assistant (optional)
+
+# The AI assistant. Plans set how many prompts it takes a month with max_ai_prompts_per_month.
+[assistant]
+model = "gpt-5-mini"
+reasoning_effort = "low"
+max_output_tokens = 16000 # per model call, reasoning included
+max_repairs = 2 # fixes of its own mistakes that don't count as prompts
 
 [database.postgres]
 host = "localhost"
@@ -60,7 +67,7 @@ default = true
 max_saved_messages = 25
 max_actions_per_component = 3
 advanced_action_types = false
-ai_assistant = false
+max_ai_prompts_per_month = 5
 is_premium = false
 custom_bot = false
 max_custom_commands = 0
@@ -80,7 +87,7 @@ sku_id = "123"
 max_saved_messages = 100
 max_actions_per_component = 10
 advanced_action_types = true
-ai_assistant = true
+max_ai_prompts_per_month = 100
 is_premium = true # This is used for handing out cosmetics like a role on the support server
 custom_bot = true
 max_custom_commands = 25

@@ -13,7 +13,7 @@ import LoginErrorHandler from "./components/LoginErrorHandler";
 import { lazyView } from "./util/lazyView";
 
 const LazyJsonView = lazyView(() => import("./views/editor/json"));
-const LazyAssistantView = lazyView(() => import("./views/editor/assisstant"));
+const LazyAssistantView = lazyView(() => import("./views/editor/assistant"));
 const LazyMessagesView = lazyView(() => import("./views/messages"));
 const LazyPremiumView = lazyView(() => import("./views/premium"));
 const LazyShareRestoreView = lazyView(

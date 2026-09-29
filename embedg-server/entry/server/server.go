@@ -11,6 +11,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
+	"github.com/merlinfuchs/embed-generator/embedg-server/assistant"
 	"github.com/merlinfuchs/embed-generator/embedg-server/command"
 	"github.com/merlinfuchs/embed-generator/embedg-server/config"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres"
@@ -23,7 +24,8 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/manager/premium"
 	scheduled_messages "github.com/merlinfuchs/embed-generator/embedg-server/manager/scheduled_message"
 	"github.com/merlinfuchs/embed-generator/embedg-server/manager/webhook"
-	"github.com/sashabaranov/go-openai"
+	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v2/option"
 )
 
 const gatewayCloseTimeout = 10 * time.Second
@@ -139,6 +141,17 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		}
 	}()
 
+	// The assistant stays off without an API key, as it's optional for self hosters.
+	var aiAssistant *assistant.Assistant
+	if cfg.OpenAI.APIKey != "" {
+		client := openai.NewClient(option.WithAPIKey(cfg.OpenAI.APIKey))
+		aiAssistant = assistant.New(&client, assistant.Config{
+			Model:           cfg.Assistant.Model,
+			ReasoningEffort: cfg.Assistant.ReasoningEffort,
+			MaxOutputTokens: cfg.Assistant.MaxOutputTokens,
+		})
+	}
+
 	api.Serve(ctx, &api.Env{
 		UserStore:             pg,
 		SharedMessageStore:    pg,
@@ -162,7 +175,8 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		ActionHandler:         actionHandler,
 		Rest:                  embedg.Rest(),
 		ShardManager:          embedg.ShardManager(),
-		OpenAIClient:          openai.NewClient(cfg.OpenAI.APIKey),
+		Assistant:             aiAssistant,
+		AssistantPromptStore:  pg,
 		FileStore:             blob,
 		AppContext:            embedg,
 		EventDispatcher:       embedg,
@@ -177,6 +191,8 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		DiscordPublicKey: cfg.Discord.PublicKey,
 		SupportGuildID:   cfg.Discord.SupportGuildID,
 		InsecureCookies:  cfg.API.InsecureCookies,
+
+		AssistantMaxRepairs: cfg.Assistant.MaxRepairs,
 	})
 
 	select {

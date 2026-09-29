@@ -4,14 +4,68 @@ import {APIResponse} from "./base"
 //////////
 // source: assistant.go
 
-export interface AssistantGenerateMessageRequestWire {
-  base_data: null | string;
-  prompt: string;
+export interface AssistantChatMessageWire {
+  role: string;
+  content: string;
 }
-export interface AssistantGenerateMessageResponseDataWire {
+export interface AssistantChatRequestWire {
+  /**
+   * Message is the message in the editor as JSON.
+   */
+  message: string;
+  messages: AssistantChatMessageWire[];
+  /**
+   * RepairPromptID asks to fix the issues the editor found with the message of an earlier
+   * prompt. Repairs don't count as new prompts.
+   */
+  repair_prompt_id: string;
+  issues: string[];
+}
+export interface AssistantChatResponseDataWire {
+  prompt_id: string;
+  /**
+   * Message is Markdown.
+   */
+  message: string;
+  /**
+   * Data is the new message as JSON, or empty if the answer doesn't change it.
+   */
   data: string;
+  /**
+   * BuildPrompt is a request the user can send to make the change the message suggests, if
+   * any.
+   */
+  build_prompt: string;
+  /**
+   * Fields ask the user for what the assistant needs but only they know.
+   */
+  fields: AssistantFieldWire[];
+  /**
+   * Issues are problems with the message the editor can't see. They are fixed with a repair,
+   * like the problems the editor finds.
+   */
+  issues: string[];
+  usage: AssistantUsageWire;
 }
-export type AssistantGenerateMessageResponseWire = APIResponse<AssistantGenerateMessageResponseDataWire>;
+export type AssistantChatResponseWire = APIResponse<AssistantChatResponseDataWire>;
+export interface AssistantUsageWire {
+  prompts_used: number /* int */;
+  prompts_limit: number /* int */;
+}
+export type AssistantUsageResponseWire = APIResponse<AssistantUsageWire>;
+/**
+ * AssistantFieldWire asks the user for something only they know, like a channel.
+ */
+export interface AssistantFieldWire {
+  label: string;
+  description: string;
+  /**
+   * Type is "text", "channel", "role" or "choice".
+   */
+  type: string;
+  options: string[];
+  default: string;
+}
 
 //////////
 // source: custom_bots.go
@@ -286,7 +340,7 @@ export interface GetPremiumPlanFeaturesResponseDataWire {
   max_saved_messages: number /* int */;
   max_actions_per_component: number /* int */;
   advanced_action_types: boolean;
-  ai_assistant: boolean;
+  max_ai_prompts_per_month: number /* int */;
   components_v2: boolean;
   component_types: number /* int */[];
   custom_bot: boolean;

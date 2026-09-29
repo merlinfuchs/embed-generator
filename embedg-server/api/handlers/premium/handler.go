@@ -70,7 +70,7 @@ func (h *PremiumHandler) HandleGetFeatures(c *fiber.Ctx) error {
 			MaxSavedMessages:          features.MaxSavedMessages,
 			MaxActionsPerComponent:    features.MaxActionsPerComponent,
 			AdvancedActionTypes:       features.AdvancedActionTypes,
-			AIAssistant:               features.AIAssistant,
+			MaxAIPromptsPerMonth:      features.MaxAIPromptsPerMonth,
 			CustomBot:                 features.CustomBot,
 			ComponentsV2:              features.ComponentsV2,
 			ComponentTypes:            features.ComponentTypes,
