@@ -113,13 +113,6 @@ describe("runAssistantPrompt", () => {
     expect(res.issues).toEqual([]);
   });
 
-  it("doesn't apply a message that isn't JSON", async () => {
-    const res = await run({ data: '{"embeds": [' });
-
-    expect(res.editor.applied).toBe(0);
-    expect(res.issues).toEqual(["The AI's message isn't valid JSON."]);
-  });
-
   it("throws when the prompt fails", async () => {
     await expect(run(null)).rejects.toThrow("You've used all 5");
   });

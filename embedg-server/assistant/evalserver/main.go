@@ -13,7 +13,6 @@ import (
 
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/assistant"
-	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/openai/openai-go/v2"
 	"github.com/openai/openai-go/v2/option"
@@ -38,6 +37,7 @@ func main() {
 		Model:           prefix + *modelName,
 		ReasoningEffort: *effort,
 		MaxOutputTokens: 16000,
+		MaxRepairs:      *maxRepairs,
 	})
 
 	// The app's wire types, plus the guild the server would load, and in the response the tokens
@@ -61,7 +61,7 @@ func main() {
 			Message:  req.Message,
 			Messages: messages,
 			Guild:    req.Guild.toGuild(),
-		}, *maxRepairs)
+		})
 		if err != nil {
 			fail(w, err)
 			return
@@ -92,16 +92,9 @@ func main() {
 }
 
 type evalGuild struct {
-	Name  string `json:"name"`
-	Roles []struct {
-		ID   string `json:"id"`
-		Name string `json:"name"`
-	} `json:"roles"`
-	Emojis []struct {
-		ID       string `json:"id"`
-		Name     string `json:"name"`
-		Animated bool   `json:"animated"`
-	} `json:"emojis"`
+	Name          string                `json:"name"`
+	Roles         []wire.GuildRoleWire  `json:"roles"`
+	Emojis        []wire.GuildEmojiWire `json:"emojis"`
 	SavedMessages []struct {
 		ID   string `json:"id"`
 		Name string `json:"name"`
@@ -120,10 +113,10 @@ func (g evalGuild) toGuild() assistant.Guild {
 		},
 	}
 	for _, r := range g.Roles {
-		guild.Roles = append(guild.Roles, assistant.Role{ID: common.DefinitelyID(r.ID), Name: r.Name})
+		guild.Roles = append(guild.Roles, assistant.Role{ID: r.ID, Name: r.Name, Managed: r.Managed})
 	}
 	for _, e := range g.Emojis {
-		guild.Emojis = append(guild.Emojis, assistant.Emoji{ID: common.DefinitelyID(e.ID), Name: e.Name, Animated: e.Animated})
+		guild.Emojis = append(guild.Emojis, assistant.Emoji{ID: e.ID, Name: e.Name, Animated: e.Animated})
 	}
 	for _, m := range g.SavedMessages {
 		guild.SavedMessages = append(guild.SavedMessages, assistant.SavedMessage{ID: m.ID, Name: m.Name})

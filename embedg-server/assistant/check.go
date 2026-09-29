@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/disgoorg/disgo/discord"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 )
 
@@ -14,17 +15,15 @@ import (
 // lengths, and shows the user what's left. This only fixes what has one obvious fix, and finds
 // what the editor can't: what the plan doesn't include and IDs the guild doesn't have.
 
-const componentsV2Flag = 1 << 15
-
-// inspect cleans up the message and adds what check finds to issues. The message is returned as
-// it was if it can't be read, which the editor then reports.
+// inspect cleans up the message and adds what check finds to issues. A message that isn't an
+// object is dropped, with an issue to repair it.
 func inspect(messageJSON string, issues []string, guild Guild) (string, []string) {
 	if messageJSON == "" {
 		return "", issues
 	}
 	var msg map[string]any
-	if err := json.Unmarshal([]byte(messageJSON), &msg); err != nil {
-		return messageJSON, issues
+	if err := json.Unmarshal([]byte(messageJSON), &msg); err != nil || msg == nil {
+		return "", append(issues, "new_message isn't a JSON object.")
 	}
 
 	cleanUp(msg)
@@ -102,27 +101,33 @@ func dropEmptyURLs(v any) {
 	}
 }
 
-// unwrapSections replaces sections without an accessory with their text displays. The model
-// leaves the accessory out when it has nothing to show next to the text, but it's required.
+// unwrapSections replaces sections without an accessory with a text display of their text. The
+// model leaves the accessory out when it has nothing to show next to the text, but it's required.
 func unwrapSections(components []any) []any {
-	res := make([]any, 0, len(components))
-	for _, v := range components {
+	for i, v := range components {
 		c, ok := v.(map[string]any)
 		if !ok {
-			res = append(res, v)
 			continue
 		}
-		if children, ok := c["components"].([]any); ok {
+		children, _ := c["components"].([]any)
+		if children != nil {
 			c["components"] = unwrapSections(children)
 		}
-		if typeOf(c) == 9 && !hasAccessory(c) {
-			children, _ := c["components"].([]any)
-			res = append(res, children...)
+		if typeOf(c) != discord.ComponentTypeSection || hasAccessory(c) {
 			continue
 		}
-		res = append(res, c)
+		// One text display, so the parent doesn't get more components than it may have.
+		texts := make([]string, 0, len(children))
+		for _, child := range children {
+			if display, ok := child.(map[string]any); ok {
+				if content, ok := display["content"].(string); ok {
+					texts = append(texts, content)
+				}
+			}
+		}
+		components[i] = map[string]any{"type": float64(discord.ComponentTypeTextDisplay), "content": strings.Join(texts, "\n")}
 	}
-	return res
+	return components
 }
 
 func hasAccessory(section map[string]any) bool {
@@ -130,7 +135,7 @@ func hasAccessory(section map[string]any) bool {
 	if !ok {
 		return false
 	}
-	if typeOf(accessory) == 11 {
+	if typeOf(accessory) == discord.ComponentTypeThumbnail {
 		media, _ := accessory["media"].(map[string]any)
 		url, _ := media["url"].(string)
 		return url != ""
@@ -144,12 +149,12 @@ func check(msg map[string]any, guild Guild) []string {
 	var issues []string
 	f := guild.Features
 
-	if flags, _ := msg["flags"].(float64); int(flags)&componentsV2Flag != 0 && !f.ComponentsV2 {
+	if flags, _ := msg["flags"].(float64); discord.MessageFlags(flags).Has(discord.MessageFlagIsComponentsV2) && !f.ComponentsV2 {
 		issues = append(issues, "flags: The plan doesn't include components v2.")
 	}
 
 	walkComponents(msg, func(c map[string]any, path string) {
-		if t := typeOf(c); !slices.Contains(f.ComponentTypes, t) {
+		if t := typeOf(c); !slices.Contains(f.ComponentTypes, int(t)) {
 			issues = append(issues, fmt.Sprintf("%s: The plan doesn't include components of type %d.", path, t))
 		}
 	})
@@ -254,11 +259,11 @@ func walkComponents(msg map[string]any, visit func(c map[string]any, path string
 // buttons that aren't links, and the options of select menus.
 func actionSetOwners(c map[string]any) []map[string]any {
 	switch typeOf(c) {
-	case 2:
-		if style, _ := c["style"].(float64); style != 5 {
+	case discord.ComponentTypeButton:
+		if style, _ := c["style"].(float64); discord.ButtonStyle(style) != discord.ButtonStyleLink {
 			return []map[string]any{c}
 		}
-	case 3:
+	case discord.ComponentTypeStringSelectMenu:
 		options, _ := c["options"].([]any)
 		var owners []map[string]any
 		for _, v := range options {
@@ -271,9 +276,9 @@ func actionSetOwners(c map[string]any) []map[string]any {
 	return nil
 }
 
-func typeOf(c map[string]any) int {
+func typeOf(c map[string]any) discord.ComponentType {
 	t, _ := c["type"].(float64)
-	return int(t)
+	return discord.ComponentType(t)
 }
 
 func uniqueID(id string, taken map[string]bool) string {

@@ -40,8 +40,6 @@ type APIConfig struct {
 	DiscordPublicKey string
 	SupportGuildID   common.ID
 	InsecureCookies  bool
-
-	AssistantMaxRepairs int
 }
 
 func Serve(ctx context.Context, env *Env, config APIConfig) {

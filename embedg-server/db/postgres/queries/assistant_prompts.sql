@@ -6,14 +6,10 @@ INSERT INTO assistant_prompts (
     model,
     prompt,
     edited,
-    rounds,
-    input_tokens,
-    cached_input_tokens,
-    output_tokens,
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+    $1, $2, $3, $4, $5, $6, $7, $8
 );
 
 -- name: DeleteAssistantPrompt :exec

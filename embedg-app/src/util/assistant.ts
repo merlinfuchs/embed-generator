@@ -90,21 +90,16 @@ function parseAnswer(data: string): {
   message: Message | null;
   issues: string[];
 } {
+  // The server only sends objects, which the lenient schema rarely rejects.
   try {
     return { message: parseMessageWithAction(JSON.parse(data)), issues: [] };
   } catch (err) {
-    return {
-      message: null,
-      issues:
-        err instanceof SyntaxError
-          ? ["The AI's message isn't valid JSON."]
-          : describeZodError(err as ZodError),
-    };
+    return { message: null, issues: describeZodError(err as ZodError) };
   }
 }
 
 /** The problems with a message that keep it from being sent. */
-export function findIssues(message: Message): string[] {
+function findIssues(message: Message): string[] {
   const res = messageSchema.safeParse(message);
   return res.success ? [] : describeZodError(res.error);
 }

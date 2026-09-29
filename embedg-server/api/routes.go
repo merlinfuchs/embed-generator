@@ -72,7 +72,6 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 		env.SavedMessageStore,
 		env.GuildState,
 		env.Assistant,
-		config.AssistantMaxRepairs,
 	)
 	assistantGroup := app.Group("/api/assistant", sessionMiddleware.SessionRequired())
 	assistantGroup.Get("/usage", assistantHandler.HandleGetUsage)

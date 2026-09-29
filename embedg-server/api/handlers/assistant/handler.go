@@ -37,8 +37,6 @@ type AssistantHandler struct {
 	guildState        *guildstate.Provider
 	// assistant is nil if no OpenAI API key is configured.
 	assistant *ai.Assistant
-	// maxRepairs is how often the assistant may fix its own message in one prompt.
-	maxRepairs int
 }
 
 func New(
@@ -48,7 +46,6 @@ func New(
 	savedMessageStore store.SavedMessageStore,
 	guildState *guildstate.Provider,
 	assistant *ai.Assistant,
-	maxRepairs int,
 ) *AssistantHandler {
 	return &AssistantHandler{
 		am:                am,
@@ -57,7 +54,6 @@ func New(
 		savedMessageStore: savedMessageStore,
 		guildState:        guildState,
 		assistant:         assistant,
-		maxRepairs:        maxRepairs,
 	}
 }
 
@@ -159,7 +155,7 @@ func (h *AssistantHandler) HandleChat(c *fiber.Ctx, req wire.AssistantChatReques
 		Guild:    guild,
 		GuildID:  guildID,
 		UserID:   session.UserID,
-	}, h.maxRepairs)
+	})
 	if res == nil {
 		// Prompts the model didn't answer at all don't count.
 		if err := h.promptStore.DeleteAssistantPrompt(c.UserContext(), guildID, prompt.ID); err != nil {

@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/disgoorg/disgo/discord"
 	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/openai/openai-go/v2"
@@ -28,6 +29,8 @@ type Config struct {
 	Model           string
 	ReasoningEffort string
 	MaxOutputTokens int
+	// MaxRepairs is how often the model may fix its message in one prompt.
+	MaxRepairs int
 }
 
 // Assistant asks the model for changes to a message.
@@ -53,15 +56,11 @@ type Message struct {
 type Request struct {
 	// Message is the message in the editor as JSON.
 	Message string
-	// Messages is the chat so far, oldest first. The last one is the user's current message,
-	// unless this is a repair.
+	// Messages is the chat so far, oldest first. The last one is the user's current message.
 	Messages []Message
-	// Issues are the problems found with the message of the last response, which this response
-	// should fix.
-	Issues  []string
-	Guild   Guild
-	GuildID common.ID
-	UserID  common.ID
+	Guild    Guild
+	GuildID  common.ID
+	UserID   common.ID
 }
 
 // Guild is what the model needs to know about the guild the message is for.
@@ -120,24 +119,25 @@ func (e *ErrResponse) Error() string {
 }
 
 // Respond asks the model for a response and has it fix the problems check finds with its message,
-// up to maxRepairs times. If the model answered but the answer can't be used, it returns an error
+// up to MaxRepairs times. If the model answered but the answer can't be used, it returns an error
 // along with a response that only has the usage.
-func (a *Assistant) Respond(ctx context.Context, req Request, maxRepairs int) (*Response, error) {
-	res, err := a.respond(ctx, req)
+func (a *Assistant) Respond(ctx context.Context, req Request) (*Response, error) {
+	// Problems the message had before are the user's, and the model keeps them as they are.
+	_, before := inspect(req.Message, nil, req.Guild)
+
+	res, err := a.respond(ctx, req, nil)
 	if err != nil {
 		return res, err
 	}
 	res.MessageJSON, res.Issues = inspect(res.MessageJSON, res.Issues, req.Guild)
+	res.Issues = withoutIssues(res.Issues, before)
 
-	for len(res.Issues) > 0 && res.Repairs < maxRepairs {
-		repair := req
-		if res.MessageJSON != "" {
-			repair.Message = res.MessageJSON
+	for len(res.Issues) > 0 && res.Repairs < a.config.MaxRepairs {
+		message := res.MessageJSON
+		if message == "" {
+			message = req.Message
 		}
-		repair.Messages = append(slices.Clone(req.Messages), Message{Role: "assistant", Content: res.Message})
-		repair.Issues = res.Issues
-
-		next, err := a.respond(ctx, repair)
+		next, err := a.respond(ctx, req, &repair{answer: res.Message, message: message, issues: res.Issues})
 		res.Repairs++
 		if next != nil {
 			res.Usage = res.Usage.Add(next.Usage)
@@ -147,23 +147,36 @@ func (a *Assistant) Respond(ctx context.Context, req Request, maxRepairs int) (*
 			slog.Warn("Assistant repair failed", slog.String("guild_id", req.GuildID.String()), slog.Any("error", err))
 			break
 		}
-
-		// A repair without a message leaves the last one, and what's wrong with it.
-		messageJSON := res.MessageJSON
-		if next.MessageJSON != "" {
-			messageJSON = next.MessageJSON
+		// A repair without a message changes nothing, and asking again won't either.
+		if next.MessageJSON == "" {
+			break
 		}
-		res.MessageJSON, res.Issues = inspect(messageJSON, next.Issues, req.Guild)
+		res.MessageJSON, res.Issues = inspect(next.MessageJSON, next.Issues, req.Guild)
+		res.Issues = withoutIssues(res.Issues, before)
 	}
 	return res, nil
 }
 
+// repair asks the model to fix the problems of the message it answered with.
+type repair struct {
+	// answer is what the model replied.
+	answer  string
+	message string
+	issues  []string
+}
+
+func withoutIssues(issues []string, remove []string) []string {
+	return slices.DeleteFunc(issues, func(issue string) bool {
+		return slices.Contains(remove, issue)
+	})
+}
+
 // respond makes a single model call.
-func (a *Assistant) respond(ctx context.Context, req Request) (*Response, error) {
+func (a *Assistant) respond(ctx context.Context, req Request, repair *repair) (*Response, error) {
 	resp, err := a.client.Responses.New(ctx, responses.ResponseNewParams{
 		Model:           a.config.Model,
 		Instructions:    openai.String(instructions),
-		Input:           responses.ResponseNewParamsInputUnion{OfInputItemList: chatInput(req)},
+		Input:           responses.ResponseNewParamsInputUnion{OfInputItemList: chatInput(req, repair)},
 		MaxOutputTokens: openai.Int(int64(a.config.MaxOutputTokens)),
 		Reasoning: shared.ReasoningParam{
 			Effort: shared.ReasoningEffort(a.config.ReasoningEffort),
@@ -177,7 +190,9 @@ func (a *Assistant) respond(ctx context.Context, req Request) (*Response, error)
 				},
 			},
 		},
-		PromptCacheKey: openai.String("embedg-assistant"),
+		// Keeps a guild's requests on the same machines, so its roles and the chat stay cached
+		// between turns and repairs, not only the instructions.
+		PromptCacheKey: openai.String(common.HashBytes([]byte("guild:" + req.GuildID.String()))[:32]),
 		// Lets OpenAI tell users apart for abuse detection.
 		SafetyIdentifier: openai.String(common.HashBytes([]byte(req.UserID.String()))),
 	})
@@ -193,7 +208,7 @@ func (a *Assistant) respond(ctx context.Context, req Request) (*Response, error)
 	slog.Info(
 		"Assistant response",
 		slog.String("guild_id", req.GuildID.String()),
-		slog.Bool("repair", len(req.Issues) > 0),
+		slog.Bool("repair", repair != nil),
 		slog.String("status", string(resp.Status)),
 		slog.String("incomplete_reason", resp.IncompleteDetails.Reason),
 		slog.Int("input_tokens", usage.InputTokens),
@@ -217,25 +232,21 @@ func (a *Assistant) respond(ctx context.Context, req Request) (*Response, error)
 	return res, nil
 }
 
-func chatInput(req Request) responses.ResponseInputParam {
-	messages := req.Messages
+func chatInput(req Request, repair *repair) responses.ResponseInputParam {
+	history := req.Messages
 	var current string
-	if len(req.Issues) > 0 {
-		current = "These problems were found with your message:\n- " +
-			strings.Join(req.Issues, "\n- ") +
-			"\n\nFix them and return the whole message again."
-	} else if len(messages) > 0 {
-		current = messages[len(messages)-1].Content
-		messages = messages[:len(messages)-1]
+	if len(history) > 0 {
+		current = history[len(history)-1].Content
+		history = history[:len(history)-1]
 	}
-	if over := len(messages) - maxHistory; over > 0 {
-		messages = messages[(over+historyStep-1)/historyStep*historyStep:]
+	if over := len(history) - maxHistory; over > 0 {
+		history = history[(over+historyStep-1)/historyStep*historyStep:]
 	}
 
 	// The guild comes before the chat, so it stays cached while the chat goes on.
-	input := make(responses.ResponseInputParam, 0, len(messages)+2)
+	input := make(responses.ResponseInputParam, 0, len(history)+4)
 	input = append(input, easyMessage(responses.EasyInputMessageRoleDeveloper, describeGuild(req.Guild)))
-	for _, m := range messages {
+	for _, m := range history {
 		// Answers that only change the message have no text.
 		if m.Content == "" {
 			continue
@@ -246,12 +257,24 @@ func chatInput(req Request) responses.ResponseInputParam {
 		}
 		input = append(input, easyMessage(role, m.Content))
 	}
-	input = append(input, easyMessage(
-		responses.EasyInputMessageRoleUser,
-		fmt.Sprintf("Current message:\n%s\n\n%s", req.Message, current),
-	))
 
-	return input
+	if repair == nil {
+		return append(input, easyMessage(
+			responses.EasyInputMessageRoleUser,
+			fmt.Sprintf("Current message:\n%s\n\n%s", req.Message, current),
+		))
+	}
+	input = append(input, easyMessage(responses.EasyInputMessageRoleUser, current))
+	if repair.answer != "" {
+		input = append(input, easyMessage(responses.EasyInputMessageRoleAssistant, repair.answer))
+	}
+	return append(input, easyMessage(
+		responses.EasyInputMessageRoleUser,
+		fmt.Sprintf(
+			"Current message:\n%s\n\nThese problems were found with your message:\n- %s\n\nFix them and return the whole message again.",
+			repair.message, strings.Join(repair.issues, "\n- "),
+		),
+	))
 }
 
 func easyMessage(role responses.EasyInputMessageRole, content string) responses.ResponseInputItemUnionParam {
@@ -298,11 +321,11 @@ func describeGuild(guild Guild) string {
 				fmt.Fprintf(&b, "\n- and %d more", len(guild.Emojis)-maxEmojis)
 				break
 			}
-			prefix := ""
+			mention := discord.EmojiMention(e.ID, e.Name)
 			if e.Animated {
-				prefix = "a"
+				mention = discord.AnimatedEmojiMention(e.ID, e.Name)
 			}
-			fmt.Fprintf(&b, "\n- <%s:%s:%s>", prefix, e.Name, e.ID)
+			b.WriteString("\n- " + mention)
 		}
 		b.WriteString("\n")
 	}
@@ -373,14 +396,9 @@ func parseOutput(text string) (*Response, error) {
 	if json.Unmarshal(out.BuildPrompt, &buildPrompt) == nil {
 		res.BuildPrompt = buildPrompt
 	}
+	// inspect checks that it's an object.
 	if len(out.NewMessage) > 0 && string(out.NewMessage) != "null" {
-		var msg map[string]any
-		if err := json.Unmarshal(out.NewMessage, &msg); err != nil || msg == nil {
-			// Repaired, as the model can fix it.
-			res.Issues = append(res.Issues, "new_message isn't a JSON object.")
-		} else {
-			res.MessageJSON = string(out.NewMessage)
-		}
+		res.MessageJSON = string(out.NewMessage)
 	}
 
 	// The schema can't enforce these, and the editor can't show more fields or choices without

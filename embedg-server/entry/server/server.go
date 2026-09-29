@@ -149,6 +149,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 			Model:           cfg.Assistant.Model,
 			ReasoningEffort: cfg.Assistant.ReasoningEffort,
 			MaxOutputTokens: cfg.Assistant.MaxOutputTokens,
+			MaxRepairs:      cfg.Assistant.MaxRepairs,
 		})
 	}
 
@@ -191,8 +192,6 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		DiscordPublicKey: cfg.Discord.PublicKey,
 		SupportGuildID:   cfg.Discord.SupportGuildID,
 		InsecureCookies:  cfg.API.InsecureCookies,
-
-		AssistantMaxRepairs: cfg.Assistant.MaxRepairs,
 	})
 
 	select {

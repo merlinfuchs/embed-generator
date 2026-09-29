@@ -55,12 +55,11 @@ func TestCleanUpSectionsWithoutAccessory(t *testing.T) {
 	cleanUp(msg)
 
 	container := msg["components"].([]any)[0].(map[string]any)
-	var types []int
-	for _, c := range container["components"].([]any) {
-		types = append(types, typeOf(c.(map[string]any)))
-	}
-	if want := []int{10, 10, 10, 9}; !reflect.DeepEqual(types, want) {
-		t.Errorf("types = %v, want %v", types, want)
+	got, _ := json.Marshal(container["components"])
+	want := `[{"content":"a\nb","type":10},{"content":"c","type":10},` +
+		`{"accessory":{"media":{"url":"https://example.com/a.png"},"type":11},"components":[{"content":"d","type":10}],"type":9}]`
+	if string(got) != want {
+		t.Errorf("components = %s", got)
 	}
 }
 

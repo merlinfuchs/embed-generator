@@ -10,10 +10,10 @@ CREATE TABLE IF NOT EXISTS assistant_prompts (
     -- Whether the assistant changed the message. Only prompts that did count towards the limit.
     edited BOOLEAN NOT NULL,
     -- Model calls made for the prompt, including repairs of its message.
-    rounds INTEGER NOT NULL,
-    input_tokens INTEGER NOT NULL,
-    cached_input_tokens INTEGER NOT NULL,
-    output_tokens INTEGER NOT NULL,
+    rounds INTEGER NOT NULL DEFAULT 0,
+    input_tokens INTEGER NOT NULL DEFAULT 0,
+    cached_input_tokens INTEGER NOT NULL DEFAULT 0,
+    output_tokens INTEGER NOT NULL DEFAULT 0,
 
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL

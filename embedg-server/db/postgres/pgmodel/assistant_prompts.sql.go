@@ -93,30 +93,22 @@ INSERT INTO assistant_prompts (
     model,
     prompt,
     edited,
-    rounds,
-    input_tokens,
-    cached_input_tokens,
-    output_tokens,
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+    $1, $2, $3, $4, $5, $6, $7, $8
 )
 `
 
 type InsertAssistantPromptParams struct {
-	ID                string
-	GuildID           string
-	UserID            string
-	Model             string
-	Prompt            string
-	Edited            bool
-	Rounds            int32
-	InputTokens       int32
-	CachedInputTokens int32
-	OutputTokens      int32
-	CreatedAt         pgtype.Timestamp
-	UpdatedAt         pgtype.Timestamp
+	ID        string
+	GuildID   string
+	UserID    string
+	Model     string
+	Prompt    string
+	Edited    bool
+	CreatedAt pgtype.Timestamp
+	UpdatedAt pgtype.Timestamp
 }
 
 func (q *Queries) InsertAssistantPrompt(ctx context.Context, arg InsertAssistantPromptParams) error {
@@ -127,10 +119,6 @@ func (q *Queries) InsertAssistantPrompt(ctx context.Context, arg InsertAssistant
 		arg.Model,
 		arg.Prompt,
 		arg.Edited,
-		arg.Rounds,
-		arg.InputTokens,
-		arg.CachedInputTokens,
-		arg.OutputTokens,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)

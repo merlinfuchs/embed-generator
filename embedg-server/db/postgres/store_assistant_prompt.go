@@ -15,18 +15,14 @@ var _ store.AssistantPromptStore = (*Client)(nil)
 
 func (c *Client) CreateAssistantPrompt(ctx context.Context, prompt model.AssistantPrompt) error {
 	return c.Q.InsertAssistantPrompt(ctx, pgmodel.InsertAssistantPromptParams{
-		ID:                prompt.ID,
-		GuildID:           prompt.GuildID.String(),
-		UserID:            prompt.UserID.String(),
-		Model:             prompt.Model,
-		Prompt:            prompt.Prompt,
-		Edited:            prompt.Edited,
-		Rounds:            int32(prompt.Rounds),
-		InputTokens:       int32(prompt.Usage.InputTokens),
-		CachedInputTokens: int32(prompt.Usage.CachedInputTokens),
-		OutputTokens:      int32(prompt.Usage.OutputTokens),
-		CreatedAt:         pgtype.Timestamp{Time: prompt.CreatedAt, Valid: true},
-		UpdatedAt:         pgtype.Timestamp{Time: prompt.UpdatedAt, Valid: true},
+		ID:        prompt.ID,
+		GuildID:   prompt.GuildID.String(),
+		UserID:    prompt.UserID.String(),
+		Model:     prompt.Model,
+		Prompt:    prompt.Prompt,
+		Edited:    prompt.Edited,
+		CreatedAt: pgtype.Timestamp{Time: prompt.CreatedAt, Valid: true},
+		UpdatedAt: pgtype.Timestamp{Time: prompt.UpdatedAt, Valid: true},
 	})
 }
 
