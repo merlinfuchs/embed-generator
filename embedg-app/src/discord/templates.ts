@@ -29,7 +29,7 @@ const FUCHSIA = 0xeb459e;
 
 /** A banner in public/templates, linked from this instance so it serves its own copy. */
 function banner(name: string): string {
-  return `${location.origin}${getRelativeUrl(`/templates/${name}.jpg`)}`;
+  return `${location.origin}${getRelativeUrl(`/templates/${name}.webp`)}`;
 }
 
 // Embeds put their image at the bottom, so a banner on top is an embed of its own.
