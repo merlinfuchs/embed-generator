@@ -100,7 +100,7 @@ func TestCheck(t *testing.T) {
 func TestCleanUpEmptyURLs(t *testing.T) {
 	var msg map[string]any
 	json.Unmarshal([]byte(`{"avatar_url": "", "embeds": [{
-		"title": "Hi", "url": "",
+		"title": "Hi", "url": "", "author": {"name": "", "icon_url": ""},
 		"image": {"url": ""}, "thumbnail": {"url": "https://example.com/a.png"},
 		"footer": {"text": "Bye", "icon_url": ""}
 	}]}`), &msg)
@@ -110,5 +110,32 @@ func TestCleanUpEmptyURLs(t *testing.T) {
 	want := `{"embeds":[{"footer":{"text":"Bye"},"thumbnail":{"url":"https://example.com/a.png"},"title":"Hi"}]}`
 	if got, _ := json.Marshal(msg); string(got) != want {
 		t.Errorf("message = %s", got)
+	}
+}
+
+func TestCheckPlacement(t *testing.T) {
+	var msg map[string]any
+	json.Unmarshal([]byte(`{"components": [
+		{"type": 10, "content": "Not in a classic message"},
+		{"type": 1, "components": [{"type": 10, "content": "Not in a row"}, {"type": 2, "style": 1}]}
+	]}`), &msg)
+
+	want := []string{
+		"components.0: A component of type 10 can't be at the top of this message.",
+		"components.1.components.0: A component of type 10 can't be in a component of type 1.",
+	}
+	if issues := checkPlacement(msg); !reflect.DeepEqual(issues, want) {
+		t.Errorf("issues = %#v", issues)
+	}
+
+	msg["flags"] = float64(1 << 15)
+	msg["components"] = []any{
+		map[string]any{"type": float64(17), "components": []any{
+			map[string]any{"type": float64(9), "components": []any{}, "accessory": map[string]any{"type": float64(10)}},
+		}},
+	}
+	want = []string{"components.0.components.0.accessory: A component of type 10 can't be the accessory of a section."}
+	if issues := checkPlacement(msg); !reflect.DeepEqual(issues, want) {
+		t.Errorf("issues = %#v", issues)
 	}
 }

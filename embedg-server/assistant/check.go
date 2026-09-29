@@ -77,8 +77,8 @@ func cleanUp(msg map[string]any) {
 	}
 }
 
-// dropEmptyURLs removes the empty URLs the model writes when it has no image, and the images left
-// without one.
+// dropEmptyURLs removes the empty URLs the model writes when it has no image, the images left
+// without one, and authors without a name.
 func dropEmptyURLs(v any) {
 	switch v := v.(type) {
 	case map[string]any:
@@ -88,8 +88,17 @@ func dropEmptyURLs(v any) {
 				continue
 			}
 			dropEmptyURLs(value)
-			if key == "image" || key == "thumbnail" {
-				if image, ok := value.(map[string]any); ok && len(image) == 0 {
+			object, ok := value.(map[string]any)
+			if !ok {
+				continue
+			}
+			switch key {
+			case "image", "thumbnail":
+				if len(object) == 0 {
+					delete(v, key)
+				}
+			case "author", "provider":
+				if name, _ := object["name"].(string); name == "" {
 					delete(v, key)
 				}
 			}
@@ -153,6 +162,8 @@ func check(msg map[string]any, guild Guild) []string {
 		issues = append(issues, "flags: The plan doesn't include components v2.")
 	}
 
+	issues = append(issues, checkPlacement(msg)...)
+
 	// Once per type and without a path, so a problem the message already had stays the same when
 	// the model moves components around.
 	var types []int
@@ -178,6 +189,52 @@ func check(msg map[string]any, guild Guild) []string {
 		}
 	}
 	return append(issues, checkIDs(sets, guild)...)
+}
+
+// childTypes is what components can hold, which the editor can't read otherwise.
+var childTypes = map[discord.ComponentType][]discord.ComponentType{
+	discord.ComponentTypeActionRow: {discord.ComponentTypeButton, discord.ComponentTypeStringSelectMenu},
+	discord.ComponentTypeSection:   {discord.ComponentTypeTextDisplay},
+	discord.ComponentTypeContainer: {
+		discord.ComponentTypeActionRow, discord.ComponentTypeSection, discord.ComponentTypeTextDisplay,
+		discord.ComponentTypeMediaGallery, discord.ComponentTypeSeparator, discord.ComponentTypeFile,
+	},
+}
+
+// checkPlacement reports components where they can't be, like a text display in an action row.
+func checkPlacement(msg map[string]any) []string {
+	top := []discord.ComponentType{discord.ComponentTypeActionRow}
+	if flags, _ := msg["flags"].(float64); discord.MessageFlags(flags).Has(discord.MessageFlagIsComponentsV2) {
+		top = append(slices.Clone(childTypes[discord.ComponentTypeContainer]), discord.ComponentTypeContainer)
+	}
+
+	var issues []string
+	var walk func(components []any, path string, allowed []discord.ComponentType, in string)
+	walk = func(components []any, path string, allowed []discord.ComponentType, in string) {
+		for i, v := range components {
+			c, ok := v.(map[string]any)
+			if !ok {
+				continue
+			}
+			at := fmt.Sprintf("%s.%d", path, i)
+			t := typeOf(c)
+			if !slices.Contains(allowed, t) {
+				issues = append(issues, fmt.Sprintf("%s: A component of type %d can't be %s.", at, t, in))
+				continue
+			}
+			if accessory, ok := c["accessory"].(map[string]any); ok && t == discord.ComponentTypeSection {
+				if a := typeOf(accessory); a != discord.ComponentTypeButton && a != discord.ComponentTypeThumbnail {
+					issues = append(issues, fmt.Sprintf("%s.accessory: A component of type %d can't be the accessory of a section.", at, a))
+				}
+			}
+			if children, ok := c["components"].([]any); ok {
+				walk(children, at+".components", childTypes[t], fmt.Sprintf("in a component of type %d", t))
+			}
+		}
+	}
+	components, _ := msg["components"].([]any)
+	walk(components, "components", top, "at the top of this message")
+	return issues
 }
 
 // checkIDs reports roles and saved messages the actions use that the guild doesn't have, which the
