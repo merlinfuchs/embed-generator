@@ -42,8 +42,9 @@ export default function EditorComponents({
     >
       {sendMode === "webhook" && (
         <div className="text-orange-300 mb-3 text-sm font-light">
-          Interactive components are only available when selecting a server and
-          channel at the top instead of sending to a webhook.
+          Webhooks can send link buttons and layout components. Buttons with
+          actions and select menus need a server and channel selected at the
+          top.
         </div>
       )}
       <AutoAnimate className="space-y-3 mb-3">

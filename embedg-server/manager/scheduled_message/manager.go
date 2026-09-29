@@ -224,7 +224,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		params.TTS = data.TTS
 	}
 
-	params.Components, err = m.actionParser.ParseMessageComponents(data.Components, features.ComponentTypes)
+	params.Components, err = m.actionParser.ParseMessageComponents(data.Components, true)
 	if err != nil {
 		return fmt.Errorf("failed to parse message components: %w", err)
 	}

@@ -125,7 +125,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		})
 	}
 
-	params.Components, err = h.actionParser.ParseMessageComponents(data.Components, features.ComponentTypes)
+	params.Components, err = h.actionParser.ParseMessageComponents(data.Components, true)
 	if err != nil {
 		return handlers.BadRequest("invalid_actions", err.Error())
 	}
@@ -206,7 +206,17 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		})
 	}
 
+	// Only the bot can handle interactive components, but webhooks send the rest.
+	params.Components, err = h.actionParser.ParseMessageComponents(data.Components, false)
+	if err != nil {
+		return handlers.BadRequest("invalid_components", err.Error())
+	}
+
 	if req.WebhookType == "guilded" {
+		if len(data.Components) > 0 {
+			return handlers.BadRequest("invalid_components", "Guilded webhooks can't send components.")
+		}
+
 		err := common.ExecuteGuildedWebhook(c.UserContext(), req.WebhookID, req.WebhookToken, params)
 		if err != nil {
 			return err
@@ -233,7 +243,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 			},
 			rest.UpdateWebhookMessageParams{
 				ThreadID:       req.ThreadID.ID,
-				WithComponents: false,
+				WithComponents: true,
 			},
 		)
 	} else {
@@ -244,7 +254,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 			rest.CreateWebhookMessageParams{
 				Wait:           true,
 				ThreadID:       req.ThreadID.ID,
-				WithComponents: false,
+				WithComponents: true,
 			},
 		)
 	}
@@ -265,10 +275,6 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 }
 
 func checkMessageLimits(data *actions.MessageWithActions, features model.PlanFeatures) error {
-	if data.ComponentsV2Enabled() && !features.ComponentsV2 {
-		return handlers.Forbidden("insufficient_plan", "Components V2 are not available on your plan!")
-	}
-
 	for _, actionSet := range data.Actions {
 		if err := handlers.CheckActionSetLimit(actionSet, features); err != nil {
 			return err

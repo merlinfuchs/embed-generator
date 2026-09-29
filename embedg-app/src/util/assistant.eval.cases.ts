@@ -8,7 +8,7 @@ export type EvalRoute = "build" | "clarify" | "answer";
 
 type Features = Pick<
   GetPremiumPlanFeaturesResponseDataWire,
-  "components_v2" | "component_types" | "max_actions_per_component"
+  "max_actions_per_component"
 >;
 
 export interface EvalCase {
@@ -26,14 +26,10 @@ export interface EvalCase {
 }
 
 export const premiumFeatures: Features = {
-  components_v2: true,
-  component_types: [1, 2, 3, 9, 10, 11, 12, 13, 14, 17],
   max_actions_per_component: 5,
 };
 
 const freeFeatures: Features = {
-  components_v2: false,
-  component_types: [1, 2, 3],
   max_actions_per_component: 2,
 };
 
@@ -308,13 +304,6 @@ export const evalCases: EvalCase[] = [
         "no Event Pings action",
       ),
     ],
-  },
-  {
-    name: "components v2 not in plan",
-    prompt: "Use components v2 for this message",
-    route: ["answer"],
-    message: welcomeEmbed,
-    features: freeFeatures,
   },
   {
     name: "saved message response",

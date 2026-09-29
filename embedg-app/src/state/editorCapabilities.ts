@@ -7,7 +7,7 @@ import { createContext, useContext } from "react";
  * https://discord.com/developers/docs/link-previews/component-embeds
  */
 export interface EditorCapabilities {
-  /** Component types that can be added, or null for whatever the plan allows. */
+  /** Component types that can be added, or null for all of them. */
   componentTypes: number[] | null;
   /** Whether buttons have to be link buttons. */
   linkButtonsOnly: boolean;

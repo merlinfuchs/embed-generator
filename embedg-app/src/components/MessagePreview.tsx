@@ -32,7 +32,6 @@ export default function MessagePreview({ msg, unfurledComponent }: Props) {
   const currentTime = format(new Date(), "hh:mm aa");
   // A Components V2 message carries its content in the components instead.
   const componentsV2 = ((msg.flags ?? 0) & COMPONENTS_V2_FLAG) !== 0;
-  const sendMode = useSendSettingsStore((state) => state.mode);
   const [responses, setResponses] = useState<ButtonResponse[]>([]);
 
   const guildId = useSendSettingsStore((s) => s.guildId);
@@ -87,13 +86,11 @@ export default function MessagePreview({ msg, unfurledComponent }: Props) {
                     ))}
 
                     <div className="discord-attachments">
-                      {sendMode === "channel" && (
-                        <PreviewComponents
-                          components={msg.components.filter(
-                            (component) => component.type === 1,
-                          )}
-                        />
-                      )}
+                      <PreviewComponents
+                        components={msg.components.filter(
+                          (component) => component.type === 1,
+                        )}
+                      />
                     </div>
                   </div>
                 </>

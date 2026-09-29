@@ -661,6 +661,16 @@ export function selectAllowedMentions(state: DocumentData) {
 
 export const useAllowedMentions = () => useDocument(selectAllowedMentions);
 
+/** Whether the message has components only the bot can handle, which webhooks can't send. */
+export const useHasInteractiveComponents = () =>
+  useDocument((state) =>
+    Object.values(state.nodes).some(
+      (node) =>
+        node.type === "selectMenu" ||
+        (node.type === "button" && node.style !== 5),
+    ),
+  );
+
 export const useComponentsV2Enabled = () =>
   useDocument((state) => {
     const root = state.nodes[state.rootId];

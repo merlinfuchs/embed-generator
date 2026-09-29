@@ -9,6 +9,7 @@ import { parseMessageId, parseWebhookUrl } from "../discord/util";
 import MessageRestoreButton from "./MessageRestoreButton";
 import { useToasts } from "../util/toasts";
 import { getCurrentMessage } from "../state/currentMessage";
+import { useHasInteractiveComponents } from "../state/document";
 
 export default function SendMenuWebhook() {
   const validationError = useValidationErrorStore((state) =>
@@ -36,8 +37,12 @@ export default function SendMenuWebhook() {
 
   // One predicate per button, used for both the styling and the disabled attribute. Only Discord
   // webhooks can edit a message they sent.
+  const interactive = useHasInteractiveComponents();
   const canSend =
-    !validationError && !!webhookInfo && !sendToWebhookMutation.isPending;
+    !validationError &&
+    !interactive &&
+    !!webhookInfo &&
+    !sendToWebhookMutation.isPending;
   const canEdit = canSend && webhookInfo?.type === "discord";
 
   function send(edit: boolean) {
@@ -115,10 +120,12 @@ export default function SendMenuWebhook() {
           />
         </div>
       </div>
-      <div className="text-orange-300 font-light">
-        Interactive components are only available when selecting a server and
-        channel instead of sending to a webhook.
-      </div>
+      {interactive && (
+        <div className="text-orange-300 font-light">
+          Buttons with actions and select menus only work when the bot sends the
+          message. Switch to Channel to send it, or turn them into link buttons.
+        </div>
+      )}
       <div>
         {validationError && (
           <div className="flex items-center text-red space-x-1">
@@ -141,11 +148,7 @@ export default function SendMenuWebhook() {
                   ? "bg-azure-500 hover:bg-azure-400 cursor-pointer"
                   : "cursor-not-allowed bg-ink-900"
               }`}
-              disabled={
-                !!validationError ||
-                !webhookInfo ||
-                webhookInfo.type !== "discord"
-              }
+              disabled={!canEdit}
               onClick={() => send(true)}
             >
               {sendToWebhookMutation.isPending && (
@@ -161,7 +164,7 @@ export default function SendMenuWebhook() {
                 ? "bg-azure-500 hover:bg-azure-400 cursor-pointer"
                 : "cursor-not-allowed bg-ink-900"
             }`}
-            disabled={!!validationError || !webhookInfo}
+            disabled={!canSend}
             onClick={() => send(false)}
           >
             {sendToWebhookMutation.isPending && (

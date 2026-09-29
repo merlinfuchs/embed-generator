@@ -283,7 +283,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 
 			var components []discord.LayoutComponent
 			if !legacyPermissions {
-				components, err = m.parser.ParseMessageComponents(data.Components, features.ComponentTypes)
+				components, err = m.parser.ParseMessageComponents(data.Components, true)
 				if err != nil {
 					return userErr("Invalid components: %s", err)
 				}
@@ -338,7 +338,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 			}
 
 			// We support displaying components in DMs, but don't hook them up to actions
-			components, err := m.parser.ParseMessageComponents(data.Components, features.ComponentTypes)
+			components, err := m.parser.ParseMessageComponents(data.Components, true)
 			if err != nil {
 				return userErr("Invalid components: %s", err)
 			}
@@ -382,7 +382,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 
 			var components []discord.LayoutComponent
 			if !legacyPermissions {
-				components, err = m.parser.ParseMessageComponents(data.Components, features.ComponentTypes)
+				components, err = m.parser.ParseMessageComponents(data.Components, true)
 				if err != nil {
 					return userErr("Invalid components: %s", err)
 				}

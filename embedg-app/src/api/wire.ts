@@ -347,8 +347,6 @@ export interface GetPremiumPlanFeaturesResponseDataWire {
   max_actions_per_component: number /* int */;
   advanced_action_types: boolean;
   max_ai_prompts_per_month: number /* int */;
-  components_v2: boolean;
-  component_types: number /* int */[];
   custom_bot: boolean;
   max_custom_commands: number /* int */;
   is_premium: boolean;

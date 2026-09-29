@@ -11,7 +11,6 @@ import EditorComponents from "./EditorComponents";
 
 vi.mock("../util/premium", () => ({
   usePremiumGuildFeatures: () => ({
-    component_types: [1, 2, 3, 9, 10, 11, 12, 13, 14, 17],
     max_actions_per_component: 5,
   }),
   usePremiumUserFeatures: () => ({}),
