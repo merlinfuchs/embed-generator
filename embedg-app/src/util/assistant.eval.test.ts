@@ -28,8 +28,6 @@ const env = import.meta.env as Record<string, string | undefined>;
 const url = env.ASSISTANT_EVAL_URL;
 const filter = env.ASSISTANT_EVAL_FILTER ?? "";
 const outDir = env.ASSISTANT_EVAL_OUT ?? "eval-results";
-// Like the server's default max_repairs, which the eval server doesn't know.
-const maxRepairs = 2;
 
 // USD per million input, cached input and output tokens.
 const prices: Record<string, [number, number, number]> = {
@@ -102,23 +100,14 @@ async function runCase(c: EvalCase): Promise<CaseResult> {
 
   const start = Date.now();
   const prompt = async (messages: AssistantChatMessageWire[]) => {
-    let rounds = 0;
     const res = await runAssistantPrompt({
       messages,
-      features,
       getMessage: () => structuredClone(message),
       applyMessage: (applied) => {
         message = applied;
         result.edited = true;
       },
       send: async (req: AssistantChatRequestWire) => {
-        if (rounds++ > maxRepairs) {
-          return {
-            success: false,
-            data: null as never,
-            error: { status: 400, code: "repair_limit", message: "" },
-          };
-        }
         // The server loads the guild, the eval server takes it.
         const res = await fetch(`${url}/chat`, {
           method: "POST",

@@ -77,7 +77,6 @@ export default function AssistantView() {
       try {
         const res = await runAssistantPrompt({
           messages,
-          features,
           getMessage: getCurrentMessage,
           applyMessage: setCurrentMessage,
           send: (req) => chat.mutateAsync({ guildId, req }),
@@ -100,7 +99,7 @@ export default function AssistantView() {
         setBusy(false);
       }
     },
-    [guildId, features, chat.mutateAsync],
+    [guildId, chat.mutateAsync],
   );
 
   const submit = useCallback(() => {

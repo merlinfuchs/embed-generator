@@ -17,22 +17,24 @@ import (
 	"github.com/openai/openai-go/v2/option"
 )
 
-// fakeOpenAI answers every request with a response of the given status and output text, and
-// records the request body.
-func fakeOpenAI(t *testing.T, status string, reason string, text string) (*Assistant, *map[string]any) {
+// fakeOpenAI answers the requests with responses of the given status and the output texts in
+// order, repeating the last one, and records the request bodies.
+func fakeOpenAI(t *testing.T, status string, reason string, texts ...string) (*Assistant, *[]map[string]any) {
 	t.Helper()
 
-	var body map[string]any
+	var bodies []map[string]any
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/responses" {
 			t.Errorf("unexpected path %s", r.URL.Path)
 		}
 		raw, _ := io.ReadAll(r.Body)
+		var body map[string]any
 		if err := json.Unmarshal(raw, &body); err != nil {
 			t.Errorf("request body isn't JSON: %v", err)
 		}
+		bodies = append(bodies, body)
 
-		output, _ := json.Marshal(text)
+		output, _ := json.Marshal(texts[min(len(bodies), len(texts))-1])
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{
 			"id": "resp_1", "object": "response", "created_at": 0, "status": %q, "model": "gpt-5-mini",
@@ -47,7 +49,7 @@ func fakeOpenAI(t *testing.T, status string, reason string, text string) (*Assis
 
 	client := openai.NewClient(option.WithAPIKey("test"), option.WithBaseURL(server.URL))
 	assistant := New(&client, Config{Model: "gpt-5-mini", ReasoningEffort: "low", MaxOutputTokens: 1000})
-	return assistant, &body
+	return assistant, &bodies
 }
 
 var testGuild = Guild{
@@ -66,7 +68,7 @@ var testGuild = Guild{
 }
 
 func TestRespond(t *testing.T) {
-	assistant, body := fakeOpenAI(t, "completed", "", `{"reply": "Added a title.",
+	assistant, bodies := fakeOpenAI(t, "completed", "", `{"reply": "Added a title.",
 		"new_message": {"content": "", "embeds": [{"title": "Welcome"}]}, "fields": [], "build_prompt": null}`)
 
 	messages := []Message{}
@@ -80,7 +82,7 @@ func TestRespond(t *testing.T) {
 		Messages: messages,
 		Guild:    testGuild,
 		UserID:   1,
-	})
+	}, 2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,7 +90,7 @@ func TestRespond(t *testing.T) {
 	if res.Message != "Added a title." {
 		t.Errorf("message = %q", res.Message)
 	}
-	if res.MessageJSON != `{"content": "", "embeds": [{"title": "Welcome"}]}` {
+	if res.MessageJSON != `{"content":"","embeds":[{"title":"Welcome"}]}` || res.Repairs != 0 {
 		t.Errorf("message json = %q", res.MessageJSON)
 	}
 	// Sent as [] rather than null, which the app can't iterate.
@@ -99,7 +101,10 @@ func TestRespond(t *testing.T) {
 		t.Errorf("usage = %+v", res.Usage)
 	}
 
-	req := *body
+	if len(*bodies) != 1 {
+		t.Fatalf("made %d requests", len(*bodies))
+	}
+	req := (*bodies)[0]
 	if req["model"] != "gpt-5-mini" || req["prompt_cache_key"] != "embedg-assistant" {
 		t.Errorf("model = %v, prompt_cache_key = %v", req["model"], req["prompt_cache_key"])
 	}
@@ -141,33 +146,66 @@ func TestRespond(t *testing.T) {
 }
 
 func TestRespondRepair(t *testing.T) {
-	assistant, body := fakeOpenAI(t, "completed", "", `{"reply": "Fixed.", "new_message": {}, "fields": [], "build_prompt": null}`)
+	assistant, bodies := fakeOpenAI(t, "completed", "",
+		`{"reply": "Added a role button.", "new_message": {"actions": {"a": {"actions": [{"type": 2, "target_id": "99"}]}}}}`,
+		// Doesn't send the message again, which leaves the problem.
+		`{"reply": "Fixed.", "new_message": null}`,
+		`{"reply": "Fixed.", "new_message": {"actions": {"a": {"actions": [{"type": 2, "target_id": "2"}]}}}}`,
+	)
 
-	_, err := assistant.Respond(context.Background(), Request{
+	res, err := assistant.Respond(context.Background(), Request{
 		Message: `{}`,
 		Messages: []Message{
 			{Role: "user", Content: "Add a title"},
-			{Role: "assistant", Content: "Added a title."},
-			{Role: "user", Content: "Make it red"},
 			{Role: "assistant", Content: ""},
+			{Role: "user", Content: "Add a role button"},
 		},
-		Issues: []string{"embeds.0.color: Expected number, received string"},
-		Guild:  testGuild,
-	})
+		Guild: testGuild,
+	}, 2)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// The answer without text is left out.
-	input := (*body)["input"].([]any)
+	if len(*bodies) != 3 || res.Repairs != 2 || len(res.Issues) != 0 {
+		t.Fatalf("requests = %d, repairs = %d, issues = %v", len(*bodies), res.Repairs, res.Issues)
+	}
+	if res.Message != "Added a role button." || !strings.Contains(res.MessageJSON, `"target_id":"2"`) {
+		t.Errorf("message = %q, message json = %q", res.Message, res.MessageJSON)
+	}
+	if res.Usage.InputTokens != 3000 {
+		t.Errorf("usage = %+v", res.Usage)
+	}
+
+	// The repair gets the chat with the answer, the answer's message and the problems. The answer
+	// without text is left out.
+	input := (*bodies)[2]["input"].([]any)
 	if len(input) != 5 {
 		t.Fatalf("input has %d items", len(input))
 	}
-	if input[2].(map[string]any)["role"] != "assistant" || input[3].(map[string]any)["role"] != "user" {
-		t.Errorf("roles = %v, %v", input[2], input[3])
+	if input[2].(map[string]any)["content"] != "Add a role button" || input[3].(map[string]any)["content"] != "Added a role button." {
+		t.Errorf("chat = %v, %v", input[2], input[3])
 	}
-	if !strings.Contains(input[4].(map[string]any)["content"].(string), "- embeds.0.color: Expected number, received string") {
-		t.Errorf("repair = %v", input[4])
+	last := input[4].(map[string]any)["content"].(string)
+	if !strings.Contains(last, `"target_id":"99"`) || !strings.Contains(last, "uses role 99") {
+		t.Errorf("repair = %q", last)
+	}
+}
+
+func TestRespondStopsRepairing(t *testing.T) {
+	assistant, bodies := fakeOpenAI(t, "completed", "",
+		`{"reply": "Done.", "new_message": {"actions": {"a": {"actions": [{"type": 2, "target_id": "99"}]}}}}`,
+	)
+
+	res, err := assistant.Respond(context.Background(), Request{
+		Message:  `{}`,
+		Messages: []Message{{Role: "user", Content: "Add a role button"}},
+		Guild:    testGuild,
+	}, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(*bodies) != 2 || res.Repairs != 1 || len(res.Issues) != 1 {
+		t.Errorf("requests = %d, repairs = %d, issues = %v", len(*bodies), res.Repairs, res.Issues)
 	}
 }
 
@@ -178,7 +216,7 @@ func TestRespondCutOff(t *testing.T) {
 		Message:  `{}`,
 		Messages: []Message{{Role: "user", Content: "Add a title"}},
 		Guild:    testGuild,
-	})
+	}, 2)
 
 	var resErr *ErrResponse
 	if !errors.As(err, &resErr) || !strings.Contains(resErr.Message, "cut off") {
@@ -242,31 +280,6 @@ func TestParseOutputLimitsFields(t *testing.T) {
 	// Needs the fields filled in first.
 	if res.BuildPrompt != "" {
 		t.Errorf("build prompt = %q", res.BuildPrompt)
-	}
-}
-
-func TestCheckIDs(t *testing.T) {
-	res := &Response{MessageJSON: `{"actions": {
-		"b": {"actions": [{"type": 2, "target_id": "2"}, {"type": 3, "target_id": "99"}]},
-		"a": {"actions": [{"type": 1, "text": "hi"}, {"type": 5, "target_id": "made_up"}, {"type": 10, "role_ids": ["2", "4", "98"]}, {"type": 4, "target_id": "4"}]}
-	}}`}
-	res.checkIDs(testGuild)
-
-	want := []string{
-		`Action 2 of action set "a" uses saved message made_up, which the server doesn't have. Use one from the list, or remove the action and ask the user.`,
-		`Action 3 of action set "a" uses role 98, which the server doesn't have. Use one from the list, or remove the action and ask the user.`,
-		`Action 4 of action set "a" gives or takes the managed role 4, which isn't possible. Use another role or remove the action.`,
-		`Action 2 of action set "b" uses role 99, which the server doesn't have. Use one from the list, or remove the action and ask the user.`,
-	}
-	if !reflect.DeepEqual(res.Issues, want) {
-		t.Errorf("issues = %#v", res.Issues)
-	}
-
-	// Without the bot there are no roles to check against.
-	res = &Response{MessageJSON: `{"actions": {"a": {"actions": [{"type": 2, "target_id": "99"}]}}}`}
-	res.checkIDs(Guild{})
-	if len(res.Issues) != 0 {
-		t.Errorf("issues = %v", res.Issues)
 	}
 }
 

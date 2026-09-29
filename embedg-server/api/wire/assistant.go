@@ -23,39 +23,24 @@ type AssistantChatRequestWire struct {
 	// Message is the message in the editor as JSON.
 	Message  string                     `json:"message"`
 	Messages []AssistantChatMessageWire `json:"messages"`
-	// RepairPromptID asks to fix the issues the editor found with the message of an earlier
-	// prompt. Repairs don't count as new prompts.
-	RepairPromptID string   `json:"repair_prompt_id"`
-	Issues         []string `json:"issues"`
 }
 
 func (req AssistantChatRequestWire) Validate() error {
 	err := validation.ValidateStruct(&req,
 		validation.Field(&req.Message, validation.Required, validation.Length(1, 100_000)),
 		validation.Field(&req.Messages, validation.Required, validation.Length(1, 20)),
-		validation.Field(&req.Issues,
-			validation.When(req.RepairPromptID != "", validation.Required).Else(validation.Empty),
-			validation.Length(0, 50),
-			validation.Each(validation.Length(1, 2000)),
-		),
 	)
 	if err != nil {
 		return err
 	}
 
-	// A repair follows the answer it fixes, anything else asks something new.
-	lastRole := req.Messages[len(req.Messages)-1].Role
-	if req.RepairPromptID == "" && lastRole != "user" {
+	if req.Messages[len(req.Messages)-1].Role != "user" {
 		return validation.Errors{"messages": errors.New("the last message must be from the user")}
-	}
-	if req.RepairPromptID != "" && lastRole != "assistant" {
-		return validation.Errors{"messages": errors.New("the last message of a repair must be from the assistant")}
 	}
 	return nil
 }
 
 type AssistantChatResponseDataWire struct {
-	PromptID string `json:"prompt_id"`
 	// Message is Markdown.
 	Message string `json:"message"`
 	// Data is the new message as JSON, or empty if the answer doesn't change it.
@@ -65,10 +50,12 @@ type AssistantChatResponseDataWire struct {
 	BuildPrompt string `json:"build_prompt"`
 	// Fields ask the user for what the assistant needs but only they know.
 	Fields []AssistantFieldWire `json:"fields"`
-	// Issues are problems with the message the editor can't see. They are fixed with a repair,
-	// like the problems the editor finds.
-	Issues []string           `json:"issues"`
-	Usage  AssistantUsageWire `json:"usage"`
+	// Issues are problems with the message the editor can't see, like roles the guild doesn't
+	// have, that the assistant couldn't fix.
+	Issues []string `json:"issues"`
+	// Repairs is how often the assistant fixed its own message.
+	Repairs int                `json:"repairs"`
+	Usage   AssistantUsageWire `json:"usage"`
 }
 
 type AssistantChatResponseWire APIResponse[AssistantChatResponseDataWire]

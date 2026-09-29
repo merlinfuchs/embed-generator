@@ -1,10 +1,15 @@
-import type { Features } from "./assistant";
+import type { GetPremiumPlanFeaturesResponseDataWire } from "../api/wire";
 import type { Message, MessageComponent } from "../discord/schema";
 
 // What the assistant is expected to do: build or change the message, ask
 // for what only the user knows, or answer without changing anything. Cases
 // where either is fine list both.
 export type EvalRoute = "build" | "clarify" | "answer";
+
+type Features = Pick<
+  GetPremiumPlanFeaturesResponseDataWire,
+  "components_v2" | "component_types" | "max_actions_per_component"
+>;
 
 export interface EvalCase {
   name: string;

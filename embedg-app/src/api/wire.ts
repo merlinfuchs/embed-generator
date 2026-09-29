@@ -14,15 +14,8 @@ export interface AssistantChatRequestWire {
    */
   message: string;
   messages: AssistantChatMessageWire[];
-  /**
-   * RepairPromptID asks to fix the issues the editor found with the message of an earlier
-   * prompt. Repairs don't count as new prompts.
-   */
-  repair_prompt_id: string;
-  issues: string[];
 }
 export interface AssistantChatResponseDataWire {
-  prompt_id: string;
   /**
    * Message is Markdown.
    */
@@ -41,10 +34,14 @@ export interface AssistantChatResponseDataWire {
    */
   fields: AssistantFieldWire[];
   /**
-   * Issues are problems with the message the editor can't see. They are fixed with a repair,
-   * like the problems the editor finds.
+   * Issues are problems with the message the editor can't see, like roles the guild doesn't
+   * have, that the assistant couldn't fix.
    */
   issues: string[];
+  /**
+   * Repairs is how often the assistant fixed its own message.
+   */
+  repairs: number /* int */;
   usage: AssistantUsageWire;
 }
 export type AssistantChatResponseWire = APIResponse<AssistantChatResponseDataWire>;

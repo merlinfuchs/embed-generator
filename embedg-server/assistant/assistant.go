@@ -6,11 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"maps"
 	"slices"
 	"strings"
 
-	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/openai/openai-go/v2"
@@ -58,8 +56,8 @@ type Request struct {
 	// Messages is the chat so far, oldest first. The last one is the user's current message,
 	// unless this is a repair.
 	Messages []Message
-	// Issues are the problems the editor found with the message of the last response, which this
-	// response should fix.
+	// Issues are the problems found with the message of the last response, which this response
+	// should fix.
 	Issues  []string
 	Guild   Guild
 	GuildID common.ID
@@ -104,10 +102,12 @@ type Response struct {
 	BuildPrompt string
 	// Fields ask the user for what the assistant needs but only they know.
 	Fields []Field
-	// Issues are problems with the message the editor can't see, like roles the guild doesn't
-	// have. They are fixed like the editor's own issues.
+	// Issues are the problems with the message that were left after repairs, like roles the
+	// guild doesn't have.
 	Issues []string
-	Usage  model.AssistantUsage
+	// Repairs is how often the model was asked to fix its message.
+	Repairs int
+	Usage   model.AssistantUsage
 }
 
 // ErrResponse is an error with a message that can be shown to the user.
@@ -119,9 +119,47 @@ func (e *ErrResponse) Error() string {
 	return e.Message
 }
 
-// Respond asks the model for a response. If the model answered but the answer can't be used, it
-// returns an error along with a response that only has the usage.
-func (a *Assistant) Respond(ctx context.Context, req Request) (*Response, error) {
+// Respond asks the model for a response and has it fix the problems check finds with its message,
+// up to maxRepairs times. If the model answered but the answer can't be used, it returns an error
+// along with a response that only has the usage.
+func (a *Assistant) Respond(ctx context.Context, req Request, maxRepairs int) (*Response, error) {
+	res, err := a.respond(ctx, req)
+	if err != nil {
+		return res, err
+	}
+	res.MessageJSON, res.Issues = inspect(res.MessageJSON, res.Issues, req.Guild)
+
+	for len(res.Issues) > 0 && res.Repairs < maxRepairs {
+		repair := req
+		if res.MessageJSON != "" {
+			repair.Message = res.MessageJSON
+		}
+		repair.Messages = append(slices.Clone(req.Messages), Message{Role: "assistant", Content: res.Message})
+		repair.Issues = res.Issues
+
+		next, err := a.respond(ctx, repair)
+		res.Repairs++
+		if next != nil {
+			res.Usage = res.Usage.Add(next.Usage)
+		}
+		if err != nil {
+			// The message so far is still better than none.
+			slog.Warn("Assistant repair failed", slog.String("guild_id", req.GuildID.String()), slog.Any("error", err))
+			break
+		}
+
+		// A repair without a message leaves the last one, and what's wrong with it.
+		messageJSON := res.MessageJSON
+		if next.MessageJSON != "" {
+			messageJSON = next.MessageJSON
+		}
+		res.MessageJSON, res.Issues = inspect(messageJSON, next.Issues, req.Guild)
+	}
+	return res, nil
+}
+
+// respond makes a single model call.
+func (a *Assistant) respond(ctx context.Context, req Request) (*Response, error) {
 	resp, err := a.client.Responses.New(ctx, responses.ResponseNewParams{
 		Model:           a.config.Model,
 		Instructions:    openai.String(instructions),
@@ -175,7 +213,6 @@ func (a *Assistant) Respond(ctx context.Context, req Request) (*Response, error)
 	if err != nil {
 		return &Response{Usage: usage}, err
 	}
-	res.checkIDs(req.Guild)
 	res.Usage = usage
 	return res, nil
 }
@@ -184,7 +221,7 @@ func chatInput(req Request) responses.ResponseInputParam {
 	messages := req.Messages
 	var current string
 	if len(req.Issues) > 0 {
-		current = "The editor found these problems with your message:\n- " +
+		current = "These problems were found with your message:\n- " +
 			strings.Join(req.Issues, "\n- ") +
 			"\n\nFix them and return the whole message again."
 	} else if len(messages) > 0 {
@@ -339,7 +376,7 @@ func parseOutput(text string) (*Response, error) {
 	if len(out.NewMessage) > 0 && string(out.NewMessage) != "null" {
 		var msg map[string]any
 		if err := json.Unmarshal(out.NewMessage, &msg); err != nil || msg == nil {
-			// Sent back for repair like the editor's issues, as the model can fix it.
+			// Repaired, as the model can fix it.
 			res.Issues = append(res.Issues, "new_message isn't a JSON object.")
 		} else {
 			res.MessageJSON = string(out.NewMessage)
@@ -362,64 +399,4 @@ func parseOutput(text string) (*Response, error) {
 		res.BuildPrompt = ""
 	}
 	return res, nil
-}
-
-// checkIDs reports roles and saved messages the message's actions use that the guild doesn't
-// have, which the model sometimes makes up. The editor can't tell.
-func (r *Response) checkIDs(guild Guild) {
-	if r.MessageJSON == "" || !guild.HasBot {
-		return
-	}
-	var msg struct {
-		Actions map[string]actions.ActionSet `json:"actions"`
-	}
-	if err := json.Unmarshal([]byte(r.MessageJSON), &msg); err != nil {
-		// The editor reports what's wrong with it.
-		return
-	}
-
-	// Managed roles can only be checked.
-	roles := make(map[string]bool, len(guild.Roles))
-	assignable := make(map[string]bool, len(guild.Roles))
-	for _, role := range guild.Roles {
-		roles[role.ID.String()] = true
-		assignable[role.ID.String()] = !role.Managed
-	}
-	saved := make(map[string]bool, len(guild.SavedMessages))
-	for _, m := range guild.SavedMessages {
-		saved[m.ID] = true
-	}
-
-	for _, setID := range slices.Sorted(maps.Keys(msg.Actions)) {
-		for i, action := range msg.Actions[setID].Actions {
-			var unknown []string
-			switch action.Type {
-			case actions.ActionTypeToggleRole, actions.ActionTypeAddRole, actions.ActionTypeRemoveRole:
-				if !roles[action.TargetID] {
-					unknown = append(unknown, "role "+action.TargetID)
-				} else if !assignable[action.TargetID] {
-					r.Issues = append(r.Issues, fmt.Sprintf(
-						"Action %d of action set %q gives or takes the managed role %s, which isn't possible. Use another role or remove the action.",
-						i+1, setID, action.TargetID,
-					))
-				}
-			case actions.ActionTypeSavedMessageResponse, actions.ActionTypeSavedMessageDM, actions.ActionTypeSavedMessageEdit:
-				if !saved[action.TargetID] {
-					unknown = append(unknown, "saved message "+action.TargetID)
-				}
-			case actions.ActionTypePermissionCheck:
-				for _, id := range action.RoleIDs {
-					if !roles[id] {
-						unknown = append(unknown, "role "+id)
-					}
-				}
-			}
-			for _, u := range unknown {
-				r.Issues = append(r.Issues, fmt.Sprintf(
-					"Action %d of action set %q uses %s, which the server doesn't have. Use one from the list, or remove the action and ask the user.",
-					i+1, setID, u,
-				))
-			}
-		}
-	}
 }

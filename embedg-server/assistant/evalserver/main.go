@@ -23,6 +23,7 @@ func main() {
 	addr := flag.String("addr", "localhost:4456", "address to listen on")
 	modelName := flag.String("model", "gpt-5-mini", "model to use")
 	effort := flag.String("effort", "low", "reasoning effort")
+	maxRepairs := flag.Int("max-repairs", 2, "how often the model may fix its message")
 	flag.Parse()
 
 	opts := []option.RequestOption{option.WithAPIKey(os.Getenv("OPENAI_API_KEY"))}
@@ -59,9 +60,8 @@ func main() {
 		res, err := ai.Respond(r.Context(), assistant.Request{
 			Message:  req.Message,
 			Messages: messages,
-			Issues:   req.Issues,
 			Guild:    req.Guild.toGuild(),
-		})
+		}, *maxRepairs)
 		if err != nil {
 			fail(w, err)
 			return
@@ -76,12 +76,12 @@ func main() {
 			Eval evalInfo `json:"eval"`
 		}{
 			AssistantChatResponseDataWire: wire.AssistantChatResponseDataWire{
-				PromptID:    "eval",
 				Message:     res.Message,
 				Data:        res.MessageJSON,
 				BuildPrompt: res.BuildPrompt,
 				Fields:      fields,
 				Issues:      res.Issues,
+				Repairs:     res.Repairs,
 			},
 			Eval: evalInfo{Model: *modelName, Tokens: res.Usage, MS: time.Since(start).Milliseconds()},
 		})

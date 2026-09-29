@@ -36,3 +36,11 @@ type AssistantUsage struct {
 	CachedInputTokens int
 	OutputTokens      int
 }
+
+func (u AssistantUsage) Add(o AssistantUsage) AssistantUsage {
+	return AssistantUsage{
+		InputTokens:       u.InputTokens + o.InputTokens,
+		CachedInputTokens: u.CachedInputTokens + o.CachedInputTokens,
+		OutputTokens:      u.OutputTokens + o.OutputTokens,
+	}
+}

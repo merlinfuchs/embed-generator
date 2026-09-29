@@ -11,40 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const addAssistantPromptUsage = `-- name: AddAssistantPromptUsage :exec
-UPDATE assistant_prompts SET
-    edited = edited AND $1,
-    input_tokens = input_tokens + $2,
-    cached_input_tokens = cached_input_tokens + $3,
-    output_tokens = output_tokens + $4,
-    updated_at = $5
-WHERE id = $6 AND guild_id = $7
-`
-
-type AddAssistantPromptUsageParams struct {
-	Edited            bool
-	InputTokens       int32
-	CachedInputTokens int32
-	OutputTokens      int32
-	UpdatedAt         pgtype.Timestamp
-	ID                string
-	GuildID           string
-}
-
-// A prompt can only become unedited, when its first answer doesn't change the message.
-func (q *Queries) AddAssistantPromptUsage(ctx context.Context, arg AddAssistantPromptUsageParams) error {
-	_, err := q.db.Exec(ctx, addAssistantPromptUsage,
-		arg.Edited,
-		arg.InputTokens,
-		arg.CachedInputTokens,
-		arg.OutputTokens,
-		arg.UpdatedAt,
-		arg.ID,
-		arg.GuildID,
-	)
-	return err
-}
-
 const countAssistantPromptsSince = `-- name: CountAssistantPromptsSince :one
 SELECT
     COUNT(*) FILTER (WHERE edited)::int AS edited,
@@ -83,33 +49,40 @@ func (q *Queries) DeleteAssistantPrompt(ctx context.Context, arg DeleteAssistant
 	return err
 }
 
-const getAssistantPrompt = `-- name: GetAssistantPrompt :one
-SELECT id, guild_id, user_id, model, prompt, edited, rounds, input_tokens, cached_input_tokens, output_tokens, created_at, updated_at FROM assistant_prompts WHERE id = $1 AND guild_id = $2
+const finishAssistantPrompt = `-- name: FinishAssistantPrompt :exec
+UPDATE assistant_prompts SET
+    edited = $1,
+    rounds = $2,
+    input_tokens = $3,
+    cached_input_tokens = $4,
+    output_tokens = $5,
+    updated_at = $6
+WHERE id = $7 AND guild_id = $8
 `
 
-type GetAssistantPromptParams struct {
-	ID      string
-	GuildID string
+type FinishAssistantPromptParams struct {
+	Edited            bool
+	Rounds            int32
+	InputTokens       int32
+	CachedInputTokens int32
+	OutputTokens      int32
+	UpdatedAt         pgtype.Timestamp
+	ID                string
+	GuildID           string
 }
 
-func (q *Queries) GetAssistantPrompt(ctx context.Context, arg GetAssistantPromptParams) (AssistantPrompt, error) {
-	row := q.db.QueryRow(ctx, getAssistantPrompt, arg.ID, arg.GuildID)
-	var i AssistantPrompt
-	err := row.Scan(
-		&i.ID,
-		&i.GuildID,
-		&i.UserID,
-		&i.Model,
-		&i.Prompt,
-		&i.Edited,
-		&i.Rounds,
-		&i.InputTokens,
-		&i.CachedInputTokens,
-		&i.OutputTokens,
-		&i.CreatedAt,
-		&i.UpdatedAt,
+func (q *Queries) FinishAssistantPrompt(ctx context.Context, arg FinishAssistantPromptParams) error {
+	_, err := q.db.Exec(ctx, finishAssistantPrompt,
+		arg.Edited,
+		arg.Rounds,
+		arg.InputTokens,
+		arg.CachedInputTokens,
+		arg.OutputTokens,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.GuildID,
 	)
-	return i, err
+	return err
 }
 
 const insertAssistantPrompt = `-- name: InsertAssistantPrompt :exec
@@ -162,31 +135,4 @@ func (q *Queries) InsertAssistantPrompt(ctx context.Context, arg InsertAssistant
 		arg.UpdatedAt,
 	)
 	return err
-}
-
-const startAssistantPromptRound = `-- name: StartAssistantPromptRound :execrows
-UPDATE assistant_prompts SET
-    rounds = rounds + 1,
-    updated_at = $1
-WHERE id = $2 AND guild_id = $3 AND rounds < $4
-`
-
-type StartAssistantPromptRoundParams struct {
-	UpdatedAt pgtype.Timestamp
-	ID        string
-	GuildID   string
-	MaxRounds int32
-}
-
-func (q *Queries) StartAssistantPromptRound(ctx context.Context, arg StartAssistantPromptRoundParams) (int64, error) {
-	result, err := q.db.Exec(ctx, startAssistantPromptRound,
-		arg.UpdatedAt,
-		arg.ID,
-		arg.GuildID,
-		arg.MaxRounds,
-	)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
 }

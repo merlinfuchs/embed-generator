@@ -21,9 +21,6 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 )
 
-// repairWindow is how long after a prompt its message can be repaired.
-const repairWindow = time.Hour
-
 // Answers that don't change the message don't count as prompts, so the assistant can ask what's
 // missing for free. They are limited to this many times the plan's prompts, so it can't be used as
 // a free chatbot.
@@ -39,7 +36,8 @@ type AssistantHandler struct {
 	savedMessageStore store.SavedMessageStore
 	guildState        *guildstate.Provider
 	// assistant is nil if no OpenAI API key is configured.
-	assistant  *ai.Assistant
+	assistant *ai.Assistant
+	// maxRepairs is how often the assistant may fix its own message in one prompt.
 	maxRepairs int
 }
 
@@ -123,12 +121,8 @@ func (h *AssistantHandler) HandleChat(c *fiber.Ctx, req wire.AssistantChatReques
 		return err
 	}
 	used := count.Edited
-
-	isRepair := req.RepairPromptID != ""
-	if !isRepair {
-		if err := checkLimits(limit, count); err != nil {
-			return err
-		}
+	if err := checkLimits(limit, count); err != nil {
+		return err
 	}
 
 	// Loaded before the prompt is recorded, so failing doesn't use it up.
@@ -140,46 +134,18 @@ func (h *AssistantHandler) HandleChat(c *fiber.Ctx, req wire.AssistantChatReques
 	// The prompt is recorded, and counted as edited, before the model is called, so requests sent
 	// while it runs count it. Requests sent at the same moment can still all pass the limits.
 	now := time.Now().UTC()
-	var prompt *model.AssistantPrompt
-	if isRepair {
-		prompt, err = h.promptStore.GetAssistantPrompt(c.UserContext(), guildID, req.RepairPromptID)
-		if err != nil {
-			if errors.Is(err, store.ErrNotFound) {
-				return handlers.NotFound("unknown_prompt", "Prompt not found")
-			}
-			return fmt.Errorf("failed to get assistant prompt: %w", err)
-		}
-		// Prompts whose answer didn't change the message don't count, so their repairs can't be
-		// used to get changes for free.
-		if !prompt.Edited {
-			return handlers.BadRequest("nothing_to_repair", "The prompt made no changes to repair.")
-		}
-		if now.Sub(prompt.CreatedAt) > repairWindow {
-			return handlers.BadRequest("repair_expired", "The prompt is too old to be repaired.")
-		}
-
-		started, err := h.promptStore.StartAssistantPromptRound(c.UserContext(), guildID, prompt.ID, 1+h.maxRepairs, now)
-		if err != nil {
-			return fmt.Errorf("failed to start assistant prompt round: %w", err)
-		}
-		if !started {
-			return handlers.BadRequest("repair_limit", "The AI couldn't fix its changes. Try describing the change differently.")
-		}
-	} else {
-		prompt = &model.AssistantPrompt{
-			ID:        common.InternalID(),
-			GuildID:   guildID,
-			UserID:    session.UserID,
-			Model:     h.assistant.Model(),
-			Prompt:    req.Messages[len(req.Messages)-1].Content,
-			Edited:    true,
-			Rounds:    1,
-			CreatedAt: now,
-			UpdatedAt: now,
-		}
-		if err := h.promptStore.CreateAssistantPrompt(c.UserContext(), *prompt); err != nil {
-			return fmt.Errorf("failed to create assistant prompt: %w", err)
-		}
+	prompt := model.AssistantPrompt{
+		ID:        common.InternalID(),
+		GuildID:   guildID,
+		UserID:    session.UserID,
+		Model:     h.assistant.Model(),
+		Prompt:    req.Messages[len(req.Messages)-1].Content,
+		Edited:    true,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+	if err := h.promptStore.CreateAssistantPrompt(c.UserContext(), prompt); err != nil {
+		return fmt.Errorf("failed to create assistant prompt: %w", err)
 	}
 
 	messages := make([]ai.Message, len(req.Messages))
@@ -190,28 +156,28 @@ func (h *AssistantHandler) HandleChat(c *fiber.Ctx, req wire.AssistantChatReques
 	res, err := h.assistant.Respond(c.UserContext(), ai.Request{
 		Message:  req.Message,
 		Messages: messages,
-		Issues:   req.Issues,
 		Guild:    guild,
 		GuildID:  guildID,
 		UserID:   session.UserID,
-	})
-	// Answers that don't change the message don't count. Ones that can't be used do, as they cost
-	// as much, and so do ones with problems, as they are repaired.
-	edited := isRepair || err != nil || res.MessageJSON != "" || len(res.Issues) > 0
-	if res != nil {
+	}, h.maxRepairs)
+	if res == nil {
+		// Prompts the model didn't answer at all don't count.
+		if err := h.promptStore.DeleteAssistantPrompt(c.UserContext(), guildID, prompt.ID); err != nil {
+			slog.Error("Failed to delete assistant prompt", slog.String("guild_id", guildID.String()), slog.Any("error", err))
+		}
+	} else {
+		// Answers that don't change the message don't count. Ones that can't be used do, as they
+		// cost as much.
+		prompt.Edited = err != nil || res.MessageJSON != "" || res.Repairs > 0
+		prompt.Rounds = 1 + res.Repairs
+		prompt.Usage = res.Usage
+		prompt.UpdatedAt = time.Now().UTC()
 		// Failing to record the usage shouldn't lose the answer.
-		if err := h.promptStore.AddAssistantPromptUsage(c.UserContext(), guildID, prompt.ID, res.Usage, edited, time.Now().UTC()); err != nil {
-			slog.Error("Failed to add assistant prompt usage", slog.String("guild_id", guildID.String()), slog.Any("error", err))
+		if err := h.promptStore.FinishAssistantPrompt(c.UserContext(), prompt); err != nil {
+			slog.Error("Failed to finish assistant prompt", slog.String("guild_id", guildID.String()), slog.Any("error", err))
 		}
 	}
 	if err != nil {
-		// Prompts the model didn't answer at all don't count.
-		if res == nil && !isRepair {
-			if err := h.promptStore.DeleteAssistantPrompt(c.UserContext(), guildID, prompt.ID); err != nil {
-				slog.Error("Failed to delete assistant prompt", slog.String("guild_id", guildID.String()), slog.Any("error", err))
-			}
-		}
-
 		var resErr *ai.ErrResponse
 		if errors.As(err, &resErr) {
 			return handlers.ServiceUnavailable("assistant_failed", resErr.Message)
@@ -220,7 +186,7 @@ func (h *AssistantHandler) HandleChat(c *fiber.Ctx, req wire.AssistantChatReques
 		return handlers.ServiceUnavailable("assistant_unavailable", "The AI assistant isn't available right now. Please try again later.")
 	}
 
-	if edited && !isRepair {
+	if prompt.Edited {
 		used++
 	}
 
@@ -232,12 +198,12 @@ func (h *AssistantHandler) HandleChat(c *fiber.Ctx, req wire.AssistantChatReques
 	return c.JSON(wire.AssistantChatResponseWire{
 		Success: true,
 		Data: wire.AssistantChatResponseDataWire{
-			PromptID:    prompt.ID,
 			Message:     res.Message,
 			Data:        res.MessageJSON,
 			BuildPrompt: res.BuildPrompt,
 			Fields:      fields,
 			Issues:      res.Issues,
+			Repairs:     res.Repairs,
 			Usage:       wire.AssistantUsageWire{PromptsUsed: used, PromptsLimit: limit},
 		},
 	})
