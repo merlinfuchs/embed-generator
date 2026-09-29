@@ -35,14 +35,13 @@ test("a template replaces the message after confirming", async () => {
   renderEditor(<NewMessageView />);
   const user = editorUser();
 
-  await user.click(screen.getByRole("button", { name: /Patch notes/ }));
-  await user.click(screen.getByRole("button", { name: "Use template" }));
+  await user.click(screen.getByRole("button", { name: "Use Patch notes" }));
   expect(currentMessage().content).toBe("Old message");
   await user.click(screen.getByRole("button", { name: "Confirm" }));
 
   expect(currentMessage()).toMatchObject({
     content: "",
-    embeds: [{ title: "Update 1.2.0" }],
+    embeds: [{ image: {} }, { title: "Update 1.2.0" }],
   });
 });
 
@@ -51,27 +50,28 @@ test("blank starts over", async () => {
   renderEditor(<NewMessageView />);
   const user = editorUser();
 
-  await user.click(screen.getByRole("button", { name: /Blank message/ }));
+  await user.click(screen.getByRole("button", { name: "Start from scratch" }));
   await user.click(screen.getByRole("button", { name: "Confirm" }));
 
   expect(currentMessage()).toMatchObject({ content: "", embeds: [] });
 });
 
-test("logged out it offers the embed templates and a login", async () => {
+test("logged out the templates with components ask to log in", async () => {
   loadMessage({ content: "" });
   renderEditor(<NewMessageView />);
-  const login = await screen.findByRole("link", { name: "Log in" });
+  const logins = await screen.findAllByRole("link", { name: "Log in to use" });
 
   expect(
-    screen.getByRole("button", { name: /Server rules/ }),
+    screen.getByRole("button", { name: "Use Server rules" }),
   ).toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: /Server guide/ })).toBeNull();
-  expect(screen.queryByRole("button", { name: /Role selection/ })).toBeNull();
-  expect(screen.queryByRole("button", { name: /AI/ })).toBeNull();
-  expect(login).toHaveAttribute(
+  expect(screen.queryByRole("button", { name: "Use Server guide" })).toBeNull();
+  expect(screen.getByText("Server guide")).toBeInTheDocument();
+  expect(logins).toHaveLength(4);
+  expect(logins[0]).toHaveAttribute(
     "href",
     expect.stringContaining("/api/auth/login"),
   );
+  expect(screen.queryByRole("button", { name: /AI/ })).toBeNull();
 });
 
 test("logged in with a server it offers everything", async () => {
@@ -80,12 +80,12 @@ test("logged in with a server it offers everything", async () => {
   renderEditor(<NewMessageView />);
 
   expect(
-    await screen.findByRole("button", { name: /Server guide/ }),
+    await screen.findByRole("button", { name: "Use Server guide" }),
   ).toBeInTheDocument();
   expect(
     screen.getByRole("button", { name: /Describe it to the AI/ }),
   ).toBeInTheDocument();
-  expect(screen.queryByRole("link", { name: "Log in" })).toBeNull();
+  expect(screen.queryByRole("link", { name: "Log in to use" })).toBeNull();
 });
 
 test("a template with components switches to sending through the bot", async () => {
@@ -95,9 +95,8 @@ test("a template with components switches to sending through the bot", async () 
   const user = editorUser();
 
   await user.click(
-    await screen.findByRole("button", { name: /Role selection/ }),
+    await screen.findByRole("button", { name: "Use Role selection" }),
   );
-  await user.click(screen.getByRole("button", { name: "Use template" }));
 
   expect(useSendSettingsStore.getState().mode).toBe("channel");
   expect(currentMessage().components).toHaveLength(1);

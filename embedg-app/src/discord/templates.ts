@@ -1,5 +1,6 @@
 import type { GetPremiumPlanFeaturesResponseDataWire } from "../api/wire";
 import { getUniqueId } from "../util";
+import { getRelativeUrl } from "../util/url";
 import { parseMessageWithAction } from "./importSchema";
 import {
   COMPONENTS_V2_FLAG,
@@ -7,25 +8,40 @@ import {
   type MessageComponent,
 } from "./schema";
 
-/** The groups the templates are listed in, in order. */
-export const templateGroups = [
-  "Embeds",
-  "Components V2",
-  "Interactive",
-] as const;
-
 export interface MessageTemplate {
   id: string;
-  group: (typeof templateGroups)[number];
+  group: "Embeds" | "Components V2" | "Interactive";
   name: string;
   description: string;
+  /** The accent of the message, for its card. */
+  color: number;
   /** Builds the message with fresh ids, so using a template twice doesn't share action sets. */
   build: () => Message;
 }
 
+// Discord's brand colors, which the banners use too.
 const BLURPLE = 0x5865f2;
 const GREEN = 0x57f287;
 const YELLOW = 0xfee75c;
+const RED = 0xed4245;
+const PURPLE = 0x9b59b6;
+const FUCHSIA = 0xeb459e;
+
+/** A banner in public/templates, linked from this instance so it serves its own copy. */
+function banner(name: string): string {
+  return `${location.origin}${getRelativeUrl(`/templates/${name}.jpg`)}`;
+}
+
+// Embeds put their image at the bottom, so a banner on top is an embed of its own.
+const bannerEmbed = (name: string, color: number) => ({
+  image: { url: banner(name) },
+  color,
+});
+
+const bannerGallery = (name: string) => ({
+  type: 12,
+  items: [{ media: { url: banner(name) } }],
+});
 
 // Link buttons need a valid URL, and this one is obviously meant to be replaced.
 const PLACEHOLDER_URL = "https://example.com";
@@ -67,14 +83,16 @@ export const messageTemplates: MessageTemplate[] = [
     group: "Embeds",
     name: "Server rules",
     description: "A numbered list of rules with a footer",
+    color: RED,
     build: () =>
       parseMessageWithAction({
         embeds: [
+          bannerEmbed("rules", RED),
           {
             title: "📜 Server Rules",
             description:
               "To keep this a place everyone enjoys, please follow these rules. The moderators have the final say.",
-            color: BLURPLE,
+            color: RED,
             fields: [
               {
                 name: "1. Be respectful",
@@ -112,10 +130,12 @@ export const messageTemplates: MessageTemplate[] = [
     group: "Embeds",
     name: "Welcome",
     description: "Greets new members and points them around",
+    color: BLURPLE,
     build: () =>
       parseMessageWithAction({
         content: "Welcome to the server! 👋",
         embeds: [
+          bannerEmbed("welcome", BLURPLE),
           {
             title: "Welcome to Your Server",
             description:
@@ -148,9 +168,11 @@ export const messageTemplates: MessageTemplate[] = [
     group: "Embeds",
     name: "Announcement",
     description: "News for your members with a date",
+    color: YELLOW,
     build: () =>
       parseMessageWithAction({
         embeds: [
+          bannerEmbed("announcement", YELLOW),
           {
             title: "📣 Big News",
             description:
@@ -167,9 +189,11 @@ export const messageTemplates: MessageTemplate[] = [
     group: "Embeds",
     name: "Patch notes",
     description: "What's new, changed and fixed in an update",
+    color: GREEN,
     build: () =>
       parseMessageWithAction({
         embeds: [
+          bannerEmbed("update", GREEN),
           {
             title: "Update 1.2.0",
             description: "Here's everything that changed in this update.",
@@ -198,15 +222,17 @@ export const messageTemplates: MessageTemplate[] = [
     group: "Embeds",
     name: "Event",
     description: "Time and place, shown in each member's timezone",
+    color: PURPLE,
     build: () => {
       const time = nextWeekEvening();
       return parseMessageWithAction({
         embeds: [
+          bannerEmbed("event", PURPLE),
           {
             title: "🎮 Game Night",
             description:
               "Join us for a night of games! Everyone's welcome, no matter your skill level.",
-            color: BLURPLE,
+            color: PURPLE,
             fields: [
               { name: "📅 When", value: `<t:${time}:f>`, inline: true },
               { name: "⏰ Starts", value: `<t:${time}:R>`, inline: true },
@@ -222,12 +248,14 @@ export const messageTemplates: MessageTemplate[] = [
     group: "Components V2",
     name: "Server guide",
     description: "Sections with buttons that link to the important places",
+    color: BLURPLE,
     build: () =>
       v2([
         {
           type: 17,
           accent_color: BLURPLE,
           components: [
+            bannerGallery("welcome"),
             textDisplay(
               "# Welcome to Your Server\nEverything you need to find your way around.",
             ),
@@ -255,12 +283,14 @@ export const messageTemplates: MessageTemplate[] = [
     group: "Components V2",
     name: "News card",
     description: "An announcement in a container with a link",
+    color: YELLOW,
     build: () =>
       v2([
         {
           type: 17,
           accent_color: YELLOW,
           components: [
+            bannerGallery("announcement"),
             textDisplay(
               "## 📣 Big News\nDescribe what's happening here. Text displays support **markdown**, headings and lists:\n- What changes\n- When it happens",
             ),
@@ -278,13 +308,15 @@ export const messageTemplates: MessageTemplate[] = [
     group: "Components V2",
     name: "Event card",
     description: "Event details with a button to the event",
+    color: PURPLE,
     build: () => {
       const time = nextWeekEvening();
       return v2([
         {
           type: 17,
-          accent_color: GREEN,
+          accent_color: PURPLE,
           components: [
+            bannerGallery("event"),
             textDisplay(
               "## 🎮 Game Night\nJoin us for a night of games! Everyone's welcome, no matter your skill level.",
             ),
@@ -305,6 +337,7 @@ export const messageTemplates: MessageTemplate[] = [
     group: "Interactive",
     name: "Role selection",
     description: "Buttons that give or take roles when clicked",
+    color: FUCHSIA,
     build: () => {
       const buttons = [
         { label: "Announcements", emoji: "📣" },
@@ -320,11 +353,12 @@ export const messageTemplates: MessageTemplate[] = [
 
       return parseMessageWithAction({
         embeds: [
+          bannerEmbed("roles", FUCHSIA),
           {
             title: "🎭 Pick your roles",
             description:
               "Click a button to get pinged for what you're interested in. Click it again to remove the role.",
-            color: BLURPLE,
+            color: FUCHSIA,
           },
         ],
         components: [{ type: 1, components: buttons }],

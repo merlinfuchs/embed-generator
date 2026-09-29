@@ -1,7 +1,12 @@
-import { expect, test } from "vitest";
+import { beforeAll, expect, test, vi } from "vitest";
 import { defaultPlanFeatures as defaultPlan } from "../test/plan";
 import { messageSchema } from "./schema";
 import { messageTemplates, templateAvailable } from "./templates";
+
+// The banners link to the instance the app is served from.
+beforeAll(() => {
+  vi.stubGlobal("location", { origin: "https://message.style" });
+});
 
 test.each(messageTemplates)("$name is a valid message", (template) => {
   const result = messageSchema.safeParse(template.build());

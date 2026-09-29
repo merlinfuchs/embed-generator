@@ -3,19 +3,19 @@ import {
   LockClosedIcon,
   SparklesIcon,
 } from "@heroicons/react/20/solid";
-import clsx from "clsx";
-import { type ReactNode, useMemo, useRef, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserQuery } from "../../api/queries";
 import ConfirmModal from "../../components/ConfirmModal";
 import LoginLink from "../../components/LoginLink";
 import MessagePreview from "../../components/MessagePreview";
 import Modal from "../../components/Modal";
+import type { Message } from "../../discord/schema";
 import {
+  type MessageTemplate,
   messageTemplates,
   needsBot,
   templateAvailable,
-  templateGroups,
 } from "../../discord/templates";
 import {
   clearCurrentMessage,
@@ -23,7 +23,10 @@ import {
   setCurrentMessage,
 } from "../../state/currentMessage";
 import { useSendSettingsStore } from "../../state/sendSettings";
+import { colorIntToHex } from "../../util/discord";
 import { usePremiumGuildFeatures } from "../../util/premium";
+
+type LockedReason = "login" | "server";
 
 /** Replaces the message with a template, a blank one or whatever the AI builds. */
 export default function NewMessageView() {
@@ -32,40 +35,34 @@ export default function NewMessageView() {
   const { data: user, isPending: userPending } = useUserQuery();
   const guildId = useSendSettingsStore((s) => s.guildId);
   const features = usePremiumGuildFeatures();
-  // Why the templates with components are missing. Nothing while the plan is
-  // still loading.
-  const lockedReason = userPending
+  const aiAllowed = !!features?.max_ai_prompts_per_month;
+  // Why the templates with components can't be used yet. Nothing while that
+  // is still loading.
+  const lockedReason: LockedReason | null = userPending
     ? null
     : !user?.success
       ? "login"
       : !guildId
         ? "server"
         : null;
-  const aiAllowed = !!features?.max_ai_prompts_per_month;
 
   // Built once per opening, so every use gets its own ids.
   const templates = useMemo(
     () => messageTemplates.map((t) => ({ ...t, message: t.build() })),
     [],
   );
-  const available = templates.filter((t) =>
-    templateAvailable(t.message, features),
+  // What logging in or picking a server unlocks is shown locked, what the plan
+  // doesn't include is left out.
+  const shown = templates.flatMap<{
+    template: (typeof templates)[number];
+    locked: LockedReason | null;
+  }>((template) =>
+    templateAvailable(template.message, features)
+      ? [{ template, locked: null }]
+      : !features && lockedReason
+        ? [{ template, locked: lockedReason }]
+        : [],
   );
-
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  // On small screens the preview is below the list, out of sight.
-  const previewRef = useRef<HTMLDivElement>(null);
-  function select(id: string) {
-    setSelectedId(id);
-    previewRef.current?.scrollIntoView?.({
-      behavior: "smooth",
-      block: "nearest",
-    });
-  }
-  const selected =
-    available.find((t) => t.id === selectedId) ?? available[0] ?? null;
-
-  const selectedNeedsBot = !!selected && needsBot(selected.message);
 
   // Replacing a message with content asks first, as it's gone for good once
   // the page reloads.
@@ -77,10 +74,9 @@ export default function NewMessageView() {
     else setPendingReplace({ run });
   }
 
-  function applyTemplate() {
-    if (!selected) return;
-    setCurrentMessage(selected.message);
-    if (selectedNeedsBot) {
+  function applyTemplate(message: Message) {
+    setCurrentMessage(message);
+    if (needsBot(message)) {
       useSendSettingsStore.getState().setMode("channel");
     }
     navigate("/editor");
@@ -103,104 +99,34 @@ export default function NewMessageView() {
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row flex-auto min-h-0 overflow-y-auto md:overflow-y-hidden">
-            <div className="md:w-72 flex-none md:overflow-y-auto p-3 space-y-1 md:border-r border-white/5">
-              <OptionButton
-                icon={<DocumentIcon />}
-                label="Blank message"
-                description="Start from scratch"
-                onClick={() => replace(() => startBlank("/editor"))}
-              />
-              {aiAllowed && (
-                <OptionButton
-                  icon={<SparklesIcon className="text-amber-300" />}
-                  label="Describe it to the AI"
-                  description="The assistant builds it for you"
-                  onClick={() => replace(() => startBlank("/editor/assistant"))}
+          <div className="flex-auto min-h-0 overflow-y-auto">
+            <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {shown.map(({ template, locked }) => (
+                <TemplateCard
+                  key={template.id}
+                  template={template}
+                  locked={locked}
+                  onUse={() => replace(() => applyTemplate(template.message))}
                 />
-              )}
-
-              {templateGroups.map((group) => {
-                const inGroup = available.filter((t) => t.group === group);
-                return (
-                  inGroup.length > 0 && (
-                    <div key={group} className="pt-3">
-                      <div className="px-3 pb-1 uppercase text-xs font-medium text-mist-400">
-                        {group}
-                      </div>
-                      {inGroup.map((t) => (
-                        <OptionButton
-                          key={t.id}
-                          label={t.name}
-                          description={t.description}
-                          selected={t.id === selected?.id}
-                          onClick={() => select(t.id)}
-                        />
-                      ))}
-                    </div>
-                  )
-                );
-              })}
-
-              {!features && lockedReason && (
-                <div className="mt-3 p-3 rounded-lg bg-ink-800 border border-white/5 text-sm text-mist-300 space-y-2">
-                  <div className="flex items-center space-x-2 text-mist-100">
-                    <LockClosedIcon className="h-4 w-4 flex-none text-azure-400" />
-                    <div>More templates</div>
-                  </div>
-                  {lockedReason === "server" ? (
-                    <div>
-                      Select a server to see the Components V2 and interactive
-                      templates.
-                    </div>
-                  ) : (
-                    <>
-                      <div>
-                        Log in to see the Components V2 and interactive
-                        templates, and to build messages with the AI.
-                      </div>
-                      <LoginLink className="inline-block bg-azure-500 hover:bg-azure-400 transition-colors px-3 py-1.5 rounded-lg text-white font-medium">
-                        Log in
-                      </LoginLink>
-                    </>
-                  )}
-                </div>
-              )}
+              ))}
             </div>
+          </div>
 
-            {selected && (
-              <div
-                ref={previewRef}
-                className="flex-auto flex flex-col min-w-0 min-h-0"
+          <div className="flex-none flex flex-wrap justify-end gap-3 px-5 py-3 border-t border-white/5">
+            {aiAllowed && (
+              <FooterButton
+                icon={<SparklesIcon className="text-amber-300" />}
+                onClick={() => replace(() => startBlank("/editor/assistant"))}
               >
-                <div
-                  // A new element per template, so each preview starts at the top.
-                  key={selected.id}
-                  className="flex-auto md:overflow-y-auto bg-ink-800 px-5 py-3"
-                >
-                  <MessagePreview
-                    msg={selected.message}
-                    sendMode={selectedNeedsBot ? "channel" : undefined}
-                  />
-                </div>
-                <div className="flex-none flex items-center justify-end gap-3 px-5 py-3 border-t border-white/5">
-                  {selectedNeedsBot && (
-                    <div className="text-sm text-mist-400">
-                      {selected.group === "Interactive"
-                        ? "Needs the bot on your server. Pick the roles for each button before sending."
-                        : "Sent through the bot, as webhooks can't send components."}
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    className="flex-none bg-azure-500 hover:bg-azure-400 transition-colors px-4 py-2 rounded-lg text-white font-medium"
-                    onClick={() => replace(applyTemplate)}
-                  >
-                    Use template
-                  </button>
-                </div>
-              </div>
+                Describe it to the AI
+              </FooterButton>
             )}
+            <FooterButton
+              icon={<DocumentIcon />}
+              onClick={() => replace(() => startBlank("/editor"))}
+            >
+              Start from scratch
+            </FooterButton>
           </div>
         </div>
       </Modal>
@@ -216,33 +142,104 @@ export default function NewMessageView() {
   );
 }
 
-function OptionButton({
+// The preview renders at full width and is scaled down to fit the card.
+const THUMBNAIL_SCALE = 0.55;
+
+function TemplateCard({
+  template,
+  locked,
+  onUse,
+}: {
+  template: MessageTemplate & { message: Message };
+  locked: LockedReason | null;
+  onUse: () => void;
+}) {
+  return (
+    <div className="relative flex flex-col rounded-xl overflow-hidden bg-ink-800 border border-white/10 hover:border-white/25 focus-within:border-azure-400 transition-colors">
+      <div
+        className="h-1 flex-none"
+        style={{ backgroundColor: colorIntToHex(template.color) }}
+      />
+      <div
+        className="relative flex-none h-56 overflow-hidden pointer-events-none"
+        // Only a picture of the message, so its links and buttons stay out of
+        // the tab order. React 18 has no type for it yet.
+        {...{ inert: "" }}
+      >
+        <div
+          className="px-3 pt-2 origin-top-left"
+          style={{
+            width: `${100 / THUMBNAIL_SCALE}%`,
+            transform: `scale(${THUMBNAIL_SCALE})`,
+          }}
+        >
+          <MessagePreview
+            msg={template.message}
+            sendMode={needsBot(template.message) ? "channel" : undefined}
+          />
+        </div>
+        <div className="absolute inset-x-0 bottom-0 h-12 bg-linear-to-t from-ink-800" />
+      </div>
+      <div className="flex-auto px-4 pt-2 pb-4">
+        <div className="text-mist-100 font-medium">{template.name}</div>
+        <div className="text-sm text-mist-400">{template.description}</div>
+        {template.group !== "Embeds" && (
+          <div className="mt-3 inline-block rounded-full border border-white/15 px-2 py-0.5 text-xs text-mist-300">
+            {template.group}
+          </div>
+        )}
+      </div>
+
+      {locked ? (
+        <div className="absolute inset-0 bg-ink-900/60">
+          {locked === "login" ? (
+            <LoginLink className="absolute inset-0 flex items-start justify-center pt-24">
+              <LockedLabel>Log in to use</LockedLabel>
+            </LoginLink>
+          ) : (
+            <div className="flex items-start justify-center pt-24">
+              <LockedLabel>Select a server to use</LockedLabel>
+            </div>
+          )}
+        </div>
+      ) : (
+        <button
+          type="button"
+          aria-label={`Use ${template.name}`}
+          className="absolute inset-0 focus:outline-none"
+          onClick={onUse}
+        />
+      )}
+    </div>
+  );
+}
+
+function LockedLabel({ children }: { children: string }) {
+  return (
+    <div className="flex items-center space-x-2 rounded-full bg-ink-700 border border-white/10 px-3 py-1.5 text-sm text-mist-100">
+      <LockClosedIcon className="h-4 w-4 text-azure-400" />
+      <div>{children}</div>
+    </div>
+  );
+}
+
+function FooterButton({
   icon,
-  label,
-  description,
-  selected,
+  children,
   onClick,
 }: {
-  icon?: ReactNode;
-  label: string;
-  description: string;
-  selected?: boolean;
+  icon: ReactNode;
+  children: string;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
-      className={clsx(
-        "w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors",
-        selected ? "bg-white/10" : "hover:bg-white/5",
-      )}
+      className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-white/15 text-mist-100 hover:bg-white/5 hover:border-white/30 transition-colors"
       onClick={onClick}
     >
-      {icon && <div className="h-5 w-5 flex-none text-mist-300">{icon}</div>}
-      <div className="min-w-0">
-        <div className="text-sm text-mist-100">{label}</div>
-        <div className="text-xs text-mist-400">{description}</div>
-      </div>
+      <div className="h-5 w-5 flex-none text-mist-300">{icon}</div>
+      <div>{children}</div>
     </button>
   );
 }
