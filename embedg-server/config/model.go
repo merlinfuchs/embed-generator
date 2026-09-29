@@ -9,15 +9,16 @@ import (
 )
 
 type RootConfig struct {
-	API      APIConfig      `toml:"api"`
-	App      AppConfig      `toml:"app"`
-	CDN      CDNConfig      `toml:"cdn"`
-	Discord  DiscordConfig  `toml:"discord"`
-	Premium  PremiumConfig  `toml:"premium"`
-	Links    LinksConfig    `toml:"links"`
-	Logging  LoggingConfig  `toml:"logging"`
-	Database DatabaseConfig `toml:"database"`
-	OpenAI   OpenAIConfig   `toml:"openai"`
+	API       APIConfig       `toml:"api"`
+	App       AppConfig       `toml:"app"`
+	CDN       CDNConfig       `toml:"cdn"`
+	Discord   DiscordConfig   `toml:"discord"`
+	Premium   PremiumConfig   `toml:"premium"`
+	Links     LinksConfig     `toml:"links"`
+	Logging   LoggingConfig   `toml:"logging"`
+	Database  DatabaseConfig  `toml:"database"`
+	OpenAI    OpenAIConfig    `toml:"openai"`
+	Assistant AssistantConfig `toml:"assistant"`
 }
 
 func (cfg *RootConfig) Validate() error {
@@ -160,4 +161,16 @@ type S3Config struct {
 
 type OpenAIConfig struct {
 	APIKey string `toml:"api_key"`
+}
+
+// AssistantConfig configures the AI assistant that builds messages in the editor. It uses the
+// OpenAI API key.
+type AssistantConfig struct {
+	Model           string `toml:"model"`
+	ReasoningEffort string `toml:"reasoning_effort"`
+	// MaxOutputTokens caps each model call, reasoning included, so a prompt's cost is bounded.
+	MaxOutputTokens int `toml:"max_output_tokens"`
+	// MaxRepairs is how often the assistant may fix problems with the message it produced
+	// without them counting as new prompts.
+	MaxRepairs int `toml:"max_repairs"`
 }

@@ -17,13 +17,13 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
+	"github.com/merlinfuchs/embed-generator/embedg-server/assistant"
 	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"github.com/merlinfuchs/embed-generator/embedg-server/guildstate"
 	"github.com/merlinfuchs/embed-generator/embedg-server/manager/custom_bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/manager/premium"
 	"github.com/merlinfuchs/embed-generator/embedg-server/manager/webhook"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
-	"github.com/sashabaranov/go-openai"
 )
 
 type APIConfig struct {
@@ -188,7 +188,8 @@ type Env struct {
 	ActionHandler         *handler.ActionHandler
 	Rest                  rest.Rest
 	ShardManager          sharding.ShardManager
-	OpenAIClient          *openai.Client
+	Assistant             *assistant.Assistant
+	AssistantPromptStore  store.AssistantPromptStore
 	FileStore             store.FileStore
 	AppContext            store.AppContext
 	EventDispatcher       store.EventDispatcher

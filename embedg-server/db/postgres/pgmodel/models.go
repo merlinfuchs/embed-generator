@@ -8,6 +8,21 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AssistantPrompt struct {
+	ID                string
+	GuildID           string
+	UserID            string
+	Model             string
+	Prompt            string
+	Edited            bool
+	Rounds            int32
+	InputTokens       int32
+	CachedInputTokens int32
+	OutputTokens      int32
+	CreatedAt         pgtype.Timestamp
+	UpdatedAt         pgtype.Timestamp
+}
+
 type CustomBot struct {
 	ID                      string
 	GuildID                 string

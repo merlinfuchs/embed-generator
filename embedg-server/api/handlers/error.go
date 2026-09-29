@@ -45,3 +45,11 @@ func BadRequest(code string, message string) *wire.Error {
 		Message: message,
 	}
 }
+
+func ServiceUnavailable(code string, message string) *wire.Error {
+	return &wire.Error{
+		Status:  fiber.StatusServiceUnavailable,
+		Code:    code,
+		Message: message,
+	}
+}

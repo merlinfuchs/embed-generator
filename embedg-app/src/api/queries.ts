@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type {
+  AssistantUsageResponseWire,
   CustomBotGetResponseWire,
   GetPremiumPlanFeaturesResponseWire,
   ListChannelsResponseWire,
@@ -164,6 +165,17 @@ export function useSharedMessageQuery(messageId: string | null) {
       return fetch(url).then((res) => handleApiResponse(res.json()));
     },
     enabled: !!messageId,
+  });
+}
+
+export function useAssistantUsageQuery(guildId: string | null) {
+  return useQuery<AssistantUsageResponseWire>({
+    queryKey: ["assistant", "usage", guildId],
+    queryFn: () =>
+      fetch(`/api/assistant/usage?guild_id=${guildId}`).then((res) =>
+        handleApiResponse(res.json()),
+      ),
+    enabled: !!guildId,
   });
 }
 

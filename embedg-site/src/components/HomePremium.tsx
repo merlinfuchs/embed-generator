@@ -7,7 +7,7 @@ const perks = [
   "Your own bot name and avatar",
   "Custom slash commands",
   "Recurring scheduled messages",
-  "AI assistant",
+  "More AI assistant prompts",
 ];
 
 export default function HomePremium(): JSX.Element {

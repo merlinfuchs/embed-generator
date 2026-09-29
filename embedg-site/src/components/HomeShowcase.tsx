@@ -98,10 +98,9 @@ const features: {
   {
     id: "ai",
     name: "AI assistant",
-    blurb: "Draft a message from a sentence.",
+    blurb: "Build a message by chatting with AI.",
     href: "/docs/features/ai-assistant",
     icon: SparklesIcon,
-    premium: true,
   },
 ];
 

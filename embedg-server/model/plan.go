@@ -12,7 +12,6 @@ type PlanFeatures struct {
 	MaxSavedMessages          int   `toml:"max_saved_messages"`
 	MaxActionsPerComponent    int   `toml:"max_actions_per_component"`
 	AdvancedActionTypes       bool  `toml:"advanced_action_types"`
-	AIAssistant               bool  `toml:"ai_assistant"`
 	CustomBot                 bool  `toml:"custom_bot"`
 	ComponentsV2              bool  `toml:"components_v2"`
 	ComponentTypes            []int `toml:"component_types"`
@@ -23,6 +22,9 @@ type PlanFeatures struct {
 	PeriodicScheduledMessages bool  `toml:"periodic_scheduled_messages"`
 	MaxTemplateOps            int   `toml:"max_template_ops"`
 	MaxKVKeys                 int   `toml:"max_kv_keys"`
+	// MaxAIPromptsPerMonth is how many prompts that change the message the AI assistant takes a
+	// month. 0 turns it off.
+	MaxAIPromptsPerMonth int `toml:"max_ai_prompts_per_month"`
 }
 
 func (f *PlanFeatures) Merge(b PlanFeatures) {
@@ -47,9 +49,11 @@ func (f *PlanFeatures) Merge(b PlanFeatures) {
 	if b.MaxKVKeys > f.MaxKVKeys {
 		f.MaxKVKeys = b.MaxKVKeys
 	}
+	if b.MaxAIPromptsPerMonth > f.MaxAIPromptsPerMonth {
+		f.MaxAIPromptsPerMonth = b.MaxAIPromptsPerMonth
+	}
 
 	f.AdvancedActionTypes = f.AdvancedActionTypes || b.AdvancedActionTypes
-	f.AIAssistant = f.AIAssistant || b.AIAssistant
 	f.IsPremium = f.IsPremium || b.IsPremium
 	f.CustomBot = f.CustomBot || b.CustomBot
 	f.ComponentsV2 = f.ComponentsV2 || b.ComponentsV2

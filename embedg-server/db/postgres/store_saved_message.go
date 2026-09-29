@@ -122,6 +122,22 @@ func (c *Client) GetSavedMessageForGuild(ctx context.Context, guildID common.ID,
 	return rowToSavedMessage(row), nil
 }
 
+func (c *Client) GetSavedMessageNamesForGuild(ctx context.Context, guildID common.ID, limit int) ([]model.SavedMessage, error) {
+	rows, err := c.Q.GetSavedMessageNamesForGuild(ctx, pgmodel.GetSavedMessageNamesForGuildParams{
+		GuildID:  pgtype.Text{String: guildID.String(), Valid: true},
+		MaxCount: int32(limit),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	messages := make([]model.SavedMessage, len(rows))
+	for i, row := range rows {
+		messages[i] = model.SavedMessage{ID: row.ID, Name: row.Name}
+	}
+	return messages, nil
+}
+
 func rowsToSavedMessages(rows []pgmodel.SavedMessage) []model.SavedMessage {
 	messages := make([]model.SavedMessage, len(rows))
 	for i, row := range rows {
