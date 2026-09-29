@@ -1,4 +1,6 @@
 import {
+  ArrowUturnLeftIcon,
+  ArrowUturnRightIcon,
   ClockIcon,
   InformationCircleIcon,
   PaperAirplaneIcon,
@@ -7,7 +9,14 @@ import {
   XMarkIcon,
 } from "@heroicons/react/20/solid";
 import clsx from "clsx";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import {
+  memo,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import { Link, useNavigate } from "react-router-dom";
 import { useAssistantChatMutation } from "../../api/mutations";
@@ -23,6 +32,10 @@ import {
   getCurrentMessage,
   setCurrentMessage,
 } from "../../state/currentMessage";
+import {
+  useDocumentStoreApi,
+  useDocumentUndoStore,
+} from "../../state/document";
 import { useSendSettingsStore } from "../../state/sendSettings";
 import { runAssistantPrompt } from "../../util/assistant";
 import { usePremiumGuildFeatures } from "../../util/premium";
@@ -139,25 +152,17 @@ export default function AssistantView() {
           <div>AI Assistant</div>
         </div>
         <div className="flex items-center space-x-1">
-          <button
-            type="button"
-            title="New chat"
-            aria-label="New chat"
+          <UndoButtons />
+          <HeaderButton
+            label="New chat"
             disabled={busy || entries.length === 0}
-            className="p-1.5 rounded-lg text-mist-300 hover:text-mist-100 hover:bg-white/5 disabled:text-mist-500 disabled:hover:bg-transparent"
             onClick={clear}
           >
             <PencilSquareIcon className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            title="Close"
-            aria-label="Close"
-            className="p-1.5 rounded-lg text-mist-300 hover:text-mist-100 hover:bg-white/5"
-            onClick={() => navigate("/editor")}
-          >
+          </HeaderButton>
+          <HeaderButton label="Close" onClick={() => navigate("/editor")}>
             <XMarkIcon className="h-5 w-5" />
-          </button>
+          </HeaderButton>
         </div>
       </div>
 
@@ -258,6 +263,58 @@ export default function AssistantView() {
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * Undo and redo, as the editor with its own buttons is hidden next to the
+ * chat on smaller screens. The editor's buttons stay mounted and own the
+ * keyboard shortcuts, so they aren't handled twice.
+ */
+function UndoButtons() {
+  const { undo, redo } = useDocumentStoreApi().temporal.getState();
+  const isTracking = useDocumentUndoStore((s) => s.isTracking);
+  const canUndo = useDocumentUndoStore((s) => s.pastStates.length !== 0);
+  const canRedo = useDocumentUndoStore((s) => s.futureStates.length !== 0);
+
+  // Off when edit history is turned off in the settings.
+  if (!isTracking) return null;
+
+  return (
+    <>
+      <HeaderButton label="Undo" disabled={!canUndo} onClick={() => undo(1)}>
+        <ArrowUturnLeftIcon className="h-5 w-5" />
+      </HeaderButton>
+      <HeaderButton label="Redo" disabled={!canRedo} onClick={() => redo(1)}>
+        <ArrowUturnRightIcon className="h-5 w-5" />
+      </HeaderButton>
+      <div className="h-5 w-px bg-white/10 mx-1" />
+    </>
+  );
+}
+
+function HeaderButton({
+  label,
+  disabled,
+  onClick,
+  children,
+}: {
+  label: string;
+  disabled?: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      disabled={disabled}
+      className="p-1.5 rounded-lg text-mist-300 hover:text-mist-100 hover:bg-white/5 disabled:text-mist-500 disabled:hover:bg-transparent"
+      onClick={onClick}
+    >
+      {children}
+    </button>
   );
 }
 
