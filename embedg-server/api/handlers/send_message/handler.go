@@ -28,7 +28,7 @@ import (
 
 type SendMessageHandler struct {
 	rest           rest.Rest
-	fluxerRest     rest.Rest
+	fluxer         *fluxerClient
 	guildState     *guildstate.Provider
 	kvEntryStore   store.KVEntryStore
 	webhookManager *webhook.WebhookManager
@@ -48,7 +48,7 @@ func New(
 ) *SendMessageHandler {
 	return &SendMessageHandler{
 		rest:           rest,
-		fluxerRest:     newFluxerRest(fluxerAPIURL),
+		fluxer:         newFluxerClient(fluxerAPIURL),
 		guildState:     guildState,
 		kvEntryStore:   kvEntryStore,
 		webhookManager: webhookManager,
@@ -114,17 +114,9 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		params.TTS = data.TTS
 	}
 
-	for _, attachment := range req.Attachments {
-		dataURL, err := dataurl.DecodeString(attachment.DataURL)
-		if err != nil {
-			return handlers.BadRequest("invalid_attachments", "Failed to parse attachment data URL")
-		}
-
-		params.Files = append(params.Files, &discord.File{
-			Name: attachment.Name,
-			// ContentType: dataURL.ContentType(),
-			Reader: bytes.NewReader(dataURL.Data),
-		})
+	params.Files, err = decodeAttachments(req.Attachments)
+	if err != nil {
+		return err
 	}
 
 	params.Components, err = h.actionParser.ParseMessageComponents(data.Components, true)
@@ -184,11 +176,8 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		return err
 	}
 
-	fluxer := req.WebhookPlatform == wire.WebhookPlatformFluxer
-	if fluxer {
-		if err := checkFluxerMessage(data, req); err != nil {
-			return err
-		}
+	if req.WebhookPlatform == wire.WebhookPlatformFluxer {
+		return h.sendToFluxerWebhook(c, req, data)
 	}
 
 	params := discord.WebhookMessageCreate{
@@ -213,61 +202,43 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		return handlers.BadRequest("invalid_components", err.Error())
 	}
 
-	for _, attachment := range req.Attachments {
-		dataURL, err := dataurl.DecodeString(attachment.DataURL)
-		if err != nil {
-			return handlers.BadRequest("invalid_attachments", "Failed to parse attachment data URL")
-		}
-
-		params.Files = append(params.Files, &discord.File{
-			Name: attachment.Name,
-			// ContentType: dataURL.ContentType(),
-			Reader: bytes.NewReader(dataURL.Data),
-		})
+	params.Files, err = decodeAttachments(req.Attachments)
+	if err != nil {
+		return err
 	}
-
-	client := h.webhookRest(req.WebhookPlatform)
 
 	var msg *discord.Message
 	if req.MessageID.Valid {
-		update := discord.WebhookMessageUpdate{
-			Content:         &params.Content,
-			Embeds:          &params.Embeds,
-			AllowedMentions: params.AllowedMentions,
-			Files:           params.Files,
-			Flags:           componentsV2Flag(data),
-		}
-		// Fluxer's edits only take content, embeds, flags and allowed mentions.
-		if !fluxer {
-			update.Components = &params.Components
-		}
-
-		msg, err = client.UpdateWebhookMessage(
+		msg, err = h.rest.UpdateWebhookMessage(
 			common.DefinitelyID(req.WebhookID),
 			req.WebhookToken,
 			req.MessageID.ID,
-			update,
+			discord.WebhookMessageUpdate{
+				Content:         &params.Content,
+				Embeds:          &params.Embeds,
+				Components:      &params.Components,
+				AllowedMentions: params.AllowedMentions,
+				Files:           params.Files,
+				Flags:           componentsV2Flag(data),
+			},
 			rest.UpdateWebhookMessageParams{
 				ThreadID:       req.ThreadID.ID,
-				WithComponents: !fluxer,
+				WithComponents: true,
 			},
 		)
 	} else {
-		msg, err = client.CreateWebhookMessage(
+		msg, err = h.rest.CreateWebhookMessage(
 			common.DefinitelyID(req.WebhookID),
 			req.WebhookToken,
 			params,
 			rest.CreateWebhookMessageParams{
 				Wait:           true,
 				ThreadID:       req.ThreadID.ID,
-				WithComponents: !fluxer,
+				WithComponents: true,
 			},
 		)
 	}
 	if err != nil {
-		if fluxer {
-			return fluxerError(err)
-		}
 		if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeUnknownWebhook) {
 			return handlers.NotFound("unknown_webhook", "The webhook does not exist.")
 		}
@@ -283,18 +254,21 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 	})
 }
 
-// checkFluxerMessage rejects what Fluxer's webhooks can't send, instead of leaving it out.
-func checkFluxerMessage(data *actions.MessageWithActions, req wire.MessageSendToWebhookRequestWire) error {
-	if data.ComponentsV2Enabled() || len(data.Components) > 0 {
-		return handlers.BadRequest("invalid_components", "Fluxer doesn't support components yet. Remove them and turn off Components V2 to send the message to Fluxer.")
+func decodeAttachments(attachments []*wire.MessageAttachmentWire) ([]*discord.File, error) {
+	files := make([]*discord.File, 0, len(attachments))
+	for _, attachment := range attachments {
+		dataURL, err := dataurl.DecodeString(attachment.DataURL)
+		if err != nil {
+			return nil, handlers.BadRequest("invalid_attachments", "Failed to parse attachment data URL")
+		}
+
+		files = append(files, &discord.File{
+			Name: attachment.Name,
+			// ContentType: dataURL.ContentType(),
+			Reader: bytes.NewReader(dataURL.Data),
+		})
 	}
-	if req.ThreadID.Valid {
-		return handlers.BadRequest("invalid_thread", "Fluxer doesn't have threads.")
-	}
-	if req.MessageID.Valid && len(req.Attachments) > 0 {
-		return handlers.BadRequest("invalid_attachments", "Fluxer can't change the files of a message when editing it. Remove the attachments to edit it, or send it as a new message.")
-	}
-	return nil
+	return files, nil
 }
 
 // componentsV2Flag turns an edited message into a Components V2 one, which Discord needs to be told

@@ -72,9 +72,8 @@ func (h *SendMessageHandler) HandleRestoreMessageFromChannel(c *fiber.Ctx, req w
 }
 
 func (h *SendMessageHandler) HandleRestoreMessageFromWebhook(c *fiber.Ctx, req wire.MessageRestoreFromWebhookRequestWire) error {
-	fluxer := req.WebhookPlatform == wire.WebhookPlatformFluxer
-	if fluxer && req.ThreadID.Valid {
-		return handlers.BadRequest("invalid_thread", "Fluxer doesn't have threads.")
+	if req.WebhookPlatform == wire.WebhookPlatformFluxer {
+		return h.restoreFromFluxerWebhook(c, req)
 	}
 
 	reqOpts := []rest.RequestOpt{
@@ -84,11 +83,8 @@ func (h *SendMessageHandler) HandleRestoreMessageFromWebhook(c *fiber.Ctx, req w
 		reqOpts = append(reqOpts, rest.WithQueryParam("thread_id", req.ThreadID.String))
 	}
 
-	msg, err := h.webhookRest(req.WebhookPlatform).GetWebhookMessage(req.WebhookID, req.WebhookToken, req.MessageID, reqOpts...)
+	msg, err := h.rest.GetWebhookMessage(req.WebhookID, req.WebhookToken, req.MessageID, reqOpts...)
 	if err != nil {
-		if fluxer {
-			return fluxerError(err)
-		}
 		if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeUnknownWebhook) {
 			return handlers.NotFound("unknown_webhook", "The webhook does not exist.")
 		}
@@ -103,16 +99,11 @@ func (h *SendMessageHandler) HandleRestoreMessageFromWebhook(c *fiber.Ctx, req w
 		return fmt.Errorf("Failed to unparse message components: %w", err)
 	}
 
-	avatarURL := msg.Author.EffectiveAvatarURL(discord.WithSize(512))
-	if fluxer {
-		avatarURL = fluxerAvatarURL(msg.Author)
-	}
-
 	// Webhooks only send link buttons and layout components, so there are no actions to restore.
 	data := &actions.MessageWithActions{
 		Content:    msg.Content,
 		Username:   msg.Author.Username,
-		AvatarURL:  avatarURL,
+		AvatarURL:  msg.Author.EffectiveAvatarURL(discord.WithSize(512)),
 		Embeds:     msg.Embeds,
 		Components: components,
 		Flags:      msg.Flags,
