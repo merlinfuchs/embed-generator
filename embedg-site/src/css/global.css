@@ -69,6 +69,16 @@ html[data-theme="dark"] .navbar {
   backdrop-filter: blur(12px);
 }
 
+/* backdrop-filter makes the navbar the containing block of the fixed mobile
+   sidebar, which clips the sidebar to the navbar's height. */
+html[data-theme="dark"] .navbar.navbar-sidebar--show {
+  backdrop-filter: none;
+}
+
+html[data-theme="dark"] .navbar-sidebar {
+  background-color: #1e1f22;
+}
+
 html[data-theme="dark"] .footer--dark {
   --ifm-footer-background-color: #111214;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
