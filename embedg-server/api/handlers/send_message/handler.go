@@ -48,7 +48,7 @@ func New(
 ) *SendMessageHandler {
 	return &SendMessageHandler{
 		rest:           rest,
-		fluxerRest:     newFluxerRest(),
+		fluxerRest:     newFluxerRest(fluxerAPIURL),
 		guildState:     guildState,
 		kvEntryStore:   kvEntryStore,
 		webhookManager: webhookManager,

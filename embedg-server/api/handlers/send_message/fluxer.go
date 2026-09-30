@@ -1,9 +1,11 @@
 package send_message
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
@@ -18,9 +20,20 @@ const (
 	fluxerMediaURL = "https://fluxerusercontent.com"
 )
 
-func newFluxerRest() rest.Rest {
-	return rest.New(rest.NewClient("", rest.WithURL(fluxerAPIURL)))
+func newFluxerRest(url string) rest.Rest {
+	return rest.New(rest.NewClient("", rest.WithURL(url), rest.WithRateLimiter(fluxerRateLimiter{})))
 }
+
+// fluxerRateLimiter leaves rate limits to Fluxer. disgo's limiter reads a 429 without Cloudflare's
+// via header as a global limit, which on this client shared by all users would hold up every
+// Fluxer send. A 429 goes back to the user instead, as Fluxer limits each webhook on its own.
+type fluxerRateLimiter struct{}
+
+func (fluxerRateLimiter) MaxRetries() int                                     { return 0 }
+func (fluxerRateLimiter) Close(context.Context)                               {}
+func (fluxerRateLimiter) Reset()                                              {}
+func (fluxerRateLimiter) Wait(context.Context, *rest.CompiledEndpoint) error  { return nil }
+func (fluxerRateLimiter) Unlock(*rest.CompiledEndpoint, *http.Response) error { return nil }
 
 // webhookRest is the client for webhooks on the platform.
 func (h *SendMessageHandler) webhookRest(platform wire.WebhookPlatform) rest.Rest {
@@ -44,13 +57,20 @@ func fluxerError(err error) error {
 	}
 	_ = json.Unmarshal(restErr.RsBody, &body)
 
+	status := restErr.Response.StatusCode
 	switch {
 	case body.Code == "UNKNOWN_WEBHOOK":
 		return handlers.NotFound("unknown_webhook", "The webhook does not exist.")
 	case body.Code == "UNKNOWN_MESSAGE":
 		return handlers.NotFound("unknown_message", "The message does not exist.")
-	case restErr.Response.StatusCode >= 400 && restErr.Response.StatusCode < 500:
-		return handlers.BadRequest("fluxer_error", fmt.Sprintf("Fluxer rejected the request: %s", body.Message))
+	case status == http.StatusTooManyRequests:
+		return handlers.BadRequest("rate_limited", "Fluxer is rate limiting this webhook, try again in a few seconds.")
+	case status >= 400 && status < 500:
+		message := body.Message
+		if message == "" {
+			message = http.StatusText(status)
+		}
+		return handlers.BadRequest("fluxer_error", fmt.Sprintf("Fluxer rejected the request: %s", message))
 	}
 	return err
 }

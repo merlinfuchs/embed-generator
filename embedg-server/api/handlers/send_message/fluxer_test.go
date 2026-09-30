@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/disgoorg/disgo/discord"
-	"github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
@@ -84,13 +83,15 @@ func fakeFluxer(t *testing.T, status int, response string) (*SendMessageHandler,
 		requests = append(requests, req)
 
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("X-RateLimit-Bucket", "0123456789abcdef")
+		w.Header().Set("Retry-After", "1")
 		w.WriteHeader(status)
 		_, _ = w.Write([]byte(response))
 	}))
 	t.Cleanup(srv.Close)
 
 	h := &SendMessageHandler{
-		fluxerRest:   rest.New(rest.NewClient("", rest.WithURL(srv.URL+"/v1"))),
+		fluxerRest:   newFluxerRest(srv.URL + "/v1"),
 		actionParser: &parser.ActionParser{},
 	}
 	return h, &requests
@@ -174,16 +175,21 @@ func TestFluxerErrors(t *testing.T) {
 	}{
 		{name: "unknown webhook", status: http.StatusNotFound, response: `{"code":"UNKNOWN_WEBHOOK","message":"Unknown webhook."}`, want: http.StatusNotFound},
 		{name: "invalid body", status: http.StatusBadRequest, response: `{"code":"INVALID_FORM_BODY","message":"Invalid form body"}`, want: http.StatusBadRequest},
+		{name: "rate limited", status: http.StatusTooManyRequests, response: `{"code":"RATE_LIMITED","message":"You are being rate limited.","global":false,"retry_after":0.4}`, want: http.StatusBadRequest},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h, _ := fakeFluxer(t, tt.status, tt.response)
+			h, requests := fakeFluxer(t, tt.status, tt.response)
 
 			err := sendToFluxer(t, h, fluxerSendRequest(`{"content":"hi"}`))
 			var e *wire.Error
 			if !errors.As(err, &e) || e.Status != tt.want {
 				t.Fatalf("want a %d error, got %v", tt.want, err)
+			}
+			// A 429 goes back to the user rather than being retried.
+			if len(*requests) != 1 {
+				t.Fatalf("want one request to Fluxer, got %d", len(*requests))
 			}
 		})
 	}

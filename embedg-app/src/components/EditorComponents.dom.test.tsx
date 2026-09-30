@@ -56,6 +56,7 @@ test("components already in the message stay for Fluxer, so they can be removed"
   expect(
     screen.getByRole("button", { name: "Clear Components" }),
   ).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /Add Component/ })).toBeNull();
 });
 
 test("adding a button row puts an action row in the message", async () => {
