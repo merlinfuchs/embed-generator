@@ -1,4 +1,4 @@
-import { ChevronUpIcon, StarIcon } from "@heroicons/react/20/solid";
+import { ChevronUpIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
 import {
   type NewNode,
@@ -9,8 +9,6 @@ import {
 import { useState } from "react";
 import { useEditorCapabilities } from "../state/editorCapabilities";
 import ClickOutsideHandler from "./ClickOutsideHandler";
-import { usePremiumGuildFeatures } from "../util/premium";
-import { useNavigate } from "react-router-dom";
 
 interface Props {
   context: "root" | "container";
@@ -34,17 +32,8 @@ export default function EditorComponentAddDropdown({
     setOpen(false);
   }
 
-  const navigate = useNavigate();
-
   const componentsV2Enabled = useComponentsV2Enabled();
-  const { componentTypes: allowedTypes } = useEditorCapabilities();
-
-  const features = usePremiumGuildFeatures();
-  const unlockedTypes = features?.component_types ?? [];
-
-  // A surface with its own component types isn't part of what a plan unlocks.
-  const unlocked = (componentType: number) =>
-    allowedTypes !== null || unlockedTypes.includes(componentType);
+  const { componentTypes: allowedTypes, interactive } = useEditorCapabilities();
 
   function addSelectMenuRow() {
     const rowId = insert(parentId, "components", "end", { type: "actionRow" });
@@ -115,6 +104,7 @@ export default function EditorComponentAddDropdown({
     if (c.v2Only && !componentsV2Enabled) return false;
     if (c.rootOnly && context !== "root") return false;
     if (allowedTypes && !allowedTypes.includes(c.type)) return false;
+    if (c.type === 3 && !interactive) return false;
 
     return true;
   });
@@ -148,22 +138,13 @@ export default function EditorComponentAddDropdown({
                 aria-label={componentType.label}
                 className="px-3 py-2 rounded-lg text-white hover:bg-ink-700 w-full text-left flex items-center gap-2"
                 onClick={() => {
-                  if (unlocked(componentType.type)) {
-                    if (componentType.handler) {
-                      componentType.handler();
-                    } else if (componentType.node) {
-                      addComponent(componentType.node);
-                    }
-                  } else {
-                    navigate("/premium");
+                  if (componentType.handler) {
+                    componentType.handler();
+                  } else if (componentType.node) {
+                    addComponent(componentType.node);
                   }
                 }}
               >
-                {!unlocked(componentType.type) && (
-                  <div className="text-amber-300">
-                    <StarIcon className="w-4 h-4" />
-                  </div>
-                )}
                 <div className="flex items-center space-x-2">
                   Add {componentType.label}
                 </div>

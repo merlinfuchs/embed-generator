@@ -152,27 +152,13 @@ func hasAccessory(section map[string]any) bool {
 	return true
 }
 
-// check reports what the plan doesn't include and the roles and saved messages the actions use
-// that the guild doesn't have.
+// check reports what the plan doesn't include, components where they can't be, and the roles and
+// saved messages the actions use that the guild doesn't have.
 func check(msg map[string]any, guild Guild) []string {
 	var issues []string
 	f := guild.Features
 
-	if flags, _ := msg["flags"].(float64); discord.MessageFlags(flags).Has(discord.MessageFlagIsComponentsV2) && !f.ComponentsV2 {
-		issues = append(issues, "flags: The plan doesn't include components v2.")
-	}
-
 	issues = append(issues, checkPlacement(msg)...)
-
-	// Once per type and without a path, so a problem the message already had stays the same when
-	// the model moves components around.
-	var types []int
-	walkComponents(msg, func(c map[string]any, _ string) {
-		if t := int(typeOf(c)); !slices.Contains(f.ComponentTypes, t) && !slices.Contains(types, t) {
-			types = append(types, t)
-			issues = append(issues, fmt.Sprintf("The plan doesn't include components of type %d.", t))
-		}
-	})
 
 	raw, _ := json.Marshal(msg["actions"])
 	var sets map[string]actions.ActionSet

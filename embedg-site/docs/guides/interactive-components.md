@@ -7,7 +7,7 @@ description: "Full guide to buttons, select menus and actions in Embed Generator
 
 Interactive Components can be added to your messages to allow users to interact with them. Right now there are two types of Interactive Components: buttons & select menus.
 
-Interactive Components are only available after logging in and selecting a channel. They aren't available when sending to a Webhook directly. The option can be found at the very bottom of the message editor.
+Buttons with actions and select menus are only available after logging in and selecting a channel. When sending to a webhook, only link buttons work. The option can be found at the very bottom of the message editor.
 
 ![Interactive Components](./interactive-components.png)
 

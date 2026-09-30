@@ -35,7 +35,7 @@ export default function EditorComponentSection({
   const actions = useNodeActions(id);
   const { insert, removeChildren } = useDocumentStoreApi().getState();
 
-  const { linkButtonsOnly } = useEditorCapabilities();
+  const { interactive } = useEditorCapabilities();
 
   const accessoryType = useDocument(
     (state) => state.nodes[data?.accessoryId ?? ""]?.type,
@@ -53,7 +53,7 @@ export default function EditorComponentSection({
       insert(id, "accessory", "end", {
         type: "button",
         label: "",
-        style: linkButtonsOnly ? 5 : 1,
+        style: interactive ? 1 : 5,
       });
     }
   }

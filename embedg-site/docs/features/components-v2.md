@@ -9,10 +9,6 @@ Components V2 is Discord's newer message layout system. Instead of one text bloc
 
 Components V2 replaces regular embeds. A message uses one or the other, not both.
 
-:::info Premium
-Some Components V2 components are only available with [Embed Generator Premium](../premium).
-:::
-
 ![Components V2 Example](./components-v2.png)
 
 ## What you can build with it
@@ -37,6 +33,6 @@ You can also disable Components V2 by clicking on the "Components V2" button aga
 
 ## Things to know
 
-- Components V2 messages can be sent through webhooks and through the bot.
+- Components V2 messages can be sent through webhooks and through the bot. Buttons with actions and select menus need the bot, so pick a channel instead of a webhook for those.
 - Saved messages, scheduled messages and custom command responses all work with Components V2.
 - Older Discord clients may render these messages slightly differently, so check the preview on mobile and desktop for important posts.

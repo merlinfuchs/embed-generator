@@ -29,7 +29,7 @@ The message appears in the channel right away. Sending the same message again ed
 
 ## What webhooks can and can't do
 
-Webhooks can send content, embeds, files and Components V2 layouts, with a custom name and avatar per message.
+Webhooks can send content, embeds, files, link buttons and Components V2 layouts, with a custom name and avatar per message.
 
 Webhooks can't handle clicks. Buttons that hand out roles, select menus and slash commands need the Embed Generator bot on your server, because something has to receive the interaction. Log in, invite the bot, and pick a channel as the target instead of a webhook to use [interactive components](./interactive-components).
 

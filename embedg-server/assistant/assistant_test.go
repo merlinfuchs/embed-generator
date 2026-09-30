@@ -61,8 +61,6 @@ var testGuild = Guild{
 		{ID: "abc", Name: "Rules"},
 	},
 	Features: model.PlanFeatures{
-		ComponentsV2:           true,
-		ComponentTypes:         []int{17, 1, 2},
 		MaxActionsPerComponent: 3,
 	},
 }
@@ -130,7 +128,6 @@ func TestRespond(t *testing.T) {
 		"- 4 \"Server Booster\" (managed, can't be given or taken)",
 		"- <a:party:3>",
 		"- abc \"Rules\"",
-		"- Component types: 1, 2, 17",
 		"- Actions per button or select menu option: 3",
 	} {
 		if !strings.Contains(guild["content"].(string), want) {

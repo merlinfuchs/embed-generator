@@ -342,19 +342,8 @@ func describeGuild(guild Guild) string {
 		fmt.Fprintf(&b, "\n- %s %q", m.ID, m.Name)
 	}
 
-	f := guild.Features
 	b.WriteString("\n\nPlan:")
-	if f.ComponentsV2 {
-		b.WriteString("\n- Components v2: yes")
-	} else {
-		b.WriteString("\n- Components v2: no")
-	}
-	types := make([]string, len(f.ComponentTypes))
-	for i, t := range slices.Sorted(slices.Values(f.ComponentTypes)) {
-		types[i] = fmt.Sprint(t)
-	}
-	fmt.Fprintf(&b, "\n- Component types: %s", strings.Join(types, ", "))
-	fmt.Fprintf(&b, "\n- Actions per button or select menu option: %d", f.MaxActionsPerComponent)
+	fmt.Fprintf(&b, "\n- Actions per button or select menu option: %d", guild.Features.MaxActionsPerComponent)
 
 	return b.String()
 }

@@ -6,14 +6,17 @@ import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { parseMessageId, parseWebhookUrl } from "../discord/util";
+import InteractiveWebhookNotice from "./InteractiveWebhookNotice";
 import MessageRestoreButton from "./MessageRestoreButton";
 import { useToasts } from "../util/toasts";
 import { getCurrentMessage } from "../state/currentMessage";
+import { useHasInteractiveComponents } from "../state/document";
 
 export default function SendMenuWebhook() {
   const validationError = useValidationErrorStore((state) =>
     state.hasAnyIssue(),
   );
+  const interactive = useHasInteractiveComponents();
 
   const [webhookUrl, setWebhookUrl] = useSendSettingsStore(
     useShallow((state) => [state.webhookUrl, state.setWebhookUrl]),
@@ -34,20 +37,20 @@ export default function SendMenuWebhook() {
 
   const createToast = useToasts((state) => state.create);
 
-  // One predicate per button, used for both the styling and the disabled attribute. Only Discord
-  // webhooks can edit a message they sent.
+  // Used for both the styling and the disabled attribute of both buttons.
   const canSend =
-    !validationError && !!webhookInfo && !sendToWebhookMutation.isPending;
-  const canEdit = canSend && webhookInfo?.type === "discord";
+    !validationError &&
+    !interactive &&
+    !!webhookInfo &&
+    !sendToWebhookMutation.isPending;
 
   function send(edit: boolean) {
-    if (edit ? !canEdit : !canSend) return;
+    if (!canSend) return;
     // Already covered by the predicate, repeated so webhookInfo narrows to non-null below.
     if (!webhookInfo) return;
 
     sendToWebhookMutation.mutate(
       {
-        webhook_type: webhookInfo.type,
         webhook_id: webhookInfo.id,
         webhook_token: webhookInfo.token,
         message_id: edit ? messageId : null,
@@ -115,10 +118,7 @@ export default function SendMenuWebhook() {
           />
         </div>
       </div>
-      <div className="text-orange-300 font-light">
-        Interactive components are only available when selecting a server and
-        channel instead of sending to a webhook.
-      </div>
+      {interactive && <InteractiveWebhookNotice />}
       <div>
         {validationError && (
           <div className="flex items-center text-red space-x-1">
@@ -137,15 +137,11 @@ export default function SendMenuWebhook() {
             <button
               type="button"
               className={`px-3 py-2 rounded-lg text-white flex items-center space-x-3 ${
-                canEdit
+                canSend
                   ? "bg-azure-500 hover:bg-azure-400 cursor-pointer"
                   : "cursor-not-allowed bg-ink-900"
               }`}
-              disabled={
-                !!validationError ||
-                !webhookInfo ||
-                webhookInfo.type !== "discord"
-              }
+              disabled={!canSend}
               onClick={() => send(true)}
             >
               {sendToWebhookMutation.isPending && (
@@ -161,7 +157,7 @@ export default function SendMenuWebhook() {
                 ? "bg-azure-500 hover:bg-azure-400 cursor-pointer"
                 : "cursor-not-allowed bg-ink-900"
             }`}
-            disabled={!!validationError || !webhookInfo}
+            disabled={!canSend}
             onClick={() => send(false)}
           >
             {sendToWebhookMutation.isPending && (

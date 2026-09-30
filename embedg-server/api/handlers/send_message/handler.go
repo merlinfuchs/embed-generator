@@ -125,7 +125,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		})
 	}
 
-	params.Components, err = h.actionParser.ParseMessageComponents(data.Components, features.ComponentTypes)
+	params.Components, err = h.actionParser.ParseMessageComponents(data.Components, true)
 	if err != nil {
 		return handlers.BadRequest("invalid_actions", err.Error())
 	}
@@ -138,6 +138,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 			Components:      &params.Components,
 			AllowedMentions: params.AllowedMentions,
 			Files:           params.Files,
+			Flags:           componentsV2Flag(data),
 		})
 	} else {
 		msg, err = h.webhookManager.SendMessageToChannel(c.UserContext(), req.ChannelID, params)
@@ -193,6 +194,16 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		params.TTS = data.TTS
 	}
 
+	// Only the bot can handle interactive components, but webhooks send the rest. Checked before
+	// the attachments are decoded, as the request fails either way.
+	params.Components, err = h.actionParser.ParseMessageComponents(data.Components, false)
+	if errors.Is(err, parser.ErrInteractiveNotAllowed) {
+		return handlers.BadRequest("invalid_components", "Buttons with actions and select menus only work when the bot sends the message. Select a server and channel instead of a webhook.")
+	}
+	if err != nil {
+		return handlers.BadRequest("invalid_components", err.Error())
+	}
+
 	for _, attachment := range req.Attachments {
 		dataURL, err := dataurl.DecodeString(attachment.DataURL)
 		if err != nil {
@@ -203,18 +214,6 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 			Name: attachment.Name,
 			// ContentType: dataURL.ContentType(),
 			Reader: bytes.NewReader(dataURL.Data),
-		})
-	}
-
-	if req.WebhookType == "guilded" {
-		err := common.ExecuteGuildedWebhook(c.UserContext(), req.WebhookID, req.WebhookToken, params)
-		if err != nil {
-			return err
-		}
-
-		return c.JSON(wire.MessageSendResponseWire{
-			Success: true,
-			Data:    wire.MessageSendResponseDataWire{},
 		})
 	}
 
@@ -230,10 +229,11 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 				Components:      &params.Components,
 				AllowedMentions: params.AllowedMentions,
 				Files:           params.Files,
+				Flags:           componentsV2Flag(data),
 			},
 			rest.UpdateWebhookMessageParams{
 				ThreadID:       req.ThreadID.ID,
-				WithComponents: false,
+				WithComponents: true,
 			},
 		)
 	} else {
@@ -244,7 +244,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 			rest.CreateWebhookMessageParams{
 				Wait:           true,
 				ThreadID:       req.ThreadID.ID,
-				WithComponents: false,
+				WithComponents: true,
 			},
 		)
 	}
@@ -264,11 +264,17 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 	})
 }
 
-func checkMessageLimits(data *actions.MessageWithActions, features model.PlanFeatures) error {
-	if data.ComponentsV2Enabled() && !features.ComponentsV2 {
-		return handlers.Forbidden("insufficient_plan", "Components V2 are not available on your plan!")
+// componentsV2Flag turns an edited message into a Components V2 one, which Discord needs to be told
+// on edits too. It can't be turned back, so it's left out otherwise.
+func componentsV2Flag(data *actions.MessageWithActions) *discord.MessageFlags {
+	if !data.ComponentsV2Enabled() {
+		return nil
 	}
+	flags := discord.MessageFlagIsComponentsV2
+	return &flags
+}
 
+func checkMessageLimits(data *actions.MessageWithActions, features model.PlanFeatures) error {
 	for _, actionSet := range data.Actions {
 		if err := handlers.CheckActionSetLimit(actionSet, features); err != nil {
 			return err

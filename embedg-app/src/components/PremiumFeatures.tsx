@@ -4,7 +4,6 @@ import {
   CommandLineIcon,
   TagIcon,
   ClockIcon,
-  SquaresPlusIcon,
 } from "@heroicons/react/24/outline";
 import { HeartIcon } from "@heroicons/react/24/solid";
 
@@ -59,16 +58,6 @@ export default function PremiumFeatures() {
           <span className="font-medium text-white">
             periodically multiple times
           </span>
-        </div>
-      </div>
-      <div className="flex items-center gap-4">
-        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-amber-400/15 text-amber-300">
-          <SquaresPlusIcon className="h-4 w-4" />
-        </span>
-        <div className="text-mist-300 text-sm">
-          Get access to{" "}
-          <span className="font-medium text-white">more components v2</span> to
-          create more complex messages
         </div>
       </div>
       <div className="flex items-center gap-4">

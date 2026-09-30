@@ -1,6 +1,7 @@
 import { screen } from "@testing-library/react";
-import { beforeEach, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { COMPONENTS_V2_FLAG, messageDocumentStore } from "../state/document";
+import { useSendSettingsStore } from "../state/sendSettings";
 import {
   currentComponents,
   editorUser,
@@ -11,7 +12,6 @@ import EditorComponents from "./EditorComponents";
 
 vi.mock("../util/premium", () => ({
   usePremiumGuildFeatures: () => ({
-    component_types: [1, 2, 3, 9, 10, 11, 12, 13, 14, 17],
     max_actions_per_component: 5,
   }),
   usePremiumUserFeatures: () => ({}),
@@ -56,7 +56,12 @@ beforeEach(() => {
   loadMessage(selectMenuMessage(["One", "Two"]));
 });
 
+afterEach(() => {
+  useSendSettingsStore.setState({ mode: "webhook" });
+});
+
 test("a select menu row added from the menu holds a select menu", async () => {
+  useSendSettingsStore.setState({ mode: "channel" });
   loadMessage({ content: "", flags: COMPONENTS_V2_FLAG, components: [] });
   renderEditor(<EditorComponents defaultCollapsed={false} />);
 
@@ -68,6 +73,20 @@ test("a select menu row added from the menu holds a select menu", async () => {
   expect(currentComponents()).toMatchObject([
     { type: 1, components: [{ type: 3, options: [] }] },
   ]);
+});
+
+test("webhooks can't send select menus, so the menu doesn't offer them", async () => {
+  loadMessage({ content: "", flags: COMPONENTS_V2_FLAG, components: [] });
+  renderEditor(<EditorComponents defaultCollapsed={false} />);
+
+  await editorUser().click(
+    screen.getByRole("button", { name: /Add Component/ }),
+  );
+
+  expect(screen.queryByRole("button", { name: "Select Menu" })).toBeNull();
+  expect(
+    screen.getByRole("button", { name: "Button Row" }),
+  ).toBeInTheDocument();
 });
 
 test("adding an option gives it an action set", async () => {

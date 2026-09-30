@@ -1,17 +1,17 @@
 import { screen } from "@testing-library/react";
 
-import { beforeEach, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-// Every component type is gated on the guild's premium features, which come
+// Actions per button are limited by the guild's premium features, which come
 // from the API the tests do not talk to.
 vi.mock("../util/premium", () => ({
   usePremiumGuildFeatures: () => ({
-    component_types: [1, 2, 3, 9, 10, 11, 12, 13, 14, 17],
     max_actions_per_component: 5,
   }),
   usePremiumUserFeatures: () => ({}),
 }));
 import { COMPONENTS_V2_FLAG } from "../state/document";
+import { useSendSettingsStore } from "../state/sendSettings";
 import {
   currentComponents,
   editorUser,
@@ -22,6 +22,10 @@ import EditorComponents from "./EditorComponents";
 
 beforeEach(() => {
   loadMessage({ content: "", flags: COMPONENTS_V2_FLAG, components: [] });
+});
+
+afterEach(() => {
+  useSendSettingsStore.setState({ mode: "webhook" });
 });
 
 test("adding a button row puts an action row in the message", async () => {
@@ -36,20 +40,30 @@ test("adding a button row puts an action row in the message", async () => {
   expect(screen.getByText("Action Row")).toBeInTheDocument();
 });
 
-test("a button added to a row reaches the message", async () => {
-  loadMessage({
-    content: "",
-    flags: COMPONENTS_V2_FLAG,
-    components: [{ type: 1, components: [] }],
-  });
-  renderEditor(<EditorComponents defaultCollapsed={false} />);
+test.each([
+  ["channel", 2],
+  // Webhooks can only send link buttons.
+  ["webhook", 5],
+] as const)(
+  "a button added to a row reaches the message when sending to a %s",
+  async (mode, style) => {
+    useSendSettingsStore.setState({ mode });
+    loadMessage({
+      content: "",
+      flags: COMPONENTS_V2_FLAG,
+      components: [{ type: 1, components: [] }],
+    });
+    renderEditor(<EditorComponents defaultCollapsed={false} />);
 
-  await editorUser().click(screen.getByRole("button", { name: "Add Button" }));
+    await editorUser().click(
+      screen.getByRole("button", { name: "Add Button" }),
+    );
 
-  expect(currentComponents()).toMatchObject([
-    { type: 1, components: [{ type: 2, style: 2 }] },
-  ]);
-});
+    expect(currentComponents()).toMatchObject([
+      { type: 1, components: [{ type: 2, style }] },
+    ]);
+  },
+);
 
 test("typing a label updates the button in the message", async () => {
   loadMessage({

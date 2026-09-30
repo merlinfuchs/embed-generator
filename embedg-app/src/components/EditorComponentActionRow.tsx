@@ -26,7 +26,7 @@ export default function EditorComponentActionRow({
   const childIds = useChildIds(id, "components");
   const actions = useNodeActions(id);
   const { insert, removeChildren } = useDocumentStoreApi().getState();
-  const { linkButtonsOnly } = useEditorCapabilities();
+  const { interactive } = useEditorCapabilities();
   // A row holds either buttons or a single select menu, never both.
   const isButtonRow = useDocument(
     (state) => state.nodes[childIds[0]]?.type !== "selectMenu",
@@ -53,7 +53,7 @@ export default function EditorComponentActionRow({
             onAdd={() =>
               insert(id, "components", "end", {
                 type: "button",
-                style: linkButtonsOnly ? 5 : 2,
+                style: interactive ? 2 : 5,
                 label: "",
               })
             }

@@ -75,11 +75,8 @@ func TestCheck(t *testing.T) {
 	}`), &msg)
 
 	guild := testGuild
-	guild.Features = model.PlanFeatures{ComponentTypes: []int{9}, MaxActionsPerComponent: 3}
+	guild.Features = model.PlanFeatures{MaxActionsPerComponent: 3}
 	want := []string{
-		"flags: The plan doesn't include components v2.",
-		"The plan doesn't include components of type 13.",
-		"The plan doesn't include components of type 2.",
 		"actions.a: The plan allows 3 actions per button or option, not 4.",
 		`Action 2 of action set "a" uses saved message made_up, which the server doesn't have. Use one from the list, or remove the action and ask the user.`,
 		`Action 3 of action set "a" uses role 98, which the server doesn't have. Use one from the list, or remove the action and ask the user.`,
@@ -92,7 +89,7 @@ func TestCheck(t *testing.T) {
 
 	// Without the bot there are no roles to check against.
 	guild.HasBot = false
-	if issues := check(msg, guild); len(issues) != 4 {
+	if issues := check(msg, guild); len(issues) != 1 {
 		t.Errorf("issues = %v", issues)
 	}
 }

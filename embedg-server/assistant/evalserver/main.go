@@ -107,8 +107,6 @@ func (g evalGuild) toGuild() assistant.Guild {
 		Name:   g.Name,
 		HasBot: true,
 		Features: model.PlanFeatures{
-			ComponentsV2:           g.Features.ComponentsV2,
-			ComponentTypes:         g.Features.ComponentTypes,
 			MaxActionsPerComponent: g.Features.MaxActionsPerComponent,
 		},
 	}
