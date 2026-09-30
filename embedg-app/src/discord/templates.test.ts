@@ -1,7 +1,12 @@
 import { beforeAll, expect, test, vi } from "vitest";
 import { defaultPlanFeatures as defaultPlan } from "../test/plan";
-import { COMPONENTS_V2_FLAG, messageSchema } from "./schema";
 import {
+  COMPONENTS_V2_FLAG,
+  type MessageComponent,
+  messageSchema,
+} from "./schema";
+import {
+  EMPTY_TEMPLATE_INPUT,
   messageTemplates,
   type TemplateFormat,
   templateAvailable,
@@ -19,7 +24,7 @@ const builds = messageTemplates.flatMap((template) =>
     id: template.id,
     name: template.name,
     format,
-    build: template.build[format],
+    build: () => template.build[format](EMPTY_TEMPLATE_INPUT),
   })),
 );
 
@@ -42,15 +47,21 @@ test.each(builds)("$name as $format is in its format", ({ format, build }) => {
 test.each(FORMATS)(
   "the role template as %s makes the user pick the roles",
   (format) => {
-    const result = messageSchema.safeParse(roles?.build[format]());
+    const result = messageSchema.safeParse(
+      roles?.build[format](EMPTY_TEMPLATE_INPUT),
+    );
 
     expect(result.success).toBe(false);
   },
 );
 
 test("every build gets its own action sets", () => {
-  const first = Object.keys(roles?.build.embeds().actions ?? {});
-  const second = Object.keys(roles?.build.embeds().actions ?? {});
+  const first = Object.keys(
+    roles?.build.embeds(EMPTY_TEMPLATE_INPUT).actions ?? {},
+  );
+  const second = Object.keys(
+    roles?.build.embeds(EMPTY_TEMPLATE_INPUT).actions ?? {},
+  );
 
   expect(first).toHaveLength(3);
   expect(first.some((id) => second.includes(id))).toBe(false);
@@ -82,4 +93,68 @@ test("a plan with fewer actions per button than a template uses leaves it out", 
       .filter(({ build }) => templateAvailable(build(), noActions))
       .map(({ id }) => id),
   ).not.toContain("roles");
+});
+
+const template = (id: string) => {
+  const found = messageTemplates.find((t) => t.id === id);
+  if (!found) throw new Error(`no template ${id}`);
+  return found;
+};
+
+test.each(FORMATS)("picked roles end up in the actions as %s", (format) => {
+  const message = template("roles").build[format]({
+    values: { announcementsRole: "1", eventsRole: "2", giveawaysRole: "3" },
+    guildId: "9",
+  });
+
+  const roleByLabel: Record<string, string> = {};
+  const walk = (components: MessageComponent[]) => {
+    for (const c of components) {
+      if (c.type === 2 && c.style !== 5) {
+        const action = message.actions[c.action_set_id].actions[0];
+        if ("target_id" in action) roleByLabel[c.label] = action.target_id;
+      }
+      if ("components" in c) walk(c.components);
+    }
+  };
+  walk(message.components);
+
+  expect(roleByLabel).toEqual({
+    Announcements: "1",
+    Events: "2",
+    Giveaways: "3",
+  });
+  expect(messageSchema.safeParse(message).success).toBe(true);
+});
+
+test("the fields of a template are the ones it reads", () => {
+  expect(template("roles").fields?.map((f) => f.id)).toEqual([
+    "announcementsRole",
+    "eventsRole",
+    "giveawaysRole",
+  ]);
+  expect(template("welcome").fields?.map((f) => f.type)).toEqual([
+    "channel",
+    "channel",
+    "channel",
+  ]);
+});
+
+test("picked channels become mentions, and links to them in Components V2", () => {
+  const input = { values: { rulesChannel: "5" }, guildId: "9" };
+
+  expect(JSON.stringify(template("welcome").build.embeds(input))).toContain(
+    "<#5>",
+  );
+  expect(
+    JSON.stringify(template("welcome").build.componentsV2(input)),
+  ).toContain("https://discord.com/channels/9/5");
+  expect(
+    JSON.stringify(
+      template("event").build.embeds({
+        values: { eventChannel: "6" },
+        guildId: "9",
+      }),
+    ),
+  ).toContain("<#6>");
 });

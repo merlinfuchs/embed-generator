@@ -1,4 +1,5 @@
 import {
+  ArrowLeftIcon,
   DocumentIcon,
   LockClosedIcon,
   SparklesIcon,
@@ -7,16 +8,19 @@ import clsx from "clsx";
 import { type ReactNode, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserQuery } from "../../api/queries";
+import { ChannelSelect } from "../../components/ChannelSelect";
 import ConfirmModal from "../../components/ConfirmModal";
 import LoginLink from "../../components/LoginLink";
 import MessagePreview from "../../components/MessagePreview";
 import Modal from "../../components/Modal";
+import { RoleSelect } from "../../components/RoleSelect";
 import {
   defaultMessage,
   emptyComponentsV2Message,
 } from "../../discord/defaultMessage";
 import type { Message } from "../../discord/schema";
 import {
+  EMPTY_TEMPLATE_INPUT,
   type MessageTemplate,
   type TemplateFormat,
   messageTemplates,
@@ -54,7 +58,11 @@ export default function NewMessageView() {
 
   // Built once per opening and format, so every use gets its own ids.
   const templates = useMemo(
-    () => messageTemplates.map((t) => ({ ...t, message: t.build[format]() })),
+    () =>
+      messageTemplates.map((t) => ({
+        ...t,
+        message: t.build[format](EMPTY_TEMPLATE_INPUT),
+      })),
     [format],
   );
   // What logging in or picking a server unlocks is shown locked, what the plan
@@ -88,6 +96,17 @@ export default function NewMessageView() {
     navigate("/editor");
   }
 
+  // Templates that ask for roles or channels get a step to pick them, which
+  // takes a server to pick from.
+  const [filling, setFilling] = useState<MessageTemplate | null>(null);
+  function pickTemplate(template: MessageTemplate, message: Message) {
+    if (features && guildId && template.fields?.length) {
+      setFilling(template);
+    } else {
+      replace(() => applyTemplate(message));
+    }
+  }
+
   function startBlank(path: string) {
     setCurrentMessage(
       format === "componentsV2" ? emptyComponentsV2Message : defaultMessage,
@@ -99,47 +118,61 @@ export default function NewMessageView() {
     <>
       <Modal width="lg" height="full" onClose={() => navigate("/editor")}>
         <div className="flex flex-col h-full">
-          <div className="flex-none flex flex-wrap items-center justify-between gap-3 px-5 pt-4 pb-3 pr-12 border-b border-white/5">
-            <div>
-              <div className="text-lg text-white">New message</div>
-              <div className="text-sm text-mist-400">
-                Start from a template and make it your own. This replaces the
-                message in the editor.
+          {filling && guildId ? (
+            <TemplateFields
+              template={filling}
+              format={format}
+              guildId={guildId}
+              onBack={() => setFilling(null)}
+              onUse={(message) => replace(() => applyTemplate(message))}
+            />
+          ) : (
+            <>
+              <div className="flex-none flex flex-wrap items-center justify-between gap-3 px-5 pt-4 pb-3 pr-12 border-b border-white/5">
+                <div>
+                  <div className="text-lg text-white">New message</div>
+                  <div className="text-sm text-mist-400">
+                    Start from a template and make it your own. This replaces
+                    the message in the editor.
+                  </div>
+                </div>
+                <FormatToggle format={format} onChange={setFormat} />
               </div>
-            </div>
-            <FormatToggle format={format} onChange={setFormat} />
-          </div>
 
-          <div className="flex-auto min-h-0 overflow-y-auto">
-            <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {shown.map(({ template, locked }) => (
-                <TemplateCard
-                  key={template.id}
-                  template={template}
-                  locked={locked}
-                  onUse={() => replace(() => applyTemplate(template.message))}
-                />
-              ))}
-            </div>
-          </div>
+              <div className="flex-auto min-h-0 overflow-y-auto">
+                <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {shown.map(({ template, locked }) => (
+                    <TemplateCard
+                      key={template.id}
+                      template={template}
+                      locked={locked}
+                      onUse={() => pickTemplate(template, template.message)}
+                    />
+                  ))}
+                </div>
+              </div>
 
-          <div className="flex-none flex flex-wrap justify-end gap-3 px-5 py-3 border-t border-white/5">
-            {aiAllowed && (
-              <FooterButton
-                icon={<SparklesIcon className="text-amber-300" />}
-                onClick={() => replace(() => startBlank("/editor/assistant"))}
-              >
-                Describe it to the AI
-              </FooterButton>
-            )}
-            <FooterButton
-              icon={<DocumentIcon />}
-              primary
-              onClick={() => replace(() => startBlank("/editor"))}
-            >
-              Start from scratch
-            </FooterButton>
-          </div>
+              <div className="flex-none flex flex-wrap justify-end gap-3 px-5 py-3 border-t border-white/5">
+                {aiAllowed && (
+                  <FooterButton
+                    icon={<SparklesIcon className="text-amber-300" />}
+                    onClick={() =>
+                      replace(() => startBlank("/editor/assistant"))
+                    }
+                  >
+                    Describe it to the AI
+                  </FooterButton>
+                )}
+                <FooterButton
+                  icon={<DocumentIcon />}
+                  primary
+                  onClick={() => replace(() => startBlank("/editor"))}
+                >
+                  Start from scratch
+                </FooterButton>
+              </div>
+            </>
+          )}
         </div>
       </Modal>
       {pendingReplace && (
@@ -150,6 +183,86 @@ export default function NewMessageView() {
           onConfirm={pendingReplace.run}
         />
       )}
+    </>
+  );
+}
+
+/** Picks the roles and channels a template asks for, next to a live preview. */
+function TemplateFields({
+  template,
+  format,
+  guildId,
+  onBack,
+  onUse,
+}: {
+  template: MessageTemplate;
+  format: TemplateFormat;
+  guildId: string;
+  onBack: () => void;
+  onUse: (message: Message) => void;
+}) {
+  const [values, setValues] = useState<Partial<Record<string, string>>>({});
+  const message = useMemo(
+    () => template.build[format]({ values, guildId }),
+    [template, format, values, guildId],
+  );
+
+  function setValue(id: string, value: string | null) {
+    setValues((v) => ({ ...v, [id]: value ?? undefined }));
+  }
+
+  return (
+    <>
+      <div className="flex-none px-5 pt-4 pb-3 pr-12 border-b border-white/5">
+        <div className="text-lg text-white">Set up {template.name}</div>
+        <div className="text-sm text-mist-400">
+          Pick what the template should use. Anything you leave empty can be
+          filled in in the editor.
+        </div>
+      </div>
+
+      <div className="flex-auto min-h-0 overflow-y-auto">
+        <div className="p-5 flex flex-col md:flex-row gap-6">
+          <div className="md:w-80 flex-none space-y-4">
+            {template.fields?.map((field) => (
+              <div key={field.id}>
+                <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
+                  {field.label}
+                </div>
+                {field.type === "role" ? (
+                  <RoleSelect
+                    guildId={guildId}
+                    roleId={values[field.id] ?? null}
+                    onChange={(id) => setValue(field.id, id)}
+                  />
+                ) : (
+                  <ChannelSelect
+                    guildId={guildId}
+                    channelId={values[field.id] ?? null}
+                    onChange={(id) => setValue(field.id, id)}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="flex-auto min-w-0 rounded-xl bg-ink-800 border border-white/10 px-4 py-3">
+            <MessagePreview msg={message} />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-none flex flex-wrap justify-between gap-3 px-5 py-3 border-t border-white/5">
+        <FooterButton icon={<ArrowLeftIcon />} onClick={onBack}>
+          Back
+        </FooterButton>
+        <FooterButton
+          icon={<DocumentIcon />}
+          primary
+          onClick={() => onUse(message)}
+        >
+          Use template
+        </FooterButton>
+      </div>
     </>
   );
 }

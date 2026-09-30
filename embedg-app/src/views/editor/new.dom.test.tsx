@@ -123,6 +123,10 @@ test("a template that needs the bot switches to sending through it", async () =>
   await user.click(
     await screen.findByRole("button", { name: "Use Role selection" }),
   );
+  // The roles are asked for first.
+  expect(screen.getByText("Set up Role selection")).toBeInTheDocument();
+  expect(screen.getByText("Role for 📣 Announcements")).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Use template" }));
 
   expect(useSendSettingsStore.getState().mode).toBe("channel");
   expect(currentMessage().components).toHaveLength(1);
@@ -133,9 +137,25 @@ test("a template with only link buttons stays on the webhook", async () => {
   loadMessage({ content: "" });
   renderEditor(<NewMessageView />);
 
-  await editorUser().click(
-    await screen.findByRole("button", { name: "Use Welcome" }),
-  );
+  const user = editorUser();
 
+  await user.click(await screen.findByRole("button", { name: "Use Welcome" }));
+  await user.click(screen.getByRole("button", { name: "Use template" }));
+
+  expect(currentMessage().components).not.toEqual([]);
   expect(useSendSettingsStore.getState().mode).toBe("webhook");
+});
+
+test("going back from the fields keeps the message", async () => {
+  logIn();
+  loadMessage({ content: "" });
+  renderEditor(<NewMessageView />);
+  const user = editorUser();
+
+  await user.click(await screen.findByRole("button", { name: "Use Welcome" }));
+  expect(screen.getByText("Rules channel")).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Back" }));
+
+  expect(screen.getByText("New message")).toBeInTheDocument();
+  expect(currentMessage().components).toEqual([]);
 });

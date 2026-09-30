@@ -10,12 +10,31 @@ import {
 
 export type TemplateFormat = "componentsV2" | "embeds";
 
+/** Something the user picks before the template is used, like the role a button gives. */
+export interface TemplateField {
+  id: string;
+  label: string;
+  type: "role" | "channel";
+}
+
+/** What a template is built from. Fields left out keep their placeholders. */
+export interface TemplateInput {
+  values: Partial<Record<string, string>>;
+  guildId: string | null;
+}
+
+export const EMPTY_TEMPLATE_INPUT: TemplateInput = {
+  values: {},
+  guildId: null,
+};
+
 export interface MessageTemplate {
   id: string;
   name: string;
   description: string;
+  fields?: TemplateField[];
   /** Builds the message with fresh ids, so using a template twice doesn't share action sets. */
-  build: Record<TemplateFormat, () => Message>;
+  build: Record<TemplateFormat, (input: TemplateInput) => Message>;
 }
 
 // Discord's brand colors, which the banners use too.
@@ -74,19 +93,38 @@ const textDisplay = (content: string) => ({ type: 10, content });
 
 const separator = { type: 14, divider: true, spacing: 1 };
 
-const linkButton = (label: string, emoji: string) => ({
+const linkButton = (label: string, emoji: string, url = PLACEHOLDER_URL) => ({
   type: 2,
   style: 5,
   label,
   emoji: { name: emoji, animated: false },
-  url: PLACEHOLDER_URL,
+  url,
 });
 
-const linkSection = (content: string, label: string, emoji: string) => ({
+const linkSection = (
+  content: string,
+  label: string,
+  emoji: string,
+  url?: string,
+) => ({
   type: 9,
   components: [textDisplay(content)],
-  accessory: linkButton(label, emoji),
+  accessory: linkButton(label, emoji, url),
 });
+
+/** A mention of the picked channel, or the placeholder until one is. */
+function channelMention(input: TemplateInput, field: string, fallback: string) {
+  const id = input.values[field];
+  return id ? `<#${id}>` : fallback;
+}
+
+/** A link that opens the picked channel, or the placeholder until one is. */
+function channelUrl(input: TemplateInput, field: string) {
+  const id = input.values[field];
+  return id && input.guildId
+    ? `https://discord.com/channels/${input.guildId}/${id}`
+    : PLACEHOLDER_URL;
+}
 
 const RULES: [string, string][] = [
   [
@@ -110,10 +148,28 @@ const RULES_FOOTER = "Breaking the rules can get you muted, kicked or banned.";
 
 const WELCOME_INTRO =
   "We're glad you're here. Here's everything you need to get started.";
-const WELCOME_LINKS: [string, string, string, string][] = [
-  ["📜", "Rules", "Read them before you start chatting.", "#rules"],
-  ["🎭", "Roles", "Pick the roles for what you're into.", "#roles"],
-  ["💬", "Chat", "Say hi to everyone.", "#general"],
+const WELCOME_LINKS = [
+  {
+    emoji: "📜",
+    name: "Rules",
+    text: "Read them before you start chatting.",
+    field: "rulesChannel",
+    placeholder: "#rules",
+  },
+  {
+    emoji: "🎭",
+    name: "Roles",
+    text: "Pick the roles for what you're into.",
+    field: "rolesChannel",
+    placeholder: "#roles",
+  },
+  {
+    emoji: "💬",
+    name: "Chat",
+    text: "Say hi to everyone.",
+    field: "chatChannel",
+    placeholder: "#general",
+  },
 ];
 
 const NEWS_TEXT =
@@ -128,28 +184,33 @@ const PATCH_NOTES: [string, string][] = [
 const EVENT_TEXT =
   "Join us for a night of games! Everyone's welcome, no matter your skill level.";
 
+const ROLE_BUTTONS = [
+  { label: "Announcements", emoji: "📣", field: "announcementsRole" },
+  { label: "Events", emoji: "🎉", field: "eventsRole" },
+  { label: "Giveaways", emoji: "🎁", field: "giveawaysRole" },
+];
+
 /** Buttons that toggle roles, with the actions to go with them. */
-function roleButtons() {
-  const buttons = [
-    { label: "Announcements", emoji: "📣" },
-    { label: "Events", emoji: "🎉" },
-    { label: "Giveaways", emoji: "🎁" },
-  ].map(({ label, emoji }) => ({
-    type: 2,
-    style: 2,
-    label,
-    emoji: { name: emoji, animated: false },
-    action_set_id: getUniqueId().toString(),
+function roleButtons(input: TemplateInput) {
+  const buttons = ROLE_BUTTONS.map(({ label, emoji, field }) => ({
+    field,
+    component: {
+      type: 2,
+      style: 2,
+      label,
+      emoji: { name: emoji, animated: false },
+      action_set_id: getUniqueId().toString(),
+    },
   }));
 
   return {
-    row: { type: 1, components: buttons },
-    // The roles are the server's own, so they are left for the user to pick.
-    // Until they do, the editor won't send the message.
+    row: { type: 1, components: buttons.map((b) => b.component) },
+    // The roles are the server's own. Until the user picks them, the editor
+    // won't send the message.
     actions: Object.fromEntries(
       buttons.map((b) => [
-        b.action_set_id,
-        { actions: [{ type: 2, target_id: "" }] },
+        b.component.action_set_id,
+        { actions: [{ type: 2, target_id: input.values[b.field] ?? "" }] },
       ]),
     ),
   };
@@ -194,17 +255,27 @@ export const messageTemplates: MessageTemplate[] = [
     id: "welcome",
     name: "Welcome",
     description: "Greets new members and points them around",
+    fields: WELCOME_LINKS.map(({ name, field }) => ({
+      id: field,
+      label: `${name} channel`,
+      type: "channel",
+    })),
     build: {
-      componentsV2: () =>
+      componentsV2: (input) =>
         container(BLURPLE, [
           bannerGallery("welcome"),
           textDisplay(`# Welcome to Your Server\n${WELCOME_INTRO}`),
           separator,
-          ...WELCOME_LINKS.map(([emoji, name, text]) =>
-            linkSection(`### ${emoji} ${name}\n${text}`, name, emoji),
+          ...WELCOME_LINKS.map(({ emoji, name, text, field }) =>
+            linkSection(
+              `### ${emoji} ${name}\n${text}`,
+              name,
+              emoji,
+              channelUrl(input, field),
+            ),
           ),
         ]),
-      embeds: () =>
+      embeds: (input) =>
         embeds({
           content: "Welcome to the server! 👋",
           embeds: [
@@ -213,11 +284,13 @@ export const messageTemplates: MessageTemplate[] = [
               title: "Welcome to Your Server",
               description: WELCOME_INTRO,
               color: BLURPLE,
-              fields: WELCOME_LINKS.map(([emoji, name, , channel]) => ({
-                name: `${emoji} ${name}`,
-                value: channel,
-                inline: true,
-              })),
+              fields: WELCOME_LINKS.map(
+                ({ emoji, name, field, placeholder }) => ({
+                  name: `${emoji} ${name}`,
+                  value: channelMention(input, field, placeholder),
+                  inline: true,
+                }),
+              ),
               footer: { text: "Have fun!" },
             },
           ],
@@ -289,20 +362,23 @@ export const messageTemplates: MessageTemplate[] = [
     id: "event",
     name: "Event",
     description: "Time and place, shown in each member's timezone",
+    fields: [
+      { id: "eventChannel", label: "Where it happens", type: "channel" },
+    ],
     build: {
-      componentsV2: () => {
+      componentsV2: (input) => {
         const time = nextWeekEvening();
         return container(PURPLE, [
           bannerGallery("event"),
           textDisplay(`## 🎮 Game Night\n${EVENT_TEXT}`),
           separator,
           textDisplay(
-            `**📅 When:** <t:${time}:f> (<t:${time}:R>)\n**📍 Where:** #voice-chat`,
+            `**📅 When:** <t:${time}:f> (<t:${time}:R>)\n**📍 Where:** ${channelMention(input, "eventChannel", "#voice-chat")}`,
           ),
           { type: 1, components: [linkButton("Event page", "📅")] },
         ]);
       },
-      embeds: () => {
+      embeds: (input) => {
         const time = nextWeekEvening();
         return embeds({
           embeds: [
@@ -314,7 +390,11 @@ export const messageTemplates: MessageTemplate[] = [
               fields: [
                 { name: "📅 When", value: `<t:${time}:f>`, inline: true },
                 { name: "⏰ Starts", value: `<t:${time}:R>`, inline: true },
-                { name: "📍 Where", value: "#voice-chat", inline: true },
+                {
+                  name: "📍 Where",
+                  value: channelMention(input, "eventChannel", "#voice-chat"),
+                  inline: true,
+                },
               ],
             },
           ],
@@ -326,9 +406,14 @@ export const messageTemplates: MessageTemplate[] = [
     id: "roles",
     name: "Role selection",
     description: "Buttons that give or take roles when clicked",
+    fields: ROLE_BUTTONS.map(({ label, emoji, field }) => ({
+      id: field,
+      label: `Role for ${emoji} ${label}`,
+      type: "role",
+    })),
     build: {
-      componentsV2: () => {
-        const { row, actions } = roleButtons();
+      componentsV2: (input) => {
+        const { row, actions } = roleButtons(input);
         return container(
           FUCHSIA,
           [
@@ -339,8 +424,8 @@ export const messageTemplates: MessageTemplate[] = [
           { actions },
         );
       },
-      embeds: () => {
-        const { row, actions } = roleButtons();
+      embeds: (input) => {
+        const { row, actions } = roleButtons(input);
         return embeds({
           embeds: [
             bannerEmbed("roles", FUCHSIA),
