@@ -30,6 +30,7 @@
     "highlight.js": "^11.7.0",
     "immer": "^9",
     "just-debounce-it": "^3.2.0",
+    "lucide-react": "^1.48.0",
     "react": "^18.2.0",
     "react-calendar": "^4.3.0",
     "react-clock": "^4.2.0",

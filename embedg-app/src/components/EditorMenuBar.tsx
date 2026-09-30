@@ -4,10 +4,11 @@ import {
   LinkIcon,
   Cog6ToothIcon,
 } from "@heroicons/react/20/solid";
+// Lucide fills in what heroicons doesn't have.
+import { BroomIcon } from "lucide-react";
 import { isDefaultAllowedMentions } from "../discord/allowedMentions";
 import { useAllowedMentions } from "../state/document";
 import { usePremiumGuildFeatures } from "../util/premium";
-import BroomIcon from "./BroomIcon";
 import EditorUndoButtons from "./EditorUndoButtons";
 import EditorIconButton from "./EditorIconButton";
 import EditorComponentsV2Toggle from "./EditorComponentsV2Toggle";
@@ -23,7 +24,7 @@ export default function EditorMenuBar() {
       <div className="flex flex-wrap gap-2.5 items-center">
         <EditorUndoButtons />
         <EditorIconButton label="Clear Message" href="/editor/new">
-          <BroomIcon />
+          <BroomIcon className="h-full w-full" />
         </EditorIconButton>
         <EditorIconButton label="JSON Code" href="/editor/json">
           <CodeBracketSquareIcon />
