@@ -247,7 +247,7 @@ func TestFluxerErrors(t *testing.T) {
 	}{
 		{name: "unknown webhook", status: http.StatusNotFound, response: `{"code":"UNKNOWN_WEBHOOK","message":"Unknown webhook."}`, want: http.StatusNotFound},
 		{name: "invalid body", status: http.StatusBadRequest, response: `{"code":"INVALID_FORM_BODY","message":"Invalid form body"}`, want: http.StatusBadRequest},
-		{name: "rate limited", status: http.StatusTooManyRequests, response: `{"code":"RATE_LIMITED","message":"You are being rate limited.","global":false,"retry_after":0.4}`, want: http.StatusBadRequest},
+		{name: "rate limited", status: http.StatusTooManyRequests, response: `{"code":"RATE_LIMITED","message":"You are being rate limited.","global":false,"retry_after":0.4}`, want: http.StatusTooManyRequests},
 		{name: "not json", status: http.StatusForbidden, response: `forbidden`, want: http.StatusBadRequest},
 	}
 
@@ -265,5 +265,22 @@ func TestFluxerErrors(t *testing.T) {
 				t.Fatalf("want one request to Fluxer, got %d", len(*requests))
 			}
 		})
+	}
+}
+
+func TestFluxerGlobalRateLimit(t *testing.T) {
+	h, requests := fakeFluxer(t, http.StatusTooManyRequests, `{"code":"RATE_LIMITED","message":"You are being rate limited.","global":true,"retry_after":30}`)
+
+	for range 2 {
+		err := sendToFluxer(t, h, fluxerSendRequest(`{"content":"hi"}`))
+		var e *wire.Error
+		if !errors.As(err, &e) || e.Status != http.StatusTooManyRequests {
+			t.Fatalf("want a 429, got %v", err)
+		}
+	}
+
+	// A global limit covers every webhook, so the second send waits it out without asking Fluxer.
+	if len(*requests) != 1 {
+		t.Fatalf("want one request to Fluxer, got %d", len(*requests))
 	}
 }

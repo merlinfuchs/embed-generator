@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/disgoorg/disgo/discord"
@@ -28,6 +30,11 @@ const (
 type fluxerClient struct {
 	apiURL string
 	http   *http.Client
+
+	mu sync.Mutex
+	// globalUntil is when Fluxer lifts a global rate limit. It covers every webhook this server
+	// sends to, so nothing more is sent to Fluxer before then.
+	globalUntil time.Time
 }
 
 func newFluxerClient(apiURL string) *fluxerClient {
@@ -62,7 +69,14 @@ type fluxerMessageEdit struct {
 	AllowedMentions *discord.AllowedMentions `json:"allowed_mentions,omitempty"`
 }
 
-// fluxerMessage is what sending and restoring read from Fluxer's message object.
+// fluxerSentMessage is what sending and editing read from the message Fluxer returns. Only the
+// IDs, so a change to the rest of the message can't fail a send that went through.
+type fluxerSentMessage struct {
+	ID        common.ID `json:"id"`
+	ChannelID common.ID `json:"channel_id"`
+}
+
+// fluxerMessage is what restoring reads from Fluxer's message object.
 type fluxerMessage struct {
 	ID          common.ID            `json:"id"`
 	ChannelID   common.ID            `json:"channel_id"`
@@ -91,10 +105,11 @@ func (c *fluxerClient) webhookURL(webhookID common.ID, token string) string {
 	return fmt.Sprintf("%s/webhooks/%s/%s", c.apiURL, webhookID, token)
 }
 
-func (c *fluxerClient) ExecuteWebhook(ctx context.Context, webhookID common.ID, token string, msg fluxerMessageCreate, files []*discord.File) (*fluxerMessage, error) {
+func (c *fluxerClient) ExecuteWebhook(ctx context.Context, webhookID common.ID, token string, msg fluxerMessageCreate, files []*discord.File) (*fluxerSentMessage, error) {
 	url := c.webhookURL(webhookID, token) + "?wait=true"
+	sent := &fluxerSentMessage{}
 	if len(files) == 0 {
-		return c.doJSON(ctx, http.MethodPost, url, msg)
+		return sent, c.doJSON(ctx, http.MethodPost, url, msg, sent)
 	}
 
 	for i, file := range files {
@@ -104,29 +119,38 @@ func (c *fluxerClient) ExecuteWebhook(ctx context.Context, webhookID common.ID, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to build multipart body: %w", err)
 	}
-	return c.do(ctx, http.MethodPost, url, body.ContentType, body.Buffer.Bytes())
+	return sent, c.do(ctx, http.MethodPost, url, body.ContentType, body.Buffer.Bytes(), sent)
 }
 
-func (c *fluxerClient) EditWebhookMessage(ctx context.Context, webhookID common.ID, token string, messageID common.ID, edit fluxerMessageEdit) (*fluxerMessage, error) {
-	return c.doJSON(ctx, http.MethodPatch, fmt.Sprintf("%s/messages/%s", c.webhookURL(webhookID, token), messageID), edit)
+func (c *fluxerClient) EditWebhookMessage(ctx context.Context, webhookID common.ID, token string, messageID common.ID, edit fluxerMessageEdit) (*fluxerSentMessage, error) {
+	sent := &fluxerSentMessage{}
+	return sent, c.doJSON(ctx, http.MethodPatch, fmt.Sprintf("%s/messages/%s", c.webhookURL(webhookID, token), messageID), edit, sent)
 }
 
 func (c *fluxerClient) GetWebhookMessage(ctx context.Context, webhookID common.ID, token string, messageID common.ID) (*fluxerMessage, error) {
-	return c.do(ctx, http.MethodGet, fmt.Sprintf("%s/messages/%s", c.webhookURL(webhookID, token), messageID), "", nil)
+	msg := &fluxerMessage{}
+	return msg, c.do(ctx, http.MethodGet, fmt.Sprintf("%s/messages/%s", c.webhookURL(webhookID, token), messageID), "", nil, msg)
 }
 
-func (c *fluxerClient) doJSON(ctx context.Context, method string, url string, body any) (*fluxerMessage, error) {
+func (c *fluxerClient) doJSON(ctx context.Context, method string, url string, body any, out any) error {
 	raw, err := json.Marshal(body)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return c.do(ctx, method, url, "application/json", raw)
+	return c.do(ctx, method, url, "application/json", raw, out)
 }
 
-func (c *fluxerClient) do(ctx context.Context, method string, url string, contentType string, body []byte) (*fluxerMessage, error) {
+func (c *fluxerClient) do(ctx context.Context, method string, url string, contentType string, body []byte, out any) error {
+	c.mu.Lock()
+	globalWait := time.Until(c.globalUntil)
+	c.mu.Unlock()
+	if globalWait > 0 {
+		return fluxerRateLimited(globalWait)
+	}
+
 	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewReader(body))
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
@@ -135,31 +159,32 @@ func (c *fluxerClient) do(ctx context.Context, method string, url string, conten
 
 	resp, err := c.http.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to reach Fluxer: %w", err)
+		return fmt.Errorf("failed to reach Fluxer: %w", err)
 	}
 	defer resp.Body.Close()
 
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
-		return nil, fmt.Errorf("failed to read Fluxer's response: %w", err)
+		return fmt.Errorf("failed to read Fluxer's response: %w", err)
 	}
 	if resp.StatusCode >= 300 {
-		return nil, fluxerError(resp.StatusCode, raw)
+		return c.fluxerError(resp.StatusCode, raw)
 	}
 
-	msg := &fluxerMessage{}
-	if err := json.Unmarshal(raw, msg); err != nil {
-		return nil, fmt.Errorf("failed to parse Fluxer's message: %w", err)
+	if err := json.Unmarshal(raw, out); err != nil {
+		return fmt.Errorf("failed to parse Fluxer's message: %w", err)
 	}
-	return msg, nil
+	return nil
 }
 
 // fluxerError turns an error response from Fluxer into one for the user. Anything but a 4xx is
 // Fluxer's problem and stays an internal error.
-func fluxerError(status int, raw []byte) error {
+func (c *fluxerClient) fluxerError(status int, raw []byte) error {
 	var body struct {
-		Code    string `json:"code"`
-		Message string `json:"message"`
+		Code       string  `json:"code"`
+		Message    string  `json:"message"`
+		Global     bool    `json:"global"`
+		RetryAfter float64 `json:"retry_after"`
 	}
 	_ = json.Unmarshal(raw, &body)
 
@@ -169,7 +194,13 @@ func fluxerError(status int, raw []byte) error {
 	case body.Code == "UNKNOWN_MESSAGE":
 		return handlers.NotFound("unknown_message", "The message does not exist.")
 	case status == http.StatusTooManyRequests:
-		return handlers.BadRequest("rate_limited", "Fluxer is rate limiting this webhook, try again in a few seconds.")
+		retryAfter := time.Duration(body.RetryAfter * float64(time.Second))
+		if body.Global {
+			c.mu.Lock()
+			c.globalUntil = time.Now().Add(retryAfter)
+			c.mu.Unlock()
+		}
+		return fluxerRateLimited(retryAfter)
 	case status >= 400 && status < 500:
 		message := body.Message
 		if message == "" {
@@ -178,6 +209,14 @@ func fluxerError(status int, raw []byte) error {
 		return handlers.BadRequest("fluxer_error", fmt.Sprintf("Fluxer rejected the request: %s", message))
 	}
 	return fmt.Errorf("fluxer returned %d: %s", status, raw)
+}
+
+func fluxerRateLimited(retryAfter time.Duration) error {
+	return &wire.Error{
+		Status:  http.StatusTooManyRequests,
+		Code:    "rate_limited",
+		Message: fmt.Sprintf("Fluxer is rate limiting messages, try again in %d seconds.", max(1, int(math.Ceil(retryAfter.Seconds())))),
+	}
 }
 
 // checkFluxerMessage rejects what Fluxer's webhooks can't send, instead of leaving it out.
@@ -201,7 +240,7 @@ func (h *SendMessageHandler) sendToFluxerWebhook(c *fiber.Ctx, req wire.MessageS
 
 	webhookID := common.DefinitelyID(req.WebhookID)
 
-	var msg *fluxerMessage
+	var msg *fluxerSentMessage
 	var err error
 	if req.MessageID.Valid {
 		msg, err = h.fluxer.EditWebhookMessage(c.UserContext(), webhookID, req.WebhookToken, req.MessageID.ID, fluxerMessageEdit{

@@ -80,6 +80,8 @@ const (
 // could point the request somewhere else.
 var webhookTokenRegex = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
 
+var snowflakeRegex = regexp.MustCompile(`^[0-9]+$`)
+
 func validateWebhookTarget(platform *WebhookPlatform, token *string) []*validation.FieldRules {
 	return []*validation.FieldRules{
 		// Empty from tabs opened before Fluxer was supported, which only sent to Discord.
@@ -99,7 +101,10 @@ type MessageSendToWebhookRequestWire struct {
 }
 
 func (req MessageSendToWebhookRequestWire) Validate() error {
-	return validation.ValidateStruct(&req, validateWebhookTarget(&req.WebhookPlatform, &req.WebhookToken)...)
+	return validation.ValidateStruct(&req, append(
+		validateWebhookTarget(&req.WebhookPlatform, &req.WebhookToken),
+		validation.Field(&req.WebhookID, validation.Required, validation.Match(snowflakeRegex)),
+	)...)
 }
 
 type MessageSendToChannelRequestWire struct {

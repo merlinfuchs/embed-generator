@@ -20,7 +20,7 @@ func TestWebhookRequestValidate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			send := MessageSendToWebhookRequestWire{WebhookPlatform: tt.platform, WebhookToken: tt.token}
+			send := MessageSendToWebhookRequestWire{WebhookPlatform: tt.platform, WebhookID: "123", WebhookToken: tt.token}
 			if err := send.Validate(); (err == nil) != tt.ok {
 				t.Fatalf("send: want ok=%v, got %v", tt.ok, err)
 			}
@@ -30,5 +30,14 @@ func TestWebhookRequestValidate(t *testing.T) {
 				t.Fatalf("restore: want ok=%v, got %v", tt.ok, err)
 			}
 		})
+	}
+}
+
+func TestWebhookSendRequestNeedsAnID(t *testing.T) {
+	for _, id := range []string{"", "abc", "123/../456"} {
+		req := MessageSendToWebhookRequestWire{WebhookPlatform: WebhookPlatformDiscord, WebhookID: id, WebhookToken: "abc"}
+		if err := req.Validate(); err == nil {
+			t.Fatalf("want webhook ID %q to be rejected", id)
+		}
 	}
 }
