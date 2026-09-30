@@ -3,6 +3,7 @@ import {
   LockClosedIcon,
   SparklesIcon,
 } from "@heroicons/react/20/solid";
+import clsx from "clsx";
 import { type ReactNode, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserQuery } from "../../api/queries";
@@ -23,7 +24,6 @@ import {
   setCurrentMessage,
 } from "../../state/currentMessage";
 import { useSendSettingsStore } from "../../state/sendSettings";
-import { colorIntToHex } from "../../util/discord";
 import { usePremiumGuildFeatures } from "../../util/premium";
 
 type LockedReason = "login" | "server";
@@ -123,6 +123,7 @@ export default function NewMessageView() {
             )}
             <FooterButton
               icon={<DocumentIcon />}
+              primary
               onClick={() => replace(() => startBlank("/editor"))}
             >
               Start from scratch
@@ -156,10 +157,6 @@ function TemplateCard({
 }) {
   return (
     <div className="relative flex flex-col rounded-xl overflow-hidden bg-ink-800 border border-white/10 hover:border-white/25 focus-within:border-azure-400 transition-colors">
-      <div
-        className="h-1 flex-none"
-        style={{ backgroundColor: colorIntToHex(template.color) }}
-      />
       <div
         className="relative flex-none h-56 overflow-hidden pointer-events-none"
         // Only a picture of the message, so its links and buttons stay out of
@@ -222,20 +219,34 @@ function LockedLabel({ children }: { children: string }) {
 
 function FooterButton({
   icon,
+  primary,
   children,
   onClick,
 }: {
   icon: ReactNode;
+  primary?: boolean;
   children: string;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
-      className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-white/15 text-mist-100 hover:bg-white/5 hover:border-white/30 transition-colors"
+      className={clsx(
+        "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors",
+        primary
+          ? "bg-azure-500 hover:bg-azure-400 text-white font-medium"
+          : "border border-white/15 text-mist-100 hover:bg-white/5 hover:border-white/30",
+      )}
       onClick={onClick}
     >
-      <div className="h-5 w-5 flex-none text-mist-300">{icon}</div>
+      <div
+        className={clsx(
+          "h-5 w-5 flex-none",
+          primary ? "text-white" : "text-mist-300",
+        )}
+      >
+        {icon}
+      </div>
       <div>{children}</div>
     </button>
   );

@@ -13,8 +13,6 @@ export interface MessageTemplate {
   group: "Embeds" | "Components V2" | "Interactive";
   name: string;
   description: string;
-  /** The accent of the message, for its card. */
-  color: number;
   /** Builds the message with fresh ids, so using a template twice doesn't share action sets. */
   build: () => Message;
 }
@@ -83,7 +81,6 @@ export const messageTemplates: MessageTemplate[] = [
     group: "Embeds",
     name: "Server rules",
     description: "A numbered list of rules with a footer",
-    color: RED,
     build: () =>
       parseMessageWithAction({
         embeds: [
@@ -130,7 +127,6 @@ export const messageTemplates: MessageTemplate[] = [
     group: "Embeds",
     name: "Welcome",
     description: "Greets new members and points them around",
-    color: BLURPLE,
     build: () =>
       parseMessageWithAction({
         content: "Welcome to the server! 👋",
@@ -168,7 +164,6 @@ export const messageTemplates: MessageTemplate[] = [
     group: "Embeds",
     name: "Announcement",
     description: "News for your members with a date",
-    color: YELLOW,
     build: () =>
       parseMessageWithAction({
         embeds: [
@@ -189,7 +184,6 @@ export const messageTemplates: MessageTemplate[] = [
     group: "Embeds",
     name: "Patch notes",
     description: "What's new, changed and fixed in an update",
-    color: GREEN,
     build: () =>
       parseMessageWithAction({
         embeds: [
@@ -222,7 +216,6 @@ export const messageTemplates: MessageTemplate[] = [
     group: "Embeds",
     name: "Event",
     description: "Time and place, shown in each member's timezone",
-    color: PURPLE,
     build: () => {
       const time = nextWeekEvening();
       return parseMessageWithAction({
@@ -248,7 +241,6 @@ export const messageTemplates: MessageTemplate[] = [
     group: "Components V2",
     name: "Server guide",
     description: "Sections with buttons that link to the important places",
-    color: BLURPLE,
     build: () =>
       v2([
         {
@@ -283,7 +275,6 @@ export const messageTemplates: MessageTemplate[] = [
     group: "Components V2",
     name: "News card",
     description: "An announcement in a container with a link",
-    color: YELLOW,
     build: () =>
       v2([
         {
@@ -308,7 +299,6 @@ export const messageTemplates: MessageTemplate[] = [
     group: "Components V2",
     name: "Event card",
     description: "Event details with a button to the event",
-    color: PURPLE,
     build: () => {
       const time = nextWeekEvening();
       return v2([
@@ -337,7 +327,6 @@ export const messageTemplates: MessageTemplate[] = [
     group: "Interactive",
     name: "Role selection",
     description: "Buttons that give or take roles when clicked",
-    color: FUCHSIA,
     build: () => {
       const buttons = [
         { label: "Announcements", emoji: "📣" },
