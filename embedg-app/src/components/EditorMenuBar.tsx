@@ -1,5 +1,4 @@
 import {
-  DocumentPlusIcon,
   CodeBracketSquareIcon,
   SparklesIcon,
   LinkIcon,
@@ -8,6 +7,7 @@ import {
 import { isDefaultAllowedMentions } from "../discord/allowedMentions";
 import { useAllowedMentions } from "../state/document";
 import { usePremiumGuildFeatures } from "../util/premium";
+import BroomIcon from "./BroomIcon";
 import EditorUndoButtons from "./EditorUndoButtons";
 import EditorIconButton from "./EditorIconButton";
 import EditorComponentsV2Toggle from "./EditorComponentsV2Toggle";
@@ -22,8 +22,8 @@ export default function EditorMenuBar() {
     <div className="flex flex-wrap-reverse gap-x-5 gap-y-3 justify-between items-center mb-5 mt-5">
       <div className="flex flex-wrap gap-2.5 items-center">
         <EditorUndoButtons />
-        <EditorIconButton label="New Message" href="/editor/new">
-          <DocumentPlusIcon />
+        <EditorIconButton label="Clear Message" href="/editor/new">
+          <BroomIcon />
         </EditorIconButton>
         <EditorIconButton label="JSON Code" href="/editor/json">
           <CodeBracketSquareIcon />
