@@ -34,3 +34,34 @@ test("link buttons go to a webhook", () => {
   ).toBeNull();
   expect(screen.getByRole("button", { name: "Send Message" })).toBeEnabled();
 });
+
+const FLUXER_WEBHOOK_URL = "https://api.fluxer.app/webhooks/123/token";
+
+test("a Fluxer webhook takes content and embeds, without a thread", () => {
+  useSendSettingsStore.setState({ webhookUrl: FLUXER_WEBHOOK_URL });
+  loadMessage({ content: "Hi", embeds: [{ title: "Title" }] });
+  renderEditor(<SendMenuWebhook />);
+
+  expect(screen.queryByText("Thread ID")).toBeNull();
+  expect(screen.getByRole("button", { name: "Send Message" })).toBeEnabled();
+});
+
+test("a message with components can't go to a Fluxer webhook", () => {
+  useSendSettingsStore.setState({ webhookUrl: FLUXER_WEBHOOK_URL });
+  loadMessage({
+    content: "Hi",
+    components: [row({ style: 5, url: "https://example.com" })],
+  });
+  renderEditor(<SendMenuWebhook />);
+
+  expect(screen.getByText(/Fluxer doesn't support components/)).toBeVisible();
+  expect(screen.getByRole("button", { name: "Send Message" })).toBeDisabled();
+});
+
+test("a Components V2 message can't go to a Fluxer webhook", () => {
+  useSendSettingsStore.setState({ webhookUrl: FLUXER_WEBHOOK_URL });
+  loadMessage({ flags: 1 << 15, components: [{ type: 10, content: "Hi" }] });
+  renderEditor(<SendMenuWebhook />);
+
+  expect(screen.getByRole("button", { name: "Send Message" })).toBeDisabled();
+});

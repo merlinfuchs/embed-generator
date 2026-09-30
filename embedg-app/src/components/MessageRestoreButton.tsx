@@ -89,10 +89,11 @@ export default function MessageRestoreButton() {
 
       restoreFromWebhookMutation.mutate(
         {
+          webhook_platform: webhookInfo.platform,
           webhook_id: webhookInfo.id,
           webhook_token: webhookInfo.token,
           message_id: messageId,
-          thread_id: threadId,
+          thread_id: webhookInfo.platform === "fluxer" ? null : threadId,
         },
         {
           onSuccess: (resp) => {

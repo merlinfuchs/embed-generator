@@ -7,16 +7,24 @@ import { useCurrentAttachmentsStore } from "../state/attachments";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { parseMessageId, parseWebhookUrl } from "../discord/util";
 import InteractiveWebhookNotice from "./InteractiveWebhookNotice";
+import FluxerComponentsNotice from "./FluxerComponentsNotice";
 import MessageRestoreButton from "./MessageRestoreButton";
 import { useToasts } from "../util/toasts";
 import { getCurrentMessage } from "../state/currentMessage";
-import { useHasInteractiveComponents } from "../state/document";
+import {
+  useHasComponents,
+  useHasInteractiveComponents,
+} from "../state/document";
 
 export default function SendMenuWebhook() {
   const validationError = useValidationErrorStore((state) =>
     state.hasAnyIssue(),
   );
   const interactive = useHasInteractiveComponents();
+  const hasComponents = useHasComponents();
+  const hasAttachments = useCurrentAttachmentsStore(
+    (state) => state.attachments.length > 0,
+  );
 
   const [webhookUrl, setWebhookUrl] = useSendSettingsStore(
     useShallow((state) => [state.webhookUrl, state.setWebhookUrl]),
@@ -25,6 +33,7 @@ export default function SendMenuWebhook() {
     if (!webhookUrl) return null;
     return parseWebhookUrl(webhookUrl);
   }, [webhookUrl]);
+  const fluxer = webhookInfo?.platform === "fluxer";
 
   const [messageId, setMessageId] = useSendSettingsStore(
     useShallow((state) => [state.messageId, state.setMessageId]),
@@ -41,6 +50,7 @@ export default function SendMenuWebhook() {
   const canSend =
     !validationError &&
     !interactive &&
+    !(fluxer && hasComponents) &&
     !!webhookInfo &&
     !sendToWebhookMutation.isPending;
 
@@ -51,12 +61,17 @@ export default function SendMenuWebhook() {
 
     sendToWebhookMutation.mutate(
       {
+        webhook_platform: webhookInfo.platform,
         webhook_id: webhookInfo.id,
         webhook_token: webhookInfo.token,
         message_id: edit ? messageId : null,
-        thread_id: threadId,
+        // Fluxer has no threads, and its edits can't change the files.
+        thread_id: fluxer ? null : threadId,
         data: getCurrentMessage(),
-        attachments: useCurrentAttachmentsStore.getState().attachments,
+        attachments:
+          fluxer && edit
+            ? []
+            : useCurrentAttachmentsStore.getState().attachments,
       },
       {
         onSuccess: (resp) => {
@@ -95,17 +110,19 @@ export default function SendMenuWebhook() {
         </div>
       </div>
       <div className="flex space-x-3">
-        <div className="flex-auto">
-          <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
-            Thread ID
+        {!fluxer && (
+          <div className="flex-auto">
+            <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
+              Thread ID
+            </div>
+            <input
+              type="text"
+              className="bg-ink-900 px-3 py-2 rounded-lg w-full focus:outline-none text-white"
+              onChange={(e) => setThreadId(e.target.value || null)}
+              value={threadId ?? ""}
+            />
           </div>
-          <input
-            type="text"
-            className="bg-ink-900 px-3 py-2 rounded-lg w-full focus:outline-none text-white"
-            onChange={(e) => setThreadId(e.target.value || null)}
-            value={threadId ?? ""}
-          />
-        </div>
+        )}
         <div className="flex-auto">
           <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
             Message ID or URL
@@ -118,7 +135,17 @@ export default function SendMenuWebhook() {
           />
         </div>
       </div>
-      {interactive && <InteractiveWebhookNotice />}
+      {fluxer && hasComponents ? (
+        <FluxerComponentsNotice />
+      ) : (
+        interactive && <InteractiveWebhookNotice />
+      )}
+      {fluxer && messageId && hasAttachments && (
+        <div className="text-mist-400 font-light text-sm">
+          Editing a Fluxer message keeps the files it was sent with, as Fluxer
+          can't change them.
+        </div>
+      )}
       <div>
         {validationError && (
           <div className="flex items-center text-red space-x-1">

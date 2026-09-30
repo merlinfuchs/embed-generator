@@ -33,6 +33,12 @@ Webhooks can send content, embeds, files, link buttons and Components V2 layouts
 
 Webhooks can't handle clicks. Buttons that hand out roles, select menus and slash commands need the Embed Generator bot on your server, because something has to receive the interaction. Log in, invite the bot, and pick a channel as the target instead of a webhook to use [interactive components](./interactive-components).
 
+## Send to Fluxer
+
+[Fluxer](https://fluxer.app) webhooks take the same messages as Discord's, so Embed Generator sends to them too. Create a webhook in the channel's settings on Fluxer, copy its URL (it starts with `https://api.fluxer.app/webhooks/`) and paste it as the target.
+
+Fluxer doesn't support components or threads yet, so the editor hides them while a Fluxer webhook is the target, and messages with components or a Components V2 layout can't be sent there. Editing a message you sent to Fluxer changes its content and embeds, but keeps the files it was sent with.
+
 ## Inspect a webhook URL
 
-If you have a webhook URL and don't know where it came from, paste it into the [Webhook Info tool](https://message.style/app/tools/webhook-info). It shows the webhook's name, avatar and who created it.
+If you have a webhook URL and don't know where it came from, paste it into the [Webhook Info tool](https://message.style/app/tools/webhook-info). It shows the webhook's name, avatar and who created it. It works for Fluxer webhooks as well.

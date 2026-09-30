@@ -1,6 +1,7 @@
 import { screen } from "@testing-library/react";
-import { expect, test } from "vitest";
-import { messageDocumentStore } from "../state/document";
+import { afterEach, expect, test } from "vitest";
+import { COMPONENTS_V2_FLAG, messageDocumentStore } from "../state/document";
+import { useSendSettingsStore } from "../state/sendSettings";
 import {
   currentMessage,
   editorUser,
@@ -8,6 +9,10 @@ import {
   renderEditor,
 } from "../test/editor";
 import EditorMenuBar from "./EditorMenuBar";
+
+afterEach(() => {
+  useSendSettingsStore.setState({ mode: "webhook", webhookUrl: null });
+});
 
 test("the settings button marks settings that differ from Discord's defaults", () => {
   loadMessage({
@@ -77,4 +82,24 @@ test("a plain click on the broom leaves the message for the dialog", async () =>
   );
 
   expect(currentMessage().content).toBe("Hello");
+});
+
+test("Fluxer has no Components V2, so there is nothing to toggle", () => {
+  useSendSettingsStore.setState({
+    webhookUrl: "https://api.fluxer.app/webhooks/123/token",
+  });
+  loadMessage({ content: "" });
+  renderEditor(<EditorMenuBar />);
+
+  expect(screen.queryByText("Components V2")).toBeNull();
+});
+
+test("a Components V2 message can still be switched back for Fluxer", () => {
+  useSendSettingsStore.setState({
+    webhookUrl: "https://api.fluxer.app/webhooks/123/token",
+  });
+  loadMessage({ flags: COMPONENTS_V2_FLAG, components: [] });
+  renderEditor(<EditorMenuBar />);
+
+  expect(screen.getByText("Components V2")).toBeInTheDocument();
 });

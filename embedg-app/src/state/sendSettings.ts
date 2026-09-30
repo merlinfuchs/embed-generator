@@ -1,3 +1,4 @@
+import { parseWebhookUrl, type WebhookPlatform } from "../discord/util";
 import { localStorageJSON } from "./storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
@@ -47,3 +48,11 @@ export const useSendSettingsStore = create<SendSettingsStore>()(
     { name: "send-settings", version: 0, storage: localStorageJSON },
   ),
 );
+
+/** Where the message is going: Fluxer for a Fluxer webhook URL, Discord otherwise. */
+export const useSendPlatform = (): WebhookPlatform =>
+  useSendSettingsStore((state) =>
+    state.mode === "webhook" && state.webhookUrl
+      ? (parseWebhookUrl(state.webhookUrl)?.platform ?? "discord")
+      : "discord",
+  );

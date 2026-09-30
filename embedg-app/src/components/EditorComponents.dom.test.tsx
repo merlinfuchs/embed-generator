@@ -25,7 +25,38 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  useSendSettingsStore.setState({ mode: "webhook" });
+  useSendSettingsStore.setState({ mode: "webhook", webhookUrl: null });
+});
+
+const FLUXER_WEBHOOK_URL = "https://api.fluxer.app/webhooks/123/token";
+
+test("there are no components to add for Fluxer", () => {
+  useSendSettingsStore.setState({ webhookUrl: FLUXER_WEBHOOK_URL });
+  loadMessage({ content: "Hi" });
+  renderEditor(<EditorComponents defaultCollapsed={false} />);
+
+  expect(screen.queryByText("Components")).toBeNull();
+});
+
+test("components already in the message stay for Fluxer, so they can be removed", () => {
+  useSendSettingsStore.setState({ webhookUrl: FLUXER_WEBHOOK_URL });
+  loadMessage({
+    content: "Hi",
+    components: [
+      {
+        type: 1,
+        components: [
+          { type: 2, style: 5, label: "Go", url: "https://example.com" },
+        ],
+      },
+    ],
+  });
+  renderEditor(<EditorComponents defaultCollapsed={false} />);
+
+  expect(screen.getByText(/Fluxer doesn't support components/)).toBeVisible();
+  expect(
+    screen.getByRole("button", { name: "Clear Components" }),
+  ).toBeInTheDocument();
 });
 
 test("adding a button row puts an action row in the message", async () => {

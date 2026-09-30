@@ -28,6 +28,7 @@ import (
 
 type SendMessageHandler struct {
 	rest           rest.Rest
+	fluxerRest     rest.Rest
 	guildState     *guildstate.Provider
 	kvEntryStore   store.KVEntryStore
 	webhookManager *webhook.WebhookManager
@@ -47,6 +48,7 @@ func New(
 ) *SendMessageHandler {
 	return &SendMessageHandler{
 		rest:           rest,
+		fluxerRest:     newFluxerRest(),
 		guildState:     guildState,
 		kvEntryStore:   kvEntryStore,
 		webhookManager: webhookManager,
@@ -182,6 +184,13 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		return err
 	}
 
+	fluxer := req.WebhookPlatform == wire.WebhookPlatformFluxer
+	if fluxer {
+		if err := checkFluxerMessage(data, req); err != nil {
+			return err
+		}
+	}
+
 	params := discord.WebhookMessageCreate{
 		Username:        data.Username,
 		AvatarURL:       data.AvatarURL,
@@ -217,38 +226,51 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		})
 	}
 
+	client := h.rest
+	if fluxer {
+		client = h.fluxerRest
+	}
+
 	var msg *discord.Message
 	if req.MessageID.Valid {
-		msg, err = h.rest.UpdateWebhookMessage(
+		update := discord.WebhookMessageUpdate{
+			Content:         &params.Content,
+			Embeds:          &params.Embeds,
+			AllowedMentions: params.AllowedMentions,
+			Files:           params.Files,
+			Flags:           componentsV2Flag(data),
+		}
+		// Fluxer's edits only take content, embeds, flags and allowed mentions.
+		if !fluxer {
+			update.Components = &params.Components
+		}
+
+		msg, err = client.UpdateWebhookMessage(
 			common.DefinitelyID(req.WebhookID),
 			req.WebhookToken,
 			req.MessageID.ID,
-			discord.WebhookMessageUpdate{
-				Content:         &params.Content,
-				Embeds:          &params.Embeds,
-				Components:      &params.Components,
-				AllowedMentions: params.AllowedMentions,
-				Files:           params.Files,
-				Flags:           componentsV2Flag(data),
-			},
+			update,
 			rest.UpdateWebhookMessageParams{
 				ThreadID:       req.ThreadID.ID,
-				WithComponents: true,
+				WithComponents: !fluxer,
 			},
 		)
 	} else {
-		msg, err = h.rest.CreateWebhookMessage(
+		msg, err = client.CreateWebhookMessage(
 			common.DefinitelyID(req.WebhookID),
 			req.WebhookToken,
 			params,
 			rest.CreateWebhookMessageParams{
 				Wait:           true,
 				ThreadID:       req.ThreadID.ID,
-				WithComponents: true,
+				WithComponents: !fluxer,
 			},
 		)
 	}
 	if err != nil {
+		if fluxer {
+			return fluxerError(err)
+		}
 		if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeUnknownWebhook) {
 			return handlers.NotFound("unknown_webhook", "The webhook does not exist.")
 		}
@@ -262,6 +284,20 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 			ChannelID: msg.ChannelID,
 		},
 	})
+}
+
+// checkFluxerMessage rejects what Fluxer's webhooks can't send, instead of leaving it out.
+func checkFluxerMessage(data *actions.MessageWithActions, req wire.MessageSendToWebhookRequestWire) error {
+	if data.ComponentsV2Enabled() || len(data.Components) > 0 {
+		return handlers.BadRequest("invalid_components", "Fluxer doesn't support components yet. Remove them and turn off Components V2 to send the message to Fluxer.")
+	}
+	if req.ThreadID.Valid {
+		return handlers.BadRequest("invalid_thread", "Fluxer doesn't have threads.")
+	}
+	if req.MessageID.Valid && len(req.Attachments) > 0 {
+		return handlers.BadRequest("invalid_attachments", "Fluxer can't change the files of a message when editing it. Remove the attachments to edit it, or send it as a new message.")
+	}
+	return nil
 }
 
 // componentsV2Flag turns an edited message into a Components V2 one, which Discord needs to be told

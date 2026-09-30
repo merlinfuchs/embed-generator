@@ -7,16 +7,18 @@ import {
 } from "../state/document";
 import {
   EditorCapabilitiesContext,
+  FLUXER_MESSAGE_CAPABILITIES,
   MESSAGE_CAPABILITIES,
   WEBHOOK_MESSAGE_CAPABILITIES,
 } from "../state/editorCapabilities";
 import { slotScope } from "../state/validationError";
-import { useSendSettingsStore } from "../state/sendSettings";
+import { useSendPlatform, useSendSettingsStore } from "../state/sendSettings";
 import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";
 import EditorComponentAddDropdown from "./EditorComponentAddDropdown";
 import EditorComponentEntry from "./EditorComponentEntry";
 import InteractiveWebhookNotice from "./InteractiveWebhookNotice";
+import FluxerComponentsNotice from "./FluxerComponentsNotice";
 
 export default function EditorComponents({
   defaultCollapsed = true,
@@ -29,10 +31,20 @@ export default function EditorComponents({
 
   const webhook = useSendSettingsStore((state) => state.mode) === "webhook";
   const interactive = useHasInteractiveComponents();
+  const fluxer = useSendPlatform() === "fluxer";
+
+  // Nothing to add on Fluxer, but components already there stay so they can be removed.
+  if (fluxer && components.length === 0) return null;
 
   return (
     <EditorCapabilitiesContext.Provider
-      value={webhook ? WEBHOOK_MESSAGE_CAPABILITIES : MESSAGE_CAPABILITIES}
+      value={
+        fluxer
+          ? FLUXER_MESSAGE_CAPABILITIES
+          : webhook
+            ? WEBHOOK_MESSAGE_CAPABILITIES
+            : MESSAGE_CAPABILITIES
+      }
     >
       <Collapsable
         id="components"
@@ -51,8 +63,11 @@ export default function EditorComponents({
           </div>
         }
       >
-        {webhook && interactive && (
-          <InteractiveWebhookNotice className="mb-3 text-sm" />
+        {fluxer ? (
+          <FluxerComponentsNotice className="mb-3 text-sm" />
+        ) : (
+          webhook &&
+          interactive && <InteractiveWebhookNotice className="mb-3 text-sm" />
         )}
         <AutoAnimate className="space-y-3 mb-3">
           {components.map((id) => (

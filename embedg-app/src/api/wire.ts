@@ -294,7 +294,15 @@ export interface SavedMessageImportDataWire {
   description: null | string;
   data: Record<string, any> | null;
 }
+/**
+ * WebhookPlatform is where a webhook lives. Fluxer's webhooks take Discord's message format, minus
+ * the components and threads.
+ */
+export type WebhookPlatform = string;
+export const WebhookPlatformDiscord: WebhookPlatform = "discord";
+export const WebhookPlatformFluxer: WebhookPlatform = "fluxer";
 export interface MessageSendToWebhookRequestWire {
+  webhook_platform: WebhookPlatform;
   webhook_id: string;
   webhook_token: string;
   thread_id: null | string;
@@ -322,6 +330,7 @@ export interface MessageSendResponseDataWire {
 }
 export type MessageSendResponseWire = APIResponse<MessageSendResponseDataWire>;
 export interface MessageRestoreFromWebhookRequestWire {
+  webhook_platform: WebhookPlatform;
   webhook_id: string;
   webhook_token: string;
   thread_id: null | string;

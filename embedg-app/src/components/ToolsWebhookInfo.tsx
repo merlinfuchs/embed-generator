@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { userAvatarUrl } from "../discord/cdn";
+import { fluxerAvatarUrl, userAvatarUrl } from "../discord/cdn";
+import { parseWebhookUrl } from "../discord/util";
 
 interface Webhook {
   application_id: string | null;
@@ -22,6 +23,7 @@ interface Webhook {
 export default function ToolsWebhookInfo() {
   const [webhookUrl, setWebhookUrl] = useState("");
   const [webhookInfo, setWebhookInfo] = useState<Webhook>();
+  const [fluxer, setFluxer] = useState(false);
   const [error, setError] = useState<string>();
 
   function getWebhookInfo() {
@@ -29,6 +31,7 @@ export default function ToolsWebhookInfo() {
 
     setWebhookInfo(undefined);
     setError(undefined);
+    setFluxer(parseWebhookUrl(webhookUrl)?.platform === "fluxer");
 
     fetch(webhookUrl)
       .then((res) => {
@@ -42,13 +45,23 @@ export default function ToolsWebhookInfo() {
       .catch((err) => setError(`${err}`));
   }
 
+  const avatarUrl =
+    webhookInfo &&
+    (fluxer
+      ? fluxerAvatarUrl(webhookInfo)
+      : userAvatarUrl({
+          id: webhookInfo.id,
+          avatar: webhookInfo.avatar,
+          discriminator: "0",
+        }));
+
   return (
     <div className="space-y-5">
       <div className="flex space-x-3">
         <input
           type="url"
           className="bg-ink-900 rounded-lg px-3 py-2 w-full focus:outline-none text-mist-100 placeholder:font-light placeholder-mist-500"
-          placeholder="https://discord.com/api/webhooks/..."
+          placeholder="https://discord.com/api/webhooks/... or https://api.fluxer.app/webhooks/..."
           value={webhookUrl}
           onChange={(e) => setWebhookUrl(e.target.value)}
         />
@@ -63,15 +76,9 @@ export default function ToolsWebhookInfo() {
       {webhookInfo && (
         <div className="bg-ink-700 p-5 rounded-xl">
           <div className="flex items-center space-x-4 mb-10">
-            <img
-              src={userAvatarUrl({
-                id: webhookInfo.id,
-                avatar: webhookInfo.avatar,
-                discriminator: "0",
-              })}
-              className="h-20 w-20 rounded-full"
-              alt=""
-            />
+            {avatarUrl && (
+              <img src={avatarUrl} className="h-20 w-20 rounded-full" alt="" />
+            )}
             <div>
               <div className="text-xl font-medium text-mist-100">
                 {webhookInfo.name}
