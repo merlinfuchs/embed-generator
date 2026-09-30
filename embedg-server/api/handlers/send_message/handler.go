@@ -138,6 +138,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 			Components:      &params.Components,
 			AllowedMentions: params.AllowedMentions,
 			Files:           params.Files,
+			Flags:           componentsV2Flag(data),
 		})
 	} else {
 		msg, err = h.webhookManager.SendMessageToChannel(c.UserContext(), req.ChannelID, params)
@@ -243,6 +244,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 				Components:      &params.Components,
 				AllowedMentions: params.AllowedMentions,
 				Files:           params.Files,
+				Flags:           componentsV2Flag(data),
 			},
 			rest.UpdateWebhookMessageParams{
 				ThreadID:       req.ThreadID.ID,
@@ -275,6 +277,16 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 			ChannelID: msg.ChannelID,
 		},
 	})
+}
+
+// componentsV2Flag turns an edited message into a Components V2 one, which Discord needs to be told
+// on edits too. It can't be turned back, so it's left out otherwise.
+func componentsV2Flag(data *actions.MessageWithActions) *discord.MessageFlags {
+	if !data.ComponentsV2Enabled() {
+		return nil
+	}
+	flags := discord.MessageFlagIsComponentsV2
+	return &flags
 }
 
 func checkMessageLimits(data *actions.MessageWithActions, features model.PlanFeatures) error {

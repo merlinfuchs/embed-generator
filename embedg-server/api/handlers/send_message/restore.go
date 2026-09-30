@@ -90,14 +90,20 @@ func (h *SendMessageHandler) HandleRestoreMessageFromWebhook(c *fiber.Ctx, req w
 		return err
 	}
 
-	data := &actions.MessageWithActions{
-		Content:   msg.Content,
-		Username:  msg.Author.Username,
-		AvatarURL: msg.Author.EffectiveAvatarURL(discord.WithSize(512)),
-		Embeds:    msg.Embeds,
+	components, err := h.actionParser.UnparseMessageComponents(msg.Components)
+	if err != nil {
+		return fmt.Errorf("Failed to unparse message components: %w", err)
 	}
 
-	// TODO: components and actions
+	// Webhooks only send link buttons and layout components, so there are no actions to restore.
+	data := &actions.MessageWithActions{
+		Content:    msg.Content,
+		Username:   msg.Author.Username,
+		AvatarURL:  msg.Author.EffectiveAvatarURL(discord.WithSize(512)),
+		Embeds:     msg.Embeds,
+		Components: components,
+		Flags:      msg.Flags,
+	}
 
 	attachments := downloadMessageAttachments(msg.Attachments)
 

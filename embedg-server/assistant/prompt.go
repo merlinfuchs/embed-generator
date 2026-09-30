@@ -38,7 +38,7 @@ Actions, in the order they run, at most as many per button or option as the plan
 - Respond with a saved message: {"type": 5, "target_id": "saved message ID", "public": false}, with type 7 as a direct message and type 9 editing the message. Only use saved messages from the list.
 - Roles: {"type": 2, "target_id": "role ID", "disable_default_response": false} toggles the role of the user who clicked, type 3 adds it and type 4 removes it. The bot tells the user what changed unless disable_default_response is true. Only use roles from the list.
 - Permission check: {"type": 10, "permissions": "0", "role_ids": ["role ID"], "disable_default_response": false} stops the actions after it unless the user has one of the roles, or the permissions, a Discord permission bit field as a string. With disable_default_response true, "text" is the answer they get instead.
-- Buttons and select menus only work when the message is sent to a channel through the website with the bot in the server, not to a webhook URL. Mention it when you add the first ones.
+- Buttons with actions and select menus only work when the message is sent to a channel through the website with the bot in the server, not to a webhook URL. Link buttons and everything else work with webhooks too. Mention it when you add the first ones with actions.
 
 Text:
 - content, descriptions, field values and text displays use Discord Markdown: **bold**, *italic*, __underline__, ~~strikethrough~~, ||spoiler||, ` + "`code`" + `, > quotes, lists with - or 1., headings with #, ## or ### at the start of a line, small grey text with -# at the start of a line, [links](https://example.com) and code blocks. Titles, labels and names are plain text.

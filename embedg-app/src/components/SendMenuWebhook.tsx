@@ -10,13 +10,19 @@ import InteractiveWebhookNotice from "./InteractiveWebhookNotice";
 import MessageRestoreButton from "./MessageRestoreButton";
 import { useToasts } from "../util/toasts";
 import { getCurrentMessage } from "../state/currentMessage";
-import { useHasInteractiveComponents } from "../state/document";
+import {
+  useChildIds,
+  useDocument,
+  useHasInteractiveComponents,
+} from "../state/document";
 
 export default function SendMenuWebhook() {
   const validationError = useValidationErrorStore((state) =>
     state.hasAnyIssue(),
   );
   const interactive = useHasInteractiveComponents();
+  const rootId = useDocument((state) => state.rootId);
+  const hasComponents = useChildIds(rootId, "components").length > 0;
 
   const [webhookUrl, setWebhookUrl] = useSendSettingsStore(
     useShallow((state) => [state.webhookUrl, state.setWebhookUrl]),
@@ -39,9 +45,11 @@ export default function SendMenuWebhook() {
 
   // One predicate per button, used for both the styling and the disabled attribute. Only Discord
   // webhooks can edit a message they sent.
+  const guildedComponents = webhookInfo?.type === "guilded" && hasComponents;
   const canSend =
     !validationError &&
     !interactive &&
+    !guildedComponents &&
     !!webhookInfo &&
     !sendToWebhookMutation.isPending;
   const canEdit = canSend && webhookInfo?.type === "discord";
@@ -122,6 +130,12 @@ export default function SendMenuWebhook() {
         </div>
       </div>
       {interactive && <InteractiveWebhookNotice />}
+      {guildedComponents && (
+        <div className="text-orange-300 font-light">
+          Guilded webhooks can't send components. Remove them to send the
+          message there.
+        </div>
+      )}
       <div>
         {validationError && (
           <div className="flex items-center text-red space-x-1">

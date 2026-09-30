@@ -33,7 +33,7 @@ export default function EditorComponentAddDropdown({
   }
 
   const componentsV2Enabled = useComponentsV2Enabled();
-  const { componentTypes: allowedTypes } = useEditorCapabilities();
+  const { componentTypes: allowedTypes, interactive } = useEditorCapabilities();
 
   function addSelectMenuRow() {
     const rowId = insert(parentId, "components", "end", { type: "actionRow" });
@@ -104,6 +104,7 @@ export default function EditorComponentAddDropdown({
     if (c.v2Only && !componentsV2Enabled) return false;
     if (c.rootOnly && context !== "root") return false;
     if (allowedTypes && !allowedTypes.includes(c.type)) return false;
+    if (c.type === 3 && !interactive) return false;
 
     return true;
   });

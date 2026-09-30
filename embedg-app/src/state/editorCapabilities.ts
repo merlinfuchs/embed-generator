@@ -10,7 +10,7 @@ import { createContext, useContext } from "react";
 export interface EditorCapabilities {
   /** Component types that can be added, or null for all of them. */
   componentTypes: number[] | null;
-  /** Whether buttons have to be link buttons. */
+  /** Whether buttons have to be link buttons, which rules out interactive. */
   linkButtonsOnly: boolean;
   /**
    * Whether buttons with actions and select menus can be sent, which takes
