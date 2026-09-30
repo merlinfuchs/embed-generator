@@ -26,7 +26,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  useSendSettingsStore.setState({ mode: "webhook", webhookUrl: null });
+  useSendSettingsStore.setState({ mode: "webhook" });
 });
 
 test("there are no components to add for Fluxer", () => {

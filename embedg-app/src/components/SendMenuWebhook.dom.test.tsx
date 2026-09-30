@@ -1,5 +1,6 @@
 import { screen } from "@testing-library/react";
 import { expect, test } from "vitest";
+import { COMPONENTS_V2_FLAG } from "../state/document";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { loadMessage, renderEditor, targetFluxerWebhook } from "../test/editor";
 import SendMenuWebhook from "./SendMenuWebhook";
@@ -58,7 +59,10 @@ test("a message with components can't go to a Fluxer webhook", () => {
 
 test("a Components V2 message can't go to a Fluxer webhook", () => {
   targetFluxerWebhook();
-  loadMessage({ flags: 1 << 15, components: [{ type: 10, content: "Hi" }] });
+  loadMessage({
+    flags: COMPONENTS_V2_FLAG,
+    components: [{ type: 10, content: "Hi" }],
+  });
   renderEditor(<SendMenuWebhook />);
 
   expect(screen.getByRole("button", { name: "Send Message" })).toBeDisabled();

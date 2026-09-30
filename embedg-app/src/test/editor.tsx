@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
+import { onTestFinished } from "vitest";
 import { parseMessageWithAction } from "../discord/importSchema";
 import { setCurrentMessage } from "../state/currentMessage";
 import { messageDocumentStore } from "../state/document";
@@ -58,10 +59,16 @@ export function editorUser(options?: Parameters<typeof userEvent.setup>[0]) {
   return userEvent.setup({ pointerEventsCheck: 0, ...options });
 }
 
-/** Targets a Fluxer webhook, which the editor treats as having no components or threads. */
+/**
+ * Targets a Fluxer webhook, which the editor treats as having no components or
+ * threads, until the test ends.
+ */
 export function targetFluxerWebhook() {
   useSendSettingsStore.setState({
     mode: "webhook",
     webhookUrl: "https://api.fluxer.app/webhooks/123/token",
+  });
+  onTestFinished(() => {
+    useSendSettingsStore.setState({ webhookUrl: null });
   });
 }

@@ -1,7 +1,6 @@
 import { screen } from "@testing-library/react";
-import { afterEach, expect, test } from "vitest";
+import { expect, test } from "vitest";
 import { COMPONENTS_V2_FLAG, messageDocumentStore } from "../state/document";
-import { useSendSettingsStore } from "../state/sendSettings";
 import {
   currentMessage,
   editorUser,
@@ -10,10 +9,6 @@ import {
   targetFluxerWebhook,
 } from "../test/editor";
 import EditorMenuBar from "./EditorMenuBar";
-
-afterEach(() => {
-  useSendSettingsStore.setState({ mode: "webhook", webhookUrl: null });
-});
 
 test("the settings button marks settings that differ from Discord's defaults", () => {
   loadMessage({

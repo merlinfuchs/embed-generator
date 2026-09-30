@@ -70,7 +70,7 @@ type fluxerMessage struct {
 	Content     string               `json:"content"`
 	Embeds      []discord.Embed      `json:"embeds"`
 	Flags       discord.MessageFlags `json:"flags"`
-	Attachments []fluxerAttachment   `json:"attachments"`
+	Attachments []discord.Attachment `json:"attachments"`
 }
 
 type fluxerUser struct {
@@ -85,13 +85,6 @@ func (u fluxerUser) avatarURL() string {
 		return ""
 	}
 	return fmt.Sprintf("%s/avatars/%s/%s.png", fluxerMediaURL, u.ID, *u.Avatar)
-}
-
-type fluxerAttachment struct {
-	Filename    string  `json:"filename"`
-	ContentType *string `json:"content_type"`
-	Size        int     `json:"size"`
-	URL         string  `json:"url"`
 }
 
 func (c *fluxerClient) webhookURL(webhookID common.ID, token string) string {
@@ -206,27 +199,24 @@ func (h *SendMessageHandler) sendToFluxerWebhook(c *fiber.Ctx, req wire.MessageS
 		return err
 	}
 
-	files, err := decodeAttachments(req.Attachments)
-	if err != nil {
-		return err
-	}
-
 	webhookID := common.DefinitelyID(req.WebhookID)
 
 	var msg *fluxerMessage
+	var err error
 	if req.MessageID.Valid {
-		// An empty list rather than none, so embeds removed in the editor are removed on Fluxer.
-		embeds := data.Embeds
-		if embeds == nil {
-			embeds = []discord.Embed{}
-		}
-
 		msg, err = h.fluxer.EditWebhookMessage(c.UserContext(), webhookID, req.WebhookToken, req.MessageID.ID, fluxerMessageEdit{
-			Content:         data.Content,
-			Embeds:          embeds,
+			Content: data.Content,
+			// An empty list rather than none, so embeds removed in the editor are removed on Fluxer.
+			Embeds:          append([]discord.Embed{}, data.Embeds...),
 			AllowedMentions: data.AllowedMentions,
 		})
 	} else {
+		var files []*discord.File
+		files, err = decodeAttachments(req.Attachments)
+		if err != nil {
+			return err
+		}
+
 		msg, err = h.fluxer.ExecuteWebhook(c.UserContext(), webhookID, req.WebhookToken, fluxerMessageCreate{
 			Content:         data.Content,
 			Username:        data.Username,
@@ -260,33 +250,11 @@ func (h *SendMessageHandler) restoreFromFluxerWebhook(c *fiber.Ctx, req wire.Mes
 		return err
 	}
 
-	data := &actions.MessageWithActions{
+	return restoreResponse(c, &actions.MessageWithActions{
 		Content:   msg.Content,
 		Username:  msg.Author.Username,
 		AvatarURL: msg.Author.avatarURL(),
 		Embeds:    msg.Embeds,
 		Flags:     msg.Flags,
-	}
-	rawData, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-
-	attachments := make([]discord.Attachment, len(msg.Attachments))
-	for i, attachment := range msg.Attachments {
-		attachments[i] = discord.Attachment{
-			Filename:    attachment.Filename,
-			ContentType: attachment.ContentType,
-			Size:        attachment.Size,
-			URL:         attachment.URL,
-		}
-	}
-
-	return c.JSON(wire.MessageRestoreResponseWire{
-		Success: true,
-		Data: wire.MessageRestoreResponseDataWire{
-			Data:        rawData,
-			Attachments: downloadMessageAttachments(attachments),
-		},
-	})
+	}, msg.Attachments)
 }

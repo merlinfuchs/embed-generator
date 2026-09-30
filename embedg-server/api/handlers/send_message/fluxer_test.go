@@ -191,7 +191,7 @@ func TestEditFluxerWebhookMessage(t *testing.T) {
 	if got.method != http.MethodPatch || got.uri != "/v1/webhooks/1500000000000000001/token/messages/1500000000000000002" {
 		t.Fatalf("want the edit webhook message route, got %s %s", got.method, got.uri)
 	}
-	// Fluxer's edits only take content, embeds, flags and allowed mentions.
+	// Only what Fluxer's edits take, which has no files or components.
 	for key := range got.body {
 		if key != "content" && key != "embeds" && key != "allowed_mentions" {
 			t.Fatalf("want only fields Fluxer's edit takes, got %v", got.body)
