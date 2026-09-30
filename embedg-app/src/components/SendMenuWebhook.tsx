@@ -6,6 +6,7 @@ import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { parseMessageId, parseWebhookUrl } from "../discord/util";
+import InteractiveWebhookNotice from "./InteractiveWebhookNotice";
 import MessageRestoreButton from "./MessageRestoreButton";
 import { useToasts } from "../util/toasts";
 import { getCurrentMessage } from "../state/currentMessage";
@@ -15,6 +16,7 @@ export default function SendMenuWebhook() {
   const validationError = useValidationErrorStore((state) =>
     state.hasAnyIssue(),
   );
+  const interactive = useHasInteractiveComponents();
 
   const [webhookUrl, setWebhookUrl] = useSendSettingsStore(
     useShallow((state) => [state.webhookUrl, state.setWebhookUrl]),
@@ -37,7 +39,6 @@ export default function SendMenuWebhook() {
 
   // One predicate per button, used for both the styling and the disabled attribute. Only Discord
   // webhooks can edit a message they sent.
-  const interactive = useHasInteractiveComponents();
   const canSend =
     !validationError &&
     !interactive &&
@@ -120,12 +121,7 @@ export default function SendMenuWebhook() {
           />
         </div>
       </div>
-      {interactive && (
-        <div className="text-orange-300 font-light">
-          Buttons with actions and select menus only work when the bot sends the
-          message. Switch to Channel to send it, or turn them into link buttons.
-        </div>
-      )}
+      {interactive && <InteractiveWebhookNotice />}
       <div>
         {validationError && (
           <div className="flex items-center text-red space-x-1">

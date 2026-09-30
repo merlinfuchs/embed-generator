@@ -342,9 +342,8 @@ func describeGuild(guild Guild) string {
 		fmt.Fprintf(&b, "\n- %s %q", m.ID, m.Name)
 	}
 
-	f := guild.Features
 	b.WriteString("\n\nPlan:")
-	fmt.Fprintf(&b, "\n- Actions per button or select menu option: %d", f.MaxActionsPerComponent)
+	fmt.Fprintf(&b, "\n- Actions per button or select menu option: %d", guild.Features.MaxActionsPerComponent)
 
 	return b.String()
 }

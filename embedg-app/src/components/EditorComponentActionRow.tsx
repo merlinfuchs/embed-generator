@@ -8,7 +8,6 @@ import {
   useDocument,
 } from "../state/document";
 import { useEditorCapabilities } from "../state/editorCapabilities";
-import { useSendSettingsStore } from "../state/sendSettings";
 import { nodeScope } from "../state/validationError";
 import { AutoAnimate } from "../util/autoAnimate";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
@@ -27,10 +26,7 @@ export default function EditorComponentActionRow({
   const childIds = useChildIds(id, "components");
   const actions = useNodeActions(id);
   const { insert, removeChildren } = useDocumentStoreApi().getState();
-  const { linkButtonsOnly } = useEditorCapabilities();
-  // Webhooks can only send link buttons, so new buttons start as one there.
-  const linkByDefault =
-    useSendSettingsStore((s) => s.mode) === "webhook" || linkButtonsOnly;
+  const { interactive } = useEditorCapabilities();
   // A row holds either buttons or a single select menu, never both.
   const isButtonRow = useDocument(
     (state) => state.nodes[childIds[0]]?.type !== "selectMenu",
@@ -57,7 +53,7 @@ export default function EditorComponentActionRow({
             onAdd={() =>
               insert(id, "components", "end", {
                 type: "button",
-                style: linkByDefault ? 5 : 2,
+                style: interactive ? 2 : 5,
                 label: "",
               })
             }

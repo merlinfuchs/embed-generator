@@ -34,7 +34,9 @@ func New(
 	}
 }
 
-var errNotInteractive = errors.New("buttons with actions and select menus only work when the bot sends the message, select a server and channel instead of a webhook")
+// ErrInteractiveNotAllowed is returned for buttons with actions and select menus when they aren't
+// allowed.
+var ErrInteractiveNotAllowed = errors.New("buttons with actions and select menus need the bot to handle them")
 
 // isInteractive is whether the component needs the bot to handle it, unlike a link button.
 func isInteractive(data actions.ComponentWithActions) bool {
@@ -47,13 +49,13 @@ func isInteractive(data actions.ComponentWithActions) bool {
 	return false
 }
 
-// ParseMessageComponents turns the components into what Discord takes. Without interactive, which
-// needs the bot to handle them, buttons with actions and select menus are refused.
-func (m *ActionParser) ParseMessageComponents(data []actions.ComponentWithActions, interactive bool) ([]discord.LayoutComponent, error) {
+// ParseMessageComponents turns the components into what Discord takes. Without allowInteractive,
+// buttons with actions and select menus are refused, as only the bot can handle them.
+func (m *ActionParser) ParseMessageComponents(data []actions.ComponentWithActions, allowInteractive bool) ([]discord.LayoutComponent, error) {
 	components := make([]discord.LayoutComponent, 0, len(data))
 
 	for _, component := range data {
-		parsed, err := m.ParseMessageComponent(component, interactive)
+		parsed, err := m.ParseMessageComponent(component, allowInteractive)
 		if err != nil {
 			return nil, err
 		}
@@ -69,9 +71,9 @@ func (m *ActionParser) ParseMessageComponents(data []actions.ComponentWithAction
 	return components, nil
 }
 
-func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions, interactive bool) (discord.Component, error) {
-	if !interactive && isInteractive(data) {
-		return nil, errNotInteractive
+func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions, allowInteractive bool) (discord.Component, error) {
+	if !allowInteractive && isInteractive(data) {
+		return nil, ErrInteractiveNotAllowed
 	}
 
 	switch data.Type {
@@ -82,7 +84,7 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions, 
 		}
 
 		for _, component := range data.Components {
-			parsed, err := m.ParseMessageComponent(component, interactive)
+			parsed, err := m.ParseMessageComponent(component, allowInteractive)
 			if err != nil {
 				return nil, err
 			}
@@ -139,7 +141,7 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions, 
 		}
 
 		for _, component := range data.Components {
-			parsed, err := m.ParseMessageComponent(component, interactive)
+			parsed, err := m.ParseMessageComponent(component, allowInteractive)
 			if err != nil {
 				return nil, err
 			}
@@ -152,7 +154,7 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions, 
 		}
 
 		if data.Accessory != nil {
-			parsed, err := m.ParseMessageComponent(*data.Accessory, interactive)
+			parsed, err := m.ParseMessageComponent(*data.Accessory, allowInteractive)
 			if err != nil {
 				return nil, err
 			}
@@ -215,7 +217,7 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions, 
 		}
 
 		for _, component := range data.Components {
-			parsed, err := m.ParseMessageComponent(component, interactive)
+			parsed, err := m.ParseMessageComponent(component, allowInteractive)
 			if err != nil {
 				return nil, err
 			}

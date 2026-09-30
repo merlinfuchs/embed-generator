@@ -44,8 +44,8 @@ func TestParseMessageComponentsWithoutInteractive(t *testing.T) {
 			if test.ok && err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
-			if !test.ok && !errors.Is(err, errNotInteractive) {
-				t.Fatalf("err = %v, want errNotInteractive", err)
+			if !test.ok && !errors.Is(err, ErrInteractiveNotAllowed) {
+				t.Fatalf("err = %v, want ErrInteractiveNotAllowed", err)
 			}
 		})
 	}

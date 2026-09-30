@@ -193,6 +193,19 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		params.TTS = data.TTS
 	}
 
+	// Checked before the attachments are decoded, as the request fails either way.
+	if req.WebhookType == "guilded" && len(data.Components) > 0 {
+		return handlers.BadRequest("invalid_components", "Guilded webhooks can't send components.")
+	}
+	// Only the bot can handle interactive components, but webhooks send the rest.
+	params.Components, err = h.actionParser.ParseMessageComponents(data.Components, false)
+	if errors.Is(err, parser.ErrInteractiveNotAllowed) {
+		return handlers.BadRequest("invalid_components", "Buttons with actions and select menus only work when the bot sends the message. Select a server and channel instead of a webhook.")
+	}
+	if err != nil {
+		return handlers.BadRequest("invalid_components", err.Error())
+	}
+
 	for _, attachment := range req.Attachments {
 		dataURL, err := dataurl.DecodeString(attachment.DataURL)
 		if err != nil {
@@ -206,17 +219,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		})
 	}
 
-	// Only the bot can handle interactive components, but webhooks send the rest.
-	params.Components, err = h.actionParser.ParseMessageComponents(data.Components, false)
-	if err != nil {
-		return handlers.BadRequest("invalid_components", err.Error())
-	}
-
 	if req.WebhookType == "guilded" {
-		if len(data.Components) > 0 {
-			return handlers.BadRequest("invalid_components", "Guilded webhooks can't send components.")
-		}
-
 		err := common.ExecuteGuildedWebhook(c.UserContext(), req.WebhookID, req.WebhookToken, params)
 		if err != nil {
 			return err
