@@ -1,3 +1,10 @@
+/** A Fluxer avatar, or null for Fluxer's default one, which has no documented URL. */
+export function fluxerAvatarUrl(user: { id: string; avatar: string | null }) {
+  return user.avatar
+    ? `https://fluxerusercontent.com/avatars/${user.id}/${user.avatar}.png`
+    : null;
+}
+
 export function userAvatarUrl(
   user: { id: string; discriminator: string; avatar: string | null },
   size: number = 128,

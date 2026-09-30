@@ -17,6 +17,7 @@ import {
   editorUser,
   loadMessage,
   renderEditor,
+  targetFluxerWebhook,
 } from "../test/editor";
 import EditorComponents from "./EditorComponents";
 
@@ -26,6 +27,36 @@ beforeEach(() => {
 
 afterEach(() => {
   useSendSettingsStore.setState({ mode: "webhook" });
+});
+
+test("there are no components to add for Fluxer", () => {
+  targetFluxerWebhook();
+  loadMessage({ content: "Hi" });
+  renderEditor(<EditorComponents defaultCollapsed={false} />);
+
+  expect(screen.queryByText("Components")).toBeNull();
+});
+
+test("components already in the message stay for Fluxer, so they can be removed", () => {
+  targetFluxerWebhook();
+  loadMessage({
+    content: "Hi",
+    components: [
+      {
+        type: 1,
+        components: [
+          { type: 2, style: 5, label: "Go", url: "https://example.com" },
+        ],
+      },
+    ],
+  });
+  renderEditor(<EditorComponents defaultCollapsed={false} />);
+
+  expect(screen.getByText(/Fluxer doesn't support components/)).toBeVisible();
+  expect(
+    screen.getByRole("button", { name: "Clear Components" }),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /Add Component/ })).toBeNull();
 });
 
 test("adding a button row puts an action row in the message", async () => {

@@ -28,6 +28,7 @@ import (
 
 type SendMessageHandler struct {
 	rest           rest.Rest
+	fluxer         *fluxerClient
 	guildState     *guildstate.Provider
 	kvEntryStore   store.KVEntryStore
 	webhookManager *webhook.WebhookManager
@@ -47,6 +48,7 @@ func New(
 ) *SendMessageHandler {
 	return &SendMessageHandler{
 		rest:           rest,
+		fluxer:         newFluxerClient(fluxerAPIURL),
 		guildState:     guildState,
 		kvEntryStore:   kvEntryStore,
 		webhookManager: webhookManager,
@@ -112,17 +114,9 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		params.TTS = data.TTS
 	}
 
-	for _, attachment := range req.Attachments {
-		dataURL, err := dataurl.DecodeString(attachment.DataURL)
-		if err != nil {
-			return handlers.BadRequest("invalid_attachments", "Failed to parse attachment data URL")
-		}
-
-		params.Files = append(params.Files, &discord.File{
-			Name: attachment.Name,
-			// ContentType: dataURL.ContentType(),
-			Reader: bytes.NewReader(dataURL.Data),
-		})
+	params.Files, err = decodeAttachments(req.Attachments)
+	if err != nil {
+		return err
 	}
 
 	params.Components, err = h.actionParser.ParseMessageComponents(data.Components, true)
@@ -182,6 +176,10 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		return err
 	}
 
+	if req.WebhookPlatform == wire.WebhookPlatformFluxer {
+		return h.sendToFluxerWebhook(c, req, data)
+	}
+
 	params := discord.WebhookMessageCreate{
 		Username:        data.Username,
 		AvatarURL:       data.AvatarURL,
@@ -204,17 +202,9 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		return handlers.BadRequest("invalid_components", err.Error())
 	}
 
-	for _, attachment := range req.Attachments {
-		dataURL, err := dataurl.DecodeString(attachment.DataURL)
-		if err != nil {
-			return handlers.BadRequest("invalid_attachments", "Failed to parse attachment data URL")
-		}
-
-		params.Files = append(params.Files, &discord.File{
-			Name: attachment.Name,
-			// ContentType: dataURL.ContentType(),
-			Reader: bytes.NewReader(dataURL.Data),
-		})
+	params.Files, err = decodeAttachments(req.Attachments)
+	if err != nil {
+		return err
 	}
 
 	var msg *discord.Message
@@ -262,6 +252,23 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 			ChannelID: msg.ChannelID,
 		},
 	})
+}
+
+func decodeAttachments(attachments []*wire.MessageAttachmentWire) ([]*discord.File, error) {
+	files := make([]*discord.File, 0, len(attachments))
+	for _, attachment := range attachments {
+		dataURL, err := dataurl.DecodeString(attachment.DataURL)
+		if err != nil {
+			return nil, handlers.BadRequest("invalid_attachments", "Failed to parse attachment data URL")
+		}
+
+		files = append(files, &discord.File{
+			Name: attachment.Name,
+			// ContentType: dataURL.ContentType(),
+			Reader: bytes.NewReader(dataURL.Data),
+		})
+	}
+	return files, nil
 }
 
 // componentsV2Flag turns an edited message into a Components V2 one, which Discord needs to be told

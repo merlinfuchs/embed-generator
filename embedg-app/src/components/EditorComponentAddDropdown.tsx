@@ -109,6 +109,9 @@ export default function EditorComponentAddDropdown({
     return true;
   });
 
+  // Fluxer has no components, so there is nothing to offer.
+  if (componentTypes.length === 0) return null;
+
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
       <div className="relative">

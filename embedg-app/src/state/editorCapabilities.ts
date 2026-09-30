@@ -30,6 +30,13 @@ export const WEBHOOK_MESSAGE_CAPABILITIES: EditorCapabilities = {
   interactive: false,
 };
 
+/** Fluxer has no components yet, so none can be added. */
+export const FLUXER_MESSAGE_CAPABILITIES: EditorCapabilities = {
+  componentTypes: [],
+  linkButtonsOnly: true,
+  interactive: false,
+};
+
 export const COMPONENT_EMBED_CAPABILITIES: EditorCapabilities = {
   componentTypes: [1, 9, 10, 12, 14],
   linkButtonsOnly: true,

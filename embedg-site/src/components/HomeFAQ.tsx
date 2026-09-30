@@ -18,6 +18,10 @@ export const faq = [
     a: "Yes. You can switch a message to Components V2 in the editor to use sections, separators, media galleries and thumbnails.",
   },
   {
+    q: "Can I send embeds to Fluxer?",
+    a: "Yes. Paste a Fluxer webhook URL instead of a Discord one and send content, embeds and files with a custom name and avatar. Fluxer doesn't support buttons or Components V2 yet, so those stay on Discord.",
+  },
+  {
     q: "Can I change the name and avatar of the message?",
     a: "Yes. Webhook messages can use any name and avatar. With Premium you can also connect your own bot so replies to buttons and commands come from it instead of Embed Generator.",
   },

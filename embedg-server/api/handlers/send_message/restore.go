@@ -45,7 +45,7 @@ func (h *SendMessageHandler) HandleRestoreMessageFromChannel(c *fiber.Ctx, req w
 		return fmt.Errorf("Failed to retrieve actions for message: %w", err)
 	}
 
-	data := &actions.MessageWithActions{
+	return restoreResponse(c, &actions.MessageWithActions{
 		Content:    msg.Content,
 		Username:   msg.Author.Username,
 		AvatarURL:  msg.Author.EffectiveAvatarURL(discord.WithSize(512)),
@@ -53,25 +53,14 @@ func (h *SendMessageHandler) HandleRestoreMessageFromChannel(c *fiber.Ctx, req w
 		Components: components,
 		Actions:    actionSets,
 		Flags:      msg.Flags,
-	}
-
-	attachments := downloadMessageAttachments(msg.Attachments)
-
-	rawData, err := json.Marshal(data)
-	if err != nil {
-		return fmt.Errorf("Failed to marshal message data: %w", err)
-	}
-
-	return c.JSON(wire.MessageRestoreResponseWire{
-		Success: true,
-		Data: wire.MessageRestoreResponseDataWire{
-			Data:        rawData,
-			Attachments: attachments,
-		},
-	})
+	}, msg.Attachments)
 }
 
 func (h *SendMessageHandler) HandleRestoreMessageFromWebhook(c *fiber.Ctx, req wire.MessageRestoreFromWebhookRequestWire) error {
+	if req.WebhookPlatform == wire.WebhookPlatformFluxer {
+		return h.restoreFromFluxerWebhook(c, req)
+	}
+
 	reqOpts := []rest.RequestOpt{
 		rest.WithCtx(c.UserContext()),
 	}
@@ -96,27 +85,28 @@ func (h *SendMessageHandler) HandleRestoreMessageFromWebhook(c *fiber.Ctx, req w
 	}
 
 	// Webhooks only send link buttons and layout components, so there are no actions to restore.
-	data := &actions.MessageWithActions{
+	return restoreResponse(c, &actions.MessageWithActions{
 		Content:    msg.Content,
 		Username:   msg.Author.Username,
 		AvatarURL:  msg.Author.EffectiveAvatarURL(discord.WithSize(512)),
 		Embeds:     msg.Embeds,
 		Components: components,
 		Flags:      msg.Flags,
-	}
+	}, msg.Attachments)
+}
 
-	attachments := downloadMessageAttachments(msg.Attachments)
-
+// restoreResponse sends the message back to the editor, with the attachments it can download.
+func restoreResponse(c *fiber.Ctx, data *actions.MessageWithActions, attachments []discord.Attachment) error {
 	rawData, err := json.Marshal(data)
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to marshal message data: %w", err)
 	}
 
 	return c.JSON(wire.MessageRestoreResponseWire{
 		Success: true,
 		Data: wire.MessageRestoreResponseDataWire{
 			Data:        rawData,
-			Attachments: attachments,
+			Attachments: downloadMessageAttachments(attachments),
 		},
 	})
 }

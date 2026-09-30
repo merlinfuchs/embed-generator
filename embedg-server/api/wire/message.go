@@ -2,8 +2,10 @@ package wire
 
 import (
 	"encoding/json"
+	"regexp"
 	"time"
 
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"gopkg.in/guregu/null.v4"
 )
@@ -65,17 +67,44 @@ func (req SavedMessagesImportRequestWire) Validate() error {
 	return nil
 }
 
+// WebhookPlatform is where a webhook lives. Fluxer's webhooks take Discord's message format, minus
+// the components and threads.
+type WebhookPlatform string
+
+const (
+	WebhookPlatformDiscord WebhookPlatform = "discord"
+	WebhookPlatformFluxer  WebhookPlatform = "fluxer"
+)
+
+// The token ends up in the request path, so anything but the characters Discord and Fluxer use
+// could point the request somewhere else.
+var webhookTokenRegex = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
+
+var snowflakeRegex = regexp.MustCompile(`^[0-9]+$`)
+
+func validateWebhookTarget(platform *WebhookPlatform, token *string) []*validation.FieldRules {
+	return []*validation.FieldRules{
+		// Empty from tabs opened before Fluxer was supported, which only sent to Discord.
+		validation.Field(platform, validation.In(WebhookPlatformDiscord, WebhookPlatformFluxer)),
+		validation.Field(token, validation.Required, validation.Match(webhookTokenRegex)),
+	}
+}
+
 type MessageSendToWebhookRequestWire struct {
-	WebhookID    string                   `json:"webhook_id"`
-	WebhookToken string                   `json:"webhook_token"`
-	ThreadID     common.NullID            `json:"thread_id"`
-	MessageID    common.NullID            `json:"message_id"`
-	Data         json.RawMessage          `json:"data"`
-	Attachments  []*MessageAttachmentWire `json:"attachments"`
+	WebhookPlatform WebhookPlatform          `json:"webhook_platform"`
+	WebhookID       string                   `json:"webhook_id"`
+	WebhookToken    string                   `json:"webhook_token"`
+	ThreadID        common.NullID            `json:"thread_id"`
+	MessageID       common.NullID            `json:"message_id"`
+	Data            json.RawMessage          `json:"data"`
+	Attachments     []*MessageAttachmentWire `json:"attachments"`
 }
 
 func (req MessageSendToWebhookRequestWire) Validate() error {
-	return nil
+	return validation.ValidateStruct(&req, append(
+		validateWebhookTarget(&req.WebhookPlatform, &req.WebhookToken),
+		validation.Field(&req.WebhookID, validation.Required, validation.Match(snowflakeRegex)),
+	)...)
 }
 
 type MessageSendToChannelRequestWire struct {
@@ -106,14 +135,15 @@ type MessageSendResponseDataWire struct {
 type MessageSendResponseWire APIResponse[MessageSendResponseDataWire]
 
 type MessageRestoreFromWebhookRequestWire struct {
-	WebhookID    common.ID   `json:"webhook_id"`
-	WebhookToken string      `json:"webhook_token"`
-	ThreadID     null.String `json:"thread_id"`
-	MessageID    common.ID   `json:"message_id"`
+	WebhookPlatform WebhookPlatform `json:"webhook_platform"`
+	WebhookID       common.ID       `json:"webhook_id"`
+	WebhookToken    string          `json:"webhook_token"`
+	ThreadID        null.String     `json:"thread_id"`
+	MessageID       common.ID       `json:"message_id"`
 }
 
 func (req MessageRestoreFromWebhookRequestWire) Validate() error {
-	return nil
+	return validation.ValidateStruct(&req, validateWebhookTarget(&req.WebhookPlatform, &req.WebhookToken)...)
 }
 
 type MessageRestoreFromChannelRequestWire struct {

@@ -14,6 +14,7 @@ import {
 } from "../discord/defaultMessage";
 import { setCurrentMessage } from "../state/currentMessage";
 import { useAllowedMentions, useComponentsV2Enabled } from "../state/document";
+import { useSendsToFluxer } from "../state/sendSettings";
 import { usePremiumGuildFeatures } from "../util/premium";
 import EditorUndoButtons from "./EditorUndoButtons";
 import EditorIconButton from "./EditorIconButton";
@@ -26,6 +27,8 @@ export default function EditorMenuBar() {
     !!usePremiumGuildFeatures()?.max_ai_prompts_per_month;
   // Easy to forget behind a modal otherwise.
   const settingsChanged = !isDefaultAllowedMentions(useAllowedMentions());
+  // Fluxer has no Components V2, the toggle only stays to turn it off.
+  const fluxer = useSendsToFluxer();
 
   return (
     <div className="flex flex-wrap-reverse gap-x-5 gap-y-3 justify-between items-center mb-5 mt-5">
@@ -71,9 +74,11 @@ export default function EditorMenuBar() {
         )}
       </div>
 
-      <div className="flex items-center">
-        <EditorComponentsV2Toggle />
-      </div>
+      {(!fluxer || componentsV2Enabled) && (
+        <div className="flex items-center">
+          <EditorComponentsV2Toggle />
+        </div>
+      )}
     </div>
   );
 }

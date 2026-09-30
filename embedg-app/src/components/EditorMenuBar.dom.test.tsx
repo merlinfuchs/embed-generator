@@ -1,11 +1,12 @@
 import { screen } from "@testing-library/react";
 import { expect, test } from "vitest";
-import { messageDocumentStore } from "../state/document";
+import { COMPONENTS_V2_FLAG, messageDocumentStore } from "../state/document";
 import {
   currentMessage,
   editorUser,
   loadMessage,
   renderEditor,
+  targetFluxerWebhook,
 } from "../test/editor";
 import EditorMenuBar from "./EditorMenuBar";
 
@@ -77,4 +78,20 @@ test("a plain click on the broom leaves the message for the dialog", async () =>
   );
 
   expect(currentMessage().content).toBe("Hello");
+});
+
+test("Fluxer has no Components V2, so there is nothing to toggle", () => {
+  targetFluxerWebhook();
+  loadMessage({ content: "" });
+  renderEditor(<EditorMenuBar />);
+
+  expect(screen.queryByText("Components V2")).toBeNull();
+});
+
+test("a Components V2 message can still be switched back for Fluxer", () => {
+  targetFluxerWebhook();
+  loadMessage({ flags: COMPONENTS_V2_FLAG, components: [] });
+  renderEditor(<EditorMenuBar />);
+
+  expect(screen.getByText("Components V2")).toBeInTheDocument();
 });

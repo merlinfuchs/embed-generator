@@ -671,11 +671,24 @@ export const useHasInteractiveComponents = () =>
     ),
   );
 
-export const useComponentsV2Enabled = () =>
+function selectComponentsV2Enabled(state: DocumentData) {
+  const root = state.nodes[state.rootId];
+
+  return root?.type === "message"
+    ? ((root.flags ?? 0) & COMPONENTS_V2_FLAG) !== 0
+    : false;
+}
+
+/** Whether the message has components or is a Components V2 one, which Fluxer can't send. */
+export const useHasComponents = () =>
   useDocument((state) => {
     const root = state.nodes[state.rootId];
 
-    return root?.type === "message"
-      ? ((root.flags ?? 0) & COMPONENTS_V2_FLAG) !== 0
-      : false;
+    return (
+      (root?.type === "message" && childIds(root, "components").length > 0) ||
+      selectComponentsV2Enabled(state)
+    );
   });
+
+export const useComponentsV2Enabled = () =>
+  useDocument(selectComponentsV2Enabled);
