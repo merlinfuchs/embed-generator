@@ -131,7 +131,8 @@ export default function NewMessageView() {
               <div className="flex-none flex flex-wrap items-center justify-between gap-3 px-5 pt-4 pb-3 pr-12 border-b border-white/5">
                 <div>
                   <div className="text-lg text-white">New message</div>
-                  <div className="text-sm text-mist-400">
+                  {/* Left out on phones, where the templates need the room. */}
+                  <div className="hidden sm:block text-sm text-mist-400">
                     Start from a template and make it your own. This replaces
                     the message in the editor.
                   </div>
@@ -152,7 +153,16 @@ export default function NewMessageView() {
                 </div>
               </div>
 
-              <div className="flex-none flex flex-wrap justify-end gap-3 px-5 py-3 border-t border-white/5">
+              {/* On phones the buttons stack with the main one on top. */}
+              <div className="flex-none flex flex-col-reverse sm:flex-row sm:flex-wrap sm:items-center sm:justify-end gap-3 px-5 py-3 border-t border-white/5">
+                <a
+                  href="/discord"
+                  target="_blank"
+                  rel="noopener"
+                  className="sm:mr-auto text-center text-sm text-mist-400 hover:text-mist-100"
+                >
+                  Need help? Join the support server
+                </a>
                 {aiAllowed && (
                   <FooterButton
                     icon={<SparklesIcon className="text-amber-300" />}
@@ -278,7 +288,7 @@ function TemplateCard({
   return (
     <div className="relative flex flex-col rounded-xl overflow-hidden bg-ink-800 border border-white/10 hover:border-white/25 focus-within:border-azure-400 transition-colors">
       <div
-        className="relative flex-none h-56 overflow-hidden pointer-events-none"
+        className="relative flex-none h-44 sm:h-56 overflow-hidden pointer-events-none"
         // Only a picture of the message, so its links and buttons stay out of
         // the tab order. React 18 has no type for it yet.
         {...{ inert: "" }}
@@ -387,7 +397,7 @@ function FooterButton({
     <button
       type="button"
       className={clsx(
-        "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors",
+        "flex items-center justify-center space-x-2 px-4 py-2 rounded-lg transition-colors",
         primary
           ? "bg-azure-500 hover:bg-azure-400 text-white font-medium"
           : "border border-white/15 text-mist-100 hover:bg-white/5 hover:border-white/30",
