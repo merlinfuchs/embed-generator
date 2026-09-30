@@ -1,6 +1,6 @@
 import {
   ArrowLeftIcon,
-  DocumentIcon,
+  PlusIcon,
   LockClosedIcon,
   SparklesIcon,
 } from "@heroicons/react/20/solid";
@@ -164,7 +164,7 @@ export default function NewMessageView() {
                   </FooterButton>
                 )}
                 <FooterButton
-                  icon={<DocumentIcon />}
+                  icon={<PlusIcon />}
                   primary
                   onClick={() => replace(() => startBlank("/editor"))}
                 >
@@ -255,11 +255,7 @@ function TemplateFields({
         <FooterButton icon={<ArrowLeftIcon />} onClick={onBack}>
           Back
         </FooterButton>
-        <FooterButton
-          icon={<DocumentIcon />}
-          primary
-          onClick={() => onUse(message)}
-        >
+        <FooterButton primary onClick={() => onUse(message)}>
           Use template
         </FooterButton>
       </div>
@@ -382,7 +378,7 @@ function FooterButton({
   children,
   onClick,
 }: {
-  icon: ReactNode;
+  icon?: ReactNode;
   primary?: boolean;
   children: string;
   onClick: () => void;
@@ -398,14 +394,16 @@ function FooterButton({
       )}
       onClick={onClick}
     >
-      <div
-        className={clsx(
-          "h-5 w-5 flex-none",
-          primary ? "text-white" : "text-mist-300",
-        )}
-      >
-        {icon}
-      </div>
+      {icon && (
+        <div
+          className={clsx(
+            "h-5 w-5 flex-none",
+            primary ? "text-white" : "text-mist-300",
+          )}
+        >
+          {icon}
+        </div>
+      )}
       <div>{children}</div>
     </button>
   );
