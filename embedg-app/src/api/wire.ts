@@ -295,7 +295,6 @@ export interface SavedMessageImportDataWire {
   data: Record<string, any> | null;
 }
 export interface MessageSendToWebhookRequestWire {
-  webhook_type: string;
   webhook_id: string;
   webhook_token: string;
   thread_id: null | string;

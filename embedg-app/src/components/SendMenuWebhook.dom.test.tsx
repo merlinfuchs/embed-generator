@@ -34,19 +34,3 @@ test("link buttons go to a webhook", () => {
   ).toBeNull();
   expect(screen.getByRole("button", { name: "Send Message" })).toBeEnabled();
 });
-
-test("a Guilded webhook can't take components", () => {
-  useSendSettingsStore.setState({
-    webhookUrl: "https://media.guilded.gg/webhooks/123/token",
-  });
-  loadMessage({
-    content: "Hi",
-    components: [row({ style: 5, url: "https://example.com" })],
-  });
-  renderEditor(<SendMenuWebhook />);
-
-  expect(
-    screen.getByText(/Guilded webhooks can't send components/),
-  ).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Send Message" })).toBeDisabled();
-});

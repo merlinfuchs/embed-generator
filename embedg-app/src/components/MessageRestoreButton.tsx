@@ -113,9 +113,7 @@ export default function MessageRestoreButton() {
 
   const canRestore =
     !!messageId &&
-    (mode === "channel"
-      ? !!guildId && !!channelId
-      : !!webhookInfo && webhookInfo.type === "discord");
+    (mode === "channel" ? !!guildId && !!channelId : !!webhookInfo);
 
   return (
     <button
