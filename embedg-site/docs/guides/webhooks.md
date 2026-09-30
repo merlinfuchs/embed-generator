@@ -35,9 +35,7 @@ Webhooks can't handle clicks. Buttons that hand out roles, select menus and slas
 
 ## Send to Fluxer
 
-[Fluxer](https://fluxer.app) webhooks take the same messages as Discord's, so Embed Generator sends to them too. Create a webhook in the channel's settings on Fluxer, copy its URL (it starts with `https://api.fluxer.app/webhooks/`) and paste it as the target.
-
-Fluxer doesn't support components or threads yet, so the editor hides them while a Fluxer webhook is the target, and messages with components or a Components V2 layout can't be sent there. Editing a message you sent to Fluxer changes its content and embeds, but keeps the files it was sent with.
+[Fluxer](https://fluxer.app) webhooks take the same messages as Discord's, so you can paste a Fluxer webhook URL as the target too. Fluxer has no components or threads yet, see [Fluxer](../features/fluxer) for what works there.
 
 ## Inspect a webhook URL
 
