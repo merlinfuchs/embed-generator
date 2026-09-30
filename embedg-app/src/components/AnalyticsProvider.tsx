@@ -3,8 +3,8 @@ import { useEffect } from "react";
 import { useUserQuery } from "../api/queries";
 
 export const op = new OpenPanel({
-  clientId: "f4dd2f20-2d9f-4ff5-9486-6d88b5326fc7",
-  apiUrl: "https://analytics.vaven.io/api",
+  clientId: "73f81ab2-5b52-46d7-9735-b9041e96e01c",
+  apiUrl: "https://analytics.xenon.bot/api",
   trackScreenViews: true,
   trackOutgoingLinks: true,
 });
