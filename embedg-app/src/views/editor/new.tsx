@@ -11,15 +11,19 @@ import ConfirmModal from "../../components/ConfirmModal";
 import LoginLink from "../../components/LoginLink";
 import MessagePreview from "../../components/MessagePreview";
 import Modal from "../../components/Modal";
+import {
+  defaultMessage,
+  emptyComponentsV2Message,
+} from "../../discord/defaultMessage";
 import type { Message } from "../../discord/schema";
 import {
   type MessageTemplate,
+  type TemplateFormat,
   messageTemplates,
   needsBot,
   templateAvailable,
 } from "../../discord/templates";
 import {
-  clearCurrentMessage,
   currentMessageIsBlank,
   setCurrentMessage,
 } from "../../state/currentMessage";
@@ -46,10 +50,12 @@ export default function NewMessageView() {
         ? "server"
         : null;
 
-  // Built once per opening, so every use gets its own ids.
+  const [format, setFormat] = useState<TemplateFormat>("componentsV2");
+
+  // Built once per opening and format, so every use gets its own ids.
   const templates = useMemo(
-    () => messageTemplates.map((t) => ({ ...t, message: t.build() })),
-    [],
+    () => messageTemplates.map((t) => ({ ...t, message: t.build[format]() })),
+    [format],
   );
   // What logging in or picking a server unlocks is shown locked, what the plan
   // doesn't include is left out.
@@ -83,7 +89,9 @@ export default function NewMessageView() {
   }
 
   function startBlank(path: string) {
-    clearCurrentMessage();
+    setCurrentMessage(
+      format === "componentsV2" ? emptyComponentsV2Message : defaultMessage,
+    );
     navigate(path);
   }
 
@@ -91,12 +99,15 @@ export default function NewMessageView() {
     <>
       <Modal width="lg" height="full" onClose={() => navigate("/editor")}>
         <div className="flex flex-col h-full">
-          <div className="flex-none px-5 pt-4 pb-3 pr-12 border-b border-white/5">
-            <div className="text-lg text-white">New message</div>
-            <div className="text-sm text-mist-400">
-              Start from a template and make it your own. This replaces the
-              message in the editor.
+          <div className="flex-none flex flex-wrap items-center justify-between gap-3 px-5 pt-4 pb-3 pr-12 border-b border-white/5">
+            <div>
+              <div className="text-lg text-white">New message</div>
+              <div className="text-sm text-mist-400">
+                Start from a template and make it your own. This replaces the
+                message in the editor.
+              </div>
             </div>
+            <FormatToggle format={format} onChange={setFormat} />
           </div>
 
           <div className="flex-auto min-h-0 overflow-y-auto">
@@ -177,9 +188,9 @@ function TemplateCard({
       <div className="flex-auto px-4 pt-2 pb-4">
         <div className="text-mist-100 font-medium">{template.name}</div>
         <div className="text-sm text-mist-400">{template.description}</div>
-        {template.group !== "Embeds" && (
+        {needsBot(template.message) && (
           <div className="mt-3 inline-block rounded-full border border-white/15 px-2 py-0.5 text-xs text-mist-300">
-            {template.group}
+            Interactive
           </div>
         )}
       </div>
@@ -204,6 +215,41 @@ function TemplateCard({
           onClick={onUse}
         />
       )}
+    </div>
+  );
+}
+
+const FORMATS: [TemplateFormat, string][] = [
+  ["embeds", "Embeds V1"],
+  ["componentsV2", "Components V2"],
+];
+
+/** Which kind of message the templates and a blank start are, like the editor's toggle. */
+function FormatToggle({
+  format,
+  onChange,
+}: {
+  format: TemplateFormat;
+  onChange: (format: TemplateFormat) => void;
+}) {
+  return (
+    <div className="flex bg-ink-900 p-1 rounded-lg border border-white/10 text-sm font-medium text-mist-400 whitespace-nowrap">
+      {FORMATS.map(([value, label]) => (
+        <button
+          key={value}
+          type="button"
+          aria-pressed={format === value}
+          className={clsx(
+            "py-1 px-3 rounded-md transition-colors",
+            format === value
+              ? "bg-ink-700 text-mist-100"
+              : "hover:text-mist-100",
+          )}
+          onClick={() => onChange(value)}
+        >
+          {label}
+        </button>
+      ))}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { screen } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
+import { COMPONENTS_V2_FLAG } from "../../discord/schema";
 import { useSendSettingsStore } from "../../state/sendSettings";
 import { defaultPlanFeatures } from "../../test/plan";
 import {
@@ -35,6 +36,7 @@ test("a template replaces the message after confirming", async () => {
   renderEditor(<NewMessageView />);
   const user = editorUser();
 
+  await user.click(screen.getByRole("button", { name: "Embeds V1" }));
   await user.click(screen.getByRole("button", { name: "Use Patch notes" }));
   expect(currentMessage().content).toBe("Old message");
   await user.click(screen.getByRole("button", { name: "Confirm" }));
@@ -45,15 +47,38 @@ test("a template replaces the message after confirming", async () => {
   });
 });
 
-test("blank starts over", async () => {
+test("templates start as Components V2", async () => {
+  loadMessage({ content: "" });
+  renderEditor(<NewMessageView />);
+
+  await editorUser().click(
+    screen.getByRole("button", { name: "Use Patch notes" }),
+  );
+
+  expect(currentMessage()).toMatchObject({
+    flags: COMPONENTS_V2_FLAG,
+    components: [{ type: 17 }],
+  });
+});
+
+test.each([
+  ["Components V2", COMPONENTS_V2_FLAG],
+  ["Embeds V1", 0],
+])("starting from scratch as %s", async (format, flags) => {
   loadMessage({ content: "Old message", embeds: [{ title: "Old embed" }] });
   renderEditor(<NewMessageView />);
   const user = editorUser();
 
+  await user.click(screen.getByRole("button", { name: format }));
   await user.click(screen.getByRole("button", { name: "Start from scratch" }));
   await user.click(screen.getByRole("button", { name: "Confirm" }));
 
-  expect(currentMessage()).toMatchObject({ content: "", embeds: [] });
+  expect(currentMessage()).toMatchObject({
+    content: "",
+    embeds: [],
+    components: [],
+    flags,
+  });
 });
 
 test("logged out only the templates that need the bot ask to log in", async () => {
@@ -62,7 +87,7 @@ test("logged out only the templates that need the bot ask to log in", async () =
   const logins = await screen.findAllByRole("link", { name: "Log in to use" });
 
   expect(
-    screen.getByRole("button", { name: "Use Server guide" }),
+    screen.getByRole("button", { name: "Use Welcome" }),
   ).toBeInTheDocument();
   expect(
     screen.queryByRole("button", { name: "Use Role selection" }),
@@ -103,13 +128,13 @@ test("a template that needs the bot switches to sending through it", async () =>
   expect(currentMessage().components).toHaveLength(1);
 });
 
-test("a Components V2 template stays on the webhook", async () => {
+test("a template with only link buttons stays on the webhook", async () => {
   logIn();
   loadMessage({ content: "" });
   renderEditor(<NewMessageView />);
 
   await editorUser().click(
-    await screen.findByRole("button", { name: "Use Server guide" }),
+    await screen.findByRole("button", { name: "Use Welcome" }),
   );
 
   expect(useSendSettingsStore.getState().mode).toBe("webhook");

@@ -8,13 +8,14 @@ import {
   type MessageComponent,
 } from "./schema";
 
+export type TemplateFormat = "componentsV2" | "embeds";
+
 export interface MessageTemplate {
   id: string;
-  group: "Embeds" | "Components V2" | "Interactive";
   name: string;
   description: string;
   /** Builds the message with fresh ids, so using a template twice doesn't share action sets. */
-  build: () => Message;
+  build: Record<TemplateFormat, () => Message>;
 }
 
 // Discord's brand colors, which the banners use too.
@@ -52,14 +53,26 @@ function nextWeekEvening(): number {
   return Math.floor(date.getTime() / 1000);
 }
 
-function v2(components: unknown[]): Message {
+function embeds(message: object): Message {
+  return parseMessageWithAction(message);
+}
+
+/** A Components V2 message of one container, and what goes below it. */
+function container(
+  accentColor: number,
+  components: unknown[],
+  { after = [], actions = {} }: { after?: unknown[]; actions?: object } = {},
+): Message {
   return parseMessageWithAction({
     flags: COMPONENTS_V2_FLAG,
-    components,
+    components: [{ type: 17, accent_color: accentColor, components }, ...after],
+    actions,
   });
 }
 
 const textDisplay = (content: string) => ({ type: 10, content });
+
+const separator = { type: 14, divider: true, spacing: 1 };
 
 const linkButton = (label: string, emoji: string) => ({
   type: 2,
@@ -75,291 +88,272 @@ const linkSection = (content: string, label: string, emoji: string) => ({
   accessory: linkButton(label, emoji),
 });
 
+const RULES: [string, string][] = [
+  [
+    "1. Be respectful",
+    "No harassment, hate speech or personal attacks. Treat others the way you want to be treated.",
+  ],
+  [
+    "2. No spam",
+    "Don't flood the chat, and keep self-promotion to the channels meant for it.",
+  ],
+  ["3. Keep it safe for work", "No NSFW content anywhere on the server."],
+  ["4. Use the right channels", "Check the channel topic before posting."],
+  [
+    "5. Follow Discord's rules",
+    "The [Terms of Service](https://discord.com/terms) and [Community Guidelines](https://discord.com/guidelines) apply here too.",
+  ],
+];
+const RULES_INTRO =
+  "To keep this a place everyone enjoys, please follow these rules. The moderators have the final say.";
+const RULES_FOOTER = "Breaking the rules can get you muted, kicked or banned.";
+
+const WELCOME_INTRO =
+  "We're glad you're here. Here's everything you need to get started.";
+const WELCOME_LINKS: [string, string, string, string][] = [
+  ["📜", "Rules", "Read them before you start chatting.", "#rules"],
+  ["🎭", "Roles", "Pick the roles for what you're into.", "#roles"],
+  ["💬", "Chat", "Say hi to everyone.", "#general"],
+];
+
+const NEWS_TEXT =
+  "Describe what's happening here. You can use **bold**, *italics*, [links](https://example.com) and lists:\n\n- What changes\n- When it happens\n- What members need to do";
+
+const PATCH_NOTES: [string, string][] = [
+  ["✨ New", "- The first new feature\n- The second new feature"],
+  ["🛠️ Changed", "- Something that works differently now"],
+  ["🐛 Fixed", "- A bug that no longer happens"],
+];
+
+const EVENT_TEXT =
+  "Join us for a night of games! Everyone's welcome, no matter your skill level.";
+
+/** Buttons that toggle roles, with the actions to go with them. */
+function roleButtons() {
+  const buttons = [
+    { label: "Announcements", emoji: "📣" },
+    { label: "Events", emoji: "🎉" },
+    { label: "Giveaways", emoji: "🎁" },
+  ].map(({ label, emoji }) => ({
+    type: 2,
+    style: 2,
+    label,
+    emoji: { name: emoji, animated: false },
+    action_set_id: getUniqueId().toString(),
+  }));
+
+  return {
+    row: { type: 1, components: buttons },
+    // The roles are the server's own, so they are left for the user to pick.
+    // Until they do, the editor won't send the message.
+    actions: Object.fromEntries(
+      buttons.map((b) => [
+        b.action_set_id,
+        { actions: [{ type: 2, target_id: "" }] },
+      ]),
+    ),
+  };
+}
+
+const ROLES_TEXT =
+  "Click a button to get pinged for what you're interested in. Click it again to remove the role.";
+
 export const messageTemplates: MessageTemplate[] = [
   {
     id: "rules",
-    group: "Embeds",
     name: "Server rules",
     description: "A numbered list of rules with a footer",
-    build: () =>
-      parseMessageWithAction({
-        embeds: [
-          bannerEmbed("rules", RED),
-          {
-            title: "📜 Server Rules",
-            description:
-              "To keep this a place everyone enjoys, please follow these rules. The moderators have the final say.",
-            color: RED,
-            fields: [
-              {
-                name: "1. Be respectful",
-                value:
-                  "No harassment, hate speech or personal attacks. Treat others the way you want to be treated.",
-              },
-              {
-                name: "2. No spam",
-                value:
-                  "Don't flood the chat, and keep self-promotion to the channels meant for it.",
-              },
-              {
-                name: "3. Keep it safe for work",
-                value: "No NSFW content anywhere on the server.",
-              },
-              {
-                name: "4. Use the right channels",
-                value: "Check the channel topic before posting.",
-              },
-              {
-                name: "5. Follow Discord's rules",
-                value:
-                  "The [Terms of Service](https://discord.com/terms) and [Community Guidelines](https://discord.com/guidelines) apply here too.",
-              },
-            ],
-            footer: {
-              text: "Breaking the rules can get you muted, kicked or banned.",
+    build: {
+      componentsV2: () =>
+        container(RED, [
+          bannerGallery("rules"),
+          textDisplay(`## 📜 Server Rules\n${RULES_INTRO}`),
+          separator,
+          textDisplay(
+            RULES.map(([name, value]) => `**${name}**\n${value}`).join("\n\n"),
+          ),
+          separator,
+          textDisplay(`-# ${RULES_FOOTER}`),
+        ]),
+      embeds: () =>
+        embeds({
+          embeds: [
+            bannerEmbed("rules", RED),
+            {
+              title: "📜 Server Rules",
+              description: RULES_INTRO,
+              color: RED,
+              fields: RULES.map(([name, value]) => ({ name, value })),
+              footer: { text: RULES_FOOTER },
             },
-          },
-        ],
-      }),
-  },
-  {
-    id: "welcome",
-    group: "Embeds",
-    name: "Welcome",
-    description: "Greets new members and points them around",
-    build: () =>
-      parseMessageWithAction({
-        content: "Welcome to the server! 👋",
-        embeds: [
-          bannerEmbed("welcome", BLURPLE),
-          {
-            title: "Welcome to Your Server",
-            description:
-              "We're glad you're here. Here's everything you need to get started.",
-            color: BLURPLE,
-            fields: [
-              {
-                name: "📜 Rules",
-                value: "Read them in #rules",
-                inline: true,
-              },
-              {
-                name: "🎭 Roles",
-                value: "Pick yours in #roles",
-                inline: true,
-              },
-              {
-                name: "💬 Chat",
-                value: "Say hi in #general",
-                inline: true,
-              },
-            ],
-            footer: { text: "Have fun!" },
-          },
-        ],
-      }),
-  },
-  {
-    id: "announcement",
-    group: "Embeds",
-    name: "Announcement",
-    description: "News for your members with a date",
-    build: () =>
-      parseMessageWithAction({
-        embeds: [
-          bannerEmbed("announcement", YELLOW),
-          {
-            title: "📣 Big News",
-            description:
-              "Describe what's happening here. You can use **bold**, *italics*, [links](https://example.com) and lists:\n\n- What changes\n- When it happens\n- What members need to do",
-            color: YELLOW,
-            timestamp: new Date().toISOString(),
-            footer: { text: "The Team" },
-          },
-        ],
-      }),
-  },
-  {
-    id: "patch-notes",
-    group: "Embeds",
-    name: "Patch notes",
-    description: "What's new, changed and fixed in an update",
-    build: () =>
-      parseMessageWithAction({
-        embeds: [
-          bannerEmbed("update", GREEN),
-          {
-            title: "Update 1.2.0",
-            description: "Here's everything that changed in this update.",
-            color: GREEN,
-            fields: [
-              {
-                name: "✨ New",
-                value: "- The first new feature\n- The second new feature",
-              },
-              {
-                name: "🛠️ Changed",
-                value: "- Something that works differently now",
-              },
-              {
-                name: "🐛 Fixed",
-                value: "- A bug that no longer happens",
-              },
-            ],
-            timestamp: new Date().toISOString(),
-          },
-        ],
-      }),
-  },
-  {
-    id: "event",
-    group: "Embeds",
-    name: "Event",
-    description: "Time and place, shown in each member's timezone",
-    build: () => {
-      const time = nextWeekEvening();
-      return parseMessageWithAction({
-        embeds: [
-          bannerEmbed("event", PURPLE),
-          {
-            title: "🎮 Game Night",
-            description:
-              "Join us for a night of games! Everyone's welcome, no matter your skill level.",
-            color: PURPLE,
-            fields: [
-              { name: "📅 When", value: `<t:${time}:f>`, inline: true },
-              { name: "⏰ Starts", value: `<t:${time}:R>`, inline: true },
-              { name: "📍 Where", value: "#voice-chat", inline: true },
-            ],
-          },
-        ],
-      });
+          ],
+        }),
     },
   },
   {
-    id: "v2-guide",
-    group: "Components V2",
-    name: "Server guide",
-    description: "Sections with buttons that link to the important places",
-    build: () =>
-      v2([
-        {
-          type: 17,
-          accent_color: BLURPLE,
-          components: [
-            bannerGallery("welcome"),
-            textDisplay(
-              "# Welcome to Your Server\nEverything you need to find your way around.",
-            ),
-            linkSection(
-              "### 📜 Rules\nRead them before you start chatting.",
-              "Rules",
-              "📜",
-            ),
-            linkSection(
-              "### 🎭 Roles\nPick the roles for what you're into.",
-              "Roles",
-              "🎭",
-            ),
-            linkSection(
-              "### 💬 Support\nStuck? Ask us anything.",
-              "Support",
-              "💬",
-            ),
+    id: "welcome",
+    name: "Welcome",
+    description: "Greets new members and points them around",
+    build: {
+      componentsV2: () =>
+        container(BLURPLE, [
+          bannerGallery("welcome"),
+          textDisplay(`# Welcome to Your Server\n${WELCOME_INTRO}`),
+          separator,
+          ...WELCOME_LINKS.map(([emoji, name, text]) =>
+            linkSection(`### ${emoji} ${name}\n${text}`, name, emoji),
+          ),
+        ]),
+      embeds: () =>
+        embeds({
+          content: "Welcome to the server! 👋",
+          embeds: [
+            bannerEmbed("welcome", BLURPLE),
+            {
+              title: "Welcome to Your Server",
+              description: WELCOME_INTRO,
+              color: BLURPLE,
+              fields: WELCOME_LINKS.map(([emoji, name, , channel]) => ({
+                name: `${emoji} ${name}`,
+                value: channel,
+                inline: true,
+              })),
+              footer: { text: "Have fun!" },
+            },
           ],
-        },
-      ]),
+        }),
+    },
   },
   {
-    id: "v2-news",
-    group: "Components V2",
-    name: "News card",
-    description: "An announcement in a container with a link",
-    build: () =>
-      v2([
-        {
-          type: 17,
-          accent_color: YELLOW,
-          components: [
+    id: "announcement",
+    name: "Announcement",
+    description: "News for your members with a link",
+    build: {
+      componentsV2: () =>
+        container(
+          YELLOW,
+          [
             bannerGallery("announcement"),
-            textDisplay(
-              "## 📣 Big News\nDescribe what's happening here. Text displays support **markdown**, headings and lists:\n- What changes\n- When it happens",
-            ),
+            textDisplay(`## 📣 Big News\n${NEWS_TEXT}`),
+            { type: 1, components: [linkButton("Read more", "🔗")] },
+          ],
+          { after: [textDisplay("-# Posted by the team")] },
+        ),
+      embeds: () =>
+        embeds({
+          embeds: [
+            bannerEmbed("announcement", YELLOW),
             {
-              type: 1,
-              components: [linkButton("Read more", "🔗")],
+              title: "📣 Big News",
+              description: NEWS_TEXT,
+              color: YELLOW,
+              timestamp: new Date().toISOString(),
+              footer: { text: "The Team" },
             },
           ],
-        },
-        textDisplay("-# Posted by the team"),
-      ]),
+        }),
+    },
   },
   {
-    id: "v2-event",
-    group: "Components V2",
-    name: "Event card",
-    description: "Event details with a button to the event",
-    build: () => {
-      const time = nextWeekEvening();
-      return v2([
-        {
-          type: 17,
-          accent_color: PURPLE,
-          components: [
-            bannerGallery("event"),
-            textDisplay(
-              "## 🎮 Game Night\nJoin us for a night of games! Everyone's welcome, no matter your skill level.",
-            ),
-            textDisplay(
-              `**📅 When:** <t:${time}:f> (<t:${time}:R>)\n**📍 Where:** #voice-chat`,
-            ),
+    id: "patch-notes",
+    name: "Patch notes",
+    description: "What's new, changed and fixed in an update",
+    build: {
+      componentsV2: () =>
+        container(GREEN, [
+          bannerGallery("update"),
+          textDisplay(
+            "## Update 1.2.0\nHere's everything that changed in this update.",
+          ),
+          separator,
+          ...PATCH_NOTES.map(([name, value]) =>
+            textDisplay(`### ${name}\n${value}`),
+          ),
+        ]),
+      embeds: () =>
+        embeds({
+          embeds: [
+            bannerEmbed("update", GREEN),
             {
-              type: 1,
-              components: [linkButton("Event page", "📅")],
+              title: "Update 1.2.0",
+              description: "Here's everything that changed in this update.",
+              color: GREEN,
+              fields: PATCH_NOTES.map(([name, value]) => ({ name, value })),
+              timestamp: new Date().toISOString(),
             },
           ],
-        },
-      ]);
+        }),
+    },
+  },
+  {
+    id: "event",
+    name: "Event",
+    description: "Time and place, shown in each member's timezone",
+    build: {
+      componentsV2: () => {
+        const time = nextWeekEvening();
+        return container(PURPLE, [
+          bannerGallery("event"),
+          textDisplay(`## 🎮 Game Night\n${EVENT_TEXT}`),
+          separator,
+          textDisplay(
+            `**📅 When:** <t:${time}:f> (<t:${time}:R>)\n**📍 Where:** #voice-chat`,
+          ),
+          { type: 1, components: [linkButton("Event page", "📅")] },
+        ]);
+      },
+      embeds: () => {
+        const time = nextWeekEvening();
+        return embeds({
+          embeds: [
+            bannerEmbed("event", PURPLE),
+            {
+              title: "🎮 Game Night",
+              description: EVENT_TEXT,
+              color: PURPLE,
+              fields: [
+                { name: "📅 When", value: `<t:${time}:f>`, inline: true },
+                { name: "⏰ Starts", value: `<t:${time}:R>`, inline: true },
+                { name: "📍 Where", value: "#voice-chat", inline: true },
+              ],
+            },
+          ],
+        });
+      },
     },
   },
   {
     id: "roles",
-    group: "Interactive",
     name: "Role selection",
     description: "Buttons that give or take roles when clicked",
-    build: () => {
-      const buttons = [
-        { label: "Announcements", emoji: "📣" },
-        { label: "Events", emoji: "🎉" },
-        { label: "Giveaways", emoji: "🎁" },
-      ].map(({ label, emoji }) => ({
-        type: 2,
-        style: 2,
-        label,
-        emoji: { name: emoji, animated: false },
-        action_set_id: getUniqueId().toString(),
-      }));
-
-      return parseMessageWithAction({
-        embeds: [
-          bannerEmbed("roles", FUCHSIA),
-          {
-            title: "🎭 Pick your roles",
-            description:
-              "Click a button to get pinged for what you're interested in. Click it again to remove the role.",
-            color: FUCHSIA,
-          },
-        ],
-        components: [{ type: 1, components: buttons }],
-        // The roles are the server's own, so they are left for the user to
-        // pick. Until they do, the editor won't send the message.
-        actions: Object.fromEntries(
-          buttons.map((b) => [
-            b.action_set_id,
-            { actions: [{ type: 2, target_id: "" }] },
-          ]),
-        ),
-      });
+    build: {
+      componentsV2: () => {
+        const { row, actions } = roleButtons();
+        return container(
+          FUCHSIA,
+          [
+            bannerGallery("roles"),
+            textDisplay(`## 🎭 Pick your roles\n${ROLES_TEXT}`),
+            row,
+          ],
+          { actions },
+        );
+      },
+      embeds: () => {
+        const { row, actions } = roleButtons();
+        return embeds({
+          embeds: [
+            bannerEmbed("roles", FUCHSIA),
+            {
+              title: "🎭 Pick your roles",
+              description: ROLES_TEXT,
+              color: FUCHSIA,
+            },
+          ],
+          components: [row],
+          actions,
+        });
+      },
     },
   },
 ];
