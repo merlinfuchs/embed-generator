@@ -6,6 +6,7 @@ import { MemoryRouter } from "react-router-dom";
 import { parseMessageWithAction } from "../discord/importSchema";
 import { setCurrentMessage } from "../state/currentMessage";
 import { messageDocumentStore } from "../state/document";
+import { useSendSettingsStore } from "../state/sendSettings";
 import { toMessage } from "../state/documentConvert";
 
 /**
@@ -55,4 +56,12 @@ export function renderEditor(ui: ReactElement) {
  */
 export function editorUser(options?: Parameters<typeof userEvent.setup>[0]) {
   return userEvent.setup({ pointerEventsCheck: 0, ...options });
+}
+
+/** Targets a Fluxer webhook, which the editor treats as having no components or threads. */
+export function targetFluxerWebhook() {
+  useSendSettingsStore.setState({
+    mode: "webhook",
+    webhookUrl: "https://api.fluxer.app/webhooks/123/token",
+  });
 }

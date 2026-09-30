@@ -8,6 +8,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 )
 
 // Fluxer's webhook routes, request bodies and message objects match Discord's, so disgo's client
@@ -19,6 +20,14 @@ const (
 
 func newFluxerRest() rest.Rest {
 	return rest.New(rest.NewClient("", rest.WithURL(fluxerAPIURL)))
+}
+
+// webhookRest is the client for webhooks on the platform.
+func (h *SendMessageHandler) webhookRest(platform wire.WebhookPlatform) rest.Rest {
+	if platform == wire.WebhookPlatformFluxer {
+		return h.fluxerRest
+	}
+	return h.rest
 }
 
 // fluxerError turns an error response from Fluxer into one for the user. Fluxer's error codes are

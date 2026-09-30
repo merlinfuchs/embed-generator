@@ -226,10 +226,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		})
 	}
 
-	client := h.rest
-	if fluxer {
-		client = h.fluxerRest
-	}
+	client := h.webhookRest(req.WebhookPlatform)
 
 	var msg *discord.Message
 	if req.MessageID.Valid {

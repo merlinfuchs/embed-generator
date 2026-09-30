@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   slotLimit,
   useChildIds,
@@ -12,13 +13,15 @@ import {
   WEBHOOK_MESSAGE_CAPABILITIES,
 } from "../state/editorCapabilities";
 import { slotScope } from "../state/validationError";
-import { useSendPlatform, useSendSettingsStore } from "../state/sendSettings";
+import { useSendsToFluxer, useSendSettingsStore } from "../state/sendSettings";
 import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";
 import EditorComponentAddDropdown from "./EditorComponentAddDropdown";
 import EditorComponentEntry from "./EditorComponentEntry";
-import InteractiveWebhookNotice from "./InteractiveWebhookNotice";
-import FluxerComponentsNotice from "./FluxerComponentsNotice";
+import {
+  FluxerComponentsNotice,
+  InteractiveWebhookNotice,
+} from "./WebhookNotice";
 
 export default function EditorComponents({
   defaultCollapsed = true,
@@ -31,21 +34,25 @@ export default function EditorComponents({
 
   const webhook = useSendSettingsStore((state) => state.mode) === "webhook";
   const interactive = useHasInteractiveComponents();
-  const fluxer = useSendPlatform() === "fluxer";
+  const fluxer = useSendsToFluxer();
 
   // Nothing to add on Fluxer, but components already there stay so they can be removed.
   if (fluxer && components.length === 0) return null;
 
+  let capabilities = MESSAGE_CAPABILITIES;
+  let notice: ReactNode = null;
+  if (fluxer) {
+    capabilities = FLUXER_MESSAGE_CAPABILITIES;
+    notice = <FluxerComponentsNotice className="mb-3 text-sm" />;
+  } else if (webhook) {
+    capabilities = WEBHOOK_MESSAGE_CAPABILITIES;
+    if (interactive) {
+      notice = <InteractiveWebhookNotice className="mb-3 text-sm" />;
+    }
+  }
+
   return (
-    <EditorCapabilitiesContext.Provider
-      value={
-        fluxer
-          ? FLUXER_MESSAGE_CAPABILITIES
-          : webhook
-            ? WEBHOOK_MESSAGE_CAPABILITIES
-            : MESSAGE_CAPABILITIES
-      }
-    >
+    <EditorCapabilitiesContext.Provider value={capabilities}>
       <Collapsable
         id="components"
         title="Components"
@@ -63,12 +70,7 @@ export default function EditorComponents({
           </div>
         }
       >
-        {fluxer ? (
-          <FluxerComponentsNotice className="mb-3 text-sm" />
-        ) : (
-          webhook &&
-          interactive && <InteractiveWebhookNotice className="mb-3 text-sm" />
-        )}
+        {notice}
         <AutoAnimate className="space-y-3 mb-3">
           {components.map((id) => (
             <div key={id}>

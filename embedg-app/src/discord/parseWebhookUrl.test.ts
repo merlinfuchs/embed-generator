@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { parseMessageId, parseWebhookUrl } from "./util";
+import { parseWebhookUrl } from "./util";
 
 test("a Discord webhook URL is a Discord webhook", () => {
   expect(
@@ -26,8 +26,4 @@ test("webhook URLs from other hosts aren't webhooks", () => {
     parseWebhookUrl("https://fluxer.example.com/api/webhooks/123/abc"),
   ).toBeNull();
   expect(parseWebhookUrl("https://media.guilded.gg/webhooks/1/abc")).toBeNull();
-});
-
-test("a Fluxer message link gives its message id", () => {
-  expect(parseMessageId("https://web.fluxer.app/channels/1/2/3")).toBe("3");
 });

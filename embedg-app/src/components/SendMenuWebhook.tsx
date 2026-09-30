@@ -1,13 +1,14 @@
 import { useShallow } from "zustand/react/shallow";
-import { useMemo } from "react";
 import { useSendMessageToWebhookMutation } from "../api/mutations";
 import { useValidationErrorStore } from "../state/validationError";
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import { useCurrentAttachmentsStore } from "../state/attachments";
-import { useSendSettingsStore } from "../state/sendSettings";
-import { parseMessageId, parseWebhookUrl } from "../discord/util";
-import InteractiveWebhookNotice from "./InteractiveWebhookNotice";
-import FluxerComponentsNotice from "./FluxerComponentsNotice";
+import { useSendSettingsStore, useWebhookTarget } from "../state/sendSettings";
+import { parseMessageId } from "../discord/util";
+import {
+  FluxerComponentsNotice,
+  InteractiveWebhookNotice,
+} from "./WebhookNotice";
 import MessageRestoreButton from "./MessageRestoreButton";
 import { useToasts } from "../util/toasts";
 import { getCurrentMessage } from "../state/currentMessage";
@@ -29,11 +30,8 @@ export default function SendMenuWebhook() {
   const [webhookUrl, setWebhookUrl] = useSendSettingsStore(
     useShallow((state) => [state.webhookUrl, state.setWebhookUrl]),
   );
-  const webhookInfo = useMemo(() => {
-    if (!webhookUrl) return null;
-    return parseWebhookUrl(webhookUrl);
-  }, [webhookUrl]);
-  const fluxer = webhookInfo?.platform === "fluxer";
+  const target = useWebhookTarget();
+  const fluxer = target?.platform === "fluxer";
 
   const [messageId, setMessageId] = useSendSettingsStore(
     useShallow((state) => [state.messageId, state.setMessageId]),
@@ -51,23 +49,23 @@ export default function SendMenuWebhook() {
     !validationError &&
     !interactive &&
     !(fluxer && hasComponents) &&
-    !!webhookInfo &&
+    !!target &&
     !sendToWebhookMutation.isPending;
 
   function send(edit: boolean) {
     if (!canSend) return;
-    // Already covered by the predicate, repeated so webhookInfo narrows to non-null below.
-    if (!webhookInfo) return;
+    // Already covered by the predicate, repeated so target narrows to non-null below.
+    if (!target) return;
 
     sendToWebhookMutation.mutate(
       {
-        webhook_platform: webhookInfo.platform,
-        webhook_id: webhookInfo.id,
-        webhook_token: webhookInfo.token,
+        webhook_platform: target.platform,
+        webhook_id: target.id,
+        webhook_token: target.token,
         message_id: edit ? messageId : null,
-        // Fluxer has no threads, and its edits can't change the files.
-        thread_id: fluxer ? null : threadId,
+        thread_id: target.threadId,
         data: getCurrentMessage(),
+        // Fluxer's edits can't change the files.
         attachments:
           fluxer && edit
             ? []
@@ -135,11 +133,8 @@ export default function SendMenuWebhook() {
           />
         </div>
       </div>
-      {fluxer && hasComponents ? (
-        <FluxerComponentsNotice />
-      ) : (
-        interactive && <InteractiveWebhookNotice />
-      )}
+      {fluxer && hasComponents && <FluxerComponentsNotice />}
+      {!fluxer && interactive && <InteractiveWebhookNotice />}
       {fluxer && messageId && hasAttachments && (
         <div className="text-mist-400 font-light text-sm">
           Editing a Fluxer message keeps the files it was sent with, as Fluxer

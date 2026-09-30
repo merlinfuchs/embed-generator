@@ -2,6 +2,7 @@ import { parseWebhookUrl, type WebhookPlatform } from "../discord/util";
 import { localStorageJSON } from "./storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { useShallow } from "zustand/react/shallow";
 
 export interface SendSettingsStore {
   mode: "webhook" | "channel";
@@ -49,10 +50,28 @@ export const useSendSettingsStore = create<SendSettingsStore>()(
   ),
 );
 
-/** Where the message is going: Fluxer for a Fluxer webhook URL, Discord otherwise. */
-export const useSendPlatform = (): WebhookPlatform =>
-  useSendSettingsStore((state) =>
-    state.mode === "webhook" && state.webhookUrl
-      ? (parseWebhookUrl(state.webhookUrl)?.platform ?? "discord")
-      : "discord",
-  );
+interface WebhookTarget {
+  platform: WebhookPlatform;
+  id: string;
+  token: string;
+  threadId: string | null;
+}
+
+/** The webhook the message goes to, with the thread left out where the platform has none. */
+function webhookTarget(state: SendSettingsStore): WebhookTarget | null {
+  if (state.mode !== "webhook" || !state.webhookUrl) return null;
+
+  const webhook = parseWebhookUrl(state.webhookUrl);
+  if (!webhook) return null;
+
+  return {
+    ...webhook,
+    threadId: webhook.platform === "fluxer" ? null : state.threadId,
+  };
+}
+
+export const useWebhookTarget = () =>
+  useSendSettingsStore(useShallow(webhookTarget));
+
+export const useSendsToFluxer = () =>
+  useSendSettingsStore((state) => webhookTarget(state)?.platform === "fluxer");

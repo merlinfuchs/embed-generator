@@ -1,7 +1,7 @@
 import { screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 import { useSendSettingsStore } from "../state/sendSettings";
-import { loadMessage, renderEditor } from "../test/editor";
+import { loadMessage, renderEditor, targetFluxerWebhook } from "../test/editor";
 import SendMenuWebhook from "./SendMenuWebhook";
 
 const WEBHOOK_URL = "https://discord.com/api/webhooks/123/token";
@@ -35,10 +35,8 @@ test("link buttons go to a webhook", () => {
   expect(screen.getByRole("button", { name: "Send Message" })).toBeEnabled();
 });
 
-const FLUXER_WEBHOOK_URL = "https://api.fluxer.app/webhooks/123/token";
-
 test("a Fluxer webhook takes content and embeds, without a thread", () => {
-  useSendSettingsStore.setState({ webhookUrl: FLUXER_WEBHOOK_URL });
+  targetFluxerWebhook();
   loadMessage({ content: "Hi", embeds: [{ title: "Title" }] });
   renderEditor(<SendMenuWebhook />);
 
@@ -47,7 +45,7 @@ test("a Fluxer webhook takes content and embeds, without a thread", () => {
 });
 
 test("a message with components can't go to a Fluxer webhook", () => {
-  useSendSettingsStore.setState({ webhookUrl: FLUXER_WEBHOOK_URL });
+  targetFluxerWebhook();
   loadMessage({
     content: "Hi",
     components: [row({ style: 5, url: "https://example.com" })],
@@ -59,7 +57,7 @@ test("a message with components can't go to a Fluxer webhook", () => {
 });
 
 test("a Components V2 message can't go to a Fluxer webhook", () => {
-  useSendSettingsStore.setState({ webhookUrl: FLUXER_WEBHOOK_URL });
+  targetFluxerWebhook();
   loadMessage({ flags: 1 << 15, components: [{ type: 10, content: "Hi" }] });
   renderEditor(<SendMenuWebhook />);
 

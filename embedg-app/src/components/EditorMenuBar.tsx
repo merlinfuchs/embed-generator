@@ -14,7 +14,7 @@ import {
 } from "../discord/defaultMessage";
 import { setCurrentMessage } from "../state/currentMessage";
 import { useAllowedMentions, useComponentsV2Enabled } from "../state/document";
-import { useSendPlatform } from "../state/sendSettings";
+import { useSendsToFluxer } from "../state/sendSettings";
 import { usePremiumGuildFeatures } from "../util/premium";
 import EditorUndoButtons from "./EditorUndoButtons";
 import EditorIconButton from "./EditorIconButton";
@@ -28,7 +28,7 @@ export default function EditorMenuBar() {
   // Easy to forget behind a modal otherwise.
   const settingsChanged = !isDefaultAllowedMentions(useAllowedMentions());
   // Fluxer has no Components V2, the toggle only stays to turn it off.
-  const fluxer = useSendPlatform() === "fluxer";
+  const fluxer = useSendsToFluxer();
 
   return (
     <div className="flex flex-wrap-reverse gap-x-5 gap-y-3 justify-between items-center mb-5 mt-5">

@@ -17,6 +17,7 @@ import {
   editorUser,
   loadMessage,
   renderEditor,
+  targetFluxerWebhook,
 } from "../test/editor";
 import EditorComponents from "./EditorComponents";
 
@@ -28,10 +29,8 @@ afterEach(() => {
   useSendSettingsStore.setState({ mode: "webhook", webhookUrl: null });
 });
 
-const FLUXER_WEBHOOK_URL = "https://api.fluxer.app/webhooks/123/token";
-
 test("there are no components to add for Fluxer", () => {
-  useSendSettingsStore.setState({ webhookUrl: FLUXER_WEBHOOK_URL });
+  targetFluxerWebhook();
   loadMessage({ content: "Hi" });
   renderEditor(<EditorComponents defaultCollapsed={false} />);
 
@@ -39,7 +38,7 @@ test("there are no components to add for Fluxer", () => {
 });
 
 test("components already in the message stay for Fluxer, so they can be removed", () => {
-  useSendSettingsStore.setState({ webhookUrl: FLUXER_WEBHOOK_URL });
+  targetFluxerWebhook();
   loadMessage({
     content: "Hi",
     components: [

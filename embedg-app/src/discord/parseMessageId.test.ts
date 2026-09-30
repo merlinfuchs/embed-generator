@@ -9,6 +9,10 @@ test("a message link gives its message id", () => {
   expect(parseMessageId("https://ptb.discord.com/channels/1/2/3")).toBe("3");
 });
 
+test("a Fluxer message link gives its message id", () => {
+  expect(parseMessageId("https://web.fluxer.app/channels/1/2/3")).toBe("3");
+});
+
 test("nothing typed is no message", () => {
   expect(parseMessageId("  ")).toBeNull();
 });

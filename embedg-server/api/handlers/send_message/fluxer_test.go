@@ -96,27 +96,30 @@ func fakeFluxer(t *testing.T, status int, response string) (*SendMessageHandler,
 	return h, &requests
 }
 
-func sendToFluxer(t *testing.T, h *SendMessageHandler, req wire.MessageSendToWebhookRequestWire) *http.Response {
+// sendToFluxer runs the webhook send handler and returns the error it hands to the API.
+func sendToFluxer(t *testing.T, h *SendMessageHandler, req wire.MessageSendToWebhookRequestWire) error {
 	t.Helper()
 
-	app := fiber.New(fiber.Config{
-		ErrorHandler: func(c *fiber.Ctx, err error) error {
-			var e *wire.Error
-			if errors.As(err, &e) {
-				return c.Status(e.Status).JSON(e)
-			}
-			return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
-		},
-	})
+	var handlerErr error
+	app := fiber.New()
 	app.Post("/", func(c *fiber.Ctx) error {
-		return h.HandleSendMessageToWebhook(c, req)
+		handlerErr = h.HandleSendMessageToWebhook(c, req)
+		return nil
 	})
 
-	resp, err := app.Test(httptest.NewRequest(http.MethodPost, "/", nil))
-	if err != nil {
+	if _, err := app.Test(httptest.NewRequest(http.MethodPost, "/", nil)); err != nil {
 		t.Fatal(err)
 	}
-	return resp
+	return handlerErr
+}
+
+func fluxerSendRequest(data string) wire.MessageSendToWebhookRequestWire {
+	return wire.MessageSendToWebhookRequestWire{
+		WebhookPlatform: wire.WebhookPlatformFluxer,
+		WebhookID:       "1500000000000000001",
+		WebhookToken:    "token",
+		Data:            json.RawMessage(data),
+	}
 }
 
 const fluxerMessage = `{"id":"1500000000000000002","channel_id":"1500000000000000003","author":{"id":"1500000000000000001","username":"Hook","avatar":null},"content":"hi","type":0,"flags":0}`
@@ -124,15 +127,8 @@ const fluxerMessage = `{"id":"1500000000000000002","channel_id":"150000000000000
 func TestSendToFluxerWebhook(t *testing.T) {
 	h, requests := fakeFluxer(t, http.StatusOK, fluxerMessage)
 
-	resp := sendToFluxer(t, h, wire.MessageSendToWebhookRequestWire{
-		WebhookPlatform: wire.WebhookPlatformFluxer,
-		WebhookID:       "1500000000000000001",
-		WebhookToken:    "token",
-		Data:            json.RawMessage(`{"content":"hi"}`),
-	})
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		t.Fatalf("want 200, got %d: %s", resp.StatusCode, body)
+	if err := sendToFluxer(t, h, fluxerSendRequest(`{"content":"hi"}`)); err != nil {
+		t.Fatal(err)
 	}
 
 	if len(*requests) != 1 {
@@ -150,16 +146,10 @@ func TestSendToFluxerWebhook(t *testing.T) {
 func TestEditFluxerWebhookMessage(t *testing.T) {
 	h, requests := fakeFluxer(t, http.StatusOK, fluxerMessage)
 
-	resp := sendToFluxer(t, h, wire.MessageSendToWebhookRequestWire{
-		WebhookPlatform: wire.WebhookPlatformFluxer,
-		WebhookID:       "1500000000000000001",
-		WebhookToken:    "token",
-		MessageID:       common.NullID{ID: 1500000000000000002, Valid: true},
-		Data:            json.RawMessage(`{"content":"edited"}`),
-	})
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		t.Fatalf("want 200, got %d: %s", resp.StatusCode, body)
+	req := fluxerSendRequest(`{"content":"edited"}`)
+	req.MessageID = common.NullID{ID: 1500000000000000002, Valid: true}
+	if err := sendToFluxer(t, h, req); err != nil {
+		t.Fatal(err)
 	}
 
 	got := (*requests)[0]
@@ -190,15 +180,10 @@ func TestFluxerErrors(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			h, _ := fakeFluxer(t, tt.status, tt.response)
 
-			resp := sendToFluxer(t, h, wire.MessageSendToWebhookRequestWire{
-				WebhookPlatform: wire.WebhookPlatformFluxer,
-				WebhookID:       "1500000000000000001",
-				WebhookToken:    "token",
-				Data:            json.RawMessage(`{"content":"hi"}`),
-			})
-			if resp.StatusCode != tt.want {
-				body, _ := io.ReadAll(resp.Body)
-				t.Fatalf("want %d, got %d: %s", tt.want, resp.StatusCode, body)
+			err := sendToFluxer(t, h, fluxerSendRequest(`{"content":"hi"}`))
+			var e *wire.Error
+			if !errors.As(err, &e) || e.Status != tt.want {
+				t.Fatalf("want a %d error, got %v", tt.want, err)
 			}
 		})
 	}

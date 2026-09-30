@@ -1,6 +1,5 @@
 import { useShallow } from "zustand/react/shallow";
-import { useSendSettingsStore } from "../state/sendSettings";
-import { useMemo } from "react";
+import { useSendSettingsStore, useWebhookTarget } from "../state/sendSettings";
 import {
   useRestoreMessageFromChannelMutation,
   useRestoreMessageFromWebhookMutation,
@@ -10,26 +9,18 @@ import { parseMessageWithAction } from "../discord/importSchema";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import { getUniqueId } from "../util";
 import { useToasts } from "../util/toasts";
-import { parseWebhookUrl } from "../discord/util";
 import { setCurrentMessage } from "../state/currentMessage";
 
 export default function MessageRestoreButton() {
-  const [mode, webhookUrl, messageId, threadId, guildId, channelId] =
-    useSendSettingsStore(
-      useShallow((state) => [
-        state.mode,
-        state.webhookUrl,
-        state.messageId,
-        state.threadId,
-        state.guildId,
-        state.channelId,
-      ]),
-    );
-
-  const webhookInfo = useMemo(() => {
-    if (!webhookUrl) return null;
-    return parseWebhookUrl(webhookUrl);
-  }, [webhookUrl]);
+  const [mode, messageId, guildId, channelId] = useSendSettingsStore(
+    useShallow((state) => [
+      state.mode,
+      state.messageId,
+      state.guildId,
+      state.channelId,
+    ]),
+  );
+  const target = useWebhookTarget();
 
   const restoreFromWebhookMutation = useRestoreMessageFromWebhookMutation();
   const restoreFromChannelMutation = useRestoreMessageFromChannelMutation();
@@ -85,15 +76,15 @@ export default function MessageRestoreButton() {
         },
       );
     } else {
-      if (!webhookInfo || !messageId) return;
+      if (!target || !messageId) return;
 
       restoreFromWebhookMutation.mutate(
         {
-          webhook_platform: webhookInfo.platform,
-          webhook_id: webhookInfo.id,
-          webhook_token: webhookInfo.token,
+          webhook_platform: target.platform,
+          webhook_id: target.id,
+          webhook_token: target.token,
           message_id: messageId,
-          thread_id: webhookInfo.platform === "fluxer" ? null : threadId,
+          thread_id: target.threadId,
         },
         {
           onSuccess: (resp) => {
@@ -113,8 +104,7 @@ export default function MessageRestoreButton() {
   }
 
   const canRestore =
-    !!messageId &&
-    (mode === "channel" ? !!guildId && !!channelId : !!webhookInfo);
+    !!messageId && (mode === "channel" ? !!guildId && !!channelId : !!target);
 
   return (
     <button

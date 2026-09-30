@@ -7,6 +7,7 @@ import {
   editorUser,
   loadMessage,
   renderEditor,
+  targetFluxerWebhook,
 } from "../test/editor";
 import EditorMenuBar from "./EditorMenuBar";
 
@@ -85,9 +86,7 @@ test("a plain click on the broom leaves the message for the dialog", async () =>
 });
 
 test("Fluxer has no Components V2, so there is nothing to toggle", () => {
-  useSendSettingsStore.setState({
-    webhookUrl: "https://api.fluxer.app/webhooks/123/token",
-  });
+  targetFluxerWebhook();
   loadMessage({ content: "" });
   renderEditor(<EditorMenuBar />);
 
@@ -95,9 +94,7 @@ test("Fluxer has no Components V2, so there is nothing to toggle", () => {
 });
 
 test("a Components V2 message can still be switched back for Fluxer", () => {
-  useSendSettingsStore.setState({
-    webhookUrl: "https://api.fluxer.app/webhooks/123/token",
-  });
+  targetFluxerWebhook();
   loadMessage({ flags: COMPONENTS_V2_FLAG, components: [] });
   renderEditor(<EditorMenuBar />);
 
