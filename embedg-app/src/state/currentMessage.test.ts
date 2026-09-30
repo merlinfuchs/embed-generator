@@ -133,9 +133,32 @@ test("a current document is left alone", async () => {
   expect(message.embeds).toMatchObject([{ title: "Document embed" }]);
 });
 
-test("seeding without a draft keeps the default message", async () => {
+test("seeding with nothing stored offers the templates once", async () => {
   const { defaultMessage } = await import("../discord/defaultMessage");
   const message = await seedWith({});
+  const { takeFirstVisit } = await import("./currentMessage");
 
-  expect(message.embeds).toEqual(defaultMessage.embeds);
+  expect(message).toEqual(defaultMessage);
+  expect(takeFirstVisit()).toBe(true);
+  expect(takeFirstVisit()).toBe(false);
+});
+
+test("a stored draft means it isn't a first visit", async () => {
+  await seedWith({ "current-message": JSON.stringify(draft) });
+  const { takeFirstVisit } = await import("./currentMessage");
+
+  expect(takeFirstVisit()).toBe(false);
+});
+
+test("only a message without content is blank", async () => {
+  await seedWith({});
+  const { currentMessageIsBlank, setCurrentMessage } = await import(
+    "./currentMessage"
+  );
+  const { defaultMessage } = await import("../discord/defaultMessage");
+
+  expect(currentMessageIsBlank()).toBe(true);
+
+  setCurrentMessage({ ...defaultMessage, content: "Restored" });
+  expect(currentMessageIsBlank()).toBe(false);
 });

@@ -1,6 +1,12 @@
 import { screen } from "@testing-library/react";
 import { expect, test } from "vitest";
-import { loadMessage, renderEditor } from "../test/editor";
+import { messageDocumentStore } from "../state/document";
+import {
+  currentMessage,
+  editorUser,
+  loadMessage,
+  renderEditor,
+} from "../test/editor";
 import EditorMenuBar from "./EditorMenuBar";
 
 test("the settings button marks settings that differ from Discord's defaults", () => {
@@ -44,4 +50,31 @@ test("an imported setting that matches the defaults isn't marked", () => {
   expect(
     screen.getByRole("link", { name: "Message Settings" }),
   ).toBeInTheDocument();
+});
+
+test("shift-clicking the broom clears the message without the templates", async () => {
+  loadMessage({ content: "Hello", embeds: [{ title: "Old embed" }] });
+  renderEditor(<EditorMenuBar />);
+  const user = editorUser();
+
+  await user.keyboard("{Shift>}");
+  await user.click(screen.getByRole("button", { name: /Clear Message/ }));
+  await user.keyboard("{/Shift}");
+
+  expect(currentMessage()).toMatchObject({ content: "", embeds: [] });
+
+  // It skips the confirmation, but can be undone.
+  messageDocumentStore.temporal.getState().undo();
+  expect(currentMessage().content).toBe("Hello");
+});
+
+test("a plain click on the broom leaves the message for the dialog", async () => {
+  loadMessage({ content: "Hello" });
+  renderEditor(<EditorMenuBar />);
+
+  await editorUser().click(
+    screen.getByRole("button", { name: /Clear Message/ }),
+  );
+
+  expect(currentMessage().content).toBe("Hello");
 });

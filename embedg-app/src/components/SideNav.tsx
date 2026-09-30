@@ -14,6 +14,7 @@ import {
   CommandLineIcon,
   CalendarDaysIcon,
   WrenchScrewdriverIcon,
+  QuestionMarkCircleIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import logo from "../assets/logo.svg";
@@ -173,6 +174,24 @@ export default function SideNav() {
             </div>
           </div>
           <div className="flex flex-col items-center py-5 space-y-7">
+            <a
+              href="/discord"
+              target="_blank"
+              rel="noopener"
+              aria-label="Help & Support"
+              title="Help & Support"
+              className={clsx(
+                "flex w-full items-center group",
+                collapsed ? "px-4" : "px-5",
+              )}
+            >
+              <QuestionMarkCircleIcon className="h-8 w-8 flex-none text-mist-400 group-hover:text-mist-100" />
+              {!collapsed && (
+                <div className="ml-5 text-mist-400 group-hover:text-mist-100">
+                  Help & Support
+                </div>
+              )}
+            </a>
             {user && user.success && (
               <LogoutLink
                 className={clsx(

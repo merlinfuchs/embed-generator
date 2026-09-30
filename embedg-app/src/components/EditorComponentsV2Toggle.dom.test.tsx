@@ -64,7 +64,7 @@ test("confirming switches to an empty v2 message", async () => {
   expect(message.components).toEqual([]);
 });
 
-test("turning it off restores the default message", async () => {
+test("turning it off leaves a blank message", async () => {
   loadMessage(v2Message);
   renderEditor(<EditorComponentsV2Toggle />);
 
@@ -74,5 +74,6 @@ test("turning it off restores the default message", async () => {
   const message = currentMessage();
   expect(isV2()).toBe(false);
   expect(message.components).toEqual([]);
-  expect(message.content).not.toBe("");
+  expect(message.content).toBe("");
+  expect(message.embeds).toEqual([]);
 });

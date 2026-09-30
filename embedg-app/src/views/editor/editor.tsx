@@ -1,7 +1,7 @@
 import { DocumentMagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import clsx from "clsx";
-import { Outlet, useMatch } from "react-router-dom";
+import { Outlet, useMatch, useNavigate } from "react-router-dom";
 import { Drawer } from "vaul";
 import EditorAttachments from "../../components/EditorAttachments";
 import EditorComponents from "../../components/EditorComponents";
@@ -12,7 +12,11 @@ import EditorMessagePreview from "../../components/EditorMessagePreview";
 import EditorWebhookFields from "../../components/EditorWebhookFields";
 import SendMenu from "../../components/SendMenu";
 import { messageSchema } from "../../discord/schema";
-import { useDebouncedCurrentDocument } from "../../state/currentMessage";
+import {
+  currentMessageIsBlank,
+  takeFirstVisit,
+  useDebouncedCurrentDocument,
+} from "../../state/currentMessage";
 import { useComponentsV2Enabled } from "../../state/document";
 import { useValidationErrorStore } from "../../state/validationError";
 import EditorErrorBoundary from "../../components/EditorErrorBoundary";
@@ -31,6 +35,17 @@ export default function EditorView() {
 
   const componentsV2Enabled = useComponentsV2Enabled();
   const assistantOpen = !!useMatch("/editor/assistant");
+
+  // Taken on any editor route, so opening a shared message first doesn't
+  // bring the templates up once it's loaded. A message restored before the
+  // editor opened isn't blank anymore.
+  const navigate = useNavigate();
+  const editorRoot = !!useMatch("/editor");
+  useEffect(() => {
+    if (takeFirstVisit() && editorRoot && currentMessageIsBlank()) {
+      navigate("/editor/new", { replace: true });
+    }
+  }, []);
 
   // TODO: also validate actions stores
 

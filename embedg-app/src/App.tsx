@@ -3,7 +3,6 @@ import { Route, Routes, Navigate } from "react-router-dom";
 import { ToastContainer } from "./util/toasts";
 import EditorView from "./views/editor/editor";
 import RequestLoadingIndicator from "./components/RequestLoadingIndicator";
-import ClearView from "./views/editor/clear";
 import MessageSettingsView from "./views/editor/messageSettings";
 import ShareView from "./views/editor/share";
 import EditorSideNav from "./components/SideNav";
@@ -13,6 +12,7 @@ import LoginErrorHandler from "./components/LoginErrorHandler";
 import { lazyView } from "./util/lazyView";
 
 const LazyJsonView = lazyView(() => import("./views/editor/json"));
+const LazyNewMessageView = lazyView(() => import("./views/editor/new"));
 const LazyAssistantView = lazyView(() => import("./views/editor/assistant"));
 const LazyMessagesView = lazyView(() => import("./views/messages"));
 const LazyPremiumView = lazyView(() => import("./views/premium"));
@@ -48,7 +48,14 @@ function App() {
         <EditorSideNav />
         <Routes>
           <Route path="/editor" element={<EditorView />}>
-            <Route path="clear" element={<ClearView />} />
+            <Route
+              path="new"
+              element={
+                <SuspendedView>
+                  <LazyNewMessageView />
+                </SuspendedView>
+              }
+            />
             <Route
               path="json"
               element={
