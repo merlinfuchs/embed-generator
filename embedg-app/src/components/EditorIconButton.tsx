@@ -6,7 +6,7 @@ interface Props {
   label: string;
   children: React.ReactNode;
   href?: string;
-  onClick?: () => void;
+  onClick?: (event: React.MouseEvent) => void;
   highlight?: boolean;
   /** Shows a dot on the button. */
   indicator?: boolean;
@@ -54,7 +54,7 @@ export default function EditorIconButton({
           aria-label={label}
           disabled={disabled}
           className={classes}
-          onClick={() => !disabled && onClick?.()}
+          onClick={(e) => !disabled && onClick?.(e)}
         >
           {icon}
         </button>
