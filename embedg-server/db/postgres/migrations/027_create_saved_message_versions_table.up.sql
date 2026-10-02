@@ -8,4 +8,4 @@ CREATE TABLE IF NOT EXISTS saved_message_versions (
     data JSONB NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS saved_message_versions_saved_message_id_created_at ON saved_message_versions (saved_message_id, created_at);
+CREATE INDEX IF NOT EXISTS saved_message_versions_saved_message_id_created_at ON saved_message_versions (saved_message_id, created_at DESC, id DESC);

@@ -32,37 +32,95 @@ func (c *Client) CreateSavedMessage(ctx context.Context, msg model.SavedMessage)
 	return rowToSavedMessage(row), nil
 }
 
-func (c *Client) UpdateSavedMessageForCreator(ctx context.Context, msg model.SavedMessage) (*model.SavedMessage, error) {
-	row, err := c.Q.UpdateSavedMessageForCreator(ctx, pgmodel.UpdateSavedMessageForCreatorParams{
-		ID:          msg.ID,
-		CreatorID:   msg.CreatorID.String(),
-		UpdatedAt:   pgtype.Timestamp{Time: msg.UpdatedAt, Valid: true},
-		Name:        msg.Name,
-		Description: pgtype.Text{String: msg.Description.String, Valid: msg.Description.Valid},
-		Data:        msg.Data,
-	})
+func (c *Client) UpdateSavedMessageForCreator(ctx context.Context, msg model.SavedMessage, keepVersions int) (*model.SavedMessage, error) {
+	return c.updateSavedMessage(ctx, msg, keepVersions,
+		func(q *pgmodel.Queries) (int64, error) {
+			return q.InsertSavedMessageVersionForCreator(ctx, pgmodel.InsertSavedMessageVersionForCreatorParams{
+				ID:             common.InternalID(),
+				SavedMessageID: msg.ID,
+				CreatorID:      msg.CreatorID.String(),
+				NewData:        msg.Data,
+			})
+		},
+		func(q *pgmodel.Queries) (pgmodel.SavedMessage, error) {
+			return q.UpdateSavedMessageForCreator(ctx, pgmodel.UpdateSavedMessageForCreatorParams{
+				ID:          msg.ID,
+				CreatorID:   msg.CreatorID.String(),
+				UpdatedAt:   pgtype.Timestamp{Time: msg.UpdatedAt, Valid: true},
+				Name:        msg.Name,
+				Description: pgtype.Text{String: msg.Description.String, Valid: msg.Description.Valid},
+				Data:        msg.Data,
+			})
+		},
+	)
+}
+
+func (c *Client) UpdateSavedMessageForGuild(ctx context.Context, msg model.SavedMessage, keepVersions int) (*model.SavedMessage, error) {
+	guildID := pgtype.Text{String: msg.GuildID.ID.String(), Valid: msg.GuildID.Valid}
+	return c.updateSavedMessage(ctx, msg, keepVersions,
+		func(q *pgmodel.Queries) (int64, error) {
+			return q.InsertSavedMessageVersionForGuild(ctx, pgmodel.InsertSavedMessageVersionForGuildParams{
+				ID:             common.InternalID(),
+				SavedMessageID: msg.ID,
+				GuildID:        guildID,
+				NewData:        msg.Data,
+			})
+		},
+		func(q *pgmodel.Queries) (pgmodel.SavedMessage, error) {
+			return q.UpdateSavedMessageForGuild(ctx, pgmodel.UpdateSavedMessageForGuildParams{
+				ID:          msg.ID,
+				GuildID:     guildID,
+				UpdatedAt:   pgtype.Timestamp{Time: msg.UpdatedAt, Valid: true},
+				Name:        msg.Name,
+				Description: pgtype.Text{String: msg.Description.String, Valid: msg.Description.Valid},
+				Data:        msg.Data,
+			})
+		},
+	)
+}
+
+// updateSavedMessage keeps what the message looked like as a version, updates it and deletes the
+// versions past keepVersions, all in one transaction.
+func (c *Client) updateSavedMessage(
+	ctx context.Context,
+	msg model.SavedMessage,
+	keepVersions int,
+	insertVersion func(q *pgmodel.Queries) (int64, error),
+	update func(q *pgmodel.Queries) (pgmodel.SavedMessage, error),
+) (*model.SavedMessage, error) {
+	tx, err := c.DB.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+	q := c.Q.WithTx(tx)
+
+	var inserted int64
+	if msg.Data != nil && keepVersions > 0 {
+		if inserted, err = insertVersion(q); err != nil {
+			return nil, err
+		}
+	}
+
+	row, err := update(q)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, store.ErrNotFound
 		}
 		return nil, err
 	}
-	return rowToSavedMessage(row), nil
-}
 
-func (c *Client) UpdateSavedMessageForGuild(ctx context.Context, msg model.SavedMessage) (*model.SavedMessage, error) {
-	row, err := c.Q.UpdateSavedMessageForGuild(ctx, pgmodel.UpdateSavedMessageForGuildParams{
-		ID:          msg.ID,
-		GuildID:     pgtype.Text{String: msg.GuildID.ID.String(), Valid: msg.GuildID.Valid},
-		UpdatedAt:   pgtype.Timestamp{Time: msg.UpdatedAt, Valid: true},
-		Name:        msg.Name,
-		Description: pgtype.Text{String: msg.Description.String, Valid: msg.Description.Valid},
-		Data:        msg.Data,
-	})
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, store.ErrNotFound
+	// Without a new version only a plan that keeps none can leave too many.
+	if msg.Data != nil && (inserted > 0 || keepVersions == 0) {
+		if err := q.DeleteOldSavedMessageVersions(ctx, pgmodel.DeleteOldSavedMessageVersionsParams{
+			SavedMessageID: msg.ID,
+			KeepCount:      int32(keepVersions),
+		}); err != nil {
+			return nil, err
 		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
 		return nil, err
 	}
 	return rowToSavedMessage(row), nil

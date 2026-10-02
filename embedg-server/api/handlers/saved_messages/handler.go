@@ -127,31 +127,21 @@ func (h *SavedMessagesHandler) HandleUpdateSavedMessage(c *fiber.Ctx, req wire.S
 		Data:        req.Data,
 	}
 
-	// Renames leave the data as it is, so there is nothing to keep.
-	var features model.PlanFeatures
+	// Renames leave the data as it is, so there are no versions to keep.
+	var keepVersions int
 	if req.Data != nil {
-		if features, err = h.planFeatures(c.UserContext(), session.UserID, guildID); err != nil {
+		features, err := h.planFeatures(c.UserContext(), session.UserID, guildID)
+		if err != nil {
 			return err
 		}
-
-		if features.MaxSavedMessageVersions > 0 {
-			if guildID.Valid {
-				err = h.savedMessageStore.CreateSavedMessageVersionForGuild(c.UserContext(), common.InternalID(), update)
-			} else {
-				err = h.savedMessageStore.CreateSavedMessageVersionForCreator(c.UserContext(), common.InternalID(), update)
-			}
-			if err != nil {
-				slog.Error("Failed to create saved message version", slog.Any("error", err))
-				return err
-			}
-		}
+		keepVersions = features.MaxSavedMessageVersions
 	}
 
 	var message *model.SavedMessage
 	if guildID.Valid {
-		message, err = h.savedMessageStore.UpdateSavedMessageForGuild(c.UserContext(), update)
+		message, err = h.savedMessageStore.UpdateSavedMessageForGuild(c.UserContext(), update, keepVersions)
 	} else {
-		message, err = h.savedMessageStore.UpdateSavedMessageForCreator(c.UserContext(), update)
+		message, err = h.savedMessageStore.UpdateSavedMessageForCreator(c.UserContext(), update, keepVersions)
 	}
 
 	if err != nil {
@@ -160,13 +150,6 @@ func (h *SavedMessagesHandler) HandleUpdateSavedMessage(c *fiber.Ctx, req wire.S
 		}
 		slog.Error("Failed to update saved message", slog.Any("error", err))
 		return err
-	}
-
-	// Also drops all versions once the plan doesn't keep any.
-	if req.Data != nil {
-		if err := h.savedMessageStore.DeleteOldSavedMessageVersions(c.UserContext(), messageID, features.MaxSavedMessageVersions); err != nil {
-			slog.Error("Failed to delete old saved message versions", slog.Any("error", err))
-		}
 	}
 
 	return c.JSON(wire.SavedMessageUpdateResponseWire{
@@ -283,11 +266,7 @@ func (h *SavedMessagesHandler) HandleListSavedMessageVersions(c *fiber.Ctx) erro
 
 	res := make([]wire.SavedMessageVersionWire, len(versions))
 	for i, version := range versions {
-		res[i] = wire.SavedMessageVersionWire{
-			ID:        version.ID,
-			CreatedAt: version.CreatedAt,
-			Name:      version.Name,
-		}
+		res[i] = savedMessageVersionModelToWire(&version)
 	}
 
 	return c.JSON(wire.SavedMessageVersionListResponseWire{
@@ -311,16 +290,11 @@ func (h *SavedMessagesHandler) HandleGetSavedMessageVersion(c *fiber.Ctx) error 
 		}
 	}
 
-	features, err := h.planFeatures(c.UserContext(), session.UserID, guildID)
-	if err != nil {
-		return err
-	}
-
 	var version *model.SavedMessageVersion
 	if guildID.Valid {
-		version, err = h.savedMessageStore.GetSavedMessageVersionForGuild(c.UserContext(), guildID.ID, messageID, versionID, features.MaxSavedMessageVersions)
+		version, err = h.savedMessageStore.GetSavedMessageVersionForGuild(c.UserContext(), guildID.ID, messageID, versionID)
 	} else {
-		version, err = h.savedMessageStore.GetSavedMessageVersionForCreator(c.UserContext(), session.UserID, messageID, versionID, features.MaxSavedMessageVersions)
+		version, err = h.savedMessageStore.GetSavedMessageVersionForCreator(c.UserContext(), session.UserID, messageID, versionID)
 	}
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
@@ -333,10 +307,8 @@ func (h *SavedMessagesHandler) HandleGetSavedMessageVersion(c *fiber.Ctx) error 
 	return c.JSON(wire.SavedMessageVersionGetResponseWire{
 		Success: true,
 		Data: wire.SavedMessageVersionDataWire{
-			ID:        version.ID,
-			CreatedAt: version.CreatedAt,
-			Name:      version.Name,
-			Data:      version.Data,
+			SavedMessageVersionWire: savedMessageVersionModelToWire(version),
+			Data:                    version.Data,
 		},
 	})
 }
@@ -382,5 +354,13 @@ func savedMessageModelToWire(model *model.SavedMessage) wire.SavedMessageWire {
 		Name:        model.Name,
 		Description: model.Description,
 		Data:        model.Data,
+	}
+}
+
+func savedMessageVersionModelToWire(model *model.SavedMessageVersion) wire.SavedMessageVersionWire {
+	return wire.SavedMessageVersionWire{
+		ID:        model.ID,
+		CreatedAt: model.CreatedAt,
+		Name:      model.Name,
 	}
 }

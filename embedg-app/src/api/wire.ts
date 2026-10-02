@@ -297,10 +297,7 @@ export interface SavedMessageVersionWire {
   name: string;
 }
 export type SavedMessageVersionListResponseWire = APIResponse<SavedMessageVersionWire[]>;
-export interface SavedMessageVersionDataWire {
-  id: string;
-  created_at: string /* RFC3339 */;
-  name: string;
+export interface SavedMessageVersionDataWire extends SavedMessageVersionWire {
   data: Record<string, any> | null;
 }
 export type SavedMessageVersionGetResponseWire = APIResponse<SavedMessageVersionDataWire>;

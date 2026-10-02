@@ -12,8 +12,8 @@ import (
 )
 
 const deleteOldSavedMessageVersions = `-- name: DeleteOldSavedMessageVersions :exec
-DELETE FROM saved_message_versions WHERE saved_message_versions.saved_message_id = $1 AND saved_message_versions.id NOT IN (
-    SELECT newest.id FROM saved_message_versions newest WHERE newest.saved_message_id = $1 ORDER BY newest.created_at DESC, newest.id DESC LIMIT $2
+DELETE FROM saved_message_versions WHERE saved_message_versions.id IN (
+    SELECT old.id FROM saved_message_versions old WHERE old.saved_message_id = $1 ORDER BY old.created_at DESC, old.id DESC OFFSET $2
 )
 `
 
@@ -31,25 +31,16 @@ const getSavedMessageVersionForCreator = `-- name: GetSavedMessageVersionForCrea
 SELECT saved_message_versions.id, saved_message_versions.saved_message_id, saved_message_versions.created_at, saved_message_versions.name, saved_message_versions.data FROM saved_message_versions
 JOIN saved_messages ON saved_messages.id = saved_message_versions.saved_message_id
 WHERE saved_message_versions.id = $1 AND saved_message_versions.saved_message_id = $2 AND saved_messages.creator_id = $3 AND saved_messages.guild_id IS NULL
-AND saved_message_versions.id IN (
-    SELECT newest.id FROM saved_message_versions newest WHERE newest.saved_message_id = $2 ORDER BY newest.created_at DESC, newest.id DESC LIMIT $4
-)
 `
 
 type GetSavedMessageVersionForCreatorParams struct {
 	ID             string
 	SavedMessageID string
 	CreatorID      string
-	MaxCount       int32
 }
 
 func (q *Queries) GetSavedMessageVersionForCreator(ctx context.Context, arg GetSavedMessageVersionForCreatorParams) (SavedMessageVersion, error) {
-	row := q.db.QueryRow(ctx, getSavedMessageVersionForCreator,
-		arg.ID,
-		arg.SavedMessageID,
-		arg.CreatorID,
-		arg.MaxCount,
-	)
+	row := q.db.QueryRow(ctx, getSavedMessageVersionForCreator, arg.ID, arg.SavedMessageID, arg.CreatorID)
 	var i SavedMessageVersion
 	err := row.Scan(
 		&i.ID,
@@ -65,25 +56,16 @@ const getSavedMessageVersionForGuild = `-- name: GetSavedMessageVersionForGuild 
 SELECT saved_message_versions.id, saved_message_versions.saved_message_id, saved_message_versions.created_at, saved_message_versions.name, saved_message_versions.data FROM saved_message_versions
 JOIN saved_messages ON saved_messages.id = saved_message_versions.saved_message_id
 WHERE saved_message_versions.id = $1 AND saved_message_versions.saved_message_id = $2 AND saved_messages.guild_id = $3
-AND saved_message_versions.id IN (
-    SELECT newest.id FROM saved_message_versions newest WHERE newest.saved_message_id = $2 ORDER BY newest.created_at DESC, newest.id DESC LIMIT $4
-)
 `
 
 type GetSavedMessageVersionForGuildParams struct {
 	ID             string
 	SavedMessageID string
 	GuildID        pgtype.Text
-	MaxCount       int32
 }
 
 func (q *Queries) GetSavedMessageVersionForGuild(ctx context.Context, arg GetSavedMessageVersionForGuildParams) (SavedMessageVersion, error) {
-	row := q.db.QueryRow(ctx, getSavedMessageVersionForGuild,
-		arg.ID,
-		arg.SavedMessageID,
-		arg.GuildID,
-		arg.MaxCount,
-	)
+	row := q.db.QueryRow(ctx, getSavedMessageVersionForGuild, arg.ID, arg.SavedMessageID, arg.GuildID)
 	var i SavedMessageVersion
 	err := row.Scan(
 		&i.ID,
@@ -173,7 +155,7 @@ func (q *Queries) GetSavedMessageVersionsForGuild(ctx context.Context, arg GetSa
 	return items, nil
 }
 
-const insertSavedMessageVersionForCreator = `-- name: InsertSavedMessageVersionForCreator :exec
+const insertSavedMessageVersionForCreator = `-- name: InsertSavedMessageVersionForCreator :execrows
 INSERT INTO saved_message_versions (id, saved_message_id, created_at, name, data)
 SELECT $1, saved_messages.id, saved_messages.updated_at, saved_messages.name, saved_messages.data FROM saved_messages
 WHERE saved_messages.id = $2 AND saved_messages.creator_id = $3 AND saved_messages.data <> $4::jsonb
@@ -186,17 +168,20 @@ type InsertSavedMessageVersionForCreatorParams struct {
 	NewData        []byte
 }
 
-func (q *Queries) InsertSavedMessageVersionForCreator(ctx context.Context, arg InsertSavedMessageVersionForCreatorParams) error {
-	_, err := q.db.Exec(ctx, insertSavedMessageVersionForCreator,
+func (q *Queries) InsertSavedMessageVersionForCreator(ctx context.Context, arg InsertSavedMessageVersionForCreatorParams) (int64, error) {
+	result, err := q.db.Exec(ctx, insertSavedMessageVersionForCreator,
 		arg.ID,
 		arg.SavedMessageID,
 		arg.CreatorID,
 		arg.NewData,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
-const insertSavedMessageVersionForGuild = `-- name: InsertSavedMessageVersionForGuild :exec
+const insertSavedMessageVersionForGuild = `-- name: InsertSavedMessageVersionForGuild :execrows
 INSERT INTO saved_message_versions (id, saved_message_id, created_at, name, data)
 SELECT $1, saved_messages.id, saved_messages.updated_at, saved_messages.name, saved_messages.data FROM saved_messages
 WHERE saved_messages.id = $2 AND saved_messages.guild_id = $3 AND saved_messages.data <> $4::jsonb
@@ -209,12 +194,15 @@ type InsertSavedMessageVersionForGuildParams struct {
 	NewData        []byte
 }
 
-func (q *Queries) InsertSavedMessageVersionForGuild(ctx context.Context, arg InsertSavedMessageVersionForGuildParams) error {
-	_, err := q.db.Exec(ctx, insertSavedMessageVersionForGuild,
+func (q *Queries) InsertSavedMessageVersionForGuild(ctx context.Context, arg InsertSavedMessageVersionForGuildParams) (int64, error) {
+	result, err := q.db.Exec(ctx, insertSavedMessageVersionForGuild,
 		arg.ID,
 		arg.SavedMessageID,
 		arg.GuildID,
 		arg.NewData,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }

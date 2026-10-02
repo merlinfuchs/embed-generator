@@ -62,10 +62,8 @@ type SavedMessageVersionWire struct {
 type SavedMessageVersionListResponseWire APIResponse[[]SavedMessageVersionWire]
 
 type SavedMessageVersionDataWire struct {
-	ID        string          `json:"id"`
-	CreatedAt time.Time       `json:"created_at"`
-	Name      string          `json:"name"`
-	Data      json.RawMessage `json:"data"`
+	SavedMessageVersionWire `tstype:",extends"`
+	Data                    json.RawMessage `json:"data"`
 }
 
 type SavedMessageVersionGetResponseWire APIResponse[SavedMessageVersionDataWire]

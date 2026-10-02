@@ -190,6 +190,8 @@ export function useSavedMessageVersionQuery(
       return fetch(url).then((res) => handleApiResponse(res.json()));
     },
     enabled: !!versionId,
+    // Versions never change.
+    staleTime: Infinity,
   });
 }
 

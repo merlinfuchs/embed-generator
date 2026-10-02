@@ -20,8 +20,7 @@ type SavedMessage struct {
 
 // SavedMessageVersion is what a saved message looked like before it was overwritten.
 type SavedMessageVersion struct {
-	ID             string
-	SavedMessageID string
+	ID string
 	// CreatedAt is when the version was saved, not when it was overwritten.
 	CreatedAt time.Time
 	Name      string
