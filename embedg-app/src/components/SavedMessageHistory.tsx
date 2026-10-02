@@ -37,6 +37,7 @@ export default function SavedMessageHistory({
   );
 
   const parsed = useMemo(() => {
+    if (versionQuery.isError) return { error: `${versionQuery.error}` };
     if (!versionQuery.data) return null;
     if (!versionQuery.data.success) {
       return { error: versionQuery.data.error.message };
@@ -46,7 +47,7 @@ export default function SavedMessageHistory({
     } catch (e) {
       return { error: `${e}` };
     }
-  }, [versionQuery.data]);
+  }, [versionQuery.data, versionQuery.isError, versionQuery.error]);
 
   function restore() {
     if (!parsed?.msg) return;
@@ -55,7 +56,9 @@ export default function SavedMessageHistory({
   }
 
   let body: React.ReactNode;
-  if (versionsQuery.data && !versionsQuery.data.success) {
+  if (versionsQuery.isError) {
+    body = <div className="text-red text-sm">{`${versionsQuery.error}`}</div>;
+  } else if (versionsQuery.data && !versionsQuery.data.success) {
     body = (
       <div className="text-red text-sm">{versionsQuery.data.error.message}</div>
     );

@@ -158,7 +158,8 @@ func (q *Queries) GetSavedMessageVersionsForGuild(ctx context.Context, arg GetSa
 const insertSavedMessageVersionForCreator = `-- name: InsertSavedMessageVersionForCreator :execrows
 INSERT INTO saved_message_versions (id, saved_message_id, created_at, name, data)
 SELECT $1, saved_messages.id, saved_messages.updated_at, saved_messages.name, saved_messages.data FROM saved_messages
-WHERE saved_messages.id = $2 AND saved_messages.creator_id = $3 AND saved_messages.data <> $4::jsonb
+WHERE saved_messages.id = $2 AND saved_messages.creator_id = $3 AND saved_messages.guild_id IS NULL AND saved_messages.data <> $4::jsonb
+FOR UPDATE OF saved_messages
 `
 
 type InsertSavedMessageVersionForCreatorParams struct {
@@ -185,6 +186,7 @@ const insertSavedMessageVersionForGuild = `-- name: InsertSavedMessageVersionFor
 INSERT INTO saved_message_versions (id, saved_message_id, created_at, name, data)
 SELECT $1, saved_messages.id, saved_messages.updated_at, saved_messages.name, saved_messages.data FROM saved_messages
 WHERE saved_messages.id = $2 AND saved_messages.guild_id = $3 AND saved_messages.data <> $4::jsonb
+FOR UPDATE OF saved_messages
 `
 
 type InsertSavedMessageVersionForGuildParams struct {

@@ -221,7 +221,7 @@ func (q *Queries) InsertSavedMessage(ctx context.Context, arg InsertSavedMessage
 }
 
 const updateSavedMessageForCreator = `-- name: UpdateSavedMessageForCreator :one
-UPDATE saved_messages SET updated_at = $3, name = $4, description = $5, data = COALESCE($6, data) WHERE id = $1 AND creator_id = $2 RETURNING id, creator_id, guild_id, updated_at, name, description, data
+UPDATE saved_messages SET updated_at = $3, name = $4, description = $5, data = COALESCE($6, data) WHERE id = $1 AND creator_id = $2 AND guild_id IS NULL RETURNING id, creator_id, guild_id, updated_at, name, description, data
 `
 
 type UpdateSavedMessageForCreatorParams struct {

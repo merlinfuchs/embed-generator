@@ -290,6 +290,14 @@ func (h *SavedMessagesHandler) HandleGetSavedMessageVersion(c *fiber.Ctx) error 
 		}
 	}
 
+	features, err := h.planFeatures(c.UserContext(), session.UserID, guildID)
+	if err != nil {
+		return err
+	}
+	if features.MaxSavedMessageVersions == 0 {
+		return handlers.Forbidden("insufficient_plan", "Your plan doesn't keep versions of saved messages.")
+	}
+
 	var version *model.SavedMessageVersion
 	if guildID.Valid {
 		version, err = h.savedMessageStore.GetSavedMessageVersionForGuild(c.UserContext(), guildID.ID, messageID, versionID)

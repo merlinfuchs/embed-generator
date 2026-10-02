@@ -2,7 +2,7 @@
 INSERT INTO saved_messages (id, creator_id, guild_id, updated_at, name, description, data) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
 
 -- name: UpdateSavedMessageForCreator :one
-UPDATE saved_messages SET updated_at = $3, name = $4, description = $5, data = COALESCE(sqlc.narg(data), data) WHERE id = $1 AND creator_id = $2 RETURNING *;
+UPDATE saved_messages SET updated_at = $3, name = $4, description = $5, data = COALESCE(sqlc.narg(data), data) WHERE id = $1 AND creator_id = $2 AND guild_id IS NULL RETURNING *;
 
 -- name: UpdateSavedMessageForGuild :one
 UPDATE saved_messages SET updated_at = $3, name = $4, description = $5, data = COALESCE(sqlc.narg(data), data) WHERE id = $1 AND guild_id = $2 RETURNING *;

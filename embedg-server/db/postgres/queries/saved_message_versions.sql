@@ -1,12 +1,14 @@
 -- name: InsertSavedMessageVersionForCreator :execrows
 INSERT INTO saved_message_versions (id, saved_message_id, created_at, name, data)
 SELECT @id, saved_messages.id, saved_messages.updated_at, saved_messages.name, saved_messages.data FROM saved_messages
-WHERE saved_messages.id = @saved_message_id AND saved_messages.creator_id = @creator_id AND saved_messages.data <> @new_data::jsonb;
+WHERE saved_messages.id = @saved_message_id AND saved_messages.creator_id = @creator_id AND saved_messages.guild_id IS NULL AND saved_messages.data <> @new_data::jsonb
+FOR UPDATE OF saved_messages;
 
 -- name: InsertSavedMessageVersionForGuild :execrows
 INSERT INTO saved_message_versions (id, saved_message_id, created_at, name, data)
 SELECT @id, saved_messages.id, saved_messages.updated_at, saved_messages.name, saved_messages.data FROM saved_messages
-WHERE saved_messages.id = @saved_message_id AND saved_messages.guild_id = @guild_id AND saved_messages.data <> @new_data::jsonb;
+WHERE saved_messages.id = @saved_message_id AND saved_messages.guild_id = @guild_id AND saved_messages.data <> @new_data::jsonb
+FOR UPDATE OF saved_messages;
 
 -- name: DeleteOldSavedMessageVersions :exec
 DELETE FROM saved_message_versions WHERE saved_message_versions.id IN (

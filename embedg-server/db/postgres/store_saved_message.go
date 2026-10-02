@@ -110,8 +110,9 @@ func (c *Client) updateSavedMessage(
 		return nil, err
 	}
 
-	// Without a new version only a plan that keeps none can leave too many.
-	if msg.Data != nil && (inserted > 0 || keepVersions == 0) {
+	// Versions past the plan stay hidden instead of deleted until the next one is kept, so a lapsed
+	// plan doesn't lose them.
+	if inserted > 0 {
 		if err := q.DeleteOldSavedMessageVersions(ctx, pgmodel.DeleteOldSavedMessageVersionsParams{
 			SavedMessageID: msg.ID,
 			KeepCount:      int32(keepVersions),
