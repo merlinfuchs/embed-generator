@@ -74,13 +74,27 @@ export default function SavedMessageHistory({
   } else {
     body = (
       <div className="flex flex-col sm:flex-row gap-3">
-        <div className="flex sm:flex-col gap-1 flex-none sm:w-48 overflow-x-auto sm:overflow-y-auto sm:max-h-[500px]">
+        {/* A row of versions is too wide for small screens. */}
+        <select
+          aria-label="Version"
+          className="sm:hidden bg-ink-900 rounded-lg p-2 w-full font-light cursor-pointer text-white"
+          value={versionId ?? ""}
+          onChange={(e) => setSelectedId(e.target.value)}
+        >
+          {versions.map((version) => (
+            <option key={version.id} value={version.id}>
+              {parseISO(version.created_at).toLocaleString() +
+                (version.name !== message.name ? ` · ${version.name}` : "")}
+            </option>
+          ))}
+        </select>
+        <div className="hidden sm:flex flex-col gap-1 flex-none w-48 overflow-y-auto max-h-[500px]">
           {versions.map((version) => (
             <button
               key={version.id}
               type="button"
               className={clsx(
-                "text-left rounded-lg px-3 py-2 flex-none cursor-pointer",
+                "text-left rounded-lg px-3 py-2 cursor-pointer",
                 version.id === versionId
                   ? "bg-ink-900 text-white"
                   : "text-mist-300 hover:bg-ink-800",
