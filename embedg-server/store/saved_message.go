@@ -21,4 +21,17 @@ type SavedMessageStore interface {
 	GetSavedMessageNamesForGuild(ctx context.Context, guildID common.ID, limit int) ([]model.SavedMessage, error)
 	CountSavedMessagesForCreator(ctx context.Context, creatorID common.ID) (int64, error)
 	CountSavedMessagesForGuild(ctx context.Context, guildID common.ID) (int64, error)
+
+	// CreateSavedMessageVersionForCreator keeps the saved message as it is now as a version, unless
+	// msg.Data is the same. msg is the update that is about to overwrite it.
+	CreateSavedMessageVersionForCreator(ctx context.Context, versionID string, msg model.SavedMessage) error
+	CreateSavedMessageVersionForGuild(ctx context.Context, versionID string, msg model.SavedMessage) error
+	// DeleteOldSavedMessageVersions deletes all but the newest keep versions of the message.
+	DeleteOldSavedMessageVersions(ctx context.Context, messageID string, keep int) error
+	// GetSavedMessageVersionsForCreator returns the newest versions of the message without their data.
+	GetSavedMessageVersionsForCreator(ctx context.Context, creatorID common.ID, messageID string, limit int) ([]model.SavedMessageVersion, error)
+	GetSavedMessageVersionsForGuild(ctx context.Context, guildID common.ID, messageID string, limit int) ([]model.SavedMessageVersion, error)
+	// GetSavedMessageVersionForCreator returns the version if it's among the newest limit versions.
+	GetSavedMessageVersionForCreator(ctx context.Context, creatorID common.ID, messageID string, versionID string, limit int) (*model.SavedMessageVersion, error)
+	GetSavedMessageVersionForGuild(ctx context.Context, guildID common.ID, messageID string, versionID string, limit int) (*model.SavedMessageVersion, error)
 }

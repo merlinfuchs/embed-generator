@@ -57,6 +57,8 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	savedMessagesGroup.Patch("/", handlers.WithRequestBodyValidated(savedMessagesHandler.HandleImportSavedMessages))
 	savedMessagesGroup.Put("/:messageID", handlers.WithRequestBodyValidated(savedMessagesHandler.HandleUpdateSavedMessage))
 	savedMessagesGroup.Delete("/:messageID", savedMessagesHandler.HandleDeleteSavedMessage)
+	savedMessagesGroup.Get("/:messageID/versions", savedMessagesHandler.HandleListSavedMessageVersions)
+	savedMessagesGroup.Get("/:messageID/versions/:versionID", savedMessagesHandler.HandleGetSavedMessageVersion)
 
 	sharedMessageHandler := shared_messages.New(shared_messages.SharedMessageHandlerConfig{
 		AppPublicURL: config.AppPublicURL,

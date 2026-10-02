@@ -68,6 +68,7 @@ func (h *PremiumHandler) HandleGetFeatures(c *fiber.Ctx) error {
 		Success: true,
 		Data: wire.GetPremiumPlanFeaturesResponseDataWire{
 			MaxSavedMessages:          features.MaxSavedMessages,
+			MaxSavedMessageVersions:   features.MaxSavedMessageVersions,
 			MaxActionsPerComponent:    features.MaxActionsPerComponent,
 			AdvancedActionTypes:       features.AdvancedActionTypes,
 			MaxAIPromptsPerMonth:      features.MaxAIPromptsPerMonth,

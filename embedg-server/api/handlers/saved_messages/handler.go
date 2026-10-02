@@ -117,25 +117,41 @@ func (h *SavedMessagesHandler) HandleUpdateSavedMessage(c *fiber.Ctx, req wire.S
 		}
 	}
 
+	update := model.SavedMessage{
+		ID:          messageID,
+		CreatorID:   session.UserID,
+		GuildID:     guildID,
+		UpdatedAt:   time.Now().UTC(),
+		Name:        req.Name,
+		Description: req.Description,
+		Data:        req.Data,
+	}
+
+	// Renames leave the data as it is, so there is nothing to keep.
+	var features model.PlanFeatures
+	if req.Data != nil {
+		if features, err = h.planFeatures(c.UserContext(), session.UserID, guildID); err != nil {
+			return err
+		}
+
+		if features.MaxSavedMessageVersions > 0 {
+			if guildID.Valid {
+				err = h.savedMessageStore.CreateSavedMessageVersionForGuild(c.UserContext(), common.InternalID(), update)
+			} else {
+				err = h.savedMessageStore.CreateSavedMessageVersionForCreator(c.UserContext(), common.InternalID(), update)
+			}
+			if err != nil {
+				slog.Error("Failed to create saved message version", slog.Any("error", err))
+				return err
+			}
+		}
+	}
+
 	var message *model.SavedMessage
 	if guildID.Valid {
-		message, err = h.savedMessageStore.UpdateSavedMessageForGuild(c.UserContext(), model.SavedMessage{
-			ID:          messageID,
-			GuildID:     guildID,
-			UpdatedAt:   time.Now().UTC(),
-			Name:        req.Name,
-			Description: req.Description,
-			Data:        req.Data,
-		})
+		message, err = h.savedMessageStore.UpdateSavedMessageForGuild(c.UserContext(), update)
 	} else {
-		message, err = h.savedMessageStore.UpdateSavedMessageForCreator(c.UserContext(), model.SavedMessage{
-			ID:          messageID,
-			CreatorID:   session.UserID,
-			UpdatedAt:   time.Now().UTC(),
-			Name:        req.Name,
-			Description: req.Description,
-			Data:        req.Data,
-		})
+		message, err = h.savedMessageStore.UpdateSavedMessageForCreator(c.UserContext(), update)
 	}
 
 	if err != nil {
@@ -144,6 +160,13 @@ func (h *SavedMessagesHandler) HandleUpdateSavedMessage(c *fiber.Ctx, req wire.S
 		}
 		slog.Error("Failed to update saved message", slog.Any("error", err))
 		return err
+	}
+
+	// Also drops all versions once the plan doesn't keep any.
+	if req.Data != nil {
+		if err := h.savedMessageStore.DeleteOldSavedMessageVersions(c.UserContext(), messageID, features.MaxSavedMessageVersions); err != nil {
+			slog.Error("Failed to delete old saved message versions", slog.Any("error", err))
+		}
 	}
 
 	return c.JSON(wire.SavedMessageUpdateResponseWire{
@@ -228,21 +251,116 @@ func (h *SavedMessagesHandler) HandleImportSavedMessages(c *fiber.Ctx, req wire.
 	})
 }
 
+func (h *SavedMessagesHandler) HandleListSavedMessageVersions(c *fiber.Ctx) error {
+	session := c.Locals("session").(*session.Session)
+	messageID := c.Params("messageID")
+	guildID, err := handlers.QueryNullID(c, "guild_id")
+	if err != nil {
+		return err
+	}
+
+	if guildID.Valid {
+		if err := h.am.CheckGuildAccessForRequest(c, guildID.ID); err != nil {
+			return err
+		}
+	}
+
+	features, err := h.planFeatures(c.UserContext(), session.UserID, guildID)
+	if err != nil {
+		return err
+	}
+
+	var versions []model.SavedMessageVersion
+	if guildID.Valid {
+		versions, err = h.savedMessageStore.GetSavedMessageVersionsForGuild(c.UserContext(), guildID.ID, messageID, features.MaxSavedMessageVersions)
+	} else {
+		versions, err = h.savedMessageStore.GetSavedMessageVersionsForCreator(c.UserContext(), session.UserID, messageID, features.MaxSavedMessageVersions)
+	}
+	if err != nil {
+		slog.Error("Failed to get saved message versions", slog.Any("error", err))
+		return err
+	}
+
+	res := make([]wire.SavedMessageVersionWire, len(versions))
+	for i, version := range versions {
+		res[i] = wire.SavedMessageVersionWire{
+			ID:        version.ID,
+			CreatedAt: version.CreatedAt,
+			Name:      version.Name,
+		}
+	}
+
+	return c.JSON(wire.SavedMessageVersionListResponseWire{
+		Success: true,
+		Data:    res,
+	})
+}
+
+func (h *SavedMessagesHandler) HandleGetSavedMessageVersion(c *fiber.Ctx) error {
+	session := c.Locals("session").(*session.Session)
+	messageID := c.Params("messageID")
+	versionID := c.Params("versionID")
+	guildID, err := handlers.QueryNullID(c, "guild_id")
+	if err != nil {
+		return err
+	}
+
+	if guildID.Valid {
+		if err := h.am.CheckGuildAccessForRequest(c, guildID.ID); err != nil {
+			return err
+		}
+	}
+
+	features, err := h.planFeatures(c.UserContext(), session.UserID, guildID)
+	if err != nil {
+		return err
+	}
+
+	var version *model.SavedMessageVersion
+	if guildID.Valid {
+		version, err = h.savedMessageStore.GetSavedMessageVersionForGuild(c.UserContext(), guildID.ID, messageID, versionID, features.MaxSavedMessageVersions)
+	} else {
+		version, err = h.savedMessageStore.GetSavedMessageVersionForCreator(c.UserContext(), session.UserID, messageID, versionID, features.MaxSavedMessageVersions)
+	}
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return handlers.NotFound("unknown_version", "The version does not exist.")
+		}
+		slog.Error("Failed to get saved message version", slog.Any("error", err))
+		return err
+	}
+
+	return c.JSON(wire.SavedMessageVersionGetResponseWire{
+		Success: true,
+		Data: wire.SavedMessageVersionDataWire{
+			ID:        version.ID,
+			CreatedAt: version.CreatedAt,
+			Name:      version.Name,
+			Data:      version.Data,
+		},
+	})
+}
+
+// planFeatures returns the plan of the guild, or of the user for their personal messages.
+func (h *SavedMessagesHandler) planFeatures(ctx context.Context, userID common.ID, guildID common.NullID) (model.PlanFeatures, error) {
+	if guildID.Valid {
+		return h.planStore.GetPlanFeaturesForGuild(ctx, guildID.ID)
+	}
+	return h.planStore.GetPlanFeaturesForUser(ctx, userID)
+}
+
 // checkSavedMessageLimit checks that adding messages stays within the plan of the guild, or of the
 // user for their personal messages.
 func (h *SavedMessagesHandler) checkSavedMessageLimit(ctx context.Context, userID common.ID, guildID common.NullID, adding int) error {
-	var features model.PlanFeatures
+	features, err := h.planFeatures(ctx, userID, guildID)
+	if err != nil {
+		return err
+	}
+
 	var existing int64
-	var err error
 	if guildID.Valid {
-		if features, err = h.planStore.GetPlanFeaturesForGuild(ctx, guildID.ID); err != nil {
-			return err
-		}
 		existing, err = h.savedMessageStore.CountSavedMessagesForGuild(ctx, guildID.ID)
 	} else {
-		if features, err = h.planStore.GetPlanFeaturesForUser(ctx, userID); err != nil {
-			return err
-		}
 		existing, err = h.savedMessageStore.CountSavedMessagesForCreator(ctx, userID)
 	}
 	if err != nil {

@@ -285,6 +285,25 @@ export interface SavedMessageUpdateRequestWire {
 export type SavedMessageUpdateResponseWire = APIResponse<SavedMessageWire>;
 export type SavedMessageDeleteResponseWire = APIResponse<{
   }>;
+/**
+ * SavedMessageVersionWire is what a saved message looked like before it was overwritten.
+ */
+export interface SavedMessageVersionWire {
+  id: string;
+  /**
+   * CreatedAt is when the version was saved, not when it was overwritten.
+   */
+  created_at: string /* RFC3339 */;
+  name: string;
+}
+export type SavedMessageVersionListResponseWire = APIResponse<SavedMessageVersionWire[]>;
+export interface SavedMessageVersionDataWire {
+  id: string;
+  created_at: string /* RFC3339 */;
+  name: string;
+  data: Record<string, any> | null;
+}
+export type SavedMessageVersionGetResponseWire = APIResponse<SavedMessageVersionDataWire>;
 export type SavedMessagesImportResponseWire = APIResponse<SavedMessageWire[]>;
 export interface SavedMessagesImportRequestWire {
   messages: SavedMessageImportDataWire[];
@@ -352,6 +371,7 @@ export type MessageRestoreResponseWire = APIResponse<MessageRestoreResponseDataW
 
 export interface GetPremiumPlanFeaturesResponseDataWire {
   max_saved_messages: number /* int */;
+  max_saved_message_versions: number /* int */;
   max_actions_per_component: number /* int */;
   advanced_action_types: boolean;
   max_ai_prompts_per_month: number /* int */;

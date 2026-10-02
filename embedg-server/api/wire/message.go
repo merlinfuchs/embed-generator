@@ -51,6 +51,25 @@ type SavedMessageUpdateResponseWire APIResponse[SavedMessageWire]
 
 type SavedMessageDeleteResponseWire APIResponse[struct{}]
 
+// SavedMessageVersionWire is what a saved message looked like before it was overwritten.
+type SavedMessageVersionWire struct {
+	ID string `json:"id"`
+	// CreatedAt is when the version was saved, not when it was overwritten.
+	CreatedAt time.Time `json:"created_at"`
+	Name      string    `json:"name"`
+}
+
+type SavedMessageVersionListResponseWire APIResponse[[]SavedMessageVersionWire]
+
+type SavedMessageVersionDataWire struct {
+	ID        string          `json:"id"`
+	CreatedAt time.Time       `json:"created_at"`
+	Name      string          `json:"name"`
+	Data      json.RawMessage `json:"data"`
+}
+
+type SavedMessageVersionGetResponseWire APIResponse[SavedMessageVersionDataWire]
+
 type SavedMessagesImportResponseWire APIResponse[[]SavedMessageWire]
 
 type SavedMessagesImportRequestWire struct {

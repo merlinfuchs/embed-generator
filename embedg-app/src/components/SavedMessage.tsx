@@ -2,6 +2,7 @@ import {
   ArrowDownTrayIcon,
   ArrowUpTrayIcon,
   ClipboardIcon,
+  ClockIcon,
   PencilSquareIcon,
   TrashIcon,
   XMarkIcon,
@@ -23,6 +24,7 @@ import { parseMessageWithAction } from "../discord/importSchema";
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import ConfirmModal from "./ConfirmModal";
+import SavedMessageHistory from "./SavedMessageHistory";
 import { getCurrentMessage, setCurrentMessage } from "../state/currentMessage";
 
 function formatUpdatedAt(updatedAt: string): string {
@@ -32,9 +34,12 @@ function formatUpdatedAt(updatedAt: string): string {
 export default function SavedMessage({
   message,
   guildId,
+  maxVersions,
 }: {
   message: SavedMessageWire;
   guildId: string | null;
+  /** How many versions the plan keeps from before the message was overwritten. */
+  maxVersions: number;
 }) {
   const navigate = useNavigate();
   const createToast = useToasts((state) => state.create);
@@ -59,6 +64,9 @@ export default function SavedMessage({
           if (resp.success) {
             queryClient.invalidateQueries({
               queryKey: ["saved-messages", guildId],
+            });
+            queryClient.invalidateQueries({
+              queryKey: ["saved-message-versions", guildId, message.id],
             });
             onDone();
           } else {
@@ -103,6 +111,7 @@ export default function SavedMessage({
   }
 
   const [restoreModal, setRestoreModal] = useState(false);
+  const [historyModal, setHistoryModal] = useState(false);
 
   function restoreMessageConfirm() {
     try {
@@ -212,6 +221,15 @@ export default function SavedMessage({
                 onClick={() => setUpdateModal(true)}
               />
 
+              {maxVersions > 0 && (
+                <RowButton
+                  icon={ClockIcon}
+                  tooltip="Message History"
+                  label="History"
+                  onClick={() => setHistoryModal(true)}
+                />
+              )}
+
               <RowButton
                 icon={PencilSquareIcon}
                 tooltip="Rename Message"
@@ -241,10 +259,22 @@ export default function SavedMessage({
       {updateModal && (
         <ConfirmModal
           title="Are you sure that you want to update the message?"
-          subTitle="The message will be overwritten and the previous data will be lost."
+          subTitle={
+            maxVersions > 0
+              ? "The message will be overwritten. You can get the previous data back from its history."
+              : "The message will be overwritten and the previous data will be lost."
+          }
           onClose={() => setUpdateModal(false)}
           pending={updateMessageMutation.isPending}
           onConfirm={updateMessageConfirm}
+        />
+      )}
+      {historyModal && (
+        <SavedMessageHistory
+          message={message}
+          guildId={guildId}
+          maxVersions={maxVersions}
+          onClose={() => setHistoryModal(false)}
         />
       )}
       {deleteModal && (

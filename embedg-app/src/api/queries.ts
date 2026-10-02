@@ -9,6 +9,8 @@ import type {
   ListPremiumEntitlementsResponseWire,
   ListRolesResponseWire,
   SavedMessageListResponseWire,
+  SavedMessageVersionGetResponseWire,
+  SavedMessageVersionListResponseWire,
   SharedMessageGetResponseWire,
   UserResponseWire,
   ListEmojisResponseWire,
@@ -154,6 +156,40 @@ export function useSavedMessagesQuery(guildId: string | null) {
       }
       return fetch(url).then((res) => handleApiResponse(res.json()));
     },
+  });
+}
+
+export function useSavedMessageVersionsQuery(
+  messageId: string,
+  guildId: string | null,
+) {
+  return useQuery<SavedMessageVersionListResponseWire>({
+    queryKey: ["saved-message-versions", guildId, messageId],
+    queryFn: () => {
+      let url = `/api/saved-messages/${messageId}/versions`;
+      if (guildId) {
+        url += `?guild_id=${guildId}`;
+      }
+      return fetch(url).then((res) => handleApiResponse(res.json()));
+    },
+  });
+}
+
+export function useSavedMessageVersionQuery(
+  messageId: string,
+  versionId: string | null,
+  guildId: string | null,
+) {
+  return useQuery<SavedMessageVersionGetResponseWire>({
+    queryKey: ["saved-message-version", guildId, messageId, versionId],
+    queryFn: () => {
+      let url = `/api/saved-messages/${messageId}/versions/${versionId}`;
+      if (guildId) {
+        url += `?guild_id=${guildId}`;
+      }
+      return fetch(url).then((res) => handleApiResponse(res.json()));
+    },
+    enabled: !!versionId,
   });
 }
 

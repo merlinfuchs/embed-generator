@@ -23,11 +23,17 @@ type PlanFeatures struct {
 	// MaxAIPromptsPerMonth is how many prompts that change the message the AI assistant takes a
 	// month. 0 turns it off.
 	MaxAIPromptsPerMonth int `toml:"max_ai_prompts_per_month"`
+	// MaxSavedMessageVersions is how many earlier versions are kept of each saved message when it's
+	// overwritten. 0 turns it off.
+	MaxSavedMessageVersions int `toml:"max_saved_message_versions"`
 }
 
 func (f *PlanFeatures) Merge(b PlanFeatures) {
 	if b.MaxSavedMessages > f.MaxSavedMessages {
 		f.MaxSavedMessages = b.MaxSavedMessages
+	}
+	if b.MaxSavedMessageVersions > f.MaxSavedMessageVersions {
+		f.MaxSavedMessageVersions = b.MaxSavedMessageVersions
 	}
 	if b.MaxActionsPerComponent > f.MaxActionsPerComponent {
 		f.MaxActionsPerComponent = b.MaxActionsPerComponent

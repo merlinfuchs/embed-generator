@@ -6,6 +6,7 @@ import type { SavedMessageWire } from "../api/wire";
 import { editorUser } from "../test/editor";
 import { useToasts } from "../util/toasts";
 import SavedMessage from "./SavedMessage";
+import { getCurrentMessage } from "../state/currentMessage";
 
 const message: SavedMessageWire = {
   id: "msg-1",
@@ -40,11 +41,15 @@ function respond(body: unknown) {
   fetchMock.mockResolvedValue({ json: async () => body });
 }
 
-function renderMessage() {
+function renderMessage(maxVersions = 0) {
   render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <SavedMessage message={message} guildId={null} />
+        <SavedMessage
+          message={message}
+          guildId={null}
+          maxVersions={maxVersions}
+        />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -109,4 +114,61 @@ test("escape leaves the name as it was", async () => {
   expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   expect(screen.getByText("Welcome")).toBeInTheDocument();
   expect(fetchMock).not.toHaveBeenCalled();
+});
+
+test("history is hidden when the plan keeps no versions", () => {
+  renderMessage(0);
+
+  expect(
+    screen.queryByRole("button", { name: /Message History/ }),
+  ).not.toBeInTheDocument();
+});
+
+test("restoring a version from the history loads it into the editor", async () => {
+  fetchMock.mockImplementation(async (url: string) => ({
+    json: async () =>
+      url === "/api/saved-messages/msg-1/versions"
+        ? {
+            success: true,
+            data: [
+              { id: "v2", created_at: "2024-01-02T00:00:00Z", name: "Welcome" },
+              { id: "v1", created_at: "2024-01-01T00:00:00Z", name: "Old" },
+            ],
+          }
+        : {
+            success: true,
+            data: {
+              id: url.split("/").pop(),
+              created_at: "2024-01-01T00:00:00Z",
+              name: "Welcome",
+              data: { content: `Content of ${url.split("/").pop()}` },
+            },
+          },
+  }));
+  renderMessage(5);
+  const user = editorUser();
+
+  await user.click(screen.getByRole("button", { name: /Message History/ }));
+  // The newest version is shown first.
+  expect(await screen.findByText("Content of v2")).toBeInTheDocument();
+
+  await user.click(screen.getByText("Old"));
+  expect(await screen.findByText("Content of v1")).toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "Restore" }));
+  expect(getCurrentMessage().content).toBe("Content of v1");
+});
+
+test("an empty history explains when versions are kept", async () => {
+  respond({ success: true, data: [] });
+  renderMessage(5);
+
+  await editorUser().click(
+    screen.getByRole("button", { name: /Message History/ }),
+  );
+
+  expect(
+    await screen.findByText(/No earlier versions yet/),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Restore" })).toBeDisabled();
 });
