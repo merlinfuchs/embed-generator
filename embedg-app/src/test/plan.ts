@@ -3,6 +3,7 @@ import type { GetPremiumPlanFeaturesResponseDataWire } from "../api/wire";
 /** The default plan in embedg.example.toml. */
 export const defaultPlanFeatures: GetPremiumPlanFeaturesResponseDataWire = {
   max_saved_messages: 25,
+  max_saved_message_versions: 5,
   max_actions_per_component: 3,
   advanced_action_types: false,
   max_ai_prompts_per_month: 5,

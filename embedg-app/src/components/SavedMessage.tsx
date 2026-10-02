@@ -2,6 +2,7 @@ import {
   ArrowDownTrayIcon,
   ArrowUpTrayIcon,
   ClipboardIcon,
+  ClockIcon,
   PencilSquareIcon,
   TrashIcon,
   XMarkIcon,
@@ -23,6 +24,7 @@ import { parseMessageWithAction } from "../discord/importSchema";
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import ConfirmModal from "./ConfirmModal";
+import SavedMessageHistory from "./SavedMessageHistory";
 import { getCurrentMessage, setCurrentMessage } from "../state/currentMessage";
 
 function formatUpdatedAt(updatedAt: string): string {
@@ -32,9 +34,12 @@ function formatUpdatedAt(updatedAt: string): string {
 export default function SavedMessage({
   message,
   guildId,
+  maxVersions,
 }: {
   message: SavedMessageWire;
   guildId: string | null;
+  /** How many versions the plan keeps from before the message was overwritten. */
+  maxVersions: number;
 }) {
   const navigate = useNavigate();
   const createToast = useToasts((state) => state.create);
@@ -59,6 +64,9 @@ export default function SavedMessage({
           if (resp.success) {
             queryClient.invalidateQueries({
               queryKey: ["saved-messages", guildId],
+            });
+            queryClient.invalidateQueries({
+              queryKey: ["saved-message-versions", guildId, message.id],
             });
             onDone();
           } else {
@@ -103,6 +111,7 @@ export default function SavedMessage({
   }
 
   const [restoreModal, setRestoreModal] = useState(false);
+  const [historyModal, setHistoryModal] = useState(false);
 
   function restoreMessageConfirm() {
     try {
@@ -148,7 +157,7 @@ export default function SavedMessage({
     <div>
       <div
         key={message.id}
-        className="bg-ink-700 p-3 rounded-lg flex justify-between truncate space-x-3"
+        className="bg-ink-700 p-3 rounded-lg flex flex-col lg:flex-row lg:justify-between gap-3 truncate"
       >
         {renaming ? (
           <>
@@ -164,7 +173,7 @@ export default function SavedMessage({
                 else if (e.key === "Escape") setNewName(null);
               }}
             />
-            <div className="flex flex-none items-center space-x-4 md:space-x-3">
+            <div className="flex flex-wrap lg:flex-nowrap flex-none items-center gap-2 lg:gap-3">
               <RowButton
                 icon={XMarkIcon}
                 tooltip="Discard Changes"
@@ -197,7 +206,7 @@ export default function SavedMessage({
                 {formatUpdatedAt(message.updated_at)}
               </div>
             </div>
-            <div className="flex flex-none items-center space-x-4 md:space-x-3">
+            <div className="flex flex-wrap lg:flex-nowrap flex-none items-center gap-2 lg:gap-3">
               <RowButton
                 icon={ArrowDownTrayIcon}
                 tooltip="Restore Message"
@@ -211,6 +220,15 @@ export default function SavedMessage({
                 label="Overwrite"
                 onClick={() => setUpdateModal(true)}
               />
+
+              {maxVersions > 0 && (
+                <RowButton
+                  icon={ClockIcon}
+                  tooltip="Message History"
+                  label="History"
+                  onClick={() => setHistoryModal(true)}
+                />
+              )}
 
               <RowButton
                 icon={PencilSquareIcon}
@@ -241,10 +259,22 @@ export default function SavedMessage({
       {updateModal && (
         <ConfirmModal
           title="Are you sure that you want to update the message?"
-          subTitle="The message will be overwritten and the previous data will be lost."
+          subTitle={
+            maxVersions > 0
+              ? "The message will be overwritten. You can get the previous data back from its history."
+              : "The message will be overwritten and the previous data will be lost."
+          }
           onClose={() => setUpdateModal(false)}
           pending={updateMessageMutation.isPending}
           onConfirm={updateMessageConfirm}
+        />
+      )}
+      {historyModal && (
+        <SavedMessageHistory
+          message={message}
+          guildId={guildId}
+          maxVersions={maxVersions}
+          onClose={() => setHistoryModal(false)}
         />
       )}
       {deleteModal && (
@@ -274,13 +304,13 @@ function RowButton({
   return (
     <button
       type="button"
-      className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
+      className="flex items-center text-mist-300 hover:text-white cursor-pointer bg-ink-900 rounded-lg px-2 py-1"
       onClick={onClick}
     >
       <Tooltip text={tooltip}>
         <Icon className="h-5 w-5" />
       </Tooltip>
-      <div className="hidden md:block ml-2">{label}</div>
+      <div className="ml-2">{label}</div>
     </button>
   );
 }

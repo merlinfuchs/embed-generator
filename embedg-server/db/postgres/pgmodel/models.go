@@ -140,6 +140,14 @@ type SavedMessage struct {
 	Data        []byte
 }
 
+type SavedMessageVersion struct {
+	ID             string
+	SavedMessageID string
+	CreatedAt      pgtype.Timestamp
+	Name           string
+	Data           []byte
+}
+
 type ScheduledMessage struct {
 	ID               string
 	CreatorID        string

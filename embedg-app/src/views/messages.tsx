@@ -36,10 +36,9 @@ export default function MessagesView() {
 
   const guildFeatures = usePremiumGuildFeatures(guildId);
   const userFeatures = usePremiumUserFeatures();
-  const maxMessages =
-    (source === "user"
-      ? userFeatures?.max_saved_messages
-      : guildFeatures?.max_saved_messages) || 0;
+  const features = source === "user" ? userFeatures : guildFeatures;
+  const maxMessages = features?.max_saved_messages || 0;
+  const maxVersions = features?.max_saved_message_versions || 0;
 
   const [newMessageName, setNewMessageName] = useState("");
 
@@ -119,6 +118,7 @@ export default function MessagesView() {
                   <SavedMessage
                     message={message}
                     guildId={guildId}
+                    maxVersions={maxVersions}
                     key={message.id}
                   />
                 ))}

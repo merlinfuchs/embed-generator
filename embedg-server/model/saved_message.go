@@ -17,3 +17,12 @@ type SavedMessage struct {
 	Description null.String
 	Data        json.RawMessage
 }
+
+// SavedMessageVersion is what a saved message looked like before it was overwritten.
+type SavedMessageVersion struct {
+	ID string
+	// CreatedAt is when the version was saved, not when it was overwritten.
+	CreatedAt time.Time
+	Name      string
+	Data      json.RawMessage
+}
