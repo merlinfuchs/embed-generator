@@ -2,6 +2,10 @@
 title: Privacy Policy
 ---
 
+<head>
+  <meta name="robots" content="noindex, nofollow" />
+</head>
+
 # Privacy Policy
 
 This privacy notice explains how Merlin Fuchs ("we," "us," or "our") collects, stores, uses, and shares your information when you use Embed Generator, our website at https://message.style, or any other service of ours that links to this notice (the "Services").

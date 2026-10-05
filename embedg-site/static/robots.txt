@@ -1,2 +1,6 @@
-user-agent: *
+User-agent: *
 allow: /
+disallow: /imprint
+disallow: /terms
+disallow: /privacy
+disallow: /cookies

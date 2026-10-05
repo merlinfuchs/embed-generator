@@ -2,6 +2,10 @@
 title: Cookie Policy
 ---
 
+<head>
+  <meta name="robots" content="noindex, nofollow" />
+</head>
+
 # Cookie Policy
 
 This Cookie Policy explains how Merlin Fuchs ("we," "us," and "our") uses cookies and similar technologies to recognize you when you visit our website at https://message.style. It explains what these technologies are, why we use them, and how you can control them. In some cases we use cookies to collect personal information, or information that becomes personal information when combined with other information.

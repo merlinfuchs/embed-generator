@@ -2,6 +2,10 @@
 title: Terms of Service
 ---
 
+<head>
+  <meta name="robots" content="noindex, nofollow" />
+</head>
+
 # Terms of Service
 
 By inviting Embed Generator to your Discord server or logging into our website (https://message.style) you agree that you have read, understood, and accepted these terms. You are also responsible for informing the members in your discord server about these terms. If you do not agree with any of these terms, you are prohibited from using or adding any version of Embed Generator to your server.
