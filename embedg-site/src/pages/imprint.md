@@ -3,6 +3,10 @@ title: Imprint
 description: Legal disclosure (Impressum) according to § 5 DDG.
 ---
 
+<head>
+  <meta name="robots" content="noindex, nofollow" />
+</head>
+
 # Imprint / Impressum
 
 Information according to § 5 DDG (Digitale-Dienste-Gesetz).
