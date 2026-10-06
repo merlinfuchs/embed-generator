@@ -371,8 +371,8 @@ func firstRun(onlyOnce bool, cronExpression, cronTimezone string, startAt time.T
 	return nextAt, nil
 }
 
-// checkRunsBeforeEnd rejects schedules that would stay enabled without ever sending,
-// because the due query skips everything past end_at.
+// checkRunsBeforeEnd rejects schedules whose next run is past end_at, which the
+// manager would disable without sending.
 func checkRunsBeforeEnd(nextAt time.Time, endAt null.Time, cronTimezone string) error {
 	if !endAt.Valid || !nextAt.After(endAt.Time) {
 		return nil
