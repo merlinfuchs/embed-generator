@@ -296,6 +296,10 @@ export default function ScheduledMessageCreate({
                   clearable={false}
                   timezone={timezone}
                 />
+                <div className="mt-2 text-mist-400 text-sm font-light">
+                  No runs before this time. The first run is the next scheduled
+                  time after it.
+                </div>
               </div>
               <div className="flex-auto">
                 <div className="mb-1.5 flex">
@@ -309,6 +313,10 @@ export default function ScheduledMessageCreate({
                   clearable={true}
                   timezone={timezone}
                 />
+                <div className="mt-2 text-mist-400 text-sm font-light">
+                  Stops the schedule after this time. Leave empty to run
+                  forever.
+                </div>
               </div>
             </div>
             <CronExpressionBuilder
