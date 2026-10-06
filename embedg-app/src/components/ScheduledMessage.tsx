@@ -368,6 +368,10 @@ export default function ScheduledMessage({
                         clearable={false}
                         timezone={timezone}
                       />
+                      <div className="mt-2 text-mist-400 text-sm font-light">
+                        No runs before this time. The first run is the next
+                        scheduled time after it.
+                      </div>
                     </div>
                     <div className="flex-auto">
                       <div className="mb-1.5 flex">
@@ -381,6 +385,10 @@ export default function ScheduledMessage({
                         clearable={true}
                         timezone={timezone}
                       />
+                      <div className="mt-2 text-mist-400 text-sm font-light">
+                        Stops the schedule after this time. Leave empty to run
+                        forever.
+                      </div>
                     </div>
                   </div>
                   <div>
@@ -417,13 +425,19 @@ export default function ScheduledMessage({
                 ({storedTimezone})
               </div>
               {!msg.only_once &&
-                msg.enabled &&
-                (!msg.end_at || msg.next_at <= msg.end_at) && (
-                  <div className="text-mist-400 text-sm font-light whitespace-normal">
-                    Next run in your time:{" "}
-                    {new Date(msg.next_at).toLocaleString()}
+                (msg.end_at &&
+                Date.parse(msg.next_at) > Date.parse(msg.end_at) ? (
+                  <div className="text-amber-300 text-sm font-light whitespace-normal">
+                    Ended, no more runs before the end date
                   </div>
-                )}
+                ) : (
+                  msg.enabled && (
+                    <div className="text-mist-400 text-sm font-light whitespace-normal">
+                      Next run in your time:{" "}
+                      {new Date(msg.next_at).toLocaleString()}
+                    </div>
+                  )
+                ))}
             </div>
             <div className="flex flex-none items-center space-x-4 md:space-x-3">
               <button

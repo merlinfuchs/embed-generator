@@ -2,6 +2,7 @@ package scheduled_messages
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"log/slog"
@@ -93,6 +94,12 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 	nextAt, err := firstRun(req.OnlyOnce, req.CronExpression.String, req.CronTimezone.String, req.StartAt)
 	if err != nil {
 		return err
+	}
+
+	if req.Enabled {
+		if err := checkRunsBeforeEnd(nextAt, req.EndAt, req.CronTimezone.String); err != nil {
+			return err
+		}
 	}
 
 	existingCount, err := h.scheduledMessageStore.CountScheduledMessages(c.UserContext(), guildID)
@@ -262,6 +269,12 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		}
 	}
 
+	if req.Enabled {
+		if err := checkRunsBeforeEnd(nextAt, req.EndAt, req.CronTimezone.String); err != nil {
+			return err
+		}
+	}
+
 	messageSender, err := h.messageSender(c, req.ChannelID, req.MessageID)
 	if err != nil {
 		return err
@@ -356,6 +369,25 @@ func firstRun(onlyOnce bool, cronExpression, cronTimezone string, startAt time.T
 	}
 
 	return nextAt, nil
+}
+
+// checkRunsBeforeEnd rejects schedules whose next run is past end_at, which the
+// manager would disable without sending.
+func checkRunsBeforeEnd(nextAt time.Time, endAt null.Time, cronTimezone string) error {
+	if !endAt.Valid || !nextAt.After(endAt.Time) {
+		return nil
+	}
+
+	loc, err := common.LoadTimezone(cronTimezone)
+	if err != nil {
+		loc = time.UTC
+	}
+
+	return handlers.BadRequest("never_runs", fmt.Sprintf(
+		"The schedule doesn't run before the end date. Its next run would be on %s (%s).",
+		nextAt.In(loc).Format("Jan 2, 2006 at 3:04 PM"),
+		loc.String(),
+	))
 }
 
 func scheduledMessageModelToWire(model *model.ScheduledMessage) wire.ScheduledMessageWire {

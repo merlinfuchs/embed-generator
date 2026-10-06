@@ -107,6 +107,12 @@ func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, s
 
 	now := time.Now().UTC()
 
+	// The due query doesn't filter on end_at, so rows past it end up here and get
+	// disabled instead of staying enabled without ever sending again.
+	if scheduledMessage.EndAt.Valid && scheduledMessage.NextAt.After(scheduledMessage.EndAt.Time) {
+		return m.disable(ctx, scheduledMessage, "past end date")
+	}
+
 	sendErr := m.SendScheduledMessage(ctx, scheduledMessage)
 	if sendErr != nil {
 		if now.Sub(scheduledMessage.NextAt) < sendRetryWindow {
@@ -147,6 +153,10 @@ func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, s
 	err = m.scheduledMessageStore.UpdateScheduledMessageNextAt(ctx, scheduledMessage.GuildID, scheduledMessage.ID, nextAt, now)
 	if err != nil {
 		return fmt.Errorf("failed to update next_at after sending scheduled message: %w", err)
+	}
+
+	if scheduledMessage.EndAt.Valid && nextAt.After(scheduledMessage.EndAt.Time) {
+		return m.disable(ctx, scheduledMessage, "past end date")
 	}
 
 	return nil
