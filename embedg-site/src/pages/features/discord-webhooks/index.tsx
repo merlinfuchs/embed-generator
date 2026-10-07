@@ -14,11 +14,11 @@ import {
   Squares2X2Icon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
-import HomeHeader from "../../components/HomeHeader";
-import HomeFooter from "../../components/HomeFooter";
-import { Avatar } from "../../components/discord";
+import HomeHeader from "../../../components/HomeHeader";
+import HomeFooter from "../../../components/HomeFooter";
+import { Avatar } from "../../../components/discord";
 
-import "../../css/tailwind.css";
+import "../../../css/tailwind.css";
 
 const TITLE = "Discord Webhook Sender: Send Messages and Embeds | Embed Generator";
 const DESCRIPTION =
@@ -329,7 +329,7 @@ export default function DiscordWebhook(): JSX.Element {
               </ol>
             </div>
             <img
-              src="/img/discord-webhook/create-webhook.png"
+              src="/img/features/discord-webhooks/create-webhook.png"
               alt="Creating a webhook under Integrations in Discord's server settings"
               loading="lazy"
               className="w-full rounded-2xl border border-solid border-white/5 shadow-card"
