@@ -1,5 +1,11 @@
 import clsx from "clsx";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 interface Props {
   text: string;
@@ -10,98 +16,91 @@ interface Props {
   children: ReactNode;
 }
 
+// Space kept between the tooltip and the edges of the screen.
+const SCREEN_MARGIN = 8;
+
 export default function Tooltip({ text, wide, tappable, children }: Props) {
   const childRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const [show, setShow] = useState(false);
   const [pos, setPos] = useState<[number, number] | null>(null);
 
   useEffect(() => {
     if (!childRef.current) return;
 
-    function onMouseEnter() {
-      setShow(true);
-    }
-
-    function onMouseLeave() {
-      setShow(false);
-    }
-
     const child = childRef.current;
-    child.addEventListener("mouseenter", onMouseEnter);
-    child.addEventListener("mouseleave", onMouseLeave);
 
-    return () => {
-      child.removeEventListener("mouseleave", onMouseLeave);
-      child.removeEventListener("mouseenter", onMouseEnter);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!show) return;
-
-    function onMouseMove(e: MouseEvent) {
-      const tooltipWidth = tooltipRef.current?.clientWidth ?? 0;
-      const x = Math.max(e.clientX, tooltipWidth / 2);
-      setPos([x, e.clientY]);
+    // Centered below the child.
+    function anchor(): [number, number] {
+      const rect = (child.firstElementChild ?? child).getBoundingClientRect();
+      return [rect.left + rect.width / 2, rect.bottom];
     }
 
-    document.addEventListener("mousemove", onMouseMove);
-    return () => document.removeEventListener("mousemove", onMouseMove);
-  }, [show]);
+    function open() {
+      setPos(anchor());
+    }
 
-  useEffect(() => {
-    if (!tappable || !childRef.current) return;
-
-    const child = childRef.current;
-    const halfWidth = wide ? 144 : 80;
+    function close() {
+      setPos(null);
+    }
 
     function onPointerDown(e: PointerEvent) {
       if (e.pointerType === "mouse") return;
 
-      if (child.contains(e.target as Node)) {
-        const x = Math.min(
-          Math.max(e.clientX, halfWidth),
-          window.innerWidth - halfWidth,
-        );
-        setPos([x, e.clientY]);
-        setShow((show) => !show);
+      if (tappable && child.contains(e.target as Node)) {
+        setPos((pos) => (pos ? null : anchor()));
       } else {
-        setShow(false);
+        close();
       }
     }
 
+    child.addEventListener("mouseenter", open);
+    child.addEventListener("mouseleave", close);
     document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [tappable, wide]);
+    // The tooltip is fixed, so it would stay behind when the page scrolls.
+    document.addEventListener("scroll", close, true);
+
+    return () => {
+      child.removeEventListener("mouseenter", open);
+      child.removeEventListener("mouseleave", close);
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("scroll", close, true);
+    };
+  }, [tappable]);
+
+  // Pushes the tooltip back on screen before it's painted.
+  useLayoutEffect(() => {
+    const tooltip = tooltipRef.current;
+    if (!tooltip || !pos) return;
+
+    tooltip.style.transform = "translateX(-50%)";
+    const rect = tooltip.getBoundingClientRect();
+    const shift =
+      Math.max(SCREEN_MARGIN - rect.left, 0) -
+      Math.max(rect.right - (window.innerWidth - SCREEN_MARGIN), 0);
+    if (shift) {
+      tooltip.style.transform = `translateX(calc(-50% + ${shift}px))`;
+    }
+  }, [pos]);
 
   return (
     <div>
       <div ref={childRef} aria-label={text}>
         {children}
       </div>
-      {show && pos && (
+      {pos && (
         <div
+          ref={tooltipRef}
           className={clsx(
-            "fixed left-1/2 flex justify-center z-50",
-            wide ? "w-72 -ml-36" : "w-40 -ml-20",
+            "fixed z-50 rounded-lg bg-black text-white py-1 px-2",
+            wide ? "w-72 text-left text-sm whitespace-pre-line" : "w-max",
           )}
           style={{
-            top: pos[1] + 20,
+            top: pos[1] + 8,
             left: pos[0],
+            transform: "translateX(-50%)",
           }}
-          ref={tooltipRef}
         >
-          <div
-            className={clsx(
-              "rounded-lg bg-black text-white py-1 px-2 block",
-              wide
-                ? "text-left text-sm whitespace-pre-line"
-                : "flex-none text-center",
-            )}
-          >
-            {text}
-          </div>
+          {text}
         </div>
       )}
     </div>
