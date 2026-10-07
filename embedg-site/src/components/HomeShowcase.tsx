@@ -68,7 +68,7 @@ const features: {
     id: "v2",
     name: "Components V2",
     blurb: "Sections, thumbnails, separators. New layouts.",
-    href: "/docs/features/components-v2",
+    href: "/features/components-v2",
     icon: Squares2X2Icon,
   },
   {

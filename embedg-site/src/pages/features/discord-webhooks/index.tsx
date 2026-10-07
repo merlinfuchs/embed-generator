@@ -20,6 +20,7 @@ import {
   Hero,
   LandingPage,
   Questions,
+  Screenshot,
   Section,
   Steps,
 } from "../../../components/landing";
@@ -233,10 +234,12 @@ export default function DiscordWebhook(): JSX.Element {
       <Steps
         title="Send a webhook message in three steps."
         steps={steps}
-        image={{
-          src: "/img/features/discord-webhooks/create-webhook.png",
-          alt: "Creating a webhook under Integrations in Discord's server settings",
-        }}
+        aside={
+          <Screenshot
+            src="/img/features/discord-webhooks/create-webhook.png"
+            alt="Creating a webhook under Integrations in Discord's server settings"
+          />
+        }
       />
       <Features title="Everything a webhook can send." features={features} />
       <Callout
