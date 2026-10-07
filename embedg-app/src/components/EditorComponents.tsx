@@ -4,7 +4,6 @@ import {
   useChildIds,
   useDocumentStoreApi,
   useDocument,
-  useHasInteractiveComponents,
 } from "../state/document";
 import {
   EditorCapabilitiesContext,
@@ -18,10 +17,7 @@ import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";
 import EditorComponentAddDropdown from "./EditorComponentAddDropdown";
 import EditorComponentEntry from "./EditorComponentEntry";
-import {
-  FluxerComponentsNotice,
-  InteractiveWebhookNotice,
-} from "./WebhookNotice";
+import { FluxerComponentsNotice } from "./WebhookNotice";
 
 export default function EditorComponents({
   defaultCollapsed = true,
@@ -33,7 +29,6 @@ export default function EditorComponents({
   const { removeChildren } = useDocumentStoreApi().getState();
 
   const webhook = useSendSettingsStore((state) => state.mode) === "webhook";
-  const interactive = useHasInteractiveComponents();
   const fluxer = useSendsToFluxer();
 
   // Nothing to add on Fluxer, but components already there stay so they can be removed.
@@ -43,12 +38,9 @@ export default function EditorComponents({
   let notice: ReactNode = null;
   if (fluxer) {
     capabilities = FLUXER_MESSAGE_CAPABILITIES;
-    notice = <FluxerComponentsNotice className="mb-3 text-sm" />;
+    notice = <FluxerComponentsNotice className="mb-3" />;
   } else if (webhook) {
     capabilities = WEBHOOK_MESSAGE_CAPABILITIES;
-    if (interactive) {
-      notice = <InteractiveWebhookNotice className="mb-3 text-sm" />;
-    }
   }
 
   return (

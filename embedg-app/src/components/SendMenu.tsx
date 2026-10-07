@@ -1,3 +1,4 @@
+import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
 import { useShallow } from "zustand/react/shallow";
 import clsx from "clsx";
 import { useUserQuery } from "../api/queries";
@@ -5,6 +6,15 @@ import { useSendSettingsStore } from "../state/sendSettings";
 import LoginSuggest from "./LoginSuggest";
 import SendMenuChannel from "./SendMenuChannel";
 import SendMenuWebhook from "./SendMenuWebhook";
+import Tooltip from "./Tooltip";
+
+const MODES = [
+  ["webhook", "Webhook"],
+  ["channel", "Channel"],
+] as const;
+
+const MODES_HELP =
+  "Webhook: paste a webhook URL and send, no login needed.\n\nChannel: log in, pick a server and channel, and the bot sends it. Needed for buttons with actions and select menus.";
 
 export default function SendMenu() {
   const [mode, setMode] = useSendSettingsStore(
@@ -13,34 +23,30 @@ export default function SendMenu() {
 
   const { data: user } = useUserQuery();
 
-  function toggleMode() {
-    setMode(mode === "webhook" ? "channel" : "webhook");
-  }
-
   return (
     <div>
-      <div className="flex mb-5">
-        <button
-          className="flex bg-ink-900 p-1 rounded-lg border border-white/10 text-sm font-medium text-mist-400"
-          onClick={toggleMode}
-        >
-          <div
-            className={clsx(
-              "py-1 px-3 rounded-md transition-colors",
-              mode === "webhook" && "bg-ink-700 text-mist-100",
-            )}
-          >
-            Webhook
-          </div>
-          <div
-            className={clsx(
-              "py-1 px-3 rounded-md transition-colors",
-              mode === "channel" && "bg-ink-700 text-mist-100",
-            )}
-          >
-            Channel
-          </div>
-        </button>
+      <div className="flex items-center gap-2 mb-5">
+        <div className="flex bg-ink-900 p-1 rounded-lg border border-white/10 text-sm font-medium text-mist-400">
+          {MODES.map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={mode === value}
+              className={clsx(
+                "py-1 px-3 rounded-md transition-colors",
+                mode === value
+                  ? "bg-ink-700 text-mist-100"
+                  : "hover:text-mist-100",
+              )}
+              onClick={() => setMode(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <Tooltip text={MODES_HELP} wide tappable>
+          <QuestionMarkCircleIcon className="h-5 w-5 text-mist-400 hover:text-mist-100" />
+        </Tooltip>
       </div>
       {mode === "webhook" ? (
         <SendMenuWebhook />
