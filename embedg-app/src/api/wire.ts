@@ -368,7 +368,7 @@ export type MessageRestoreResponseWire = APIResponse<MessageRestoreResponseDataW
 
 export interface GetPremiumPlanFeaturesResponseDataWire {
   /**
-   * Plan is the name of the most expensive plan, or empty for the free one.
+   * Plan is the name of the plan. For a user or guild it's their most expensive one, or empty for free.
    */
   plan: string;
   max_saved_messages: number /* int */;

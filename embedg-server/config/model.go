@@ -130,9 +130,13 @@ type PremiumConfig struct {
 }
 
 // validatePlans makes sure plans that share a name, like a subscription and its lifetime version,
-// have the same features, because the app shows the features of the first one.
+// have the same features, because the app shows the features of the first one. Lifetime plans need
+// a name, the app only offers to activate the ones it knows.
 func (c PremiumConfig) validatePlans() error {
 	for i, a := range c.Plans {
+		if a.Consumable && a.Name == "" {
+			return fmt.Errorf("premium plan %s is consumable and needs a name", a.ID)
+		}
 		for _, b := range c.Plans[:i] {
 			if a.Name != "" && a.Name == b.Name && a.Features != b.Features {
 				return fmt.Errorf("premium plans %s and %s are both named %q but have different features", b.ID, a.ID, a.Name)

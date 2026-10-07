@@ -3,6 +3,7 @@ package premium
 import (
 	"context"
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/disgoorg/disgo/rest"
@@ -24,6 +25,7 @@ type PremiumManager struct {
 	entitlementStore    store.EntitlementStore
 	appContext          store.AppContext
 	defaultPlanFeatures model.PlanFeatures
+	paidPlans           []model.Plan
 
 	memberRequestInterval time.Duration
 }
@@ -36,9 +38,14 @@ func NewPremiumManager(
 	appContext store.AppContext,
 ) *PremiumManager {
 	var defaultPlanFeatures model.PlanFeatures
+	var paidPlans []model.Plan
 	for _, plan := range config.Plans {
 		if plan.Default {
 			defaultPlanFeatures = plan.Features
+		} else if plan.Name != "" && !slices.ContainsFunc(paidPlans, func(p model.Plan) bool {
+			return p.Name == plan.Name
+		}) {
+			paidPlans = append(paidPlans, plan)
 		}
 	}
 
@@ -51,6 +58,7 @@ func NewPremiumManager(
 		entitlementStore:    entitlementStore,
 		appContext:          appContext,
 		defaultPlanFeatures: defaultPlanFeatures,
+		paidPlans:           paidPlans,
 	}
 }
 

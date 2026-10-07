@@ -71,6 +71,7 @@ func TestValidatePlans(t *testing.T) {
 		{"different names", []model.Plan{{ID: "a", Name: "Premium", Features: premium}, {ID: "b", Name: "Ultimate", Features: ultimate}}, false},
 		{"unnamed plans may differ", []model.Plan{{ID: "a", Features: premium}, {ID: "b", Features: ultimate}}, false},
 		{"same name, different features", []model.Plan{{ID: "a", Name: "Premium", Features: premium}, {ID: "b", Name: "Premium", Features: ultimate}}, true},
+		{"unnamed consumable", []model.Plan{{ID: "a", Consumable: true, Features: premium}}, true},
 	}
 
 	for _, tt := range tests {

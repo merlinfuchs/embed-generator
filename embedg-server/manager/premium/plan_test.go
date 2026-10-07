@@ -14,6 +14,8 @@ func newPlanTestManager() *PremiumManager {
 		{ID: "premium_lifetime", Name: "Premium", SKUID: "premium-lifetime", Consumable: true, Features: model.PlanFeatures{MaxSavedMessages: 100, MaxScheduledMessages: 25}},
 		{ID: "legacy", SKUID: "legacy", Features: model.PlanFeatures{MaxScheduledMessages: 50}},
 		{ID: "ultimate_server", Name: "Ultimate", SKUID: "ultimate", Features: model.PlanFeatures{MaxSavedMessages: 500, MaxScheduledMessages: 100}},
+		// Listed after Ultimate, but still ranked as Premium.
+		{ID: "premium_gift", Name: "Premium", SKUID: "premium-gift", Features: model.PlanFeatures{MaxSavedMessages: 100, MaxScheduledMessages: 25}},
 	}}, common.Shards{}, nil, nil, nil)
 }
 
@@ -41,6 +43,7 @@ func TestPlanForEntitlements(t *testing.T) {
 		// Ultimate comes after Premium in the config, whatever order the entitlements are in.
 		{"highest plan wins", []string{"ultimate", "premium"}, "Ultimate", 500, 100},
 		{"unknown sku", []string{"other"}, "", 25, 0},
+		{"same name further down keeps its rank", []string{"ultimate", "premium-gift"}, "Ultimate", 500, 100},
 	}
 
 	for _, tt := range tests {

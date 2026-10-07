@@ -9,7 +9,7 @@ import (
 )
 
 type GetPremiumPlanFeaturesResponseDataWire struct {
-	// Plan is the name of the most expensive plan, or empty for the free one.
+	// Plan is the name of the plan. For a user or guild it's their most expensive one, or empty for free.
 	Plan                      string `json:"plan"`
 	MaxSavedMessages          int    `json:"max_saved_messages"`
 	MaxSavedMessageVersions   int    `json:"max_saved_message_versions"`

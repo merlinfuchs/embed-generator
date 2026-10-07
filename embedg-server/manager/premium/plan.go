@@ -32,16 +32,7 @@ func (m *PremiumManager) GetPlanBySKUID(skuID string) *model.Plan {
 // GetPaidPlans returns the named plans that can be bought, once per name, in the order of the
 // config, which goes from the cheapest to the most expensive plan.
 func (m *PremiumManager) GetPaidPlans() []model.Plan {
-	var plans []model.Plan
-	for _, plan := range m.config.Plans {
-		if plan.Default || plan.Name == "" || slices.ContainsFunc(plans, func(p model.Plan) bool {
-			return p.Name == plan.Name
-		}) {
-			continue
-		}
-		plans = append(plans, plan)
-	}
-	return plans
+	return m.paidPlans
 }
 
 func (m *PremiumManager) GetPlanFeaturesForGuild(ctx context.Context, guildID common.ID) (model.PlanFeatures, error) {
@@ -79,6 +70,7 @@ func (m *PremiumManager) GetPlanForUser(ctx context.Context, userID common.ID) (
 
 func (m *PremiumManager) planForEntitlements(entitlements []model.Entitlement) (string, model.PlanFeatures) {
 	name := ""
+	rank := -1
 	features := m.defaultPlanFeatures
 
 	for _, plan := range m.config.Plans {
@@ -89,8 +81,10 @@ func (m *PremiumManager) planForEntitlements(entitlements []model.Entitlement) (
 		}
 
 		features.Merge(plan.Features)
-		if plan.Name != "" {
-			name = plan.Name
+
+		// Ranked like GetPaidPlans, so a name listed again further down doesn't move it up.
+		if r := slices.IndexFunc(m.paidPlans, func(p model.Plan) bool { return p.Name == plan.Name }); r > rank {
+			name, rank = plan.Name, r
 		}
 	}
 
