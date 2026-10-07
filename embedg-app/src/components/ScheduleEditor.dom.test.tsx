@@ -12,6 +12,7 @@ import ScheduleEditor, { type SchedulePreview } from "./ScheduleEditor";
 const noPreview: SchedulePreview = {
   runs: [],
   more: false,
+  endAt: null,
   error: null,
   checking: false,
 };

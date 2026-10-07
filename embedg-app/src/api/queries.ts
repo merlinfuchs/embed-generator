@@ -18,8 +18,8 @@ import type {
   GetGuildBrandingResponseWire,
   GuildWire,
   ScheduledMessageListResponseWire,
-  ScheduledMessagePreviewRequestWire,
   ScheduledMessagePreviewResponseWire,
+  ScheduledMessageScheduleWire,
 } from "./wire";
 import type { APIResponse } from "./base";
 
@@ -297,7 +297,7 @@ export function useScheduledMessagesQuery(guildId: string | null) {
 // When a schedule that isn't saved yet would send, null until there is one to ask about.
 export function useScheduledMessagePreviewQuery(
   guildId: string | null,
-  req: ScheduledMessagePreviewRequestWire | null,
+  req: ScheduledMessageScheduleWire | null,
 ) {
   return useQuery<ScheduledMessagePreviewResponseWire>({
     queryKey: ["scheduled-message-preview", guildId, req],

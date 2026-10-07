@@ -79,3 +79,17 @@ func TestFirstRun(t *testing.T) {
 		t.Errorf("want every minute to be allowed, got %v", err)
 	}
 }
+
+func TestEndAfterRuns(t *testing.T) {
+	startAt := time.Date(2026, 10, 7, 0, 0, 0, 0, time.UTC)
+	s := recurring("0 12 * * *", "UTC", 2, startAt)
+	s.EndAfterRuns = 3
+
+	if err := endAfterRuns(s, time.Date(2026, 10, 7, 12, 0, 0, 0, time.UTC)); err != nil {
+		t.Fatal(err)
+	}
+	// Oct 7, 9 and 11, every second day.
+	if want := time.Date(2026, 10, 11, 12, 0, 0, 0, time.UTC); !s.EndAt.Valid || !s.EndAt.Time.Equal(want) {
+		t.Errorf("got %v, want %s", s.EndAt, want)
+	}
+}

@@ -459,6 +459,10 @@ export interface ScheduledMessageScheduleWire {
   cron_interval: number /* int */;
   start_at: string /* RFC3339 */;
   end_at: null | string /* RFC3339 */;
+  /**
+   * EndAfterRuns ends the schedule after this many sends from its next one, instead of at end_at.
+   */
+  end_after_runs: number /* int */;
   only_once: boolean;
 }
 export interface ScheduledMessageCreateRequestWire extends ScheduledMessageScheduleWire {
@@ -475,12 +479,6 @@ export type ScheduledMessageUpdateRequestWire = ScheduledMessageCreateRequestWir
 export type ScheduledMessageUpdateResponseWire = APIResponse<ScheduledMessageWire>;
 export type ScheduledMessageDeleteResponseWire = APIResponse<{
   }>;
-export interface ScheduledMessagePreviewRequestWire extends ScheduledMessageScheduleWire {
-  /**
-   * Limit is how many runs to list at most, 5 when left out. Enough for "ends after N sends".
-   */
-  limit: number /* int */;
-}
 export interface ScheduledMessagePreviewWire {
   /**
    * Runs are the next sends, none past end_at.
@@ -490,6 +488,10 @@ export interface ScheduledMessagePreviewWire {
    * More is whether more sends follow the listed ones.
    */
   more: boolean;
+  /**
+   * EndAt is when the schedule ends, also when it ends after a number of sends.
+   */
+  end_at: null | string /* RFC3339 */;
 }
 export type ScheduledMessagePreviewResponseWire = APIResponse<ScheduledMessagePreviewWire>;
 

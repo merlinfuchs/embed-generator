@@ -90,6 +90,9 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 	if err != nil {
 		return err
 	}
+	if err := endAfterRuns(&req.ScheduledMessageScheduleWire, nextAt); err != nil {
+		return err
+	}
 
 	if req.Enabled {
 		if err := checkRunsBeforeEnd(nextAt, req.EndAt, req.CronTimezone.String); err != nil {
@@ -259,6 +262,9 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 			return err
 		}
 	}
+	if err := endAfterRuns(&req.ScheduledMessageScheduleWire, nextAt); err != nil {
+		return err
+	}
 
 	if req.Enabled {
 		if err := checkRunsBeforeEnd(nextAt, req.EndAt, req.CronTimezone.String); err != nil {
@@ -306,12 +312,12 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 	})
 }
 
-// How many upcoming runs a preview lists unless asked for more.
-const defaultPreviewRuns = 5
+// How many upcoming runs a preview lists.
+const previewRuns = 5
 
 // HandlePreviewScheduledMessage lists when a schedule would send, so it can be checked before it's
 // saved. It fails the same way saving it would.
-func (h *ScheduledMessageHandler) HandlePreviewScheduledMessage(c *fiber.Ctx, req wire.ScheduledMessagePreviewRequestWire) error {
+func (h *ScheduledMessageHandler) HandlePreviewScheduledMessage(c *fiber.Ctx, req wire.ScheduledMessageScheduleWire) error {
 	guildID, err := handlers.QueryID(c, "guild_id")
 	if err != nil {
 		return err
@@ -321,27 +327,24 @@ func (h *ScheduledMessageHandler) HandlePreviewScheduledMessage(c *fiber.Ctx, re
 		return err
 	}
 
-	limit := req.Limit
-	if limit == 0 {
-		limit = defaultPreviewRuns
-	}
-
-	s := &req.ScheduledMessageScheduleWire
-	if err := normalizeSchedule(s); err != nil {
+	if err := normalizeSchedule(&req); err != nil {
 		return err
 	}
 
-	first, err := firstRun(s, time.Now().UTC())
+	first, err := firstRun(&req, time.Now().UTC())
 	if err != nil {
+		return err
+	}
+	if err := endAfterRuns(&req, first); err != nil {
 		return err
 	}
 	if err := checkRunsBeforeEnd(first, req.EndAt, req.CronTimezone.String); err != nil {
 		return err
 	}
 
-	sched := schedule(s)
+	sched := schedule(&req)
 	runs := []time.Time{first}
-	for !req.OnlyOnce && len(runs) <= limit {
+	for !req.OnlyOnce && len(runs) <= previewRuns {
 		next, err := sched.Next(runs[len(runs)-1])
 		if err != nil {
 			return err
@@ -352,16 +355,17 @@ func (h *ScheduledMessageHandler) HandlePreviewScheduledMessage(c *fiber.Ctx, re
 		runs = append(runs, next)
 	}
 
-	more := len(runs) > limit
+	more := len(runs) > previewRuns
 	if more {
-		runs = runs[:limit]
+		runs = runs[:previewRuns]
 	}
 
 	return c.JSON(wire.ScheduledMessagePreviewResponseWire{
 		Success: true,
 		Data: wire.ScheduledMessagePreviewWire{
-			Runs: runs,
-			More: more,
+			Runs:  runs,
+			More:  more,
+			EndAt: req.EndAt,
 		},
 	})
 }
@@ -452,6 +456,25 @@ func firstRun(s *wire.ScheduledMessageScheduleWire, now time.Time) (time.Time, e
 	}
 
 	return nextAt, nil
+}
+
+// endAfterRuns turns ending after a number of sends into the end_at of the last one, counted
+// from the next send.
+func endAfterRuns(s *wire.ScheduledMessageScheduleWire, next time.Time) error {
+	if s.OnlyOnce || s.EndAfterRuns == 0 {
+		return nil
+	}
+
+	sched := schedule(s)
+	last := next
+	for range s.EndAfterRuns - 1 {
+		var err error
+		if last, err = sched.Next(last); err != nil {
+			return handlers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
+		}
+	}
+	s.EndAt = null.TimeFrom(last)
+	return nil
 }
 
 // checkRunsBeforeEnd rejects schedules whose next run is past end_at, which the

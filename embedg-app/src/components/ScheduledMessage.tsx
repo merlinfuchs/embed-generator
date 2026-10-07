@@ -29,9 +29,8 @@ import { timezoneOrUTC } from "../util/time";
 import CheckBox from "./CheckBox";
 import ScheduleEditor, {
   formatRun,
-  lastRun,
   relativeRun,
-  scheduleBlocked,
+  scheduleError,
   useSchedulePreview,
 } from "./ScheduleEditor";
 import {
@@ -112,7 +111,7 @@ export default function ScheduledMessage({
       return;
     }
 
-    const blocked = scheduleBlocked(schedule, preview);
+    const blocked = scheduleError(schedule, preview);
     if (blocked) {
       createToast({
         title: "The schedule can't be saved yet",
@@ -133,7 +132,7 @@ export default function ScheduledMessage({
           message_id: messageId,
           thread_name: threadName,
           saved_message_id: savedMessageId,
-          ...scheduleFromDraft(schedule, lastRun(schedule, preview)),
+          ...scheduleFromDraft(schedule),
           enabled: enabled,
         },
       },
@@ -390,10 +389,8 @@ function LastError({ msg }: { msg: ScheduledMessageWire }) {
   if (!msg.last_error) return null;
 
   // A schedule that ran past its end date is off too, but the error didn't stop it.
-  const ended =
-    msg.end_at !== null && Date.parse(msg.next_at) > Date.parse(msg.end_at);
   const label =
-    msg.enabled || ended
+    msg.enabled || ended(msg)
       ? "Last run failed"
       : msg.only_once
         ? "Failed to send"

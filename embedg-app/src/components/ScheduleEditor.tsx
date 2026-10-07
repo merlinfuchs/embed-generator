@@ -1,11 +1,12 @@
 import clsx from "clsx";
 import { formatDistanceToNowStrict } from "date-fns";
 import { useEffect, useMemo, useState } from "react";
-import type { ScheduledMessagePreviewRequestWire } from "../api/wire";
 import { useScheduledMessagePreviewQuery } from "../api/queries";
 import {
   defaultRepeat,
+  describeRepeat,
   describeSchedule,
+  type Ends,
   parseRepeat,
   type Repeat,
   type RepeatUnit,
@@ -19,7 +20,6 @@ import DateTimePicker from "./DateTimePicker";
 import PremiumSuggest from "./PremiumSuggest";
 import TimezoneSelect from "./TimezoneSelect";
 
-const previewRuns = 5;
 const maxEvery = 1000;
 
 const inputClass = "bg-ink-900 rounded-lg px-3 h-10 text-white";
@@ -36,6 +36,8 @@ function useDebounced<T>(value: T, ms: number): T {
 export interface SchedulePreview {
   runs: string[];
   more: boolean;
+  // When the schedule ends, also when it ends after a number of sends.
+  endAt: string | null;
   // Why the schedule can't be saved, like it never running before its end date.
   error: string | null;
   // The runs don't match the draft yet.
@@ -47,51 +49,34 @@ export function useSchedulePreview(
   guildId: string | null,
   draft: ScheduleDraft,
 ): SchedulePreview {
-  const req = useMemo<ScheduledMessagePreviewRequestWire | null>(
-    () =>
-      draft.onlyOnce || !draft.startAt
-        ? null
-        : {
-            ...scheduleFromDraft(draft),
-            limit: draft.ends === "count" ? draft.endCount : previewRuns,
-          },
-    [draft],
+  // Compared as text, so an edit that ends up where it started doesn't count as one.
+  const key =
+    draft.onlyOnce || !draft.startAt
+      ? ""
+      : JSON.stringify(scheduleFromDraft(draft));
+  const debounced = useDebounced(key, 300);
+  const req = useMemo(
+    () => (debounced ? JSON.parse(debounced) : null),
+    [debounced],
   );
-  const debounced = useDebounced(req, 300);
-  const query = useScheduledMessagePreviewQuery(guildId, debounced);
+  const query = useScheduledMessagePreviewQuery(guildId, req);
 
   const data = query.data;
   return {
     runs: data?.success ? data.data.runs : [],
     more: data?.success ? data.data.more : false,
+    endAt: data?.success ? data.data.end_at : null,
     error: data && !data.success ? data.error.message : null,
-    checking: req !== debounced || query.isFetching,
+    checking: key !== debounced || query.isFetching,
   };
 }
 
 // Why the schedule can't be saved as it is, null when it can.
-export function scheduleBlocked(
+export function scheduleError(
   schedule: ScheduleDraft,
   preview: SchedulePreview,
 ): string | null {
-  if (schedule.onlyOnce) return null;
-  if (preview.error) return preview.error;
-  if (
-    schedule.ends === "count" &&
-    (preview.checking || !lastRun(schedule, preview))
-  ) {
-    return "Wait until the upcoming sends are checked.";
-  }
-  return null;
-}
-
-export function lastRun(
-  schedule: ScheduleDraft,
-  preview: SchedulePreview,
-): string | undefined {
-  return schedule.ends === "count"
-    ? preview.runs[schedule.endCount - 1]
-    : undefined;
+  return schedule.onlyOnce ? null : preview.error;
 }
 
 export function formatRun(iso: string, timezone: string): string {
@@ -152,6 +137,7 @@ export default function ScheduleEditor({
               key={String(once)}
               type="button"
               onClick={() =>
+                draft.onlyOnce !== once &&
                 set({
                   onlyOnce: once,
                   // A repeating schedule can start right away, a single send needs a time picked.
@@ -254,9 +240,7 @@ export default function ScheduleEditor({
                 aria-label="Ends"
                 className={clsx(inputClass, "cursor-pointer")}
                 value={draft.ends}
-                onChange={(e) =>
-                  set({ ends: e.target.value as ScheduleDraft["ends"] })
-                }
+                onChange={(e) => set({ ends: e.target.value as Ends })}
               >
                 <option value="never">never</option>
                 <option value="date">on a date</option>
@@ -465,8 +449,6 @@ function PreviewPanel({
   preview: SchedulePreview;
 }) {
   const { runs, more, error, checking } = preview;
-  const shown = runs.slice(0, previewRuns);
-  const hidden = runs.length - shown.length;
 
   return (
     <div
@@ -484,14 +466,11 @@ function PreviewPanel({
         <>
           {draft.repeat && (
             <div className="text-sm text-mist-300 mb-3">
-              {describeSchedule(
-                scheduleFromDraft(draft).cron_expression,
-                draft.repeat.every,
-              )}
+              {describeRepeat(draft.repeat)}
             </div>
           )}
           <ol className="space-y-2 text-sm">
-            {shown.map((run, i) => (
+            {runs.map((run, i) => (
               <li key={run} className="flex justify-between gap-3">
                 <span className={i === 0 ? "text-white" : "text-mist-400"}>
                   {formatRun(run, draft.timezone)}
@@ -504,11 +483,11 @@ function PreviewPanel({
           </ol>
           {runs.length > 0 && (
             <div className="text-mist-500 text-xs mt-2">
-              {hidden > 0
-                ? `${hidden} more, the last ${formatRun(runs[runs.length - 1], draft.timezone)}`
-                : more && draft.ends !== "count"
-                  ? "and so on"
-                  : "then it ends"}
+              {!more
+                ? "then it ends"
+                : draft.ends === "count" && preview.endAt
+                  ? `${draft.endCount} sends, the last ${formatRun(preview.endAt, draft.timezone)}`
+                  : "and so on"}
             </div>
           )}
           {runs.length === 0 && checking && (

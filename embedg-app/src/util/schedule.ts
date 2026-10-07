@@ -120,7 +120,7 @@ export function repeatToCron(r: Repeat): string {
   }
 }
 
-export function formatTimeOfDay(hour: number, minute: number): string {
+function formatTimeOfDay(hour: number, minute: number): string {
   return new Date(Date.UTC(2000, 0, 1, hour, minute)).toLocaleTimeString(
     undefined,
     { hour: "numeric", minute: "2-digit", timeZone: "UTC" },
@@ -201,7 +201,7 @@ export function newScheduleDraft(timezone: string): ScheduleDraft {
     timezone,
     startAt: undefined,
     repeat: defaultRepeat,
-    cron: repeatToCron(defaultRepeat),
+    cron: "",
     interval: 1,
     ends: "never",
     endAt: undefined,
@@ -228,23 +228,22 @@ export function scheduleDraftFromMessage(
   };
 }
 
-/**
- * The schedule fields of a request. With ends after a number of sends, endAt is the last of
- * them, which only the server can tell: pass it in from a preview.
- */
 export function scheduleFromDraft(
   d: ScheduleDraft,
-  lastRun?: string,
 ): ScheduledMessageScheduleWire {
-  const cron = d.repeat ? repeatToCron(d.repeat) : d.cron;
-  const endAt =
-    d.ends === "date" ? d.endAt : d.ends === "count" ? lastRun : undefined;
+  const repeating = !d.onlyOnce;
   return {
     only_once: d.onlyOnce,
-    cron_expression: d.onlyOnce ? null : cron,
+    cron_expression: repeating
+      ? d.repeat
+        ? repeatToCron(d.repeat)
+        : d.cron
+      : null,
     cron_timezone: d.timezone,
-    cron_interval: d.onlyOnce ? 1 : d.repeat ? d.repeat.every : d.interval,
+    cron_interval: repeating ? (d.repeat?.every ?? d.interval) : 1,
     start_at: d.startAt ?? "",
-    end_at: d.onlyOnce ? null : (endAt ?? null),
+    end_at: repeating && d.ends === "date" ? (d.endAt ?? null) : null,
+    // The server works out when the last of them is.
+    end_after_runs: repeating && d.ends === "count" ? d.endCount : 0,
   };
 }

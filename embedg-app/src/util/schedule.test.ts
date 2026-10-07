@@ -104,19 +104,21 @@ describe("scheduleFromDraft", () => {
       cron_interval: 28,
       start_at: "2026-10-31T06:00:00.000Z",
       end_at: null,
+      end_after_runs: 0,
     });
   });
 
-  it("ends on the last of a number of sends", () => {
+  it("leaves ending after a number of sends to the server", () => {
     const draft = {
       ...newScheduleDraft("UTC"),
       onlyOnce: false,
       startAt: "2026-10-31T00:00:00.000Z",
       ends: "count" as const,
+      endCount: 3,
     };
-    expect(scheduleFromDraft(draft, "2026-11-09T12:00:00Z").end_at).toBe(
-      "2026-11-09T12:00:00Z",
-    );
-    expect(scheduleFromDraft(draft).end_at).toBeNull();
+    expect(scheduleFromDraft(draft)).toMatchObject({
+      end_at: null,
+      end_after_runs: 3,
+    });
   });
 });

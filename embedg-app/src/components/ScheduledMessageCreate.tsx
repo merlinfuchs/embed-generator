@@ -19,8 +19,7 @@ import { usePremiumGuildFeatures } from "../util/premium";
 import { getCurrentTimezone } from "../util/time";
 import { useGuildChannelsQuery } from "../api/queries";
 import ScheduleEditor, {
-  lastRun,
-  scheduleBlocked,
+  scheduleError,
   useSchedulePreview,
 } from "./ScheduleEditor";
 import { newScheduleDraft, scheduleFromDraft } from "../util/schedule";
@@ -81,7 +80,7 @@ export default function ScheduledMessageCreate({
       return;
     }
 
-    const blocked = scheduleBlocked(schedule, preview);
+    const blocked = scheduleError(schedule, preview);
     if (blocked) {
       createToast({
         title: "The schedule can't be saved yet",
@@ -101,7 +100,7 @@ export default function ScheduledMessageCreate({
           message_id: messageId,
           thread_name: threadName,
           saved_message_id: savedMessageId,
-          ...scheduleFromDraft(schedule, lastRun(schedule, preview)),
+          ...scheduleFromDraft(schedule),
           enabled: true,
         },
       },

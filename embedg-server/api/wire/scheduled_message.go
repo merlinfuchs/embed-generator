@@ -47,7 +47,9 @@ type ScheduledMessageScheduleWire struct {
 	CronInterval int       `json:"cron_interval"`
 	StartAt      time.Time `json:"start_at"`
 	EndAt        null.Time `json:"end_at"`
-	OnlyOnce     bool      `json:"only_once"`
+	// EndAfterRuns ends the schedule after this many sends from its next one, instead of at end_at.
+	EndAfterRuns int  `json:"end_after_runs"`
+	OnlyOnce     bool `json:"only_once"`
 }
 
 func (s ScheduledMessageScheduleWire) Validate() error {
@@ -62,6 +64,8 @@ func (s ScheduledMessageScheduleWire) Validate() error {
 			validation.Max(maxCronInterval),
 		)),
 		validation.Field(&s.StartAt, validation.Required),
+		validation.Field(&s.EndAt, validation.When(s.EndAfterRuns > 0, validation.Empty)),
+		validation.Field(&s.EndAfterRuns, validation.Min(0), validation.Max(maxEndAfterRuns)),
 		validation.Field(&s.CronTimezone, validation.By(validateTimezone)),
 	)
 }
@@ -102,33 +106,20 @@ type ScheduledMessageUpdateResponseWire APIResponse[ScheduledMessageWire]
 
 type ScheduledMessageDeleteResponseWire APIResponse[struct{}]
 
-type ScheduledMessagePreviewRequestWire struct {
-	ScheduledMessageScheduleWire `tstype:",extends"`
-	// Limit is how many runs to list at most, 5 when left out. Enough for "ends after N sends".
-	Limit int `json:"limit"`
-}
-
-func (req ScheduledMessagePreviewRequestWire) Validate() error {
-	if err := req.ScheduledMessageScheduleWire.Validate(); err != nil {
-		return err
-	}
-	return validation.ValidateStruct(&req,
-		validation.Field(&req.Limit, validation.Min(0), validation.Max(maxPreviewRuns)),
-	)
-}
-
 type ScheduledMessagePreviewWire struct {
 	// Runs are the next sends, none past end_at.
 	Runs []time.Time `json:"runs"`
 	// More is whether more sends follow the listed ones.
 	More bool `json:"more"`
+	// EndAt is when the schedule ends, also when it ends after a number of sends.
+	EndAt null.Time `json:"end_at"`
 }
 
 type ScheduledMessagePreviewResponseWire APIResponse[ScheduledMessagePreviewWire]
 
 const maxCronInterval = 1000
 
-const maxPreviewRuns = 1000
+const maxEndAfterRuns = 1000
 
 func validateTimezone(v any) error {
 	_, err := common.LoadTimezone(v.(null.String).String)
