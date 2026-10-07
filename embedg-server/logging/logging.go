@@ -44,9 +44,10 @@ func SetupLogger(cfg LoggerConfig) *slog.Logger {
 		level = slog.LevelDebug
 	}
 
-	handler := ctxlog.NewHandler(clog.HandlerOptions{
+	// Inside ctxlog so the attributes it adds from the context are redacted too.
+	handler := ctxlog.NewHandler(redactHandler{clog.HandlerOptions{
 		Level: level,
-	}.NewHandler(writer))
+	}.NewHandler(writer)})
 
 	logger := slog.New(handler)
 	hostname, err := os.Hostname()
