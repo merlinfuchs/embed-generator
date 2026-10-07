@@ -16,7 +16,7 @@ const MODES = [
 const MODES_HELP =
   "Webhook: paste a webhook URL and send, no login needed.\n\nChannel: log in, pick a server and channel, and the bot sends it. Needed for buttons with actions and select menus.\n\nClick for the full comparison.";
 
-const MODES_DOCS_URL = "https://message.style/docs/guides/webhook-or-channel";
+const MODES_DOCS_URL = "https://message.style/docs/guides/send-modes";
 
 export default function SendMenu() {
   const [mode, setMode] = useSendSettingsStore(
