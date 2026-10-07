@@ -7,6 +7,8 @@ description: How to send a Discord message with a webhook using Embed Generator.
 
 A Discord webhook is a URL that anyone can post messages to. Discord creates it for a specific channel, and Embed Generator uses it to deliver the message you built in the editor. Webhooks are the quickest way to send an embed: no bot invite, no login required.
 
+For editing sent messages, posting to threads and sending from code, see [Discord Webhook Sender](/features/discord-webhooks).
+
 ## Create a webhook in Discord
 
 You need the **Manage Webhooks** permission in the channel.

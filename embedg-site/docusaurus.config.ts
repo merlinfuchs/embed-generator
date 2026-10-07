@@ -194,6 +194,7 @@ const config: Config = {
               { label: "Premium", href: "https://message.style/premium" },
               { label: "Documentation", to: "/docs" },
               { label: "Blog", to: "/blog" },
+              { label: "Discord Webhook Sender", to: "/features/discord-webhooks" },
             ],
           },
           {

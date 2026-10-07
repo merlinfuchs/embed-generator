@@ -80,6 +80,10 @@ message.style {
 		reverse_proxy 127.0.0.1:8080
 	}
 
+	# Pages that moved. The site builds without them, so they'd 404 otherwise.
+	@moved_webhook_post path /blog/executing-webhooks /blog/executing-webhooks/
+	redir @moved_webhook_post /features/discord-webhooks 301
+
 	redir /app /app/
 	handle_path /app/* {
 		root * /srv/message.style/app
