@@ -1,0 +1,11 @@
+# /etc/systemd/system/host-heartbeat.service
+[Unit]
+Description=Better Stack host heartbeat
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/host-heartbeat.env
+ExecStart=/usr/bin/curl -fsS -m 10 --retry 2 -o /dev/null ${HEARTBEAT_URL}
+DynamicUser=yes

@@ -1,0 +1,11 @@
+# /etc/systemd/system/host-heartbeat.timer
+[Unit]
+Description=Better Stack host heartbeat every minute
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target

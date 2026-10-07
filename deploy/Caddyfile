@@ -1,0 +1,141 @@
+{
+	email admin@message.style
+}
+
+www.message.style {
+	redir https://message.style{uri} permanent
+}
+
+message.style {
+	log {
+		output file /var/log/caddy/message.style.log {
+			roll_size 100MiB
+			roll_keep 10
+		}
+		format json
+	}
+
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# Discord posts custom bot interactions here. Never rate limited:
+	# repeated 429s make Discord disable the endpoint.
+	@interactions path /api/gateway /api/gateway/*
+	handle @interactions {
+		request_body {
+			max_size 1MB
+		}
+		reverse_proxy 127.0.0.1:8080
+	}
+
+	handle /api/* {
+		rate_limit {
+			zone api_write {
+				match {
+					not method GET
+				}
+				key {client_ip}
+				events 5
+				window 5s
+			}
+			zone api_read {
+				key {client_ip}
+				events 20
+				window 5s
+			}
+			sweep_interval 1m
+		}
+		request_body {
+			max_size 32MB
+		}
+		reverse_proxy 127.0.0.1:8080
+	}
+
+	handle /cdn/* {
+		header Cache-Control "public, max-age=86400"
+		request_body {
+			max_size 1MB
+		}
+		reverse_proxy 127.0.0.1:8080
+	}
+
+	handle /e/* {
+		request_body {
+			max_size 1MB
+		}
+		reverse_proxy 127.0.0.1:8080
+	}
+
+	@backend path /invite* /discord* /source* /premium*
+	handle @backend {
+		request_body {
+			max_size 1MB
+		}
+		reverse_proxy 127.0.0.1:8080
+	}
+
+	redir /app /app/
+	handle_path /app/* {
+		root * /srv/message.style/app
+
+		# Hashed assets get their own handler so they never fall through to
+		# try_files. A chunk from a previous deploy must 404, otherwise it is
+		# answered with index.html and cached as JS for a year.
+		@app_asset path /assets/* /whitney-font/*
+		handle @app_asset {
+			@app_asset_exists file {path}
+			header @app_asset_exists Cache-Control "public, max-age=31536000, immutable"
+			file_server
+		}
+
+		handle {
+			header Cache-Control "no-cache"
+			try_files {path} {path}/ /index.html
+			file_server
+		}
+	}
+
+	handle {
+		root * /srv/message.style/site
+
+		@site_asset path /assets/* /js/* /img/*
+		handle @site_asset {
+			@site_asset_exists file {path}
+			header @site_asset_exists Cache-Control "public, max-age=31536000, immutable"
+			file_server
+		}
+
+		# Pages are built as foo.html and served at /foo. /foo/ redirects there,
+		# but only if foo.html exists so older directory builds don't loop.
+		handle {
+			header Cache-Control "no-cache"
+			route {
+				@slash path_regexp slash ^(.+)/$
+				route @slash {
+					@slash_page file {re.slash.1}.html
+					redir @slash_page {re.slash.1}{?query} 301
+				}
+				try_files {path}.html {path} {path}/
+				file_server
+			}
+		}
+	}
+
+	# Unknown site URLs get the site's 404 page with a 404 status instead of
+	# the homepage, so search engines don't see them as homepage duplicates.
+	# Misses under /app (stale asset chunks) and the backend keep a plain 404.
+	handle_errors 404 {
+		@site_404 not path /app/* /api/* /cdn/* /e/*
+		handle @site_404 {
+			root * /srv/message.style/site
+			rewrite * /404.html
+			file_server
+		}
+	}
+}

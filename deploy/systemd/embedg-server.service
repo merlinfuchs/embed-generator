@@ -1,0 +1,30 @@
+[Unit]
+Description=Embed Generator
+Documentation=https://github.com/merlinfuchs/embed-generator
+After=network-online.target postgresql@18-main.service
+Wants=network-online.target postgresql@18-main.service
+StartLimitIntervalSec=600
+StartLimitBurst=3
+
+[Service]
+Type=exec
+ExecStart=/root/embedg-server server
+WorkingDirectory=/root
+
+Restart=always
+RestartSec=30s
+
+TimeoutStopSec=60s
+KillSignal=SIGTERM
+
+LimitNOFILE=65535
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target
