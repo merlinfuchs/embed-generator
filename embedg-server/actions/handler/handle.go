@@ -181,10 +181,11 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 		return fmt.Errorf("could not get plan features: %w", err)
 	}
 
+	templateSource := template.NewSource(context.TODO(), m.guildState)
 	templates := template.NewContext(
 		"HANDLE_ACTION", features.MaxTemplateOps,
-		template.NewInteractionProvider(template.NewSource(context.TODO(), m.guildState), interaction),
-		template.NewKVProvider(*interaction.GuildID(), m.kvEntryStore, features.MaxKVKeys),
+		template.NewInteractionProvider(templateSource, interaction),
+		template.NewKVProvider(templateSource, *interaction.GuildID(), m.kvEntryStore, features.MaxKVKeys),
 	)
 
 	for _, action := range actionSet.Actions {

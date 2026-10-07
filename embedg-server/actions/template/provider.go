@@ -103,13 +103,15 @@ func (p *ChannelProvider) ProvideData(data map[string]interface{}) {
 }
 
 type KVProvider struct {
+	src          Source
 	guildID      common.ID
 	kvStore      store.KVEntryStore
 	maxGuildKeys int
 }
 
-func NewKVProvider(guildID common.ID, kvStore store.KVEntryStore, maxGuildKeys int) *KVProvider {
+func NewKVProvider(src Source, guildID common.ID, kvStore store.KVEntryStore, maxGuildKeys int) *KVProvider {
 	return &KVProvider{
+		src:          src,
 		guildID:      guildID,
 		kvStore:      kvStore,
 		maxGuildKeys: maxGuildKeys,
@@ -132,7 +134,7 @@ func (kv *KVProvider) getKey(key string) (string, error) {
 		if err == store.ErrNotFound {
 			return "", nil
 		}
-		return "", err
+		return "", kv.src.internal(err)
 	}
 	return entry.Value, nil
 }
@@ -157,7 +159,7 @@ func (kv *KVProvider) setKey(key string, value string) error {
 		UpdatedAt: time.Now().UTC(),
 	})
 	if err != nil {
-		return err
+		return kv.src.internal(err)
 	}
 	return nil
 }
@@ -182,7 +184,7 @@ func (kv *KVProvider) increaseKey(key string, delta int) (string, error) {
 		if errors.Is(err, store.ErrNotFound) {
 			return "", nil
 		}
-		return "", err
+		return "", kv.src.internal(err)
 	}
 	return entry.Value, nil
 }
@@ -193,7 +195,7 @@ func (kv *KVProvider) deleteKey(key string) (string, error) {
 		if errors.Is(err, store.ErrNotFound) {
 			return "", nil
 		}
-		return "", err
+		return "", kv.src.internal(err)
 	}
 	return entry.Value, nil
 }
@@ -201,7 +203,7 @@ func (kv *KVProvider) deleteKey(key string) (string, error) {
 func (kv *KVProvider) searchKeys(pattern string) (map[string]string, error) {
 	entries, err := kv.kvStore.SearchKVEntries(context.TODO(), kv.guildID, pattern)
 	if err != nil {
-		return nil, err
+		return nil, kv.src.internal(err)
 	}
 
 	result := make(map[string]string, len(entries))
@@ -215,7 +217,7 @@ func (kv *KVProvider) searchKeys(pattern string) (map[string]string, error) {
 func (kv *KVProvider) checkKeyCountLimit() error {
 	entryCount, err := kv.kvStore.CountKVEntries(context.TODO(), kv.guildID)
 	if err != nil {
-		return fmt.Errorf("failed to count KV keys: %w", err)
+		return kv.src.internal(fmt.Errorf("failed to count KV keys: %w", err))
 	}
 
 	if int(entryCount) >= kv.maxGuildKeys {
