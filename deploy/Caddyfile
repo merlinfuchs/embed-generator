@@ -94,9 +94,13 @@ message.style {
 			file_server
 		}
 
+		# Pages people search for have their own title and text, see embedg-app/pages.ts.
+		# Everything else gets index.html, which is noindex. /app itself is the editor.
 		handle {
 			header Cache-Control "no-cache"
-			try_files {path} {path}/ /index.html
+			rewrite / /pages/editor.html
+			rewrite /editor/share/* /pages/shared.html
+			try_files /pages{path}.html {path} {path}/ /index.html
 			file_server
 		}
 	}
