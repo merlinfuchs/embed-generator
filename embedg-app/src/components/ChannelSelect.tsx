@@ -34,6 +34,9 @@ function canSelectChannelType(type: number) {
   return selectableChannelTypes.has(type);
 }
 
+const channelPermissionsDocsUrl =
+  "https://message.style/docs/guides/channel-permissions";
+
 // Most often a channel or category overwrite that takes Manage Webhooks away from a role, which the
 // server wide role settings don't show. Administrator skips overwrites, so it "fixes" this too.
 function missingAccessReason(channel: {
@@ -43,8 +46,9 @@ function missingAccessReason(channel: {
 }) {
   if (!canSelectChannelType(channel.type)) return null;
   if (!channel.bot_access)
-    return "The bot needs Manage Webhooks in this channel";
-  if (!channel.user_access) return "You need Manage Webhooks in this channel";
+    return "The bot needs Manage Webhooks in this channel. Click for help.";
+  if (!channel.user_access)
+    return "You need Manage Webhooks in this channel. Click for help.";
   return null;
 }
 
@@ -255,9 +259,20 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
                       {c.name}
                     </div>
                     {reason && (
-                      <div className="ml-auto flex-none">
+                      // Not a link: an anchor can't be nested in the row's button.
+                      <div
+                        className="ml-auto flex-none cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(
+                            channelPermissionsDocsUrl,
+                            "_blank",
+                            "noopener",
+                          );
+                        }}
+                      >
                         <Tooltip text={reason}>
-                          <ExclamationCircleIcon className="h-5 w-5 text-mist-400" />
+                          <ExclamationCircleIcon className="h-5 w-5 text-mist-400 hover:text-mist-100" />
                         </Tooltip>
                       </div>
                     )}
