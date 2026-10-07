@@ -13,7 +13,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { Avatar, DiscordButton } from "../../../components/discord";
 import {
-  Callout,
   ClosingCta,
   Faq,
   Features,
@@ -102,8 +101,8 @@ const faq: Faq[] = [
     a: "Yes. Paste the link of a message Embed Generator sent into Message ID or URL. Each run edits it in place and keeps its name and avatar.",
   },
   {
-    q: "Can I schedule DMs or messages from my own account?",
-    a: "No. Scheduled messages are sent by the bot into server channels. Automating your own account breaks Discord's terms.",
+    q: "Can I change the message after scheduling it?",
+    a: "Yes. A schedule sends the saved message as it is when the run happens, so edit the saved message and the next run picks up the change.",
   },
 ];
 
@@ -241,12 +240,6 @@ export default function ScheduledMessages(): JSX.Element {
         }}
       />
       <Features title="More than a reminder bot." features={features} />
-      <Callout
-        icon={HashtagIcon}
-        title="Server channels, not DMs."
-        text="Scheduled messages are posted by the bot into channels of a server it's in. They can't be sent as DMs or from your own account. For a one-off message right now, a webhook works without the bot."
-        link={{ label: "Discord webhooks", href: "/features/discord-webhooks" }}
-      />
       <Questions faq={faq} />
       <ClosingCta
         title="Got something to announce?"
