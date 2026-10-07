@@ -3,10 +3,11 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 
 interface Props {
   text: string;
+  wide?: boolean;
   children: ReactNode;
 }
 
-export default function Tooltip({ text, children }: Props) {
+export default function Tooltip({ text, wide, children }: Props) {
   const childRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [show, setShow] = useState(false);
@@ -53,7 +54,10 @@ export default function Tooltip({ text, children }: Props) {
       </div>
       {show && pos && (
         <div
-          className="fixed w-40 -ml-20 left-1/2 flex justify-center z-50"
+          className={clsx(
+            "fixed left-1/2 flex justify-center z-50",
+            wide ? "w-72 -ml-36" : "w-40 -ml-20",
+          )}
           style={{
             top: pos[1] + 20,
             left: pos[0],
@@ -62,7 +66,10 @@ export default function Tooltip({ text, children }: Props) {
         >
           <div
             className={clsx(
-              "rounded-lg bg-black text-white py-1 px-2 flex-none block text-center",
+              "rounded-lg bg-black text-white py-1 px-2 block",
+              wide
+                ? "text-left text-sm whitespace-pre-line"
+                : "flex-none text-center",
             )}
           >
             {text}
