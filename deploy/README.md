@@ -9,6 +9,7 @@ How message.style runs today, so it can be rebuilt on another host. Everything r
 | `systemd/host-heartbeat.*`      | `/etc/systemd/system/`, reads `HEARTBEAT_URL` from `/etc/host-heartbeat.env` |
 | `backup/backup_*.sh`            | `/root/`, with the Better Stack heartbeat tokens filled in                   |
 | `backup/crontab`                | root's crontab                                                               |
+| `embedg-check.sh`               | `/root/`, run by hand for one health sample of the running server            |
 
 Not in the repo: `/root/embedg.toml` (start from `embedg.example.toml`), `/etc/host-heartbeat.env` and the heartbeat tokens.
 
