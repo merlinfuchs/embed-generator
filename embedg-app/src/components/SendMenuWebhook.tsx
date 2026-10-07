@@ -1,7 +1,6 @@
 import { useShallow } from "zustand/react/shallow";
 import { useSendMessageToWebhookMutation } from "../api/mutations";
 import { useValidationErrorStore } from "../state/validationError";
-import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import { useSendSettingsStore, useWebhookTarget } from "../state/sendSettings";
 import { parseMessageId } from "../discord/util";
@@ -10,6 +9,7 @@ import {
   InteractiveWebhookNotice,
 } from "./WebhookNotice";
 import MessageRestoreButton from "./MessageRestoreButton";
+import Notice from "./Notice";
 import { useToasts } from "../util/toasts";
 import { getCurrentMessage } from "../state/currentMessage";
 import {
@@ -143,13 +143,10 @@ export default function SendMenuWebhook() {
       )}
       <div>
         {validationError && (
-          <div className="flex items-center text-red space-x-1">
-            <ExclamationCircleIcon className="h-5 w-5" />
-            <div>
-              There are errors in your message, you have to fix them before
-              sending the message.
-            </div>
-          </div>
+          <Notice tone="error">
+            There are errors in your message, you have to fix them before
+            sending the message.
+          </Notice>
         )}
       </div>
       <div className="flex justify-end flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2 items-end md:items-center">

@@ -1,8 +1,13 @@
 import { screen } from "@testing-library/react";
-import { expect, test } from "vitest";
+import { expect, onTestFinished, test } from "vitest";
 import { COMPONENTS_V2_FLAG } from "../state/document";
 import { useSendSettingsStore } from "../state/sendSettings";
-import { loadMessage, renderEditor, targetFluxerWebhook } from "../test/editor";
+import {
+  editorUser,
+  loadMessage,
+  renderEditor,
+  targetFluxerWebhook,
+} from "../test/editor";
 import SendMenuWebhook from "./SendMenuWebhook";
 
 const WEBHOOK_URL = "https://discord.com/api/webhooks/123/token";
@@ -20,6 +25,21 @@ test("a message with a button that has actions can't go to a webhook", () => {
     screen.getByText(/Buttons with actions and select menus/),
   ).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Send Message" })).toBeDisabled();
+});
+
+test("the notice switches to sending through a channel", async () => {
+  useSendSettingsStore.setState({ webhookUrl: WEBHOOK_URL });
+  onTestFinished(() => {
+    useSendSettingsStore.setState({ mode: "webhook" });
+  });
+  loadMessage({ content: "Hi", components: [row({ style: 1 })] });
+  renderEditor(<SendMenuWebhook />);
+
+  await editorUser().click(
+    screen.getByRole("button", { name: "Switch to Channel" }),
+  );
+
+  expect(useSendSettingsStore.getState().mode).toBe("channel");
 });
 
 test("link buttons go to a webhook", () => {
