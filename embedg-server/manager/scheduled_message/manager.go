@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"time"
 
 	"github.com/disgoorg/disgo/bot"
@@ -25,6 +26,16 @@ import (
 // How long a due message keeps being retried on transient failures before
 // it is skipped (recurring) or disabled (only once).
 const sendRetryWindow = 30 * time.Minute
+
+// errInvalidMessage marks a saved message that can't be turned into a Discord message. Like a
+// message Discord rejects, it fails the same way on every retry.
+var errInvalidMessage = errors.New("invalid message")
+
+// sendRejected reports whether a send failed on the message itself rather than on something
+// transient, so retrying it before the next scheduled run only repeats the failure.
+func sendRejected(err error) bool {
+	return errors.Is(err, errInvalidMessage) || common.IsDiscordRestStatusCode(err, http.StatusBadRequest)
+}
 
 type ScheduledMessageManager struct {
 	scheduledMessageStore store.ScheduledMessageStore
@@ -115,7 +126,7 @@ func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, s
 
 	sendErr := m.SendScheduledMessage(ctx, scheduledMessage)
 	if sendErr != nil {
-		if now.Sub(scheduledMessage.NextAt) < sendRetryWindow {
+		if !sendRejected(sendErr) && now.Sub(scheduledMessage.NextAt) < sendRetryWindow {
 			slog.Warn(
 				"Failed to send scheduled message, retrying on next tick",
 				slog.Any("error", sendErr),
@@ -125,13 +136,16 @@ func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, s
 		}
 
 		slog.Error(
-			"Giving up on scheduled message after retry window",
+			"Giving up on scheduled message",
 			slog.Any("error", sendErr),
 			slog.String("scheduled_message_id", scheduledMessage.ID),
 		)
 	}
 
 	if scheduledMessage.OnlyOnce {
+		if sendErr != nil {
+			return m.disable(ctx, scheduledMessage, "failed to send once")
+		}
 		return m.disable(ctx, scheduledMessage, "sent once")
 	}
 
@@ -213,11 +227,15 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 	data := &actions.MessageWithActions{}
 	err = json.Unmarshal([]byte(savedMsg.Data), data)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %w", errInvalidMessage, err)
 	}
 
 	if err := templates.ParseAndExecuteMessage(data); err != nil {
-		return fmt.Errorf("failed to parse and execute message template: %w", err)
+		// Unless a lookup behind the template failed, it fails the same way on the next try.
+		if internalErr := templateSource.Err(); internalErr != nil {
+			return fmt.Errorf("failed to parse and execute message template: %w", internalErr)
+		}
+		return fmt.Errorf("%w: failed to parse and execute message template: %w", errInvalidMessage, err)
 	}
 
 	params := discord.WebhookMessageCreate{
@@ -236,7 +254,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 
 	params.Components, err = m.actionParser.ParseMessageComponents(data.Components, true)
 	if err != nil {
-		return fmt.Errorf("failed to parse message components: %w", err)
+		return fmt.Errorf("%w: failed to parse message components: %w", errInvalidMessage, err)
 	}
 
 	// Actions carry the creator's authority, so resolve the creator before sending. Without a member
