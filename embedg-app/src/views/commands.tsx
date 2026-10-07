@@ -112,7 +112,7 @@ export default function CommandsView() {
                 <LimitButton
                   limit="max_custom_commands"
                   features={guildFeatures}
-                  atLimit={commands.length >= maxCommands}
+                  count={commands.length}
                   className="px-3 py-2 rounded-lg border-2 border-white/15 hover:bg-white/5 hover:border-white/30 cursor-pointer"
                   onClick={() => setCreate(true)}
                 >

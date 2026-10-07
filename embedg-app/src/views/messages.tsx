@@ -133,7 +133,7 @@ export default function MessagesView() {
               <LimitButton
                 limit="max_saved_messages"
                 features={features}
-                atLimit={messageCount >= maxMessages}
+                count={messageCount}
                 className={clsx(
                   "px-3 py-2 rounded-lg text-white flex-none",
                   newMessageName

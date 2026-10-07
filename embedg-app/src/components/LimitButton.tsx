@@ -2,15 +2,13 @@ import { SparklesIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { type ReactNode, useState } from "react";
 import type { GetPremiumPlanFeaturesResponseDataWire } from "../api/wire";
-import LimitReachedModal, {
-  type Limit,
-  upgradesFor,
-} from "./LimitReachedModal";
+import { type Limit, upgradesFor } from "../util/plans";
+import LimitReachedModal from "./LimitReachedModal";
 
 interface Props {
   limit: Limit;
   features: GetPremiumPlanFeaturesResponseDataWire | null;
-  atLimit: boolean;
+  count: number;
   className: string;
   onClick: () => void;
   children: ReactNode;
@@ -20,14 +18,14 @@ interface Props {
 export default function LimitButton({
   limit,
   features,
-  atLimit,
+  count,
   className,
   onClick,
   children,
 }: Props) {
   const [modal, setModal] = useState(false);
 
-  if (!atLimit) {
+  if (count < (features?.[limit] ?? 0)) {
     return (
       <button className={className} onClick={onClick}>
         {children}

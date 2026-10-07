@@ -62,7 +62,7 @@ export default function ScheduledMessagesView() {
               <LimitButton
                 limit="max_scheduled_messages"
                 features={guildFeatures}
-                atLimit={messageCount >= maxMessages}
+                count={messageCount}
                 className="px-3 py-2 rounded-lg border-2 border-white/15 hover:bg-white/5 hover:border-white/30 cursor-pointer"
                 onClick={() => setCreate(true)}
               >

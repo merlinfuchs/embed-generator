@@ -48,7 +48,7 @@ export default function EditorActionSet({ setId }: Props) {
         <LimitButton
           limit="max_actions_per_component"
           features={features}
-          atLimit={(actions?.length ?? 0) >= maxActions}
+          count={actions?.length ?? 0}
           className="bg-azure-500 px-3 py-2 rounded-lg transition-colors hover:bg-azure-400 text-white"
           onClick={add}
         >

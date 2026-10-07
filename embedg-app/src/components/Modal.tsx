@@ -1,6 +1,7 @@
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
 import { type ReactNode, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 
 const maxWidths = {
   xs: "max-w-md",
@@ -39,7 +40,8 @@ export default function Modal({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  return (
+  // Portaled so that a transformed ancestor, like an animating editor section, can't trap the fixed overlay.
+  return createPortal(
     <div
       className="fixed h-[100dvh] w-[100vw] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center px-2 pt-14 pb-4 sm:py-20 sm:px-5 md:px-10 lg:px-20 xl:px-32 z-30 top-0 left-0 overflow-hidden"
       onClick={(e) => e.target === e.currentTarget && onClose()}
@@ -62,6 +64,7 @@ export default function Modal({
         </button>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

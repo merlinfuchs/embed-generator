@@ -38,6 +38,7 @@ import {
 } from "../../state/document";
 import { useSendSettingsStore } from "../../state/sendSettings";
 import { runAssistantPrompt } from "../../util/assistant";
+import { upgradesFor } from "../../util/plans";
 import { usePremiumGuildFeatures } from "../../util/premium";
 
 /** A chat next to the editor that builds and changes the message. */
@@ -219,13 +220,9 @@ export default function AssistantView() {
                 : null
             }
             upgradeTo={
-              usage?.success &&
-              usage.data.limit_reached &&
-              !features?.is_ultimate
-                ? features?.is_premium
-                  ? "Ultimate"
-                  : "Premium"
-                : null
+              usage?.success && usage.data.limit_reached
+                ? upgradesFor("max_ai_prompts_per_month", features)[0]?.name
+                : undefined
             }
           />
         ) : (
@@ -331,7 +328,7 @@ function UnavailableCard({
   reason: string;
   // When the monthly limits start over, if they are the reason.
   resetsAt: string | null;
-  upgradeTo: "Premium" | "Ultimate" | null;
+  upgradeTo?: string;
 }) {
   return (
     <div className="rounded-lg border border-white/10 bg-ink-700 p-4 space-y-3 text-sm">

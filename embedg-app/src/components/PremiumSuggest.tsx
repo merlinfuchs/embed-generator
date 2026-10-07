@@ -14,12 +14,8 @@ export default function PremiumSuggest({ alwaysExpanded }: Props) {
   const [collapsed, setCollapsed] = useState(!alwaysExpanded);
   const [activateModal, setActivateModal] = useState(false);
 
-  const {
-    entitlementId: consumableEntitlementId,
-    guildId,
-    activate,
-    pending,
-  } = useConsumableEntitlement(false);
+  const { entitlementId, guildId, activate, pending } =
+    useConsumableEntitlement(false);
 
   return (
     <AutoAnimate className="relative overflow-hidden p-3 rounded-2xl border border-amber-400/10 bg-[linear-gradient(135deg,#2B2D31_0%,#2F2E2C_65%,#3A3222_100%)] select-none">
@@ -49,7 +45,7 @@ export default function PremiumSuggest({ alwaysExpanded }: Props) {
         <div className="relative mt-6">
           <PremiumFeatures />
           <div className="flex justify-end pt-5">
-            {consumableEntitlementId ? (
+            {entitlementId ? (
               <button
                 className="bg-amber-400 px-4 py-2.5 rounded-lg transition-colors hover:bg-amber-300 text-ink-900 font-semibold w-full text-center"
                 onClick={() => setActivateModal(true)}

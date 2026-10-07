@@ -1,53 +1,19 @@
 import { SparklesIcon } from "@heroicons/react/24/solid";
 import { useEffect } from "react";
-import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import type { GetPremiumPlanFeaturesResponseDataWire } from "../api/wire";
+import { type Limit, upgradesFor } from "../util/plans";
 import { op } from "./AnalyticsProvider";
 import Modal from "./Modal";
 
-export type Limit =
-  | "max_saved_messages"
-  | "max_scheduled_messages"
-  | "max_custom_commands"
-  | "max_actions_per_component";
-
-// Mirrors the paid plans in the production config.
-const tiers: { name: string; limits: Record<Limit, number> }[] = [
-  {
-    name: "Premium",
-    limits: {
-      max_saved_messages: 100,
-      max_scheduled_messages: 25,
-      max_custom_commands: 25,
-      max_actions_per_component: 10,
-    },
-  },
-  {
-    name: "Ultimate",
-    limits: {
-      max_saved_messages: 500,
-      max_scheduled_messages: 100,
-      max_custom_commands: 50,
-      max_actions_per_component: 20,
-    },
-  },
-];
-
 const limitNames: Record<Limit, string> = {
   max_saved_messages: "saved messages",
+  max_saved_message_versions: "versions per saved message",
   max_scheduled_messages: "scheduled messages",
   max_custom_commands: "custom commands",
   max_actions_per_component: "actions per component",
+  max_ai_prompts_per_month: "AI prompts per month",
 };
-
-export function upgradesFor(
-  limit: Limit,
-  features: GetPremiumPlanFeaturesResponseDataWire | null,
-) {
-  const current = features?.[limit] ?? 0;
-  return tiers.filter((t) => t.limits[limit] > current);
-}
 
 interface Props {
   limit: Limit;
@@ -63,8 +29,7 @@ export default function LimitReachedModal({ limit, features, onClose }: Props) {
     op.track("limit_reached", { limit });
   }, [limit]);
 
-  // Portaled because it's opened from inside animated editor sections, which would trap a fixed element.
-  return createPortal(
+  return (
     <Modal width="xs" onClose={onClose}>
       <div className="p-5">
         <div className="flex items-center space-x-3 mb-5 pr-6">
@@ -129,7 +94,6 @@ export default function LimitReachedModal({ limit, features, onClose }: Props) {
           </>
         )}
       </div>
-    </Modal>,
-    document.body,
+    </Modal>
   );
 }
