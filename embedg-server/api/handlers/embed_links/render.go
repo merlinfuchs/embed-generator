@@ -55,14 +55,21 @@ func (h *EmbedLinksHandler) renderEmbedLinkHTML(c *fiber.Ctx, el *model.EmbedLin
 // fallback for everywhere else. The column is jsonb, which normalizes away the
 // escaping json.Marshal did when the link was created, so `<`, `>` and `&` are
 // escaped again here: nothing in the payload may close the script element.
+// jsonb also adds spaces after every colon and comma, which count toward
+// Discord's size limit, so they are removed again.
 func componentEmbedToHTML(raw []byte) string {
 	if len(raw) == 0 {
 		return ""
 	}
 
+	var compact bytes.Buffer
+	if err := json.Compact(&compact, raw); err != nil {
+		return ""
+	}
+
 	var html bytes.Buffer
 	html.WriteString(`<script id="discord:component-embed" type="application/json">`)
-	json.HTMLEscape(&html, raw)
+	json.HTMLEscape(&html, compact.Bytes())
 	html.WriteString("</script>\n")
 
 	return html.String()

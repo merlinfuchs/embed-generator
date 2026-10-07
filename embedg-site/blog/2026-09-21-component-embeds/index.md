@@ -42,7 +42,7 @@ A component embed is a read-only subset of message components, and Discord drops
 
 Buttons have to be link buttons, carrying a `url` and a label or an emoji. A button with a `custom_id` invalidates the payload, and so does an `id` on any component.
 
-Discord enforces the size limits strictly. A payload holds at most 40 components. A container holds 1 to 10 children, an action row 1 to 5 buttons, a section 1 to 3 text displays, and a media gallery up to 10 items. Any URL is capped at 2,048 characters. Embed Generator checks all of this before it gives you a link, so a broken payload fails with a message instead of silently falling back.
+Discord enforces the size limits strictly. A payload holds at most 40 components. A container holds 1 to 10 children, an action row 1 to 5 buttons, a section 1 to 3 text displays, and a media gallery up to 10 items. Any URL is capped at 2,048 characters, and the whole payload at 3,000 bytes. Embed Generator checks all of this before it gives you a link, so a broken payload fails with a message instead of silently falling back.
 
 ## If you're adding this to your own site
 

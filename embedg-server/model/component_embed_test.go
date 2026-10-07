@@ -105,3 +105,21 @@ func TestComponentEmbedMarshalEscapesHTML(t *testing.T) {
 		t.Fatalf("payload contains an unescaped angle bracket: %s", payload)
 	}
 }
+
+func TestParseComponentEmbedSize(t *testing.T) {
+	payload := func(content string) []byte {
+		b, _ := json.Marshal(content)
+		return []byte(`{"component":{"type":17,"components":[{"type":10,"content":` + string(b) + `}]}}`)
+	}
+
+	if _, err := model.ParseComponentEmbed(payload(strings.Repeat("a", 2900))); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if _, err := model.ParseComponentEmbed(payload(strings.Repeat("a", 3000))); err == nil {
+		t.Fatalf("expected an error for a payload over 3,000 bytes")
+	}
+	// 500 characters, but 3,000 bytes once each one is escaped for the page.
+	if _, err := model.ParseComponentEmbed(payload(strings.Repeat("<", 500))); err == nil {
+		t.Fatalf("expected escape sequences to count toward the limit")
+	}
+}
