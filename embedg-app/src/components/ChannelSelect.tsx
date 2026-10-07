@@ -2,6 +2,7 @@ import {
   ArrowPathIcon,
   ChatBubbleLeftRightIcon,
   ChevronDownIcon,
+  ExclamationCircleIcon,
   PhotoIcon,
   SpeakerWaveIcon,
 } from "@heroicons/react/24/outline";
@@ -10,6 +11,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useGuildChannelsQuery } from "../api/queries";
 import ClickOutsideHandler from "./ClickOutsideHandler";
 import SelectDropdown from "./SelectDropdown";
+import Tooltip from "./Tooltip";
 import { useToasts } from "../util/toasts";
 
 interface Props {
@@ -30,6 +32,20 @@ const threadChannelTypes = new Set([10, 11, 12]);
 
 function canSelectChannelType(type: number) {
   return selectableChannelTypes.has(type);
+}
+
+// Most often a channel or category overwrite that takes Manage Webhooks away from a role, which the
+// server wide role settings don't show. Administrator skips overwrites, so it "fixes" this too.
+function missingAccessReason(channel: {
+  type: number;
+  user_access: boolean;
+  bot_access: boolean;
+}) {
+  if (!canSelectChannelType(channel.type)) return null;
+  if (!channel.bot_access)
+    return "The bot needs Manage Webhooks in this channel";
+  if (!channel.user_access) return "You need Manage Webhooks in this channel";
+  return null;
 }
 
 function ChannelIcon({ type }: { type: number }) {
@@ -213,30 +229,41 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
         {open && (
           <SelectDropdown>
             {filteredChannels.length ? (
-              filteredChannels.map((c) => (
-                <button
-                  type="button"
-                  key={c.id}
-                  className={clsx(
-                    "py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg pr-3",
-                    c.level === 0 ? "pl-2" : c.level === 1 ? "pl-4" : "pl-6",
-                    c.canSelect ? "cursor-pointer" : "cursor-not-allowed",
-                    "w-full text-left",
-                  )}
-                  disabled={!c.canSelect}
-                  onClick={() => selectChannel(c.id)}
-                >
-                  <ChannelIcon type={c.type} />
-                  <div
+              filteredChannels.map((c) => {
+                const reason = c.canSelect ? null : missingAccessReason(c);
+                return (
+                  <button
+                    type="button"
+                    key={c.id}
                     className={clsx(
-                      "truncate",
-                      c.canSelect ? "text-mist-300" : "text-mist-400",
+                      "py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg pr-3",
+                      c.level === 0 ? "pl-2" : c.level === 1 ? "pl-4" : "pl-6",
+                      c.canSelect ? "cursor-pointer" : "cursor-not-allowed",
+                      "w-full text-left",
                     )}
+                    // Not disabled: a disabled button swallows the hover the reason tooltip needs.
+                    aria-disabled={!c.canSelect}
+                    onClick={() => c.canSelect && selectChannel(c.id)}
                   >
-                    {c.name}
-                  </div>
-                </button>
-              ))
+                    <ChannelIcon type={c.type} />
+                    <div
+                      className={clsx(
+                        "truncate",
+                        c.canSelect ? "text-mist-300" : "text-mist-400",
+                      )}
+                    >
+                      {c.name}
+                    </div>
+                    {reason && (
+                      <div className="ml-auto flex-none">
+                        <Tooltip text={reason}>
+                          <ExclamationCircleIcon className="h-5 w-5 text-mist-400" />
+                        </Tooltip>
+                      </div>
+                    )}
+                  </button>
+                );
+              })
             ) : (
               <div className="p-2 text-mist-300">
                 {data?.success === false
