@@ -75,7 +75,7 @@ const features: {
     id: "scheduled",
     name: "Scheduled messages",
     blurb: "Send once, or every hour, day or week.",
-    href: "/docs/guides/scheduled-messages",
+    href: "/features/scheduled-messages",
     icon: ClockIcon,
     premium: true,
   },
