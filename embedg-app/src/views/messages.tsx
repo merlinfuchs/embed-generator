@@ -15,6 +15,7 @@ import { useSendSettingsStore } from "../state/sendSettings";
 import SavedMessage from "../components/SavedMessage";
 import { MAX_SAVED_MESSAGE_NAME_LENGTH } from "../api/limits";
 import { getCurrentMessage } from "../state/currentMessage";
+import LimitButton from "../components/LimitButton";
 
 export default function MessagesView() {
   const selectedGuildId = useSendSettingsStore((s) => s.guildId);
@@ -47,15 +48,6 @@ export default function MessagesView() {
   const createMessageMutation = useCreatedSavedMessageMutation();
 
   function createMessage() {
-    if (messageCount >= maxMessages) {
-      createToast({
-        title: "Failed to save message",
-        message: `You have reached the maximum number of saved messages (${maxMessages})`,
-        type: "error",
-      });
-      return;
-    }
-
     if (!newMessageName) {
       return;
     }
@@ -138,7 +130,10 @@ export default function MessagesView() {
                 onChange={setNewMessageName}
                 className="w-full"
               ></EditorInput>
-              <button
+              <LimitButton
+                limit="max_saved_messages"
+                features={features}
+                atLimit={messageCount >= maxMessages}
                 className={clsx(
                   "px-3 py-2 rounded-lg text-white flex-none",
                   newMessageName
@@ -148,7 +143,7 @@ export default function MessagesView() {
                 onClick={createMessage}
               >
                 Save Message
-              </button>
+              </LimitButton>
             </div>
             <MessageExportImport
               guildId={guildId}

@@ -11,6 +11,8 @@ vi.mock("../util/premium", () => ({
   usePremiumUserFeatures: () => ({}),
 }));
 
+vi.mock("./AnalyticsProvider", () => ({ op: { track: vi.fn() } }));
+
 const SET_ID = "set-1";
 
 function actions() {
@@ -106,7 +108,7 @@ test("clearing empties the set", async () => {
   expect(actions()).toEqual([]);
 });
 
-test("the add button stops at the plan's action limit", async () => {
+test("the add button opens the limit dialog at the plan's action limit", async () => {
   loadMessage({
     content: "",
     components: [
@@ -125,5 +127,10 @@ test("the add button stops at the plan's action limit", async () => {
   });
   renderEditor(<EditorActionSet setId={SET_ID} />);
 
-  expect(screen.getByRole("button", { name: "Add Action" })).toBeDisabled();
+  await editorUser().click(screen.getByRole("button", { name: "Add Action" }));
+
+  expect(actions()).toHaveLength(5);
+  expect(
+    screen.getByText("You've reached the limit of 5 actions per component"),
+  ).toBeInTheDocument();
 });

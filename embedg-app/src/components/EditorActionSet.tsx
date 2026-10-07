@@ -4,6 +4,7 @@ import Collapsable from "./Collapsable";
 import { getUniqueId } from "../util";
 import { AutoAnimate } from "../util/autoAnimate";
 import { usePremiumGuildFeatures } from "../util/premium";
+import LimitButton from "./LimitButton";
 
 interface Props {
   setId: string;
@@ -44,21 +45,15 @@ export default function EditorActionSet({ setId }: Props) {
         ))}
       </AutoAnimate>
       <div className="space-x-3 mt-3 text-sm">
-        {(actions?.length ?? 0) < maxActions ? (
-          <button
-            className="bg-azure-500 px-3 py-2 rounded-lg transition-colors hover:bg-azure-400 text-white"
-            onClick={add}
-          >
-            Add Action
-          </button>
-        ) : (
-          <button
-            disabled
-            className="bg-ink-900 px-3 py-2 rounded-lg transition-colors cursor-not-allowed text-mist-300"
-          >
-            Add Action
-          </button>
-        )}
+        <LimitButton
+          limit="max_actions_per_component"
+          features={features}
+          atLimit={(actions?.length ?? 0) >= maxActions}
+          className="bg-azure-500 px-3 py-2 rounded-lg transition-colors hover:bg-azure-400 text-white"
+          onClick={add}
+        >
+          Add Action
+        </LimitButton>
         <button
           className="px-3 py-2 rounded-lg border-2 border-red/70 hover:bg-red hover:border-red transition-colors text-white"
           onClick={() => clearActions(setId)}

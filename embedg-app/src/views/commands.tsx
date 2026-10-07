@@ -12,6 +12,7 @@ import clsx from "clsx";
 import { AutoAnimate } from "../util/autoAnimate";
 import { useToasts } from "../util/toasts";
 import PremiumSuggest from "../components/PremiumSuggest";
+import LimitButton from "../components/LimitButton";
 
 export default function CommandsView() {
   const { data: user } = useUserQuery();
@@ -108,19 +109,15 @@ export default function CommandsView() {
                 >
                   Deploy Commands
                 </button>
-                <button
-                  className={clsx(
-                    "px-3 py-2 rounded-lg border-2",
-                    commands.length < maxCommands
-                      ? "border-white/15 hover:bg-white/5 hover:border-white/30 cursor-pointer"
-                      : "border-white/10 text-mist-500 cursor-not-allowed",
-                  )}
-                  onClick={() =>
-                    commands.length < maxCommands && setCreate(true)
-                  }
+                <LimitButton
+                  limit="max_custom_commands"
+                  features={guildFeatures}
+                  atLimit={commands.length >= maxCommands}
+                  className="px-3 py-2 rounded-lg border-2 border-white/15 hover:bg-white/5 hover:border-white/30 cursor-pointer"
+                  onClick={() => setCreate(true)}
                 >
                   New Command
-                </button>
+                </LimitButton>
               </div>
             </div>
           ) : (

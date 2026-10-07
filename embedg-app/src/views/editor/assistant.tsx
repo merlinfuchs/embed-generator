@@ -218,10 +218,14 @@ export default function AssistantView() {
                 ? usage.data.resets_at
                 : null
             }
-            showPremium={
-              !!usage?.success &&
+            upgradeTo={
+              usage?.success &&
               usage.data.limit_reached &&
-              !features?.is_premium
+              !features?.is_ultimate
+                ? features?.is_premium
+                  ? "Ultimate"
+                  : "Premium"
+                : null
             }
           />
         ) : (
@@ -322,12 +326,12 @@ function HeaderButton({
 function UnavailableCard({
   reason,
   resetsAt,
-  showPremium,
+  upgradeTo,
 }: {
   reason: string;
   // When the monthly limits start over, if they are the reason.
   resetsAt: string | null;
-  showPremium: boolean;
+  upgradeTo: "Premium" | "Ultimate" | null;
 }) {
   return (
     <div className="rounded-lg border border-white/10 bg-ink-700 p-4 space-y-3 text-sm">
@@ -353,12 +357,12 @@ function UnavailableCard({
           )}
         </div>
       </div>
-      {showPremium && (
+      {upgradeTo && (
         <Link
           to="/premium"
           className="bg-amber-400 hover:bg-amber-300 text-ink-900 font-medium px-3 py-2 rounded-lg block w-full text-center transition-colors"
         >
-          Get more prompts with Premium
+          Get more prompts with {upgradeTo}
         </Link>
       )}
     </div>
