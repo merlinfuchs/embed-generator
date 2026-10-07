@@ -429,6 +429,7 @@ export interface ScheduledMessageWire {
   description: null | string;
   cron_expression: null | string;
   cron_timezone: null | string;
+  cron_interval: number /* int */;
   start_at: string /* RFC3339 */;
   end_at: null | string /* RFC3339 */;
   next_at: string /* RFC3339 */;
@@ -445,38 +446,46 @@ export interface ScheduledMessageWire {
 }
 export type ScheduledMessageListResponseWire = APIResponse<ScheduledMessageWire[]>;
 export type ScheduledMessageGetResponseWire = APIResponse<ScheduledMessageWire>;
-export interface ScheduledMessageCreateRequestWire {
+/**
+ * ScheduledMessageScheduleWire is when a scheduled message is sent.
+ */
+export interface ScheduledMessageScheduleWire {
+  cron_expression: null | string;
+  cron_timezone: null | string;
+  /**
+   * CronInterval runs the cron expression only in every Nth day, week, month or hour, counted
+   * from its first run. 0 or left out means every one. Ignored for messages sent only once.
+   */
+  cron_interval: number /* int */;
+  start_at: string /* RFC3339 */;
+  end_at: null | string /* RFC3339 */;
+  only_once: boolean;
+}
+export interface ScheduledMessageCreateRequestWire extends ScheduledMessageScheduleWire {
   channel_id: string;
   message_id: null | string;
   thread_name: null | string;
   saved_message_id: string;
   name: string;
   description: null | string;
-  cron_expression: null | string;
-  cron_timezone: null | string;
-  start_at: string /* RFC3339 */;
-  end_at: null | string /* RFC3339 */;
-  only_once: boolean;
   enabled: boolean;
 }
 export type ScheduledMessageCreateResponseWire = APIResponse<ScheduledMessageWire>;
-export interface ScheduledMessageUpdateRequestWire {
-  channel_id: string;
-  message_id: null | string;
-  thread_name: null | string;
-  saved_message_id: string;
-  name: string;
-  description: null | string;
-  cron_expression: null | string;
-  cron_timezone: null | string;
-  start_at: string /* RFC3339 */;
-  end_at: null | string /* RFC3339 */;
-  only_once: boolean;
-  enabled: boolean;
-}
+export type ScheduledMessageUpdateRequestWire = ScheduledMessageCreateRequestWire;
 export type ScheduledMessageUpdateResponseWire = APIResponse<ScheduledMessageWire>;
 export type ScheduledMessageDeleteResponseWire = APIResponse<{
   }>;
+export interface ScheduledMessagePreviewWire {
+  /**
+   * Runs are the next sends, none past end_at.
+   */
+  runs: string /* RFC3339 */[];
+  /**
+   * More is whether more sends follow the listed ones.
+   */
+  more: boolean;
+}
+export type ScheduledMessagePreviewResponseWire = APIResponse<ScheduledMessagePreviewWire>;
 
 //////////
 // source: shared_message.go

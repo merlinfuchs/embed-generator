@@ -27,8 +27,10 @@ type ScheduledMessage struct {
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 	CronTimezone     null.String
-	ThreadName       null.String
-	LastSentAt       null.Time
+	// CronInterval runs the cron expression only in every Nth period, see scheduled_messages.Schedule.
+	CronInterval int
+	ThreadName   null.String
+	LastSentAt   null.Time
 	// LastError explains to the user why the last run failed or why the message was stopped.
 	LastError   null.String
 	LastErrorAt null.Time

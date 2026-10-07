@@ -30,9 +30,10 @@ INSERT INTO scheduled_messages (
     enabled, 
     created_at, 
     updated_at,
-    message_webhook_id
+    message_webhook_id,
+    cron_interval
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
 ) RETURNING *;
 
 -- name: UpdateScheduledMessage :one
@@ -52,6 +53,7 @@ UPDATE scheduled_messages SET
     updated_at = $15, 
     cron_timezone = $16,
     message_webhook_id = $17,
+    cron_interval = $18,
     last_error = NULL,
     last_error_at = NULL
 WHERE id = $1 AND guild_id = $2 RETURNING *;

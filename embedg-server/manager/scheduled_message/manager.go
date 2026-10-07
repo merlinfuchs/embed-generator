@@ -150,11 +150,7 @@ func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, s
 		})
 	}
 
-	nextAt, err := GetNextCronTick(
-		scheduledMessage.CronExpression.String,
-		now,
-		scheduledMessage.CronTimezone.String,
-	)
+	nextAt, err := ScheduleOf(scheduledMessage).Next(now)
 	if err != nil {
 		// Leaving next_at in the past would send it again on every tick.
 		slog.Error(

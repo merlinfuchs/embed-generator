@@ -74,6 +74,7 @@ func (c *Client) CreateScheduledMessage(ctx context.Context, msg model.Scheduled
 		Description:      pgtype.Text{String: msg.Description.String, Valid: msg.Description.Valid},
 		CronExpression:   pgtype.Text{String: msg.CronExpression.String, Valid: msg.CronExpression.Valid},
 		CronTimezone:     pgtype.Text{String: msg.CronTimezone.String, Valid: msg.CronTimezone.Valid},
+		CronInterval:     int16(msg.CronInterval),
 		StartAt:          pgtype.Timestamp{Time: msg.StartAt.UTC(), Valid: true},
 		EndAt:            pgtype.Timestamp{Time: msg.EndAt.Time.UTC(), Valid: msg.EndAt.Valid},
 		NextAt:           pgtype.Timestamp{Time: msg.NextAt.UTC(), Valid: true},
@@ -107,6 +108,7 @@ func (c *Client) UpdateScheduledMessage(ctx context.Context, msg model.Scheduled
 		Enabled:          msg.Enabled,
 		UpdatedAt:        pgtype.Timestamp{Time: msg.UpdatedAt, Valid: true},
 		CronTimezone:     pgtype.Text{String: msg.CronTimezone.String, Valid: msg.CronTimezone.Valid},
+		CronInterval:     int16(msg.CronInterval),
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -166,6 +168,7 @@ func rowToScheduledMessage(row pgmodel.ScheduledMessage) *model.ScheduledMessage
 		CreatedAt:        row.CreatedAt.Time,
 		UpdatedAt:        row.UpdatedAt.Time,
 		CronTimezone:     null.NewString(row.CronTimezone.String, row.CronTimezone.Valid),
+		CronInterval:     int(row.CronInterval),
 		ThreadName:       null.NewString(row.ThreadName.String, row.ThreadName.Valid),
 		LastSentAt:       null.NewTime(row.LastSentAt.Time, row.LastSentAt.Valid),
 		LastError:        null.NewString(row.LastError.String, row.LastError.Valid),

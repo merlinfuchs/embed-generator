@@ -81,17 +81,11 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 		return handlers.Forbidden("insufficient_plan", "Periodic scheduled messages are not available on your plan.")
 	}
 
-	if req.EndAt.Valid && req.EndAt.Time.Before(req.StartAt) {
-		return handlers.BadRequest("invalid_end_at", "The end_at field must be after the start_at field.")
+	if err := normalizeSchedule(&req.ScheduledMessageScheduleWire); err != nil {
+		return err
 	}
 
-	if req.StartAt.Before(time.Now().UTC()) {
-		req.StartAt = time.Now().UTC()
-	}
-
-	req.CronTimezone = timezoneOrUTC(req.CronTimezone)
-
-	nextAt, err := firstRun(req.OnlyOnce, req.CronExpression.String, req.CronTimezone.String, req.StartAt)
+	nextAt, err := firstRun(&req.ScheduledMessageScheduleWire, time.Now().UTC())
 	if err != nil {
 		return err
 	}
@@ -129,6 +123,7 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 		Description:      req.Description,
 		CronExpression:   req.CronExpression,
 		CronTimezone:     req.CronTimezone,
+		CronInterval:     req.CronInterval,
 		StartAt:          req.StartAt,
 		EndAt:            req.EndAt,
 		NextAt:           nextAt,
@@ -234,11 +229,9 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		return err
 	}
 
-	if req.EndAt.Valid && req.EndAt.Time.Before(req.StartAt) {
-		return handlers.BadRequest("invalid_end_at", "The end_at field must be after the start_at field.")
+	if err := normalizeSchedule(&req.ScheduledMessageScheduleWire); err != nil {
+		return err
 	}
-
-	req.CronTimezone = timezoneOrUTC(req.CronTimezone)
 	now := time.Now().UTC()
 
 	// Only recompute the schedule when it actually changed, otherwise e.g. toggling
@@ -246,7 +239,8 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 	scheduleUnchanged := existing.OnlyOnce == req.OnlyOnce &&
 		existing.StartAt.Equal(req.StartAt) &&
 		existing.CronExpression.Equal(req.CronExpression) &&
-		existing.CronTimezone.Equal(req.CronTimezone)
+		existing.CronTimezone.Equal(req.CronTimezone) &&
+		existing.CronInterval == req.CronInterval
 
 	// A disabled row with next_at in the past has already fired or was given up on,
 	// so re-enabling it needs a fresh schedule instead of an immediate send.
@@ -259,11 +253,7 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		req.StartAt = existing.StartAt
 		nextAt = existing.NextAt
 	} else {
-		if req.StartAt.Before(now) {
-			req.StartAt = now
-		}
-
-		nextAt, err = firstRun(req.OnlyOnce, req.CronExpression.String, req.CronTimezone.String, req.StartAt)
+		nextAt, err = firstRun(&req.ScheduledMessageScheduleWire, now)
 		if err != nil {
 			return err
 		}
@@ -292,6 +282,7 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		Description:      req.Description,
 		CronExpression:   req.CronExpression,
 		CronTimezone:     req.CronTimezone,
+		CronInterval:     req.CronInterval,
 		StartAt:          req.StartAt,
 		EndAt:            req.EndAt,
 		NextAt:           nextAt,
@@ -311,6 +302,60 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 	return c.JSON(wire.ScheduledMessageUpdateResponseWire{
 		Success: true,
 		Data:    scheduledMessageModelToWire(msg),
+	})
+}
+
+// How many upcoming runs a preview lists.
+const previewRuns = 5
+
+// HandlePreviewScheduledMessage lists when a schedule would send, so it can be checked before it's
+// saved. It fails the same way saving it would.
+func (h *ScheduledMessageHandler) HandlePreviewScheduledMessage(c *fiber.Ctx, req wire.ScheduledMessageScheduleWire) error {
+	guildID, err := handlers.QueryID(c, "guild_id")
+	if err != nil {
+		return err
+	}
+
+	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+		return err
+	}
+
+	if err := normalizeSchedule(&req); err != nil {
+		return err
+	}
+
+	first, err := firstRun(&req, time.Now().UTC())
+	if err != nil {
+		return err
+	}
+	if err := checkRunsBeforeEnd(first, req.EndAt, req.CronTimezone.String); err != nil {
+		return err
+	}
+
+	sched := schedule(&req)
+	runs := []time.Time{first}
+	for !req.OnlyOnce && len(runs) <= previewRuns {
+		next, err := sched.Next(runs[len(runs)-1])
+		if err != nil {
+			return err
+		}
+		if req.EndAt.Valid && next.After(req.EndAt.Time) {
+			break
+		}
+		runs = append(runs, next)
+	}
+
+	more := len(runs) > previewRuns
+	if more {
+		runs = runs[:previewRuns]
+	}
+
+	return c.JSON(wire.ScheduledMessagePreviewResponseWire{
+		Success: true,
+		Data: wire.ScheduledMessagePreviewWire{
+			Runs: runs,
+			More: more,
+		},
 	})
 }
 
@@ -348,18 +393,53 @@ func timezoneOrUTC(tz null.String) null.String {
 	return tz
 }
 
-// firstRun validates the schedule and returns when it first runs, at or after startAt.
-func firstRun(onlyOnce bool, cronExpression, cronTimezone string, startAt time.Time) (time.Time, error) {
-	if onlyOnce {
-		return startAt, nil
+// normalizeSchedule checks the schedule of a request and fills in what it leaves open.
+func normalizeSchedule(s *wire.ScheduledMessageScheduleWire) error {
+	if s.EndAt.Valid && s.EndAt.Time.Before(s.StartAt) {
+		return handlers.BadRequest("invalid_end_at", "The end_at field must be after the start_at field.")
 	}
 
-	nextAt, err := scheduled_messages.GetFirstCronTick(cronExpression, startAt, cronTimezone)
+	s.CronTimezone = timezoneOrUTC(s.CronTimezone)
+	// Clients from before intervals leave it out.
+	if s.OnlyOnce || s.CronInterval == 0 {
+		s.CronInterval = 1
+	}
+	return nil
+}
+
+func schedule(s *wire.ScheduledMessageScheduleWire) scheduled_messages.Schedule {
+	return scheduled_messages.Schedule{
+		Expression: s.CronExpression.String,
+		Timezone:   s.CronTimezone.String,
+		Interval:   s.CronInterval,
+		Anchor:     s.StartAt,
+	}
+}
+
+// firstRun validates the schedule and returns when it first runs, not before now. A message sent
+// only once runs at its start, moved up to now when that's past. A recurring schedule keeps a
+// start in the past, its intervals count from there.
+func firstRun(s *wire.ScheduledMessageScheduleWire, now time.Time) (time.Time, error) {
+	if s.OnlyOnce {
+		if s.StartAt.Before(now) {
+			s.StartAt = now
+		}
+		return s.StartAt, nil
+	}
+
+	sched := schedule(s)
+	nextAt, err := sched.First(now)
+	if errors.Is(err, scheduled_messages.ErrUnsupportedInterval) {
+		return time.Time{}, handlers.BadRequest("invalid_cron_interval", "Repeating every few days, weeks or months only works with a schedule that runs at a fixed time once a minute, hour, day, week or month.")
+	}
+	if errors.Is(err, scheduled_messages.ErrNeverRuns) {
+		return time.Time{}, handlers.BadRequest("never_runs", "The schedule never runs, none of the periods it repeats in has a matching day.")
+	}
 	if err != nil {
 		return time.Time{}, handlers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
 	}
 
-	nextNextAt, err := scheduled_messages.GetNextCronTick(cronExpression, nextAt, cronTimezone)
+	nextNextAt, err := sched.Next(nextAt)
 	if err != nil {
 		return time.Time{}, handlers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
 	}
@@ -403,6 +483,7 @@ func scheduledMessageModelToWire(model *model.ScheduledMessage) wire.ScheduledMe
 		Description:    model.Description,
 		CronExpression: model.CronExpression,
 		CronTimezone:   model.CronTimezone,
+		CronInterval:   model.CronInterval,
 		StartAt:        model.StartAt,
 		EndAt:          model.EndAt,
 		NextAt:         model.NextAt,

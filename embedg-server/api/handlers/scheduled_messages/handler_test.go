@@ -5,8 +5,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"gopkg.in/guregu/null.v4"
 )
+
+func recurring(cronExpression, cronTimezone string, cronInterval int, startAt time.Time) *wire.ScheduledMessageScheduleWire {
+	return &wire.ScheduledMessageScheduleWire{
+		CronExpression: null.StringFrom(cronExpression),
+		CronTimezone:   null.StringFrom(cronTimezone),
+		CronInterval:   cronInterval,
+		StartAt:        startAt,
+	}
+}
 
 func TestCheckRunsBeforeEnd(t *testing.T) {
 	loc, err := time.LoadLocation("America/Denver")
@@ -18,7 +28,7 @@ func TestCheckRunsBeforeEnd(t *testing.T) {
 	startAt := time.Date(2026, 10, 6, 13, 0, 0, 0, loc).UTC()
 	endAt := null.TimeFrom(time.Date(2026, 10, 6, 13, 30, 0, 0, loc).UTC())
 
-	nextAt, err := firstRun(false, "30 12 1/14 * *", "America/Denver", startAt)
+	nextAt, err := firstRun(recurring("30 12 1/14 * *", "America/Denver", 1, startAt), startAt)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,5 +47,26 @@ func TestCheckRunsBeforeEnd(t *testing.T) {
 
 	if err := checkRunsBeforeEnd(nextAt, null.TimeFrom(nextAt), "America/Denver"); err != nil {
 		t.Errorf("expected no error when the next run is exactly end_at, got %v", err)
+	}
+}
+
+func TestFirstRun(t *testing.T) {
+	startAt := time.Date(2026, 10, 7, 0, 0, 0, 0, time.UTC)
+	now := time.Date(2026, 10, 20, 10, 0, 0, 0, time.UTC)
+
+	// Started on Wednesday Oct 7, so the weeks of Oct 5 and Oct 19 are due. Oct 19 is already
+	// over by now, the first run is that week's Thursday, not a restart of the cadence.
+	got, err := firstRun(recurring("0 12 * * 1,4", "UTC", 2, startAt), now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := time.Date(2026, 10, 22, 12, 0, 0, 0, time.UTC); !got.Equal(want) {
+		t.Errorf("got %s, want %s", got, want)
+	}
+
+	// Two days a month can't be counted in intervals.
+	_, err = firstRun(recurring("0 12 1,15 * *", "UTC", 2, startAt), now)
+	if err == nil || !strings.Contains(err.Error(), "only works with a schedule") {
+		t.Errorf("want an unsupported interval to be rejected, got %v", err)
 	}
 }

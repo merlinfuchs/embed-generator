@@ -133,6 +133,7 @@ export default function ScheduledMessage({
           saved_message_id: savedMessageId,
           cron_expression: cronExpression,
           cron_timezone: timezone,
+          cron_interval: msg.cron_interval,
           start_at: startAt,
           end_at: endAt ?? null,
           only_once: onlyOnce,

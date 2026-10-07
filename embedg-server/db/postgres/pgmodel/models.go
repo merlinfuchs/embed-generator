@@ -171,6 +171,7 @@ type ScheduledMessage struct {
 	LastSentAt       pgtype.Timestamp
 	LastError        pgtype.Text
 	LastErrorAt      pgtype.Timestamp
+	CronInterval     int16
 }
 
 type Session struct {

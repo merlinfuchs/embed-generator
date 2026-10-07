@@ -7,16 +7,8 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 )
 
-// GetNextCronTick returns the first tick strictly after last, evaluated in the given timezone. The result is in UTC.
-func GetNextCronTick(cronExpression string, last time.Time, timezone string) (time.Time, error) {
-	return nextTick(cronExpression, last, timezone, false)
-}
-
-// GetFirstCronTick returns the first tick at or after start, evaluated in the given timezone. The result is in UTC.
-func GetFirstCronTick(cronExpression string, start time.Time, timezone string) (time.Time, error) {
-	return nextTick(cronExpression, start, timezone, true)
-}
-
+// nextTick returns the first tick after ref, or at ref when inclusive, evaluated in the given
+// timezone. The result is in UTC.
 func nextTick(cronExpression string, ref time.Time, timezone string, inclusive bool) (time.Time, error) {
 	loc, err := common.LoadTimezone(timezone)
 	if err != nil {
