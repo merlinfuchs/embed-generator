@@ -1,8 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
+import { pagesPlugin } from "./pages";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), pagesPlugin()],
   base: "/app",
   build: {
     // The server caches everything under this directory long term and 404s

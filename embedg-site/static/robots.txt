@@ -2,3 +2,4 @@ User-agent: *
 allow: /
 
 Sitemap: https://message.style/sitemap.xml
+Sitemap: https://message.style/app/sitemap.xml
