@@ -3,6 +3,7 @@ import {
   COMPONENTS_V2_FLAG,
   embedImageUrlSchema,
   embedTextLength,
+  embedTimestampSchema,
   messageSchema,
   unfurledMediaItemSchema,
 } from "./schema";
@@ -93,4 +94,17 @@ test("embeds going over 6000 characters together are flagged", () => {
 
   expect(issues.map((issue) => issue.path)).toEqual([["embeds"]]);
   expect(issues[0].message).toContain("(currently 6001)");
+});
+
+test("embed timestamps must be dates the server can parse", () => {
+  expect(embedTimestampSchema.safeParse(undefined).success).toBe(true);
+  expect(
+    embedTimestampSchema.safeParse("2026-10-07T12:00:00.000Z").success,
+  ).toBe(true);
+  expect(
+    embedTimestampSchema.safeParse("2026-10-07T12:00:00+02:00").success,
+  ).toBe(true);
+  expect(embedTimestampSchema.safeParse("").success).toBe(false);
+  expect(embedTimestampSchema.safeParse("tomorrow").success).toBe(false);
+  expect(embedTimestampSchema.safeParse("2026-10-07").success).toBe(false);
 });

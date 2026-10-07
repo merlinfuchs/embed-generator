@@ -165,7 +165,10 @@ export const embedUrlSchema = z.optional(z.string().refine(...urlRefinement));
 
 export type EmbedUrl = z.infer<typeof embedUrlSchema>;
 
-export const embedTimestampSchema = z.optional(z.string());
+// Same format the server parses: an ISO date with a time and a Z or offset.
+export const embedTimestampSchema = z.optional(
+  z.string().datetime({ offset: true, message: "Must be a valid date" }),
+);
 
 export type EmbedTimestamp = z.infer<typeof embedTimestampSchema>;
 
