@@ -83,7 +83,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		"SEND_MESSAGE", features.MaxTemplateOps,
 		template.NewGuildProvider(templateSource, channel.GuildID(), nil),
 		template.NewChannelProvider(templateSource, req.ChannelID, channel),
-		template.NewKVProvider(channel.GuildID(), h.kvEntryStore, features.MaxKVKeys),
+		template.NewKVProvider(templateSource, channel.GuildID(), h.kvEntryStore, features.MaxKVKeys),
 	)
 
 	data := &actions.MessageWithActions{}
@@ -96,10 +96,13 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return err
 	}
 
-	// A template that fails here is the user's to fix, like using .Interaction in a message
-	// that isn't sent in response to one.
+	// Unless a lookup behind it failed, a template that fails here is the user's to fix, like
+	// using .Interaction in a message that isn't sent in response to one.
 	err = templates.ParseAndExecuteMessage(data)
 	if err != nil {
+		if internalErr := templateSource.Err(); internalErr != nil {
+			return fmt.Errorf("failed to render message template: %w", internalErr)
+		}
 		return handlers.BadRequest("invalid_template", fmt.Sprintf("Failed to render a variable in the message: %v", err))
 	}
 

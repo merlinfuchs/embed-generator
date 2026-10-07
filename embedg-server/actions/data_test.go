@@ -39,3 +39,30 @@ func TestMessageWithActionsEmbedTimestamp(t *testing.T) {
 		t.Errorf("invalid timestamp: err = %v", err)
 	}
 }
+
+func TestMessageWithActionsDecodeError(t *testing.T) {
+	for in, want := range map[string]string{
+		`{"flags":"x"}`:                              "flags must be a number, got string",
+		`{"content":5}`:                              "content must be text, got number",
+		`{"embeds":[{"color":"red"}]}`:               "embeds.color must be a number, got string",
+		`{"embeds":[{"fields":[{"inline":"yes"}]}]}`: "embeds.fields.inline must be true or false, got string",
+		`{"components":[{"type":"button"}]}`:         "components.type must be a number, got string",
+		`[]`:                                         "the message must be a JSON object, got array",
+	} {
+		var m MessageWithActions
+		err := json.Unmarshal([]byte(in), &m)
+		if err == nil || err.Error() != want {
+			t.Errorf("%s: err = %v, want %q", in, err, want)
+		}
+	}
+}
+
+func TestMessageWithActionsEmptyEmbeds(t *testing.T) {
+	var m MessageWithActions
+	if err := json.Unmarshal([]byte(`{"embeds":[]}`), &m); err != nil {
+		t.Fatal(err)
+	}
+	if m.Embeds == nil || len(m.Embeds) != 0 {
+		t.Errorf("embeds = %#v, want an empty list so edits clear them with [] and not null", m.Embeds)
+	}
+}

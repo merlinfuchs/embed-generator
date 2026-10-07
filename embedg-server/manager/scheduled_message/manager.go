@@ -207,7 +207,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		"SCHEDULED_MESSAGE", features.MaxTemplateOps,
 		template.NewGuildProvider(templateSource, scheduledMessage.GuildID, nil),
 		template.NewChannelProvider(templateSource, scheduledMessage.ChannelID, nil),
-		template.NewKVProvider(scheduledMessage.GuildID, m.kvEntryStore, features.MaxKVKeys),
+		template.NewKVProvider(templateSource, scheduledMessage.GuildID, m.kvEntryStore, features.MaxKVKeys),
 	)
 
 	data := &actions.MessageWithActions{}

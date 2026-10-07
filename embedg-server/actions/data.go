@@ -2,9 +2,13 @@ package actions
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"reflect"
 	"slices"
+	"strings"
 	"time"
+	"unicode"
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/merlinfuchs/embed-generator/embedg-server/common"
@@ -35,11 +39,14 @@ func (m *MessageWithActions) UnmarshalJSON(data []byte) error {
 		} `json:"embeds"`
 	}
 	if err := json.Unmarshal(data, &raw); err != nil {
-		return err
+		return decodeError(err)
 	}
 
 	*m = MessageWithActions(raw.message)
 	m.Embeds = nil
+	if raw.Embeds != nil {
+		m.Embeds = make([]discord.Embed, 0, len(raw.Embeds))
+	}
 	for i, e := range raw.Embeds {
 		embed := e.Embed
 		if e.Timestamp != "" {
@@ -52,6 +59,44 @@ func (m *MessageWithActions) UnmarshalJSON(data []byte) error {
 		m.Embeds = append(m.Embeds, embed)
 	}
 	return nil
+}
+
+// decodeError describes a value of the wrong type by its path in the message JSON, without the Go
+// type and struct names encoding/json reports, which mean nothing to whoever wrote the message.
+func decodeError(err error) error {
+	var typeErr *json.UnmarshalTypeError
+	if !errors.As(err, &typeErr) {
+		return err
+	}
+
+	var path []string
+	for _, part := range strings.Split(typeErr.Field, ".") {
+		// Embedded structs show up by their type name, the decoder's own wrapper as "message".
+		if part == "" || part == "message" || unicode.IsUpper(rune(part[0])) {
+			continue
+		}
+		path = append(path, part)
+	}
+	if len(path) == 0 {
+		return fmt.Errorf("the message must be a JSON object, got %s", typeErr.Value)
+	}
+
+	var want string
+	switch typeErr.Type.Kind() {
+	case reflect.String:
+		want = "text"
+	case reflect.Bool:
+		want = "true or false"
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Float32, reflect.Float64:
+		want = "a number"
+	case reflect.Slice, reflect.Array:
+		want = "a list"
+	default:
+		want = "an object"
+	}
+	return fmt.Errorf("%s must be %s, got %s", strings.Join(path, "."), want, typeErr.Value)
 }
 
 func (m MessageWithActions) ComponentsV2Enabled() bool {
