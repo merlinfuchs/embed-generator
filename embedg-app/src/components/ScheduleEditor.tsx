@@ -15,8 +15,8 @@ import {
   weekdayName,
   weekdayOrder,
 } from "../util/schedule";
-import { rezone, zonedDate, zonedDateTime } from "../util/time";
-import DatesFields from "./ScheduleDates";
+import { formatRun, rezone, zonedDate, zonedDateTime } from "../util/time";
+import ScheduleDates from "./ScheduleDates";
 import PremiumSuggest from "./PremiumSuggest";
 import TimezoneSelect from "./TimezoneSelect";
 
@@ -84,6 +84,7 @@ export function scheduleError(
     }
     return null;
   }
+  if (!schedule.startAt) return "Pick when the schedule starts.";
   if (schedule.ends === "date" && !schedule.endAt) {
     return "Pick the date the schedule ends on.";
   }
@@ -96,17 +97,6 @@ function startOfDay(date: string, timezone: string): string {
   const start = zonedDateTime(date, timezone, 0, 0);
   const now = new Date().toISOString();
   return start < now ? now : start;
-}
-
-export function formatRun(iso: string, timezone: string): string {
-  return new Date(iso).toLocaleString(undefined, {
-    timeZone: timezone,
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
 }
 
 export function relativeRun(iso: string): string {
@@ -180,7 +170,7 @@ export default function ScheduleEditor({
 
       {draft.onDates ? (
         <div className="space-y-4">
-          <DatesFields
+          <ScheduleDates
             dates={draft.dates}
             timezone={draft.timezone}
             onChange={(dates) => set({ dates })}

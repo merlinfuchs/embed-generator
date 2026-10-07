@@ -64,13 +64,7 @@ export default function ScheduledMessageCreate({
   const createMutation = useScheduledMessageCreateMutation();
 
   function create() {
-    if (
-      name.length === 0 ||
-      !guildId ||
-      !channelId ||
-      !savedMessageId ||
-      (!schedule.onDates && !schedule.startAt)
-    ) {
+    if (name.length === 0 || !guildId || !channelId || !savedMessageId) {
       createToast({
         title: "Some required fields are missing",
         message:

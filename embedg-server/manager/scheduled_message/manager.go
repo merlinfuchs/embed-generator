@@ -24,7 +24,7 @@ import (
 )
 
 // How long a due message keeps being retried on transient failures before
-// it is skipped (recurring) or disabled (only once).
+// it moves on to the next run, or is disabled after its last date.
 const sendRetryWindow = 30 * time.Minute
 
 type ScheduledMessageManager struct {

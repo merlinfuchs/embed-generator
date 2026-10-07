@@ -1,50 +1,19 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
-  fromZonedDate,
   listTimezones,
   rezone,
   timezoneOrUTC,
-  toZonedDate,
   zonedDate,
   zonedDateTime,
 } from "./time";
 
-describe("zoned dates", () => {
-  // Pin the local zone so the picker's local Dates cross a DST change in the tests below.
+describe("rezone", () => {
+  // Pin the local zone so the conversions don't go through the local zone's DST by accident.
   beforeAll(() => {
     vi.stubEnv("TZ", "America/New_York");
   });
   afterAll(() => {
     vi.unstubAllEnvs();
-  });
-
-  it("reads the picker's wall clock in the timezone", () => {
-    const nine = new Date(2026, 8, 25, 9, 0);
-    expect(fromZonedDate(nine, "Europe/Berlin")).toBe(
-      "2026-09-25T07:00:00.000Z",
-    );
-    expect(fromZonedDate(nine, "America/New_York")).toBe(
-      "2026-09-25T13:00:00.000Z",
-    );
-    expect(fromZonedDate(nine, "UTC")).toBe("2026-09-25T09:00:00.000Z");
-  });
-
-  it("uses the offset of the date, not of today", () => {
-    // Berlin is on CET (+1) in December
-    expect(fromZonedDate(new Date(2026, 11, 1, 9, 0), "Europe/Berlin")).toBe(
-      "2026-12-01T08:00:00.000Z",
-    );
-    // the morning after Berlin switches back to CET
-    expect(fromZonedDate(new Date(2026, 9, 25, 9, 0), "Europe/Berlin")).toBe(
-      "2026-10-25T08:00:00.000Z",
-    );
-  });
-
-  it("round trips through the picker", () => {
-    for (const tz of ["Europe/Berlin", "America/New_York", "Asia/Kolkata"]) {
-      const iso = "2026-09-25T07:30:00.000Z";
-      expect(fromZonedDate(toZonedDate(iso, tz), tz)).toBe(iso);
-    }
   });
 
   it("rezones wall clocks that don't exist in the local timezone", () => {
@@ -62,9 +31,6 @@ describe("zoned dates", () => {
     expect(rezone("2027-03-28T02:30:00.000Z", "UTC", "Europe/Berlin")).toBe(
       "2027-03-28T01:30:00.000Z",
     );
-    expect(
-      fromZonedDate(new Date(2027, 2, 14, 2, 30), "America/New_York"),
-    ).toBe("2027-03-14T07:30:00.000Z");
   });
 
   it("keeps the wall clock when switching timezones", () => {

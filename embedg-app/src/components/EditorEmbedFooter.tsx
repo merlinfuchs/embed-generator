@@ -63,7 +63,6 @@ export default function EditorEmbedFooter({ id }: Props) {
             <DateTimePicker
               onChange={(v) => update<EmbedNode>(id, { timestamp: v })}
               value={embed.timestamp}
-              clearable={true}
             />
             <ValidationError target={nodeField<EmbedNode>(id, "timestamp")} />
           </div>

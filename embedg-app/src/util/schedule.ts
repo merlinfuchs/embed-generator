@@ -251,8 +251,8 @@ export function scheduleFromDraft(
       cron_expression: null,
       cron_timezone: d.timezone,
       cron_interval: 1,
-      // Ignored, the server starts at the first date.
-      start_at: dates[0] ?? new Date().toISOString(),
+      // The server starts it at the first date anyway.
+      start_at: dates[0],
       end_at: null,
       end_after_runs: 0,
     };

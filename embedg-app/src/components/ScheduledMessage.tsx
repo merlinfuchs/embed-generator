@@ -25,10 +25,9 @@ import SavedMessageSelect from "./SavedMessageSelect";
 import { ChannelSelect } from "./ChannelSelect";
 import clsx from "clsx";
 import { usePremiumGuildFeatures } from "../util/premium";
-import { timezoneOrUTC } from "../util/time";
+import { formatDay, formatRun, timezoneOrUTC } from "../util/time";
 import CheckBox from "./CheckBox";
 import ScheduleEditor, {
-  formatRun,
   relativeRun,
   scheduleError,
   useSchedulePreview,
@@ -37,7 +36,6 @@ import {
   describeSchedule,
   isOnDates,
   scheduleDraftFromMessage,
-  sortDates,
   scheduleFromDraft,
 } from "../util/schedule";
 import { useGuildChannelsQuery } from "../api/queries";
@@ -97,13 +95,7 @@ export default function ScheduledMessage({
   const updateMutation = useScheduledMessageUpdateMutation();
 
   function save() {
-    if (
-      name.length === 0 ||
-      !guildId ||
-      !channelId ||
-      !savedMessageId ||
-      (!schedule.onDates && !schedule.startAt)
-    ) {
+    if (name.length === 0 || !guildId || !channelId || !savedMessageId) {
       createToast({
         title: "Some required fields are missing",
         message:
@@ -414,17 +406,10 @@ function LastError({ msg }: { msg: ScheduledMessageWire }) {
   );
 }
 
+// The server keeps the dates sorted.
 function describeDates(dates: string[], timezone: string): string {
-  const sorted = sortDates(dates);
-  if (sorted.length === 1) return formatRun(sorted[0], timezone);
-
-  const day = (iso: string) =>
-    new Date(iso).toLocaleDateString(undefined, {
-      timeZone: timezone,
-      month: "short",
-      day: "numeric",
-    });
-  return `${sorted.length} dates from ${day(sorted[0])} to ${day(sorted[sorted.length - 1])}`;
+  if (dates.length === 1) return formatRun(dates[0], timezone);
+  return `${dates.length} dates from ${formatDay(dates[0], timezone)} to ${formatDay(dates[dates.length - 1], timezone)}`;
 }
 
 function ended(msg: ScheduledMessageWire): boolean {

@@ -79,7 +79,7 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 		return err
 	}
 
-	if !features.PeriodicScheduledMessages && (!req.OnDates() || len(req.RunTimes) > 1) {
+	if !features.PeriodicScheduledMessages && !req.SendsOnce() {
 		return handlers.Forbidden("insufficient_plan", "Repeating scheduled messages and sending on more than one date are not available on your plan.")
 	}
 
@@ -87,7 +87,7 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 		return err
 	}
 
-	nextAt, err := firstRun(&req.ScheduledMessageScheduleWire, time.Now().UTC())
+	nextAt, err := firstRun(&req.ScheduledMessageScheduleWire, time.Now().UTC(), time.Time{})
 	if err != nil {
 		return err
 	}
@@ -221,7 +221,7 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		return err
 	}
 
-	if !features.PeriodicScheduledMessages && (!req.OnDates() || len(req.RunTimes) > 1) {
+	if !features.PeriodicScheduledMessages && !req.SendsOnce() {
 		return handlers.Forbidden("insufficient_plan", "Repeating scheduled messages and sending on more than one date are not available on your plan.")
 	}
 
@@ -258,7 +258,8 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		req.StartAt = existing.StartAt
 		nextAt = existing.NextAt
 	} else {
-		nextAt, err = firstRun(&req.ScheduledMessageScheduleWire, now)
+		// A date that was just sent is in the grace for picked dates, it must not go out again.
+		nextAt, err = firstRun(&req.ScheduledMessageScheduleWire, now, existing.LastSentAt.Time)
 		if err != nil {
 			return err
 		}
@@ -332,7 +333,7 @@ func (h *ScheduledMessageHandler) HandlePreviewScheduledMessage(c *fiber.Ctx, re
 		return err
 	}
 
-	first, err := firstRun(&req, time.Now().UTC())
+	first, err := firstRun(&req, time.Now().UTC(), time.Time{})
 	if err != nil {
 		return err
 	}
@@ -446,22 +447,27 @@ func schedule(s *wire.ScheduledMessageScheduleWire) scheduled_messages.Schedule 
 	}
 }
 
-// A date picked as now is a little in the past by the time it's saved, it still goes out.
-const pickedNowGrace = time.Minute
+// Dates are picked to the minute, so one in the current minute is a little in the past by the
+// time it's saved. It still goes out.
+const pickedDateGrace = time.Minute
 
 // firstRun validates the schedule and returns when it first runs, not before now. Dates in the
-// past are skipped. A recurring schedule keeps a start in the past, its intervals count from there.
-func firstRun(s *wire.ScheduledMessageScheduleWire, now time.Time) (time.Time, error) {
+// past and up to lastSent are skipped. A recurring schedule keeps a start in the past, its
+// intervals count from there.
+func firstRun(s *wire.ScheduledMessageScheduleWire, now time.Time, lastSent time.Time) (time.Time, error) {
 	if s.OnDates() {
-		for _, t := range s.RunTimes {
-			if t.After(now) {
-				return t, nil
-			}
-			if t.After(now.Add(-pickedNowGrace)) {
-				return now, nil
-			}
+		after := now.Add(-pickedDateGrace)
+		if lastSent.After(after) {
+			after = lastSent
 		}
-		return time.Time{}, handlers.BadRequest("never_runs", "All dates of the scheduled message are in the past.")
+		next, ok := scheduled_messages.NextDate(s.RunTimes, after)
+		if !ok {
+			return time.Time{}, handlers.BadRequest("never_runs", "All dates of the scheduled message are in the past.")
+		}
+		if next.Before(now) {
+			return now, nil
+		}
+		return next, nil
 	}
 
 	// Without seconds every run is on a different minute, so it can't run more than once a minute.

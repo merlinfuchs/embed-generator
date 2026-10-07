@@ -2,7 +2,7 @@ import { fireEvent, screen } from "@testing-library/react";
 import { useState } from "react";
 import { expect, test } from "vitest";
 import { renderEditor } from "../test/editor";
-import DatesFields from "./ScheduleDates";
+import ScheduleDates from "./ScheduleDates";
 
 let latest: string[] = [];
 
@@ -10,7 +10,7 @@ function Harness({ periodicAllowed = true }: { periodicAllowed?: boolean }) {
   const [dates, setDates] = useState<string[]>([]);
   latest = dates;
   return (
-    <DatesFields
+    <ScheduleDates
       dates={dates}
       timezone="UTC"
       onChange={setDates}

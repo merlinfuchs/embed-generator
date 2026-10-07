@@ -38,7 +38,6 @@ type ScheduledMessageListResponseWire APIResponse[[]ScheduledMessageWire]
 
 type ScheduledMessageGetResponseWire APIResponse[ScheduledMessageWire]
 
-// ScheduledMessageScheduleWire is when a scheduled message is sent.
 // ScheduledMessageScheduleWire is when a scheduled message is sent: on the dates in run_times, or
 // repeating on cron_expression.
 type ScheduledMessageScheduleWire struct {
@@ -54,6 +53,11 @@ type ScheduledMessageScheduleWire struct {
 	EndAt   null.Time `json:"end_at"`
 	// EndAfterRuns ends the schedule after this many sends from its next one, instead of at end_at.
 	EndAfterRuns int `json:"end_after_runs"`
+}
+
+// SendsOnce is whether it's sent on a single date, all free plans can do.
+func (s ScheduledMessageScheduleWire) SendsOnce() bool {
+	return len(s.RunTimes) == 1
 }
 
 // OnDates is whether it's sent on a list of dates instead of repeating.

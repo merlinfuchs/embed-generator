@@ -68,35 +68,6 @@ function offsetAt(ms: number, timezone: string): number {
   return wallClockAt(ms, timezone) - Math.floor(ms / 1000) * 1000;
 }
 
-/**
- * Converts an instant into a local Date showing the wall clock of the timezone.
- * The date picker only works in local time, so this is what it gets to display.
- */
-export function toZonedDate(iso: string, timezone: string): Date {
-  const wall = new Date(wallClockAt(new Date(iso).getTime(), timezone));
-  return new Date(
-    wall.getUTCFullYear(),
-    wall.getUTCMonth(),
-    wall.getUTCDate(),
-    wall.getUTCHours(),
-    wall.getUTCMinutes(),
-    wall.getUTCSeconds(),
-  );
-}
-
-// Reverse of toZonedDate: reads the local wall clock of the date as a time in the timezone.
-export function fromZonedDate(date: Date, timezone: string): string {
-  const wall = Date.UTC(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-    date.getHours(),
-    date.getMinutes(),
-    date.getSeconds(),
-  );
-  return new Date(wallClockToInstant(wall, timezone)).toISOString();
-}
-
 // Moves the instant so that it keeps its wall clock when switching timezones.
 // Stays off local Dates, which would shift wall clocks inside the browser's own DST gap.
 export function rezone(iso: string, from: string, to: string): string {
@@ -137,4 +108,44 @@ export function zonedTime(iso: string, timezone: string): string {
   return new Date(wallClockAt(new Date(iso).getTime(), timezone))
     .toISOString()
     .slice(11, 16);
+}
+
+// Wall clock formats cache a formatter per timezone, a list of dates formats many.
+const runFormatters = new Map<string, Intl.DateTimeFormat>();
+const dayFormatters = new Map<string, Intl.DateTimeFormat>();
+
+function cached(
+  cache: Map<string, Intl.DateTimeFormat>,
+  timezone: string,
+  options: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormat {
+  let formatter = cache.get(timezone);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(undefined, {
+      ...options,
+      timeZone: timezone,
+    });
+    cache.set(timezone, formatter);
+  }
+  return formatter;
+}
+
+// "Sat, Oct 31, 5:50 AM" in the timezone.
+export function formatRun(iso: string, timezone: string): string {
+  return cached(runFormatters, timezone, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(iso));
+}
+
+// "Sat, Oct 31" in the timezone.
+export function formatDay(iso: string, timezone: string): string {
+  return cached(dayFormatters, timezone, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(new Date(iso));
 }

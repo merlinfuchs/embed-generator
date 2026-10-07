@@ -4,12 +4,10 @@ import {
   XMarkIcon,
 } from "@heroicons/react/20/solid";
 import clsx from "clsx";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { MAX_SCHEDULE_DATES } from "../api/limits";
 import { sortDates, weekdayName, weekdayOrder } from "../util/schedule";
-import { zonedDate, zonedDateTime, zonedTime } from "../util/time";
-
-// Keep in sync with MaxRunTimes on the server.
-const maxDates = 100;
+import { formatDay, zonedDate, zonedDateTime, zonedTime } from "../util/time";
 
 // The YYYY-MM-DD days of a YYYY-MM month, and the grid column its first day is in.
 function monthDays(month: string): { days: string[]; firstColumn: number } {
@@ -38,15 +36,6 @@ function formatMonth(month: string): string {
   });
 }
 
-function formatDay(iso: string, timezone: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    timeZone: timezone,
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
-
 interface Props {
   dates: string[];
   timezone: string;
@@ -54,7 +43,7 @@ interface Props {
   periodicAllowed: boolean;
 }
 
-export default function DatesFields({
+export default function ScheduleDates({
   dates,
   timezone,
   onChange,
@@ -62,8 +51,11 @@ export default function DatesFields({
 }: Props) {
   const now = new Date().toISOString();
   const today = zonedDate(now, timezone);
-  const sorted = sortDates(dates);
-  const picked = new Set(sorted.map((d) => zonedDate(d, timezone)));
+  const sorted = useMemo(() => sortDates(dates), [dates]);
+  const picked = useMemo(
+    () => new Set(sorted.map((d) => zonedDate(d, timezone))),
+    [sorted, timezone],
+  );
 
   const [month, setMonth] = useState(() =>
     zonedDate(sorted.find((d) => d >= now) ?? now, timezone).slice(0, 7),
@@ -96,7 +88,7 @@ export default function DatesFields({
     onChange(dates.map((d) => (d === date ? moved : d)));
   }
 
-  const full = dates.length >= maxDates;
+  const full = dates.length >= MAX_SCHEDULE_DATES;
   const { days, firstColumn } = monthDays(month);
 
   return (
@@ -199,7 +191,7 @@ export default function DatesFields({
         )}
         {full && (
           <div className="text-mist-400 text-sm font-light mt-3">
-            A scheduled message can be sent on up to {maxDates} dates.
+            A scheduled message can be sent on up to {MAX_SCHEDULE_DATES} dates.
           </div>
         )}
       </div>
