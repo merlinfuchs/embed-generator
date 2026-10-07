@@ -4,10 +4,13 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 interface Props {
   text: string;
   wide?: boolean;
+  // Lets touch screens open it with a tap. Off for tooltips on buttons, where
+  // the tap already does something.
+  tappable?: boolean;
   children: ReactNode;
 }
 
-export default function Tooltip({ text, wide, children }: Props) {
+export default function Tooltip({ text, wide, tappable, children }: Props) {
   const childRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [show, setShow] = useState(false);
@@ -46,6 +49,31 @@ export default function Tooltip({ text, wide, children }: Props) {
     document.addEventListener("mousemove", onMouseMove);
     return () => document.removeEventListener("mousemove", onMouseMove);
   }, [show]);
+
+  useEffect(() => {
+    if (!tappable || !childRef.current) return;
+
+    const child = childRef.current;
+    const halfWidth = wide ? 144 : 80;
+
+    function onPointerDown(e: PointerEvent) {
+      if (e.pointerType === "mouse") return;
+
+      if (child.contains(e.target as Node)) {
+        const x = Math.min(
+          Math.max(e.clientX, halfWidth),
+          window.innerWidth - halfWidth,
+        );
+        setPos([x, e.clientY]);
+        setShow((show) => !show);
+      } else {
+        setShow(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [tappable, wide]);
 
   return (
     <div>

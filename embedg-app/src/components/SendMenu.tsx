@@ -44,7 +44,7 @@ export default function SendMenu() {
             </button>
           ))}
         </div>
-        <Tooltip text={MODES_HELP} wide>
+        <Tooltip text={MODES_HELP} wide tappable>
           <QuestionMarkCircleIcon className="h-5 w-5 text-mist-400 hover:text-mist-100" />
         </Tooltip>
       </div>
