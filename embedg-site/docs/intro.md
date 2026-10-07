@@ -14,7 +14,7 @@ Embed Generator is a visual editor for Discord messages. You build embeds, butto
 1. **Open the editor** at [message.style/app](https://message.style/app). No account needed for this part.
 2. **Write the message.** Add content, then click **Add Embed** for a title, description, fields, an image and a color. The preview on the right updates as you type.
 3. **Set a name and avatar** at the top if you don't want the default ones.
-4. **Pick where it goes.** Either paste a [webhook URL](./guides/webhooks.md), or log in with Discord, invite the bot and choose a channel. The bot route is what unlocks buttons and select menus, see [Webhook or Channel?](./guides/send-modes.md).
+4. **Pick where it goes.** Log in with Discord, invite the bot and choose a channel, which unlocks every feature. Or paste a [webhook URL](./guides/webhooks.md) if you'd rather not log in. See [Webhook or Channel?](./guides/send-modes.md) for the difference.
 5. **Send it.** Click **Send Message**. Want it again later? Click **Save** first, then it's available on every device and can be scheduled or reused.
 
 The video below shows the same flow in a few minutes.

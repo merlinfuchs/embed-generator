@@ -14,7 +14,7 @@ const MODES = [
 ] as const;
 
 const MODES_HELP =
-  "Webhook: paste a webhook URL and send, no login needed.\n\nChannel: log in, pick a server and channel, and the bot sends it. Needed for buttons with actions and select menus.\n\nClick for the full comparison.";
+  "Channel (recommended): log in, pick a server and channel, and the bot sends it. Supports every feature, including buttons with actions and select menus.\n\nWebhook: paste a webhook URL and send, no login or bot needed.\n\nClick for the full comparison.";
 
 const MODES_DOCS_URL = "https://message.style/docs/guides/send-modes";
 
