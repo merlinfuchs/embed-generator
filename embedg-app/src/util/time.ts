@@ -111,3 +111,23 @@ function wallClockToInstant(wall: number, timezone: string): number {
   // A wall clock skipped by a DST change moves forward, like local Dates do.
   return wallClockAt(res, timezone) === wall ? res : Math.max(guess, res);
 }
+
+// The calendar date of the instant in the timezone, as YYYY-MM-DD for date inputs.
+export function zonedDate(iso: string, timezone: string): string {
+  return new Date(wallClockAt(new Date(iso).getTime(), timezone))
+    .toISOString()
+    .slice(0, 10);
+}
+
+// The instant the timezone's wall clock shows the given time on a YYYY-MM-DD date.
+export function zonedDateTime(
+  date: string,
+  timezone: string,
+  hours: number,
+  minutes: number,
+  seconds = 0,
+): string {
+  const [y, m, d] = date.split("-").map(Number);
+  const wall = Date.UTC(y, m - 1, d, hours, minutes, seconds);
+  return new Date(wallClockToInstant(wall, timezone)).toISOString();
+}

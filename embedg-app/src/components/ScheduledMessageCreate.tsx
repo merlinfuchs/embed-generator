@@ -13,16 +13,17 @@ import {
   CalendarDaysIcon,
   ClockIcon,
 } from "@heroicons/react/20/solid";
-import clsx from "clsx";
-import DateTimePicker from "./DateTimePicker";
 import SavedMessageSelect from "./SavedMessageSelect";
 import { ChannelSelect } from "./ChannelSelect";
-import CronExpressionBuilder from "./CronExpressionBuilder";
 import { usePremiumGuildFeatures } from "../util/premium";
-import PremiumSuggest from "./PremiumSuggest";
-import { getCurrentTimezone, rezone } from "../util/time";
-import TimezoneSelect from "./TimezoneSelect";
+import { getCurrentTimezone } from "../util/time";
 import { useGuildChannelsQuery } from "../api/queries";
+import ScheduleEditor, {
+  lastRun,
+  scheduleBlocked,
+  useSchedulePreview,
+} from "./ScheduleEditor";
+import { newScheduleDraft, scheduleFromDraft } from "../util/schedule";
 
 export default function ScheduledMessageCreate({
   setCreate,
@@ -38,13 +39,10 @@ export default function ScheduledMessageCreate({
   const createToast = useToasts((s) => s.create);
 
   const [name, setName] = useState("");
-  const [onlyOnce, setOnlyOnce] = useState(true);
-  const [startAt, setStartAt] = useState<string | undefined>();
-  const [endAt, setEndAt] = useState<string | undefined>();
-  const [timezone, setTimezone] = useState(getCurrentTimezone);
-  const [cronExpression, setCronExpression] = useState<string | null>(
-    "* * * * *",
+  const [schedule, setSchedule] = useState(() =>
+    newScheduleDraft(getCurrentTimezone()),
   );
+  const preview = useSchedulePreview(guildId, schedule);
   const [savedMessageId, setSavedMessageId] = useState<string | null>(null);
   const [channelId, setChannelId] = useState<string | null>(null);
   const [threadName, setThreadName] = useState<string | null>(null);
@@ -55,13 +53,6 @@ export default function ScheduledMessageCreate({
     setChannelId(id);
     setThreadName(null);
     setMessageId(null);
-  }
-
-  // The picked times were meant in the new timezone, so keep their wall clock.
-  function changeTimezone(tz: string) {
-    setStartAt((v) => v && rezone(v, timezone, tz));
-    setEndAt((v) => v && rezone(v, timezone, tz));
-    setTimezone(tz);
   }
 
   const selectedChannel = useMemo(
@@ -79,12 +70,22 @@ export default function ScheduledMessageCreate({
       !guildId ||
       !channelId ||
       !savedMessageId ||
-      !startAt
+      !schedule.startAt
     ) {
       createToast({
         title: "Some required fields are missing",
         message:
           "Please fill all the required fields before creating the scheduled message",
+        type: "error",
+      });
+      return;
+    }
+
+    const blocked = scheduleBlocked(schedule, preview);
+    if (blocked) {
+      createToast({
+        title: "The schedule can't be saved yet",
+        message: blocked,
         type: "error",
       });
       return;
@@ -100,12 +101,7 @@ export default function ScheduledMessageCreate({
           message_id: messageId,
           thread_name: threadName,
           saved_message_id: savedMessageId,
-          cron_expression: cronExpression,
-          cron_timezone: timezone,
-          cron_interval: 1,
-          start_at: startAt,
-          end_at: endAt ?? null,
-          only_once: onlyOnce,
+          ...scheduleFromDraft(schedule, lastRun(schedule, preview)),
           enabled: true,
         },
       },
@@ -133,7 +129,7 @@ export default function ScheduledMessageCreate({
     <div className="bg-ink-700 p-5 rounded-lg">
       <div className="flex items-center space-x-2 text-lg mb-5 truncate justify-between">
         <div className="text-white truncate flex space-x-2 items-center">
-          {onlyOnce ? (
+          {schedule.onlyOnce ? (
             <CalendarDaysIcon className="text-mist-500 h-6 w-6" />
           ) : (
             <ClockIcon className="text-mist-500 h-6 w-6" />
@@ -233,101 +229,12 @@ export default function ScheduledMessageCreate({
             </div>
           </div>
         )}
-        <div className="flex">
-          <button
-            className="flex bg-ink-900 p-1 rounded-lg text-white"
-            onClick={() => setOnlyOnce((v) => !v)}
-          >
-            <div
-              className={clsx(
-                "py-1 px-2 rounded-lg transition-colors",
-                onlyOnce && "bg-ink-700",
-              )}
-            >
-              Send Once
-            </div>
-            <div
-              className={clsx(
-                "py-1 px-2 rounded-lg transition-colors",
-                !onlyOnce && "bg-ink-700",
-              )}
-            >
-              Send Periodically
-            </div>
-          </button>
-        </div>
-        {(onlyOnce || features?.periodic_scheduled_messages) && (
-          <div>
-            <div className="mb-1.5 flex">
-              <div className="uppercase text-mist-300 text-sm font-medium">
-                Timezone
-              </div>
-            </div>
-            <TimezoneSelect value={timezone} onChange={changeTimezone} />
-          </div>
-        )}
-        {onlyOnce ? (
-          <div>
-            <div>
-              <div className="mb-1.5 flex">
-                <div className="uppercase text-mist-300 text-sm font-medium">
-                  Send at
-                </div>
-              </div>
-              <DateTimePicker
-                value={startAt}
-                onChange={setStartAt}
-                clearable={false}
-                timezone={timezone}
-              />
-            </div>
-          </div>
-        ) : features?.periodic_scheduled_messages ? (
-          <>
-            <div className="flex flex-col md:flex-row md:space-x-3 space-y-5 md:space-y-0">
-              <div className="flex-auto">
-                <div className="mb-1.5 flex">
-                  <div className="uppercase text-mist-300 text-sm font-medium">
-                    Start at
-                  </div>
-                </div>
-                <DateTimePicker
-                  value={startAt}
-                  onChange={setStartAt}
-                  clearable={false}
-                  timezone={timezone}
-                />
-                <div className="mt-2 text-mist-400 text-sm font-light">
-                  No runs before this time. The first run is the next scheduled
-                  time after it.
-                </div>
-              </div>
-              <div className="flex-auto">
-                <div className="mb-1.5 flex">
-                  <div className="uppercase text-mist-300 text-sm font-medium">
-                    End at
-                  </div>
-                </div>
-                <DateTimePicker
-                  value={endAt}
-                  onChange={setEndAt}
-                  clearable={true}
-                  timezone={timezone}
-                />
-                <div className="mt-2 text-mist-400 text-sm font-light">
-                  Stops the schedule after this time. Leave empty to run
-                  forever.
-                </div>
-              </div>
-            </div>
-            <CronExpressionBuilder
-              value={cronExpression}
-              onChange={setCronExpression}
-            />
-          </>
-        ) : (
-          <PremiumSuggest />
-        )}
+        <ScheduleEditor
+          draft={schedule}
+          onChange={setSchedule}
+          preview={preview}
+          periodicAllowed={!!features?.periodic_scheduled_messages}
+        />
       </div>
     </div>
   );

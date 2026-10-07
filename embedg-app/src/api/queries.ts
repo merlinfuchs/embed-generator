@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type {
   AssistantUsageResponseWire,
   CustomBotGetResponseWire,
@@ -18,6 +18,8 @@ import type {
   GetGuildBrandingResponseWire,
   GuildWire,
   ScheduledMessageListResponseWire,
+  ScheduledMessagePreviewRequestWire,
+  ScheduledMessagePreviewResponseWire,
 } from "./wire";
 import type { APIResponse } from "./base";
 
@@ -289,5 +291,24 @@ export function useScheduledMessagesQuery(guildId: string | null) {
         handleApiResponse(res.json()),
       ),
     enabled: !!guildId,
+  });
+}
+
+// When a schedule that isn't saved yet would send, null until there is one to ask about.
+export function useScheduledMessagePreviewQuery(
+  guildId: string | null,
+  req: ScheduledMessagePreviewRequestWire | null,
+) {
+  return useQuery<ScheduledMessagePreviewResponseWire>({
+    queryKey: ["scheduled-message-preview", guildId, req],
+    queryFn: () =>
+      fetch(`/api/scheduled-messages/preview?guild_id=${guildId}`, {
+        method: "POST",
+        body: JSON.stringify(req),
+        headers: { "Content-Type": "application/json" },
+      }).then((res) => handleApiResponse(res.json())),
+    enabled: !!guildId && !!req,
+    // Keeps the last answer on screen while the next edit is checked.
+    placeholderData: keepPreviousData,
   });
 }

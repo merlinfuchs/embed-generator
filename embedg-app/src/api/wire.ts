@@ -475,6 +475,12 @@ export type ScheduledMessageUpdateRequestWire = ScheduledMessageCreateRequestWir
 export type ScheduledMessageUpdateResponseWire = APIResponse<ScheduledMessageWire>;
 export type ScheduledMessageDeleteResponseWire = APIResponse<{
   }>;
+export interface ScheduledMessagePreviewRequestWire extends ScheduledMessageScheduleWire {
+  /**
+   * Limit is how many runs to list at most, 5 when left out. Enough for "ends after N sends".
+   */
+  limit: number /* int */;
+}
 export interface ScheduledMessagePreviewWire {
   /**
    * Runs are the next sends, none past end_at.

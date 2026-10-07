@@ -35,7 +35,6 @@
     "react-calendar": "^4.3.0",
     "react-clock": "^4.2.0",
     "react-colorful": "^5.6.1",
-    "react-cron-generator": "^2.0.10",
     "react-datetime-picker": "^5.2.0",
     "react-dom": "^18.2.0",
     "react-error-boundary": "^5.0.0",

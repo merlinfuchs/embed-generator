@@ -23,15 +23,22 @@ import { isThreadOnlyChannel, parseMessageId } from "../discord/util";
 import ConfirmModal from "./ConfirmModal";
 import SavedMessageSelect from "./SavedMessageSelect";
 import { ChannelSelect } from "./ChannelSelect";
-import DateTimePicker from "./DateTimePicker";
 import clsx from "clsx";
-import cronstrue from "cronstrue";
-import CronExpressionBuilder from "./CronExpressionBuilder";
 import { usePremiumGuildFeatures } from "../util/premium";
-import PremiumSuggest from "./PremiumSuggest";
-import { rezone, timezoneOrUTC } from "../util/time";
-import TimezoneSelect from "./TimezoneSelect";
+import { timezoneOrUTC } from "../util/time";
 import CheckBox from "./CheckBox";
+import ScheduleEditor, {
+  formatRun,
+  lastRun,
+  relativeRun,
+  scheduleBlocked,
+  useSchedulePreview,
+} from "./ScheduleEditor";
+import {
+  describeSchedule,
+  scheduleDraftFromMessage,
+  scheduleFromDraft,
+} from "../util/schedule";
 import { useGuildChannelsQuery } from "../api/queries";
 
 export default function ScheduledMessage({
@@ -49,14 +56,10 @@ export default function ScheduledMessage({
 
   const [enabled, setEnabled] = useState(msg.enabled);
   const [name, setName] = useState(msg.name);
-  const [onlyOnce, setOnlyOnce] = useState(msg.only_once);
-  const [startAt, setStartAt] = useState<string | undefined>(msg.start_at);
-  const [endAt, setEndAt] = useState<string | undefined>(
-    msg.end_at || undefined,
-  );
   const storedTimezone = timezoneOrUTC(msg.cron_timezone);
-  const [timezone, setTimezone] = useState(storedTimezone);
-  const [cronExpression, setCronExpression] = useState(msg.cron_expression);
+  const [schedule, setSchedule] = useState(() => scheduleDraftFromMessage(msg));
+  // Only asks the server while the form is open, not for every message in the list.
+  const preview = useSchedulePreview(manage ? guildId : null, schedule);
   const [savedMessageId, setSavedMessageId] = useState<string | null>(
     msg.saved_message_id,
   );
@@ -68,11 +71,7 @@ export default function ScheduledMessage({
   function cancel() {
     setEnabled(msg.enabled);
     setName(msg.name);
-    setOnlyOnce(msg.only_once);
-    setStartAt(msg.start_at);
-    setEndAt(msg.end_at || undefined);
-    setTimezone(storedTimezone);
-    setCronExpression(msg.cron_expression);
+    setSchedule(scheduleDraftFromMessage(msg));
     setSavedMessageId(msg.saved_message_id);
     setChannelId(msg.channel_id);
     setThreadName(msg.thread_name);
@@ -85,13 +84,6 @@ export default function ScheduledMessage({
     setChannelId(id);
     setThreadName(null);
     setMessageId(null);
-  }
-
-  // The picked times were meant in the new timezone, so keep their wall clock.
-  function changeTimezone(tz: string) {
-    setStartAt((v) => v && rezone(v, timezone, tz));
-    setEndAt((v) => v && rezone(v, timezone, tz));
-    setTimezone(tz);
   }
 
   const selectedChannel = useMemo(
@@ -109,12 +101,22 @@ export default function ScheduledMessage({
       !guildId ||
       !channelId ||
       !savedMessageId ||
-      !startAt
+      !schedule.startAt
     ) {
       createToast({
         title: "Some required fields are missing",
         message:
           "Please fill all the required fields before updating the scheduled message",
+        type: "error",
+      });
+      return;
+    }
+
+    const blocked = scheduleBlocked(schedule, preview);
+    if (blocked) {
+      createToast({
+        title: "The schedule can't be saved yet",
+        message: blocked,
         type: "error",
       });
       return;
@@ -131,12 +133,7 @@ export default function ScheduledMessage({
           message_id: messageId,
           thread_name: threadName,
           saved_message_id: savedMessageId,
-          cron_expression: cronExpression,
-          cron_timezone: timezone,
-          cron_interval: msg.cron_interval,
-          start_at: startAt,
-          end_at: endAt ?? null,
-          only_once: onlyOnce,
+          ...scheduleFromDraft(schedule, lastRun(schedule, preview)),
           enabled: enabled,
         },
       },
@@ -198,7 +195,7 @@ export default function ScheduledMessage({
           <div className="px-5 py-4" key="1">
             <div className="flex justify-between items-start">
               <div className="flex items-center space-x-2 truncate text-lg mb-5">
-                {onlyOnce ? (
+                {schedule.onlyOnce ? (
                   <CalendarDaysIcon className="text-mist-500 h-6 w-6" />
                 ) : (
                   <ClockIcon className="text-mist-500 h-6 w-6" />
@@ -318,103 +315,12 @@ export default function ScheduledMessage({
                   </div>
                 </div>
               )}
-              <div className="flex">
-                <button
-                  className="flex bg-ink-900 p-1 rounded-lg text-white"
-                  onClick={() => setOnlyOnce((v) => !v)}
-                >
-                  <div
-                    className={clsx(
-                      "py-1 px-2 rounded-lg transition-colors",
-                      onlyOnce && "bg-ink-700",
-                    )}
-                  >
-                    Send Once
-                  </div>
-                  <div
-                    className={clsx(
-                      "py-1 px-2 rounded-lg transition-colors",
-                      !onlyOnce && "bg-ink-700",
-                    )}
-                  >
-                    Send Periodically
-                  </div>
-                </button>
-              </div>
-              {(onlyOnce || features?.periodic_scheduled_messages) && (
-                <div>
-                  <div className="mb-1.5 flex">
-                    <div className="uppercase text-mist-300 text-sm font-medium">
-                      Timezone
-                    </div>
-                  </div>
-                  <TimezoneSelect value={timezone} onChange={changeTimezone} />
-                </div>
-              )}
-              {onlyOnce ? (
-                <div>
-                  <div>
-                    <div className="mb-1.5 flex">
-                      <div className="uppercase text-mist-300 text-sm font-medium">
-                        Send at
-                      </div>
-                    </div>
-                    <DateTimePicker
-                      value={startAt}
-                      onChange={setStartAt}
-                      clearable={false}
-                      timezone={timezone}
-                    />
-                  </div>
-                </div>
-              ) : features?.periodic_scheduled_messages ? (
-                <>
-                  <div className="flex flex-col md:flex-row md:space-x-3 space-y-5 md:space-y-0">
-                    <div className="flex-auto">
-                      <div className="mb-1.5 flex">
-                        <div className="uppercase text-mist-300 text-sm font-medium">
-                          Start at
-                        </div>
-                      </div>
-                      <DateTimePicker
-                        value={startAt}
-                        onChange={setStartAt}
-                        clearable={false}
-                        timezone={timezone}
-                      />
-                      <div className="mt-2 text-mist-400 text-sm font-light">
-                        No runs before this time. The first run is the next
-                        scheduled time after it.
-                      </div>
-                    </div>
-                    <div className="flex-auto">
-                      <div className="mb-1.5 flex">
-                        <div className="uppercase text-mist-300 text-sm font-medium">
-                          End at
-                        </div>
-                      </div>
-                      <DateTimePicker
-                        value={endAt}
-                        onChange={setEndAt}
-                        clearable={true}
-                        timezone={timezone}
-                      />
-                      <div className="mt-2 text-mist-400 text-sm font-light">
-                        Stops the schedule after this time. Leave empty to run
-                        forever.
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <CronExpressionBuilder
-                      value={cronExpression}
-                      onChange={setCronExpression}
-                    />
-                  </div>
-                </>
-              ) : (
-                <PremiumSuggest />
-              )}
+              <ScheduleEditor
+                draft={schedule}
+                onChange={setSchedule}
+                preview={preview}
+                periodicAllowed={!!features?.periodic_scheduled_messages}
+              />
             </div>
           </div>
         ) : (
@@ -431,27 +337,15 @@ export default function ScheduledMessage({
                 </div>
               </div>
               <div className="text-mist-400 text-sm font-light whitespace-normal">
-                {!msg.only_once
-                  ? cronToString(msg.cron_expression)
-                  : new Date(msg.start_at).toLocaleString(undefined, {
-                      timeZone: storedTimezone,
-                    })}{" "}
+                {msg.only_once
+                  ? formatRun(msg.start_at, storedTimezone)
+                  : describeSchedule(
+                      msg.cron_expression,
+                      msg.cron_interval,
+                    )}{" "}
                 ({storedTimezone})
               </div>
-              {!msg.only_once &&
-                (msg.end_at &&
-                Date.parse(msg.next_at) > Date.parse(msg.end_at) ? (
-                  <div className="text-amber-300 text-sm font-light whitespace-normal">
-                    Ended, no more runs before the end date
-                  </div>
-                ) : (
-                  msg.enabled && (
-                    <div className="text-mist-400 text-sm font-light whitespace-normal">
-                      Next run in your time:{" "}
-                      {new Date(msg.next_at).toLocaleString()}
-                    </div>
-                  )
-                ))}
+              <Status msg={msg} />
               <LastError msg={msg} />
             </div>
             <div className="flex flex-none items-center space-x-4 md:space-x-3">
@@ -515,11 +409,34 @@ function LastError({ msg }: { msg: ScheduledMessageWire }) {
   );
 }
 
-function cronToString(v: string | null): string {
-  if (!v) return "";
-  try {
-    return cronstrue.toString(v, { verbose: true });
-  } catch {
-    return "";
+function ended(msg: ScheduledMessageWire): boolean {
+  return (
+    !msg.only_once &&
+    msg.end_at !== null &&
+    Date.parse(msg.next_at) > Date.parse(msg.end_at)
+  );
+}
+
+// What happens next, an error shows below it on its own.
+function Status({ msg }: { msg: ScheduledMessageWire }) {
+  if (msg.last_error && !msg.enabled && !ended(msg)) return null;
+
+  let text: string;
+  let className = "text-mist-500";
+  if (ended(msg)) {
+    text = `Ended ${new Date(msg.end_at!).toLocaleDateString()}`;
+  } else if (msg.enabled) {
+    text = `Next send ${new Date(msg.next_at).toLocaleString()}, ${relativeRun(msg.next_at)}`;
+    className = "text-mist-300";
+  } else if (msg.only_once && msg.last_sent_at) {
+    text = `Sent ${new Date(msg.last_sent_at).toLocaleString()}`;
+  } else {
+    text = "Paused";
   }
+
+  return (
+    <div className={clsx("text-sm font-light whitespace-normal", className)}>
+      {text}
+    </div>
+  );
 }

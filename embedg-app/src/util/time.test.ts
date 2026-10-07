@@ -5,6 +5,8 @@ import {
   rezone,
   timezoneOrUTC,
   toZonedDate,
+  zonedDate,
+  zonedDateTime,
 } from "./time";
 
 describe("zoned dates", () => {
@@ -87,5 +89,25 @@ describe("timezoneOrUTC", () => {
     expect(timezoneOrUTC(null)).toBe("UTC");
     expect(timezoneOrUTC("")).toBe("UTC");
     expect(timezoneOrUTC("Etc/Unknown")).toBe("UTC");
+  });
+});
+
+describe("zoned calendar dates", () => {
+  it("reads the date in the timezone, not in UTC", () => {
+    // 23:30 in New York is already the next day in UTC.
+    expect(zonedDate("2026-10-08T03:30:00.000Z", "America/New_York")).toBe(
+      "2026-10-07",
+    );
+    expect(zonedDate("2026-10-08T03:30:00.000Z", "UTC")).toBe("2026-10-08");
+  });
+
+  it("turns a date and wall clock into the instant", () => {
+    expect(zonedDateTime("2026-10-07", "America/Denver", 0, 0)).toBe(
+      "2026-10-07T06:00:00.000Z",
+    );
+    // Denver is back on standard time after Nov 1.
+    expect(zonedDateTime("2026-11-02", "America/Denver", 23, 59, 59)).toBe(
+      "2026-11-03T06:59:59.000Z",
+    );
   });
 });

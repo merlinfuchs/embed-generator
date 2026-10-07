@@ -306,12 +306,12 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 	})
 }
 
-// How many upcoming runs a preview lists.
-const previewRuns = 5
+// How many upcoming runs a preview lists unless asked for more.
+const defaultPreviewRuns = 5
 
 // HandlePreviewScheduledMessage lists when a schedule would send, so it can be checked before it's
 // saved. It fails the same way saving it would.
-func (h *ScheduledMessageHandler) HandlePreviewScheduledMessage(c *fiber.Ctx, req wire.ScheduledMessageScheduleWire) error {
+func (h *ScheduledMessageHandler) HandlePreviewScheduledMessage(c *fiber.Ctx, req wire.ScheduledMessagePreviewRequestWire) error {
 	guildID, err := handlers.QueryID(c, "guild_id")
 	if err != nil {
 		return err
@@ -321,11 +321,17 @@ func (h *ScheduledMessageHandler) HandlePreviewScheduledMessage(c *fiber.Ctx, re
 		return err
 	}
 
-	if err := normalizeSchedule(&req); err != nil {
+	limit := req.Limit
+	if limit == 0 {
+		limit = defaultPreviewRuns
+	}
+
+	s := &req.ScheduledMessageScheduleWire
+	if err := normalizeSchedule(s); err != nil {
 		return err
 	}
 
-	first, err := firstRun(&req, time.Now().UTC())
+	first, err := firstRun(s, time.Now().UTC())
 	if err != nil {
 		return err
 	}
@@ -333,9 +339,9 @@ func (h *ScheduledMessageHandler) HandlePreviewScheduledMessage(c *fiber.Ctx, re
 		return err
 	}
 
-	sched := schedule(&req)
+	sched := schedule(s)
 	runs := []time.Time{first}
-	for !req.OnlyOnce && len(runs) <= previewRuns {
+	for !req.OnlyOnce && len(runs) <= limit {
 		next, err := sched.Next(runs[len(runs)-1])
 		if err != nil {
 			return err
@@ -346,9 +352,9 @@ func (h *ScheduledMessageHandler) HandlePreviewScheduledMessage(c *fiber.Ctx, re
 		runs = append(runs, next)
 	}
 
-	more := len(runs) > previewRuns
+	more := len(runs) > limit
 	if more {
-		runs = runs[:previewRuns]
+		runs = runs[:limit]
 	}
 
 	return c.JSON(wire.ScheduledMessagePreviewResponseWire{
