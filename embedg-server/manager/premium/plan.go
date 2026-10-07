@@ -33,15 +33,12 @@ func (m *PremiumManager) GetPlanBySKUID(skuID string) *model.Plan {
 // config, which goes from the cheapest to the most expensive plan.
 func (m *PremiumManager) GetPaidPlans() []model.Plan {
 	var plans []model.Plan
-	seen := make(map[string]struct{})
 	for _, plan := range m.config.Plans {
-		if plan.Default || plan.Name == "" {
+		if plan.Default || plan.Name == "" || slices.ContainsFunc(plans, func(p model.Plan) bool {
+			return p.Name == plan.Name
+		}) {
 			continue
 		}
-		if _, ok := seen[plan.Name]; ok {
-			continue
-		}
-		seen[plan.Name] = struct{}{}
 		plans = append(plans, plan)
 	}
 	return plans

@@ -1,6 +1,10 @@
 package config
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/merlinfuchs/embed-generator/embedg-server/model"
+)
 
 func TestValidateShards(t *testing.T) {
 	tests := []struct {
@@ -51,5 +55,29 @@ func TestValidateShardsUnpinnedCount(t *testing.T) {
 	cfg := DiscordConfig{ShardCount: 0, InstanceCount: 4, InstanceIndex: 1}
 	if err := cfg.validateShards(); err != nil {
 		t.Errorf("validateShards() error = %v, want nil", err)
+	}
+}
+
+func TestValidatePlans(t *testing.T) {
+	premium := model.PlanFeatures{MaxSavedMessages: 100}
+	ultimate := model.PlanFeatures{MaxSavedMessages: 500}
+
+	tests := []struct {
+		name    string
+		plans   []model.Plan
+		wantErr bool
+	}{
+		{"same name, same features", []model.Plan{{ID: "a", Name: "Premium", Features: premium}, {ID: "b", Name: "Premium", Features: premium}}, false},
+		{"different names", []model.Plan{{ID: "a", Name: "Premium", Features: premium}, {ID: "b", Name: "Ultimate", Features: ultimate}}, false},
+		{"unnamed plans may differ", []model.Plan{{ID: "a", Features: premium}, {ID: "b", Features: ultimate}}, false},
+		{"same name, different features", []model.Plan{{ID: "a", Name: "Premium", Features: premium}, {ID: "b", Name: "Premium", Features: ultimate}}, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := (PremiumConfig{Plans: tt.plans}).validatePlans(); (err != nil) != tt.wantErr {
+				t.Errorf("validatePlans() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
 	}
 }

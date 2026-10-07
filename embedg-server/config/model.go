@@ -27,6 +27,10 @@ func (cfg *RootConfig) Validate() error {
 		return err
 	}
 
+	if err := cfg.Premium.validatePlans(); err != nil {
+		return err
+	}
+
 	return cfg.Discord.validateShards()
 }
 
@@ -123,6 +127,19 @@ type PremiumConfig struct {
 	BeneficialGuildID common.ID    `toml:"beneficial_guild_id" `
 	BeneficialRoleID  common.ID    `toml:"beneficial_role_id"`
 	Plans             []model.Plan `toml:"plans"`
+}
+
+// validatePlans makes sure plans that share a name, like a subscription and its lifetime version,
+// have the same features, because the app shows the features of the first one.
+func (c PremiumConfig) validatePlans() error {
+	for i, a := range c.Plans {
+		for _, b := range c.Plans[:i] {
+			if a.Name != "" && a.Name == b.Name && a.Features != b.Features {
+				return fmt.Errorf("premium plans %s and %s are both named %q but have different features", b.ID, a.ID, a.Name)
+			}
+		}
+	}
+	return nil
 }
 
 type LinksConfig struct {

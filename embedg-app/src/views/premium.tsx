@@ -5,7 +5,7 @@ import PremiumFeatures from "../components/PremiumFeatures";
 import PremiumSuggest from "../components/PremiumSuggest";
 import UltimateFeatures from "../components/UltimateFeatures";
 import UltimateSuggest from "../components/UltimateSuggest";
-import { PREMIUM_PLAN, ULTIMATE_PLAN } from "../util/plans";
+import { PREMIUM_PLAN, ULTIMATE_PLAN, usePlans } from "../util/plans";
 import { usePremiumGuildFeatures } from "../util/premium";
 
 export default function PremiumView() {
@@ -14,6 +14,11 @@ export default function PremiumView() {
   const features = usePremiumGuildFeatures();
   const isUltimate = features?.plan === ULTIMATE_PLAN;
   const planName = features?.plan || PREMIUM_PLAN;
+
+  // Plans come from the cheapest to the most expensive, and the free one isn't listed.
+  const plans = usePlans();
+  const rank = (name: string) => plans?.findIndex((p) => p.plan === name) ?? -1;
+  const offerUltimate = !!features && rank(ULTIMATE_PLAN) > rank(features.plan);
 
   return (
     <div className="px-4 max-w-5xl mx-auto mb-20 mt-5 lg:mt-20 w-full">
@@ -49,9 +54,7 @@ export default function PremiumView() {
           ) : (
             <PremiumSuggest alwaysExpanded={true} />
           )}
-          {features && !isUltimate && (
-            <UltimateSuggest upgrade={features.is_premium} />
-          )}
+          {offerUltimate && <UltimateSuggest upgrade={features.is_premium} />}
         </div>
       ) : (
         <LogginSuggest alwaysExpanded={true} />
