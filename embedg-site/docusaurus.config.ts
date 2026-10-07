@@ -1,6 +1,7 @@
 import { themes as prismThemes } from "prism-react-renderer";
 import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
+import componentEmbeds from "./plugins/component-embeds";
 
 const config: Config = {
   title: "Embed Generator",
@@ -121,11 +122,6 @@ const config: Config = {
       metadata: [
         {
           name: "description",
-          content:
-            "Create embed messages for your Discord server with ease and give them your own branding using webhooks.",
-        },
-        {
-          name: "og:description",
           content:
             "Create embed messages for your Discord server with ease and give them your own branding using webhooks.",
         },
@@ -252,6 +248,7 @@ const config: Config = {
     } satisfies Preset.ThemeConfig,
 
   plugins: [
+    componentEmbeds,
     async function myPlugin(context, options) {
       return {
         name: "docusaurus-tailwindcss",

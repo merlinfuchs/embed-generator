@@ -1,5 +1,10 @@
 import { expect, test } from "vitest";
-import { pages, renderPage, renderPageHtml } from "./pages";
+import {
+  componentEmbedScript,
+  pages,
+  renderPage,
+  renderPageHtml,
+} from "./pages";
 
 const shell = `<head>
     <!-- page-meta -->
@@ -49,4 +54,41 @@ test("page text is escaped", () => {
 
 test("a shell without the page-meta block fails the build", () => {
   expect(() => renderPage("<head></head>", "")).toThrow();
+});
+
+test("indexable pages get a component embed Discord accepts", () => {
+  for (const page of pages.filter((p) => p.path)) {
+    const html = renderPageHtml(shell, page);
+    const json = html.match(
+      /<script id="discord:component-embed" type="application\/json">(.*?)<\/script>/,
+    )?.[1];
+    if (!json) throw new Error(`no component embed for ${page.file}`);
+
+    expect(new TextEncoder().encode(json).length).toBeLessThanOrEqual(3000);
+    const { component } = JSON.parse(json);
+    expect(component.type).toBe(17);
+    expect(component.components[1].content).toContain(
+      `(https://message.style/app${page.path})`,
+    );
+  }
+});
+
+test("component embed text is escaped", () => {
+  const script = componentEmbedScript(
+    {
+      file: "x",
+      title: "x",
+      description: "# not a heading </script>",
+      heading: "[a](b)",
+      text: "x",
+    },
+    { byline: "x", open: "Open", docs: "https://message.style/docs" },
+    "https://message.style/app/x",
+  );
+
+  expect(script.match(/<\/script>/g)).toHaveLength(1);
+  const json = script.slice(script.indexOf(">") + 1, -"</script>".length);
+  expect(JSON.parse(json).component.components[1].content).toBe(
+    "## [\\[a\\](b)](https://message.style/app/x)\n\\# not a heading \\</script\\>",
+  );
 });
