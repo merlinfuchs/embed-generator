@@ -1,6 +1,14 @@
 import React from "react";
 
-const steps = [
+function Link({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <a href={href} className="text-azure-400 hover:text-azure-300">
+      {children}
+    </a>
+  );
+}
+
+const steps: { n: string; title: string; text: React.ReactNode }[] = [
   {
     n: "1",
     title: "Build it in the editor",
@@ -9,12 +17,25 @@ const steps = [
   {
     n: "2",
     title: "Send it with a Discord webhook or the bot",
-    text: "Paste a webhook URL for plain messages, or add the Embed Generator bot to your server when you want buttons that hand out roles, reply, or open links.",
+    text: (
+      <>
+        Paste a{" "}
+        <Link href="/features/discord-webhooks">Discord webhook</Link> URL for
+        plain messages, or add the Embed Generator bot to your server when you
+        want buttons that hand out roles, reply, or open links.
+      </>
+    ),
   },
   {
     n: "3",
     title: "Save, schedule, reuse",
-    text: "Keep your messages in the cloud, send them again in other channels, schedule them for later, or turn them into slash commands your members can run.",
+    text: (
+      <>
+        Keep your messages in the cloud, send them again in other channels,{" "}
+        <Link href="/features/scheduled-messages">schedule them for later</Link>,
+        or turn them into slash commands your members can run.
+      </>
+    ),
   },
 ];
 
