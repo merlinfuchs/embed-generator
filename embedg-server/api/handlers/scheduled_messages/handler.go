@@ -3,6 +3,7 @@ package scheduled_messages
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"log/slog"
@@ -78,8 +79,8 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 		return err
 	}
 
-	if !req.OnlyOnce && !features.PeriodicScheduledMessages {
-		return handlers.Forbidden("insufficient_plan", "Periodic scheduled messages are not available on your plan.")
+	if !features.PeriodicScheduledMessages && (!req.OnDates() || len(req.RunTimes) > 1) {
+		return handlers.Forbidden("insufficient_plan", "Repeating scheduled messages and sending on more than one date are not available on your plan.")
 	}
 
 	if err := normalizeSchedule(&req.ScheduledMessageScheduleWire); err != nil {
@@ -131,7 +132,7 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 		StartAt:          req.StartAt,
 		EndAt:            req.EndAt,
 		NextAt:           nextAt,
-		OnlyOnce:         req.OnlyOnce,
+		RunTimes:         req.RunTimes,
 		CreatedAt:        time.Now().UTC(),
 		UpdatedAt:        time.Now().UTC(),
 		Enabled:          req.Enabled,
@@ -220,8 +221,8 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		return err
 	}
 
-	if !req.OnlyOnce && !features.PeriodicScheduledMessages {
-		return handlers.Forbidden("insufficient_plan", "Periodic scheduled messages are not available on your plan.")
+	if !features.PeriodicScheduledMessages && (!req.OnDates() || len(req.RunTimes) > 1) {
+		return handlers.Forbidden("insufficient_plan", "Repeating scheduled messages and sending on more than one date are not available on your plan.")
 	}
 
 	existing, err := h.scheduledMessageStore.GetScheduledMessage(c.UserContext(), guildID, messageID)
@@ -240,7 +241,7 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 
 	// Only recompute the schedule when it actually changed, otherwise e.g. toggling
 	// enabled would reset start_at and drop a pending send.
-	scheduleUnchanged := existing.OnlyOnce == req.OnlyOnce &&
+	scheduleUnchanged := slices.EqualFunc(existing.RunTimes, req.RunTimes, time.Time.Equal) &&
 		existing.StartAt.Equal(req.StartAt) &&
 		existing.CronExpression.Equal(req.CronExpression) &&
 		existing.CronTimezone.Equal(req.CronTimezone) &&
@@ -293,7 +294,7 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		StartAt:          req.StartAt,
 		EndAt:            req.EndAt,
 		NextAt:           nextAt,
-		OnlyOnce:         req.OnlyOnce,
+		RunTimes:         req.RunTimes,
 		Enabled:          req.Enabled,
 		UpdatedAt:        time.Now().UTC(),
 	})
@@ -342,17 +343,25 @@ func (h *ScheduledMessageHandler) HandlePreviewScheduledMessage(c *fiber.Ctx, re
 		return err
 	}
 
-	sched := schedule(&req)
 	runs := []time.Time{first}
-	for !req.OnlyOnce && len(runs) <= previewRuns {
-		next, err := sched.Next(runs[len(runs)-1])
-		if err != nil {
-			return err
+	if req.OnDates() {
+		for _, t := range req.RunTimes {
+			if t.After(first) {
+				runs = append(runs, t)
+			}
 		}
-		if req.EndAt.Valid && next.After(req.EndAt.Time) {
-			break
+	} else {
+		sched := schedule(&req)
+		for len(runs) <= previewRuns {
+			next, err := sched.Next(runs[len(runs)-1])
+			if err != nil {
+				return err
+			}
+			if req.EndAt.Valid && next.After(req.EndAt.Time) {
+				break
+			}
+			runs = append(runs, next)
 		}
-		runs = append(runs, next)
 	}
 
 	more := len(runs) > previewRuns
@@ -406,13 +415,23 @@ func timezoneOrUTC(tz null.String) null.String {
 
 // normalizeSchedule checks the schedule of a request and fills in what it leaves open.
 func normalizeSchedule(s *wire.ScheduledMessageScheduleWire) error {
+	s.CronTimezone = timezoneOrUTC(s.CronTimezone)
+
+	if s.OnDates() {
+		// Sorted without duplicates, so the next date is the first one after the last send.
+		slices.SortFunc(s.RunTimes, time.Time.Compare)
+		s.RunTimes = slices.CompactFunc(s.RunTimes, time.Time.Equal)
+		s.StartAt = s.RunTimes[0]
+		s.CronInterval = 1
+		return nil
+	}
+	s.RunTimes = nil
+
 	if s.EndAt.Valid && s.EndAt.Time.Before(s.StartAt) {
 		return handlers.BadRequest("invalid_end_at", "The end_at field must be after the start_at field.")
 	}
-
-	s.CronTimezone = timezoneOrUTC(s.CronTimezone)
 	// Clients from before intervals leave it out.
-	if s.OnlyOnce || s.CronInterval == 0 {
+	if s.CronInterval == 0 {
 		s.CronInterval = 1
 	}
 	return nil
@@ -427,15 +446,22 @@ func schedule(s *wire.ScheduledMessageScheduleWire) scheduled_messages.Schedule 
 	}
 }
 
-// firstRun validates the schedule and returns when it first runs, not before now. A message sent
-// only once runs at its start, moved up to now when that's past. A recurring schedule keeps a
-// start in the past, its intervals count from there.
+// A date picked as now is a little in the past by the time it's saved, it still goes out.
+const pickedNowGrace = time.Minute
+
+// firstRun validates the schedule and returns when it first runs, not before now. Dates in the
+// past are skipped. A recurring schedule keeps a start in the past, its intervals count from there.
 func firstRun(s *wire.ScheduledMessageScheduleWire, now time.Time) (time.Time, error) {
-	if s.OnlyOnce {
-		if s.StartAt.Before(now) {
-			s.StartAt = now
+	if s.OnDates() {
+		for _, t := range s.RunTimes {
+			if t.After(now) {
+				return t, nil
+			}
+			if t.After(now.Add(-pickedNowGrace)) {
+				return now, nil
+			}
 		}
-		return s.StartAt, nil
+		return time.Time{}, handlers.BadRequest("never_runs", "All dates of the scheduled message are in the past.")
 	}
 
 	// Without seconds every run is on a different minute, so it can't run more than once a minute.
@@ -461,7 +487,7 @@ func firstRun(s *wire.ScheduledMessageScheduleWire, now time.Time) (time.Time, e
 // endAfterRuns turns ending after a number of sends into the end_at of the last one, counted
 // from the next send.
 func endAfterRuns(s *wire.ScheduledMessageScheduleWire, next time.Time) error {
-	if s.OnlyOnce || s.EndAfterRuns == 0 {
+	if s.OnDates() || s.EndAfterRuns == 0 {
 		return nil
 	}
 
@@ -513,7 +539,7 @@ func scheduledMessageModelToWire(model *model.ScheduledMessage) wire.ScheduledMe
 		StartAt:        model.StartAt,
 		EndAt:          model.EndAt,
 		NextAt:         model.NextAt,
-		OnlyOnce:       model.OnlyOnce,
+		RunTimes:       model.RunTimes,
 		Enabled:        model.Enabled,
 		CreatedAt:      model.CreatedAt,
 		UpdatedAt:      model.UpdatedAt,

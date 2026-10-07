@@ -15,8 +15,7 @@ func TestScheduledMessageEditCantCreateThread(t *testing.T) {
 		Name:           "edit",
 		MessageID:      common.NullID{ID: 2, Valid: true},
 		ScheduledMessageScheduleWire: ScheduledMessageScheduleWire{
-			OnlyOnce: true,
-			StartAt:  time.Now(),
+			RunTimes: []time.Time{time.Now()},
 		},
 	}
 	if err := req.Validate(); err != nil {
@@ -42,8 +41,7 @@ func TestScheduledMessageTimezone(t *testing.T) {
 			SavedMessageID: "saved",
 			Name:           "tz",
 			ScheduledMessageScheduleWire: ScheduledMessageScheduleWire{
-				OnlyOnce:     true,
-				StartAt:      time.Now(),
+				RunTimes:     []time.Time{time.Now()},
 				CronTimezone: null.NewString(tz, tz != ""),
 			},
 		}
@@ -74,10 +72,29 @@ func TestScheduledMessageCronInterval(t *testing.T) {
 		}
 	}
 
-	// Sent only once, there is nothing to repeat.
-	req.OnlyOnce = true
-	req.CronInterval = -1
-	if err := req.Validate(); err != nil {
-		t.Errorf("want the interval to be ignored when sent once, got %v", err)
+}
+
+func TestScheduledMessageRunTimes(t *testing.T) {
+	dates := []time.Time{time.Now(), time.Now().Add(time.Hour)}
+	tooMany := make([]time.Time, MaxRunTimes+1)
+	for i := range tooMany {
+		tooMany[i] = time.Now().Add(time.Duration(i) * time.Hour)
+	}
+
+	for _, c := range []struct {
+		name     string
+		schedule ScheduledMessageScheduleWire
+		valid    bool
+	}{
+		{"dates", ScheduledMessageScheduleWire{RunTimes: dates}, true},
+		{"cron", ScheduledMessageScheduleWire{CronExpression: null.StringFrom("0 12 * * *"), StartAt: time.Now()}, true},
+		{"neither", ScheduledMessageScheduleWire{StartAt: time.Now()}, false},
+		{"both", ScheduledMessageScheduleWire{RunTimes: dates, CronExpression: null.StringFrom("0 12 * * *")}, false},
+		{"dates with an end", ScheduledMessageScheduleWire{RunTimes: dates, EndAt: null.TimeFrom(time.Now())}, false},
+		{"too many dates", ScheduledMessageScheduleWire{RunTimes: tooMany}, false},
+	} {
+		if err := c.schedule.Validate(); (err == nil) != c.valid {
+			t.Errorf("%s: got %v, want valid %v", c.name, err, c.valid)
+		}
 	}
 }

@@ -3,6 +3,7 @@ package scheduled_messages
 import (
 	"errors"
 	"testing"
+	"time"
 )
 
 func TestScheduleRuns(t *testing.T) {
@@ -138,5 +139,21 @@ func TestIntervalUnit(t *testing.T) {
 		if !c.ok && !errors.Is(err, ErrUnsupportedInterval) {
 			t.Errorf("%q: got %v, %v, want ErrUnsupportedInterval", c.expr, got, err)
 		}
+	}
+}
+
+func TestNextDate(t *testing.T) {
+	dates := []time.Time{
+		mustParse(t, "2026-10-16T18:00:00Z"),
+		mustParse(t, "2026-10-23T18:00:00Z"),
+		mustParse(t, "2026-10-30T18:00:00Z"),
+	}
+
+	// Down from before the 16th until after the 23rd, so the 23rd is skipped.
+	if got, ok := NextDate(dates, mustParse(t, "2026-10-24T00:00:00Z")); !ok || !got.Equal(dates[2]) {
+		t.Errorf("got %s, %v, want %s", got, ok, dates[2])
+	}
+	if _, ok := NextDate(dates, dates[2]); ok {
+		t.Error("want no date after the last one")
 	}
 }

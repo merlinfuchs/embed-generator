@@ -35,7 +35,9 @@ import ScheduleEditor, {
 } from "./ScheduleEditor";
 import {
   describeSchedule,
+  isOnDates,
   scheduleDraftFromMessage,
+  sortDates,
   scheduleFromDraft,
 } from "../util/schedule";
 import { useGuildChannelsQuery } from "../api/queries";
@@ -100,7 +102,7 @@ export default function ScheduledMessage({
       !guildId ||
       !channelId ||
       !savedMessageId ||
-      !schedule.startAt
+      (!schedule.onDates && !schedule.startAt)
     ) {
       createToast({
         title: "Some required fields are missing",
@@ -111,7 +113,11 @@ export default function ScheduledMessage({
       return;
     }
 
-    const blocked = scheduleError(schedule, preview);
+    const blocked = scheduleError(
+      schedule,
+      preview,
+      !!features?.periodic_scheduled_messages,
+    );
     if (blocked) {
       createToast({
         title: "The schedule can't be saved yet",
@@ -196,7 +202,7 @@ export default function ScheduledMessage({
           <div className="px-5 py-4" key="1">
             <div className="flex justify-between items-start">
               <div className="flex items-center space-x-2 truncate text-lg mb-5">
-                {schedule.onlyOnce ? (
+                {schedule.onDates ? (
                   <CalendarDaysIcon className="text-mist-500 h-6 w-6" />
                 ) : (
                   <ClockIcon className="text-mist-500 h-6 w-6" />
@@ -329,7 +335,7 @@ export default function ScheduledMessage({
             <div className="flex-auto truncate">
               <div className="flex items-center space-x-2 truncate text-lg mb-1">
                 <div className="text-white truncate flex space-x-2 items-center">
-                  {msg.only_once ? (
+                  {isOnDates(msg) ? (
                     <CalendarDaysIcon className="text-mist-500 h-6 w-6" />
                   ) : (
                     <ClockIcon className="text-mist-500 h-6 w-6" />
@@ -338,8 +344,8 @@ export default function ScheduledMessage({
                 </div>
               </div>
               <div className="text-mist-400 text-sm font-light whitespace-normal">
-                {msg.only_once
-                  ? formatRun(msg.start_at, storedTimezone)
+                {isOnDates(msg)
+                  ? describeDates(msg.run_times!, storedTimezone)
                   : describeSchedule(
                       msg.cron_expression,
                       msg.cron_interval,
@@ -394,7 +400,7 @@ function LastError({ msg }: { msg: ScheduledMessageWire }) {
   const label =
     msg.enabled || ended(msg)
       ? "Last run failed"
-      : msg.only_once
+      : isOnDates(msg)
         ? "Failed to send"
         : "Stopped";
   const at = msg.last_error_at
@@ -408,11 +414,22 @@ function LastError({ msg }: { msg: ScheduledMessageWire }) {
   );
 }
 
+function describeDates(dates: string[], timezone: string): string {
+  const sorted = sortDates(dates);
+  if (sorted.length === 1) return formatRun(sorted[0], timezone);
+
+  const day = (iso: string) =>
+    new Date(iso).toLocaleDateString(undefined, {
+      timeZone: timezone,
+      month: "short",
+      day: "numeric",
+    });
+  return `${sorted.length} dates from ${day(sorted[0])} to ${day(sorted[sorted.length - 1])}`;
+}
+
 function ended(msg: ScheduledMessageWire): boolean {
   return (
-    !msg.only_once &&
-    msg.end_at !== null &&
-    Date.parse(msg.next_at) > Date.parse(msg.end_at)
+    msg.end_at !== null && Date.parse(msg.next_at) > Date.parse(msg.end_at)
   );
 }
 
@@ -427,7 +444,7 @@ function Status({ msg }: { msg: ScheduledMessageWire }) {
   } else if (msg.enabled) {
     text = `Next send ${new Date(msg.next_at).toLocaleString()}, ${relativeRun(msg.next_at)}`;
     className = "text-mist-300";
-  } else if (msg.only_once && msg.last_sent_at) {
+  } else if (isOnDates(msg) && msg.last_sent_at) {
     text = `Sent ${new Date(msg.last_sent_at).toLocaleString()}`;
   } else {
     text = "Paused";

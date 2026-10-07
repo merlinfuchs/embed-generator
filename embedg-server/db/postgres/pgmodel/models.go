@@ -158,7 +158,6 @@ type ScheduledMessage struct {
 	Name             string
 	Description      pgtype.Text
 	CronExpression   pgtype.Text
-	OnlyOnce         bool
 	StartAt          pgtype.Timestamp
 	EndAt            pgtype.Timestamp
 	NextAt           pgtype.Timestamp
@@ -172,6 +171,7 @@ type ScheduledMessage struct {
 	LastError        pgtype.Text
 	LastErrorAt      pgtype.Timestamp
 	CronInterval     int16
+	RunTimes         []pgtype.Timestamp
 }
 
 type Session struct {

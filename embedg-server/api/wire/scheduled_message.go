@@ -24,7 +24,7 @@ type ScheduledMessageWire struct {
 	StartAt        time.Time     `json:"start_at"`
 	EndAt          null.Time     `json:"end_at"`
 	NextAt         time.Time     `json:"next_at"`
-	OnlyOnce       bool          `json:"only_once"`
+	RunTimes       []time.Time   `json:"run_times"`
 	Enabled        bool          `json:"enabled"`
 	CreatedAt      time.Time     `json:"created_at"`
 	UpdatedAt      time.Time     `json:"updated_at"`
@@ -39,33 +39,44 @@ type ScheduledMessageListResponseWire APIResponse[[]ScheduledMessageWire]
 type ScheduledMessageGetResponseWire APIResponse[ScheduledMessageWire]
 
 // ScheduledMessageScheduleWire is when a scheduled message is sent.
+// ScheduledMessageScheduleWire is when a scheduled message is sent: on the dates in run_times, or
+// repeating on cron_expression.
 type ScheduledMessageScheduleWire struct {
+	// RunTimes are the dates to send on, one for a message sent once.
+	RunTimes       []time.Time `json:"run_times"`
 	CronExpression null.String `json:"cron_expression"`
 	CronTimezone   null.String `json:"cron_timezone"`
 	// CronInterval runs the cron expression only in every Nth day, week, month or hour, counted
-	// from its first run. 0 or left out means every one. Ignored for messages sent only once.
-	CronInterval int       `json:"cron_interval"`
-	StartAt      time.Time `json:"start_at"`
-	EndAt        null.Time `json:"end_at"`
+	// from its first run. 0 or left out means every one.
+	CronInterval int `json:"cron_interval"`
+	// StartAt is where a repeating schedule starts, the first date for one on dates.
+	StartAt time.Time `json:"start_at"`
+	EndAt   null.Time `json:"end_at"`
 	// EndAfterRuns ends the schedule after this many sends from its next one, instead of at end_at.
-	EndAfterRuns int  `json:"end_after_runs"`
-	OnlyOnce     bool `json:"only_once"`
+	EndAfterRuns int `json:"end_after_runs"`
+}
+
+// OnDates is whether it's sent on a list of dates instead of repeating.
+func (s ScheduledMessageScheduleWire) OnDates() bool {
+	return len(s.RunTimes) > 0
 }
 
 func (s ScheduledMessageScheduleWire) Validate() error {
+	onDates := s.OnDates()
 	return validation.ValidateStruct(&s,
-		validation.Field(&s.CronExpression, validation.When(
-			!s.OnlyOnce,
-			validation.Required,
-		)),
-		validation.Field(&s.CronInterval, validation.When(
-			!s.OnlyOnce,
+		validation.Field(&s.RunTimes, validation.Length(0, MaxRunTimes)),
+		validation.Field(&s.CronExpression,
+			validation.When(!onDates, validation.Required),
+			validation.When(onDates, validation.Empty),
+		),
+		validation.Field(&s.CronInterval, validation.Min(0), validation.Max(maxCronInterval)),
+		validation.Field(&s.StartAt, validation.When(!onDates, validation.Required)),
+		validation.Field(&s.EndAt, validation.When(onDates || s.EndAfterRuns > 0, validation.Empty)),
+		validation.Field(&s.EndAfterRuns,
 			validation.Min(0),
-			validation.Max(maxCronInterval),
-		)),
-		validation.Field(&s.StartAt, validation.Required),
-		validation.Field(&s.EndAt, validation.When(s.EndAfterRuns > 0, validation.Empty)),
-		validation.Field(&s.EndAfterRuns, validation.Min(0), validation.Max(maxEndAfterRuns)),
+			validation.Max(maxEndAfterRuns),
+			validation.When(onDates, validation.Empty),
+		),
 		validation.Field(&s.CronTimezone, validation.By(validateTimezone)),
 	)
 }
@@ -118,6 +129,9 @@ type ScheduledMessagePreviewWire struct {
 type ScheduledMessagePreviewResponseWire APIResponse[ScheduledMessagePreviewWire]
 
 const maxCronInterval = 1000
+
+// MaxRunTimes is how many dates a scheduled message can be sent on.
+const MaxRunTimes = 100
 
 const maxEndAfterRuns = 1000
 

@@ -78,7 +78,7 @@ func (c *Client) CreateScheduledMessage(ctx context.Context, msg model.Scheduled
 		StartAt:          pgtype.Timestamp{Time: msg.StartAt.UTC(), Valid: true},
 		EndAt:            pgtype.Timestamp{Time: msg.EndAt.Time.UTC(), Valid: msg.EndAt.Valid},
 		NextAt:           pgtype.Timestamp{Time: msg.NextAt.UTC(), Valid: true},
-		OnlyOnce:         msg.OnlyOnce,
+		RunTimes:         timestamps(msg.RunTimes),
 		Enabled:          msg.Enabled,
 		CreatedAt:        pgtype.Timestamp{Time: msg.CreatedAt, Valid: true},
 		UpdatedAt:        pgtype.Timestamp{Time: msg.UpdatedAt, Valid: true},
@@ -104,7 +104,7 @@ func (c *Client) UpdateScheduledMessage(ctx context.Context, msg model.Scheduled
 		NextAt:           pgtype.Timestamp{Time: msg.NextAt.UTC(), Valid: true},
 		StartAt:          pgtype.Timestamp{Time: msg.StartAt.UTC(), Valid: true},
 		EndAt:            pgtype.Timestamp{Time: msg.EndAt.Time.UTC(), Valid: msg.EndAt.Valid},
-		OnlyOnce:         msg.OnlyOnce,
+		RunTimes:         timestamps(msg.RunTimes),
 		Enabled:          msg.Enabled,
 		UpdatedAt:        pgtype.Timestamp{Time: msg.UpdatedAt, Valid: true},
 		CronTimezone:     pgtype.Text{String: msg.CronTimezone.String, Valid: msg.CronTimezone.Valid},
@@ -140,6 +140,28 @@ func rowsToScheduledMessages(rows []pgmodel.ScheduledMessage) []model.ScheduledM
 	return messages
 }
 
+func timestamps(ts []time.Time) []pgtype.Timestamp {
+	if ts == nil {
+		return nil
+	}
+	res := make([]pgtype.Timestamp, len(ts))
+	for i, t := range ts {
+		res[i] = pgtype.Timestamp{Time: t.UTC(), Valid: true}
+	}
+	return res
+}
+
+func times(ts []pgtype.Timestamp) []time.Time {
+	if ts == nil {
+		return nil
+	}
+	res := make([]time.Time, len(ts))
+	for i, t := range ts {
+		res[i] = t.Time
+	}
+	return res
+}
+
 func nullID(text pgtype.Text) common.NullID {
 	if !text.Valid {
 		return common.NullID{}
@@ -160,7 +182,7 @@ func rowToScheduledMessage(row pgmodel.ScheduledMessage) *model.ScheduledMessage
 		Name:             row.Name,
 		Description:      null.NewString(row.Description.String, row.Description.Valid),
 		CronExpression:   null.NewString(row.CronExpression.String, row.CronExpression.Valid),
-		OnlyOnce:         row.OnlyOnce,
+		RunTimes:         times(row.RunTimes),
 		StartAt:          row.StartAt.Time,
 		EndAt:            null.NewTime(row.EndAt.Time, row.EndAt.Valid),
 		NextAt:           row.NextAt.Time,

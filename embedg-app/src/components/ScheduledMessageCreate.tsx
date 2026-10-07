@@ -69,7 +69,7 @@ export default function ScheduledMessageCreate({
       !guildId ||
       !channelId ||
       !savedMessageId ||
-      !schedule.startAt
+      (!schedule.onDates && !schedule.startAt)
     ) {
       createToast({
         title: "Some required fields are missing",
@@ -80,7 +80,11 @@ export default function ScheduledMessageCreate({
       return;
     }
 
-    const blocked = scheduleError(schedule, preview);
+    const blocked = scheduleError(
+      schedule,
+      preview,
+      !!features?.periodic_scheduled_messages,
+    );
     if (blocked) {
       createToast({
         title: "The schedule can't be saved yet",
@@ -128,7 +132,7 @@ export default function ScheduledMessageCreate({
     <div className="bg-ink-700 p-5 rounded-lg">
       <div className="flex items-center space-x-2 text-lg mb-5 truncate justify-between">
         <div className="text-white truncate flex space-x-2 items-center">
-          {schedule.onlyOnce ? (
+          {schedule.onDates ? (
             <CalendarDaysIcon className="text-mist-500 h-6 w-6" />
           ) : (
             <ClockIcon className="text-mist-500 h-6 w-6" />

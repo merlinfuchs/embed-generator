@@ -184,9 +184,11 @@ export type Ends = "never" | "date" | "count";
 
 // What the schedule part of the scheduled message form edits.
 export interface ScheduleDraft {
-  onlyOnce: boolean;
+  // Sent on the dates, or repeating.
+  onDates: boolean;
+  dates: string[];
   timezone: string;
-  // When a message sent once goes out, or where a repeating one starts.
+  // Where a repeating schedule starts.
   startAt: string | undefined;
   // Null when the cron expression is edited directly.
   repeat: Repeat | null;
@@ -199,7 +201,8 @@ export interface ScheduleDraft {
 
 export function newScheduleDraft(timezone: string): ScheduleDraft {
   return {
-    onlyOnce: true,
+    onDates: true,
+    dates: [],
     timezone,
     startAt: undefined,
     repeat: defaultRepeat,
@@ -211,17 +214,21 @@ export function newScheduleDraft(timezone: string): ScheduleDraft {
   };
 }
 
+export function isOnDates(msg: ScheduledMessageWire): boolean {
+  return !!msg.run_times?.length;
+}
+
 export function scheduleDraftFromMessage(
   msg: ScheduledMessageWire,
 ): ScheduleDraft {
   const cron = msg.cron_expression ?? "";
+  const onDates = isOnDates(msg);
   return {
-    onlyOnce: msg.only_once,
+    onDates,
+    dates: msg.run_times ?? [],
     timezone: timezoneOrUTC(msg.cron_timezone),
-    startAt: msg.start_at,
-    repeat: msg.only_once
-      ? defaultRepeat
-      : parseRepeat(cron, msg.cron_interval),
+    startAt: onDates ? undefined : msg.start_at,
+    repeat: onDates ? defaultRepeat : parseRepeat(cron, msg.cron_interval),
     cron,
     interval: msg.cron_interval,
     ends: msg.end_at ? "date" : "never",
@@ -230,22 +237,35 @@ export function scheduleDraftFromMessage(
   };
 }
 
+export function sortDates(dates: string[]): string[] {
+  return [...dates].sort((a, b) => Date.parse(a) - Date.parse(b));
+}
+
 export function scheduleFromDraft(
   d: ScheduleDraft,
 ): ScheduledMessageScheduleWire {
-  const repeating = !d.onlyOnce;
+  if (d.onDates) {
+    const dates = sortDates(d.dates);
+    return {
+      run_times: dates,
+      cron_expression: null,
+      cron_timezone: d.timezone,
+      cron_interval: 1,
+      // Ignored, the server starts at the first date.
+      start_at: dates[0] ?? new Date().toISOString(),
+      end_at: null,
+      end_after_runs: 0,
+    };
+  }
+
   return {
-    only_once: d.onlyOnce,
-    cron_expression: repeating
-      ? d.repeat
-        ? repeatToCron(d.repeat)
-        : d.cron
-      : null,
+    run_times: [],
+    cron_expression: d.repeat ? repeatToCron(d.repeat) : d.cron,
     cron_timezone: d.timezone,
-    cron_interval: repeating ? (d.repeat?.every ?? d.interval) : 1,
+    cron_interval: d.repeat?.every ?? d.interval,
     start_at: d.startAt ?? "",
-    end_at: repeating && d.ends === "date" ? (d.endAt ?? null) : null,
+    end_at: d.ends === "date" ? (d.endAt ?? null) : null,
     // The server works out when the last of them is.
-    end_after_runs: repeating && d.ends === "count" ? d.endCount : 0,
+    end_after_runs: d.ends === "count" ? d.endCount : 0,
   };
 }

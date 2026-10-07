@@ -433,7 +433,7 @@ export interface ScheduledMessageWire {
   start_at: string /* RFC3339 */;
   end_at: null | string /* RFC3339 */;
   next_at: string /* RFC3339 */;
-  only_once: boolean;
+  run_times: string /* RFC3339 */[];
   enabled: boolean;
   created_at: string /* RFC3339 */;
   updated_at: string /* RFC3339 */;
@@ -448,22 +448,30 @@ export type ScheduledMessageListResponseWire = APIResponse<ScheduledMessageWire[
 export type ScheduledMessageGetResponseWire = APIResponse<ScheduledMessageWire>;
 /**
  * ScheduledMessageScheduleWire is when a scheduled message is sent.
+ * ScheduledMessageScheduleWire is when a scheduled message is sent: on the dates in run_times, or
+ * repeating on cron_expression.
  */
 export interface ScheduledMessageScheduleWire {
+  /**
+   * RunTimes are the dates to send on, one for a message sent once.
+   */
+  run_times: string /* RFC3339 */[];
   cron_expression: null | string;
   cron_timezone: null | string;
   /**
    * CronInterval runs the cron expression only in every Nth day, week, month or hour, counted
-   * from its first run. 0 or left out means every one. Ignored for messages sent only once.
+   * from its first run. 0 or left out means every one.
    */
   cron_interval: number /* int */;
+  /**
+   * StartAt is where a repeating schedule starts, the first date for one on dates.
+   */
   start_at: string /* RFC3339 */;
   end_at: null | string /* RFC3339 */;
   /**
    * EndAfterRuns ends the schedule after this many sends from its next one, instead of at end_at.
    */
   end_after_runs: number /* int */;
-  only_once: boolean;
 }
 export interface ScheduledMessageCreateRequestWire extends ScheduledMessageScheduleWire {
   channel_id: string;
@@ -494,6 +502,10 @@ export interface ScheduledMessagePreviewWire {
   end_at: null | string /* RFC3339 */;
 }
 export type ScheduledMessagePreviewResponseWire = APIResponse<ScheduledMessagePreviewWire>;
+/**
+ * MaxRunTimes is how many dates a scheduled message can be sent on.
+ */
+export const MaxRunTimes = 100;
 
 //////////
 // source: shared_message.go

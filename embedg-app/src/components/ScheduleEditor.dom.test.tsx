@@ -22,7 +22,7 @@ let latest: ScheduleDraft;
 function Harness({ preview = noPreview }: { preview?: SchedulePreview }) {
   const [draft, setDraft] = useState<ScheduleDraft>({
     ...newScheduleDraft("UTC"),
-    onlyOnce: false,
+    onDates: false,
     startAt: "2026-10-07T00:00:00.000Z",
   });
   latest = draft;

@@ -29,6 +29,17 @@ type Schedule struct {
 	Anchor     time.Time
 }
 
+// NextDate returns the first of the sorted dates after last. Dates missed while the bot was down
+// are skipped instead of all going out at once.
+func NextDate(dates []time.Time, last time.Time) (time.Time, bool) {
+	for _, d := range dates {
+		if d.After(last) {
+			return d, true
+		}
+	}
+	return time.Time{}, false
+}
+
 // ScheduleOf returns the schedule of a recurring scheduled message.
 func ScheduleOf(msg model.ScheduledMessage) Schedule {
 	return Schedule{

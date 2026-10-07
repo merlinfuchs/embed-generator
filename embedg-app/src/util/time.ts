@@ -131,3 +131,10 @@ export function zonedDateTime(
   const wall = Date.UTC(y, m - 1, d, hours, minutes, seconds);
   return new Date(wallClockToInstant(wall, timezone)).toISOString();
 }
+
+// The wall clock of the instant in the timezone, as HH:MM for time inputs.
+export function zonedTime(iso: string, timezone: string): string {
+  return new Date(wallClockAt(new Date(iso).getTime(), timezone))
+    .toISOString()
+    .slice(11, 16);
+}

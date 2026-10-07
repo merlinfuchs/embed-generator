@@ -136,18 +136,27 @@ func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, s
 			slog.Any("error", sendErr),
 			slog.String("scheduled_message_id", scheduledMessage.ID),
 		)
-		if outcome == outcomeStop || scheduledMessage.OnlyOnce {
+		if outcome == outcomeStop {
 			return m.stop(ctx, scheduledMessage, reason, now)
 		}
 		failure = null.StringFrom(reason)
 	}
 
-	if scheduledMessage.OnlyOnce {
-		return m.record(ctx, scheduledMessage, model.ScheduledMessageRun{
-			NextAt:     scheduledMessage.NextAt,
-			LastSentAt: null.TimeFrom(now),
-			UpdatedAt:  now,
-		})
+	run := model.ScheduledMessageRun{UpdatedAt: now}
+	if failure.Valid {
+		run.LastError = failure
+		run.LastErrorAt = null.TimeFrom(now)
+	} else {
+		run.LastSentAt = null.TimeFrom(now)
+	}
+
+	if scheduledMessage.OnDates() {
+		// After the last date there is nothing left to send.
+		run.NextAt = scheduledMessage.NextAt
+		if next, ok := NextDate(scheduledMessage.RunTimes, now); ok {
+			run.NextAt, run.Enabled = next, true
+		}
+		return m.record(ctx, scheduledMessage, run)
 	}
 
 	nextAt, err := ScheduleOf(scheduledMessage).Next(now)
@@ -161,18 +170,9 @@ func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, s
 		return m.stop(ctx, scheduledMessage, "The schedule is invalid.", now)
 	}
 
-	run := model.ScheduledMessageRun{
-		NextAt: nextAt,
-		// A next run past the end date never comes, so the schedule is over.
-		Enabled:   !scheduledMessage.EndAt.Valid || !nextAt.After(scheduledMessage.EndAt.Time),
-		UpdatedAt: now,
-	}
-	if failure.Valid {
-		run.LastError = failure
-		run.LastErrorAt = null.TimeFrom(now)
-	} else {
-		run.LastSentAt = null.TimeFrom(now)
-	}
+	run.NextAt = nextAt
+	// A next run past the end date never comes, so the schedule is over.
+	run.Enabled = !scheduledMessage.EndAt.Valid || !nextAt.After(scheduledMessage.EndAt.Time)
 	return m.record(ctx, scheduledMessage, run)
 }
 

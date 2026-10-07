@@ -93,3 +93,33 @@ func TestEndAfterRuns(t *testing.T) {
 		t.Errorf("got %v, want %s", s.EndAt, want)
 	}
 }
+
+func TestFirstRunOnDates(t *testing.T) {
+	now := time.Date(2026, 10, 20, 12, 0, 0, 0, time.UTC)
+	day := func(d int) time.Time { return time.Date(2026, 10, d, 18, 0, 0, 0, time.UTC) }
+
+	s := &wire.ScheduledMessageScheduleWire{RunTimes: []time.Time{day(30), day(16), day(23), day(23)}}
+	if err := normalizeSchedule(s); err != nil {
+		t.Fatal(err)
+	}
+	if len(s.RunTimes) != 3 || !s.RunTimes[0].Equal(day(16)) || !s.StartAt.Equal(day(16)) {
+		t.Fatalf("want the dates sorted without duplicates, got %v", s.RunTimes)
+	}
+
+	// The 16th is over, the 23rd is next.
+	got, err := firstRun(s, now)
+	if err != nil || !got.Equal(day(23)) {
+		t.Errorf("got %s, %v, want %s", got, err, day(23))
+	}
+
+	// Picked as now, saved a few seconds later.
+	pickedNow := &wire.ScheduledMessageScheduleWire{RunTimes: []time.Time{now.Add(-5 * time.Second)}}
+	if got, err := firstRun(pickedNow, now); err != nil || !got.Equal(now) {
+		t.Errorf("got %s, %v, want it to go out now", got, err)
+	}
+
+	past := &wire.ScheduledMessageScheduleWire{RunTimes: []time.Time{day(16)}}
+	if _, err := firstRun(past, now); err == nil || !strings.Contains(err.Error(), "in the past") {
+		t.Errorf("want all dates in the past to be rejected, got %v", err)
+	}
+}

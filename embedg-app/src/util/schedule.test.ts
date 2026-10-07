@@ -88,7 +88,7 @@ describe("scheduleFromDraft", () => {
   it("sends the cron of the sentence with its interval", () => {
     const draft = {
       ...newScheduleDraft("America/Denver"),
-      onlyOnce: false,
+      onDates: false,
       startAt: "2026-10-31T06:00:00.000Z",
       repeat: {
         ...defaultRepeat,
@@ -99,7 +99,7 @@ describe("scheduleFromDraft", () => {
       },
     };
     expect(scheduleFromDraft(draft)).toEqual({
-      only_once: false,
+      run_times: [],
       cron_expression: "50 5 * * *",
       cron_timezone: "America/Denver",
       cron_interval: 28,
@@ -112,7 +112,7 @@ describe("scheduleFromDraft", () => {
   it("leaves ending after a number of sends to the server", () => {
     const draft = {
       ...newScheduleDraft("UTC"),
-      onlyOnce: false,
+      onDates: false,
       startAt: "2026-10-31T00:00:00.000Z",
       ends: "count" as const,
       endCount: 3,
@@ -120,6 +120,18 @@ describe("scheduleFromDraft", () => {
     expect(scheduleFromDraft(draft)).toMatchObject({
       end_at: null,
       end_after_runs: 3,
+    });
+  });
+
+  it("sends dates sorted, starting at the first", () => {
+    const draft = {
+      ...newScheduleDraft("UTC"),
+      dates: ["2026-10-23T18:00:00.000Z", "2026-10-16T18:00:00.000Z"],
+    };
+    expect(scheduleFromDraft(draft)).toMatchObject({
+      run_times: ["2026-10-16T18:00:00.000Z", "2026-10-23T18:00:00.000Z"],
+      cron_expression: null,
+      start_at: "2026-10-16T18:00:00.000Z",
     });
   });
 });

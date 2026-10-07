@@ -16,7 +16,7 @@ import {
   weekdayOrder,
 } from "../util/schedule";
 import { rezone, zonedDate, zonedDateTime } from "../util/time";
-import DateTimePicker from "./DateTimePicker";
+import DatesFields from "./ScheduleDates";
 import PremiumSuggest from "./PremiumSuggest";
 import TimezoneSelect from "./TimezoneSelect";
 
@@ -51,7 +51,7 @@ export function useSchedulePreview(
 ): SchedulePreview {
   // Compared as text, so an edit that ends up where it started doesn't count as one.
   const key =
-    draft.onlyOnce || !draft.startAt
+    draft.onDates || !draft.startAt
       ? ""
       : JSON.stringify(scheduleFromDraft(draft));
   const debounced = useDebounced(key, 300);
@@ -75,8 +75,15 @@ export function useSchedulePreview(
 export function scheduleError(
   schedule: ScheduleDraft,
   preview: SchedulePreview,
+  periodicAllowed: boolean,
 ): string | null {
-  if (schedule.onlyOnce) return null;
+  if (schedule.onDates) {
+    if (!schedule.dates.length) return "Pick at least one date.";
+    if (schedule.dates.length > 1 && !periodicAllowed) {
+      return "Sending on more than one date needs Premium.";
+    }
+    return null;
+  }
   if (schedule.ends === "date" && !schedule.endAt) {
     return "Pick the date the schedule ends on.";
   }
@@ -133,13 +140,12 @@ export default function ScheduleEditor({
   // The picked times were meant in the new timezone, so keep their wall clock.
   // A repeating schedule starts on a day, which stays the same day in the new timezone.
   function changeTimezone(tz: string) {
-    let startAt = draft.startAt && rezone(draft.startAt, draft.timezone, tz);
-    if (!draft.onlyOnce && draft.startAt) {
-      startAt = startOfDay(zonedDate(draft.startAt, draft.timezone), tz);
-    }
     set({
       timezone: tz,
-      startAt,
+      dates: draft.dates.map((d) => rezone(d, draft.timezone, tz)),
+      startAt:
+        draft.startAt &&
+        startOfDay(zonedDate(draft.startAt, draft.timezone), tz),
       endAt: draft.endAt && rezone(draft.endAt, draft.timezone, tz),
     });
   }
@@ -149,45 +155,37 @@ export default function ScheduleEditor({
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="uppercase text-mist-300 text-sm font-medium">When</div>
         <div className="flex bg-ink-900 p-1 rounded-lg text-white">
-          {[true, false].map((once) => (
+          {[true, false].map((onDates) => (
             <button
-              key={String(once)}
+              key={String(onDates)}
               type="button"
               onClick={() =>
-                draft.onlyOnce !== once &&
+                draft.onDates !== onDates &&
                 set({
-                  onlyOnce: once,
-                  // A repeating schedule can start right away, a single send needs a time picked.
-                  startAt: once ? undefined : new Date().toISOString(),
+                  onDates,
+                  // A repeating schedule can start right away.
+                  startAt: draft.startAt ?? new Date().toISOString(),
                 })
               }
               className={clsx(
                 "py-1 px-2 rounded-lg transition-colors",
-                draft.onlyOnce === once && "bg-ink-700",
+                draft.onDates === onDates && "bg-ink-700",
               )}
             >
-              {once ? "Send once" : "Repeat"}
+              {onDates ? "On specific dates" : "Repeat"}
             </button>
           ))}
         </div>
       </div>
 
-      {draft.onlyOnce ? (
+      {draft.onDates ? (
         <div className="space-y-4">
-          <div>
-            <Label>Send at</Label>
-            <DateTimePicker
-              value={draft.startAt}
-              onChange={(v) => set({ startAt: v })}
-              clearable={false}
-              timezone={draft.timezone}
-            />
-            {draft.startAt && (
-              <div className="mt-2 text-mist-400 text-sm font-light">
-                Sends {relativeRun(draft.startAt)}
-              </div>
-            )}
-          </div>
+          <DatesFields
+            dates={draft.dates}
+            timezone={draft.timezone}
+            onChange={(dates) => set({ dates })}
+            periodicAllowed={periodicAllowed}
+          />
           <div>
             <Label>Timezone</Label>
             <TimezoneSelect value={draft.timezone} onChange={changeTimezone} />
