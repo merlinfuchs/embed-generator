@@ -75,17 +75,19 @@ type ComponentEmbedEmoji struct {
 const (
 	componentEmbedMaxComponents = 40
 	componentEmbedMaxURLLength  = 2048
-	// Only the linked variant of the payload has a documented size limit
-	// (3,000 bytes). This one is ours, so a link can't carry an arbitrarily
-	// large blob into every page render.
-	componentEmbedMaxBytes = 16 * 1024
+	// Discord drops payloads over 3,000 bytes as they appear in the page,
+	// escape sequences like \u003c counted at full length.
+	componentEmbedMaxBytes = 3000
+	// What a client may send before it is parsed. Whitespace makes it larger
+	// than the payload that ends up in the page.
+	componentEmbedMaxInputBytes = 16 * 1024
 )
 
 // ParseComponentEmbed reads a payload from a client and returns it only if
 // Discord would accept it.
 func ParseComponentEmbed(raw []byte) (*ComponentEmbed, error) {
-	if len(raw) > componentEmbedMaxBytes {
-		return nil, fmt.Errorf("component embed is larger than %d bytes", componentEmbedMaxBytes)
+	if len(raw) > componentEmbedMaxInputBytes {
+		return nil, fmt.Errorf("component embed is larger than %d bytes", componentEmbedMaxInputBytes)
 	}
 
 	var embed ComponentEmbed
@@ -98,6 +100,16 @@ func ParseComponentEmbed(raw []byte) (*ComponentEmbed, error) {
 	count := 0
 	if err := validateComponentEmbedComponent(embed.Component, []int{17}, &count); err != nil {
 		return nil, err
+	}
+
+	// json.Marshal escapes the same characters the page does, so this is the
+	// size Discord sees.
+	payload, err := json.Marshal(embed)
+	if err != nil {
+		return nil, err
+	}
+	if len(payload) > componentEmbedMaxBytes {
+		return nil, fmt.Errorf("component embed is %d bytes, Discord allows at most %d", len(payload), componentEmbedMaxBytes)
 	}
 
 	return &embed, nil
