@@ -157,6 +157,8 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	scheduledMessagesGroup.Get("/", scheduledMessagesHandler.HandleListScheduledMessages)
 	scheduledMessagesGroup.Post("/", handlers.WithRequestBodyValidated(scheduledMessagesHandler.HandleCreateScheduledMessage))
 	scheduledMessagesGroup.Post("/preview", handlers.WithRequestBodyValidated(scheduledMessagesHandler.HandlePreviewScheduledMessage))
+	// Before /:messageID, which would take "runs" as an ID.
+	scheduledMessagesGroup.Get("/runs", scheduledMessagesHandler.HandleListScheduledMessageRuns)
 	scheduledMessagesGroup.Get("/:messageID", scheduledMessagesHandler.HandleGetScheduledMessage)
 	scheduledMessagesGroup.Put("/:messageID", handlers.WithRequestBodyValidated(scheduledMessagesHandler.HandleUpdateScheduledMessage))
 	scheduledMessagesGroup.Delete("/:messageID", scheduledMessagesHandler.HandleDeleteScheduledMessage)

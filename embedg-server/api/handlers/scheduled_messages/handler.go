@@ -379,6 +379,55 @@ func (h *ScheduledMessageHandler) HandlePreviewScheduledMessage(c *fiber.Ctx, re
 	})
 }
 
+const (
+	// A month as a calendar shows it, six weeks, with some room for timezones.
+	maxRunsRange      = 45 * 24 * time.Hour
+	maxRunsPerMessage = 200
+)
+
+// HandleListScheduledMessageRuns lists when the guild's scheduled messages send between the from
+// and to query parameters, for a calendar.
+func (h *ScheduledMessageHandler) HandleListScheduledMessageRuns(c *fiber.Ctx) error {
+	guildID, err := handlers.QueryID(c, "guild_id")
+	if err != nil {
+		return err
+	}
+
+	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+		return err
+	}
+
+	from, fromErr := time.Parse(time.RFC3339, c.Query("from"))
+	to, toErr := time.Parse(time.RFC3339, c.Query("to"))
+	if fromErr != nil || toErr != nil || !to.After(from) || to.Sub(from) > maxRunsRange {
+		return handlers.BadRequest("invalid_range", "The from and to times must be RFC 3339 and at most 45 days apart.")
+	}
+
+	messages, err := h.scheduledMessageStore.GetScheduledMessages(c.UserContext(), guildID)
+	if err != nil {
+		slog.Error("Failed to get scheduled messages", slog.Any("error", err))
+		return err
+	}
+
+	res := wire.ScheduledMessageRunsWire{Runs: []wire.ScheduledMessageRunWire{}}
+	for _, msg := range messages {
+		runs, more, err := scheduled_messages.UpcomingRuns(msg, from, to, maxRunsPerMessage)
+		if err != nil {
+			// Its schedule is broken, the manager stops it on its next run.
+			continue
+		}
+		res.Truncated = res.Truncated || more
+		for _, at := range runs {
+			res.Runs = append(res.Runs, wire.ScheduledMessageRunWire{ScheduledMessageID: msg.ID, At: at})
+		}
+	}
+
+	return c.JSON(wire.ScheduledMessageRunsResponseWire{
+		Success: true,
+		Data:    res,
+	})
+}
+
 func (h *ScheduledMessageHandler) HandleDeleteScheduledMessage(c *fiber.Ctx) error {
 	messageID := c.Params("messageID")
 	guildID, err := handlers.QueryID(c, "guild_id")

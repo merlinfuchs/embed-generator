@@ -40,6 +40,53 @@ func NextDate(dates []time.Time, last time.Time) (time.Time, bool) {
 	return time.Time{}, false
 }
 
+// UpcomingRuns lists when an enabled scheduled message sends between from and to, starting at its
+// next run. More is whether there are more than limit of them in the range.
+func UpcomingRuns(msg model.ScheduledMessage, from, to time.Time, limit int) (runs []time.Time, more bool, err error) {
+	if !msg.Enabled {
+		return nil, false, nil
+	}
+
+	// Takes a run, false once the range or the schedule is over.
+	add := func(t time.Time) bool {
+		if t.After(to) || (msg.EndAt.Valid && t.After(msg.EndAt.Time)) {
+			return false
+		}
+		if len(runs) == limit {
+			more = true
+			return false
+		}
+		runs = append(runs, t)
+		return true
+	}
+
+	if msg.OnDates() {
+		for _, d := range msg.RunTimes {
+			if d.Before(msg.NextAt) || d.Before(from) {
+				continue
+			}
+			if !add(d) {
+				break
+			}
+		}
+		return runs, more, nil
+	}
+
+	sched := ScheduleOf(msg)
+	next := msg.NextAt
+	if next.Before(from) {
+		if next, err = sched.First(from); err != nil {
+			return nil, false, err
+		}
+	}
+	for add(next) {
+		if next, err = sched.Next(next); err != nil {
+			return nil, false, err
+		}
+	}
+	return runs, more, nil
+}
+
 // ScheduleOf returns the schedule of a recurring scheduled message.
 func ScheduleOf(msg model.ScheduledMessage) Schedule {
 	return Schedule{

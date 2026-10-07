@@ -7,7 +7,12 @@ import {
 import clsx from "clsx";
 import { useMemo, useState } from "react";
 import { MaxRunTimes } from "../api/wire";
-import { sortDates, weekdayName, weekdayOrder } from "../util/schedule";
+import {
+  dateOnDay,
+  sortDates,
+  weekdayName,
+  weekdayOrder,
+} from "../util/schedule";
 import { formatDay, zonedDate, zonedDateTime, zonedTime } from "../util/time";
 
 // The YYYY-MM-DD days of a YYYY-MM month, and the grid column its first day is in.
@@ -88,11 +93,7 @@ export default function ScheduleDates({
     const [hour, minute] = last
       ? zonedTime(last, timezone).split(":").map(Number)
       : [12, 0];
-    let date = zonedDateTime(day, timezone, hour, minute);
-    // Today the time may be over already, the next five minutes are the soonest it can go out.
-    if (date < now) {
-      date = new Date(Math.ceil(Date.now() / 300_000) * 300_000).toISOString();
-    }
+    const date = dateOnDay(day, timezone, hour, minute);
     // Without premium a message goes out on one date, picking another one moves it.
     onChange(periodicAllowed ? [...dates, date] : [date]);
   }

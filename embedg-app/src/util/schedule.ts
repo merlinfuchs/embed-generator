@@ -3,7 +3,7 @@ import type {
   ScheduledMessageScheduleWire,
   ScheduledMessageWire,
 } from "../api/wire";
-import { timezoneOrUTC } from "./time";
+import { timezoneOrUTC, zonedDateTime } from "./time";
 
 export type RepeatUnit = "minutes" | "hours" | "days" | "weeks" | "months";
 
@@ -268,4 +268,19 @@ export function scheduleFromDraft(
     // The server works out when the last of them is.
     end_after_runs: d.ends === "count" ? d.endCount : 0,
   };
+}
+
+/**
+ * A new date on a YYYY-MM-DD day at the given time. When that time is over already, as it can
+ * be today, the next five minutes are the soonest it can go out.
+ */
+export function dateOnDay(
+  day: string,
+  timezone: string,
+  hour = 12,
+  minute = 0,
+): string {
+  const date = zonedDateTime(day, timezone, hour, minute);
+  const soonest = new Date(Math.ceil(Date.now() / 300_000) * 300_000);
+  return Date.parse(date) < soonest.getTime() ? soonest.toISOString() : date;
 }

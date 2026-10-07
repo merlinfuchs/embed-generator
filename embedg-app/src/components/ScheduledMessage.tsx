@@ -9,7 +9,7 @@ import {
   TrashIcon,
   XMarkIcon,
 } from "@heroicons/react/20/solid";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AutoAnimate } from "../util/autoAnimate";
 import {
   useScheduledMessageDeleteMutation,
@@ -42,8 +42,11 @@ import { useGuildChannelsQuery } from "../api/queries";
 
 export default function ScheduledMessage({
   msg,
+  focusKey,
 }: {
   msg: ScheduledMessageWire;
+  // Changes when the message is picked elsewhere, like in the calendar, to open its form.
+  focusKey?: number;
 }) {
   const guildId = useSendSettingsStore((s) => s.guildId);
   const createToast = useToasts((s) => s.create);
@@ -52,6 +55,12 @@ export default function ScheduledMessage({
   const features = usePremiumGuildFeatures(guildId);
 
   const [manage, setManage] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (focusKey === undefined) return;
+    setManage(true);
+    ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [focusKey]);
 
   const [enabled, setEnabled] = useState(msg.enabled);
   const [name, setName] = useState(msg.name);
@@ -183,7 +192,7 @@ export default function ScheduledMessage({
   }
 
   return (
-    <div>
+    <div ref={ref}>
       <AutoAnimate
         className={clsx(
           "bg-ink-700 rounded-lg",

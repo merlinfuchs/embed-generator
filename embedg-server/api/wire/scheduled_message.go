@@ -135,6 +135,20 @@ type ScheduledMessagePreviewWire struct {
 
 type ScheduledMessagePreviewResponseWire APIResponse[ScheduledMessagePreviewWire]
 
+type ScheduledMessageRunWire struct {
+	ScheduledMessageID string    `json:"scheduled_message_id"`
+	At                 time.Time `json:"at"`
+}
+
+type ScheduledMessageRunsWire struct {
+	// Runs are the upcoming sends of the guild's enabled scheduled messages in the range.
+	Runs []ScheduledMessageRunWire `json:"runs"`
+	// Truncated is whether a message sends too often for all of its runs to be listed.
+	Truncated bool `json:"truncated"`
+}
+
+type ScheduledMessageRunsResponseWire APIResponse[ScheduledMessageRunsWire]
+
 const maxCronInterval = 1000
 
 // MaxRunTimes is how many dates a scheduled message can be sent on.

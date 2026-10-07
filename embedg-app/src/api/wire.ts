@@ -501,6 +501,21 @@ export interface ScheduledMessagePreviewWire {
   end_at: null | string /* RFC3339 */;
 }
 export type ScheduledMessagePreviewResponseWire = APIResponse<ScheduledMessagePreviewWire>;
+export interface ScheduledMessageRunWire {
+  scheduled_message_id: string;
+  at: string /* RFC3339 */;
+}
+export interface ScheduledMessageRunsWire {
+  /**
+   * Runs are the upcoming sends of the guild's enabled scheduled messages in the range.
+   */
+  runs: ScheduledMessageRunWire[];
+  /**
+   * Truncated is whether a message sends too often for all of its runs to be listed.
+   */
+  truncated: boolean;
+}
+export type ScheduledMessageRunsResponseWire = APIResponse<ScheduledMessageRunsWire>;
 /**
  * MaxRunTimes is how many dates a scheduled message can be sent on.
  */

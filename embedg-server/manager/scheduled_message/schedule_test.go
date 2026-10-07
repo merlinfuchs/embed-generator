@@ -4,6 +4,9 @@ import (
 	"errors"
 	"testing"
 	"time"
+
+	"github.com/merlinfuchs/embed-generator/embedg-server/model"
+	"gopkg.in/guregu/null.v4"
 )
 
 func TestScheduleRuns(t *testing.T) {
@@ -155,5 +158,53 @@ func TestNextDate(t *testing.T) {
 	}
 	if _, ok := NextDate(dates, dates[2]); ok {
 		t.Error("want no date after the last one")
+	}
+}
+
+func TestUpcomingRuns(t *testing.T) {
+	from := mustParse(t, "2026-10-05T00:00:00Z")
+	to := mustParse(t, "2026-10-19T00:00:00Z")
+
+	daily := model.ScheduledMessage{
+		Enabled:        true,
+		CronExpression: null.StringFrom("0 12 * * *"),
+		CronTimezone:   null.StringFrom("UTC"),
+		CronInterval:   3,
+		StartAt:        mustParse(t, "2026-10-01T00:00:00Z"),
+		NextAt:         mustParse(t, "2026-10-07T12:00:00Z"),
+		EndAt:          null.TimeFrom(mustParse(t, "2026-10-14T00:00:00Z")),
+	}
+	runs, more, err := UpcomingRuns(daily, from, to, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Every third day from Oct 1, starting at the next run and stopping at the end date.
+	want := []string{"2026-10-07T12:00:00Z", "2026-10-10T12:00:00Z", "2026-10-13T12:00:00Z"}
+	if more || len(runs) != len(want) {
+		t.Fatalf("got %v, %v, want %v", runs, more, want)
+	}
+	for i, w := range want {
+		if !runs[i].Equal(mustParse(t, w)) {
+			t.Errorf("run %d: got %s, want %s", i, runs[i], w)
+		}
+	}
+
+	if _, more, _ := UpcomingRuns(daily, from, to, 2); !more {
+		t.Error("want more runs than the limit to be reported")
+	}
+
+	onDates := model.ScheduledMessage{
+		Enabled:  true,
+		RunTimes: []time.Time{mustParse(t, "2026-10-06T18:00:00Z"), mustParse(t, "2026-10-16T18:00:00Z"), mustParse(t, "2026-10-30T18:00:00Z")},
+		NextAt:   mustParse(t, "2026-10-16T18:00:00Z"),
+	}
+	// The 6th was sent already, the 30th is after the range.
+	if runs, _, _ := UpcomingRuns(onDates, from, to, 10); len(runs) != 1 || !runs[0].Equal(onDates.RunTimes[1]) {
+		t.Errorf("got %v, want only the 16th", runs)
+	}
+
+	onDates.Enabled = false
+	if runs, _, _ := UpcomingRuns(onDates, from, to, 10); len(runs) != 0 {
+		t.Errorf("want nothing for a disabled message, got %v", runs)
 	}
 }

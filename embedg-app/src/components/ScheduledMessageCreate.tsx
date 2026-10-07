@@ -22,14 +22,21 @@ import ScheduleEditor, {
   scheduleError,
   useSchedulePreview,
 } from "./ScheduleEditor";
-import { newScheduleDraft, scheduleFromDraft } from "../util/schedule";
+import {
+  dateOnDay,
+  newScheduleDraft,
+  scheduleFromDraft,
+} from "../util/schedule";
 
 export default function ScheduledMessageCreate({
   setCreate,
   cancelable,
+  initialDay,
 }: {
   setCreate: (b: boolean) => void;
   cancelable: boolean;
+  // A YYYY-MM-DD day picked in the calendar to send on.
+  initialDay?: string;
 }) {
   const guildId = useSendSettingsStore((s) => s.guildId);
   const features = usePremiumGuildFeatures(guildId);
@@ -38,9 +45,13 @@ export default function ScheduledMessageCreate({
   const createToast = useToasts((s) => s.create);
 
   const [name, setName] = useState("");
-  const [schedule, setSchedule] = useState(() =>
-    newScheduleDraft(getCurrentTimezone()),
-  );
+  const [schedule, setSchedule] = useState(() => {
+    const timezone = getCurrentTimezone();
+    const draft = newScheduleDraft(timezone);
+    return initialDay
+      ? { ...draft, dates: [dateOnDay(initialDay, timezone)] }
+      : draft;
+  });
   const preview = useSchedulePreview(guildId, schedule);
   const [savedMessageId, setSavedMessageId] = useState<string | null>(null);
   const [channelId, setChannelId] = useState<string | null>(null);

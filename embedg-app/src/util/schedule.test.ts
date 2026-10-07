@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { afterEach, vi } from "vitest";
 import {
+  dateOnDay,
   defaultRepeat,
   describeRepeat,
   describeSchedule,
@@ -133,5 +135,23 @@ describe("scheduleFromDraft", () => {
       cron_expression: null,
       start_at: "2026-10-16T18:00:00.000Z",
     });
+  });
+});
+
+describe("dateOnDay", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("puts the date on the day at the time", () => {
+    vi.useFakeTimers({ now: new Date("2026-10-07T09:00:00Z") });
+    expect(dateOnDay("2026-10-10", "America/Denver")).toBe(
+      "2026-10-10T18:00:00.000Z",
+    );
+  });
+
+  it("moves a time that is over to the next five minutes", () => {
+    vi.useFakeTimers({ now: new Date("2026-10-07T15:02:10Z") });
+    expect(dateOnDay("2026-10-07", "UTC")).toBe("2026-10-07T15:05:00.000Z");
   });
 });

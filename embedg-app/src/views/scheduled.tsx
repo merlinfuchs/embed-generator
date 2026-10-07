@@ -7,11 +7,17 @@ import ScheduledMessageCreate from "../components/ScheduledMessageCreate";
 import { useMemo, useState } from "react";
 import { AutoAnimate } from "../util/autoAnimate";
 import LimitButton from "../components/LimitButton";
+import ScheduledMessagesCalendar from "../components/ScheduledMessagesCalendar";
+import clsx from "clsx";
 
 export default function ScheduledMessagesView() {
   const { data: user } = useUserQuery();
 
   const [create, setCreate] = useState(false);
+  const [tab, setTab] = useState<"list" | "calendar">("list");
+  // What the calendar asked to open: a message's form, or a new one on a day.
+  const [focus, setFocus] = useState<{ id: string; n: number } | null>(null);
+  const [createDay, setCreateDay] = useState<string | undefined>();
 
   const guildId = useSendSettingsStore((s) => s.guildId);
 
@@ -47,17 +53,60 @@ export default function ScheduledMessagesView() {
         </div>
         {user?.success ? (
           <div className="space-y-5 mb-8">
-            <AutoAnimate className="space-y-5 overflow-y-auto">
-              {messages.map((msg) => (
-                <ScheduledMessage msg={msg} key={msg.id} />
-              ))}
-              {(messageCount === 0 || create) && (
-                <ScheduledMessageCreate
-                  setCreate={setCreate}
-                  cancelable={messageCount !== 0}
-                />
-              )}
-            </AutoAnimate>
+            {messageCount !== 0 && (
+              <div className="flex bg-ink-900 p-1 rounded-lg text-white w-fit">
+                {(["list", "calendar"] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setTab(t)}
+                    className={clsx(
+                      "py-1 px-3 rounded-lg transition-colors capitalize",
+                      tab === t && "bg-ink-700",
+                    )}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            )}
+            {tab === "calendar" && messageCount !== 0 ? (
+              <ScheduledMessagesCalendar
+                guildId={guildId}
+                messages={messages}
+                onOpen={(id) => {
+                  setTab("list");
+                  setFocus((f) => ({ id, n: (f?.n ?? 0) + 1 }));
+                }}
+                onCreate={(day) => {
+                  setTab("list");
+                  setCreateDay(day);
+                  setCreate(true);
+                }}
+              />
+            ) : (
+              <AutoAnimate className="space-y-5 overflow-y-auto">
+                {messages.map((msg) => (
+                  <ScheduledMessage
+                    msg={msg}
+                    key={msg.id}
+                    focusKey={focus?.id === msg.id ? focus.n : undefined}
+                  />
+                ))}
+                {(messageCount === 0 || create) && (
+                  <ScheduledMessageCreate
+                    // A new day from the calendar starts a new form.
+                    key={createDay}
+                    initialDay={createDay}
+                    setCreate={(b) => {
+                      setCreate(b);
+                      if (!b) setCreateDay(undefined);
+                    }}
+                    cancelable={messageCount !== 0}
+                  />
+                )}
+              </AutoAnimate>
+            )}
             <div className="flex space-x-3 justify-end">
               <LimitButton
                 limit="max_scheduled_messages"
