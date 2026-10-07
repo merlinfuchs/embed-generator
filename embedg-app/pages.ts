@@ -12,6 +12,10 @@ import type { Plugin } from "vite";
  */
 
 const ORIGIN = "https://message.style";
+// brand-500 in the site's tailwind.config.js
+const ACCENT_COLOR = 0x4e6ef2;
+// Discord drops component embeds over 3,000 bytes, escape sequences counted at full length.
+const COMPONENT_EMBED_MAX_BYTES = 3000;
 
 interface Page {
   file: string;
@@ -21,7 +25,22 @@ interface Page {
   description: string;
   heading: string;
   text: string;
+  // The Discord link preview, see componentEmbedScript.
+  preview?: Preview;
 }
+
+interface Preview {
+  byline: string;
+  // Label of the button that opens the page.
+  open: string;
+  docs: string;
+}
+
+const toolPreview: Preview = {
+  byline: "Embed Generator · Tools",
+  open: "Open tool",
+  docs: `${ORIGIN}/docs/tools`,
+};
 
 export const pages: Page[] = [
   {
@@ -31,6 +50,11 @@ export const pages: Page[] = [
     description:
       "Build Discord embeds, buttons and select menus in a visual editor with a live preview, then send them through a webhook or bot. Free, no account needed.",
     heading: "Discord Embed Builder",
+    preview: {
+      byline: "Embed Generator",
+      open: "Open Editor",
+      docs: `${ORIGIN}/docs`,
+    },
     text: "Write the message, add embeds with a title, description, fields, images and a color, and watch the preview update as you type. Paste a webhook URL to send it, or log in with Discord to send it through the bot with buttons and select menus that hand out roles or reply.",
   },
   {
@@ -40,6 +64,11 @@ export const pages: Page[] = [
     description:
       "Free Discord tools: a colored text generator, embed links that unfurl into rich previews and a webhook info lookup. No account needed.",
     heading: "Free Discord Tools",
+    preview: {
+      byline: "Embed Generator · Tools",
+      open: "All tools",
+      docs: `${ORIGIN}/docs/tools`,
+    },
     text: "Besides the message editor, Embed Generator has a few small tools: a colored text generator for ANSI code blocks, embed links that turn into a rich preview when posted, and a lookup that shows who created a webhook.",
   },
   {
@@ -49,6 +78,7 @@ export const pages: Page[] = [
     description:
       "Color your Discord messages. Pick foreground and background colors per word and copy the result as an ANSI code block that works in any channel.",
     heading: "Discord Colored Text Generator",
+    preview: toolPreview,
     text: "Discord renders ANSI color codes inside code blocks. Type your text, pick foreground and background colors for each part, and copy the code block into any Discord message.",
   },
   {
@@ -58,6 +88,7 @@ export const pages: Page[] = [
     description:
       "Turn a title, description, image and color into a link that unfurls into a rich embed in Discord, without a webhook or bot.",
     heading: "Discord Embed Link Generator",
+    preview: toolPreview,
     text: "An embed link is a URL that Discord shows as an embed when it's posted. Set a title, description, image and color, or a Components V2 layout, and share the link anywhere in Discord, no webhook or bot required.",
   },
   {
@@ -67,6 +98,7 @@ export const pages: Page[] = [
     description:
       "Paste a Discord webhook URL to see the webhook's name, avatar, server and who created it.",
     heading: "Discord Webhook Info",
+    preview: toolPreview,
     text: "Found an old webhook URL and don't remember what it's for? Paste it here to see the webhook's name, avatar and who created it.",
   },
   {
@@ -92,6 +124,59 @@ const META_START = "<!-- page-meta -->";
 const META_END = "<!-- /page-meta -->";
 const ROOT = '<div id="root"></div>';
 
+// Text Display content is Discord markdown. Page text is plain text.
+function escapeMarkdown(text: string): string {
+  return text.replace(/[\\*_~`|[\]<>]/g, "\\$&").replace(/^[#>-]/, "\\$&");
+}
+
+/**
+ * The Components V2 layout Discord shows instead of the Open Graph card when the link is posted:
+ * https://discord.com/developers/docs/link-previews/component-embeds
+ * Kept in line with the site's, see embedg-site/plugins/component-embeds.ts.
+ */
+export function componentEmbedScript(
+  page: Page,
+  preview: Preview,
+  url: string,
+): string {
+  const embed = {
+    component: {
+      type: 17,
+      accent_color: ACCENT_COLOR,
+      components: [
+        { type: 10, content: `-# ${preview.byline}` },
+        {
+          type: 10,
+          content: `## [${escapeMarkdown(page.heading)}](${url})\n${escapeMarkdown(page.description)}`,
+        },
+        { type: 12, items: [{ media: { url: `${ORIGIN}/img/og.png` } }] },
+        { type: 14, divider: false, spacing: 1 },
+        {
+          type: 1,
+          components: [
+            { label: preview.open, url },
+            { label: "Docs", url: preview.docs },
+            { label: "Add to Discord", url: `${ORIGIN}/invite` },
+          ].map((b) => ({ type: 2, style: 5, ...b })),
+        },
+      ],
+    },
+  };
+
+  // Nothing in the payload may close the script element.
+  const json = JSON.stringify(embed).replace(
+    /[<>&]/g,
+    (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`,
+  );
+  const size = new TextEncoder().encode(json).length;
+  if (size > COMPONENT_EMBED_MAX_BYTES) {
+    throw new Error(
+      `component embed for ${url} is ${size} bytes, Discord allows ${COMPONENT_EMBED_MAX_BYTES}`,
+    );
+  }
+  return `<script id="discord:component-embed" type="application/json">${json}</script>`;
+}
+
 function pageMeta(page: Page): string {
   const tags = [
     `<title>${escapeHtml(page.title)}</title>`,
@@ -105,6 +190,9 @@ function pageMeta(page: Page): string {
       `<link rel="canonical" href="${url}" />`,
       `<meta property="og:url" content="${url}" />`,
     );
+    if (page.preview) {
+      tags.push(componentEmbedScript(page, page.preview, url));
+    }
   } else {
     tags.push('<meta name="robots" content="noindex" />');
   }

@@ -19,6 +19,14 @@ export default function Home(): JSX.Element {
           name="description"
           content="Free Discord embed generator. Design embeds, buttons and select menus in a visual editor and send them through a webhook or bot. Save, schedule and reuse messages."
         />
+        <meta
+          property="og:title"
+          content="Discord embeds without the hassle | Embed Generator"
+        />
+        <meta
+          property="og:description"
+          content="Free Discord embed generator. Design embeds, buttons and select menus in a visual editor and send them through a webhook or bot. Save, schedule and reuse messages."
+        />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
