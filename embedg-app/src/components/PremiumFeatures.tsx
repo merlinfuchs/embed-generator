@@ -6,8 +6,11 @@ import {
   ClockIcon,
 } from "@heroicons/react/24/outline";
 import { HeartIcon } from "@heroicons/react/24/solid";
+import { PREMIUM_PLAN, usePlan } from "../util/plans";
 
 export default function PremiumFeatures() {
+  const premium = usePlan(PREMIUM_PLAN);
+
   return (
     <div className="space-y-5 px-3 py-2">
       <div className="flex items-center gap-4">
@@ -39,16 +42,23 @@ export default function PremiumFeatures() {
           with your own branding to your server that can be used by anyone
         </div>
       </div>
-      <div className="flex items-center gap-4">
-        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-amber-400/15 text-amber-300">
-          <FireIcon className="h-4 w-4" />
-        </span>
-        <div className="text-mist-300 text-sm">
-          Add up to <span className="font-medium text-white">10 actions</span>{" "}
-          to each interactive component and save up to{" "}
-          <span className="font-medium text-white">100 messages</span>
+      {premium && (
+        <div className="flex items-center gap-4">
+          <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-amber-400/15 text-amber-300">
+            <FireIcon className="h-4 w-4" />
+          </span>
+          <div className="text-mist-300 text-sm">
+            Add up to{" "}
+            <span className="font-medium text-white">
+              {premium.max_actions_per_component} actions
+            </span>{" "}
+            to each interactive component and save up to{" "}
+            <span className="font-medium text-white">
+              {premium.max_saved_messages} messages
+            </span>
+          </div>
         </div>
-      </div>
+      )}
       <div className="flex items-center gap-4">
         <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-amber-400/15 text-amber-300">
           <ClockIcon className="h-4 w-4" />

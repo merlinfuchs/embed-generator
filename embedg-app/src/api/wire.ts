@@ -367,6 +367,10 @@ export type MessageRestoreResponseWire = APIResponse<MessageRestoreResponseDataW
 // source: premium.go
 
 export interface GetPremiumPlanFeaturesResponseDataWire {
+  /**
+   * Plan is the name of the plan. For a user or guild it's their most expensive one, or empty for free.
+   */
+  plan: string;
   max_saved_messages: number /* int */;
   max_saved_message_versions: number /* int */;
   max_actions_per_component: number /* int */;
@@ -382,6 +386,10 @@ export interface GetPremiumPlanFeaturesResponseDataWire {
   max_kv_keys: number /* int */;
 }
 export type GetPremiumPlanFeaturesResponseWire = APIResponse<GetPremiumPlanFeaturesResponseDataWire>;
+/**
+ * ListPremiumPlansResponseWire has the plans that can be bought, from the cheapest to the most expensive.
+ */
+export type ListPremiumPlansResponseWire = APIResponse<GetPremiumPlanFeaturesResponseDataWire[]>;
 export interface PremiumEntitlementWire {
   id: string;
   sku_id: string;
@@ -392,6 +400,7 @@ export interface PremiumEntitlementWire {
   starts_at: null | string /* RFC3339 */;
   ends_at: null | string /* RFC3339 */;
   consumable: boolean;
+  plan: string;
   consumed: boolean;
   consumed_guild_id: null | string;
 }

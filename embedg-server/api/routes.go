@@ -105,6 +105,7 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 
 	premiumHandler := premium_handler.New(env.EntitlementStore, env.Rest, env.AccessManager, env.PremiumManager, env.AppContext)
 	app.Get("/api/premium/features", sessionMiddleware.SessionRequired(), premiumHandler.HandleGetFeatures)
+	app.Get("/api/premium/plans", premiumHandler.HandleListPlans)
 	app.Get("/api/premium/entitlements", sessionMiddleware.SessionRequired(), premiumHandler.HandleListEntitlements)
 	app.Post("/api/premium/entitlements/:entitlementID/consume", sessionMiddleware.SessionRequired(), handlers.WithRequestBodyValidated(premiumHandler.HandleConsumeEntitlement))
 

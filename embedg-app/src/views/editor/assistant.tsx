@@ -38,6 +38,7 @@ import {
 } from "../../state/document";
 import { useSendSettingsStore } from "../../state/sendSettings";
 import { runAssistantPrompt } from "../../util/assistant";
+import { upgradesFor, usePlans } from "../../util/plans";
 import { usePremiumGuildFeatures } from "../../util/premium";
 
 /** A chat next to the editor that builds and changes the message. */
@@ -46,6 +47,7 @@ export default function AssistantView() {
 
   const guildId = useSendSettingsStore((s) => s.guildId);
   const features = usePremiumGuildFeatures();
+  const plans = usePlans();
   const { data: usage } = useAssistantUsageQuery(guildId);
   const chat = useAssistantChatMutation();
 
@@ -218,10 +220,11 @@ export default function AssistantView() {
                 ? usage.data.resets_at
                 : null
             }
-            showPremium={
-              !!usage?.success &&
-              usage.data.limit_reached &&
-              !features?.is_premium
+            upgradeTo={
+              usage?.success && usage.data.limit_reached
+                ? upgradesFor("max_ai_prompts_per_month", features, plans)[0]
+                    ?.plan
+                : undefined
             }
           />
         ) : (
@@ -322,12 +325,12 @@ function HeaderButton({
 function UnavailableCard({
   reason,
   resetsAt,
-  showPremium,
+  upgradeTo,
 }: {
   reason: string;
   // When the monthly limits start over, if they are the reason.
   resetsAt: string | null;
-  showPremium: boolean;
+  upgradeTo?: string;
 }) {
   return (
     <div className="rounded-lg border border-white/10 bg-ink-700 p-4 space-y-3 text-sm">
@@ -353,12 +356,12 @@ function UnavailableCard({
           )}
         </div>
       </div>
-      {showPremium && (
+      {upgradeTo && (
         <Link
           to="/premium"
           className="bg-amber-400 hover:bg-amber-300 text-ink-900 font-medium px-3 py-2 rounded-lg block w-full text-center transition-colors"
         >
-          Get more prompts with Premium
+          Get more prompts with {upgradeTo}
         </Link>
       )}
     </div>

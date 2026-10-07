@@ -6,6 +6,8 @@ type Plan struct {
 	Default    bool         `toml:"default"`
 	Features   PlanFeatures `toml:"features"`
 	Consumable bool         `toml:"consumable"`
+	// Name is what the app calls the plan. Plans without one aren't offered in the app.
+	Name string `toml:"name"`
 }
 
 type PlanFeatures struct {

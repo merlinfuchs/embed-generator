@@ -5,8 +5,8 @@ import { usePremiumGuildFeatures } from "../util/premium";
 import ScheduledMessage from "../components/ScheduledMessage";
 import ScheduledMessageCreate from "../components/ScheduledMessageCreate";
 import { useMemo, useState } from "react";
-import clsx from "clsx";
 import { AutoAnimate } from "../util/autoAnimate";
+import LimitButton from "../components/LimitButton";
 
 export default function ScheduledMessagesView() {
   const { data: user } = useUserQuery();
@@ -59,17 +59,15 @@ export default function ScheduledMessagesView() {
               )}
             </AutoAnimate>
             <div className="flex space-x-3 justify-end">
-              <button
-                className={clsx(
-                  "px-3 py-2 rounded-lg border-2",
-                  messageCount < maxMessages
-                    ? "border-white/15 hover:bg-white/5 hover:border-white/30 cursor-pointer"
-                    : "border-white/10 text-mist-500 cursor-not-allowed",
-                )}
-                onClick={() => messageCount < maxMessages && setCreate(true)}
+              <LimitButton
+                limit="max_scheduled_messages"
+                features={guildFeatures}
+                count={messageCount}
+                className="px-3 py-2 rounded-lg border-2 border-white/15 hover:bg-white/5 hover:border-white/30 cursor-pointer"
+                onClick={() => setCreate(true)}
               >
                 New Scheduled Message
-              </button>
+              </LimitButton>
             </div>
           </div>
         ) : (

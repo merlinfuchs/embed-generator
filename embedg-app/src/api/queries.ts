@@ -7,6 +7,7 @@ import type {
   CustomCommandsListResponseWire,
   ListGuildsResponseWire,
   ListPremiumEntitlementsResponseWire,
+  ListPremiumPlansResponseWire,
   ListRolesResponseWire,
   SavedMessageListResponseWire,
   SavedMessageVersionGetResponseWire,
@@ -235,6 +236,16 @@ export function usePremiumUserEntitlementsQuery() {
       fetch(`/api/premium/entitlements`).then((res) =>
         handleApiResponse(res.json()),
       ),
+  });
+}
+
+export function usePremiumPlansQuery() {
+  return useQuery<ListPremiumPlansResponseWire>({
+    queryKey: ["premium", "plans"],
+    queryFn: () =>
+      fetch(`/api/premium/plans`).then((res) => handleApiResponse(res.json())),
+    // They only change with the config.
+    staleTime: Number.POSITIVE_INFINITY,
   });
 }
 

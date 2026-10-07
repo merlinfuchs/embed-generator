@@ -1,12 +1,10 @@
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { SparklesIcon } from "@heroicons/react/24/solid";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { AutoAnimate } from "../util/autoAnimate";
+import { PREMIUM_PLAN } from "../util/plans";
+import { useConsumableEntitlement } from "../util/premium";
 import PremiumFeatures from "./PremiumFeatures";
-import { usePremiumUserEntitlementsQuery } from "../api/queries";
-import { usePremiumEntitlementConsumeMutation } from "../api/mutations";
-import { useSendSettingsStore } from "../state/sendSettings";
-import { useToasts } from "../util/toasts";
 import ConfirmModal from "./ConfirmModal";
 
 interface Props {
@@ -17,48 +15,8 @@ export default function PremiumSuggest({ alwaysExpanded }: Props) {
   const [collapsed, setCollapsed] = useState(!alwaysExpanded);
   const [activateModal, setActivateModal] = useState(false);
 
-  const { data } = usePremiumUserEntitlementsQuery();
-
-  const consumableEntitlementId = useMemo(() => {
-    if (!data?.success) return null;
-    return data.data.entitlements.find(
-      (e) => e.consumable && !e.consumed_guild_id,
-    )?.id;
-  }, [data]);
-
-  const guildId = useSendSettingsStore((s) => s.guildId);
-  const consumeMutation = usePremiumEntitlementConsumeMutation();
-
-  const createToast = useToasts((s) => s.create);
-
-  function activatePremium() {
-    if (!consumableEntitlementId || !guildId) return;
-
-    consumeMutation.mutate(
-      {
-        entitlementId: consumableEntitlementId,
-        req: { guild_id: guildId },
-      },
-      {
-        onSuccess: (res) => {
-          if (res.success) {
-            createToast({
-              title: "Premium activated",
-              message: "This server now has access to all features!",
-              type: "success",
-            });
-          } else {
-            createToast({
-              title: "Failed to activate premium",
-              message: res.error.message,
-              type: "error",
-            });
-          }
-          setActivateModal(false);
-        },
-      },
-    );
-  }
+  const { entitlementId, guildId, activate, pending } =
+    useConsumableEntitlement(PREMIUM_PLAN);
 
   return (
     <AutoAnimate className="relative overflow-hidden p-3 rounded-2xl border border-amber-400/10 bg-[linear-gradient(135deg,#2B2D31_0%,#2F2E2C_65%,#3A3222_100%)] select-none">
@@ -88,7 +46,7 @@ export default function PremiumSuggest({ alwaysExpanded }: Props) {
         <div className="relative mt-6">
           <PremiumFeatures />
           <div className="flex justify-end pt-5">
-            {consumableEntitlementId ? (
+            {entitlementId ? (
               <button
                 className="bg-amber-400 px-4 py-2.5 rounded-lg transition-colors hover:bg-amber-300 text-ink-900 font-semibold w-full text-center"
                 onClick={() => setActivateModal(true)}
@@ -112,9 +70,9 @@ export default function PremiumSuggest({ alwaysExpanded }: Props) {
         <ConfirmModal
           title="Are you sure that you want to activate premium for this server?"
           subTitle={`Premium will be activated for the server with the id '${guildId}'. Once activated you can't move it to another server.`}
-          pending={consumeMutation.isPending}
+          pending={pending}
           onClose={() => setActivateModal(false)}
-          onConfirm={activatePremium}
+          onConfirm={() => activate(() => setActivateModal(false))}
         />
       )}
     </AutoAnimate>

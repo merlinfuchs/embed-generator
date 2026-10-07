@@ -48,15 +48,16 @@ func (h *PremiumHandler) HandleGetFeatures(c *fiber.Ctx) error {
 		return err
 	}
 
+	var plan string
 	var features model.PlanFeatures
 
 	if guildID.Valid {
 		if err := h.am.CheckGuildAccessForRequest(c, guildID.ID); err != nil {
 			return err
 		}
-		features, err = h.planStore.GetPlanFeaturesForGuild(c.UserContext(), guildID.ID)
+		plan, features, err = h.planStore.GetPlanForGuild(c.UserContext(), guildID.ID)
 	} else {
-		features, err = h.planStore.GetPlanFeaturesForUser(c.UserContext(), session.UserID)
+		plan, features, err = h.planStore.GetPlanForUser(c.UserContext(), session.UserID)
 	}
 
 	if err != nil {
@@ -66,20 +67,41 @@ func (h *PremiumHandler) HandleGetFeatures(c *fiber.Ctx) error {
 
 	return c.JSON(wire.GetPremiumPlanFeaturesResponseWire{
 		Success: true,
-		Data: wire.GetPremiumPlanFeaturesResponseDataWire{
-			MaxSavedMessages:          features.MaxSavedMessages,
-			MaxSavedMessageVersions:   features.MaxSavedMessageVersions,
-			MaxActionsPerComponent:    features.MaxActionsPerComponent,
-			AdvancedActionTypes:       features.AdvancedActionTypes,
-			MaxAIPromptsPerMonth:      features.MaxAIPromptsPerMonth,
-			CustomBot:                 features.CustomBot,
-			MaxCustomCommands:         features.MaxCustomCommands,
-			IsPremium:                 features.IsPremium,
-			MaxImageUploadSize:        features.MaxImageUploadSize,
-			MaxScheduledMessages:      features.MaxScheduledMessages,
-			PeriodicScheduledMessages: features.PeriodicScheduledMessages,
-		},
+		Data:    planFeaturesToWire(plan, features),
 	})
+}
+
+func (h *PremiumHandler) HandleListPlans(c *fiber.Ctx) error {
+	plans := h.planStore.GetPaidPlans()
+
+	res := make([]wire.GetPremiumPlanFeaturesResponseDataWire, len(plans))
+	for i, plan := range plans {
+		res[i] = planFeaturesToWire(plan.Name, plan.Features)
+	}
+
+	return c.JSON(wire.ListPremiumPlansResponseWire{
+		Success: true,
+		Data:    res,
+	})
+}
+
+func planFeaturesToWire(plan string, features model.PlanFeatures) wire.GetPremiumPlanFeaturesResponseDataWire {
+	return wire.GetPremiumPlanFeaturesResponseDataWire{
+		Plan:                      plan,
+		MaxSavedMessages:          features.MaxSavedMessages,
+		MaxSavedMessageVersions:   features.MaxSavedMessageVersions,
+		MaxActionsPerComponent:    features.MaxActionsPerComponent,
+		AdvancedActionTypes:       features.AdvancedActionTypes,
+		MaxAIPromptsPerMonth:      features.MaxAIPromptsPerMonth,
+		CustomBot:                 features.CustomBot,
+		MaxCustomCommands:         features.MaxCustomCommands,
+		IsPremium:                 features.IsPremium,
+		MaxImageUploadSize:        features.MaxImageUploadSize,
+		MaxScheduledMessages:      features.MaxScheduledMessages,
+		PeriodicScheduledMessages: features.PeriodicScheduledMessages,
+		MaxTemplateOps:            features.MaxTemplateOps,
+		MaxKVKeys:                 features.MaxKVKeys,
+	}
 }
 
 func (h *PremiumHandler) HandleListEntitlements(c *fiber.Ctx) error {
@@ -110,13 +132,15 @@ func (h *PremiumHandler) HandleListEntitlements(c *fiber.Ctx) error {
 	}
 	for i, e := range entitlements {
 		consumable := false
+		planName := ""
 		if plan := h.planStore.GetPlanBySKUID(e.SkuID); plan != nil {
 			consumable = plan.Consumable
+			planName = plan.Name
 		}
 
 		resp.Entitlements[i] = wire.PremiumEntitlementWire{
 			ID:              e.ID,
-			SkuID:           e.ID,
+			SkuID:           e.SkuID,
 			UserID:          e.UserID,
 			GuildID:         e.GuildID,
 			UpdatedAt:       e.UpdatedAt,
@@ -124,6 +148,7 @@ func (h *PremiumHandler) HandleListEntitlements(c *fiber.Ctx) error {
 			StartsAt:        e.StartsAt,
 			EndsAt:          e.EndsAt,
 			Consumable:      consumable,
+			Plan:            planName,
 			Consumed:        e.Consumed,
 			ConsumedGuildID: e.ConsumedGuildID,
 		}

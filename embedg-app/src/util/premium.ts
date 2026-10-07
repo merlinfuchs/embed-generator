@@ -1,8 +1,12 @@
+import { useMemo } from "react";
+import { usePremiumEntitlementConsumeMutation } from "../api/mutations";
 import {
   usePremiumGuildFeaturesQuery,
+  usePremiumUserEntitlementsQuery,
   usePremiumUserFeaturesQuery,
 } from "../api/queries";
 import { useSendSettingsStore } from "../state/sendSettings";
+import { useToasts } from "./toasts";
 
 export function usePremiumGuildFeatures(guildId?: string | null) {
   const selectedGuildID = useSendSettingsStore((state) => state.guildId);
@@ -27,4 +31,55 @@ export function usePremiumUserFeatures() {
   }
 
   return data.data;
+}
+
+export function useConsumableEntitlement(plan: string) {
+  const { data } = usePremiumUserEntitlementsQuery();
+
+  const entitlementId = useMemo(() => {
+    if (!data?.success) return null;
+    return data.data.entitlements.find(
+      (e) => e.consumable && !e.consumed_guild_id && e.plan === plan,
+    )?.id;
+  }, [data, plan]);
+
+  const guildId = useSendSettingsStore((s) => s.guildId);
+  const consumeMutation = usePremiumEntitlementConsumeMutation();
+  const createToast = useToasts((s) => s.create);
+
+  function activate(onDone: () => void) {
+    if (!entitlementId || !guildId) return;
+
+    consumeMutation.mutate(
+      {
+        entitlementId,
+        req: { guild_id: guildId },
+      },
+      {
+        onSuccess: (res) => {
+          if (res.success) {
+            createToast({
+              title: `${plan} activated`,
+              message: "This server now has access to all features!",
+              type: "success",
+            });
+          } else {
+            createToast({
+              title: `Failed to activate ${plan}`,
+              message: res.error.message,
+              type: "error",
+            });
+          }
+          onDone();
+        },
+      },
+    );
+  }
+
+  return {
+    entitlementId,
+    guildId,
+    activate,
+    pending: consumeMutation.isPending,
+  };
 }
