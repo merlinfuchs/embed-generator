@@ -1,5 +1,5 @@
 ---
-sidebar_position: 2
+sidebar_position: 3
 description: "Schedule Discord messages to be sent later, once or on a repeating schedule every hour, day or week. Set it up in Embed Generator without a bot command."
 ---
 
