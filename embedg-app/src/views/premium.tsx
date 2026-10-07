@@ -5,13 +5,15 @@ import PremiumFeatures from "../components/PremiumFeatures";
 import PremiumSuggest from "../components/PremiumSuggest";
 import UltimateFeatures from "../components/UltimateFeatures";
 import UltimateSuggest from "../components/UltimateSuggest";
+import { PREMIUM_PLAN, ULTIMATE_PLAN } from "../util/plans";
 import { usePremiumGuildFeatures } from "../util/premium";
 
 export default function PremiumView() {
   const { data: user } = useUserQuery();
 
   const features = usePremiumGuildFeatures();
-  const planName = features?.is_ultimate ? "Ultimate" : "Premium";
+  const isUltimate = features?.plan === ULTIMATE_PLAN;
+  const planName = features?.plan || PREMIUM_PLAN;
 
   return (
     <div className="px-4 max-w-5xl mx-auto mb-20 mt-5 lg:mt-20 w-full">
@@ -32,11 +34,7 @@ export default function PremiumView() {
         <div className="space-y-10">
           {features?.is_premium ? (
             <div className="select-none">
-              {features.is_ultimate ? (
-                <UltimateFeatures />
-              ) : (
-                <PremiumFeatures />
-              )}
+              {isUltimate ? <UltimateFeatures /> : <PremiumFeatures />}
               <div className="flex pt-5">
                 <a
                   className="px-3 py-2 rounded-lg border-2 border-white/15 text-mist-100 hover:bg-white/5 hover:border-white/30 transition-colors cursor-pointer"
@@ -51,7 +49,7 @@ export default function PremiumView() {
           ) : (
             <PremiumSuggest alwaysExpanded={true} />
           )}
-          {features && !features.is_ultimate && (
+          {features && !isUltimate && (
             <UltimateSuggest upgrade={features.is_premium} />
           )}
         </div>

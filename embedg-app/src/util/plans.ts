@@ -1,3 +1,4 @@
+import { usePremiumPlansQuery } from "../api/queries";
 import type { GetPremiumPlanFeaturesResponseDataWire } from "../api/wire";
 
 export type Limit =
@@ -8,47 +9,30 @@ export type Limit =
   | "max_actions_per_component"
   | "max_ai_prompts_per_month";
 
-export interface PlanTier {
-  name: "Premium" | "Ultimate";
-  limits: Record<Limit, number>;
+// The names of the plans in the config that the app has copy for.
+export const PREMIUM_PLAN = "Premium";
+export const ULTIMATE_PLAN = "Ultimate";
+
+/** The plans that can be bought, from the cheapest to the most expensive. */
+export function usePlans() {
+  const { data } = usePremiumPlansQuery();
+  return data?.success ? data.data : null;
 }
 
-// Mirrors the paid plans in the production config.
-export const premiumTier: PlanTier = {
-  name: "Premium",
-  limits: {
-    max_saved_messages: 100,
-    max_saved_message_versions: 25,
-    max_scheduled_messages: 25,
-    max_custom_commands: 25,
-    max_actions_per_component: 10,
-    max_ai_prompts_per_month: 100,
-  },
-};
-
-export const ultimateTier: PlanTier = {
-  name: "Ultimate",
-  limits: {
-    max_saved_messages: 500,
-    max_saved_message_versions: 50,
-    max_scheduled_messages: 100,
-    max_custom_commands: 50,
-    max_actions_per_component: 20,
-    max_ai_prompts_per_month: 250,
-  },
-};
+export function usePlan(name: string) {
+  return usePlans()?.find((p) => p.plan === name);
+}
 
 /**
- * The paid plans that raise the limit above what the features allow, cheapest
- * first. None while the features are unknown or already the highest plan.
+ * The plans that raise the limit above what the features allow, cheapest
+ * first. None while either is unknown.
  */
 export function upgradesFor(
   limit: Limit,
   features: GetPremiumPlanFeaturesResponseDataWire | null,
+  plans: GetPremiumPlanFeaturesResponseDataWire[] | null,
 ) {
-  if (!features || features.is_ultimate) return [];
+  if (!features || !plans) return [];
 
-  return [premiumTier, ultimateTier].filter(
-    (t) => t.limits[limit] > features[limit],
-  );
+  return plans.filter((p) => p[limit] > features[limit]);
 }

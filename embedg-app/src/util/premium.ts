@@ -6,6 +6,7 @@ import {
   usePremiumUserFeaturesQuery,
 } from "../api/queries";
 import { useSendSettingsStore } from "../state/sendSettings";
+import { ULTIMATE_PLAN } from "./plans";
 import { useToasts } from "./toasts";
 
 export function usePremiumGuildFeatures(guildId?: string | null) {
@@ -39,7 +40,10 @@ export function useConsumableEntitlement(ultimate: boolean) {
   const entitlementId = useMemo(() => {
     if (!data?.success) return null;
     return data.data.entitlements.find(
-      (e) => e.consumable && !e.consumed_guild_id && e.is_ultimate === ultimate,
+      (e) =>
+        e.consumable &&
+        !e.consumed_guild_id &&
+        (e.plan === ULTIMATE_PLAN) === ultimate,
     )?.id;
   }, [data, ultimate]);
 

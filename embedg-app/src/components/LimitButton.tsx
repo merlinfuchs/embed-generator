@@ -2,7 +2,7 @@ import { SparklesIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { type ReactNode, useState } from "react";
 import type { GetPremiumPlanFeaturesResponseDataWire } from "../api/wire";
-import { type Limit, upgradesFor } from "../util/plans";
+import { type Limit, upgradesFor, usePlans } from "../util/plans";
 import LimitReachedModal from "./LimitReachedModal";
 
 interface Props {
@@ -24,6 +24,7 @@ export default function LimitButton({
   children,
 }: Props) {
   const [modal, setModal] = useState(false);
+  const plans = usePlans();
 
   // Until the features load the server is the one to enforce the limit.
   if (!features || count < features[limit]) {
@@ -34,7 +35,8 @@ export default function LimitButton({
     );
   }
 
-  const upgradable = upgradesFor(limit, features).length > 0;
+  const upgrades = upgradesFor(limit, features, plans);
+  const upgradable = upgrades.length > 0;
 
   return (
     <>
@@ -54,7 +56,8 @@ export default function LimitButton({
       {modal && (
         <LimitReachedModal
           limit={limit}
-          features={features}
+          current={features[limit]}
+          upgrades={upgrades}
           onClose={() => setModal(false)}
         />
       )}

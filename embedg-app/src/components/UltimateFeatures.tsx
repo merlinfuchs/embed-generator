@@ -6,11 +6,12 @@ import {
   FireIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
-import { ultimateTier } from "../util/plans";
-
-const limits = ultimateTier.limits;
+import { ULTIMATE_PLAN, usePlan } from "../util/plans";
 
 export default function UltimateFeatures() {
+  const ultimate = usePlan(ULTIMATE_PLAN);
+  if (!ultimate) return null;
+
   return (
     <div className="space-y-5 px-3 py-2">
       <div className="flex items-center gap-4">
@@ -29,7 +30,7 @@ export default function UltimateFeatures() {
         <div className="text-mist-300 text-sm">
           Create up to{" "}
           <span className="font-medium text-white">
-            {limits.max_scheduled_messages} scheduled messages
+            {ultimate.max_scheduled_messages} scheduled messages
           </span>
         </div>
       </div>
@@ -40,9 +41,10 @@ export default function UltimateFeatures() {
         <div className="text-mist-300 text-sm">
           Save up to{" "}
           <span className="font-medium text-white">
-            {limits.max_saved_messages} messages
+            {ultimate.max_saved_messages} messages
           </span>{" "}
-          and keep {limits.max_saved_message_versions} earlier versions of each
+          and keep {ultimate.max_saved_message_versions} earlier versions of
+          each
         </div>
       </div>
       <div className="flex items-center gap-4">
@@ -52,7 +54,7 @@ export default function UltimateFeatures() {
         <div className="text-mist-300 text-sm">
           Add up to{" "}
           <span className="font-medium text-white">
-            {limits.max_custom_commands} custom commands
+            {ultimate.max_custom_commands} custom commands
           </span>
         </div>
       </div>
@@ -63,7 +65,7 @@ export default function UltimateFeatures() {
         <div className="text-mist-300 text-sm">
           Add up to{" "}
           <span className="font-medium text-white">
-            {limits.max_actions_per_component} actions
+            {ultimate.max_actions_per_component} actions
           </span>{" "}
           to each interactive component
         </div>
@@ -74,7 +76,7 @@ export default function UltimateFeatures() {
         </span>
         <div className="text-mist-300 text-sm">
           Use the <span className="font-medium text-white">AI assistant</span>{" "}
-          up to {limits.max_ai_prompts_per_month} times a month
+          up to {ultimate.max_ai_prompts_per_month} times a month
         </div>
       </div>
     </div>

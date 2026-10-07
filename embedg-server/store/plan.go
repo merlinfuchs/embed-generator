@@ -12,4 +12,7 @@ type PlanStore interface {
 	GetPlanBySKUID(skuID string) *model.Plan
 	GetPlanFeaturesForGuild(ctx context.Context, guildID common.ID) (model.PlanFeatures, error)
 	GetPlanFeaturesForUser(ctx context.Context, userID common.ID) (model.PlanFeatures, error)
+	GetPlanForGuild(ctx context.Context, guildID common.ID) (string, model.PlanFeatures, error)
+	GetPlanForUser(ctx context.Context, userID common.ID) (string, model.PlanFeatures, error)
+	GetPaidPlans() []model.Plan
 }

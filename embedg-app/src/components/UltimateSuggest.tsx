@@ -1,5 +1,6 @@
 import { SparklesIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
+import { ULTIMATE_PLAN, usePlan } from "../util/plans";
 import { useConsumableEntitlement } from "../util/premium";
 import ConfirmModal from "./ConfirmModal";
 import UltimateFeatures from "./UltimateFeatures";
@@ -13,6 +14,9 @@ export default function UltimateSuggest({ upgrade }: Props) {
 
   const { entitlementId, guildId, activate, pending } =
     useConsumableEntitlement(true);
+
+  // Not every instance sells it.
+  if (!usePlan(ULTIMATE_PLAN)) return null;
 
   return (
     <div className="relative overflow-hidden p-3 rounded-2xl border border-amber-400/10 bg-[linear-gradient(135deg,#2B2D31_0%,#2F2E2C_65%,#3A3222_100%)] select-none">

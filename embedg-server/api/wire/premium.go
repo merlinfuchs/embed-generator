@@ -9,23 +9,27 @@ import (
 )
 
 type GetPremiumPlanFeaturesResponseDataWire struct {
-	MaxSavedMessages          int  `json:"max_saved_messages"`
-	MaxSavedMessageVersions   int  `json:"max_saved_message_versions"`
-	MaxActionsPerComponent    int  `json:"max_actions_per_component"`
-	AdvancedActionTypes       bool `json:"advanced_action_types"`
-	MaxAIPromptsPerMonth      int  `json:"max_ai_prompts_per_month"`
-	CustomBot                 bool `json:"custom_bot"`
-	MaxCustomCommands         int  `json:"max_custom_commands"`
-	IsPremium                 bool `json:"is_premium"`
-	IsUltimate                bool `json:"is_ultimate"`
-	MaxImageUploadSize        int  `json:"max_image_upload_size"`
-	MaxScheduledMessages      int  `json:"max_scheduled_messages"`
-	PeriodicScheduledMessages bool `json:"periodic_scheduled_messages"`
-	MaxTemplateOps            int  `json:"max_template_ops"`
-	MaxKVKeys                 int  `json:"max_kv_keys"`
+	// Plan is the name of the most expensive plan, or empty for the free one.
+	Plan                      string `json:"plan"`
+	MaxSavedMessages          int    `json:"max_saved_messages"`
+	MaxSavedMessageVersions   int    `json:"max_saved_message_versions"`
+	MaxActionsPerComponent    int    `json:"max_actions_per_component"`
+	AdvancedActionTypes       bool   `json:"advanced_action_types"`
+	MaxAIPromptsPerMonth      int    `json:"max_ai_prompts_per_month"`
+	CustomBot                 bool   `json:"custom_bot"`
+	MaxCustomCommands         int    `json:"max_custom_commands"`
+	IsPremium                 bool   `json:"is_premium"`
+	MaxImageUploadSize        int    `json:"max_image_upload_size"`
+	MaxScheduledMessages      int    `json:"max_scheduled_messages"`
+	PeriodicScheduledMessages bool   `json:"periodic_scheduled_messages"`
+	MaxTemplateOps            int    `json:"max_template_ops"`
+	MaxKVKeys                 int    `json:"max_kv_keys"`
 }
 
 type GetPremiumPlanFeaturesResponseWire APIResponse[GetPremiumPlanFeaturesResponseDataWire]
+
+// ListPremiumPlansResponseWire has the plans that can be bought, from the cheapest to the most expensive.
+type ListPremiumPlansResponseWire APIResponse[[]GetPremiumPlanFeaturesResponseDataWire]
 
 type PremiumEntitlementWire struct {
 	ID              string        `json:"id"`
@@ -37,7 +41,7 @@ type PremiumEntitlementWire struct {
 	StartsAt        null.Time     `json:"starts_at"`
 	EndsAt          null.Time     `json:"ends_at"`
 	Consumable      bool          `json:"consumable"`
-	IsUltimate      bool          `json:"is_ultimate"`
+	Plan            string        `json:"plan"`
 	Consumed        bool          `json:"consumed"`
 	ConsumedGuildID common.NullID `json:"consumed_guild_id"`
 }
