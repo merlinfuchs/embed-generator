@@ -1,5 +1,4 @@
-import { describe, expect, it } from "vitest";
-import { afterEach, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   dateOnDay,
   defaultRepeat,

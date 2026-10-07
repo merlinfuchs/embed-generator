@@ -17,6 +17,7 @@ import {
 } from "../util/schedule";
 import { formatRun, rezone, zonedDate, zonedDateTime } from "../util/time";
 import ScheduleDates from "./ScheduleDates";
+import SegmentedControl from "./SegmentedControl";
 import PremiumSuggest from "./PremiumSuggest";
 import TimezoneSelect from "./TimezoneSelect";
 
@@ -149,28 +150,20 @@ export default function ScheduleEditor({
     <div className="bg-ink-800 rounded-lg p-4 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="uppercase text-mist-300 text-sm font-medium">When</div>
-        <div className="flex bg-ink-900 p-1 rounded-lg text-white">
-          {[true, false].map((onDates) => (
-            <button
-              key={String(onDates)}
-              type="button"
-              onClick={() =>
-                draft.onDates !== onDates &&
-                set({
-                  onDates,
-                  // A repeating schedule can start right away.
-                  startAt: draft.startAt ?? new Date().toISOString(),
-                })
-              }
-              className={clsx(
-                "py-1 px-2 rounded-lg transition-colors",
-                draft.onDates === onDates && "bg-ink-700",
-              )}
-            >
-              {onDates ? "On specific dates" : "Repeat"}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          options={[
+            { value: "dates", label: "On specific dates" },
+            { value: "repeat", label: "Repeat" },
+          ]}
+          value={draft.onDates ? "dates" : "repeat"}
+          onChange={(mode) =>
+            set({
+              onDates: mode === "dates",
+              // A repeating schedule can start right away.
+              startAt: draft.startAt ?? new Date().toISOString(),
+            })
+          }
+        />
       </div>
 
       {draft.onDates ? (

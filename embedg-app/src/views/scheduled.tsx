@@ -8,16 +8,16 @@ import { useMemo, useState } from "react";
 import { AutoAnimate } from "../util/autoAnimate";
 import LimitButton from "../components/LimitButton";
 import ScheduledMessagesCalendar from "../components/ScheduledMessagesCalendar";
-import clsx from "clsx";
+import SegmentedControl from "../components/SegmentedControl";
 
 export default function ScheduledMessagesView() {
   const { data: user } = useUserQuery();
 
-  const [create, setCreate] = useState(false);
+  // A new message, on the day it was started on in the calendar.
+  const [create, setCreate] = useState<false | { day?: string }>(false);
   const [tab, setTab] = useState<"list" | "calendar">("list");
-  // What the calendar asked to open: a message's form, or a new one on a day.
-  const [focus, setFocus] = useState<{ id: string; n: number } | null>(null);
-  const [createDay, setCreateDay] = useState<string | undefined>();
+  // The message to open, picked in the calendar.
+  const [focusId, setFocusId] = useState<string | null>(null);
 
   const guildId = useSendSettingsStore((s) => s.guildId);
 
@@ -54,21 +54,18 @@ export default function ScheduledMessagesView() {
         {user?.success ? (
           <div className="space-y-5 mb-8">
             {messageCount !== 0 && (
-              <div className="flex bg-ink-900 p-1 rounded-lg text-white w-fit">
-                {(["list", "calendar"] as const).map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setTab(t)}
-                    className={clsx(
-                      "py-1 px-3 rounded-lg transition-colors capitalize",
-                      tab === t && "bg-ink-700",
-                    )}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
+              <SegmentedControl
+                options={[
+                  { value: "list", label: "List" },
+                  { value: "calendar", label: "Calendar" },
+                ]}
+                value={tab}
+                onChange={(t) => {
+                  setTab(t);
+                  // Opened once, not again every time the list comes back.
+                  setFocusId(null);
+                }}
+              />
             )}
             {tab === "calendar" && messageCount !== 0 ? (
               <ScheduledMessagesCalendar
@@ -76,12 +73,11 @@ export default function ScheduledMessagesView() {
                 messages={messages}
                 onOpen={(id) => {
                   setTab("list");
-                  setFocus((f) => ({ id, n: (f?.n ?? 0) + 1 }));
+                  setFocusId(id);
                 }}
                 onCreate={(day) => {
                   setTab("list");
-                  setCreateDay(day);
-                  setCreate(true);
+                  setCreate({ day });
                 }}
               />
             ) : (
@@ -90,18 +86,13 @@ export default function ScheduledMessagesView() {
                   <ScheduledMessage
                     msg={msg}
                     key={msg.id}
-                    focusKey={focus?.id === msg.id ? focus.n : undefined}
+                    focused={focusId === msg.id}
                   />
                 ))}
                 {(messageCount === 0 || create) && (
                   <ScheduledMessageCreate
-                    // A new day from the calendar starts a new form.
-                    key={createDay}
-                    initialDay={createDay}
-                    setCreate={(b) => {
-                      setCreate(b);
-                      if (!b) setCreateDay(undefined);
-                    }}
+                    initialDay={create ? create.day : undefined}
+                    setCreate={(b) => setCreate(b && {})}
                     cancelable={messageCount !== 0}
                   />
                 )}
@@ -113,7 +104,7 @@ export default function ScheduledMessagesView() {
                 features={guildFeatures}
                 count={messageCount}
                 className="px-3 py-2 rounded-lg border-2 border-white/15 hover:bg-white/5 hover:border-white/30 cursor-pointer"
-                onClick={() => setCreate(true)}
+                onClick={() => setCreate({})}
               >
                 New Scheduled Message
               </LimitButton>

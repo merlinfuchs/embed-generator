@@ -2,7 +2,9 @@ import { fireEvent, screen } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 import type { ScheduledMessageWire } from "../api/wire";
 import { renderEditor } from "../test/editor";
-import ScheduledMessagesCalendar from "./ScheduledMessagesCalendar";
+import ScheduledMessagesCalendar, {
+  localDay,
+} from "./ScheduledMessagesCalendar";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -69,8 +71,7 @@ test("schedules a new message on a day", () => {
     />,
   );
 
-  const d = tomorrowNoon();
-  const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const day = localDay(tomorrowNoon());
   // The six weeks shown always reach past the end of the month, so tomorrow is in them.
   fireEvent.click(
     screen.getByRole("button", { name: `Schedule a message on ${day}` }),

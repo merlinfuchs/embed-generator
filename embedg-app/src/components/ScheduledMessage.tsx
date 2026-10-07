@@ -42,11 +42,11 @@ import { useGuildChannelsQuery } from "../api/queries";
 
 export default function ScheduledMessage({
   msg,
-  focusKey,
+  focused,
 }: {
   msg: ScheduledMessageWire;
-  // Changes when the message is picked elsewhere, like in the calendar, to open its form.
-  focusKey?: number;
+  // Picked elsewhere, like in the calendar: starts with its form open and in view.
+  focused?: boolean;
 }) {
   const guildId = useSendSettingsStore((s) => s.guildId);
   const createToast = useToasts((s) => s.create);
@@ -54,13 +54,13 @@ export default function ScheduledMessage({
 
   const features = usePremiumGuildFeatures(guildId);
 
-  const [manage, setManage] = useState(false);
+  const [manage, setManage] = useState(!!focused);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (focusKey === undefined) return;
-    setManage(true);
-    ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [focusKey]);
+    if (focused) {
+      ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [focused]);
 
   const [enabled, setEnabled] = useState(msg.enabled);
   const [name, setName] = useState(msg.name);

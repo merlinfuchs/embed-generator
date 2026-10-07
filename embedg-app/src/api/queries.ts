@@ -321,7 +321,8 @@ export function useScheduledMessageRunsQuery(
   to: string,
 ) {
   return useQuery<ScheduledMessageRunsResponseWire>({
-    queryKey: ["scheduled-message-runs", guildId, from, to],
+    // Under the scheduled messages, so saving one refreshes the runs too.
+    queryKey: ["scheduled-messages", guildId, "runs", from, to],
     queryFn: () =>
       fetch(
         `/api/scheduled-messages/runs?guild_id=${guildId}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,

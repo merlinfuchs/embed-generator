@@ -381,8 +381,9 @@ func (h *ScheduledMessageHandler) HandlePreviewScheduledMessage(c *fiber.Ctx, re
 
 const (
 	// A month as a calendar shows it, six weeks, with some room for timezones.
-	maxRunsRange      = 45 * 24 * time.Hour
-	maxRunsPerMessage = 200
+	maxRunsRange = 45 * 24 * time.Hour
+	// Enough for an hourly message to fill the six weeks, the calendar caps what it shows per day.
+	maxRunsPerMessage = 1100
 )
 
 // HandleListScheduledMessageRuns lists when the guild's scheduled messages send between the from
