@@ -9,6 +9,7 @@ import { AutoAnimate } from "../util/autoAnimate";
 import LimitButton from "../components/LimitButton";
 import ScheduledMessagesCalendar from "../components/ScheduledMessagesCalendar";
 import SegmentedControl from "../components/SegmentedControl";
+import clsx from "clsx";
 
 export default function ScheduledMessagesView() {
   const { data: user } = useUserQuery();
@@ -67,10 +68,11 @@ export default function ScheduledMessagesView() {
                 }}
               />
             )}
-            {tab === "calendar" && messageCount !== 0 ? (
+            {tab === "calendar" && messageCount !== 0 && (
               <ScheduledMessagesCalendar
                 guildId={guildId}
                 messages={messages}
+                canCreate={messageCount < maxMessages}
                 onOpen={(id) => {
                   setTab("list");
                   setFocusId(id);
@@ -80,31 +82,41 @@ export default function ScheduledMessagesView() {
                   setCreate({ day });
                 }}
               />
-            ) : (
-              <AutoAnimate className="space-y-5 overflow-y-auto">
-                {messages.map((msg) => (
-                  <ScheduledMessage
-                    msg={msg}
-                    key={msg.id}
-                    focused={focusId === msg.id}
-                  />
-                ))}
-                {(messageCount === 0 || create) && (
-                  <ScheduledMessageCreate
-                    initialDay={create ? create.day : undefined}
-                    setCreate={(b) => setCreate(b && {})}
-                    cancelable={messageCount !== 0}
-                  />
-                )}
-              </AutoAnimate>
             )}
+            {/* Hidden instead of unmounted, an open form keeps its edits while the calendar shows. */}
+            <AutoAnimate
+              className={clsx(
+                "space-y-5 overflow-y-auto",
+                tab === "calendar" && messageCount !== 0 && "hidden",
+              )}
+            >
+              {messages.map((msg) => (
+                <ScheduledMessage
+                  msg={msg}
+                  key={msg.id}
+                  focused={focusId === msg.id}
+                />
+              ))}
+              {(messageCount === 0 || create) && (
+                <ScheduledMessageCreate
+                  // A day picked in the calendar starts the form over on it.
+                  key={create ? create.day : undefined}
+                  initialDay={create ? create.day : undefined}
+                  setCreate={(b) => setCreate(b && {})}
+                  cancelable={messageCount !== 0}
+                />
+              )}
+            </AutoAnimate>
             <div className="flex space-x-3 justify-end">
               <LimitButton
                 limit="max_scheduled_messages"
                 features={guildFeatures}
                 count={messageCount}
                 className="px-3 py-2 rounded-lg border-2 border-white/15 hover:bg-white/5 hover:border-white/30 cursor-pointer"
-                onClick={() => setCreate({})}
+                onClick={() => {
+                  setTab("list");
+                  setCreate(create || {});
+                }}
               >
                 New Scheduled Message
               </LimitButton>

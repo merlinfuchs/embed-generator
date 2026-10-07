@@ -53,8 +53,9 @@ interface Props {
   guildId: string | null;
   messages: ScheduledMessageWire[];
   onOpen: (messageId: string) => void;
-  // Starts a new scheduled message on a YYYY-MM-DD day.
+  // Starts a new scheduled message on a YYYY-MM-DD day, when the plan has room for one.
   onCreate: (day: string) => void;
+  canCreate: boolean;
 }
 
 export default function ScheduledMessagesCalendar({
@@ -62,7 +63,10 @@ export default function ScheduledMessagesCalendar({
   messages,
   onOpen,
   onCreate,
+  canCreate,
 }: Props) {
+  // A day whose runs don't fit its cell, showing all of them.
+  const [expanded, setExpanded] = useState<string | null>(null);
   const now = new Date();
   const today = localDay(now);
   const [month, setMonth] = useState({
@@ -193,22 +197,27 @@ export default function ScheduledMessagesCalendar({
                   >
                     {d.getDate()}
                   </span>
-                  {day >= today && (
+                  {canCreate && day >= today && (
                     <button
                       type="button"
                       aria-label={`Schedule a message on ${day}`}
-                      className="hidden group-hover:block text-mist-500 hover:text-white"
+                      // Invisible until hovered, but still there for the keyboard and touch.
+                      className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-mist-500 hover:text-white"
                       onClick={() => onCreate(day)}
                     >
                       <PlusIcon className="h-4 w-4" />
                     </button>
                   )}
                 </div>
-                {chips(runs.slice(0, 3))}
+                {chips(expanded === day ? runs : runs.slice(0, 3))}
                 {runs.length > 3 && (
-                  <div className="text-mist-500 px-1">
-                    {runs.length - 3} more
-                  </div>
+                  <button
+                    type="button"
+                    className="text-mist-500 hover:text-white px-1"
+                    onClick={() => setExpanded(expanded === day ? null : day)}
+                  >
+                    {expanded === day ? "Show less" : `${runs.length - 3} more`}
+                  </button>
                 )}
               </div>
             );
@@ -228,11 +237,17 @@ export default function ScheduledMessagesCalendar({
                 {agendaDayFormat.format(d)}
               </div>
               <div className="space-y-1 text-sm">
-                {chips(runs.slice(0, maxAgendaRuns))}
+                {chips(expanded === day ? runs : runs.slice(0, maxAgendaRuns))}
                 {runs.length > maxAgendaRuns && (
-                  <div className="text-mist-500 text-xs px-1">
-                    {runs.length - maxAgendaRuns} more
-                  </div>
+                  <button
+                    type="button"
+                    className="text-mist-500 hover:text-white text-xs px-1"
+                    onClick={() => setExpanded(expanded === day ? null : day)}
+                  >
+                    {expanded === day
+                      ? "Show less"
+                      : `${runs.length - maxAgendaRuns} more`}
+                  </button>
                 )}
               </div>
             </div>
@@ -240,6 +255,14 @@ export default function ScheduledMessagesCalendar({
         )}
       </div>
 
+      {runsQuery.isPending && (
+        <div className="text-mist-500 text-xs mt-3">Loading the sends…</div>
+      )}
+      {runsQuery.data && !runsQuery.data.success && (
+        <div className="text-red text-xs mt-3">
+          The sends couldn't be loaded: {runsQuery.data.error.message}
+        </div>
+      )}
       {data?.truncated && (
         <div className="text-mist-500 text-xs mt-3">
           Some messages send too often to show every run.

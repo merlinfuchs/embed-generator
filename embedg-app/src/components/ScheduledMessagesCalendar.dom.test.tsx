@@ -41,6 +41,7 @@ test("shows the runs and opens their message", async () => {
       messages={[message("a", "Weekly recap")]}
       onOpen={onOpen}
       onCreate={() => {}}
+      canCreate
     />,
   );
 
@@ -68,6 +69,7 @@ test("schedules a new message on a day", () => {
       messages={[]}
       onOpen={() => {}}
       onCreate={onCreate}
+      canCreate
     />,
   );
 

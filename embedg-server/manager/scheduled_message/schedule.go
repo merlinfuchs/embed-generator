@@ -40,9 +40,10 @@ func NextDate(dates []time.Time, last time.Time) (time.Time, bool) {
 	return time.Time{}, false
 }
 
-// UpcomingRuns lists when an enabled scheduled message sends between from and to, starting at its
-// next run. More is whether there are more than limit of them in the range.
-func UpcomingRuns(msg model.ScheduledMessage, from, to time.Time, limit int) (runs []time.Time, more bool, err error) {
+// UpcomingRuns lists when an enabled scheduled message sends between from and to. Its next run
+// is still due even when it's late, after it the runs go on from now like the manager goes on.
+// More is whether there are more than limit of them in the range.
+func UpcomingRuns(msg model.ScheduledMessage, from, to time.Time, limit int, now time.Time) (runs []time.Time, more bool, err error) {
 	if !msg.Enabled {
 		return nil, false, nil
 	}
@@ -60,9 +61,17 @@ func UpcomingRuns(msg model.ScheduledMessage, from, to time.Time, limit int) (ru
 		return true
 	}
 
+	if !msg.NextAt.Before(from) && !add(msg.NextAt) {
+		return runs, more, nil
+	}
+	after := msg.NextAt
+	if now.After(after) {
+		after = now
+	}
+
 	if msg.OnDates() {
 		for _, d := range msg.RunTimes {
-			if d.Before(msg.NextAt) || d.Before(from) {
+			if !d.After(after) || d.Before(from) {
 				continue
 			}
 			if !add(d) {
@@ -73,18 +82,30 @@ func UpcomingRuns(msg model.ScheduledMessage, from, to time.Time, limit int) (ru
 	}
 
 	sched := ScheduleOf(msg)
-	next := msg.NextAt
-	if next.Before(from) {
-		if next, err = sched.First(from); err != nil {
+	if after.Before(from) {
+		first, err := sched.First(from)
+		if err != nil {
 			return nil, false, err
 		}
+		if !add(first) {
+			return runs, more, nil
+		}
+		after = first
 	}
-	for add(next) {
-		if next, err = sched.Next(next); err != nil {
+
+	next, err := sched.Runs(after)
+	if err != nil {
+		return nil, false, err
+	}
+	for {
+		t, err := next()
+		if err != nil {
 			return nil, false, err
 		}
+		if !add(t) {
+			return runs, more, nil
+		}
 	}
-	return runs, more, nil
 }
 
 // ScheduleOf returns the schedule of a recurring scheduled message.
@@ -110,45 +131,81 @@ func (s Schedule) Next(last time.Time) (time.Time, error) {
 	return s.next(last, false)
 }
 
-func (s Schedule) next(ref time.Time, inclusive bool) (time.Time, error) {
-	tick, err := nextTick(s.Expression, ref, s.Timezone, inclusive)
-	if err != nil || s.Interval <= 1 {
-		return tick, err
+// intervalPeriods is what counting an interval takes, the same for every run of a schedule.
+type intervalPeriods struct {
+	unit   periodUnit
+	loc    *time.Location
+	anchor int64
+}
+
+// periods is nil when every period is due.
+func (s Schedule) periods() (*intervalPeriods, error) {
+	if s.Interval <= 1 {
+		return nil, nil
 	}
 
 	unit, err := intervalUnit(s.Expression)
 	if err != nil {
-		return time.Time{}, err
+		return nil, err
 	}
 	loc, err := common.LoadTimezone(s.Timezone)
 	if err != nil {
-		return time.Time{}, err
+		return nil, err
 	}
 
 	// Counted from the first tick, so starting after the day's tick doesn't skip a whole interval.
 	firstTick, err := nextTick(s.Expression, s.Anchor, s.Timezone, true)
 	if err != nil {
+		return nil, err
+	}
+	return &intervalPeriods{unit: unit, loc: loc, anchor: unit.index(firstTick.In(loc))}, nil
+}
+
+func (s Schedule) next(ref time.Time, inclusive bool) (time.Time, error) {
+	p, err := s.periods()
+	if err != nil {
 		return time.Time{}, err
 	}
-	anchor := unit.index(firstTick.In(loc))
+	return s.step(p, ref, inclusive)
+}
+
+// Runs returns a function that gives the runs after last one by one, setting the schedule up
+// once for all of them.
+func (s Schedule) Runs(last time.Time) (func() (time.Time, error), error) {
+	p, err := s.periods()
+	if err != nil {
+		return nil, err
+	}
+	return func() (time.Time, error) {
+		next, err := s.step(p, last, false)
+		last = next
+		return next, err
+	}, nil
+}
+
+func (s Schedule) step(p *intervalPeriods, ref time.Time, inclusive bool) (time.Time, error) {
+	tick, err := nextTick(s.Expression, ref, s.Timezone, inclusive)
+	if err != nil || p == nil {
+		return tick, err
+	}
 	interval := int64(s.Interval)
 
 	// Each step either finds a run or jumps to the start of the next period that's due, so it
 	// only takes more than one when a due period has no tick, like day 31 in a short month.
 	for range 100 {
-		period := unit.index(tick.In(loc))
-		if period >= anchor && (period-anchor)%interval == 0 {
+		period := p.unit.index(tick.In(p.loc))
+		if period >= p.anchor && (period-p.anchor)%interval == 0 {
 			return tick, nil
 		}
 
-		due := anchor
-		if period > anchor {
-			due = period + interval - (period-anchor)%interval
+		due := p.anchor
+		if period > p.anchor {
+			due = period + interval - (period-p.anchor)%interval
 		}
 		// It's later than ref. Searching from the wall clock the period starts at still finds a
 		// tick on a midnight that DST skips, which maps to after the start.
-		wall, start := unit.start(due, loc)
-		tick, err = searchTicks(s.Expression, wall, loc, start, true)
+		wall, start := p.unit.start(due, p.loc)
+		tick, err = searchTicks(s.Expression, wall, p.loc, start, true)
 		if err != nil {
 			return time.Time{}, err
 		}

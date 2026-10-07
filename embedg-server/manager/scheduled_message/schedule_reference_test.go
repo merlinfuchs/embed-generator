@@ -213,6 +213,20 @@ func TestScheduleMatchesReference(t *testing.T) {
 						}
 						if !slices.EqualFunc(got, want, time.Time.Equal) {
 							t.Errorf("%s:\n got  %v\n want %v", name, formatRuns(got, loc), formatRuns(want, loc))
+							continue
+						}
+
+						// The calendar's iterator steps through the same runs.
+						next, err := schedule.Runs(got[0])
+						if err != nil {
+							t.Fatal(err)
+						}
+						for i := 1; i < count; i++ {
+							r, err := next()
+							if err != nil || !r.Equal(want[i]) {
+								t.Errorf("%s: Runs gives %v, %v at %d, want %v", name, r, err, i, want[i])
+								break
+							}
 						}
 					}
 				}

@@ -174,7 +174,7 @@ func TestUpcomingRuns(t *testing.T) {
 		NextAt:         mustParse(t, "2026-10-07T12:00:00Z"),
 		EndAt:          null.TimeFrom(mustParse(t, "2026-10-14T00:00:00Z")),
 	}
-	runs, more, err := UpcomingRuns(daily, from, to, 10)
+	runs, more, err := UpcomingRuns(daily, from, to, 10, from)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,7 +189,7 @@ func TestUpcomingRuns(t *testing.T) {
 		}
 	}
 
-	if _, more, _ := UpcomingRuns(daily, from, to, 2); !more {
+	if _, more, _ := UpcomingRuns(daily, from, to, 2, from); !more {
 		t.Error("want more runs than the limit to be reported")
 	}
 
@@ -199,12 +199,38 @@ func TestUpcomingRuns(t *testing.T) {
 		NextAt:   mustParse(t, "2026-10-16T18:00:00Z"),
 	}
 	// The 6th was sent already, the 30th is after the range.
-	if runs, _, _ := UpcomingRuns(onDates, from, to, 10); len(runs) != 1 || !runs[0].Equal(onDates.RunTimes[1]) {
+	if runs, _, _ := UpcomingRuns(onDates, from, to, 10, from); len(runs) != 1 || !runs[0].Equal(onDates.RunTimes[1]) {
 		t.Errorf("got %v, want only the 16th", runs)
 	}
 
 	onDates.Enabled = false
-	if runs, _, _ := UpcomingRuns(onDates, from, to, 10); len(runs) != 0 {
+	if runs, _, _ := UpcomingRuns(onDates, from, to, 10, from); len(runs) != 0 {
 		t.Errorf("want nothing for a disabled message, got %v", runs)
+	}
+}
+
+func TestUpcomingRunsGoOnFromNow(t *testing.T) {
+	// Due at 10:00 but still being retried at 10:25, the manager goes on from now after it.
+	msg := model.ScheduledMessage{
+		Enabled:        true,
+		CronExpression: null.StringFrom("*/5 * * * *"),
+		CronTimezone:   null.StringFrom("UTC"),
+		CronInterval:   1,
+		NextAt:         mustParse(t, "2026-10-07T10:00:00Z"),
+	}
+	now := mustParse(t, "2026-10-07T10:25:00Z")
+
+	runs, _, err := UpcomingRuns(msg, mustParse(t, "2026-10-07T00:00:00Z"), mustParse(t, "2026-10-07T10:40:00Z"), 10, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"2026-10-07T10:00:00Z", "2026-10-07T10:30:00Z", "2026-10-07T10:35:00Z", "2026-10-07T10:40:00Z"}
+	if len(runs) != len(want) {
+		t.Fatalf("got %v, want %v", runs, want)
+	}
+	for i, w := range want {
+		if !runs[i].Equal(mustParse(t, w)) {
+			t.Errorf("run %d: got %s, want %s", i, runs[i], w)
+		}
 	}
 }

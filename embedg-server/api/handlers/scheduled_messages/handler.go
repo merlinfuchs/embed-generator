@@ -384,6 +384,8 @@ const (
 	maxRunsRange = 45 * 24 * time.Hour
 	// Enough for an hourly message to fill the six weeks, the calendar caps what it shows per day.
 	maxRunsPerMessage = 1100
+	// All messages together, about 400 KB of JSON.
+	maxRuns = 5000
 )
 
 // HandleListScheduledMessageRuns lists when the guild's scheduled messages send between the from
@@ -410,9 +412,15 @@ func (h *ScheduledMessageHandler) HandleListScheduledMessageRuns(c *fiber.Ctx) e
 		return err
 	}
 
+	now := time.Now().UTC()
 	res := wire.ScheduledMessageRunsWire{Runs: []wire.ScheduledMessageRunWire{}}
 	for _, msg := range messages {
-		runs, more, err := scheduled_messages.UpcomingRuns(msg, from, to, maxRunsPerMessage)
+		limit := min(maxRunsPerMessage, maxRuns-len(res.Runs))
+		if limit == 0 {
+			res.Truncated = true
+			break
+		}
+		runs, more, err := scheduled_messages.UpcomingRuns(msg, from, to, limit, now)
 		if err != nil {
 			// Its schedule is broken, the manager stops it on its next run.
 			continue
@@ -572,11 +580,13 @@ func endAfterRuns(s *wire.ScheduledMessageScheduleWire, next time.Time) error {
 		return nil
 	}
 
-	sched := schedule(s)
+	runs, err := schedule(s).Runs(next)
+	if err != nil {
+		return handlers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
+	}
 	last := next
 	for range s.EndAfterRuns - 1 {
-		var err error
-		if last, err = sched.Next(last); err != nil {
+		if last, err = runs(); err != nil {
 			return handlers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
 		}
 	}

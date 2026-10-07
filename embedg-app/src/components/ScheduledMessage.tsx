@@ -45,7 +45,7 @@ export default function ScheduledMessage({
   focused,
 }: {
   msg: ScheduledMessageWire;
-  // Picked elsewhere, like in the calendar: starts with its form open and in view.
+  // Picked elsewhere, like in the calendar: opens its form and scrolls to it.
   focused?: boolean;
 }) {
   const guildId = useSendSettingsStore((s) => s.guildId);
@@ -54,10 +54,11 @@ export default function ScheduledMessage({
 
   const features = usePremiumGuildFeatures(guildId);
 
-  const [manage, setManage] = useState(!!focused);
+  const [manage, setManage] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (focused) {
+      setManage(true);
       ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, [focused]);
