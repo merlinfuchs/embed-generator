@@ -97,14 +97,28 @@ test("embeds going over 6000 characters together are flagged", () => {
 });
 
 test("embed timestamps must be dates the server can parse", () => {
-  expect(embedTimestampSchema.safeParse(undefined).success).toBe(true);
-  expect(
-    embedTimestampSchema.safeParse("2026-10-07T12:00:00.000Z").success,
-  ).toBe(true);
-  expect(
-    embedTimestampSchema.safeParse("2026-10-07T12:00:00+02:00").success,
-  ).toBe(true);
-  expect(embedTimestampSchema.safeParse("").success).toBe(false);
-  expect(embedTimestampSchema.safeParse("tomorrow").success).toBe(false);
-  expect(embedTimestampSchema.safeParse("2026-10-07").success).toBe(false);
+  const valid = (v: string | undefined) =>
+    embedTimestampSchema.safeParse(v).success;
+
+  expect(valid(undefined)).toBe(true);
+  expect(valid("2026-10-07T12:00:00.000Z")).toBe(true);
+  expect(valid("2026-10-07T12:00:00+02:00")).toBe(true);
+  expect(valid("2024-02-29T12:00:00Z")).toBe(true);
+
+  // Each of these is rejected by Go's time.Parse(time.RFC3339).
+  for (const v of [
+    "",
+    "tomorrow",
+    "2026-10-07",
+    "2026-10-07T12:00Z",
+    "2026-10-07T12:00:00",
+    "2026-10-07T12:00:00+0200",
+    "2026-10-07T12:00:00+02",
+    "2026-02-29T12:00:00Z",
+    "2026-02-30T12:00:00Z",
+    "2026-13-45T25:61:61Z",
+    "2026-10-07T24:00:00Z",
+  ]) {
+    expect(valid(v), v).toBe(false);
+  }
 });

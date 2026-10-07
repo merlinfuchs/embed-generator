@@ -200,7 +200,7 @@ export type EmbedUrl = z.infer<typeof embedUrlSchema>;
 
 // Exports and other tools write "" for an embed without a timestamp.
 export const embedTimestampSchema = z.preprocess(
-  (d) => (d === "" ? undefined : (d ?? undefined)),
+  (d) => (d === "" || d === null ? undefined : d),
   z.optional(z.string()),
 );
 

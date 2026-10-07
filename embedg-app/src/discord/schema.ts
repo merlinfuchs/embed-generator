@@ -165,9 +165,37 @@ export const embedUrlSchema = z.optional(z.string().refine(...urlRefinement));
 
 export type EmbedUrl = z.infer<typeof embedUrlSchema>;
 
-// Same format the server parses: an ISO date with a time and a Z or offset.
+const rfc3339Regex =
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-](\d{2}):(\d{2}))$/;
+
+/**
+ * Whether the server can parse `value` as a timestamp: RFC 3339, the subset of ISO 8601 with
+ * seconds and a Z or ±hh:mm offset, and a date that exists. zod's datetime() only checks the
+ * shape, so it lets through "+0200" and the 45th of a month, which the server rejects.
+ */
+export function isRfc3339(value: string): boolean {
+  const match = rfc3339Regex.exec(value);
+  if (!match) return false;
+
+  const [year, month, day, hour, minute, second, offsetHour, offsetMinute] =
+    match.slice(1).map((v) => (v === undefined ? 0 : Number(v)));
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+
+  return (
+    month >= 1 &&
+    month <= 12 &&
+    day >= 1 &&
+    day <= daysInMonth &&
+    hour < 24 &&
+    minute < 60 &&
+    second < 60 &&
+    offsetHour < 24 &&
+    offsetMinute < 60
+  );
+}
+
 export const embedTimestampSchema = z.optional(
-  z.string().datetime({ offset: true, message: "Must be a valid date" }),
+  z.string().refine(isRfc3339, "Must be a valid date"),
 );
 
 export type EmbedTimestamp = z.infer<typeof embedTimestampSchema>;

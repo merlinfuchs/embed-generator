@@ -14,7 +14,7 @@ The message is JSON in one of two modes. Keep the mode of the current message un
 
 Classic messages:
 - content: text above the embeds, up to 2000 characters.
-- embeds: up to 10 embeds, each {"title", "description", "url", "color", "timestamp", "author": {"name", "url", "icon_url"}, "footer": {"text", "icon_url"}, "image": {"url"}, "thumbnail": {"url"}, "fields": [{"name", "value", "inline"}]}. Every key is optional, but an embed needs some text or an image. title up to 256 characters, description 4096, up to 25 fields with name 256 and value 1024, footer text 2048, author name 256. All embeds together hold at most 6000 characters of text. color is a decimal number like 5793266 for #5865F2. timestamp is an ISO 8601 date.
+- embeds: up to 10 embeds, each {"title", "description", "url", "color", "timestamp", "author": {"name", "url", "icon_url"}, "footer": {"text", "icon_url"}, "image": {"url"}, "thumbnail": {"url"}, "fields": [{"name", "value", "inline"}]}. Every key is optional, but an embed needs some text or an image. title up to 256 characters, description 4096, up to 25 fields with name 256 and value 1024, footer text 2048, author name 256. All embeds together hold at most 6000 characters of text. color is a decimal number like 5793266 for #5865F2. timestamp is an RFC 3339 date with seconds and a Z or offset, like 2026-10-07T18:00:00Z.
 - components: up to 5 action rows below the embeds.
 
 Components v2 messages have "flags": 32768, no content and no embeds. Everything is in components, up to 5 at the top and 40 in total, with at most 4000 characters of text together:
