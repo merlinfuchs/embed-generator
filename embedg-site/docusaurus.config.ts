@@ -156,6 +156,11 @@ const config: Config = {
         },
         items: [
           {
+            to: "features",
+            label: "Features",
+            position: "left",
+          },
+          {
             type: "docSidebar",
             sidebarId: "tutorialSidebar",
             position: "left",
@@ -197,6 +202,8 @@ const config: Config = {
               { label: "Discord Webhook Sender", to: "/features/discord-webhooks" },
               { label: "Scheduled Messages", to: "/features/scheduled-messages" },
               { label: "Components V2", to: "/features/components-v2" },
+              { label: "Buttons & Role Menus", to: "/features/interactive-components" },
+              { label: "All Features", to: "/features" },
             ],
           },
           {

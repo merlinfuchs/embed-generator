@@ -2,6 +2,7 @@ import React from "react";
 import { SparklesIcon } from "@heroicons/react/24/solid";
 
 const links = [
+  { label: "Features", href: "/features" },
   { label: "Docs", href: "/docs" },
   { label: "Blog", href: "/blog" },
   { label: "Discord", href: "/discord", hideBelow: "sm" },
