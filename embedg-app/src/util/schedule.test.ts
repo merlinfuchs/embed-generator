@@ -58,6 +58,7 @@ describe("parseRepeat", () => {
       "0 12 1,15 * *",
       "0 12 * * 1#1",
       "0 12 * 6 *",
+      "0 12 * * 1/1", // Monday to Saturday
       "@daily",
     ]) {
       expect(parseRepeat(cron, 1), cron).toBeNull();

@@ -139,6 +139,8 @@ export default function ScheduledMessage({
       {
         onSuccess(res) {
           if (res.success) {
+            // An end after a number of sends is an end date now, counting it again would move it.
+            setSchedule(scheduleDraftFromMessage(res.data));
             setManage(false);
             queryClient.invalidateQueries({
               queryKey: ["scheduled-messages", guildId],

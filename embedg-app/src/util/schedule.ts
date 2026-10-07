@@ -74,12 +74,14 @@ export function parseRepeat(cron: string, interval: number): Repeat | null {
   // "0/1" and "1/1" step through every value from the first, the same as "*".
   const anyTime = (f: string) => f === "*" || f === "?" || f === "0/1";
   const anyDay = (f: string) => f === "*" || f === "?" || f === "1/1";
+  // Weekdays count from 0, so "1/1" there skips Sunday.
+  const anyWeekday = (f: string) => f === "*" || f === "?";
   if (!anyDay(month)) return null;
 
   const base = { ...defaultRepeat, every: Math.max(1, interval) };
 
   if (anyTime(min)) {
-    return anyTime(hour) && anyDay(dom) && anyDay(dow)
+    return anyTime(hour) && anyDay(dom) && anyWeekday(dow)
       ? { ...base, unit: "minutes" }
       : null;
   }
@@ -87,7 +89,7 @@ export function parseRepeat(cron: string, interval: number): Repeat | null {
   if (minute === null) return null;
 
   if (anyTime(hour)) {
-    return anyDay(dom) && anyDay(dow)
+    return anyDay(dom) && anyWeekday(dow)
       ? { ...base, unit: "hours", minute }
       : null;
   }
@@ -95,13 +97,13 @@ export function parseRepeat(cron: string, interval: number): Repeat | null {
   if (h === null) return null;
 
   const at = { ...base, hour: h, minute };
-  if (anyDay(dom) && anyDay(dow)) return { ...at, unit: "days" };
+  if (anyDay(dom) && anyWeekday(dow)) return { ...at, unit: "days" };
   if (anyDay(dom)) {
     const weekdays = parseWeekdays(dow);
     return weekdays ? { ...at, unit: "weeks", weekdays } : null;
   }
   const monthDay = number(dom, 31);
-  if (anyDay(dow) && monthDay) return { ...at, unit: "months", monthDay };
+  if (anyWeekday(dow) && monthDay) return { ...at, unit: "months", monthDay };
   return null;
 }
 

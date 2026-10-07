@@ -76,7 +76,19 @@ export function scheduleError(
   schedule: ScheduleDraft,
   preview: SchedulePreview,
 ): string | null {
-  return schedule.onlyOnce ? null : preview.error;
+  if (schedule.onlyOnce) return null;
+  if (schedule.ends === "date" && !schedule.endAt) {
+    return "Pick the date the schedule ends on.";
+  }
+  // An error that is still being checked may belong to an earlier edit.
+  return preview.checking ? null : preview.error;
+}
+
+// Counting starts at the first run after this, so a day that already began starts now.
+function startOfDay(date: string, timezone: string): string {
+  const start = zonedDateTime(date, timezone, 0, 0);
+  const now = new Date().toISOString();
+  return start < now ? now : start;
 }
 
 export function formatRun(iso: string, timezone: string): string {
@@ -119,10 +131,15 @@ export default function ScheduleEditor({
     onChange({ ...draft, ...patch });
 
   // The picked times were meant in the new timezone, so keep their wall clock.
+  // A repeating schedule starts on a day, which stays the same day in the new timezone.
   function changeTimezone(tz: string) {
+    let startAt = draft.startAt && rezone(draft.startAt, draft.timezone, tz);
+    if (!draft.onlyOnce && draft.startAt) {
+      startAt = startOfDay(zonedDate(draft.startAt, draft.timezone), tz);
+    }
     set({
       timezone: tz,
-      startAt: draft.startAt && rezone(draft.startAt, draft.timezone, tz),
+      startAt,
       endAt: draft.endAt && rezone(draft.endAt, draft.timezone, tz),
     });
   }
@@ -213,15 +230,7 @@ export default function ScheduleEditor({
                 }
                 onChange={(e) => {
                   if (!e.target.value) return;
-                  // Counting starts at the first run after this, a day already begun starts now.
-                  const start = zonedDateTime(
-                    e.target.value,
-                    draft.timezone,
-                    0,
-                    0,
-                  );
-                  const now = new Date().toISOString();
-                  set({ startAt: start < now ? now : start });
+                  set({ startAt: startOfDay(e.target.value, draft.timezone) });
                 }}
               />
             </div>
@@ -270,16 +279,13 @@ export default function ScheduleEditor({
               )}
               {draft.ends === "count" && (
                 <>
-                  <input
-                    type="number"
-                    aria-label="Number of sends"
+                  <NumberInput
+                    label="Number of sends"
                     min={1}
                     max={maxEvery}
-                    className={clsx(inputClass, "w-24")}
+                    className="w-24"
                     value={draft.endCount}
-                    onChange={(e) =>
-                      set({ endCount: clampInt(e.target.value, 1, maxEvery) })
-                    }
+                    onChange={(endCount) => set({ endCount })}
                   />
                   sends
                 </>
@@ -294,7 +300,7 @@ export default function ScheduleEditor({
                   ? set({
                       repeat: null,
                       cron: scheduleFromDraft(draft).cron_expression ?? "",
-                      interval: 1,
+                      interval: draft.repeat.every,
                     })
                   : set({
                       repeat:
@@ -316,10 +322,49 @@ export default function ScheduleEditor({
   );
 }
 
-function clampInt(value: string, min: number, max: number): number {
-  const n = Math.floor(Number(value));
-  if (!Number.isFinite(n)) return min;
-  return Math.min(max, Math.max(min, n));
+// Keeps what is typed, so the field can be emptied to type a new number. Only a number in
+// range reaches the draft.
+function NumberInput({
+  label,
+  min,
+  max,
+  className,
+  value,
+  onChange,
+}: {
+  label: string;
+  min: number;
+  max: number;
+  className: string;
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  // What is typed while it isn't a number yet, like an emptied field. Tied to the value it was
+  // typed over, so a reset from outside shows.
+  const [typed, setTyped] = useState<{ text: string; over: number } | null>(
+    null,
+  );
+
+  return (
+    <input
+      type="number"
+      aria-label={label}
+      min={min}
+      max={max}
+      className={clsx(inputClass, className)}
+      value={typed?.over === value ? typed.text : value}
+      onChange={(e) => {
+        const n = Math.floor(Number(e.target.value));
+        if (e.target.value === "" || !Number.isFinite(n)) {
+          setTyped({ text: e.target.value, over: value });
+          return;
+        }
+        setTyped(null);
+        onChange(Math.min(max, Math.max(min, n)));
+      }}
+      onBlur={() => setTyped(null)}
+    />
+  );
 }
 
 const units: RepeatUnit[] = ["minutes", "hours", "days", "weeks", "months"];
@@ -338,16 +383,13 @@ function RepeatFields({
     <div className="space-y-4">
       <div className="flex items-center gap-2 flex-wrap text-mist-300">
         Every
-        <input
-          type="number"
-          aria-label="Every"
+        <NumberInput
+          label="Every"
           min={1}
           max={maxEvery}
-          className={clsx(inputClass, "w-20")}
+          className="w-20"
           value={repeat.every}
-          onChange={(e) =>
-            set({ every: clampInt(e.target.value, 1, maxEvery) })
-          }
+          onChange={(every) => set({ every })}
         />
         <select
           aria-label="Unit"
@@ -364,14 +406,13 @@ function RepeatFields({
         {repeat.unit === "hours" && (
           <>
             at minute
-            <input
-              type="number"
-              aria-label="Minute"
+            <NumberInput
+              label="Minute"
               min={0}
               max={59}
-              className={clsx(inputClass, "w-20")}
+              className="w-20"
               value={repeat.minute}
-              onChange={(e) => set({ minute: clampInt(e.target.value, 0, 59) })}
+              onChange={(minute) => set({ minute })}
             />
           </>
         )}
@@ -408,6 +449,8 @@ function RepeatFields({
                   "h-9 min-w-9 px-2 rounded-full text-sm",
                   on ? "bg-azure-500 text-white" : "bg-ink-900 text-mist-300",
                 )}
+                // At least one day has to stay picked.
+                disabled={on && repeat.weekdays.length === 1}
                 onClick={() =>
                   set({
                     weekdays: on
@@ -426,14 +469,13 @@ function RepeatFields({
       {repeat.unit === "months" && (
         <div className="flex items-center gap-2 text-mist-300">
           on day
-          <input
-            type="number"
-            aria-label="Day of the month"
+          <NumberInput
+            label="Day of the month"
             min={1}
             max={31}
-            className={clsx(inputClass, "w-20")}
+            className="w-20"
             value={repeat.monthDay}
-            onChange={(e) => set({ monthDay: clampInt(e.target.value, 1, 31) })}
+            onChange={(monthDay) => set({ monthDay })}
           />
         </div>
       )}

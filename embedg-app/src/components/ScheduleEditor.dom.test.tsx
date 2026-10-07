@@ -64,15 +64,37 @@ test("picking weeks and days builds a weekly cron with its interval", () => {
   });
 });
 
-test("the advanced mode keeps the cron of the sentence", () => {
+test("the advanced mode keeps the cron and interval of the sentence", () => {
   renderEditor(<Harness />);
 
+  fireEvent.change(screen.getByLabelText("Every"), { target: { value: "2" } });
   fireEvent.click(
     screen.getByRole("button", { name: "Advanced: use a cron expression" }),
   );
 
   expect(screen.getByLabelText("Cron expression")).toHaveValue("0 12 * * *");
-  expect(scheduleFromDraft(latest).cron_interval).toBe(1);
+  expect(scheduleFromDraft(latest).cron_interval).toBe(2);
+});
+
+test("the last picked weekday stays picked", () => {
+  renderEditor(<Harness />);
+
+  fireEvent.change(screen.getByLabelText("Unit"), {
+    target: { value: "weeks" },
+  });
+
+  expect(screen.getByRole("button", { name: "Mon" })).toBeDisabled();
+});
+
+test("a number field can be emptied to type a new number", () => {
+  renderEditor(<Harness />);
+  const every = screen.getByLabelText("Every");
+
+  fireEvent.change(every, { target: { value: "" } });
+  expect(every).toHaveValue(null);
+  fireEvent.change(every, { target: { value: "5" } });
+
+  expect(scheduleFromDraft(latest).cron_interval).toBe(5);
 });
 
 test("shows why a schedule never sends instead of its runs", () => {
