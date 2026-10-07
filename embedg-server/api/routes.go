@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"net/http"
 	"path"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
@@ -186,6 +187,7 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	// at those hashed names so it has to be revalidated on every load, or a
 	// deploy leaves browsers asking for assets that no longer exist.
 	registerFrontendRoutes(app, "/app/", embedgapp.DistFS)
+	app.Use("/", sitePages(embedgsite.DistFS))
 	registerFrontendRoutes(app, "/", embedgsite.DistFS)
 }
 
@@ -220,6 +222,31 @@ func registerFrontendRoutes(app *fiber.App, mount string, dist fs.FS) {
 		NotFoundFile: "dist/index.html",
 		PathPrefix:   "/dist",
 	}))
+}
+
+// sitePages serves the site's pages without a trailing slash. Docusaurus builds
+// /docs/intro as dist/docs/intro.html, which the file server doesn't look for on
+// its own, and the slash form is redirected so each page has one URL.
+func sitePages(dist fs.FS) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		p := c.Path()
+		page := strings.TrimSuffix(p, "/")
+		if page == "" || path.Ext(page) != "" {
+			return c.Next()
+		}
+		if _, err := fs.Stat(dist, path.Join("dist", page)+".html"); err != nil {
+			return c.Next()
+		}
+
+		if page != p {
+			if query := c.Request().URI().QueryString(); len(query) != 0 {
+				page += "?" + string(query)
+			}
+			return c.Redirect(page, fiber.StatusMovedPermanently)
+		}
+		c.Path(page + ".html")
+		return c.Next()
+	}
 }
 
 func cacheControl(value string) fiber.Handler {

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"io"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -51,6 +52,51 @@ func TestStaticCacheHeaders(t *testing.T) {
 		}
 		if got := res.Header.Get("Content-Type"); tt.contentType != "" && !strings.Contains(got, tt.contentType) {
 			t.Errorf("%s: Content-Type = %q, want %q", tt.path, got, tt.contentType)
+		}
+	}
+}
+
+func TestSitePages(t *testing.T) {
+	dist := fstest.MapFS{
+		"dist/index.html":             {Data: []byte("home")},
+		"dist/docs.html":              {Data: []byte("docs")},
+		"dist/docs/features/foo.html": {Data: []byte("foo")},
+		"dist/img/logo.svg":           {Data: []byte("<svg/>")},
+	}
+
+	app := fiber.New()
+	app.Use("/", sitePages(dist))
+	registerFrontendRoutes(app, "/", dist)
+
+	for _, tt := range []struct {
+		path     string
+		status   int
+		body     string
+		location string
+	}{
+		{"/", 200, "home", ""},
+		{"/docs", 200, "docs", ""},
+		{"/docs/features/foo", 200, "foo", ""},
+		{"/docs/features/foo/", 301, "", "/docs/features/foo"},
+		{"/docs/features/foo/?a=1", 301, "", "/docs/features/foo?a=1"},
+		{"/img/logo.svg", 200, "<svg/>", ""},
+		{"/missing", 200, "home", ""},
+	} {
+		res, err := app.Test(httptest.NewRequest("GET", tt.path, nil))
+		if err != nil {
+			t.Fatalf("%s: %v", tt.path, err)
+		}
+		if res.StatusCode != tt.status {
+			t.Errorf("%s: status = %d, want %d", tt.path, res.StatusCode, tt.status)
+		}
+		if got := res.Header.Get("Location"); got != tt.location {
+			t.Errorf("%s: Location = %q, want %q", tt.path, got, tt.location)
+		}
+		if tt.body != "" {
+			body, _ := io.ReadAll(res.Body)
+			if string(body) != tt.body {
+				t.Errorf("%s: body = %q, want %q", tt.path, body, tt.body)
+			}
 		}
 	}
 }
