@@ -187,9 +187,9 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	// Serve static files. Hashed assets are cached long term; index.html points
 	// at those hashed names so it has to be revalidated on every load, or a
 	// deploy leaves browsers asking for assets that no longer exist.
-	registerFrontendRoutes(app, "/app/", embedgapp.DistFS)
+	registerFrontendRoutes(app, "/app/", embedgapp.DistFS, true)
 	app.Use("/", sitePages(embedgsite.DistFS))
-	registerFrontendRoutes(app, "/", embedgsite.DistFS)
+	registerFrontendRoutes(app, "/", embedgsite.DistFS, false)
 }
 
 const (
@@ -209,7 +209,12 @@ const (
 // own mount so that a miss 404s instead of falling through to NotFoundFile,
 // which would answer a request for a chunk from an older deploy with index.html
 // at 200 and leave the page blank.
-func registerFrontendRoutes(app *fiber.App, mount string, dist fs.FS) {
+//
+// An SPA answers every other path with index.html and routes on the client. The
+// site is prerendered, so a miss is a real 404 and gets the site's 404 page.
+// Answering it with the homepage at 200 makes search engines see every made-up
+// URL as a duplicate of the homepage.
+func registerFrontendRoutes(app *fiber.App, mount string, dist fs.FS, spa bool) {
 	app.Use(path.Join(mount, "assets"), cacheControl(assetCacheControl), filesystem.New(filesystem.Config{
 		Root:       http.FS(dist),
 		PathPrefix: "/dist/assets",
@@ -218,11 +223,22 @@ func registerFrontendRoutes(app *fiber.App, mount string, dist fs.FS) {
 		return c.SendStatus(fiber.StatusNotFound)
 	})
 
+	if spa {
+		app.Use(mount, staticCacheHeaders, filesystem.New(filesystem.Config{
+			Root:         http.FS(dist),
+			NotFoundFile: "dist/index.html",
+			PathPrefix:   "/dist",
+		}))
+		return
+	}
+
 	app.Use(mount, staticCacheHeaders, filesystem.New(filesystem.Config{
-		Root:         http.FS(dist),
-		NotFoundFile: "dist/index.html",
-		PathPrefix:   "/dist",
-	}))
+		Root:       http.FS(dist),
+		PathPrefix: "/dist",
+	}), func(c *fiber.Ctx) error {
+		c.Status(fiber.StatusNotFound)
+		return filesystem.SendFile(c, http.FS(dist), "dist/404.html")
+	})
 }
 
 // sitePages serves the site's pages without a trailing slash. Docusaurus builds

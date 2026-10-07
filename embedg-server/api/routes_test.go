@@ -18,7 +18,7 @@ func staticTestApp() *fiber.App {
 	}
 
 	app := fiber.New()
-	registerFrontendRoutes(app, "/app/", dist)
+	registerFrontendRoutes(app, "/app/", dist, true)
 	return app
 }
 
@@ -59,6 +59,7 @@ func TestStaticCacheHeaders(t *testing.T) {
 func TestSitePages(t *testing.T) {
 	dist := fstest.MapFS{
 		"dist/index.html":             {Data: []byte("home")},
+		"dist/404.html":               {Data: []byte("not found")},
 		"dist/docs.html":              {Data: []byte("docs")},
 		"dist/docs/features/foo.html": {Data: []byte("foo")},
 		"dist/img/logo.svg":           {Data: []byte("<svg/>")},
@@ -66,7 +67,7 @@ func TestSitePages(t *testing.T) {
 
 	app := fiber.New()
 	app.Use("/", sitePages(dist))
-	registerFrontendRoutes(app, "/", dist)
+	registerFrontendRoutes(app, "/", dist, false)
 
 	for _, tt := range []struct {
 		path     string
@@ -80,7 +81,8 @@ func TestSitePages(t *testing.T) {
 		{"/docs/features/foo/", 301, "", "/docs/features/foo"},
 		{"/docs/features/foo/?a=1", 301, "", "/docs/features/foo?a=1"},
 		{"/img/logo.svg", 200, "<svg/>", ""},
-		{"/missing", 200, "home", ""},
+		{"/missing", 404, "not found", ""},
+		{"/favicon.ico", 404, "not found", ""},
 	} {
 		res, err := app.Test(httptest.NewRequest("GET", tt.path, nil))
 		if err != nil {

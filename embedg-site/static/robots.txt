@@ -1,6 +1,4 @@
 User-agent: *
 allow: /
-disallow: /imprint
-disallow: /terms
-disallow: /privacy
-disallow: /cookies
+
+Sitemap: https://message.style/sitemap.xml

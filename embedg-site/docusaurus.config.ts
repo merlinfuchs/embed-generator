@@ -5,7 +5,8 @@ import type * as Preset from "@docusaurus/preset-classic";
 const config: Config = {
   title: "Embed Generator",
   tagline: "The best way to create Discord embeds!",
-  favicon: "img/logo.svg",
+  // Search engines and DuckDuckGo look for /favicon.ico and skip SVG icons.
+  favicon: "favicon.ico",
 
   // Set the production url of your site here
   url: "https://message.style",
@@ -21,6 +22,23 @@ const config: Config = {
   projectName: "embed-generator", // Usually your repo name.
 
   headTags: [
+    {
+      tagName: "link",
+      attributes: {
+        rel: "icon",
+        type: "image/svg+xml",
+        href: "/img/logo.svg",
+      },
+    },
+    {
+      tagName: "link",
+      attributes: {
+        rel: "icon",
+        type: "image/png",
+        sizes: "192x192",
+        href: "/img/logo-192.png",
+      },
+    },
     {
       tagName: "script",
       attributes: { type: "application/ld+json" },
@@ -79,7 +97,16 @@ const config: Config = {
             "https://github.com/merlinfuchs/embed-generator/tree/main/embedg-site/",
         },
         sitemap: {
-          ignorePatterns: ["/blog/tags/**", "/blog/archive", "/blog/authors"],
+          ignorePatterns: [
+            "/blog/tags/**",
+            "/blog/archive",
+            "/blog/authors",
+            // noindex, see src/pages
+            "/cookies",
+            "/imprint",
+            "/privacy",
+            "/terms",
+          ],
         },
         theme: {
           customCss: require.resolve("./src/css/global.css"),
