@@ -32,7 +32,7 @@ const pages: { icon: Icon; name: string; text: string; href: string }[] = [
   },
   {
     icon: CursorArrowRippleIcon,
-    name: "Buttons and Role Menus",
+    name: "Button Roles and Role Menus",
     text: "Buttons and select menus that hand out roles, reply, send DMs or update the message when members click.",
     href: "/features/interactive-components",
   },

@@ -21,9 +21,9 @@ import {
   Steps,
 } from "../../../components/landing";
 
-const TITLE = "Discord Buttons, Role Menus and Select Menus | Embed Generator";
+const TITLE = "Discord Button Roles and Role Menus | Embed Generator";
 const DESCRIPTION =
-  "Add buttons and select menus to Discord messages that hand out roles, reply, send DMs or update the message. Set it up in a visual editor, no code. Free.";
+  "Discord button roles and self-role menus: reaction roles with buttons instead of emoji. Buttons can also reply, send DMs or update the message. Free, no code.";
 const EDITOR = { label: "Open the editor", href: "/app/editor" };
 
 const steps = [
@@ -45,7 +45,7 @@ const features = [
   {
     icon: TagIcon,
     name: "Hand out roles",
-    text: "Add, remove or toggle roles on the member who clicked. Role menus for pronouns, regions, pings or games take a minute.",
+    text: "Add, remove or toggle roles on the member who clicked. Self-role menus for pronouns, regions, pings or games take a minute.",
   },
   {
     icon: ChatBubbleLeftEllipsisIcon,
@@ -77,8 +77,16 @@ const features = [
 
 const faq: Faq[] = [
   {
+    q: "Is this like reaction roles?",
+    a: "Yes, with buttons or a select menu instead of emoji reactions. Members click to get or remove a role, and the bot confirms it only to them, so the channel stays clean.",
+  },
+  {
     q: "How do I make a role menu in Discord?",
     a: "Add buttons or a select menu to a message in Embed Generator, give each one a Toggle Role action and send it with the bot. Members click to get or remove the role, no reactions needed.",
+  },
+  {
+    q: "Can members pick roles from a dropdown?",
+    a: "Yes. Add a select menu with up to 25 options and give each option a role action. It takes less space than rows of buttons when you have many roles.",
   },
   {
     q: "Do buttons work with webhooks?",
@@ -234,11 +242,11 @@ export default function InteractiveComponents(): JSX.Element {
       <Hero
         title={
           <>
-            Discord buttons and{" "}
-            <span className="text-azure-400">role menus</span>
+            Discord <span className="text-azure-400">button roles</span> and
+            role menus
           </>
         }
-        text="Add buttons and select menus to your Discord messages and decide what each click does: hand out a role, reply, send a DM or update the message. All set up in the editor, no code."
+        text="Let members pick their own roles with buttons or a select menu, like reaction roles without the emoji. Each click can also reply, send a DM or update the message. All set up in the editor, no code."
         cta={EDITOR}
         stats={[
           { value: "25", label: "buttons per message" },
