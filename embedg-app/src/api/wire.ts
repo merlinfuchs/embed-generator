@@ -433,7 +433,7 @@ export interface ScheduledMessageWire {
   start_at: string /* RFC3339 */;
   end_at: null | string /* RFC3339 */;
   next_at: string /* RFC3339 */;
-  run_times: string /* RFC3339 */[];
+  run_times: string[] | null;
   enabled: boolean;
   created_at: string /* RFC3339 */;
   updated_at: string /* RFC3339 */;
@@ -447,7 +447,6 @@ export interface ScheduledMessageWire {
 export type ScheduledMessageListResponseWire = APIResponse<ScheduledMessageWire[]>;
 export type ScheduledMessageGetResponseWire = APIResponse<ScheduledMessageWire>;
 /**
- * ScheduledMessageScheduleWire is when a scheduled message is sent.
  * ScheduledMessageScheduleWire is when a scheduled message is sent: on the dates in run_times, or
  * repeating on cron_expression.
  */
@@ -455,7 +454,7 @@ export interface ScheduledMessageScheduleWire {
   /**
    * RunTimes are the dates to send on, one for a message sent once.
    */
-  run_times: string /* RFC3339 */[];
+  run_times: string[] | null;
   cron_expression: null | string;
   cron_timezone: null | string;
   /**

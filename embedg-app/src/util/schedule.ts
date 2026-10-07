@@ -259,7 +259,7 @@ export function scheduleFromDraft(
   }
 
   return {
-    run_times: [],
+    run_times: null,
     cron_expression: d.repeat ? repeatToCron(d.repeat) : d.cron,
     cron_timezone: d.timezone,
     cron_interval: d.repeat?.every ?? d.interval,

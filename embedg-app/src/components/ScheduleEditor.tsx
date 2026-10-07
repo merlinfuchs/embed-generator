@@ -92,6 +92,14 @@ export function scheduleError(
   return preview.checking ? null : preview.error;
 }
 
+// A start keeps its wall clock in the new timezone, like the dates do. One that already began
+// stays in the past, intervals count from it, but it doesn't move into the future either.
+function moveStart(start: string, from: string, to: string): string {
+  const moved = rezone(start, from, to);
+  const now = new Date().toISOString();
+  return start <= now && moved > now ? now : moved;
+}
+
 // Counting starts at the first run after this, so a day that already began starts now.
 function startOfDay(date: string, timezone: string): string {
   const start = zonedDateTime(date, timezone, 0, 0);
@@ -128,14 +136,11 @@ export default function ScheduleEditor({
     onChange({ ...draft, ...patch });
 
   // The picked times were meant in the new timezone, so keep their wall clock.
-  // A repeating schedule starts on a day, which stays the same day in the new timezone.
   function changeTimezone(tz: string) {
     set({
       timezone: tz,
       dates: draft.dates.map((d) => rezone(d, draft.timezone, tz)),
-      startAt:
-        draft.startAt &&
-        startOfDay(zonedDate(draft.startAt, draft.timezone), tz),
+      startAt: draft.startAt && moveStart(draft.startAt, draft.timezone, tz),
       endAt: draft.endAt && rezone(draft.endAt, draft.timezone, tz),
     });
   }

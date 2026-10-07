@@ -92,6 +92,8 @@ func TestScheduledMessageRunTimes(t *testing.T) {
 		{"both", ScheduledMessageScheduleWire{RunTimes: dates, CronExpression: null.StringFrom("0 12 * * *")}, false},
 		{"dates with an end", ScheduledMessageScheduleWire{RunTimes: dates, EndAt: null.TimeFrom(time.Now())}, false},
 		{"too many dates", ScheduledMessageScheduleWire{RunTimes: tooMany}, false},
+		// What the app sent before run_times, cron expression included.
+		{"only once", ScheduledMessageScheduleWire{OnlyOnce: true, StartAt: time.Now(), CronExpression: null.StringFrom("* * * * *")}, true},
 	} {
 		if err := c.schedule.Validate(); (err == nil) != c.valid {
 			t.Errorf("%s: got %v, want valid %v", c.name, err, c.valid)

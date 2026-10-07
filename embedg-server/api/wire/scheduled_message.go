@@ -24,7 +24,7 @@ type ScheduledMessageWire struct {
 	StartAt        time.Time     `json:"start_at"`
 	EndAt          null.Time     `json:"end_at"`
 	NextAt         time.Time     `json:"next_at"`
-	RunTimes       []time.Time   `json:"run_times"`
+	RunTimes       []time.Time   `json:"run_times" tstype:"string[] | null"`
 	Enabled        bool          `json:"enabled"`
 	CreatedAt      time.Time     `json:"created_at"`
 	UpdatedAt      time.Time     `json:"updated_at"`
@@ -42,7 +42,7 @@ type ScheduledMessageGetResponseWire APIResponse[ScheduledMessageWire]
 // repeating on cron_expression.
 type ScheduledMessageScheduleWire struct {
 	// RunTimes are the dates to send on, one for a message sent once.
-	RunTimes       []time.Time `json:"run_times"`
+	RunTimes       []time.Time `json:"run_times" tstype:"string[] | null"`
 	CronExpression null.String `json:"cron_expression"`
 	CronTimezone   null.String `json:"cron_timezone"`
 	// CronInterval runs the cron expression only in every Nth day, week, month or hour, counted
@@ -53,6 +53,8 @@ type ScheduledMessageScheduleWire struct {
 	EndAt   null.Time `json:"end_at"`
 	// EndAfterRuns ends the schedule after this many sends from its next one, instead of at end_at.
 	EndAfterRuns int `json:"end_after_runs"`
+	// OnlyOnce is how clients from before run_times send a single date, at start_at.
+	OnlyOnce bool `json:"only_once" tstype:"-"`
 }
 
 // SendsOnce is whether it's sent on a single date, all free plans can do.
@@ -66,20 +68,21 @@ func (s ScheduledMessageScheduleWire) OnDates() bool {
 }
 
 func (s ScheduledMessageScheduleWire) Validate() error {
-	onDates := s.OnDates()
+	// Old clients send one date as only_once with start_at instead.
+	datesOrOnce := s.OnDates() || s.OnlyOnce
 	return validation.ValidateStruct(&s,
 		validation.Field(&s.RunTimes, validation.Length(0, MaxRunTimes)),
 		validation.Field(&s.CronExpression,
-			validation.When(!onDates, validation.Required),
-			validation.When(onDates, validation.Empty),
+			validation.When(!datesOrOnce, validation.Required),
+			validation.When(s.OnDates(), validation.Empty),
 		),
 		validation.Field(&s.CronInterval, validation.Min(0), validation.Max(maxCronInterval)),
-		validation.Field(&s.StartAt, validation.When(!onDates, validation.Required)),
-		validation.Field(&s.EndAt, validation.When(onDates || s.EndAfterRuns > 0, validation.Empty)),
+		validation.Field(&s.StartAt, validation.When(!s.OnDates(), validation.Required)),
+		validation.Field(&s.EndAt, validation.When(datesOrOnce || s.EndAfterRuns > 0, validation.Empty)),
 		validation.Field(&s.EndAfterRuns,
 			validation.Min(0),
 			validation.Max(maxEndAfterRuns),
-			validation.When(onDates, validation.Empty),
+			validation.When(datesOrOnce, validation.Empty),
 		),
 		validation.Field(&s.CronTimezone, validation.By(validateTimezone)),
 	)

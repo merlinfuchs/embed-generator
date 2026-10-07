@@ -79,15 +79,15 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 		return err
 	}
 
-	if !features.PeriodicScheduledMessages && !req.SendsOnce() {
-		return handlers.Forbidden("insufficient_plan", "Repeating scheduled messages and sending on more than one date are not available on your plan.")
-	}
-
 	if err := normalizeSchedule(&req.ScheduledMessageScheduleWire); err != nil {
 		return err
 	}
+	if err := checkPlan(features, &req.ScheduledMessageScheduleWire); err != nil {
+		return err
+	}
 
-	nextAt, err := firstRun(&req.ScheduledMessageScheduleWire, time.Now().UTC(), time.Time{})
+	now := time.Now().UTC()
+	nextAt, err := firstRun(&req.ScheduledMessageScheduleWire, now, now.Add(-pickedDateGrace))
 	if err != nil {
 		return err
 	}
@@ -221,10 +221,6 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		return err
 	}
 
-	if !features.PeriodicScheduledMessages && !req.SendsOnce() {
-		return handlers.Forbidden("insufficient_plan", "Repeating scheduled messages and sending on more than one date are not available on your plan.")
-	}
-
 	existing, err := h.scheduledMessageStore.GetScheduledMessage(c.UserContext(), guildID, messageID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
@@ -235,6 +231,9 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 	}
 
 	if err := normalizeSchedule(&req.ScheduledMessageScheduleWire); err != nil {
+		return err
+	}
+	if err := checkPlan(features, &req.ScheduledMessageScheduleWire); err != nil {
 		return err
 	}
 	now := time.Now().UTC()
@@ -258,8 +257,7 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		req.StartAt = existing.StartAt
 		nextAt = existing.NextAt
 	} else {
-		// A date that was just sent is in the grace for picked dates, it must not go out again.
-		nextAt, err = firstRun(&req.ScheduledMessageScheduleWire, now, existing.LastSentAt.Time)
+		nextAt, err = firstRun(&req.ScheduledMessageScheduleWire, now, pendingDatesAfter(existing, now))
 		if err != nil {
 			return err
 		}
@@ -333,7 +331,8 @@ func (h *ScheduledMessageHandler) HandlePreviewScheduledMessage(c *fiber.Ctx, re
 		return err
 	}
 
-	first, err := firstRun(&req, time.Now().UTC(), time.Time{})
+	now := time.Now().UTC()
+	first, err := firstRun(&req, now, now.Add(-pickedDateGrace))
 	if err != nil {
 		return err
 	}
@@ -418,6 +417,11 @@ func timezoneOrUTC(tz null.String) null.String {
 func normalizeSchedule(s *wire.ScheduledMessageScheduleWire) error {
 	s.CronTimezone = timezoneOrUTC(s.CronTimezone)
 
+	if s.OnlyOnce && !s.OnDates() {
+		s.RunTimes = []time.Time{s.StartAt}
+		s.CronExpression = null.String{}
+	}
+
 	if s.OnDates() {
 		// Sorted without duplicates, so the next date is the first one after the last send.
 		slices.SortFunc(s.RunTimes, time.Time.Compare)
@@ -451,16 +455,33 @@ func schedule(s *wire.ScheduledMessageScheduleWire) scheduled_messages.Schedule 
 // time it's saved. It still goes out.
 const pickedDateGrace = time.Minute
 
-// firstRun validates the schedule and returns when it first runs, not before now. Dates in the
-// past and up to lastSent are skipped. A recurring schedule keeps a start in the past, its
-// intervals count from there.
-func firstRun(s *wire.ScheduledMessageScheduleWire, now time.Time, lastSent time.Time) (time.Time, error) {
+// pendingDatesAfter is where the dates still to send start when a message on dates is edited:
+// after the last send, keeping the date it's due on. While enabled, next_at is that date, the
+// manager only moves it once the date went out or failed for good.
+func pendingDatesAfter(existing *model.ScheduledMessage, now time.Time) time.Time {
+	after := now.Add(-pickedDateGrace)
+	if existing.LastSentAt.Valid && existing.LastSentAt.Time.After(after) {
+		after = existing.LastSentAt.Time
+	}
+	if existing.Enabled && existing.OnDates() && existing.NextAt.Before(after) {
+		after = existing.NextAt.Add(-time.Nanosecond)
+	}
+	return after
+}
+
+func checkPlan(features model.PlanFeatures, s *wire.ScheduledMessageScheduleWire) error {
+	if !features.PeriodicScheduledMessages && !s.SendsOnce() {
+		return handlers.Forbidden("insufficient_plan", "Repeating scheduled messages and sending on more than one date are not available on your plan.")
+	}
+	return nil
+}
+
+// firstRun validates the schedule and returns when it first runs, not before now. Dates up to
+// datesAfter are skipped. A recurring schedule keeps a start in the past, its intervals count
+// from there.
+func firstRun(s *wire.ScheduledMessageScheduleWire, now time.Time, datesAfter time.Time) (time.Time, error) {
 	if s.OnDates() {
-		after := now.Add(-pickedDateGrace)
-		if lastSent.After(after) {
-			after = lastSent
-		}
-		next, ok := scheduled_messages.NextDate(s.RunTimes, after)
+		next, ok := scheduled_messages.NextDate(s.RunTimes, datesAfter)
 		if !ok {
 			return time.Time{}, handlers.BadRequest("never_runs", "All dates of the scheduled message are in the past.")
 		}

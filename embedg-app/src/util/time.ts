@@ -14,23 +14,36 @@ export function listTimezones(): string[] {
 
 const formatters = new Map<string, Intl.DateTimeFormat>();
 
-// Throws a RangeError for zones the browser doesn't know.
-function formatterFor(timezone: string): Intl.DateTimeFormat {
-  let formatter = formatters.get(timezone);
+// Building a formatter is slow, a list of dates formats many. Throws a RangeError for zones the
+// browser doesn't know.
+function cachedFormatter(
+  kind: string,
+  locale: string | undefined,
+  timezone: string,
+  options: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormat {
+  const key = `${kind}:${timezone}`;
+  let formatter = formatters.get(key);
   if (!formatter) {
-    formatter = new Intl.DateTimeFormat("en-US", {
+    formatter = new Intl.DateTimeFormat(locale, {
+      ...options,
       timeZone: timezone,
-      hourCycle: "h23",
-      year: "numeric",
-      month: "numeric",
-      day: "numeric",
-      hour: "numeric",
-      minute: "numeric",
-      second: "numeric",
     });
-    formatters.set(timezone, formatter);
+    formatters.set(key, formatter);
   }
   return formatter;
+}
+
+function formatterFor(timezone: string): Intl.DateTimeFormat {
+  return cachedFormatter("parts", "en-US", timezone, {
+    hourCycle: "h23",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric",
+  });
 }
 
 // Formatting with a zone the browser doesn't know throws, e.g. "Etc/Unknown" that some browsers report.
@@ -110,29 +123,9 @@ export function zonedTime(iso: string, timezone: string): string {
     .slice(11, 16);
 }
 
-// Wall clock formats cache a formatter per timezone, a list of dates formats many.
-const runFormatters = new Map<string, Intl.DateTimeFormat>();
-const dayFormatters = new Map<string, Intl.DateTimeFormat>();
-
-function cached(
-  cache: Map<string, Intl.DateTimeFormat>,
-  timezone: string,
-  options: Intl.DateTimeFormatOptions,
-): Intl.DateTimeFormat {
-  let formatter = cache.get(timezone);
-  if (!formatter) {
-    formatter = new Intl.DateTimeFormat(undefined, {
-      ...options,
-      timeZone: timezone,
-    });
-    cache.set(timezone, formatter);
-  }
-  return formatter;
-}
-
 // "Sat, Oct 31, 5:50 AM" in the timezone.
 export function formatRun(iso: string, timezone: string): string {
-  return cached(runFormatters, timezone, {
+  return cachedFormatter("run", undefined, timezone, {
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -143,7 +136,7 @@ export function formatRun(iso: string, timezone: string): string {
 
 // "Sat, Oct 31" in the timezone.
 export function formatDay(iso: string, timezone: string): string {
-  return cached(dayFormatters, timezone, {
+  return cachedFormatter("day", undefined, timezone, {
     weekday: "short",
     month: "short",
     day: "numeric",

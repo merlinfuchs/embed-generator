@@ -99,7 +99,7 @@ describe("scheduleFromDraft", () => {
       },
     };
     expect(scheduleFromDraft(draft)).toEqual({
-      run_times: [],
+      run_times: null,
       cron_expression: "50 5 * * *",
       cron_timezone: "America/Denver",
       cron_interval: 28,

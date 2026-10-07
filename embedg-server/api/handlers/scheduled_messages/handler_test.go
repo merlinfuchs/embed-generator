@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
+	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"gopkg.in/guregu/null.v4"
 )
 
@@ -28,7 +29,7 @@ func TestCheckRunsBeforeEnd(t *testing.T) {
 	startAt := time.Date(2026, 10, 6, 13, 0, 0, 0, loc).UTC()
 	endAt := null.TimeFrom(time.Date(2026, 10, 6, 13, 30, 0, 0, loc).UTC())
 
-	nextAt, err := firstRun(recurring("30 12 1/14 * *", "America/Denver", 1, startAt), startAt, time.Time{})
+	nextAt, err := firstRun(recurring("30 12 1/14 * *", "America/Denver", 1, startAt), startAt, startAt)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +57,7 @@ func TestFirstRun(t *testing.T) {
 
 	// Started on Wednesday Oct 7, so the weeks of Oct 5 and Oct 19 are due. Oct 19 is already
 	// over by now, the first run is that week's Thursday, not a restart of the cadence.
-	got, err := firstRun(recurring("0 12 * * 1,4", "UTC", 2, startAt), now, time.Time{})
+	got, err := firstRun(recurring("0 12 * * 1,4", "UTC", 2, startAt), now, now.Add(-pickedDateGrace))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -65,7 +66,7 @@ func TestFirstRun(t *testing.T) {
 	}
 
 	// Two days a month can't be counted in intervals.
-	_, err = firstRun(recurring("0 12 1,15 * *", "UTC", 2, startAt), now, time.Time{})
+	_, err = firstRun(recurring("0 12 1,15 * *", "UTC", 2, startAt), now, now.Add(-pickedDateGrace))
 	if err == nil || !strings.Contains(err.Error(), "only works with a schedule") {
 		t.Errorf("want an unsupported interval to be rejected, got %v", err)
 	}
@@ -107,31 +108,49 @@ func TestFirstRunOnDates(t *testing.T) {
 	}
 
 	// The 16th is over, the 23rd is next.
-	got, err := firstRun(s, now, time.Time{})
+	got, err := firstRun(s, now, now.Add(-pickedDateGrace))
 	if err != nil || !got.Equal(day(23)) {
 		t.Errorf("got %s, %v, want %s", got, err, day(23))
 	}
 
-	// Picked as now, saved a few seconds later.
+	// Picked for the current minute, saved a few seconds later.
 	pickedNow := &wire.ScheduledMessageScheduleWire{RunTimes: []time.Time{now.Add(-5 * time.Second)}}
-	if got, err := firstRun(pickedNow, now, time.Time{}); err != nil || !got.Equal(now) {
+	if got, err := firstRun(pickedNow, now, now.Add(-pickedDateGrace)); err != nil || !got.Equal(now) {
 		t.Errorf("got %s, %v, want it to go out now", got, err)
 	}
 
 	past := &wire.ScheduledMessageScheduleWire{RunTimes: []time.Time{day(16)}}
-	if _, err := firstRun(past, now, time.Time{}); err == nil || !strings.Contains(err.Error(), "in the past") {
+	if _, err := firstRun(past, now, now.Add(-pickedDateGrace)); err == nil || !strings.Contains(err.Error(), "in the past") {
 		t.Errorf("want all dates in the past to be rejected, got %v", err)
 	}
 }
 
-func TestFirstRunSkipsSentDates(t *testing.T) {
-	now := time.Date(2026, 10, 20, 12, 0, 30, 0, time.UTC)
-	sent := time.Date(2026, 10, 20, 12, 0, 0, 0, time.UTC)
-	s := &wire.ScheduledMessageScheduleWire{RunTimes: []time.Time{sent, sent.Add(24 * time.Hour)}}
+func TestPendingDatesAfter(t *testing.T) {
+	now := time.Date(2026, 10, 20, 12, 5, 0, 0, time.UTC)
+	noon := time.Date(2026, 10, 20, 12, 0, 0, 0, time.UTC)
+	tomorrow := noon.Add(24 * time.Hour)
+	dates := &wire.ScheduledMessageScheduleWire{RunTimes: []time.Time{noon, tomorrow}}
 
-	// Edited half a minute after the first date went out, it's still in the grace but was sent.
-	got, err := firstRun(s, now, sent.Add(time.Second))
-	if err != nil || !got.Equal(sent.Add(24*time.Hour)) {
-		t.Errorf("got %s, %v, want the second date", got, err)
+	// Noon went out a minute ago, it doesn't go out again.
+	sent := &model.ScheduledMessage{Enabled: true, RunTimes: dates.RunTimes, NextAt: tomorrow, LastSentAt: null.TimeFrom(now.Add(-time.Minute))}
+	if got, _ := firstRun(dates, now, pendingDatesAfter(sent, now)); !got.Equal(tomorrow) {
+		t.Errorf("sent: got %s, want %s", got, tomorrow)
+	}
+
+	// Noon is still being retried, it stays due.
+	retrying := &model.ScheduledMessage{Enabled: true, RunTimes: dates.RunTimes, NextAt: noon}
+	if got, _ := firstRun(dates, now, pendingDatesAfter(retrying, now)); !got.Equal(now) {
+		t.Errorf("retrying: got %s, want it to go out now", got)
+	}
+}
+
+func TestNormalizeOnlyOnce(t *testing.T) {
+	at := time.Date(2026, 10, 20, 12, 0, 0, 0, time.UTC)
+	s := &wire.ScheduledMessageScheduleWire{OnlyOnce: true, StartAt: at, CronExpression: null.StringFrom("* * * * *")}
+	if err := normalizeSchedule(s); err != nil {
+		t.Fatal(err)
+	}
+	if len(s.RunTimes) != 1 || !s.RunTimes[0].Equal(at) || s.CronExpression.Valid {
+		t.Errorf("want a single date at start_at, got %v %v", s.RunTimes, s.CronExpression)
 	}
 }

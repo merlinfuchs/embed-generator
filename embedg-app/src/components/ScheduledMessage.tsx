@@ -392,7 +392,7 @@ function LastError({ msg }: { msg: ScheduledMessageWire }) {
   const label =
     msg.enabled || ended(msg)
       ? "Last run failed"
-      : isOnDates(msg)
+      : datesDone(msg)
         ? "Failed to send"
         : "Stopped";
   const at = msg.last_error_at
@@ -412,6 +412,15 @@ function describeDates(dates: string[], timezone: string): string {
   return `${dates.length} dates from ${formatDay(dates[0], timezone)} to ${formatDay(dates[dates.length - 1], timezone)}`;
 }
 
+// Whether a message on dates is off because its last date ran, not because it was paused.
+function datesDone(msg: ScheduledMessageWire): boolean {
+  const last = msg.run_times?.at(-1);
+  const ran = [msg.last_sent_at, msg.last_error_at].filter((t) => t !== null);
+  return (
+    !msg.enabled && !!last && ran.some((t) => Date.parse(t) >= Date.parse(last))
+  );
+}
+
 function ended(msg: ScheduledMessageWire): boolean {
   return (
     msg.end_at !== null && Date.parse(msg.next_at) > Date.parse(msg.end_at)
@@ -429,7 +438,7 @@ function Status({ msg }: { msg: ScheduledMessageWire }) {
   } else if (msg.enabled) {
     text = `Next send ${new Date(msg.next_at).toLocaleString()}, ${relativeRun(msg.next_at)}`;
     className = "text-mist-300";
-  } else if (isOnDates(msg) && msg.last_sent_at) {
+  } else if (datesDone(msg) && msg.last_sent_at) {
     text = `Sent ${new Date(msg.last_sent_at).toLocaleString()}`;
   } else {
     text = "Paused";

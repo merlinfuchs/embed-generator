@@ -5,7 +5,7 @@ import {
 } from "@heroicons/react/20/solid";
 import clsx from "clsx";
 import { useMemo, useState } from "react";
-import { MAX_SCHEDULE_DATES } from "../api/limits";
+import { MaxRunTimes } from "../api/wire";
 import { sortDates, weekdayName, weekdayOrder } from "../util/schedule";
 import { formatDay, zonedDate, zonedDateTime, zonedTime } from "../util/time";
 
@@ -71,7 +71,11 @@ export default function ScheduleDates({
     const [hour, minute] = last
       ? zonedTime(last, timezone).split(":").map(Number)
       : [12, 0];
-    const date = zonedDateTime(day, timezone, hour, minute);
+    let date = zonedDateTime(day, timezone, hour, minute);
+    // Today the time may be over already, the next five minutes are the soonest it can go out.
+    if (date < now) {
+      date = new Date(Math.ceil(Date.now() / 300_000) * 300_000).toISOString();
+    }
     // Without premium a message goes out on one date, picking another one moves it.
     onChange(periodicAllowed ? [...dates, date] : [date]);
   }
@@ -88,7 +92,7 @@ export default function ScheduleDates({
     onChange(dates.map((d) => (d === date ? moved : d)));
   }
 
-  const full = dates.length >= MAX_SCHEDULE_DATES;
+  const full = dates.length >= MaxRunTimes;
   const { days, firstColumn } = monthDays(month);
 
   return (
@@ -154,7 +158,11 @@ export default function ScheduleDates({
               const past = date < now;
               const label = formatDay(date, timezone);
               return (
-                <li key={date} className="flex items-center gap-2">
+                // Not the date itself, changing its time would replace the row and drop the focus.
+                <li
+                  key={zonedDate(date, timezone)}
+                  className="flex items-center gap-2"
+                >
                   <span
                     className={clsx(
                       "flex-auto text-sm",
@@ -191,7 +199,7 @@ export default function ScheduleDates({
         )}
         {full && (
           <div className="text-mist-400 text-sm font-light mt-3">
-            A scheduled message can be sent on up to {MAX_SCHEDULE_DATES} dates.
+            A scheduled message can be sent on up to {MaxRunTimes} dates.
           </div>
         )}
       </div>
