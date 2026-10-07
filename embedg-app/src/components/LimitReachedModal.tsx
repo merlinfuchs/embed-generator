@@ -41,7 +41,7 @@ export default function LimitReachedModal({ limit, features, onClose }: Props) {
         {upgrades.length ? (
           <>
             <div className="text-mist-300 text-sm mb-3">
-              Upgrade this server to get more:
+              Upgrade to get more:
             </div>
             <div className="space-y-2 mb-6">
               {upgrades.map((t) => (

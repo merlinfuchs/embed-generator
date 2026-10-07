@@ -38,11 +38,17 @@ export const ultimateTier: PlanTier = {
   },
 };
 
-/** The paid plans that raise the limit above what the features allow, cheapest first. */
+/**
+ * The paid plans that raise the limit above what the features allow, cheapest
+ * first. None while the features are unknown or already the highest plan.
+ */
 export function upgradesFor(
   limit: Limit,
   features: GetPremiumPlanFeaturesResponseDataWire | null,
 ) {
-  const current = features?.[limit] ?? 0;
-  return [premiumTier, ultimateTier].filter((t) => t.limits[limit] > current);
+  if (!features || features.is_ultimate) return [];
+
+  return [premiumTier, ultimateTier].filter(
+    (t) => t.limits[limit] > features[limit],
+  );
 }

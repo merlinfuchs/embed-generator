@@ -42,8 +42,7 @@ export default function UltimateFeatures() {
           <span className="font-medium text-white">
             {limits.max_saved_messages} messages
           </span>{" "}
-          and keep
-          {limits.max_saved_message_versions} earlier versions of each
+          and keep {limits.max_saved_message_versions} earlier versions of each
         </div>
       </div>
       <div className="flex items-center gap-4">

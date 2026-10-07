@@ -25,7 +25,8 @@ export default function LimitButton({
 }: Props) {
   const [modal, setModal] = useState(false);
 
-  if (count < (features?.[limit] ?? 0)) {
+  // Until the features load the server is the one to enforce the limit.
+  if (!features || count < features[limit]) {
     return (
       <button className={className} onClick={onClick}>
         {children}

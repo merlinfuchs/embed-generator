@@ -6,6 +6,7 @@ import {
   ClockIcon,
 } from "@heroicons/react/24/outline";
 import { HeartIcon } from "@heroicons/react/24/solid";
+import { premiumTier } from "../util/plans";
 
 export default function PremiumFeatures() {
   return (
@@ -44,9 +45,14 @@ export default function PremiumFeatures() {
           <FireIcon className="h-4 w-4" />
         </span>
         <div className="text-mist-300 text-sm">
-          Add up to <span className="font-medium text-white">10 actions</span>{" "}
+          Add up to{" "}
+          <span className="font-medium text-white">
+            {premiumTier.limits.max_actions_per_component} actions
+          </span>{" "}
           to each interactive component and save up to{" "}
-          <span className="font-medium text-white">100 messages</span>
+          <span className="font-medium text-white">
+            {premiumTier.limits.max_saved_messages} messages
+          </span>
         </div>
       </div>
       <div className="flex items-center gap-4">
