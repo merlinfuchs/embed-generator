@@ -1,5 +1,5 @@
 ---
-sidebar_position: 8
+sidebar_position: 9
 description: Why a channel is greyed out in the Embed Generator channel picker, and how to fix the Discord permissions so you and the bot can send there.
 ---
 

@@ -10,16 +10,13 @@ import {
 interface Props {
   text: string;
   wide?: boolean;
-  // Lets touch screens open it with a tap. Off for tooltips on buttons, where
-  // the tap already does something.
-  tappable?: boolean;
   children: ReactNode;
 }
 
 // Space kept between the tooltip and the edges of the screen.
 const SCREEN_MARGIN = 8;
 
-export default function Tooltip({ text, wide, tappable, children }: Props) {
+export default function Tooltip({ text, wide, children }: Props) {
   const childRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<[number, number] | null>(null);
@@ -30,25 +27,19 @@ export default function Tooltip({ text, wide, tappable, children }: Props) {
     const child = childRef.current;
 
     // Centered below the child.
-    function anchor(): [number, number] {
-      const rect = (child.firstElementChild ?? child).getBoundingClientRect();
-      return [rect.left + rect.width / 2, rect.bottom];
-    }
-
     function open() {
-      setPos(anchor());
+      const rect = (child.firstElementChild ?? child).getBoundingClientRect();
+      setPos([rect.left + rect.width / 2, rect.bottom]);
     }
 
     function close() {
       setPos(null);
     }
 
+    // Touch screens open it with an emulated mouseenter, but only close it
+    // once something else is tapped.
     function onPointerDown(e: PointerEvent) {
-      if (e.pointerType === "mouse") return;
-
-      if (tappable && child.contains(e.target as Node)) {
-        setPos((pos) => (pos ? null : anchor()));
-      } else {
+      if (e.pointerType !== "mouse" && !child.contains(e.target as Node)) {
         close();
       }
     }
@@ -65,7 +56,7 @@ export default function Tooltip({ text, wide, tappable, children }: Props) {
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("scroll", close, true);
     };
-  }, [tappable]);
+  }, []);
 
   // Pushes the tooltip back on screen before it's painted.
   useLayoutEffect(() => {

@@ -14,7 +14,9 @@ const MODES = [
 ] as const;
 
 const MODES_HELP =
-  "Webhook: paste a webhook URL and send, no login needed.\n\nChannel: log in, pick a server and channel, and the bot sends it. Needed for buttons with actions and select menus.";
+  "Webhook: paste a webhook URL and send, no login needed.\n\nChannel: log in, pick a server and channel, and the bot sends it. Needed for buttons with actions and select menus.\n\nClick for the full comparison.";
+
+const MODES_DOCS_URL = "https://message.style/docs/guides/webhook-or-channel";
 
 export default function SendMenu() {
   const [mode, setMode] = useSendSettingsStore(
@@ -44,8 +46,16 @@ export default function SendMenu() {
             </button>
           ))}
         </div>
-        <Tooltip text={MODES_HELP} wide tappable>
-          <QuestionMarkCircleIcon className="h-5 w-5 text-mist-400 hover:text-mist-100" />
+        <Tooltip text={MODES_HELP} wide>
+          <a
+            href={MODES_DOCS_URL}
+            aria-label="Learn about webhook and channel mode"
+            className="block text-mist-400 hover:text-mist-100"
+            target="_blank"
+            rel="noopener"
+          >
+            <QuestionMarkCircleIcon className="h-5 w-5" />
+          </a>
         </Tooltip>
       </div>
       {mode === "webhook" ? (

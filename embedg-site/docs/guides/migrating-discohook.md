@@ -1,5 +1,5 @@
 ---
-sidebar_position: 7
+sidebar_position: 8
 description: "Move from Discohook to Embed Generator in a few minutes: export your Discohook backups, paste the JSON into the editor, and save them to your server."
 ---
 

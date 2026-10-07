@@ -1,5 +1,5 @@
 ---
-sidebar_position: 3
+sidebar_position: 4
 description: "Full guide to buttons, select menus and actions in Embed Generator: styles, limits, link buttons, role actions and text or saved message responses."
 ---
 

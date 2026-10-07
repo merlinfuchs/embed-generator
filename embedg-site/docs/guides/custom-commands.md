@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 6
 description: "How to create custom slash commands for your Discord server with Embed Generator: set up your bot, add a command, arguments and actions, and the current limits."
 sidebar_class_name: sidebar-premium
 ---
