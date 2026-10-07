@@ -1,8 +1,12 @@
 package embed_links
 
 import (
+	"io"
+	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 const componentEmbedPrefix = `<script id="discord:component-embed" type="application/json">`
@@ -36,5 +40,23 @@ func TestComponentEmbedToHTMLCompactsPayload(t *testing.T) {
 	want := componentEmbedPrefix + `{"component":{"type":17,"components":[{"type":10,"content":"a, b: c"}]}}` + "</script>\n"
 	if html != want {
 		t.Fatalf("got %q, want %q", html, want)
+	}
+}
+
+func TestUnknownEmbedLinkIsNotFound(t *testing.T) {
+	h := New(EmbedLinksHandlerConfig{AppPublicURL: "https://message.style/app"}, nil)
+	app := fiber.New()
+	app.Get("/e/unknown", h.renderUnknownEmbedLinkHTML)
+
+	resp, err := app.Test(httptest.NewRequest("GET", "/e/unknown", nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != fiber.StatusNotFound {
+		t.Fatalf("got status %d, want 404", resp.StatusCode)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	if !strings.Contains(string(body), `"https://message.style/app/tools/embed-links"`) {
+		t.Fatalf("expected a redirect to the embed links tool, got %s", body)
 	}
 }

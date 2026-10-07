@@ -84,10 +84,12 @@ func safeJSURL(rawURL string) string {
 	return string(b)
 }
 
+// A 404, so crawlers don't index made-up link IDs. Visitors still get sent to the tool.
 func (h *EmbedLinksHandler) renderUnknownEmbedLinkHTML(c *fiber.Ctx) error {
+	c.Status(fiber.StatusNotFound)
 	return h.renderEmbedLinkHTML(c, &model.EmbedLink{
-		Url:           h.config.AppPublicURL + "/tools/links",
-		OgTitle:       null.StringFrom("Unknwon Embed Link"),
+		Url:           h.config.AppPublicURL + "/tools/embed-links",
+		OgTitle:       null.StringFrom("Unknown Embed Link"),
 		OgSiteName:    null.StringFrom("Embed Generator"),
 		OgDescription: null.StringFrom("Create beautiful embed links for Discord, Slack, Twitter, and more!"),
 		OgImage:       null.StringFrom("https://message.style/img/logo-256.png"),
