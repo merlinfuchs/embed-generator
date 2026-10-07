@@ -1,7 +1,10 @@
 package actions
 
 import (
+	"encoding/json"
+	"fmt"
 	"slices"
+	"time"
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/merlinfuchs/embed-generator/embedg-server/common"
@@ -17,6 +20,38 @@ type MessageWithActions struct {
 	Components      []ComponentWithActions   `json:"components,omitempty"`
 	Actions         map[string]ActionSet     `json:"actions,omitempty"`
 	Flags           discord.MessageFlags     `json:"flags,omitempty"`
+}
+
+// UnmarshalJSON reads embed timestamps itself. Imported and older saved messages carry
+// "timestamp": "" for an embed without one, which time.Time rejects; anything else that
+// isn't a date is still an error.
+func (m *MessageWithActions) UnmarshalJSON(data []byte) error {
+	type message MessageWithActions
+	var raw struct {
+		message
+		Embeds []struct {
+			discord.Embed
+			Timestamp string `json:"timestamp"`
+		} `json:"embeds"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	*m = MessageWithActions(raw.message)
+	m.Embeds = nil
+	for i, e := range raw.Embeds {
+		embed := e.Embed
+		if e.Timestamp != "" {
+			t, err := time.Parse(time.RFC3339, e.Timestamp)
+			if err != nil {
+				return fmt.Errorf("embed %d has an invalid timestamp %q", i+1, e.Timestamp)
+			}
+			embed.Timestamp = &t
+		}
+		m.Embeds = append(m.Embeds, embed)
+	}
+	return nil
 }
 
 func (m MessageWithActions) ComponentsV2Enabled() bool {

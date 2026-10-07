@@ -89,16 +89,18 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 	data := &actions.MessageWithActions{}
 	err = json.Unmarshal([]byte(req.Data), data)
 	if err != nil {
-		return err
+		return invalidMessage(err)
 	}
 
 	if err := checkMessageLimits(data, features); err != nil {
 		return err
 	}
 
+	// A template that fails here is the user's to fix, like using .Interaction in a message
+	// that isn't sent in response to one.
 	err = templates.ParseAndExecuteMessage(data)
 	if err != nil {
-		return fmt.Errorf("Failed to parse and execute message template: %w", err)
+		return handlers.BadRequest("invalid_template", fmt.Sprintf("Failed to render a variable in the message: %v", err))
 	}
 
 	params := discord.WebhookMessageCreate{
@@ -141,6 +143,9 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeUnknownMessage) {
 			return handlers.NotFound("unknown_message", "The message to edit does not exist.")
 		}
+		if editsComponentsV2ToLegacy(err) {
+			return componentsV2EditError
+		}
 		return fmt.Errorf("Failed to send or edit message: %w", err)
 	}
 
@@ -173,7 +178,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 	data := &actions.MessageWithActions{}
 	err := json.Unmarshal([]byte(req.Data), data)
 	if err != nil {
-		return err
+		return invalidMessage(err)
 	}
 
 	if req.WebhookPlatform == wire.WebhookPlatformFluxer {
@@ -242,6 +247,9 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeUnknownWebhook) {
 			return handlers.NotFound("unknown_webhook", "The webhook does not exist.")
 		}
+		if editsComponentsV2ToLegacy(err) {
+			return componentsV2EditError
+		}
 		return err
 	}
 
@@ -271,6 +279,19 @@ func decodeAttachments(attachments []*wire.MessageAttachmentWire) ([]*discord.Fi
 	return files, nil
 }
 
+var componentsV2EditError = handlers.BadRequest(
+	"components_v2_edit",
+	"This message uses Components V2, which Discord doesn't let an edit turn off again. Enable Components V2 in the editor, or send it as a new message.",
+)
+
+// editsComponentsV2ToLegacy reports whether Discord refused an edit because it sends content or
+// embeds to a message that is already Components V2.
+func editsComponentsV2ToLegacy(err error) bool {
+	var restErr *rest.Error
+	return errors.As(err, &restErr) &&
+		bytes.Contains(restErr.Errors, []byte("MESSAGE_CANNOT_USE_LEGACY_FIELDS_WITH_COMPONENTS_V2"))
+}
+
 // componentsV2Flag turns an edited message into a Components V2 one, which Discord needs to be told
 // on edits too. It can't be turned back, so it's left out otherwise.
 func componentsV2Flag(data *actions.MessageWithActions) *discord.MessageFlags {
@@ -289,4 +310,9 @@ func checkMessageLimits(data *actions.MessageWithActions, features model.PlanFea
 	}
 
 	return nil
+}
+
+// invalidMessage turns a message that doesn't decode into a 400 that says why.
+func invalidMessage(err error) error {
+	return handlers.BadRequest("invalid_message", fmt.Sprintf("Invalid message: %v", err))
 }

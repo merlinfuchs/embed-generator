@@ -170,7 +170,10 @@ func (g *CommandHandler) getMessageFromCommand(e *handler.CommandEvent) (*discor
 		var err error
 		messageID, err = snowflake.Parse(messageIDOrURL)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse message ID: %w", err)
+			return nil, e.CreateMessage(discord.MessageCreate{
+				Content: "That isn't a message ID or message link. Right click the message and use **Copy Message Link** or **Copy Message ID**.",
+				Flags:   discord.MessageFlagEphemeral,
+			})
 		}
 	}
 
