@@ -151,11 +151,11 @@ export function Section({
 export function Steps({
   title,
   steps,
-  image,
+  aside,
 }: {
   title: string;
   steps: { title: string; text: string }[];
-  image: { src: string; alt: string };
+  aside: React.ReactNode;
 }): JSX.Element {
   return (
     <section
@@ -185,14 +185,26 @@ export function Steps({
             ))}
           </ol>
         </div>
-        <img
-          src={image.src}
-          alt={image.alt}
-          loading="lazy"
-          className="w-full rounded-2xl border border-solid border-white/5 shadow-card"
-        />
+        {aside}
       </div>
     </section>
+  );
+}
+
+export function Screenshot({
+  src,
+  alt,
+}: {
+  src: string;
+  alt: string;
+}): JSX.Element {
+  return (
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      className="w-full rounded-2xl border border-solid border-white/5 shadow-card"
+    />
   );
 }
 

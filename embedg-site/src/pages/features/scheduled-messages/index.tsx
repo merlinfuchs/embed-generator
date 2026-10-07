@@ -19,6 +19,7 @@ import {
   Hero,
   LandingPage,
   Questions,
+  Screenshot,
   Steps,
 } from "../../../components/landing";
 
@@ -234,10 +235,12 @@ export default function ScheduledMessages(): JSX.Element {
       <Steps
         title="Schedule a message in three steps."
         steps={steps}
-        image={{
-          src: "/img/features/scheduled-messages/schedule-form.png",
-          alt: "The form for a new scheduled message in Embed Generator",
-        }}
+        aside={
+          <Screenshot
+            src="/img/features/scheduled-messages/schedule-form.png"
+            alt="The form for a new scheduled message in Embed Generator"
+          />
+        }
       />
       <Features title="More than a reminder bot." features={features} />
       <Questions faq={faq} />

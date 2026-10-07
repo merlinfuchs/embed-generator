@@ -21,7 +21,7 @@ const columns = [
       { label: "Custom Name & Avatar", href: "/docs/features/custom-branding" },
       { label: "Saved Messages", href: "/docs/features/save-messages" },
       { label: "Variables", href: "/docs/guides/variables" },
-      { label: "Components V2", href: "/docs/features/components-v2" },
+      { label: "Components V2", href: "/features/components-v2" },
       { label: "Scheduled Messages", href: "/features/scheduled-messages" },
       { label: "Custom Commands", href: "/docs/features/custom-commands" },
       { label: "White Label Bot", href: "/docs/features/white-label" },
