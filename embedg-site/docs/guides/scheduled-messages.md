@@ -5,6 +5,8 @@ description: "Schedule Discord messages to be sent later, once or on a repeating
 
 # Scheduled Messages
 
+For an overview of what scheduled messages can do, see [Schedule Discord Messages](/features/scheduled-messages).
+
 Scheduled Messages let you send a saved message at a later point in time. This way you can define an exact point in time where your message will be sent.
 
 ## Send Once

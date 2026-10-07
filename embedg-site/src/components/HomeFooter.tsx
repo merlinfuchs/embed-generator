@@ -22,7 +22,7 @@ const columns = [
       { label: "Saved Messages", href: "/docs/features/save-messages" },
       { label: "Variables", href: "/docs/guides/variables" },
       { label: "Components V2", href: "/docs/features/components-v2" },
-      { label: "Scheduled Messages", href: "/docs/guides/scheduled-messages" },
+      { label: "Scheduled Messages", href: "/features/scheduled-messages" },
       { label: "Custom Commands", href: "/docs/features/custom-commands" },
       { label: "White Label Bot", href: "/docs/features/white-label" },
       { label: "AI Assistant", href: "/docs/features/ai-assistant" },

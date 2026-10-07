@@ -195,6 +195,7 @@ const config: Config = {
               { label: "Documentation", to: "/docs" },
               { label: "Blog", to: "/blog" },
               { label: "Discord Webhook Sender", to: "/features/discord-webhooks" },
+              { label: "Scheduled Messages", to: "/features/scheduled-messages" },
             ],
           },
           {
