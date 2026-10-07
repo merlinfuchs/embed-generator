@@ -10,6 +10,7 @@ import { nodeField, nodeScope } from "../state/validationError";
 import Collapsable from "./Collapsable";
 import DateTimePicker from "./DateTimePicker";
 import EditorInput from "./EditorInput";
+import ValidationError from "./ValidationError";
 
 const FOOTER_FIELDS: FieldPath<EmbedNode>[] = ["footer", "timestamp"];
 
@@ -64,6 +65,7 @@ export default function EditorEmbedFooter({ id }: Props) {
               value={embed.timestamp}
               clearable={true}
             />
+            <ValidationError target={nodeField<EmbedNode>(id, "timestamp")} />
           </div>
         </div>
       </div>

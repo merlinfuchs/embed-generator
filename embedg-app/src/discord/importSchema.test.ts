@@ -193,3 +193,11 @@ test("a container with no components imports", () => {
 
   expect(message.components).toHaveLength(1);
 });
+
+test("an empty embed timestamp is no timestamp", () => {
+  const message = parseMessageWithAction({
+    embeds: [{ title: "Title", timestamp: "" }],
+  });
+
+  expect(message.embeds[0].timestamp).toBeUndefined();
+});
