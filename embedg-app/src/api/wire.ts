@@ -436,6 +436,12 @@ export interface ScheduledMessageWire {
   enabled: boolean;
   created_at: string /* RFC3339 */;
   updated_at: string /* RFC3339 */;
+  last_sent_at: null | string /* RFC3339 */;
+  /**
+   * LastError is why the last run failed, or why the message was stopped when it's disabled.
+   */
+  last_error: null | string;
+  last_error_at: null | string /* RFC3339 */;
 }
 export type ScheduledMessageListResponseWire = APIResponse<ScheduledMessageWire[]>;
 export type ScheduledMessageGetResponseWire = APIResponse<ScheduledMessageWire>;

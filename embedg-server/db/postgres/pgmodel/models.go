@@ -168,6 +168,9 @@ type ScheduledMessage struct {
 	CronTimezone     pgtype.Text
 	ThreadName       pgtype.Text
 	MessageWebhookID pgtype.Text
+	LastSentAt       pgtype.Timestamp
+	LastError        pgtype.Text
+	LastErrorAt      pgtype.Timestamp
 }
 
 type Session struct {

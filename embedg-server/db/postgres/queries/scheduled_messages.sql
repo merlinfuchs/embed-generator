@@ -51,14 +51,21 @@ UPDATE scheduled_messages SET
     enabled = $14, 
     updated_at = $15, 
     cron_timezone = $16,
-    message_webhook_id = $17
+    message_webhook_id = $17,
+    last_error = NULL,
+    last_error_at = NULL
 WHERE id = $1 AND guild_id = $2 RETURNING *;
 
--- name: UpdateScheduledMessageNextAt :one
-UPDATE scheduled_messages SET next_at = $3, updated_at = $4 WHERE id = $1 AND guild_id = $2 RETURNING *;
-
--- name: UpdateScheduledMessageEnabled :one
-UPDATE scheduled_messages SET enabled = $3, updated_at = $4 WHERE id = $1 AND guild_id = $2 RETURNING *;
+-- name: RecordScheduledMessageRun :exec
+UPDATE scheduled_messages SET
+    next_at = sqlc.arg(next_at),
+    -- Only ever turns it off, the user may have disabled it while it was sending.
+    enabled = enabled AND sqlc.arg(enabled),
+    last_sent_at = COALESCE(sqlc.narg(last_sent_at), last_sent_at),
+    last_error = sqlc.narg(last_error),
+    last_error_at = sqlc.narg(last_error_at),
+    updated_at = sqlc.arg(updated_at)
+WHERE id = sqlc.arg(id) AND guild_id = sqlc.arg(guild_id);
 
 -- name: CountScheduledMessages :one
 SELECT COUNT(*) FROM scheduled_messages WHERE guild_id = $1;

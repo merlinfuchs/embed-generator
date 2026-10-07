@@ -187,7 +187,12 @@ export default function ScheduledMessage({
 
   return (
     <div>
-      <AutoAnimate className="bg-ink-700 rounded-lg">
+      <AutoAnimate
+        className={clsx(
+          "bg-ink-700 rounded-lg",
+          !manage && msg.last_error && "ring-1 ring-red/70",
+        )}
+      >
         {manage ? (
           <div className="px-5 py-4" key="1">
             <div className="flex justify-between items-start">
@@ -225,6 +230,14 @@ export default function ScheduledMessage({
               </div>
             </div>
             <div className="space-y-5">
+              {msg.last_error && (
+                <div className="border border-red/70 rounded-lg px-3 py-2">
+                  <LastError msg={msg} />
+                  <div className="text-mist-400 text-sm font-light mt-1">
+                    Saving clears this error.
+                  </div>
+                </div>
+              )}
               <div className="flex space-x-3">
                 <EditorInput
                   label="Name"
@@ -438,6 +451,7 @@ export default function ScheduledMessage({
                     </div>
                   )
                 ))}
+              <LastError msg={msg} />
             </div>
             <div className="flex flex-none items-center space-x-4 md:space-x-3">
               <button
@@ -473,6 +487,29 @@ export default function ScheduledMessage({
           onConfirm={deleteScheduledMessageConfirm}
         />
       )}
+    </div>
+  );
+}
+
+function LastError({ msg }: { msg: ScheduledMessageWire }) {
+  if (!msg.last_error) return null;
+
+  // A schedule that ran past its end date is off too, but the error didn't stop it.
+  const ended =
+    msg.end_at !== null && Date.parse(msg.next_at) > Date.parse(msg.end_at);
+  const label =
+    msg.enabled || ended
+      ? "Last run failed"
+      : msg.only_once
+        ? "Failed to send"
+        : "Stopped";
+  const at = msg.last_error_at
+    ? ` on ${new Date(msg.last_error_at).toLocaleString()}`
+    : "";
+
+  return (
+    <div className="text-red text-sm font-light whitespace-pre-line">
+      {`${label}${at}: ${msg.last_error}`}
     </div>
   );
 }

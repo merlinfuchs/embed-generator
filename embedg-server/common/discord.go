@@ -38,6 +38,25 @@ func IsDiscordRestStatusCode(err error, statusCodes ...int) bool {
 	return false
 }
 
+// DiscordRejectionMessage returns Discord's error when it rejected a request with a 4xx, which
+// means the request itself was wrong (message too large, unknown channel, missing permissions)
+// and the error is worth showing to the user.
+func DiscordRejectionMessage(err error) (msg string, ok bool) {
+	var restErr *rest.Error
+	if !errors.As(err, &restErr) || restErr.Response == nil ||
+		restErr.Response.StatusCode < 400 || restErr.Response.StatusCode >= 500 {
+		return "", false
+	}
+
+	// rest.Error renders Discord's error tree and has panicked on shapes it didn't expect.
+	defer func() {
+		if r := recover(); r != nil {
+			msg, ok = "Discord rejected the request.", true
+		}
+	}()
+	return restErr.Error(), true
+}
+
 func DiscordAvatarURL(id ID, discriminator string, avatar string) string {
 	if avatar == "" {
 		parsedDiscriminator, _ := strconv.Atoi(discriminator)

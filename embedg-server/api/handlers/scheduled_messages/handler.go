@@ -410,5 +410,8 @@ func scheduledMessageModelToWire(model *model.ScheduledMessage) wire.ScheduledMe
 		Enabled:        model.Enabled,
 		CreatedAt:      model.CreatedAt,
 		UpdatedAt:      model.UpdatedAt,
+		LastSentAt:     model.LastSentAt,
+		LastError:      model.LastError,
+		LastErrorAt:    model.LastErrorAt,
 	}
 }

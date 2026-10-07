@@ -27,6 +27,10 @@ type ScheduledMessageWire struct {
 	Enabled        bool          `json:"enabled"`
 	CreatedAt      time.Time     `json:"created_at"`
 	UpdatedAt      time.Time     `json:"updated_at"`
+	LastSentAt     null.Time     `json:"last_sent_at"`
+	// LastError is why the last run failed, or why the message was stopped when it's disabled.
+	LastError   null.String `json:"last_error"`
+	LastErrorAt null.Time   `json:"last_error_at"`
 }
 
 type ScheduledMessageListResponseWire APIResponse[[]ScheduledMessageWire]
