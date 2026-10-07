@@ -96,3 +96,24 @@ max_scheduled_messages = 25
 periodic_scheduled_messages = true
 max_template_ops = 10000
 max_kv_keys = 1000
+
+# A higher plan on top of premium. Features are merged, so each limit is the highest of all plans the user or guild has
+[[premium.plans]]
+id = "ultimate_server"
+sku_id = "456"
+
+[premium.plans.features]
+max_saved_messages = 500
+max_saved_message_versions = 50
+max_actions_per_component = 20
+advanced_action_types = true
+max_ai_prompts_per_month = 250
+is_premium = true
+is_ultimate = true # The app stops suggesting upgrades
+custom_bot = true
+max_custom_commands = 50
+max_image_upload_size = 8000000
+max_scheduled_messages = 100
+periodic_scheduled_messages = true
+max_template_ops = 10000
+max_kv_keys = 5000

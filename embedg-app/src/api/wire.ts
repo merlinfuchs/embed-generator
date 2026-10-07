@@ -375,6 +375,7 @@ export interface GetPremiumPlanFeaturesResponseDataWire {
   custom_bot: boolean;
   max_custom_commands: number /* int */;
   is_premium: boolean;
+  is_ultimate: boolean;
   max_image_upload_size: number /* int */;
   max_scheduled_messages: number /* int */;
   periodic_scheduled_messages: boolean;
@@ -392,6 +393,7 @@ export interface PremiumEntitlementWire {
   starts_at: null | string /* RFC3339 */;
   ends_at: null | string /* RFC3339 */;
   consumable: boolean;
+  is_ultimate: boolean;
   consumed: boolean;
   consumed_guild_id: null | string;
 }

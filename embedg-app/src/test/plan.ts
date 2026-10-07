@@ -10,6 +10,7 @@ export const defaultPlanFeatures: GetPremiumPlanFeaturesResponseDataWire = {
   custom_bot: false,
   max_custom_commands: 0,
   is_premium: false,
+  is_ultimate: false,
   max_image_upload_size: 0,
   max_scheduled_messages: 5,
   periodic_scheduled_messages: false,

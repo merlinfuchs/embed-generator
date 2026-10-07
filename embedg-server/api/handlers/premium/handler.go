@@ -75,6 +75,7 @@ func (h *PremiumHandler) HandleGetFeatures(c *fiber.Ctx) error {
 			CustomBot:                 features.CustomBot,
 			MaxCustomCommands:         features.MaxCustomCommands,
 			IsPremium:                 features.IsPremium,
+			IsUltimate:                features.IsUltimate,
 			MaxImageUploadSize:        features.MaxImageUploadSize,
 			MaxScheduledMessages:      features.MaxScheduledMessages,
 			PeriodicScheduledMessages: features.PeriodicScheduledMessages,
@@ -110,13 +111,15 @@ func (h *PremiumHandler) HandleListEntitlements(c *fiber.Ctx) error {
 	}
 	for i, e := range entitlements {
 		consumable := false
+		isUltimate := false
 		if plan := h.planStore.GetPlanBySKUID(e.SkuID); plan != nil {
 			consumable = plan.Consumable
+			isUltimate = plan.Features.IsUltimate
 		}
 
 		resp.Entitlements[i] = wire.PremiumEntitlementWire{
 			ID:              e.ID,
-			SkuID:           e.ID,
+			SkuID:           e.SkuID,
 			UserID:          e.UserID,
 			GuildID:         e.GuildID,
 			UpdatedAt:       e.UpdatedAt,
@@ -124,6 +127,7 @@ func (h *PremiumHandler) HandleListEntitlements(c *fiber.Ctx) error {
 			StartsAt:        e.StartsAt,
 			EndsAt:          e.EndsAt,
 			Consumable:      consumable,
+			IsUltimate:      isUltimate,
 			Consumed:        e.Consumed,
 			ConsumedGuildID: e.ConsumedGuildID,
 		}

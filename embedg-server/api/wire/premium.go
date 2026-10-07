@@ -17,6 +17,7 @@ type GetPremiumPlanFeaturesResponseDataWire struct {
 	CustomBot                 bool `json:"custom_bot"`
 	MaxCustomCommands         int  `json:"max_custom_commands"`
 	IsPremium                 bool `json:"is_premium"`
+	IsUltimate                bool `json:"is_ultimate"`
 	MaxImageUploadSize        int  `json:"max_image_upload_size"`
 	MaxScheduledMessages      int  `json:"max_scheduled_messages"`
 	PeriodicScheduledMessages bool `json:"periodic_scheduled_messages"`
@@ -36,6 +37,7 @@ type PremiumEntitlementWire struct {
 	StartsAt        null.Time     `json:"starts_at"`
 	EndsAt          null.Time     `json:"ends_at"`
 	Consumable      bool          `json:"consumable"`
+	IsUltimate      bool          `json:"is_ultimate"`
 	Consumed        bool          `json:"consumed"`
 	ConsumedGuildID common.NullID `json:"consumed_guild_id"`
 }

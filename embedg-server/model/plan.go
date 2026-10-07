@@ -15,6 +15,7 @@ type PlanFeatures struct {
 	CustomBot                 bool `toml:"custom_bot"`
 	MaxCustomCommands         int  `toml:"max_custom_commands"`
 	IsPremium                 bool `toml:"is_premium"`
+	IsUltimate                bool `toml:"is_ultimate"`
 	MaxImageUploadSize        int  `toml:"max_image_upload_size"`
 	MaxScheduledMessages      int  `toml:"max_scheduled_messages"`
 	PeriodicScheduledMessages bool `toml:"periodic_scheduled_messages"`
@@ -59,6 +60,7 @@ func (f *PlanFeatures) Merge(b PlanFeatures) {
 
 	f.AdvancedActionTypes = f.AdvancedActionTypes || b.AdvancedActionTypes
 	f.IsPremium = f.IsPremium || b.IsPremium
+	f.IsUltimate = f.IsUltimate || b.IsUltimate
 	f.CustomBot = f.CustomBot || b.CustomBot
 	f.PeriodicScheduledMessages = f.PeriodicScheduledMessages || b.PeriodicScheduledMessages
 }
