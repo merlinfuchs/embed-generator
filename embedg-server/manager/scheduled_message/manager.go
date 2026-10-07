@@ -143,6 +143,9 @@ func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, s
 	}
 
 	if scheduledMessage.OnlyOnce {
+		if sendErr != nil {
+			return m.disable(ctx, scheduledMessage, "failed to send once")
+		}
 		return m.disable(ctx, scheduledMessage, "sent once")
 	}
 
@@ -228,7 +231,11 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 	}
 
 	if err := templates.ParseAndExecuteMessage(data); err != nil {
-		return fmt.Errorf("failed to parse and execute message template: %w", err)
+		// Unless a lookup behind the template failed, it fails the same way on the next try.
+		if internalErr := templateSource.Err(); internalErr != nil {
+			return fmt.Errorf("failed to parse and execute message template: %w", internalErr)
+		}
+		return fmt.Errorf("%w: failed to parse and execute message template: %w", errInvalidMessage, err)
 	}
 
 	params := discord.WebhookMessageCreate{
