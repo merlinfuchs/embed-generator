@@ -1,0 +1,2 @@
+0 2 * * * bash /root/backup_daily.sh 2>&1 | logger -t embedg-backup
+0 4 * * 0 bash /root/backup_weekly.sh 2>&1 | logger -t embedg-backup

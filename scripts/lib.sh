@@ -1,4 +1,4 @@
-# Shared by deploy-app.sh and deploy-site.sh.
+# Shared by deploy-app.sh, deploy-site.sh and deploy-caddy.sh.
 
 DEPLOY_HOST="${DEPLOY_HOST:-root@embedg-main}"
 
