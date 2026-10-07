@@ -16,6 +16,5 @@ type ScheduledMessageStore interface {
 	DeleteScheduledMessage(ctx context.Context, guildID common.ID, id string) error
 	CreateScheduledMessage(ctx context.Context, msg model.ScheduledMessage) (*model.ScheduledMessage, error)
 	UpdateScheduledMessage(ctx context.Context, msg model.ScheduledMessage) (*model.ScheduledMessage, error)
-	UpdateScheduledMessageNextAt(ctx context.Context, guildID common.ID, id string, nextAt time.Time, updatedAt time.Time) error
-	UpdateScheduledMessageEnabled(ctx context.Context, guildID common.ID, id string, enabled bool, updatedAt time.Time) error
+	RecordScheduledMessageRun(ctx context.Context, guildID common.ID, id string, run model.ScheduledMessageRun) error
 }

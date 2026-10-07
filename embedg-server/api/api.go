@@ -67,7 +67,6 @@ func Serve(ctx context.Context, env *Env, config APIConfig) {
 			var e *wire.Error
 			var userErr *common.UserError
 			var fiberErr *fiber.Error
-			var restErr *rest.Error
 			if errors.As(err, &e) {
 				return c.Status(e.Status).JSON(e)
 			} else if errors.As(err, &userErr) {
@@ -82,8 +81,7 @@ func Serve(ctx context.Context, env *Env, config APIConfig) {
 					Code:    "http_error",
 					Message: fiberErr.Message,
 				})
-			} else if errors.As(err, &restErr) && restErr.Response != nil &&
-				restErr.Response.StatusCode >= 400 && restErr.Response.StatusCode < 500 {
+			} else if msg, ok := common.DiscordRejectionMessage(err); ok {
 				// Discord rejected what the user asked for (message too large, unknown channel,
 				// missing permissions), so its error is the useful answer. Always a 400: passing on
 				// Discord's 401 would read as our own session expiring.
@@ -96,7 +94,7 @@ func Serve(ctx context.Context, env *Env, config APIConfig) {
 				return c.Status(fiber.StatusBadRequest).JSON(wire.Error{
 					Status:  fiber.StatusBadRequest,
 					Code:    "discord_error",
-					Message: restErr.Error(),
+					Message: msg,
 				})
 			} else if errors.Is(err, session.ErrSessionInvalid) {
 				// Discord no longer accepts the user's token and the session is gone, so this is a

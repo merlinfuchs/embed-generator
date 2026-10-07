@@ -117,24 +117,17 @@ func (c *Client) UpdateScheduledMessage(ctx context.Context, msg model.Scheduled
 	return rowToScheduledMessage(row), nil
 }
 
-func (c *Client) UpdateScheduledMessageNextAt(ctx context.Context, guildID common.ID, id string, nextAt time.Time, updatedAt time.Time) error {
-	_, err := c.Q.UpdateScheduledMessageNextAt(ctx, pgmodel.UpdateScheduledMessageNextAtParams{
-		ID:        id,
-		GuildID:   guildID.String(),
-		NextAt:    pgtype.Timestamp{Time: nextAt, Valid: true},
-		UpdatedAt: pgtype.Timestamp{Time: updatedAt, Valid: true},
+func (c *Client) RecordScheduledMessageRun(ctx context.Context, guildID common.ID, id string, run model.ScheduledMessageRun) error {
+	return c.Q.RecordScheduledMessageRun(ctx, pgmodel.RecordScheduledMessageRunParams{
+		ID:          id,
+		GuildID:     guildID.String(),
+		NextAt:      pgtype.Timestamp{Time: run.NextAt, Valid: true},
+		Enabled:     run.Enabled,
+		LastSentAt:  pgtype.Timestamp{Time: run.LastSentAt.Time, Valid: run.LastSentAt.Valid},
+		LastError:   pgtype.Text{String: run.LastError.String, Valid: run.LastError.Valid},
+		LastErrorAt: pgtype.Timestamp{Time: run.LastErrorAt.Time, Valid: run.LastErrorAt.Valid},
+		UpdatedAt:   pgtype.Timestamp{Time: run.UpdatedAt, Valid: true},
 	})
-	return err
-}
-
-func (c *Client) UpdateScheduledMessageEnabled(ctx context.Context, guildID common.ID, id string, enabled bool, updatedAt time.Time) error {
-	_, err := c.Q.UpdateScheduledMessageEnabled(ctx, pgmodel.UpdateScheduledMessageEnabledParams{
-		ID:        id,
-		GuildID:   guildID.String(),
-		Enabled:   enabled,
-		UpdatedAt: pgtype.Timestamp{Time: updatedAt, Valid: true},
-	})
-	return err
 }
 
 func rowsToScheduledMessages(rows []pgmodel.ScheduledMessage) []model.ScheduledMessage {
@@ -174,5 +167,8 @@ func rowToScheduledMessage(row pgmodel.ScheduledMessage) *model.ScheduledMessage
 		UpdatedAt:        row.UpdatedAt.Time,
 		CronTimezone:     null.NewString(row.CronTimezone.String, row.CronTimezone.Valid),
 		ThreadName:       null.NewString(row.ThreadName.String, row.ThreadName.Valid),
+		LastSentAt:       null.NewTime(row.LastSentAt.Time, row.LastSentAt.Valid),
+		LastError:        null.NewString(row.LastError.String, row.LastError.Valid),
+		LastErrorAt:      null.NewTime(row.LastErrorAt.Time, row.LastErrorAt.Valid),
 	}
 }

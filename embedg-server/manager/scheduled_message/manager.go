@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"time"
 
 	"github.com/disgoorg/disgo/bot"
@@ -21,21 +20,12 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/manager/webhook"
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
+	"gopkg.in/guregu/null.v4"
 )
 
 // How long a due message keeps being retried on transient failures before
 // it is skipped (recurring) or disabled (only once).
 const sendRetryWindow = 30 * time.Minute
-
-// errInvalidMessage marks a saved message that can't be turned into a Discord message. Like a
-// message Discord rejects, it fails the same way on every retry.
-var errInvalidMessage = errors.New("invalid message")
-
-// sendRejected reports whether a send failed on the message itself rather than on something
-// transient, so retrying it before the next scheduled run only repeats the failure.
-func sendRejected(err error) bool {
-	return errors.Is(err, errInvalidMessage) || common.IsDiscordRestStatusCode(err, http.StatusBadRequest)
-}
 
 type ScheduledMessageManager struct {
 	scheduledMessageStore store.ScheduledMessageStore
@@ -121,12 +111,18 @@ func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, s
 	// The due query doesn't filter on end_at, so rows past it end up here and get
 	// disabled instead of staying enabled without ever sending again.
 	if scheduledMessage.EndAt.Valid && scheduledMessage.NextAt.After(scheduledMessage.EndAt.Time) {
-		return m.disable(ctx, scheduledMessage, "past end date")
+		return m.record(ctx, scheduledMessage, model.ScheduledMessageRun{
+			NextAt:      scheduledMessage.NextAt,
+			LastError:   scheduledMessage.LastError,
+			LastErrorAt: scheduledMessage.LastErrorAt,
+			UpdatedAt:   now,
+		})
 	}
 
-	sendErr := m.SendScheduledMessage(ctx, scheduledMessage)
-	if sendErr != nil {
-		if !sendRejected(sendErr) && now.Sub(scheduledMessage.NextAt) < sendRetryWindow {
+	var failure null.String
+	if sendErr := m.SendScheduledMessage(ctx, scheduledMessage); sendErr != nil {
+		outcome, reason := classifyFailure(sendErr)
+		if outcome == outcomeRetry && now.Sub(scheduledMessage.NextAt) < sendRetryWindow {
 			slog.Warn(
 				"Failed to send scheduled message, retrying on next tick",
 				slog.Any("error", sendErr),
@@ -136,17 +132,22 @@ func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, s
 		}
 
 		slog.Error(
-			"Giving up on scheduled message",
+			"Failed to send scheduled message",
 			slog.Any("error", sendErr),
 			slog.String("scheduled_message_id", scheduledMessage.ID),
 		)
+		if outcome == outcomeStop || scheduledMessage.OnlyOnce {
+			return m.stop(ctx, scheduledMessage, reason, now)
+		}
+		failure = null.StringFrom(reason)
 	}
 
 	if scheduledMessage.OnlyOnce {
-		if sendErr != nil {
-			return m.disable(ctx, scheduledMessage, "failed to send once")
-		}
-		return m.disable(ctx, scheduledMessage, "sent once")
+		return m.record(ctx, scheduledMessage, model.ScheduledMessageRun{
+			NextAt:     scheduledMessage.NextAt,
+			LastSentAt: null.TimeFrom(now),
+			UpdatedAt:  now,
+		})
 	}
 
 	nextAt, err := GetNextCronTick(
@@ -161,33 +162,45 @@ func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, s
 			slog.Any("error", err),
 			slog.String("scheduled_message_id", scheduledMessage.ID),
 		)
-		return m.disable(ctx, scheduledMessage, "invalid schedule")
+		return m.stop(ctx, scheduledMessage, "The schedule is invalid.", now)
 	}
 
-	err = m.scheduledMessageStore.UpdateScheduledMessageNextAt(ctx, scheduledMessage.GuildID, scheduledMessage.ID, nextAt, now)
+	run := model.ScheduledMessageRun{
+		NextAt: nextAt,
+		// A next run past the end date never comes, so the schedule is over.
+		Enabled:   !scheduledMessage.EndAt.Valid || !nextAt.After(scheduledMessage.EndAt.Time),
+		UpdatedAt: now,
+	}
+	if failure.Valid {
+		run.LastError = failure
+		run.LastErrorAt = null.TimeFrom(now)
+	} else {
+		run.LastSentAt = null.TimeFrom(now)
+	}
+	return m.record(ctx, scheduledMessage, run)
+}
+
+func (m *ScheduledMessageManager) record(ctx context.Context, scheduledMessage model.ScheduledMessage, run model.ScheduledMessageRun) error {
+	err := m.scheduledMessageStore.RecordScheduledMessageRun(ctx, scheduledMessage.GuildID, scheduledMessage.ID, run)
 	if err != nil {
-		return fmt.Errorf("failed to update next_at after sending scheduled message: %w", err)
+		return fmt.Errorf("failed to record run of scheduled message: %w", err)
 	}
-
-	if scheduledMessage.EndAt.Valid && nextAt.After(scheduledMessage.EndAt.Time) {
-		return m.disable(ctx, scheduledMessage, "past end date")
-	}
-
 	return nil
 }
 
-func (m *ScheduledMessageManager) disable(ctx context.Context, scheduledMessage model.ScheduledMessage, reason string) error {
-	err := m.scheduledMessageStore.UpdateScheduledMessageEnabled(ctx, scheduledMessage.GuildID, scheduledMessage.ID, false, time.Now().UTC())
-	if err != nil {
-		return fmt.Errorf("failed to disable scheduled message (%s): %w", reason, err)
-	}
-
+// stop disables a scheduled message that can't run anymore and keeps the reason for the user.
+func (m *ScheduledMessageManager) stop(ctx context.Context, scheduledMessage model.ScheduledMessage, reason string, now time.Time) error {
 	slog.Info(
-		"Disabled scheduled message",
+		"Stopping scheduled message",
 		slog.String("reason", reason),
 		slog.String("scheduled_message_id", scheduledMessage.ID),
 	)
-	return nil
+	return m.record(ctx, scheduledMessage, model.ScheduledMessageRun{
+		NextAt:      scheduledMessage.NextAt,
+		LastError:   null.StringFrom(reason),
+		LastErrorAt: null.TimeFrom(now),
+		UpdatedAt:   now,
+	})
 }
 
 // channelGone checks against the Discord API whether the channel really doesn't exist
@@ -206,7 +219,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 	savedMsg, err := m.savedMessageStore.GetSavedMessageForGuild(ctx, scheduledMessage.GuildID, scheduledMessage.SavedMessageID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			return m.disable(ctx, scheduledMessage, "saved message not found")
+			return stopWith("The saved message was deleted.")
 		}
 		return fmt.Errorf("failed to get saved message from scheduled message: %w", err)
 	}
@@ -227,7 +240,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 	data := &actions.MessageWithActions{}
 	err = json.Unmarshal([]byte(savedMsg.Data), data)
 	if err != nil {
-		return fmt.Errorf("%w: %w", errInvalidMessage, err)
+		return skipWith("The saved message is invalid: "+err.Error(), err)
 	}
 
 	if err := templates.ParseAndExecuteMessage(data); err != nil {
@@ -235,7 +248,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		if internalErr := templateSource.Err(); internalErr != nil {
 			return fmt.Errorf("failed to parse and execute message template: %w", internalErr)
 		}
-		return fmt.Errorf("%w: failed to parse and execute message template: %w", errInvalidMessage, err)
+		return skipWith("Template error: "+err.Error(), err)
 	}
 
 	params := discord.WebhookMessageCreate{
@@ -254,7 +267,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 
 	params.Components, err = m.actionParser.ParseMessageComponents(data.Components, true)
 	if err != nil {
-		return fmt.Errorf("%w: failed to parse message components: %w", errInvalidMessage, err)
+		return skipWith("Invalid components: "+err.Error(), err)
 	}
 
 	// Actions carry the creator's authority, so resolve the creator before sending. Without a member
@@ -271,7 +284,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 				rest.JSONErrorCodeUnknownGuild,
 				rest.JSONErrorCodeMissingAccess,
 			) {
-				return m.disable(ctx, scheduledMessage, "creator is no longer a member of the server")
+				return stopWith("The member who created it left the server.")
 			}
 			return fmt.Errorf("failed to get scheduled message creator: %w", err)
 		}
@@ -296,7 +309,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 	if err != nil {
 		if errors.Is(err, webhook.ErrChannelNotFound) {
 			if m.channelGone(ctx, scheduledMessage.ChannelID) {
-				return m.disable(ctx, scheduledMessage, "channel not found")
+				return stopWith("The channel was deleted.")
 			}
 			return fmt.Errorf("channel not in cache: %w", err)
 		}
@@ -307,7 +320,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 			rest.JSONErrorCodeUnknownMessage,
 			rest.JSONErrorCodeCannotEditMessageAuthoredByAnotherUser,
 		) {
-			return m.disable(ctx, scheduledMessage, "message to edit is gone or can't be edited")
+			return stopWith("The message it edits was deleted or can't be edited anymore.")
 		}
 
 		if common.IsDiscordRestErrorCode(
@@ -317,7 +330,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 			rest.JSONErrorCodeMissingAccess,
 			rest.JSONErrorCodeLackPermissionsToPerformAction,
 		) {
-			return m.disable(ctx, scheduledMessage, "channel inaccessible")
+			return stopWith("Embed Generator can't access the channel anymore.")
 		}
 
 		return fmt.Errorf("failed to send or edit message: %w", err)

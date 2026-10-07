@@ -28,4 +28,19 @@ type ScheduledMessage struct {
 	UpdatedAt        time.Time
 	CronTimezone     null.String
 	ThreadName       null.String
+	LastSentAt       null.Time
+	// LastError explains to the user why the last run failed or why the message was stopped.
+	LastError   null.String
+	LastErrorAt null.Time
+}
+
+// ScheduledMessageRun is what running a scheduled message changes about it. LastSentAt is left
+// as it is when invalid.
+type ScheduledMessageRun struct {
+	NextAt      time.Time
+	Enabled     bool
+	LastSentAt  null.Time
+	LastError   null.String
+	LastErrorAt null.Time
+	UpdatedAt   time.Time
 }
