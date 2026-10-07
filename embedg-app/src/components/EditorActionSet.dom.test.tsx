@@ -13,6 +13,20 @@ vi.mock("../util/premium", () => ({
 
 vi.mock("./AnalyticsProvider", () => ({ op: { track: vi.fn() } }));
 
+vi.mock("../util/plans", async (importOriginal) => {
+  const { defaultPlanFeatures } = await import("../test/plan");
+  return {
+    ...(await importOriginal<typeof import("../util/plans")>()),
+    usePlans: () => [
+      {
+        ...defaultPlanFeatures,
+        plan: "Premium",
+        max_actions_per_component: 10,
+      },
+    ],
+  };
+});
+
 const SET_ID = "set-1";
 
 function actions() {
@@ -132,5 +146,8 @@ test("the add button opens the limit dialog at the plan's action limit", async (
   expect(actions()).toHaveLength(5);
   expect(
     screen.getByText("You've reached the limit of 5 actions per component"),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("link", { name: "Upgrade to Premium" }),
   ).toBeInTheDocument();
 });

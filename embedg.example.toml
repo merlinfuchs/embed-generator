@@ -58,6 +58,7 @@ source = "https://github.com/merlinfuchs/embed-generator"
 debug = false
 
 # Here you can configure multiple tiers/plans which are linked to a Discord SKU
+# List the paid plans from the cheapest to the most expensive. The app offers the named ones as upgrades
 # The default plan that all users automatically have
 [[premium.plans]]
 id = "default"
@@ -80,6 +81,7 @@ max_kv_keys = 10
 # An additional premium plan that will apply when the user or guild has the SKU
 [[premium.plans]]
 id = "premium_server"
+name = "Premium"
 sku_id = "123"
 
 [premium.plans.features]
@@ -100,6 +102,7 @@ max_kv_keys = 1000
 # A higher plan on top of premium. Features are merged, so each limit is the highest of all plans the user or guild has
 [[premium.plans]]
 id = "ultimate_server"
+name = "Ultimate"
 sku_id = "456"
 
 [premium.plans.features]
@@ -109,7 +112,6 @@ max_actions_per_component = 20
 advanced_action_types = true
 max_ai_prompts_per_month = 250
 is_premium = true
-is_ultimate = true # The app stops suggesting upgrades
 custom_bot = true
 max_custom_commands = 50
 max_image_upload_size = 8000000

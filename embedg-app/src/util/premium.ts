@@ -33,21 +33,19 @@ export function usePremiumUserFeatures() {
   return data.data;
 }
 
-export function useConsumableEntitlement(ultimate: boolean) {
+export function useConsumableEntitlement(plan: string) {
   const { data } = usePremiumUserEntitlementsQuery();
 
   const entitlementId = useMemo(() => {
     if (!data?.success) return null;
     return data.data.entitlements.find(
-      (e) => e.consumable && !e.consumed_guild_id && e.is_ultimate === ultimate,
+      (e) => e.consumable && !e.consumed_guild_id && e.plan === plan,
     )?.id;
-  }, [data, ultimate]);
+  }, [data, plan]);
 
   const guildId = useSendSettingsStore((s) => s.guildId);
   const consumeMutation = usePremiumEntitlementConsumeMutation();
   const createToast = useToasts((s) => s.create);
-
-  const planName = ultimate ? "Ultimate" : "Premium";
 
   function activate(onDone: () => void) {
     if (!entitlementId || !guildId) return;
@@ -61,13 +59,13 @@ export function useConsumableEntitlement(ultimate: boolean) {
         onSuccess: (res) => {
           if (res.success) {
             createToast({
-              title: `${planName} activated`,
+              title: `${plan} activated`,
               message: "This server now has access to all features!",
               type: "success",
             });
           } else {
             createToast({
-              title: `Failed to activate ${planName.toLowerCase()}`,
+              title: `Failed to activate ${plan}`,
               message: res.error.message,
               type: "error",
             });

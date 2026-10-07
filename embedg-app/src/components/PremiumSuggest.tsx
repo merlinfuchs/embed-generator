@@ -2,6 +2,7 @@ import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { SparklesIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import { AutoAnimate } from "../util/autoAnimate";
+import { PREMIUM_PLAN } from "../util/plans";
 import { useConsumableEntitlement } from "../util/premium";
 import PremiumFeatures from "./PremiumFeatures";
 import ConfirmModal from "./ConfirmModal";
@@ -15,7 +16,7 @@ export default function PremiumSuggest({ alwaysExpanded }: Props) {
   const [activateModal, setActivateModal] = useState(false);
 
   const { entitlementId, guildId, activate, pending } =
-    useConsumableEntitlement(false);
+    useConsumableEntitlement(PREMIUM_PLAN);
 
   return (
     <AutoAnimate className="relative overflow-hidden p-3 rounded-2xl border border-amber-400/10 bg-[linear-gradient(135deg,#2B2D31_0%,#2F2E2C_65%,#3A3222_100%)] select-none">

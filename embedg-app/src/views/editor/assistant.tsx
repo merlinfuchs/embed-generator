@@ -38,7 +38,7 @@ import {
 } from "../../state/document";
 import { useSendSettingsStore } from "../../state/sendSettings";
 import { runAssistantPrompt } from "../../util/assistant";
-import { upgradesFor } from "../../util/plans";
+import { upgradesFor, usePlans } from "../../util/plans";
 import { usePremiumGuildFeatures } from "../../util/premium";
 
 /** A chat next to the editor that builds and changes the message. */
@@ -47,6 +47,7 @@ export default function AssistantView() {
 
   const guildId = useSendSettingsStore((s) => s.guildId);
   const features = usePremiumGuildFeatures();
+  const plans = usePlans();
   const { data: usage } = useAssistantUsageQuery(guildId);
   const chat = useAssistantChatMutation();
 
@@ -221,7 +222,8 @@ export default function AssistantView() {
             }
             upgradeTo={
               usage?.success && usage.data.limit_reached
-                ? upgradesFor("max_ai_prompts_per_month", features)[0]?.name
+                ? upgradesFor("max_ai_prompts_per_month", features, plans)[0]
+                    ?.plan
                 : undefined
             }
           />

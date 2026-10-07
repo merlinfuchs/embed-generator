@@ -2,7 +2,7 @@ import { SparklesIcon } from "@heroicons/react/24/solid";
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import type { GetPremiumPlanFeaturesResponseDataWire } from "../api/wire";
-import { type Limit, upgradesFor } from "../util/plans";
+import type { Limit } from "../util/plans";
 import { op } from "./AnalyticsProvider";
 import Modal from "./Modal";
 
@@ -17,14 +17,18 @@ const limitNames: Record<Limit, string> = {
 
 interface Props {
   limit: Limit;
-  features: GetPremiumPlanFeaturesResponseDataWire | null;
+  current: number;
+  // The plans that raise the limit, cheapest first.
+  upgrades: GetPremiumPlanFeaturesResponseDataWire[];
   onClose: () => void;
 }
 
-export default function LimitReachedModal({ limit, features, onClose }: Props) {
-  const current = features?.[limit] ?? 0;
-  const upgrades = upgradesFor(limit, features);
-
+export default function LimitReachedModal({
+  limit,
+  current,
+  upgrades,
+  onClose,
+}: Props) {
   useEffect(() => {
     op.track("limit_reached", { limit });
   }, [limit]);
@@ -44,14 +48,14 @@ export default function LimitReachedModal({ limit, features, onClose }: Props) {
               Upgrade to get more:
             </div>
             <div className="space-y-2 mb-6">
-              {upgrades.map((t) => (
+              {upgrades.map((p) => (
                 <div
-                  key={t.name}
+                  key={p.plan}
                   className="flex justify-between rounded-lg bg-ink-800 px-3 py-2 text-sm"
                 >
-                  <span className="font-medium text-amber-300">{t.name}</span>
+                  <span className="font-medium text-amber-300">{p.plan}</span>
                   <span className="text-mist-100">
-                    up to {t.limits[limit]} {limitNames[limit]}
+                    up to {p[limit]} {limitNames[limit]}
                   </span>
                 </div>
               ))}
@@ -70,10 +74,10 @@ export default function LimitReachedModal({ limit, features, onClose }: Props) {
                 rel="noopener"
                 className="px-3 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-ink-900 font-semibold transition-colors"
                 onClick={() =>
-                  op.track("upgrade_clicked", { limit, plan: upgrades[0].name })
+                  op.track("upgrade_clicked", { limit, plan: upgrades[0].plan })
                 }
               >
-                Upgrade to {upgrades[0].name}
+                Upgrade to {upgrades[0].plan}
               </a>
             </div>
           </>
