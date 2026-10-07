@@ -58,6 +58,20 @@ export const pages: Page[] = [
     text: "Write the message, add embeds with a title, description, fields, images and a color, and watch the preview update as you type. Paste a webhook URL to send it, or log in with Discord to send it through the bot with buttons and select menus that hand out roles or reply.",
   },
   {
+    file: "scheduled",
+    path: "/scheduled",
+    title: "Schedule Discord Messages | Embed Generator",
+    description:
+      "Schedule a Discord message to be sent to a channel later, once at a set time or repeating every hour, day or week. Free to send once.",
+    heading: "Schedule Discord Messages",
+    preview: {
+      byline: "Embed Generator",
+      open: "Schedule a message",
+      docs: `${ORIGIN}/docs/guides/scheduled-messages`,
+    },
+    text: "Pick a saved message with embeds and buttons, a channel in your server and a time, and the bot sends it then. Sending once is free, repeating schedules come with Premium.",
+  },
+  {
     file: "tools",
     path: "/tools",
     title: "Free Discord Tools | Embed Generator",
