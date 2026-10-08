@@ -671,8 +671,15 @@ func sendDM(restClient rest.Rest, userID snowflake.ID, msg discord.MessageCreate
 func sendToChannel(restClient rest.Rest, channelID snowflake.ID, msg discord.MessageCreate) (*discord.Message, error) {
 	newMsg, err := restClient.CreateMessage(channelID, msg, rest.WithCtx(context.TODO()))
 	if err != nil {
-		if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeLackPermissionsToPerformAction, rest.JSONErrorCodeMissingAccess) {
+		switch {
+		case common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeLackPermissionsToPerformAction, rest.JSONErrorCodeMissingAccess):
 			return nil, userErr("The bot doesn't have permissions to send messages in <#%s>.", channelID)
+		case common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeUnknownChannel):
+			return nil, userErr("The channel <#%s> doesn't exist anymore.", channelID)
+		case common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeOperationOnArchivedThread, rest.JSONErrorCodeThreadLocked):
+			return nil, userErr("The thread <#%s> is archived or locked.", channelID)
+		case common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeCannotSendEmptyMessage):
+			return nil, userErr("The message for <#%s> is empty.", channelID)
 		}
 		return nil, fmt.Errorf("failed to send message to channel: %w", err)
 	}
