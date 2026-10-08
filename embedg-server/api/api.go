@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/url"
 
 	"os"
 
@@ -105,6 +106,13 @@ func Serve(ctx context.Context, env *Env, config APIConfig) {
 					Message: "Your Discord login is no longer valid, try logging in again.",
 				})
 			} else {
+				// Network errors carry the request URL, which holds the webhook token on sends.
+				var urlErr *url.Error
+				if errors.As(err, &urlErr) {
+					if u, parseErr := url.Parse(urlErr.URL); parseErr == nil {
+						urlErr.URL = u.Host
+					}
+				}
 				slog.Error(
 					"Unhandled error in rest endpoint",
 					slog.String("method", c.Method()),
