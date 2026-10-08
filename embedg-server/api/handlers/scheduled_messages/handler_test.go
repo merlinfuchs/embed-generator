@@ -99,12 +99,12 @@ func TestFirstRunOnDates(t *testing.T) {
 	now := time.Date(2026, 10, 20, 12, 0, 0, 0, time.UTC)
 	day := func(d int) time.Time { return time.Date(2026, 10, d, 18, 0, 0, 0, time.UTC) }
 
-	s := &wire.ScheduledMessageScheduleWire{RunTimes: []time.Time{day(30), day(16), day(23), day(23)}}
+	s := &wire.ScheduledMessageScheduleWire{RunTimes: []time.Time{day(30), day(16), day(23), day(23).Add(20 * time.Second)}}
 	if err := normalizeSchedule(s); err != nil {
 		t.Fatal(err)
 	}
 	if len(s.RunTimes) != 3 || !s.RunTimes[0].Equal(day(16)) || !s.StartAt.Equal(day(16)) {
-		t.Fatalf("want the dates sorted without duplicates, got %v", s.RunTimes)
+		t.Fatalf("want the dates to the minute, sorted and without duplicates, got %v", s.RunTimes)
 	}
 
 	// The 16th is over, the 23rd is next.

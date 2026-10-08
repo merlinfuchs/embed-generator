@@ -423,7 +423,11 @@ func normalizeSchedule(s *wire.ScheduledMessageScheduleWire) error {
 	}
 
 	if s.OnDates() {
-		// Sorted without duplicates, so the next date is the first one after the last send.
+		// To the minute like the editor picks them, sorted and without duplicates, so the next date
+		// is the first one after the last send and they're at least a minute apart.
+		for i, d := range s.RunTimes {
+			s.RunTimes[i] = d.Truncate(time.Minute)
+		}
 		slices.SortFunc(s.RunTimes, time.Time.Compare)
 		s.RunTimes = slices.CompactFunc(s.RunTimes, time.Time.Equal)
 		s.StartAt = s.RunTimes[0]
