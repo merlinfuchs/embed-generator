@@ -4,7 +4,7 @@ import { SparklesIcon } from "@heroicons/react/24/solid";
 const links = [
   { label: "Features", href: "/features" },
   { label: "Docs", href: "/docs" },
-  { label: "Blog", href: "/blog" },
+  { label: "Blog", href: "/blog", hideBelow: "xs" },
   { label: "Discord", href: "/discord", hideBelow: "sm" },
   { label: "GitHub", href: "/source", hideBelow: "md" },
 ];
@@ -29,6 +29,7 @@ export default function HomeHeader(): JSX.Element {
               href={l.href}
               className={[
                 "whitespace-nowrap rounded-md px-2 py-1.5 text-sm font-medium text-mist-400 transition-colors hover:bg-white/5 hover:text-mist-100 hover:no-underline sm:px-3",
+                l.hideBelow === "xs" ? "hidden min-[360px]:block" : "",
                 l.hideBelow === "sm" ? "hidden sm:block" : "",
                 l.hideBelow === "md" ? "hidden md:block" : "",
               ].join(" ")}
