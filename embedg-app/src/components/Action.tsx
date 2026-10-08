@@ -359,11 +359,18 @@ export default function Action({
             action.type === 7 ||
             action.type === 9 ||
             action.type === 12 ? (
-            <SavedMessageSelect
-              guildId={guildId}
-              messageId={action.target_id || null}
-              onChange={(v) => setTargetId(v || "")}
-            />
+            <div>
+              <div className="mb-1.5 flex">
+                <div className="uppercase text-mist-300 text-sm font-medium">
+                  Saved Message
+                </div>
+              </div>
+              <SavedMessageSelect
+                guildId={guildId}
+                messageId={action.target_id || null}
+                onChange={(v) => setTargetId(v || "")}
+              />
+            </div>
           ) : action.type === 10 ? (
             <>
               <div className="flex-none">
