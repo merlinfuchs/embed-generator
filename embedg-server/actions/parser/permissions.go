@@ -3,7 +3,6 @@ package parser
 import (
 	"context"
 	"fmt"
-	"iter"
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/merlinfuchs/embed-generator/embedg-server/access"
@@ -14,13 +13,7 @@ import (
 // DerivePermissionsForActions records the authority the given member has at save time; the runtime
 // replays it from the action set instead of re-checking. The caller resolves the member, with the
 // user's own token from the dashboard or the bot token for a scheduled message's creator.
-func (m *ActionParser) DerivePermissionsForActions(
-	ctx context.Context,
-	member discord.Member,
-	guildID common.ID,
-	channelID common.ID,
-	actionSets iter.Seq[actions.ActionSet],
-) (actions.ActionDerivedPermissions, error) {
+func (m *ActionParser) DerivePermissionsForActions(ctx context.Context, member discord.Member, guildID common.ID, channelID common.ID) (actions.ActionDerivedPermissions, error) {
 	userID := member.User.ID
 
 	res := actions.ActionDerivedPermissions{
@@ -54,11 +47,6 @@ func (m *ActionParser) DerivePermissionsForActions(
 	}
 
 	res.GuildPermissions = uint64(access.GuildPermissions(state, member))
-
-	// The list is stored with every action set, so it's left out when nothing can use it.
-	if !res.HasGuildPermission(discord.PermissionAdministrator) && actions.MayTargetChannels(actionSets) {
-		res.AllowedChannelIDs = access.SendableChannelIDs(state, member)
-	}
 
 	// member.RoleIDs is in no particular order, so the highest role has to be searched for. The
 	// @everyone role has the guild's id.

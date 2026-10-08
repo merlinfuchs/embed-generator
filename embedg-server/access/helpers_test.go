@@ -144,20 +144,3 @@ func TestGuildPermissionsTimedOut(t *testing.T) {
 		t.Fatalf("permissions = %d, want %d", got, discord.PermissionViewChannel)
 	}
 }
-
-func TestSendableChannelIDs(t *testing.T) {
-	locked := channel(t, `{"id":"10","type":0,"guild_id":"1","name":"locked","permission_overwrites":[{"id":"2","type":0,"allow":"0","deny":"536870912"}]}`)
-	open := channel(t, `{"id":"11","type":0,"guild_id":"1","name":"open","permission_overwrites":[]}`)
-	category := channel(t, `{"id":"12","type":4,"guild_id":"1","name":"cat","permission_overwrites":[]}`)
-	state := stateWith(t, locked, open, category)
-
-	staff := discord.Member{User: discord.User{ID: userID}, RoleIDs: []common.ID{staffRole}}
-	if got := SendableChannelIDs(state, staff); len(got) != 1 || got[0] != open.ID() {
-		t.Fatalf("staff can send to %v, want only %d", got, open.ID())
-	}
-
-	member := discord.Member{User: discord.User{ID: userID}}
-	if got := SendableChannelIDs(state, member); len(got) != 0 {
-		t.Fatalf("member without Manage Webhooks can send to %v", got)
-	}
-}

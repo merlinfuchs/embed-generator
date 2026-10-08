@@ -593,7 +593,7 @@ func roleTarget(
 }
 
 // channelTarget resolves the channel a message action sends to and checks that the message creator
-// could have sent there from the dashboard.
+// may send to other channels.
 func (m *ActionHandler) channelTarget(
 	interaction discord.Interaction,
 	action actions.Action,
@@ -604,9 +604,12 @@ func (m *ActionHandler) channelTarget(
 		return 0, userErr("Messages can only be sent to a channel from a server.")
 	}
 
-	// Without the creator's permissions there is nothing to check the channel against.
+	// Messages from before the permission context was added have nothing to check against.
 	if derivedPerms == nil {
 		return 0, userErr("This message is too old to send messages to other channels. Send it again to use this action.")
+	}
+	if !derivedPerms.CanSendToOtherChannels() {
+		return 0, userErr("The user that has created this message needs the Manage Webhooks permission in the server settings to send messages to other channels.")
 	}
 
 	channelID, err := snowflake.Parse(action.ChannelID)
@@ -631,14 +634,6 @@ func (m *ActionHandler) channelTarget(
 		return 0, userErr("Messages can't be sent to <#%s> directly. Pick a text channel or a thread.", channelID)
 	}
 
-	// Threads aren't in the creator's channel list, their access follows the parent.
-	accessChannelID := channelID
-	if thread, ok := channel.(discord.GuildThread); ok && thread.ParentID() != nil {
-		accessChannelID = *thread.ParentID()
-	}
-	if !derivedPerms.CanSendToChannel(accessChannelID) {
-		return 0, userErr("The user that has created this message doesn't have permissions to send messages in <#%s>.", channelID)
-	}
 	return channelID, nil
 }
 

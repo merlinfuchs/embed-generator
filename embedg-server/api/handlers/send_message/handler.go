@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"maps"
 
 	"log/slog"
 
@@ -158,7 +157,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return fmt.Errorf("Failed to get member: %w", err)
 	}
 
-	permContext, err := h.actionParser.DerivePermissionsForActions(c.UserContext(), *member, req.GuildID, req.ChannelID, maps.Values(data.Actions))
+	permContext, err := h.actionParser.DerivePermissionsForActions(c.UserContext(), *member, req.GuildID, req.ChannelID)
 	if err != nil {
 		return fmt.Errorf("Failed to create permission context: %w", err)
 	}

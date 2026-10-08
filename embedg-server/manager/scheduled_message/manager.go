@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"maps"
 	"time"
 
 	"github.com/disgoorg/disgo/bot"
@@ -352,7 +351,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		return nil
 	}
 
-	permContext, err := m.actionParser.DerivePermissionsForActions(ctx, *creator, scheduledMessage.GuildID, scheduledMessage.ChannelID, maps.Values(data.Actions))
+	permContext, err := m.actionParser.DerivePermissionsForActions(ctx, *creator, scheduledMessage.GuildID, scheduledMessage.ChannelID)
 	if err != nil {
 		slog.Error(
 			"Failed to create permission context for scheduled message actions",

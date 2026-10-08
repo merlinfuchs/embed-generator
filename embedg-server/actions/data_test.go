@@ -2,12 +2,10 @@ package actions
 
 import (
 	"encoding/json"
-	"slices"
 	"testing"
 	"time"
 
 	"github.com/disgoorg/disgo/discord"
-	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 )
 
 func TestMessageWithActionsEmbedTimestamp(t *testing.T) {
@@ -71,52 +69,22 @@ func TestMessageWithActionsEmptyEmbeds(t *testing.T) {
 	}
 }
 
-func TestCanSendToChannel(t *testing.T) {
+func TestCanSendToOtherChannels(t *testing.T) {
 	tests := []struct {
 		name  string
 		perms ActionDerivedPermissions
 		want  bool
 	}{
-		{"listed channel", ActionDerivedPermissions{AllowedChannelIDs: []common.ID{10}}, true},
-		{"unlisted channel", ActionDerivedPermissions{AllowedChannelIDs: []common.ID{11}}, false},
-		{"owner", ActionDerivedPermissions{GuildIsOwner: true}, true},
+		{"manage webhooks", ActionDerivedPermissions{GuildPermissions: uint64(discord.PermissionManageWebhooks)}, true},
 		{"administrator", ActionDerivedPermissions{GuildPermissions: uint64(discord.PermissionAdministrator)}, true},
-		{"manage webhooks alone", ActionDerivedPermissions{GuildPermissions: uint64(discord.PermissionManageWebhooks)}, false},
+		{"owner", ActionDerivedPermissions{GuildIsOwner: true}, true},
+		{"send messages only", ActionDerivedPermissions{GuildPermissions: uint64(discord.PermissionSendMessages)}, false},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if got := test.perms.CanSendToChannel(10); got != test.want {
-				t.Fatalf("CanSendToChannel = %v, want %v", got, test.want)
-			}
-		})
-	}
-}
-
-func TestMayTargetChannels(t *testing.T) {
-	set := func(types ...ActionType) ActionSet {
-		var s ActionSet
-		for _, typ := range types {
-			s.Actions = append(s.Actions, Action{Type: typ})
-		}
-		return s
-	}
-
-	tests := []struct {
-		name string
-		sets []ActionSet
-		want bool
-	}{
-		{"roles and text only", []ActionSet{set(ActionTypeAddRole), set(ActionTypeTextResponse)}, false},
-		{"sends to a channel", []ActionSet{set(ActionTypeAddRole), set(ActionTypeTextChannel)}, true},
-		{"saved message that could send to one", []ActionSet{set(ActionTypeSavedMessageEdit)}, true},
-		{"no actions", nil, false},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			if got := MayTargetChannels(slices.Values(test.sets)); got != test.want {
-				t.Fatalf("MayTargetChannels = %v, want %v", got, test.want)
+			if got := test.perms.CanSendToOtherChannels(); got != test.want {
+				t.Fatalf("CanSendToOtherChannels = %v, want %v", got, test.want)
 			}
 		})
 	}

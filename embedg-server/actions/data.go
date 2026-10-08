@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"iter"
 	"reflect"
 	"slices"
 	"strings"
@@ -207,9 +206,6 @@ type ActionDerivedPermissions struct {
 	GuildPermissions   uint64      `json:"guild_permissions"`
 	ChannelPermissions uint64      `json:"channel_permissions"`
 	AllowedRoleIDs     []common.ID `json:"lower_role_ids"`
-	// AllowedChannelIDs is only filled when the actions can send to another channel, and never for
-	// owners and administrators, who may send everywhere.
-	AllowedChannelIDs []common.ID `json:"allowed_channel_ids,omitempty"`
 }
 
 func (a *ActionDerivedPermissions) HasChannelPermission(permission discord.Permissions) bool {
@@ -230,23 +226,8 @@ func (a *ActionDerivedPermissions) CanManageRole(roleID common.ID) bool {
 	return a.HasGuildPermission(discord.PermissionManageRoles) && slices.Contains(a.AllowedRoleIDs, roleID)
 }
 
-// MayTargetChannels reports whether the action sets can send a message to another channel, directly or
-// through the actions of a saved message they send, which aren't known before it's sent.
-func MayTargetChannels(actionSets iter.Seq[ActionSet]) bool {
-	for set := range actionSets {
-		for _, action := range set.Actions {
-			switch action.Type {
-			case ActionTypeTextChannel, ActionTypeSavedMessageChannel,
-				ActionTypeSavedMessageResponse, ActionTypeSavedMessageDM, ActionTypeSavedMessageEdit:
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// CanSendToChannel reports whether the creator could have sent a message to the channel from the
-// dashboard. For a thread the caller passes its parent.
-func (a *ActionDerivedPermissions) CanSendToChannel(channelID common.ID) bool {
-	return a.HasGuildPermission(discord.PermissionAdministrator) || slices.Contains(a.AllowedChannelIDs, channelID)
+// CanSendToOtherChannels reports whether the creator may make actions send messages to other
+// channels. Only server level permissions count, so a channel overwrite can't grant or take it away.
+func (a *ActionDerivedPermissions) CanSendToOtherChannels() bool {
+	return a.HasGuildPermission(discord.PermissionManageWebhooks)
 }

@@ -8,7 +8,7 @@ import {
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useGuildChannelsQuery } from "../api/queries";
+import { useGuildChannelsQuery, useGuildsQuery } from "../api/queries";
 import ClickOutsideHandler from "./ClickOutsideHandler";
 import SelectDropdown from "./SelectDropdown";
 import Tooltip from "./Tooltip";
@@ -45,6 +45,13 @@ const rootChannelTypes = new Set([0, 2, 4, 5, 13, 15, 16]);
 
 const threadChannelTypes = new Set([10, 11, 12]);
 
+/** What decides whether a channel can be picked, besides the channel itself. */
+interface PickContext {
+  sender: Sender;
+  // The user's server level Manage Webhooks, which is all the bot sender checks for them.
+  serverManageWebhooks: boolean;
+}
+
 function canSelectChannelType(type: number, sender: Sender) {
   if (sender === "bot" && isThreadOnlyChannel(type)) return false;
   return selectableChannelTypes.has(type);
@@ -59,25 +66,41 @@ function hasBotAccess(channel: ChannelAccess, sender: Sender) {
   return (BigInt(channel.bot_permissions) & needed) !== 0n;
 }
 
-function canSelect(channel: ChannelAccess, sender: Sender) {
+function hasUserAccess(channel: ChannelAccess, ctx: PickContext) {
+  return ctx.sender === "bot" ? ctx.serverManageWebhooks : channel.user_access;
+}
+
+function canSelect(channel: ChannelAccess, ctx: PickContext) {
   return (
-    channel.user_access &&
-    hasBotAccess(channel, sender) &&
-    canSelectChannelType(channel.type, sender)
+    hasUserAccess(channel, ctx) &&
+    hasBotAccess(channel, ctx.sender) &&
+    canSelectChannelType(channel.type, ctx.sender)
   );
 }
 
 const channelPermissionsDocsUrl =
   "https://message.style/docs/guides/channel-permissions";
 
+const otherChannelsDocsUrl = `${channelPermissionsDocsUrl}#actions-that-send-to-other-channels`;
+
 // Most often a channel or category overwrite that takes Manage Webhooks away from a role, which the
 // server wide role settings don't show. Administrator skips overwrites, so it "fixes" this too.
-function missingAccessReason(channel: ChannelAccess, sender: Sender) {
-  if (!canSelectChannelType(channel.type, sender)) return null;
-  if (!hasBotAccess(channel, sender))
-    return sender === "bot"
-      ? "The bot needs Send Messages in this channel."
-      : "The bot needs Manage Webhooks in this channel. Click for help.";
+function missingAccessReason(channel: ChannelAccess, ctx: PickContext) {
+  if (ctx.sender === "bot") {
+    if (isThreadOnlyChannel(channel.type))
+      return "The bot can't post here directly. Pick a post in this channel instead.";
+    if (!canSelectChannelType(channel.type, ctx.sender)) return null;
+    // The same for every channel, so it comes first to not hide behind a bot permission.
+    if (!ctx.serverManageWebhooks)
+      return "You need Manage Webhooks in the server's role settings to send to other channels. Click for help.";
+    if (!hasBotAccess(channel, ctx.sender))
+      return "The bot needs Send Messages in this channel. Click for help.";
+    return null;
+  }
+
+  if (!canSelectChannelType(channel.type, ctx.sender)) return null;
+  if (!channel.bot_access)
+    return "The bot needs Manage Webhooks in this channel. Click for help.";
   if (!channel.user_access)
     return "You need Manage Webhooks in this channel. Click for help.";
   return null;
@@ -106,6 +129,11 @@ export function ChannelSelect({
   sender = "webhook",
 }: Props) {
   const { data } = useGuildChannelsQuery(guildId);
+  const { data: guilds } = useGuildsQuery();
+  const serverManageWebhooks =
+    (guilds?.success &&
+      guilds.data.find((g) => g.id === guildId)?.can_manage_webhooks) ||
+    false;
   const toast = useToasts((state) => state.create);
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -139,6 +167,7 @@ export function ChannelSelect({
   }, [data]);
 
   const channels = useMemo(() => {
+    const ctx: PickContext = { sender, serverManageWebhooks };
     // Already sorted by position in the query, which the tree building below depends on.
     const rawChannels = data?.success ? data.data : [];
 
@@ -156,7 +185,7 @@ export function ChannelSelect({
         res.push({
           ...rootChannel,
           level: 0,
-          canSelect: canSelect(rootChannel, sender),
+          canSelect: canSelect(rootChannel, ctx),
         });
       }
 
@@ -170,7 +199,7 @@ export function ChannelSelect({
           res.push({
             ...childChannel,
             level: 1,
-            canSelect: canSelect(childChannel, sender),
+            canSelect: canSelect(childChannel, ctx),
           });
         }
 
@@ -182,7 +211,7 @@ export function ChannelSelect({
             res.push({
               ...childThread,
               level: 2,
-              canSelect: canSelect(childThread, sender),
+              canSelect: canSelect(childThread, ctx),
             });
           }
         }
@@ -194,12 +223,12 @@ export function ChannelSelect({
       res.push({
         ...channel,
         level: 2,
-        canSelect: canSelect(channel, sender),
+        canSelect: canSelect(channel, ctx),
       });
     }
 
     return res;
-  }, [data, sender]);
+  }, [data, sender, serverManageWebhooks]);
 
   const filteredChannels = useMemo(() => {
     if (!query) return channels;
@@ -261,7 +290,7 @@ export function ChannelSelect({
               filteredChannels.map((c) => {
                 const reason = c.canSelect
                   ? null
-                  : missingAccessReason(c, sender);
+                  : missingAccessReason(c, { sender, serverManageWebhooks });
                 return (
                   <button
                     type="button"
@@ -292,7 +321,9 @@ export function ChannelSelect({
                         onClick={(e) => {
                           e.stopPropagation();
                           window.open(
-                            channelPermissionsDocsUrl,
+                            sender === "bot"
+                              ? otherChannelsDocsUrl
+                              : channelPermissionsDocsUrl,
                             "_blank",
                             "noopener",
                           );
