@@ -24,7 +24,7 @@ import (
 )
 
 // How long a due message keeps being retried on transient failures before
-// it is skipped (recurring) or disabled (only once).
+// it moves on to the next run, or is disabled after its last date.
 const sendRetryWindow = 30 * time.Minute
 
 type ScheduledMessageManager struct {
@@ -136,25 +136,30 @@ func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, s
 			slog.Any("error", sendErr),
 			slog.String("scheduled_message_id", scheduledMessage.ID),
 		)
-		if outcome == outcomeStop || scheduledMessage.OnlyOnce {
+		if outcome == outcomeStop {
 			return m.stop(ctx, scheduledMessage, reason, now)
 		}
 		failure = null.StringFrom(reason)
 	}
 
-	if scheduledMessage.OnlyOnce {
-		return m.record(ctx, scheduledMessage, model.ScheduledMessageRun{
-			NextAt:     scheduledMessage.NextAt,
-			LastSentAt: null.TimeFrom(now),
-			UpdatedAt:  now,
-		})
+	run := model.ScheduledMessageRun{UpdatedAt: now}
+	if failure.Valid {
+		run.LastError = failure
+		run.LastErrorAt = null.TimeFrom(now)
+	} else {
+		run.LastSentAt = null.TimeFrom(now)
 	}
 
-	nextAt, err := GetNextCronTick(
-		scheduledMessage.CronExpression.String,
-		now,
-		scheduledMessage.CronTimezone.String,
-	)
+	if scheduledMessage.OnDates() {
+		// After the last date there is nothing left to send.
+		run.NextAt = scheduledMessage.NextAt
+		if next, ok := NextDate(scheduledMessage.RunTimes, now); ok {
+			run.NextAt, run.Enabled = next, true
+		}
+		return m.record(ctx, scheduledMessage, run)
+	}
+
+	nextAt, err := ScheduleOf(scheduledMessage).Next(now)
 	if err != nil {
 		// Leaving next_at in the past would send it again on every tick.
 		slog.Error(
@@ -165,18 +170,9 @@ func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, s
 		return m.stop(ctx, scheduledMessage, "The schedule is invalid.", now)
 	}
 
-	run := model.ScheduledMessageRun{
-		NextAt: nextAt,
-		// A next run past the end date never comes, so the schedule is over.
-		Enabled:   !scheduledMessage.EndAt.Valid || !nextAt.After(scheduledMessage.EndAt.Time),
-		UpdatedAt: now,
-	}
-	if failure.Valid {
-		run.LastError = failure
-		run.LastErrorAt = null.TimeFrom(now)
-	} else {
-		run.LastSentAt = null.TimeFrom(now)
-	}
+	run.NextAt = nextAt
+	// A next run past the end date never comes, so the schedule is over.
+	run.Enabled = !scheduledMessage.EndAt.Valid || !nextAt.After(scheduledMessage.EndAt.Time)
 	return m.record(ctx, scheduledMessage, run)
 }
 
@@ -215,21 +211,17 @@ func (m *ScheduledMessageManager) channelGone(ctx context.Context, channelID com
 	)
 }
 
-func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, scheduledMessage model.ScheduledMessage) error {
+// loadMessage reads the saved message of a scheduled message and the templates it can use, whose
+// lookups report failures on our side to templateSource.
+func (m *ScheduledMessageManager) loadMessage(ctx context.Context, scheduledMessage model.ScheduledMessage, features model.PlanFeatures, templateSource template.Source) (*actions.MessageWithActions, *template.TemplateContext, error) {
 	savedMsg, err := m.savedMessageStore.GetSavedMessageForGuild(ctx, scheduledMessage.GuildID, scheduledMessage.SavedMessageID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			return stopWith("The saved message was deleted.")
+			return nil, nil, stopWith("The saved message was deleted.")
 		}
-		return fmt.Errorf("failed to get saved message from scheduled message: %w", err)
+		return nil, nil, fmt.Errorf("failed to get saved message from scheduled message: %w", err)
 	}
 
-	features, err := m.planStore.GetPlanFeaturesForGuild(ctx, scheduledMessage.GuildID)
-	if err != nil {
-		return fmt.Errorf("could not get plan features: %w", err)
-	}
-
-	templateSource := template.NewSource(ctx, m.guildState)
 	templates := template.NewContext(
 		"SCHEDULED_MESSAGE", features.MaxTemplateOps,
 		template.NewGuildProvider(templateSource, scheduledMessage.GuildID, nil),
@@ -240,7 +232,45 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 	data := &actions.MessageWithActions{}
 	err = json.Unmarshal([]byte(savedMsg.Data), data)
 	if err != nil {
-		return skipWith("The saved message is invalid: "+err.Error(), err)
+		return nil, nil, skipWith("The saved message is invalid: "+err.Error(), err)
+	}
+
+	// The plan may have shrunk since the message was saved.
+	for _, actionSet := range data.Actions {
+		if len(actionSet.Actions) > features.MaxActionsPerComponent {
+			return nil, nil, skipWith(fmt.Sprintf("Your plan allows up to %d actions per component.", features.MaxActionsPerComponent), nil)
+		}
+	}
+	return data, templates, nil
+}
+
+// CheckScheduledMessage checks that the saved message of a scheduled message can be sent, as far
+// as that works without sending it. Its templates are only parsed, running them can change KV
+// entries.
+func (m *ScheduledMessageManager) CheckScheduledMessage(ctx context.Context, scheduledMessage model.ScheduledMessage, features model.PlanFeatures) error {
+	data, templates, err := m.loadMessage(ctx, scheduledMessage, features, template.NewSource(ctx, m.guildState))
+	if err != nil {
+		return err
+	}
+	if err := templates.CheckMessage(data); err != nil {
+		return skipWith("Template error: "+err.Error(), err)
+	}
+	if _, err := m.actionParser.ParseMessageComponents(data.Components, true); err != nil {
+		return skipWith("Invalid components: "+err.Error(), err)
+	}
+	return nil
+}
+
+func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, scheduledMessage model.ScheduledMessage) error {
+	features, err := m.planStore.GetPlanFeaturesForGuild(ctx, scheduledMessage.GuildID)
+	if err != nil {
+		return fmt.Errorf("could not get plan features: %w", err)
+	}
+
+	templateSource := template.NewSource(ctx, m.guildState)
+	data, templates, err := m.loadMessage(ctx, scheduledMessage, features, templateSource)
+	if err != nil {
+		return err
 	}
 
 	if err := templates.ParseAndExecuteMessage(data); err != nil {

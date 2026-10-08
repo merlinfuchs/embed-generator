@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type {
   AssistantUsageResponseWire,
   CustomBotGetResponseWire,
@@ -18,6 +18,9 @@ import type {
   GetGuildBrandingResponseWire,
   GuildWire,
   ScheduledMessageListResponseWire,
+  ScheduledMessagePreviewResponseWire,
+  ScheduledMessageRunsResponseWire,
+  ScheduledMessageScheduleWire,
 } from "./wire";
 import type { APIResponse } from "./base";
 
@@ -289,5 +292,42 @@ export function useScheduledMessagesQuery(guildId: string | null) {
         handleApiResponse(res.json()),
       ),
     enabled: !!guildId,
+  });
+}
+
+// When a schedule that isn't saved yet would send, null until there is one to ask about.
+export function useScheduledMessagePreviewQuery(
+  guildId: string | null,
+  req: ScheduledMessageScheduleWire | null,
+) {
+  return useQuery<ScheduledMessagePreviewResponseWire>({
+    queryKey: ["scheduled-message-preview", guildId, req],
+    queryFn: () =>
+      fetch(`/api/scheduled-messages/preview?guild_id=${guildId}`, {
+        method: "POST",
+        body: JSON.stringify(req),
+        headers: { "Content-Type": "application/json" },
+      }).then((res) => handleApiResponse(res.json())),
+    enabled: !!guildId && !!req,
+    // Keeps the last answer on screen while the next edit is checked.
+    placeholderData: keepPreviousData,
+  });
+}
+
+// When the guild's scheduled messages send between two times, for the calendar.
+export function useScheduledMessageRunsQuery(
+  guildId: string | null,
+  from: string,
+  to: string,
+) {
+  return useQuery<ScheduledMessageRunsResponseWire>({
+    // Under the scheduled messages, so saving one refreshes the runs too.
+    queryKey: ["scheduled-messages", guildId, "runs", from, to],
+    queryFn: () =>
+      fetch(
+        `/api/scheduled-messages/runs?guild_id=${guildId}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+      ).then((res) => handleApiResponse(res.json())),
+    enabled: !!guildId,
+    placeholderData: keepPreviousData,
   });
 }

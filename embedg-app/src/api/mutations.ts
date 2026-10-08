@@ -33,6 +33,8 @@ import type {
   ScheduledMessageCreateRequestWire,
   ScheduledMessageCreateResponseWire,
   ScheduledMessageDeleteResponseWire,
+  ScheduledMessageTestRequestWire,
+  ScheduledMessageTestResponseWire,
   ScheduledMessageUpdateRequestWire,
   ScheduledMessageUpdateResponseWire,
   SharedMessageCreateRequestWire,
@@ -470,6 +472,28 @@ export function useScheduledMessageUpdateMutation() {
         },
       }).then((res) =>
         handleApiResponse<ScheduledMessageUpdateResponseWire>(res.json()),
+      );
+    },
+  });
+}
+
+export function useScheduledMessageTestMutation() {
+  return useMutation({
+    mutationFn: ({
+      guildId,
+      req,
+    }: {
+      guildId: string;
+      req: ScheduledMessageTestRequestWire;
+    }) => {
+      return fetch(`/api/scheduled-messages/test?guild_id=${guildId}`, {
+        method: "POST",
+        body: JSON.stringify(req),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) =>
+        handleApiResponse<ScheduledMessageTestResponseWire>(res.json()),
       );
     },
   });

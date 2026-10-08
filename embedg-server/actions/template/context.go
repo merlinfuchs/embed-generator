@@ -25,6 +25,9 @@ type TemplateContext struct {
 
 	MaxOps    int
 	MaxOutput int64
+
+	// Only parse templates, see CheckMessage.
+	parseOnly bool
 }
 
 func NewContext(name string, maxOps int, providers ...ContextProvider) *TemplateContext {
@@ -218,8 +221,19 @@ func (c *TemplateContext) ParseAndExecute(text string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if c.parseOnly {
+		return text, nil
+	}
 
 	return c.Execute(tmpl)
+}
+
+// CheckMessage parses every template of the message without running them. Running them could
+// change KV entries, like a counter with kvIncrease.
+func (c *TemplateContext) CheckMessage(m *actions.MessageWithActions) error {
+	check := *c
+	check.parseOnly = true
+	return check.ParseAndExecuteMessage(m)
 }
 
 func (c *TemplateContext) Parse(text string) (*template.Template, error) {

@@ -66,6 +66,13 @@ func classifyFailure(err error) (failureOutcome, string) {
 	return outcomeRetry, "The message couldn't be sent because of a temporary error, this run was skipped."
 }
 
+// UserFailure is why a send failed when it's up to the user to fix, like an invalid message or a
+// deleted channel. False for failures on our or Discord's side that may go away.
+func UserFailure(err error) (string, bool) {
+	outcome, reason := classifyFailure(err)
+	return reason, outcome != outcomeRetry
+}
+
 func truncateReason(reason string) string {
 	runes := []rune(reason)
 	if len(runes) <= maxReasonLength {
