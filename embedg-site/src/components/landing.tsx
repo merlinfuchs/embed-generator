@@ -29,7 +29,7 @@ export function LandingPage({
 }: {
   title: string;
   description: string;
-  faq: Faq[];
+  faq?: Faq[];
   children: React.ReactNode;
 }): JSX.Element {
   return (
@@ -44,17 +44,19 @@ export function LandingPage({
             "@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}"
           }
         </style>
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            mainEntity: faq.map((f) => ({
-              "@type": "Question",
-              name: f.q,
-              acceptedAnswer: { "@type": "Answer", text: f.a },
-            })),
-          })}
-        </script>
+        {faq && (
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: faq.map((f) => ({
+                "@type": "Question",
+                name: f.q,
+                acceptedAnswer: { "@type": "Answer", text: f.a },
+              })),
+            })}
+          </script>
+        )}
       </Head>
       <HomeHeader />
       <main>{children}</main>

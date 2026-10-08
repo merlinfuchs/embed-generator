@@ -17,7 +17,7 @@ const columns = [
   {
     title: "Features",
     links: [
-      { label: "Buttons & Select Menus", href: "/docs/features/interactive-components" },
+      { label: "Buttons & Select Menus", href: "/features/interactive-components" },
       { label: "Custom Name & Avatar", href: "/docs/features/custom-branding" },
       { label: "Saved Messages", href: "/docs/features/save-messages" },
       { label: "Variables", href: "/docs/guides/variables" },
@@ -26,6 +26,7 @@ const columns = [
       { label: "Custom Commands", href: "/docs/features/custom-commands" },
       { label: "White Label Bot", href: "/docs/features/white-label" },
       { label: "AI Assistant", href: "/docs/features/ai-assistant" },
+      { label: "All Features", href: "/features" },
     ],
   },
   {

@@ -40,7 +40,7 @@ const features: {
     id: "components",
     name: "Buttons & select menus",
     blurb: "Hand out roles, reply, or link somewhere.",
-    href: "/docs/features/interactive-components",
+    href: "/features/interactive-components",
     icon: CursorArrowRippleIcon,
   },
   {

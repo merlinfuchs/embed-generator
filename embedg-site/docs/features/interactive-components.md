@@ -5,6 +5,8 @@ description: Add buttons and select menus to your Discord messages. Hand out rol
 
 # Interactive Components
 
+For an overview of what buttons and role menus can do, see [Discord Buttons and Role Menus](/features/interactive-components).
+
 Interactive components are buttons and select menus attached to your message. Each one can run actions when a member clicks it: hand out or remove roles, reply with a text or saved message, or open a link.
 
 Buttons with actions and select menus need the Embed Generator bot on your server, because the bot is what receives the click. Log in and pick a channel as the target instead of a webhook. Link buttons work with webhooks too. Up to 5 rows of buttons or select menus per message.
