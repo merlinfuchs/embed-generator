@@ -65,6 +65,21 @@ func maxChannelPermissions(state *guildstate.State, member discord.Member, stopA
 	return permissions
 }
 
+// SendableChannelIDs lists the channels the member could send to from the dashboard. Threads aren't
+// in the guild's channel list; they follow their parent.
+func SendableChannelIDs(state *guildstate.State, member discord.Member) []common.ID {
+	var res []common.ID
+	for _, channel := range state.Channels {
+		if channel.Type() == discord.ChannelTypeGuildCategory {
+			continue
+		}
+		if HasRequiredPermissions(memberPermissions(&state.Guild, state.Roles, channel, member)) {
+			res = append(res, channel.ID())
+		}
+	}
+	return res
+}
+
 // GuildPermissions is the member's guild level permissions, before any channel overwrites.
 func GuildPermissions(state *guildstate.State, member discord.Member) discord.Permissions {
 	return memberPermissions(&state.Guild, state.Roles, nil, member)

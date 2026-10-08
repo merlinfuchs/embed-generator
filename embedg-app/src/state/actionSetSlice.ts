@@ -17,6 +17,7 @@ export interface ActionSetActions {
   setActionType: (id: string, i: number, type: number) => void;
   setActionText: (id: string, i: number, text: string) => void;
   setActionTargetId: (id: string, i: number, target: string) => void;
+  setActionChannelId: (id: string, i: number, channelId: string) => void;
   setActionPublic: (id: string, i: number, val: boolean) => void;
   setActionAllowRoleMentions: (id: string, i: number, val: boolean) => void;
   setActionDisableDefaultResponse: (
@@ -34,6 +35,15 @@ function defaultsForType(type: number): Omit<MessageAction, "type" | "id"> {
     return {
       permissions: "0",
       role_ids: [],
+      disable_default_response: false,
+    } as Omit<MessageAction, "type" | "id">;
+  }
+
+  if (type === 11 || type === 12) {
+    return {
+      ...(type === 11 ? { text: "" } : { target_id: "" }),
+      channel_id: "",
+      allow_role_mentions: false,
       disable_default_response: false,
     } as Omit<MessageAction, "type" | "id">;
   }
@@ -141,6 +151,11 @@ export function createActionSetSlice<T extends ActionSetState>(
     setActionTargetId: (id, i, target) =>
       withAction(id, i, (action) => {
         if ("target_id" in action) action.target_id = target;
+      }),
+
+    setActionChannelId: (id, i, channelId) =>
+      withAction(id, i, (action) => {
+        if ("channel_id" in action) action.channel_id = channelId;
       }),
 
     setActionPublic: (id, i, val) =>

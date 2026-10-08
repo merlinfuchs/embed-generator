@@ -48,6 +48,11 @@ func (m *ActionParser) DerivePermissionsForActions(ctx context.Context, member d
 
 	res.GuildPermissions = uint64(access.GuildPermissions(state, member))
 
+	// Owners and administrators may send everywhere, so listing every channel for them is wasted space.
+	if !res.HasGuildPermission(discord.PermissionAdministrator) {
+		res.AllowedChannelIDs = access.SendableChannelIDs(state, member)
+	}
+
 	// member.RoleIDs is in no particular order, so the highest role has to be searched for. The
 	// @everyone role has the guild's id.
 	highestRole, _ := state.Role(guildID)

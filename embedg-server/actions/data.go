@@ -180,11 +180,14 @@ const (
 	ActionTypeTextEdit             ActionType = 8
 	ActionTypeSavedMessageEdit     ActionType = 9
 	ActionTypePermissionCheck      ActionType = 10
+	ActionTypeTextChannel          ActionType = 11
+	ActionTypeSavedMessageChannel  ActionType = 12
 )
 
 type Action struct {
 	Type                   ActionType `json:"type"`
 	TargetID               string     `json:"target_id"`
+	ChannelID              string     `json:"channel_id"`
 	Text                   string     `json:"text"`
 	Public                 bool       `json:"public"`
 	AllowRoleMentions      bool       `json:"allow_role_mentions"`
@@ -203,6 +206,8 @@ type ActionDerivedPermissions struct {
 	GuildPermissions   uint64      `json:"guild_permissions"`
 	ChannelPermissions uint64      `json:"channel_permissions"`
 	AllowedRoleIDs     []common.ID `json:"lower_role_ids"`
+	// AllowedChannelIDs is left empty for owners and administrators, who may send everywhere.
+	AllowedChannelIDs []common.ID `json:"allowed_channel_ids,omitempty"`
 }
 
 func (a *ActionDerivedPermissions) HasChannelPermission(permission discord.Permissions) bool {
@@ -221,4 +226,10 @@ func (a *ActionDerivedPermissions) CanManageRole(roleID common.ID) bool {
 	}
 
 	return a.HasGuildPermission(discord.PermissionManageRoles) && slices.Contains(a.AllowedRoleIDs, roleID)
+}
+
+// CanSendToChannel reports whether the creator could have sent a message to the channel from the
+// dashboard. For a thread the caller passes its parent.
+func (a *ActionDerivedPermissions) CanSendToChannel(channelID common.ID) bool {
+	return a.HasGuildPermission(discord.PermissionAdministrator) || slices.Contains(a.AllowedChannelIDs, channelID)
 }

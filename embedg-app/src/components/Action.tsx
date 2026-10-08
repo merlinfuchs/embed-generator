@@ -13,6 +13,7 @@ import type { MessageAction } from "../discord/schema";
 import CheckBox from "./CheckBox";
 import { RolesSelect } from "./RolesSelect";
 import PermissionsSelect from "./PermissionsSelect";
+import { ChannelSelect } from "./ChannelSelect";
 
 interface Props {
   guildId: string | null;
@@ -31,6 +32,7 @@ interface Props {
   setType(type: number): void;
   setText(text: string): void;
   setTargetId(targetId: string): void;
+  setChannelId(channelId: string): void;
   setPublic(p: boolean): void;
   setAllowRoleMentions(p: boolean): void;
   setDisableDefaultResponse(p: boolean): void;
@@ -49,6 +51,8 @@ const actionTypes = {
   3: "Add Role",
   4: "Remove Role",
   10: "Check Permissions",
+  11: "Text Message to Channel",
+  12: "Saved Message to Channel",
 } as const;
 
 const actionDescriptions = {
@@ -62,6 +66,8 @@ const actionDescriptions = {
   8: "Edit the message with a new text message.",
   9: "Edit the message with a saved message.",
   10: "Check if the user has the required permissions and roles.",
+  11: "Send a text message to another channel.",
+  12: "Send a saved message to another channel.",
 } as const;
 
 export default function Action({
@@ -79,6 +85,7 @@ export default function Action({
   setType,
   setText,
   setTargetId,
+  setChannelId,
   setPublic,
   setAllowRoleMentions,
   setDisableDefaultResponse,
@@ -90,10 +97,12 @@ export default function Action({
       case 1:
       case 6:
       case 8:
+      case 11:
         return "text_response";
       case 5:
       case 7:
       case 9:
+      case 12:
         return "saved_message_response";
       case 2:
         return "toggle_role";
@@ -140,6 +149,9 @@ export default function Action({
       case 8:
       case 9:
         return "edit";
+      case 11:
+      case 12:
+        return "other_channel";
     }
   }, [action.type]);
 
@@ -164,6 +176,13 @@ export default function Action({
           setType(8);
         } else {
           setType(9);
+        }
+        break;
+      case "other_channel":
+        if (actionTypeGroup === "text_response") {
+          setType(11);
+        } else {
+          setType(12);
         }
         break;
     }
@@ -246,6 +265,7 @@ export default function Action({
                     <option value="channel">Channel Message</option>
                     <option value="dm">Direct Message</option>
                     <option value="edit">Edit Message</option>
+                    <option value="other_channel">Other Channel</option>
                   </select>
                 </div>
               )}
@@ -265,7 +285,10 @@ export default function Action({
                   />
                 </div>
               )}
-              {(action.type === 1 || action.type === 5) && (
+              {(action.type === 1 ||
+                action.type === 5 ||
+                action.type === 11 ||
+                action.type === 12) && (
                 <div className="flex-none">
                   <div className="mb-1.5 flex">
                     <div className="uppercase text-mist-300 text-sm font-medium">
@@ -282,7 +305,9 @@ export default function Action({
               {(action.type === 2 ||
                 action.type === 3 ||
                 action.type === 4 ||
-                action.type === 10) && (
+                action.type === 10 ||
+                action.type === 11 ||
+                action.type === 12) && (
                 <div className="flex-none">
                   <div className="mb-1.5 flex">
                     <div className="uppercase text-mist-300 text-sm font-medium">
@@ -298,7 +323,25 @@ export default function Action({
               )}
             </div>
           </div>
-          {action.type === 1 || action.type === 6 || action.type === 8 ? (
+          {(action.type === 11 || action.type === 12) && (
+            <div>
+              <div className="mb-1.5 flex">
+                <div className="uppercase text-mist-300 text-sm font-medium">
+                  Channel
+                </div>
+              </div>
+              <ChannelSelect
+                guildId={guildId}
+                channelId={action.channel_id || null}
+                onChange={(v) => setChannelId(v || "")}
+                sender="bot"
+              />
+            </div>
+          )}
+          {action.type === 1 ||
+          action.type === 6 ||
+          action.type === 8 ||
+          action.type === 11 ? (
             <EditorInput
               label="Response"
               type="textarea"
@@ -312,7 +355,10 @@ export default function Action({
               roleId={action.target_id || null}
               onChange={(v) => setTargetId(v || "")}
             />
-          ) : action.type === 5 || action.type === 7 || action.type === 9 ? (
+          ) : action.type === 5 ||
+            action.type === 7 ||
+            action.type === 9 ||
+            action.type === 12 ? (
             <SavedMessageSelect
               guildId={guildId}
               messageId={action.target_id || null}

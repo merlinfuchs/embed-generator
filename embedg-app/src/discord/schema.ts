@@ -510,6 +510,26 @@ export const messageActionSchema = z
   )
   .or(
     z.object({
+      type: z.literal(11), // text message to another channel
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      channel_id: z.string().min(1),
+      text: z.string().min(1).max(2000),
+      allow_role_mentions: z.boolean().default(false),
+      disable_default_response: z.boolean().default(false),
+    }),
+  )
+  .or(
+    z.object({
+      type: z.literal(12), // saved message to another channel
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      channel_id: z.string().min(1),
+      target_id: z.string().min(1),
+      allow_role_mentions: z.boolean().default(false),
+      disable_default_response: z.boolean().default(false),
+    }),
+  )
+  .or(
+    z.object({
       type: z.literal(10), // permission check with default response
       id: uniqueIdSchema.default(() => getUniqueId()),
       permissions: z.string().default("0"),

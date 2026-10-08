@@ -13,11 +13,26 @@ import ClickOutsideHandler from "./ClickOutsideHandler";
 import SelectDropdown from "./SelectDropdown";
 import Tooltip from "./Tooltip";
 import { useToasts } from "../util/toasts";
+import { isThreadOnlyChannel } from "../discord/util";
 
 interface Props {
   guildId: string | null;
   channelId: string | null;
   onChange: (channelId: string | null) => void;
+  /**
+   * Who posts in the channel. The bot can't post in forum and media channels directly and needs
+   * Send Messages instead of Manage Webhooks.
+   */
+  sender?: "webhook" | "bot";
+}
+
+type Sender = NonNullable<Props["sender"]>;
+
+interface ChannelAccess {
+  type: number;
+  user_access: boolean;
+  bot_access: boolean;
+  bot_permissions: string;
 }
 
 // text, voice, announcement, announcement thread, public thread, private thread, stage, forum, media.
@@ -30,8 +45,29 @@ const rootChannelTypes = new Set([0, 2, 4, 5, 13, 15, 16]);
 
 const threadChannelTypes = new Set([10, 11, 12]);
 
-function canSelectChannelType(type: number) {
+const sendMessages = 1n << 11n;
+const sendMessagesInThreads = 1n << 38n;
+
+function canSelectChannelType(type: number, sender: Sender) {
+  if (sender === "bot" && isThreadOnlyChannel(type)) return false;
   return selectableChannelTypes.has(type);
+}
+
+// The permissions are the bot's in the channel, which are all of them for an administrator.
+function hasBotAccess(channel: ChannelAccess, sender: Sender) {
+  if (sender === "webhook") return channel.bot_access;
+  const needed = threadChannelTypes.has(channel.type)
+    ? sendMessagesInThreads
+    : sendMessages;
+  return (BigInt(channel.bot_permissions) & needed) !== 0n;
+}
+
+function canSelect(channel: ChannelAccess, sender: Sender) {
+  return (
+    channel.user_access &&
+    hasBotAccess(channel, sender) &&
+    canSelectChannelType(channel.type, sender)
+  );
 }
 
 const channelPermissionsDocsUrl =
@@ -39,14 +75,12 @@ const channelPermissionsDocsUrl =
 
 // Most often a channel or category overwrite that takes Manage Webhooks away from a role, which the
 // server wide role settings don't show. Administrator skips overwrites, so it "fixes" this too.
-function missingAccessReason(channel: {
-  type: number;
-  user_access: boolean;
-  bot_access: boolean;
-}) {
-  if (!canSelectChannelType(channel.type)) return null;
-  if (!channel.bot_access)
-    return "The bot needs Manage Webhooks in this channel. Click for help.";
+function missingAccessReason(channel: ChannelAccess, sender: Sender) {
+  if (!canSelectChannelType(channel.type, sender)) return null;
+  if (!hasBotAccess(channel, sender))
+    return sender === "bot"
+      ? "The bot needs Send Messages in this channel."
+      : "The bot needs Manage Webhooks in this channel. Click for help.";
   if (!channel.user_access)
     return "You need Manage Webhooks in this channel. Click for help.";
   return null;
@@ -68,7 +102,12 @@ function ChannelIcon({ type }: { type: number }) {
   return <div className="text-xl italic text-mist-400 font-light pl-1">#</div>;
 }
 
-export function ChannelSelect({ guildId, channelId, onChange }: Props) {
+export function ChannelSelect({
+  guildId,
+  channelId,
+  onChange,
+  sender = "webhook",
+}: Props) {
   const { data } = useGuildChannelsQuery(guildId);
   const toast = useToasts((state) => state.create);
 
@@ -120,10 +159,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
         res.push({
           ...rootChannel,
           level: 0,
-          canSelect:
-            rootChannel.user_access &&
-            rootChannel.bot_access &&
-            canSelectChannelType(rootChannel.type),
+          canSelect: canSelect(rootChannel, sender),
         });
       }
 
@@ -131,15 +167,13 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
         if (childChannel.parent_id !== rootChannel.id) continue;
 
         // A channel in a category, or a thread of a channel outside one.
-        if (canSelectChannelType(childChannel.type)) {
+        // Forum and media channels stay listed for the bot, as the parents of their posts.
+        if (selectableChannelTypes.has(childChannel.type)) {
           added.add(childChannel.id);
           res.push({
             ...childChannel,
             level: 1,
-            canSelect:
-              childChannel.user_access &&
-              childChannel.bot_access &&
-              canSelectChannelType(childChannel.type),
+            canSelect: canSelect(childChannel, sender),
           });
         }
 
@@ -151,10 +185,7 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
             res.push({
               ...childThread,
               level: 2,
-              canSelect:
-                childThread.user_access &&
-                childThread.bot_access &&
-                canSelectChannelType(childThread.type),
+              canSelect: canSelect(childThread, sender),
             });
           }
         }
@@ -166,15 +197,12 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
       res.push({
         ...channel,
         level: 2,
-        canSelect:
-          channel.user_access &&
-          channel.bot_access &&
-          canSelectChannelType(channel.type),
+        canSelect: canSelect(channel, sender),
       });
     }
 
     return res;
-  }, [data]);
+  }, [data, sender]);
 
   const filteredChannels = useMemo(() => {
     if (!query) return channels;
@@ -234,7 +262,9 @@ export function ChannelSelect({ guildId, channelId, onChange }: Props) {
           <SelectDropdown>
             {filteredChannels.length ? (
               filteredChannels.map((c) => {
-                const reason = c.canSelect ? null : missingAccessReason(c);
+                const reason = c.canSelect
+                  ? null
+                  : missingAccessReason(c, sender);
                 return (
                   <button
                     type="button"
