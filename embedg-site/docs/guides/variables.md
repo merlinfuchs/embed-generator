@@ -80,3 +80,19 @@ Check if the server has more than 5 boosts and respond based on it.
 ```
 
 Notice the dash (`-`) inside each of the actions which is used to strip all whitespaces from that side.
+
+### Dates and Times
+
+`currentTime` is the time the message is sent, in UTC. In a scheduled message that is the time of each run. `discordTimestamp` turns a time into a Discord timestamp, which every viewer sees in their own timezone:
+
+```go
+Sent {{ discordTimestamp currentTime "R" }}, the event starts {{ discordTimestamp (newDate 2026 10 2 18 0 0) "F" }}
+```
+
+The second argument is the style: `t` (16:20), `T` (16:20:30), `d` (20/04/2021), `D` (20 April 2021), `f` (20 April 2021 16:20), `F` (Tuesday, 20 April 2021 16:20) or `R` (2 months ago). Leave it out for `f`. `newDate` takes year, month, day, hour, minute and second in UTC. `discordTimestamp` also accepts a Unix timestamp in seconds.
+
+Because Discord shows timestamps in the viewer's timezone, a date can land on a different day for some people. Midnight UTC on October 2 shows as October 1 for anyone in the Americas. To show the UTC date to everyone, format it as text instead:
+
+```go
+{{ currentTime.Format "January 2, 2006" }}
+```
