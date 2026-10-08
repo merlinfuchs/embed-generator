@@ -9,6 +9,7 @@ import { json, jsonParseLinter } from "@codemirror/lang-json";
 import { githubDark } from "@uiw/codemirror-theme-github";
 import { linter, lintGutter } from "@codemirror/lint";
 import { parseMessageWithAction } from "../../discord/importSchema";
+import { exportMessage } from "../../discord/exportMessage";
 import { useNavigate } from "react-router-dom";
 import { useToasts } from "../../util/toasts";
 
@@ -21,7 +22,7 @@ export default function JsonView() {
   const [raw, setRaw] = useState("{}");
 
   useEffect(() => {
-    setRaw(JSON.stringify(msg, null, 2));
+    setRaw(msg ? JSON.stringify(exportMessage(msg), null, 2) : "{}");
   }, [msg]);
 
   function save() {
