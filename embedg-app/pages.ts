@@ -90,7 +90,7 @@ export const pages: Page[] = [
     path: "/tools/colored-text",
     title: "Discord Colored Text Generator | Embed Generator",
     description:
-      "Color your Discord messages. Pick foreground and background colors per word and copy the result as an ANSI code block that works in any channel.",
+      "Make colored text for Discord: pick text and background colors per word, add bold or underline, then copy and paste the ANSI code block into any message.",
     heading: "Discord Colored Text Generator",
     preview: toolPreview,
     text: "Discord renders ANSI color codes inside code blocks. Type your text, pick foreground and background colors for each part, and copy the code block into any Discord message.",

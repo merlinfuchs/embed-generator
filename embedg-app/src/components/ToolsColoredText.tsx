@@ -10,8 +10,31 @@ import {
 import { parseANSI } from "../util/ansi";
 import { useColoredTextStore } from "../state/coloredText";
 
-const foregroundColors = [30, 31, 32, 33, 34, 35, 36, 37];
-const backgroundColors = [40, 41, 42, 43, 44, 45, 46, 47];
+// The names Discord users know these colors by.
+export const foregroundColors = [
+  { code: 30, name: "Gray" },
+  { code: 31, name: "Red" },
+  { code: 32, name: "Green" },
+  { code: 33, name: "Yellow" },
+  { code: 34, name: "Blue" },
+  { code: 35, name: "Pink" },
+  { code: 36, name: "Cyan" },
+  { code: 37, name: "White" },
+];
+export const backgroundColors = [
+  { code: 40, name: "Firefly dark blue" },
+  { code: 41, name: "Orange" },
+  { code: 42, name: "Marble blue" },
+  { code: 43, name: "Grayish turquoise" },
+  { code: 44, name: "Gray" },
+  { code: 45, name: "Indigo" },
+  { code: 46, name: "Light gray" },
+  { code: 47, name: "White" },
+];
+
+export function ansiClass(code: number): string {
+  return styles[`ansi${code}`];
+}
 
 function nodesToANSI(
   nodes: NodeListOf<ChildNode>,
@@ -205,14 +228,16 @@ export default function ToolsColoredText() {
         <div className="flex-auto mb-5 md:mb-0">
           <div className="flex items-center space-x-3">
             <div className="flex flex-wrap">
-              {foregroundColors.map((style) => (
+              {foregroundColors.map(({ code, name }) => (
                 <button
-                  key={style}
+                  key={code}
+                  aria-label={`Text color ${name}`}
+                  title={name}
                   className={clsx(
                     "h-8 w-10 rounded-xl cursor-pointer bg-ink-900 mr-2 mb-2",
-                    styles[`ansi${style}`],
+                    styles[`ansi${code}`],
                   )}
-                  onClick={() => handleStyleChange(style)}
+                  onClick={() => handleStyleChange(code)}
                 >
                   T
                 </button>
@@ -221,14 +246,16 @@ export default function ToolsColoredText() {
           </div>
           <div className="flex items-center space-x-3">
             <div className="flex flex-wrap">
-              {backgroundColors.map((style) => (
+              {backgroundColors.map(({ code, name }) => (
                 <button
-                  key={style}
+                  key={code}
+                  aria-label={`Background color ${name}`}
+                  title={name}
                   className={clsx(
                     "h-8 w-10 rounded-xl cursor-pointer text-white mr-2 mb-2",
-                    styles[`ansi${style}`],
+                    styles[`ansi${code}`],
                   )}
-                  onClick={() => handleStyleChange(style)}
+                  onClick={() => handleStyleChange(code)}
                 ></button>
               ))}
             </div>
