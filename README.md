@@ -1,7 +1,5 @@
 # Embed Generator
 
-**[Embed Generator](https://message.style)** is a free visual editor for Discord messages. Build embeds, [button roles](https://message.style/features/interactive-components), [scheduled messages](https://message.style/features/scheduled-messages) and [Components V2](https://message.style/features/components-v2) layouts, then send them through a [Discord webhook](https://message.style/features/discord-webhooks) or the Embed Generator bot.
-
 [![Release](https://github.com/merlinfuchs/embed-generator/actions/workflows/release.yaml/badge.svg)](https://github.com/merlinfuchs/embed-generator/releases)
 [![Docker image](https://github.com/merlinfuchs/embed-generator/actions/workflows/docker-push.yaml/badge.svg)](https://hub.docker.com/r/merlintor/embed-generator)
 
@@ -9,6 +7,8 @@
 [![MIT License](https://img.shields.io/github/license/merlinfuchs/embed-generator)](LICENSE)
 [![Status](https://uptime.betterstack.com/status-badges/v2/monitor/2y8eg.svg)](https://status.message.style/)
 [![Discord Server](https://img.shields.io/discord/730045476459642900)](https://message.style/discord)
+
+**[Embed Generator](https://message.style)** is a free visual editor for Discord messages. Build embeds, [button roles](https://message.style/features/interactive-components), [scheduled messages](https://message.style/features/scheduled-messages) and [Components V2](https://message.style/features/components-v2) layouts, then send them through a [Discord webhook](https://message.style/features/discord-webhooks) or the Embed Generator bot.
 
 Use the hosted version at [message.style](https://message.style). Self-hosting works too, but there is not much benefit to it.
 
