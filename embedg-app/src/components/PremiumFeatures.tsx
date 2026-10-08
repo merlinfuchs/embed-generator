@@ -4,6 +4,7 @@ import {
   CommandLineIcon,
   TagIcon,
   ClockIcon,
+  PaperAirplaneIcon,
 } from "@heroicons/react/24/outline";
 import { HeartIcon } from "@heroicons/react/24/solid";
 import { PREMIUM_PLAN, usePlan } from "../util/plans";
@@ -59,6 +60,18 @@ export default function PremiumFeatures() {
           </div>
         </div>
       )}
+      <div className="flex items-center gap-4">
+        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-amber-400/15 text-amber-300">
+          <PaperAirplaneIcon className="h-4 w-4" />
+        </span>
+        <div className="text-mist-300 text-sm">
+          Let buttons, select menus and commands{" "}
+          <span className="font-medium text-white">
+            send messages to other channels
+          </span>
+          , like reports to a staff channel
+        </div>
+      </div>
       <div className="flex items-center gap-4">
         <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-amber-400/15 text-amber-300">
           <ClockIcon className="h-4 w-4" />

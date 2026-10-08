@@ -14,6 +14,8 @@ import CheckBox from "./CheckBox";
 import { RolesSelect } from "./RolesSelect";
 import PermissionsSelect from "./PermissionsSelect";
 import { ChannelSelect } from "./ChannelSelect";
+import PremiumSuggest from "./PremiumSuggest";
+import { usePremiumGuildFeatures } from "../util/premium";
 import { useGuildChannelsQuery, useSavedMessagesQuery } from "../api/queries";
 
 interface Props {
@@ -93,6 +95,12 @@ export default function Action({
   setRoleIds,
   setPermissions,
 }: Props) {
+  // Until the features load the server is the one to enforce this.
+  const features = usePremiumGuildFeatures(guildId);
+  const channelActionsLocked = !!features && !features.advanced_action_types;
+  const showPremiumSuggest =
+    channelActionsLocked && (action.type === 11 || action.type === 12);
+
   const actionTypeGroup = useMemo(() => {
     switch (action.type) {
       case 1:
@@ -266,7 +274,9 @@ export default function Action({
                     <option value="channel">Channel Message</option>
                     <option value="dm">Direct Message</option>
                     <option value="edit">Edit Message</option>
-                    <option value="other_channel">Other Channel</option>
+                    <option value="other_channel">
+                      Other Channel{channelActionsLocked ? " (Premium)" : ""}
+                    </option>
                   </select>
                 </div>
               )}
@@ -289,60 +299,65 @@ export default function Action({
               {(action.type === 1 ||
                 action.type === 5 ||
                 action.type === 11 ||
-                action.type === 12) && (
-                <div className="flex-none">
-                  <div className="mb-1.5 flex">
-                    <div className="uppercase text-mist-300 text-sm font-medium">
-                      Ping Roles
+                action.type === 12) &&
+                !showPremiumSuggest && (
+                  <div className="flex-none">
+                    <div className="mb-1.5 flex">
+                      <div className="uppercase text-mist-300 text-sm font-medium">
+                        Ping Roles
+                      </div>
                     </div>
+                    <CheckBox
+                      label="Ping Roles"
+                      checked={action.allow_role_mentions}
+                      onChange={(v) => setAllowRoleMentions(v)}
+                    />
                   </div>
-                  <CheckBox
-                    label="Ping Roles"
-                    checked={action.allow_role_mentions}
-                    onChange={(v) => setAllowRoleMentions(v)}
-                  />
-                </div>
-              )}
+                )}
               {(action.type === 2 ||
                 action.type === 3 ||
                 action.type === 4 ||
                 action.type === 10 ||
                 action.type === 11 ||
-                action.type === 12) && (
-                <div className="flex-none">
-                  <div className="mb-1.5 flex">
-                    <div className="uppercase text-mist-300 text-sm font-medium">
-                      Default Response
+                action.type === 12) &&
+                !showPremiumSuggest && (
+                  <div className="flex-none">
+                    <div className="mb-1.5 flex">
+                      <div className="uppercase text-mist-300 text-sm font-medium">
+                        Default Response
+                      </div>
                     </div>
+                    <CheckBox
+                      label="Default Response"
+                      checked={!action.disable_default_response}
+                      onChange={(v) => setDisableDefaultResponse(!v)}
+                    />
                   </div>
-                  <CheckBox
-                    label="Default Response"
-                    checked={!action.disable_default_response}
-                    onChange={(v) => setDisableDefaultResponse(!v)}
-                  />
-                </div>
-              )}
+                )}
             </div>
           </div>
-          {(action.type === 11 || action.type === 12) && (
-            <div>
-              <div className="mb-1.5 flex">
-                <div className="uppercase text-mist-300 text-sm font-medium">
-                  Channel
+          {(action.type === 11 || action.type === 12) &&
+            !showPremiumSuggest && (
+              <div>
+                <div className="mb-1.5 flex">
+                  <div className="uppercase text-mist-300 text-sm font-medium">
+                    Channel
+                  </div>
                 </div>
+                <ChannelSelect
+                  guildId={guildId}
+                  channelId={action.channel_id || null}
+                  onChange={(v) => setChannelId(v || "")}
+                  sender="bot"
+                />
               </div>
-              <ChannelSelect
-                guildId={guildId}
-                channelId={action.channel_id || null}
-                onChange={(v) => setChannelId(v || "")}
-                sender="bot"
-              />
-            </div>
-          )}
-          {action.type === 1 ||
-          action.type === 6 ||
-          action.type === 8 ||
-          action.type === 11 ? (
+            )}
+          {showPremiumSuggest ? (
+            <PremiumSuggest />
+          ) : action.type === 1 ||
+            action.type === 6 ||
+            action.type === 8 ||
+            action.type === 11 ? (
             <EditorInput
               label="Response"
               type="textarea"
@@ -373,7 +388,7 @@ export default function Action({
               />
             </div>
           ) : null}
-          {action.type === 12 && (
+          {action.type === 12 && !showPremiumSuggest && (
             <EmbedLinksWarning
               guildId={guildId}
               channelId={action.channel_id}
