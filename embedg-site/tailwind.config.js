@@ -57,6 +57,10 @@ module.exports = {
           "sans-serif",
         ],
       },
+      // Tailwind 3.3 has no 15% step, the pages use it for tinted icon squares and badges.
+      opacity: {
+        15: "0.15",
+      },
       boxShadow: {
         card: "0 1px 0 0 rgba(255,255,255,0.04) inset, 0 20px 40px -24px rgba(0,0,0,0.6)",
       },
