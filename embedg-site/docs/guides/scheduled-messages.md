@@ -13,11 +13,13 @@ Scheduled Messages let you send a saved message at a later point in time. This w
 
 Usually you want your message to be sent once at a specific time. Just select the saved message, the target channel, and a time and give your scheduled message a name.
 
-Make sure there are no errors in the selected message, otherwise the message will not be sent.
+![Scheduled Messages Once](./scheduled-messages-once.png)
 
-![Scheduled Messages Onc## Send on Several Dates
+## Send on Several Dates
 
 Pick more than one date to send the same message on each of them, like the days of an event. A day can have several times. The dates count as one scheduled message.
+
+![Scheduled Messages Dates](./scheduled-messages-dates.png)
 
 ## Send Periodically
 
@@ -33,13 +35,15 @@ Sending on more than one date and repeating schedules are only available to [Emb
 
 The **Calendar** tab shows the upcoming sends of all scheduled messages of the server in one timezone. Click a send to open its scheduled message, or the plus on a day to schedule a new message on it.
 
+![Scheduled Messages Calendar](./scheduled-messages-calendar.png)
+
 ## Checks and Errors
 
 When you save, the saved message is checked for errors, so a broken message is caught before its first send. **Send test** sends it to the channel right away.
 
 Each scheduled message in the list shows whether it's active, paused, ended or stopped. If a send fails, the message shows why and when. If Discord rejects the message, for example because the channel was deleted, the schedule stops instead of retrying forever.
 
-/scheduled-messages-periodic.png)
+![Scheduled Messages List](./scheduled-messages-list.png)
 
 ## Timezone
 
