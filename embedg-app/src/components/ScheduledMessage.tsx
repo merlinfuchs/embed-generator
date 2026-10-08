@@ -9,7 +9,7 @@ import {
   TrashIcon,
   XMarkIcon,
 } from "@heroicons/react/20/solid";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AutoAnimate } from "../util/autoAnimate";
 import {
   useScheduledMessageDeleteMutation,
@@ -23,21 +23,33 @@ import { isThreadOnlyChannel, parseMessageId } from "../discord/util";
 import ConfirmModal from "./ConfirmModal";
 import SavedMessageSelect from "./SavedMessageSelect";
 import { ChannelSelect } from "./ChannelSelect";
-import DateTimePicker from "./DateTimePicker";
 import clsx from "clsx";
-import cronstrue from "cronstrue";
-import CronExpressionBuilder from "./CronExpressionBuilder";
 import { usePremiumGuildFeatures } from "../util/premium";
-import PremiumSuggest from "./PremiumSuggest";
-import { rezone, timezoneOrUTC } from "../util/time";
-import TimezoneSelect from "./TimezoneSelect";
+import { formatDay, formatRun, timezoneOrUTC } from "../util/time";
 import CheckBox from "./CheckBox";
+import ScheduleTestButton from "./ScheduleTestButton";
+import ScheduleEditor, {
+  relativeRun,
+  scheduleError,
+  useSchedulePreview,
+} from "./ScheduleEditor";
+import {
+  describeSchedule,
+  isOnDates,
+  type MessageState,
+  messageState,
+  scheduleDraftFromMessage,
+  scheduleFromDraft,
+} from "../util/schedule";
 import { useGuildChannelsQuery } from "../api/queries";
 
 export default function ScheduledMessage({
   msg,
+  focused,
 }: {
   msg: ScheduledMessageWire;
+  // Picked elsewhere, like in the calendar: opens its form and scrolls to it.
+  focused?: boolean;
 }) {
   const guildId = useSendSettingsStore((s) => s.guildId);
   const createToast = useToasts((s) => s.create);
@@ -46,17 +58,20 @@ export default function ScheduledMessage({
   const features = usePremiumGuildFeatures(guildId);
 
   const [manage, setManage] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (focused) {
+      setManage(true);
+      ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [focused]);
 
   const [enabled, setEnabled] = useState(msg.enabled);
   const [name, setName] = useState(msg.name);
-  const [onlyOnce, setOnlyOnce] = useState(msg.only_once);
-  const [startAt, setStartAt] = useState<string | undefined>(msg.start_at);
-  const [endAt, setEndAt] = useState<string | undefined>(
-    msg.end_at || undefined,
-  );
   const storedTimezone = timezoneOrUTC(msg.cron_timezone);
-  const [timezone, setTimezone] = useState(storedTimezone);
-  const [cronExpression, setCronExpression] = useState(msg.cron_expression);
+  const [schedule, setSchedule] = useState(() => scheduleDraftFromMessage(msg));
+  // Only asks the server while the form is open, not for every message in the list.
+  const preview = useSchedulePreview(manage ? guildId : null, schedule);
   const [savedMessageId, setSavedMessageId] = useState<string | null>(
     msg.saved_message_id,
   );
@@ -68,11 +83,7 @@ export default function ScheduledMessage({
   function cancel() {
     setEnabled(msg.enabled);
     setName(msg.name);
-    setOnlyOnce(msg.only_once);
-    setStartAt(msg.start_at);
-    setEndAt(msg.end_at || undefined);
-    setTimezone(storedTimezone);
-    setCronExpression(msg.cron_expression);
+    setSchedule(scheduleDraftFromMessage(msg));
     setSavedMessageId(msg.saved_message_id);
     setChannelId(msg.channel_id);
     setThreadName(msg.thread_name);
@@ -87,13 +98,6 @@ export default function ScheduledMessage({
     setMessageId(null);
   }
 
-  // The picked times were meant in the new timezone, so keep their wall clock.
-  function changeTimezone(tz: string) {
-    setStartAt((v) => v && rezone(v, timezone, tz));
-    setEndAt((v) => v && rezone(v, timezone, tz));
-    setTimezone(tz);
-  }
-
   const selectedChannel = useMemo(
     () =>
       channels?.success ? channels.data.find((c) => c.id === channelId) : null,
@@ -104,17 +108,25 @@ export default function ScheduledMessage({
   const updateMutation = useScheduledMessageUpdateMutation();
 
   function save() {
-    if (
-      name.length === 0 ||
-      !guildId ||
-      !channelId ||
-      !savedMessageId ||
-      !startAt
-    ) {
+    if (name.length === 0 || !guildId || !channelId || !savedMessageId) {
       createToast({
         title: "Some required fields are missing",
         message:
           "Please fill all the required fields before updating the scheduled message",
+        type: "error",
+      });
+      return;
+    }
+
+    const blocked = scheduleError(
+      schedule,
+      preview,
+      !!features?.periodic_scheduled_messages,
+    );
+    if (blocked) {
+      createToast({
+        title: "The schedule can't be saved yet",
+        message: blocked,
         type: "error",
       });
       return;
@@ -131,17 +143,15 @@ export default function ScheduledMessage({
           message_id: messageId,
           thread_name: threadName,
           saved_message_id: savedMessageId,
-          cron_expression: cronExpression,
-          cron_timezone: timezone,
-          start_at: startAt,
-          end_at: endAt ?? null,
-          only_once: onlyOnce,
+          ...scheduleFromDraft(schedule),
           enabled: enabled,
         },
       },
       {
         onSuccess(res) {
           if (res.success) {
+            // An end after a number of sends is an end date now, counting it again would move it.
+            setSchedule(scheduleDraftFromMessage(res.data));
             setManage(false);
             queryClient.invalidateQueries({
               queryKey: ["scheduled-messages", guildId],
@@ -185,8 +195,11 @@ export default function ScheduledMessage({
     );
   }
 
+  const state = messageState(msg);
+  const inactive = state !== "active";
+
   return (
-    <div>
+    <div ref={ref}>
       <AutoAnimate
         className={clsx(
           "bg-ink-700 rounded-lg",
@@ -197,7 +210,7 @@ export default function ScheduledMessage({
           <div className="px-5 py-4" key="1">
             <div className="flex justify-between items-start">
               <div className="flex items-center space-x-2 truncate text-lg mb-5">
-                {onlyOnce ? (
+                {schedule.onDates ? (
                   <CalendarDaysIcon className="text-mist-500 h-6 w-6" />
                 ) : (
                   <ClockIcon className="text-mist-500 h-6 w-6" />
@@ -205,6 +218,12 @@ export default function ScheduledMessage({
                 <div className="text-white truncate">{msg.name}</div>
               </div>
               <div className="flex flex-none items-center space-x-4 md:space-x-3">
+                <ScheduleTestButton
+                  guildId={guildId}
+                  channelId={channelId}
+                  threadName={threadName}
+                  savedMessageId={savedMessageId}
+                />
                 <button
                   type="button"
                   className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"
@@ -232,7 +251,7 @@ export default function ScheduledMessage({
             <div className="space-y-5">
               {msg.last_error && (
                 <div className="border border-red/70 rounded-lg px-3 py-2">
-                  <LastError msg={msg} />
+                  <LastError msg={msg} state={state} />
                   <div className="text-mist-400 text-sm font-light mt-1">
                     Saving clears this error.
                   </div>
@@ -317,141 +336,49 @@ export default function ScheduledMessage({
                   </div>
                 </div>
               )}
-              <div className="flex">
-                <button
-                  className="flex bg-ink-900 p-1 rounded-lg text-white"
-                  onClick={() => setOnlyOnce((v) => !v)}
-                >
-                  <div
-                    className={clsx(
-                      "py-1 px-2 rounded-lg transition-colors",
-                      onlyOnce && "bg-ink-700",
-                    )}
-                  >
-                    Send Once
-                  </div>
-                  <div
-                    className={clsx(
-                      "py-1 px-2 rounded-lg transition-colors",
-                      !onlyOnce && "bg-ink-700",
-                    )}
-                  >
-                    Send Periodically
-                  </div>
-                </button>
-              </div>
-              {(onlyOnce || features?.periodic_scheduled_messages) && (
-                <div>
-                  <div className="mb-1.5 flex">
-                    <div className="uppercase text-mist-300 text-sm font-medium">
-                      Timezone
-                    </div>
-                  </div>
-                  <TimezoneSelect value={timezone} onChange={changeTimezone} />
-                </div>
-              )}
-              {onlyOnce ? (
-                <div>
-                  <div>
-                    <div className="mb-1.5 flex">
-                      <div className="uppercase text-mist-300 text-sm font-medium">
-                        Send at
-                      </div>
-                    </div>
-                    <DateTimePicker
-                      value={startAt}
-                      onChange={setStartAt}
-                      clearable={false}
-                      timezone={timezone}
-                    />
-                  </div>
-                </div>
-              ) : features?.periodic_scheduled_messages ? (
-                <>
-                  <div className="flex flex-col md:flex-row md:space-x-3 space-y-5 md:space-y-0">
-                    <div className="flex-auto">
-                      <div className="mb-1.5 flex">
-                        <div className="uppercase text-mist-300 text-sm font-medium">
-                          Start at
-                        </div>
-                      </div>
-                      <DateTimePicker
-                        value={startAt}
-                        onChange={setStartAt}
-                        clearable={false}
-                        timezone={timezone}
-                      />
-                      <div className="mt-2 text-mist-400 text-sm font-light">
-                        No runs before this time. The first run is the next
-                        scheduled time after it.
-                      </div>
-                    </div>
-                    <div className="flex-auto">
-                      <div className="mb-1.5 flex">
-                        <div className="uppercase text-mist-300 text-sm font-medium">
-                          End at
-                        </div>
-                      </div>
-                      <DateTimePicker
-                        value={endAt}
-                        onChange={setEndAt}
-                        clearable={true}
-                        timezone={timezone}
-                      />
-                      <div className="mt-2 text-mist-400 text-sm font-light">
-                        Stops the schedule after this time. Leave empty to run
-                        forever.
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <CronExpressionBuilder
-                      value={cronExpression}
-                      onChange={setCronExpression}
-                    />
-                  </div>
-                </>
-              ) : (
-                <PremiumSuggest />
-              )}
+              <ScheduleEditor
+                draft={schedule}
+                onChange={setSchedule}
+                preview={preview}
+                periodicAllowed={!!features?.periodic_scheduled_messages}
+              />
             </div>
           </div>
         ) : (
           <div className="flex justify-between items-start py-4 px-5" key="2">
             <div className="flex-auto truncate">
               <div className="flex items-center space-x-2 truncate text-lg mb-1">
-                <div className="text-white truncate flex space-x-2 items-center">
-                  {msg.only_once ? (
+                <div
+                  className={clsx(
+                    "text-white truncate flex space-x-2 items-center",
+                    inactive && "opacity-60",
+                  )}
+                >
+                  {isOnDates(msg) ? (
                     <CalendarDaysIcon className="text-mist-500 h-6 w-6" />
                   ) : (
                     <ClockIcon className="text-mist-500 h-6 w-6" />
                   )}
-                  <div>{msg.name}</div>
+                  <div className="truncate">{msg.name}</div>
                 </div>
+                <StateBadge state={state} />
               </div>
-              <div className="text-mist-400 text-sm font-light whitespace-normal">
-                {!msg.only_once
-                  ? cronToString(msg.cron_expression)
-                  : new Date(msg.start_at).toLocaleString(undefined, {
-                      timeZone: storedTimezone,
-                    })}{" "}
+              <div
+                className={clsx(
+                  "text-mist-400 text-sm font-light whitespace-normal",
+                  inactive && "opacity-60",
+                )}
+              >
+                {isOnDates(msg)
+                  ? describeDates(msg.run_times!, storedTimezone)
+                  : describeSchedule(
+                      msg.cron_expression,
+                      msg.cron_interval,
+                    )}{" "}
                 ({storedTimezone})
               </div>
-              {!msg.only_once &&
-                (msg.end_at &&
-                Date.parse(msg.next_at) > Date.parse(msg.end_at) ? (
-                  <div className="text-amber-300 text-sm font-light whitespace-normal">
-                    Ended, no more runs before the end date
-                  </div>
-                ) : (
-                  msg.enabled && (
-                    <div className="text-mist-400 text-sm font-light whitespace-normal">
-                      Next run in your time:{" "}
-                      {new Date(msg.next_at).toLocaleString()}
-                    </div>
-                  )
-                ))}
-              <LastError msg={msg} />
+              <Status msg={msg} state={state} />
+              <LastError msg={msg} state={state} />
             </div>
             <div className="flex flex-none items-center space-x-4 md:space-x-3">
               <button
@@ -491,16 +418,20 @@ export default function ScheduledMessage({
   );
 }
 
-function LastError({ msg }: { msg: ScheduledMessageWire }) {
+function LastError({
+  msg,
+  state,
+}: {
+  msg: ScheduledMessageWire;
+  state: MessageState;
+}) {
   if (!msg.last_error) return null;
 
   // A schedule that ran past its end date is off too, but the error didn't stop it.
-  const ended =
-    msg.end_at !== null && Date.parse(msg.next_at) > Date.parse(msg.end_at);
   const label =
-    msg.enabled || ended
+    state === "active" || state === "ended"
       ? "Last run failed"
-      : msg.only_once
+      : state === "failed"
         ? "Failed to send"
         : "Stopped";
   const at = msg.last_error_at
@@ -514,11 +445,61 @@ function LastError({ msg }: { msg: ScheduledMessageWire }) {
   );
 }
 
-function cronToString(v: string | null): string {
-  if (!v) return "";
-  try {
-    return cronstrue.toString(v, { verbose: true });
-  } catch {
-    return "";
+// The server keeps the dates sorted.
+function describeDates(dates: string[], timezone: string): string {
+  if (dates.length === 1) return formatRun(dates[0], timezone);
+  return `${dates.length} dates from ${formatDay(dates[0], timezone)} to ${formatDay(dates[dates.length - 1], timezone)}`;
+}
+
+const stateBadges: Record<MessageState, [string, string]> = {
+  active: ["Active", "bg-green/15 text-green"],
+  paused: ["Paused", "bg-ink-600 text-mist-300"],
+  ended: ["Ended", "bg-ink-600 text-mist-300"],
+  sent: ["Sent", "bg-ink-600 text-mist-300"],
+  failed: ["Failed", "bg-red/15 text-red"],
+  stopped: ["Stopped", "bg-red/15 text-red"],
+};
+
+function StateBadge({ state }: { state: MessageState }) {
+  const [label, className] = stateBadges[state];
+  return (
+    <div
+      className={clsx(
+        "flex-none rounded-full px-2 py-0.5 text-xs font-medium",
+        className,
+      )}
+    >
+      {label}
+    </div>
+  );
+}
+
+// What happens next or what happened last, an error shows below it on its own.
+function Status({
+  msg,
+  state,
+}: {
+  msg: ScheduledMessageWire;
+  state: MessageState;
+}) {
+  let text: string;
+  let className = "text-mist-500";
+  if (state === "active") {
+    text = `Next send ${new Date(msg.next_at).toLocaleString()}, ${relativeRun(msg.next_at)}`;
+    className = "text-mist-300";
+  } else if (state === "ended") {
+    text = `Ended ${new Date(msg.end_at!).toLocaleDateString()}`;
+  } else if (state === "sent" && msg.last_sent_at) {
+    text = `Sent ${new Date(msg.last_sent_at).toLocaleString()}`;
+  } else if (state === "paused" && msg.last_sent_at) {
+    text = `Last sent ${new Date(msg.last_sent_at).toLocaleString()}`;
+  } else {
+    return null;
   }
+
+  return (
+    <div className={clsx("text-sm font-light whitespace-normal", className)}>
+      {text}
+    </div>
+  );
 }

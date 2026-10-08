@@ -100,3 +100,22 @@ func TestDiscordTimestamp(t *testing.T) {
 		}
 	}
 }
+
+func TestCheckMessageDoesNotRun(t *testing.T) {
+	ran := false
+	c := NewContext("TEST", 0)
+	c.funcs["mark"] = func() string { ran = true; return "" }
+
+	ok := &actions.MessageWithActions{Content: "{{mark}}"}
+	if err := c.CheckMessage(ok); err != nil {
+		t.Fatal(err)
+	}
+	if ran || ok.Content != "{{mark}}" {
+		t.Errorf("want the template parsed but not run, ran %v, content %q", ran, ok.Content)
+	}
+
+	broken := &actions.MessageWithActions{Content: "{{mark"}
+	if err := c.CheckMessage(broken); err == nil {
+		t.Error("want a template that doesn't parse to fail")
+	}
+}

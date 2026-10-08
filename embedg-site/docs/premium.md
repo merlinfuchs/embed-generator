@@ -14,7 +14,7 @@ You pay $4.99 a month to **support the development of Embed Generator** and unlo
 - **Custom bot**: Connect [your own bot](./features/white-label) so interaction responses use its name and avatar
 - **Custom commands**: Add [slash commands](./features/custom-commands) to your bot that your server members can use
 - **Send to other channels**: Let [buttons, select menus](./guides/interactive-components#text-response) and commands send messages to a channel of your choice, like reports to a staff channel
-- **Recurring scheduled messages**: [Schedule messages](./guides/scheduled-messages) to be sent repeatedly, every hour, day or week
+- **Recurring scheduled messages**: [Schedule messages](./guides/scheduled-messages) to be sent repeatedly, every few hours, days, weeks or months, or on a list of dates
 - **More AI prompts**: Let the [AI assistant](./features/ai-assistant) build many more messages for you each month
 
 Everything else stays free: the editor, webhooks, buttons and select menus, one-time scheduled messages and 25 saved messages. You can cancel anytime and pick which server the subscription applies to.

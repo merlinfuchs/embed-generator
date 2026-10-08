@@ -14,7 +14,7 @@ func mustParse(t *testing.T, s string) time.Time {
 	return res
 }
 
-func TestGetFirstCronTick(t *testing.T) {
+func TestFirstTick(t *testing.T) {
 	cases := []struct {
 		name, tz, start, want string
 	}{
@@ -29,7 +29,7 @@ func TestGetFirstCronTick(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			got, err := GetFirstCronTick("0 8 * * *", mustParse(t, c.start), c.tz)
+			got, err := nextTick("0 8 * * *", mustParse(t, c.start), c.tz, true)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -40,7 +40,7 @@ func TestGetFirstCronTick(t *testing.T) {
 	}
 }
 
-func TestGetNextCronTick(t *testing.T) {
+func TestNextTick(t *testing.T) {
 	cases := []struct {
 		name, tz, last, want string
 	}{
@@ -55,7 +55,7 @@ func TestGetNextCronTick(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			got, err := GetNextCronTick("0 8 * * *", mustParse(t, c.last), c.tz)
+			got, err := nextTick("0 8 * * *", mustParse(t, c.last), c.tz, false)
 			if err != nil {
 				t.Fatal(err)
 			}

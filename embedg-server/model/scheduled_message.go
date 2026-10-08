@@ -19,19 +19,28 @@ type ScheduledMessage struct {
 	Name             string
 	Description      null.String
 	CronExpression   null.String
-	OnlyOnce         bool
 	StartAt          time.Time
 	EndAt            null.Time
 	NextAt           time.Time
 	Enabled          bool
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
-	CronTimezone     null.String
-	ThreadName       null.String
-	LastSentAt       null.Time
+	// RunTimes are the dates of a message sent on specific dates, sorted. Nil when it repeats
+	// on CronExpression instead.
+	RunTimes     []time.Time
+	CronTimezone null.String
+	// CronInterval runs the cron expression only in every Nth period, see scheduled_messages.Schedule.
+	CronInterval int
+	ThreadName   null.String
+	LastSentAt   null.Time
 	// LastError explains to the user why the last run failed or why the message was stopped.
 	LastError   null.String
 	LastErrorAt null.Time
+}
+
+// OnDates is whether the message is sent on a list of dates instead of repeating.
+func (m ScheduledMessage) OnDates() bool {
+	return len(m.RunTimes) > 0
 }
 
 // ScheduledMessageRun is what running a scheduled message changes about it. LastSentAt is left

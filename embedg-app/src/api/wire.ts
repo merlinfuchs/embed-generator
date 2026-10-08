@@ -438,10 +438,11 @@ export interface ScheduledMessageWire {
   description: null | string;
   cron_expression: null | string;
   cron_timezone: null | string;
+  cron_interval: number /* int */;
   start_at: string /* RFC3339 */;
   end_at: null | string /* RFC3339 */;
   next_at: string /* RFC3339 */;
-  only_once: boolean;
+  run_times: string[] | null;
   enabled: boolean;
   created_at: string /* RFC3339 */;
   updated_at: string /* RFC3339 */;
@@ -454,37 +455,90 @@ export interface ScheduledMessageWire {
 }
 export type ScheduledMessageListResponseWire = APIResponse<ScheduledMessageWire[]>;
 export type ScheduledMessageGetResponseWire = APIResponse<ScheduledMessageWire>;
-export interface ScheduledMessageCreateRequestWire {
+/**
+ * ScheduledMessageScheduleWire is when a scheduled message is sent: on the dates in run_times, or
+ * repeating on cron_expression.
+ */
+export interface ScheduledMessageScheduleWire {
+  /**
+   * RunTimes are the dates to send on, one for a message sent once.
+   */
+  run_times: string[] | null;
+  cron_expression: null | string;
+  cron_timezone: null | string;
+  /**
+   * CronInterval runs the cron expression only in every Nth day, week, month or hour, counted
+   * from its first run. 0 or left out means every one.
+   */
+  cron_interval: number /* int */;
+  /**
+   * StartAt is where a repeating schedule starts, the first date for one on dates.
+   */
+  start_at: string /* RFC3339 */;
+  end_at: null | string /* RFC3339 */;
+  /**
+   * EndAfterRuns ends the schedule after this many sends from its next one, instead of at end_at.
+   */
+  end_after_runs: number /* int */;
+}
+export interface ScheduledMessageCreateRequestWire extends ScheduledMessageScheduleWire {
   channel_id: string;
   message_id: null | string;
   thread_name: null | string;
   saved_message_id: string;
   name: string;
   description: null | string;
-  cron_expression: null | string;
-  cron_timezone: null | string;
-  start_at: string /* RFC3339 */;
-  end_at: null | string /* RFC3339 */;
-  only_once: boolean;
   enabled: boolean;
 }
 export type ScheduledMessageCreateResponseWire = APIResponse<ScheduledMessageWire>;
-export interface ScheduledMessageUpdateRequestWire {
-  channel_id: string;
-  message_id: null | string;
-  thread_name: null | string;
-  saved_message_id: string;
-  name: string;
-  description: null | string;
-  cron_expression: null | string;
-  cron_timezone: null | string;
-  start_at: string /* RFC3339 */;
-  end_at: null | string /* RFC3339 */;
-  only_once: boolean;
-  enabled: boolean;
-}
+export type ScheduledMessageUpdateRequestWire = ScheduledMessageCreateRequestWire;
 export type ScheduledMessageUpdateResponseWire = APIResponse<ScheduledMessageWire>;
 export type ScheduledMessageDeleteResponseWire = APIResponse<{
+  }>;
+export interface ScheduledMessagePreviewWire {
+  /**
+   * Runs are the next sends, none past end_at.
+   */
+  runs: string /* RFC3339 */[];
+  /**
+   * More is whether more sends follow the listed ones.
+   */
+  more: boolean;
+  /**
+   * EndAt is when the schedule ends, also when it ends after a number of sends.
+   */
+  end_at: null | string /* RFC3339 */;
+}
+export type ScheduledMessagePreviewResponseWire = APIResponse<ScheduledMessagePreviewWire>;
+export interface ScheduledMessageRunWire {
+  scheduled_message_id: string;
+  at: string /* RFC3339 */;
+}
+export interface ScheduledMessageRunsWire {
+  /**
+   * Runs are the upcoming sends of the guild's enabled scheduled messages in the range.
+   */
+  runs: ScheduledMessageRunWire[];
+  /**
+   * Truncated is whether a message sends too often for all of its runs to be listed.
+   */
+  truncated: boolean;
+}
+export type ScheduledMessageRunsResponseWire = APIResponse<ScheduledMessageRunsWire>;
+/**
+ * MaxRunTimes is how many dates a scheduled message can be sent on.
+ */
+export const MaxRunTimes = 100;
+/**
+ * ScheduledMessageTestRequestWire is what a test send of a scheduled message needs, before it's
+ * saved. It always sends a new message.
+ */
+export interface ScheduledMessageTestRequestWire {
+  channel_id: string;
+  thread_name: null | string;
+  saved_message_id: string;
+}
+export type ScheduledMessageTestResponseWire = APIResponse<{
   }>;
 
 //////////

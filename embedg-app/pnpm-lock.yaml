@@ -235,9 +235,6 @@ importers:
       react-colorful:
         specifier: ^5.6.1
         version: 5.6.1(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
-      react-cron-generator:
-        specifier: ^2.0.10
-        version: 2.0.10(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       react-datetime-picker:
         specifier: ^5.2.0
         version: 5.2.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -1956,12 +1953,6 @@ packages:
 
   react-colorful@5.6.1:
     resolution: {integrity: sha512-1exovf0uGTGyq5mXQT0zgQ80uvj2PCwvF8zY1RN9/vbJVSjSo3fsB/4L3ObbF7u70NduSiK4xu4Y6q1MHoUGEw==}
-    peerDependencies:
-      react: '>=16.8.0'
-      react-dom: '>=16.8.0'
-
-  react-cron-generator@2.0.10:
-    resolution: {integrity: sha512-N2KaRCcbWWJdgjP/3SkEEMPaAw9LRV8i3UHBL00WXi/uP3ePVU5StkhiCX91L2tJ47kBeTSX6J0HCL10aV1rlw==}
     peerDependencies:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
@@ -3927,12 +3918,6 @@ snapshots:
 
   react-colorful@5.6.1(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
     dependencies:
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
-
-  react-cron-generator@2.0.10(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
-    dependencies:
-      cronstrue: 2.47.0
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
 

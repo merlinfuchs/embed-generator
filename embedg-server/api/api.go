@@ -23,6 +23,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/guildstate"
 	"github.com/merlinfuchs/embed-generator/embedg-server/manager/custom_bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/manager/premium"
+	scheduled_messages "github.com/merlinfuchs/embed-generator/embedg-server/manager/scheduled_message"
 	"github.com/merlinfuchs/embed-generator/embedg-server/manager/webhook"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 )
@@ -190,13 +191,15 @@ type Env struct {
 	PremiumManager        *premium.PremiumManager
 	WebhookManager        *webhook.WebhookManager
 	AccessManager         *access.AccessManager
-	ActionParser          *parser.ActionParser
-	ActionHandler         *handler.ActionHandler
-	Rest                  rest.Rest
-	ShardManager          sharding.ShardManager
-	Assistant             *assistant.Assistant
-	AssistantPromptStore  store.AssistantPromptStore
-	FileStore             store.FileStore
-	AppContext            store.AppContext
-	EventDispatcher       store.EventDispatcher
+	// ScheduledMessageManager sends scheduled messages, also to check one before it's saved.
+	ScheduledMessageManager *scheduled_messages.ScheduledMessageManager
+	ActionParser            *parser.ActionParser
+	ActionHandler           *handler.ActionHandler
+	Rest                    rest.Rest
+	ShardManager            sharding.ShardManager
+	Assistant               *assistant.Assistant
+	AssistantPromptStore    store.AssistantPromptStore
+	FileStore               store.FileStore
+	AppContext              store.AppContext
+	EventDispatcher         store.EventDispatcher
 }
