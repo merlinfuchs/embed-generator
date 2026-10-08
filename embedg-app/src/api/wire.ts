@@ -213,6 +213,10 @@ export interface GuildChannelWire {
    * BotCanSend is whether the bot can post its own messages here, as opposed to through a webhook.
    */
   bot_can_send: boolean;
+  /**
+   * BotCanEmbed is whether the bot's own messages here can have embeds. Webhooks don't need it.
+   */
+  bot_can_embed: boolean;
 }
 export type ListChannelsResponseWire = APIResponse<GuildChannelWire[]>;
 export interface GuildRoleWire {

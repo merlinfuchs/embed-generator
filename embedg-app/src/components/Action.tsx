@@ -14,6 +14,7 @@ import CheckBox from "./CheckBox";
 import { RolesSelect } from "./RolesSelect";
 import PermissionsSelect from "./PermissionsSelect";
 import { ChannelSelect } from "./ChannelSelect";
+import { useGuildChannelsQuery, useSavedMessagesQuery } from "../api/queries";
 
 interface Props {
   guildId: string | null;
@@ -371,7 +372,15 @@ export default function Action({
                 onChange={(v) => setTargetId(v || "")}
               />
             </div>
-          ) : action.type === 10 ? (
+          ) : null}
+          {action.type === 12 && (
+            <EmbedLinksWarning
+              guildId={guildId}
+              channelId={action.channel_id}
+              savedMessageId={action.target_id}
+            />
+          )}
+          {action.type === 10 ? (
             <>
               <div className="flex-none">
                 <div className="mb-1.5 flex">
@@ -413,6 +422,42 @@ export default function Action({
           </div>
         </div>
       </Collapsable>
+    </div>
+  );
+}
+
+/**
+ * The bot needs Embed Links for embeds in its own messages, which webhooks don't. Sending to another
+ * channel goes through the bot, so a saved message with embeds needs it there.
+ */
+function EmbedLinksWarning({
+  guildId,
+  channelId,
+  savedMessageId,
+}: {
+  guildId: string | null;
+  channelId: string;
+  savedMessageId: string;
+}) {
+  const { data: channels } = useGuildChannelsQuery(guildId);
+  const { data: messages } = useSavedMessagesQuery(guildId);
+
+  const channel = channels?.success
+    ? channels.data.find((c) => c.id === channelId)
+    : undefined;
+  const message = messages?.success
+    ? messages.data.find((m) => m.id === savedMessageId)
+    : undefined;
+
+  if (!channel || channel.bot_can_embed || !message?.data?.embeds?.length) {
+    return null;
+  }
+
+  return (
+    <div className="text-amber-300 text-sm">
+      The bot is missing the Embed Links permission in this channel, so it can't
+      post this saved message's embeds there. Give it Embed Links in the
+      channel's permission settings.
     </div>
   );
 }

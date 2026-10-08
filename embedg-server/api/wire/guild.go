@@ -32,6 +32,8 @@ type GuildChannelWire struct {
 	BotPermissions  string `json:"bot_permissions"`
 	// BotCanSend is whether the bot can post its own messages here, as opposed to through a webhook.
 	BotCanSend bool `json:"bot_can_send"`
+	// BotCanEmbed is whether the bot's own messages here can have embeds. Webhooks don't need it.
+	BotCanEmbed bool `json:"bot_can_embed"`
 }
 
 type ListChannelsResponseWire APIResponse[[]GuildChannelWire]
