@@ -43,7 +43,7 @@ const steps = [
   },
   {
     title: "Say when",
-    text: "Open Scheduled Messages, pick the saved message and the channel, then pick dates or write the repeat as a sentence. The next sends show up while you type.",
+    text: "Open Scheduled Messages, pick the saved message and the channel, then click the dates or set up the repeat. The next sends show up as you go.",
   },
 ];
 
@@ -683,7 +683,7 @@ export default function ScheduledMessages(): JSX.Element {
             any way you like
           </>
         }
-        text="Once, on a handful of dates, every other Tuesday or every 6 hours. Say it as a sentence, see the next sends right away, and Embed Generator's bot posts the message on time in your timezone."
+        text="Once, on a handful of dates, every other Tuesday or every 6 hours. Pick when, check the next sends right away, and Embed Generator's bot posts the message on time in your timezone."
         cta={SCHEDULE}
         stats={[
           { value: "Free", label: "to send once" },
@@ -696,8 +696,8 @@ export default function ScheduledMessages(): JSX.Element {
       <WaysToSchedule />
       <Showcase
         icon={ArrowPathIcon}
-        title="Write it as a sentence."
-        text="Every 2 weeks on Tuesday and Thursday at 7:30 PM is exactly what you type. The upcoming sends update while you edit, so you know what the schedule does before you save it, and the cadence is counted from your start date instead of resetting every month."
+        title="Repeats that read like a sentence."
+        text="Pick a number, a unit, the days and a time, and the schedule reads like you'd say it: every 2 weeks on Tuesday and Thursday at 7:30 PM. The upcoming sends update while you edit, so you know what it does before you save it, and the cadence is counted from your start date instead of resetting every month."
         src={`${IMG}/repeat.webp`}
         alt="The repeat editor with every 2 weeks on Tuesday and Thursday and the upcoming sends"
       />
