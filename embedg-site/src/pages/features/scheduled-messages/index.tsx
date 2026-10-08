@@ -10,7 +10,6 @@ import {
   FlagIcon,
   GlobeAltIcon,
   PencilSquareIcon,
-  Squares2X2Icon,
   VariableIcon,
 } from "@heroicons/react/24/outline";
 import {
@@ -65,31 +64,31 @@ const ways = [
     icon: ArrowPathIcon,
     name: "Every few minutes or hours",
     example: "Every 6 hours at :30",
-    text: "Real hours, so a daylight saving change never squeezes or stretches the gap.",
+    text: "The gap stays the same number of hours, even on the night the clocks change.",
   },
   {
     icon: ArrowPathIcon,
     name: "Every few days",
     example: "Every 14 days at 9:00 AM",
-    text: "Counted from your start date. No surprise restart on the 1st of the month like with cron.",
+    text: "Counted from your start date, so every 14 days stays every 14 days across the end of a month.",
   },
   {
     icon: ArrowPathIcon,
     name: "Every few weeks on chosen days",
     example: "Every 2 weeks on Tue and Thu at 7:30 PM",
-    text: "Pick any weekdays. Weeks start on Monday.",
+    text: "Pick one or more weekdays. Every 2 weeks means every other week, starting with the week you start in.",
   },
   {
     icon: ArrowPathIcon,
     name: "Every few months on a day",
     example: "Every 3 months on day 1 at 10:00 AM",
-    text: "Quarterly reports, monthly recaps, yearly birthdays with every 12 months.",
+    text: "For monthly recaps and quarterly reports, or once a year with every 12 months.",
   },
   {
     icon: CodeBracketIcon,
     name: "Any cron expression",
     example: "0 9 * * 1-5",
-    text: "For everything else, like weekdays at 9:00. The preview tells you in plain words what it does.",
+    text: "For anything the options above don't cover, like weekdays at 9:00. The preview spells out what it does in plain words.",
   },
   {
     icon: FlagIcon,
@@ -110,7 +109,7 @@ const features = [
   {
     icon: GlobeAltIcon,
     name: "Your timezone, all year",
-    text: "Times are in the timezone you pick. Repeats follow daylight saving time, so a message at 9:00 stays at 9:00, and a time the clocks skip still goes out once.",
+    text: "Times are in the timezone you pick and follow daylight saving time, so a message at 9:00 goes out at 9:00 all year.",
   },
   {
     icon: PencilSquareIcon,
@@ -120,7 +119,7 @@ const features = [
   {
     icon: BeakerIcon,
     name: "Checked before it's saved",
-    text: "Saving checks the message for broken variables and components, so the first send doesn't fail at 3 AM. Send test posts it to the channel right away.",
+    text: "Saving checks the message for mistakes in variables and components, so you find out now and not when a send fails. Send test posts it to the channel right away so you can see how it looks.",
   },
   {
     icon: VariableIcon,
@@ -137,7 +136,7 @@ const features = [
   {
     icon: ExclamationTriangleIcon,
     name: "Clear errors",
-    text: "If a send fails, the schedule shows why and when. If Discord rejects the message, it stops instead of retrying forever, and the list marks it in red.",
+    text: "If a send fails, you see why and when. If Discord rejects the message, for example because the channel was deleted, the schedule stops instead of retrying forever.",
   },
 ];
 
@@ -153,11 +152,11 @@ const faq: Faq[] = [
   },
   {
     q: "How often can a message repeat?",
-    a: "As often as every minute, or every few hours, days, weeks or months. For anything else you can enter a cron expression. You can set when it starts and when it ends, on a date or after a number of sends.",
+    a: "As often as every minute, or every few hours, days, weeks or months. You can set when it starts, and end it on a date or after a number of sends. For anything else there's cron.",
   },
   {
     q: "Can I send every two weeks?",
-    a: "Yes. Pick every 2 weeks and the days of the week. It's counted from your start date, so it keeps a real two week rhythm, unlike cron's day-of-month steps that restart every month.",
+    a: "Yes. Pick every 2 weeks and the days of the week. It's counted from your start date, so it stays every other week, also when a new month starts.",
   },
   {
     q: "Can I send the same message on several dates?",
@@ -595,7 +594,7 @@ function ScheduleShowcase(): JSX.Element {
 
 function WaysToSchedule(): JSX.Element {
   return (
-    <Section title="Every way to say when.">
+    <Section title="Every way to schedule.">
       <div className="grid gap-4 sm:grid-cols-2">
         {ways.map((w) => (
           <div
@@ -632,14 +631,12 @@ function WaysToSchedule(): JSX.Element {
 
 // A screenshot from the app next to what it shows, alternating sides down the page.
 function Showcase({
-  icon: Icon,
   title,
   text,
   src,
   alt,
   flip,
 }: {
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   title: string;
   text: string;
   src: string;
@@ -657,9 +654,6 @@ function Showcase({
         ].join(" ")}
       >
         <div className={flip ? "lg:order-2" : undefined}>
-          <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-azure-500/15 text-azure-300">
-            <Icon className="h-5 w-5" />
-          </div>
           <h2 className="mb-4 mt-0 text-3xl font-bold tracking-tight text-mist-100">
             {title}
           </h2>
@@ -683,11 +677,11 @@ export default function ScheduledMessages(): JSX.Element {
             any way you like
           </>
         }
-        text="Once, on a handful of dates, every other Tuesday or every 6 hours. Pick when, check the next sends right away, and Embed Generator's bot posts the message on time in your timezone."
+        text="Send once, on a handful of dates, every other Tuesday or every 6 hours. You see the next sends before you save, and Embed Generator's bot posts the message on time in your timezone."
         cta={SCHEDULE}
         stats={[
           { value: "Free", label: "to send once" },
-          { value: "1 min", label: "to years apart" },
+          { value: "1 min", label: "shortest repeat" },
           { value: "100", label: "dates per message" },
           { value: "Any", label: "timezone" },
         ]}
@@ -695,14 +689,12 @@ export default function ScheduledMessages(): JSX.Element {
       />
       <WaysToSchedule />
       <Showcase
-        icon={ArrowPathIcon}
         title="Repeats that read like a sentence."
-        text="Pick a number, a unit, the days and a time, and the schedule reads like you'd say it: every 2 weeks on Tuesday and Thursday at 7:30 PM. The upcoming sends update while you edit, so you know what it does before you save it, and the cadence is counted from your start date instead of resetting every month."
+        text="Pick a number, a unit, the days and a time, and it reads back like you'd say it: every 2 weeks on Tuesday and Thursday at 7:30 PM. The next sends update as you edit, so you can check the schedule before you save it."
         src={`${IMG}/repeat.webp`}
         alt="The repeat editor with every 2 weeks on Tuesday and Thursday and the upcoming sends"
       />
       <Showcase
-        icon={CalendarDaysIcon}
         title="Or just pick the dates."
         text="For events that don't follow a pattern, click the days in the calendar and give each one as many times as you need. A tournament weekend with a reminder at noon and one before the finals is a single scheduled message."
         src={`${IMG}/dates.webp`}
@@ -710,16 +702,14 @@ export default function ScheduledMessages(): JSX.Element {
         flip
       />
       <Showcase
-        icon={Squares2X2Icon}
         title="See the whole month at once."
-        text="The calendar shows every upcoming send of the server in the timezone you pick, colored by message. Spot a crowded Friday, click a send to open its schedule, or click the plus on a day to schedule something new on it."
+        text="The calendar shows every upcoming send of the server, with a color for each message. Click a send to open its schedule, or the plus on a day to schedule something new on it."
         src={`${IMG}/calendar.webp`}
         alt="A month calendar with the sends of several scheduled messages"
       />
       <Showcase
-        icon={ExclamationTriangleIcon}
-        title="Know what's running."
-        text="Every scheduled message shows whether it's active, paused, ended or stopped, and when it sends next. If Discord rejects a message, it stops and says why instead of failing quietly."
+        title="See what's running."
+        text="The list shows which messages are active, paused, ended or stopped, and when each one sends next. When a send fails, it tells you why, like a deleted channel."
         src={`${IMG}/list.webp`}
         alt="The list of scheduled messages with active, paused, ended and stopped ones"
         flip
