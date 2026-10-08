@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -141,7 +142,7 @@ func (h *CustomBotsHandler) HandleCreateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return handlers.Forbidden("insufficient_plan", "You have reached the maximum number of custom commands for your plan!")
 	}
 
-	derivedPerms, err := h.derivePermissionsForUser(c, session, guildID)
+	derivedPerms, err := h.derivePermissionsForUser(c, session, guildID, actionSet)
 	if err != nil {
 		return err
 	}
@@ -214,7 +215,7 @@ func (h *CustomBotsHandler) HandleUpdateCustomCommand(c *fiber.Ctx, req wire.Cus
 		return err
 	}
 
-	derivedPerms, err := h.derivePermissionsForUser(c, session, guildID)
+	derivedPerms, err := h.derivePermissionsForUser(c, session, guildID, actionSet)
 	if err != nil {
 		return err
 	}
@@ -452,13 +453,13 @@ func (e *NameCollisionError) Error() string {
 
 // derivePermissionsForUser records the authority the requesting user has over the command's actions,
 // resolving their member with their own OAuth token.
-func (h *CustomBotsHandler) derivePermissionsForUser(c *fiber.Ctx, session *session.Session, guildID common.ID) (actions.ActionDerivedPermissions, error) {
+func (h *CustomBotsHandler) derivePermissionsForUser(c *fiber.Ctx, session *session.Session, guildID common.ID, actionSet actions.ActionSet) (actions.ActionDerivedPermissions, error) {
 	member, err := h.am.GetMemberForUser(c.UserContext(), session, guildID)
 	if err != nil {
 		return actions.ActionDerivedPermissions{}, fmt.Errorf("Failed to get member: %w", err)
 	}
 
-	derivedPerms, err := h.actionParser.DerivePermissionsForActions(c.UserContext(), *member, guildID, 0)
+	derivedPerms, err := h.actionParser.DerivePermissionsForActions(c.UserContext(), *member, guildID, 0, slices.Values([]actions.ActionSet{actionSet}))
 	if err != nil {
 		return actions.ActionDerivedPermissions{}, handlers.BadRequest("invalid_actions", err.Error())
 	}

@@ -2,6 +2,7 @@ package actions
 
 import (
 	"encoding/json"
+	"slices"
 	"testing"
 	"time"
 
@@ -87,6 +88,35 @@ func TestCanSendToChannel(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			if got := test.perms.CanSendToChannel(10); got != test.want {
 				t.Fatalf("CanSendToChannel = %v, want %v", got, test.want)
+			}
+		})
+	}
+}
+
+func TestMayTargetChannels(t *testing.T) {
+	set := func(types ...ActionType) ActionSet {
+		var s ActionSet
+		for _, typ := range types {
+			s.Actions = append(s.Actions, Action{Type: typ})
+		}
+		return s
+	}
+
+	tests := []struct {
+		name string
+		sets []ActionSet
+		want bool
+	}{
+		{"roles and text only", []ActionSet{set(ActionTypeAddRole), set(ActionTypeTextResponse)}, false},
+		{"sends to a channel", []ActionSet{set(ActionTypeAddRole), set(ActionTypeTextChannel)}, true},
+		{"saved message that could send to one", []ActionSet{set(ActionTypeSavedMessageEdit)}, true},
+		{"no actions", nil, false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := MayTargetChannels(slices.Values(test.sets)); got != test.want {
+				t.Fatalf("MayTargetChannels = %v, want %v", got, test.want)
 			}
 		})
 	}

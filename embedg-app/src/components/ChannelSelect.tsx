@@ -14,6 +14,15 @@ import SelectDropdown from "./SelectDropdown";
 import Tooltip from "./Tooltip";
 import { useToasts } from "../util/toasts";
 import { isThreadOnlyChannel } from "../discord/util";
+import type { GuildChannelWire } from "../api/wire";
+import { permissionFlags } from "./PermissionsSelect";
+
+type Sender = "webhook" | "bot";
+
+type ChannelAccess = Pick<
+  GuildChannelWire,
+  "type" | "user_access" | "bot_access" | "bot_permissions"
+>;
 
 interface Props {
   guildId: string | null;
@@ -23,16 +32,7 @@ interface Props {
    * Who posts in the channel. The bot can't post in forum and media channels directly and needs
    * Send Messages instead of Manage Webhooks.
    */
-  sender?: "webhook" | "bot";
-}
-
-type Sender = NonNullable<Props["sender"]>;
-
-interface ChannelAccess {
-  type: number;
-  user_access: boolean;
-  bot_access: boolean;
-  bot_permissions: string;
+  sender?: Sender;
 }
 
 // text, voice, announcement, announcement thread, public thread, private thread, stage, forum, media.
@@ -45,9 +45,6 @@ const rootChannelTypes = new Set([0, 2, 4, 5, 13, 15, 16]);
 
 const threadChannelTypes = new Set([10, 11, 12]);
 
-const sendMessages = 1n << 11n;
-const sendMessagesInThreads = 1n << 38n;
-
 function canSelectChannelType(type: number, sender: Sender) {
   if (sender === "bot" && isThreadOnlyChannel(type)) return false;
   return selectableChannelTypes.has(type);
@@ -57,8 +54,8 @@ function canSelectChannelType(type: number, sender: Sender) {
 function hasBotAccess(channel: ChannelAccess, sender: Sender) {
   if (sender === "webhook") return channel.bot_access;
   const needed = threadChannelTypes.has(channel.type)
-    ? sendMessagesInThreads
-    : sendMessages;
+    ? permissionFlags.SEND_MESSAGES_IN_THREADS
+    : permissionFlags.SEND_MESSAGES;
   return (BigInt(channel.bot_permissions) & needed) !== 0n;
 }
 

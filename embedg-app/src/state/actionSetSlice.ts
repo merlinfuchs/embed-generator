@@ -39,13 +39,19 @@ function defaultsForType(type: number): Omit<MessageAction, "type" | "id"> {
     } as Omit<MessageAction, "type" | "id">;
   }
 
-  if (type === 11 || type === 12) {
-    return {
-      ...(type === 11 ? { text: "" } : { target_id: "" }),
-      channel_id: "",
-      allow_role_mentions: false,
-      disable_default_response: false,
-    } as Omit<MessageAction, "type" | "id">;
+  const channelBase = {
+    channel_id: "",
+    allow_role_mentions: false,
+    disable_default_response: false,
+  };
+  if (type === 11) {
+    return { ...channelBase, text: "" } as Omit<MessageAction, "type" | "id">;
+  }
+  if (type === 12) {
+    return { ...channelBase, target_id: "" } as Omit<
+      MessageAction,
+      "type" | "id"
+    >;
   }
 
   const base = { public: false, allow_role_mentions: false };

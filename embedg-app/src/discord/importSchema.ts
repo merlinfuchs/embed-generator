@@ -438,6 +438,20 @@ export const componentSchema = z.union([
   componentContainerSchema,
 ]);
 
+// The fields shared by the actions that send to another channel.
+const channelActionFields = {
+  id: uniqueIdSchema.default(() => getUniqueId()),
+  channel_id: z.preprocess((d) => d ?? undefined, z.string().default("")),
+  allow_role_mentions: z.preprocess(
+    (d) => d ?? undefined,
+    z.boolean().default(false),
+  ),
+  disable_default_response: z.preprocess(
+    (d) => d ?? undefined,
+    z.boolean().default(false),
+  ),
+};
+
 export const messageActionSchema = z
   .object({
     type: z.literal(1).or(z.literal(6)).or(z.literal(8)), // text response
@@ -480,33 +494,15 @@ export const messageActionSchema = z
   .or(
     z.object({
       type: z.literal(11), // text message to another channel
-      id: uniqueIdSchema.default(() => getUniqueId()),
-      channel_id: z.preprocess((d) => d ?? undefined, z.string().default("")),
+      ...channelActionFields,
       text: z.preprocess((d) => d ?? undefined, z.string().default("")),
-      allow_role_mentions: z.preprocess(
-        (d) => d ?? undefined,
-        z.boolean().default(false),
-      ),
-      disable_default_response: z.preprocess(
-        (d) => d ?? undefined,
-        z.boolean().default(false),
-      ),
     }),
   )
   .or(
     z.object({
       type: z.literal(12), // saved message to another channel
-      id: uniqueIdSchema.default(() => getUniqueId()),
-      channel_id: z.preprocess((d) => d ?? undefined, z.string().default("")),
+      ...channelActionFields,
       target_id: z.preprocess((d) => d ?? undefined, z.string().default("")),
-      allow_role_mentions: z.preprocess(
-        (d) => d ?? undefined,
-        z.boolean().default(false),
-      ),
-      disable_default_response: z.preprocess(
-        (d) => d ?? undefined,
-        z.boolean().default(false),
-      ),
     }),
   )
   .or(

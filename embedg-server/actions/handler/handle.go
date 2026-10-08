@@ -407,64 +407,58 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 					return fmt.Errorf("failed to create actions for message: %w", err)
 				}
 			}
-		case actions.ActionTypeTextChannel:
+		case actions.ActionTypeTextChannel, actions.ActionTypeSavedMessageChannel:
 			channelID, err := m.channelTarget(interaction, action, derivedPerms)
 			if err != nil {
 				return err
 			}
 
-			content, err := templates.ParseAndExecute(action.Text)
-			if err != nil {
-				return templateErr(err)
+			var msg discord.MessageCreate
+			var msgActions map[string]actions.ActionSet
+			if action.Type == actions.ActionTypeTextChannel {
+				content, err := templates.ParseAndExecute(action.Text)
+				if err != nil {
+					return templateErr(err)
+				}
+				msg = discord.MessageCreate{
+					Content:         content,
+					AllowedMentions: actionAllowedMentions(action, nil),
+				}
+			} else {
+				data, err := m.savedMessage(*interaction.GuildID(), action.TargetID)
+				if err != nil {
+					return err
+				}
+
+				if err := templates.ParseAndExecuteMessage(data); err != nil {
+					return templateErr(err)
+				}
+
+				components, err := m.parser.ParseMessageComponents(data.Components, true)
+				if err != nil {
+					return userErr("Invalid components: %s", err)
+				}
+
+				msg = discord.MessageCreate{
+					Content:         data.Content,
+					Embeds:          data.Embeds,
+					Components:      components,
+					Flags:           data.Flags,
+					AllowedMentions: actionAllowedMentions(action, data.AllowedMentions),
+				}
+				msgActions = data.Actions
 			}
 
-			_, err = sendToChannel(restClient, channelID, discord.MessageCreate{
-				Content:         content,
-				AllowedMentions: actionAllowedMentions(action, nil),
-			})
-			if err != nil {
-				return err
-			}
-			if !action.DisableDefaultResponse {
-				i.Respond(discord.MessageCreate{
-					Content: fmt.Sprintf("Sent a message to <#%s>.", channelID),
-					Flags:   discord.MessageFlagEphemeral,
-				})
-			}
-		case actions.ActionTypeSavedMessageChannel:
-			channelID, err := m.channelTarget(interaction, action, derivedPerms)
-			if err != nil {
-				return err
-			}
-
-			data, err := m.savedMessage(*interaction.GuildID(), action.TargetID)
-			if err != nil {
-				return err
-			}
-
-			if err := templates.ParseAndExecuteMessage(data); err != nil {
-				return templateErr(err)
-			}
-
-			components, err := m.parser.ParseMessageComponents(data.Components, true)
-			if err != nil {
-				return userErr("Invalid components: %s", err)
-			}
-
-			newMsg, err := sendToChannel(restClient, channelID, discord.MessageCreate{
-				Content:         data.Content,
-				Embeds:          data.Embeds,
-				Components:      components,
-				Flags:           data.Flags,
-				AllowedMentions: actionAllowedMentions(action, data.AllowedMentions),
-			})
+			newMsg, err := sendToChannel(restClient, channelID, msg)
 			if err != nil {
 				return err
 			}
 
-			err = m.parser.CreateActionsForMessage(context.TODO(), data.Actions, *derivedPerms, newMsg.ID, false)
-			if err != nil {
-				return fmt.Errorf("failed to create actions for message: %w", err)
+			if len(msgActions) != 0 {
+				err = m.parser.CreateActionsForMessage(context.TODO(), msgActions, *derivedPerms, newMsg.ID, false)
+				if err != nil {
+					return fmt.Errorf("failed to create actions for message: %w", err)
+				}
 			}
 			if !action.DisableDefaultResponse {
 				i.Respond(discord.MessageCreate{
