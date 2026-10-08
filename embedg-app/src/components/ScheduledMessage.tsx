@@ -27,6 +27,7 @@ import clsx from "clsx";
 import { usePremiumGuildFeatures } from "../util/premium";
 import { formatDay, formatRun, timezoneOrUTC } from "../util/time";
 import CheckBox from "./CheckBox";
+import ScheduleTestButton from "./ScheduleTestButton";
 import ScheduleEditor, {
   relativeRun,
   scheduleError,
@@ -212,6 +213,12 @@ export default function ScheduledMessage({
                 <div className="text-white truncate">{msg.name}</div>
               </div>
               <div className="flex flex-none items-center space-x-4 md:space-x-3">
+                <ScheduleTestButton
+                  guildId={guildId}
+                  channelId={channelId}
+                  threadName={threadName}
+                  savedMessageId={savedMessageId}
+                />
                 <button
                   type="button"
                   className="flex items-center text-mist-300 hover:text-white cursor-pointer md:bg-ink-900 md:rounded-lg md:px-2 md:py-1"

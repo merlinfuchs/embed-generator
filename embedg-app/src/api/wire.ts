@@ -520,6 +520,17 @@ export type ScheduledMessageRunsResponseWire = APIResponse<ScheduledMessageRunsW
  * MaxRunTimes is how many dates a scheduled message can be sent on.
  */
 export const MaxRunTimes = 100;
+/**
+ * ScheduledMessageTestRequestWire is what a test send of a scheduled message needs, before it's
+ * saved. It always sends a new message.
+ */
+export interface ScheduledMessageTestRequestWire {
+  channel_id: string;
+  thread_name: null | string;
+  saved_message_id: string;
+}
+export type ScheduledMessageTestResponseWire = APIResponse<{
+  }>;
 
 //////////
 // source: shared_message.go

@@ -18,6 +18,7 @@ import { ChannelSelect } from "./ChannelSelect";
 import { usePremiumGuildFeatures } from "../util/premium";
 import { getCurrentTimezone } from "../util/time";
 import { useGuildChannelsQuery } from "../api/queries";
+import ScheduleTestButton from "./ScheduleTestButton";
 import ScheduleEditor, {
   scheduleError,
   useSchedulePreview,
@@ -145,6 +146,12 @@ export default function ScheduledMessageCreate({
           <div>New Scheduled Message</div>
         </div>
         <div className="flex flex-none items-center space-x-4 md:space-x-3">
+          <ScheduleTestButton
+            guildId={guildId}
+            channelId={channelId}
+            threadName={threadName}
+            savedMessageId={savedMessageId}
+          />
           {cancelable && (
             <button
               type="button"

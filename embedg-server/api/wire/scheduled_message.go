@@ -160,3 +160,20 @@ func validateTimezone(v any) error {
 	_, err := common.LoadTimezone(v.(null.String).String)
 	return err
 }
+
+// ScheduledMessageTestRequestWire is what a test send of a scheduled message needs, before it's
+// saved. It always sends a new message.
+type ScheduledMessageTestRequestWire struct {
+	ChannelID      common.ID   `json:"channel_id"`
+	ThreadName     null.String `json:"thread_name"`
+	SavedMessageID string      `json:"saved_message_id"`
+}
+
+func (req ScheduledMessageTestRequestWire) Validate() error {
+	return validation.ValidateStruct(&req,
+		validation.Field(&req.ChannelID, validation.Required),
+		validation.Field(&req.SavedMessageID, validation.Required),
+	)
+}
+
+type ScheduledMessageTestResponseWire APIResponse[struct{}]

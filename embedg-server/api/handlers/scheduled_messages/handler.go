@@ -28,15 +28,38 @@ type ScheduledMessageHandler struct {
 	am                    *access.AccessManager
 	planStore             store.PlanStore
 	webhookManager        *webhook.WebhookManager
+	manager               *scheduled_messages.ScheduledMessageManager
 }
 
-func New(scheduledMessageStore store.ScheduledMessageStore, am *access.AccessManager, planStore store.PlanStore, webhookManager *webhook.WebhookManager) *ScheduledMessageHandler {
+func New(scheduledMessageStore store.ScheduledMessageStore, am *access.AccessManager, planStore store.PlanStore, webhookManager *webhook.WebhookManager, manager *scheduled_messages.ScheduledMessageManager) *ScheduledMessageHandler {
 	return &ScheduledMessageHandler{
 		scheduledMessageStore: scheduledMessageStore,
 		am:                    am,
 		planStore:             planStore,
 		webhookManager:        webhookManager,
+		manager:               manager,
 	}
+}
+
+// checkSavedMessage rejects a saved message the scheduled message couldn't send, so that shows
+// on save and not with the first send.
+func (h *ScheduledMessageHandler) checkSavedMessage(c *fiber.Ctx, features model.PlanFeatures, guildID, channelID common.ID, savedMessageID string) error {
+	return userFailure(h.manager.CheckScheduledMessage(c.UserContext(), model.ScheduledMessage{
+		GuildID:        guildID,
+		ChannelID:      channelID,
+		SavedMessageID: savedMessageID,
+	}, features), "invalid_saved_message")
+}
+
+// userFailure turns a failure the user can fix into a bad request with its reason.
+func userFailure(err error, code string) error {
+	if err == nil {
+		return nil
+	}
+	if reason, ok := scheduled_messages.UserFailure(err); ok {
+		return handlers.BadRequest(code, reason)
+	}
+	return err
 }
 
 // messageSender checks that the message to edit exists in the channel and can be edited, and finds
@@ -108,6 +131,13 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 
 	if int(existingCount) >= features.MaxScheduledMessages {
 		return handlers.Forbidden("insufficient_plan", "You have reached the maximum number of scheduled messages for your plan!")
+	}
+
+	// Before looking up the message to edit on Discord, a bad saved message fails faster.
+	if req.Enabled {
+		if err := h.checkSavedMessage(c, features, guildID, req.ChannelID, req.SavedMessageID); err != nil {
+			return err
+		}
 	}
 
 	messageSender, err := h.messageSender(c, req.ChannelID, req.MessageID)
@@ -272,6 +302,13 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		}
 	}
 
+	// Before looking up the message to edit on Discord, a bad saved message fails faster.
+	if req.Enabled {
+		if err := h.checkSavedMessage(c, features, guildID, req.ChannelID, req.SavedMessageID); err != nil {
+			return err
+		}
+	}
+
 	messageSender, err := h.messageSender(c, req.ChannelID, req.MessageID)
 	if err != nil {
 		return err
@@ -309,6 +346,42 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 	return c.JSON(wire.ScheduledMessageUpdateResponseWire{
 		Success: true,
 		Data:    scheduledMessageModelToWire(msg),
+	})
+}
+
+// HandleTestScheduledMessage sends the saved message of a scheduled message to its channel once,
+// so the user sees what the schedule will send. It's always a new message, a test shouldn't
+// edit the one the schedule edits. Unlike the check on save it runs the templates, KV changes
+// included, like any send does.
+func (h *ScheduledMessageHandler) HandleTestScheduledMessage(c *fiber.Ctx, req wire.ScheduledMessageTestRequestWire) error {
+	session := c.Locals("session").(*session.Session)
+	guildID, err := handlers.QueryID(c, "guild_id")
+	if err != nil {
+		return err
+	}
+
+	if err := h.am.CheckGuildAccessForRequest(c, guildID); err != nil {
+		return err
+	}
+
+	if err := h.am.CheckChannelAccessForRequestInGuild(c, req.ChannelID, guildID); err != nil {
+		return err
+	}
+
+	err = h.manager.SendScheduledMessage(c.UserContext(), model.ScheduledMessage{
+		CreatorID:      session.UserID,
+		GuildID:        guildID,
+		ChannelID:      req.ChannelID,
+		ThreadName:     req.ThreadName,
+		SavedMessageID: req.SavedMessageID,
+	})
+	if err := userFailure(err, "send_failed"); err != nil {
+		return err
+	}
+
+	return c.JSON(wire.ScheduledMessageTestResponseWire{
+		Success: true,
+		Data:    struct{}{},
 	})
 }
 
