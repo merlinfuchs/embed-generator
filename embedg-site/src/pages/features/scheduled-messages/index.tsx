@@ -698,14 +698,14 @@ export default function ScheduledMessages(): JSX.Element {
         icon={ArrowPathIcon}
         title="Write it as a sentence."
         text="Every 2 weeks on Tuesday and Thursday at 7:30 PM is exactly what you type. The upcoming sends update while you edit, so you know what the schedule does before you save it, and the cadence is counted from your start date instead of resetting every month."
-        src={`${IMG}/repeat.png`}
+        src={`${IMG}/repeat.webp`}
         alt="The repeat editor with every 2 weeks on Tuesday and Thursday and the upcoming sends"
       />
       <Showcase
         icon={CalendarDaysIcon}
         title="Or just pick the dates."
         text="For events that don't follow a pattern, click the days in the calendar and give each one as many times as you need. A tournament weekend with a reminder at noon and one before the finals is a single scheduled message."
-        src={`${IMG}/dates.png`}
+        src={`${IMG}/dates.webp`}
         alt="The date picker with three days selected, two of them with two times"
         flip
       />
@@ -713,14 +713,14 @@ export default function ScheduledMessages(): JSX.Element {
         icon={Squares2X2Icon}
         title="See the whole month at once."
         text="The calendar shows every upcoming send of the server in the timezone you pick, colored by message. Spot a crowded Friday, click a send to open its schedule, or click the plus on a day to schedule something new on it."
-        src={`${IMG}/calendar.png`}
+        src={`${IMG}/calendar.webp`}
         alt="A month calendar with the sends of several scheduled messages"
       />
       <Showcase
         icon={ExclamationTriangleIcon}
         title="Know what's running."
         text="Every scheduled message shows whether it's active, paused, ended or stopped, and when it sends next. If Discord rejects a message, it stops and says why instead of failing quietly."
-        src={`${IMG}/list.png`}
+        src={`${IMG}/list.webp`}
         alt="The list of scheduled messages with active, paused, ended and stopped ones"
         flip
       />
@@ -729,7 +729,7 @@ export default function ScheduledMessages(): JSX.Element {
         steps={steps}
         aside={
           <Screenshot
-            src={`${IMG}/once.png`}
+            src={`${IMG}/once.webp`}
             alt="A scheduled message that sends once on October 31"
           />
         }
