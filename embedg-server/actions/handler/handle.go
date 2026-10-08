@@ -408,6 +408,10 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				}
 			}
 		case actions.ActionTypeTextChannel, actions.ActionTypeSavedMessageChannel:
+			if !features.AdvancedActionTypes {
+				return userErr("Sending messages to other channels needs Embed Generator Premium on this server.")
+			}
+
 			channelID, err := m.channelTarget(*interaction.GuildID(), action, derivedPerms)
 			if err != nil {
 				return err

@@ -47,7 +47,7 @@ This action will create a simple text response. You can select if the message sh
 
 You can also select where the message should be send. By default a new message will be created in the channel where the user has interacted with the components or ran the command, but you can also select to send a direct message to the user or even edit the message.
 
-With "Other Channel" the message is sent to a channel of your choice instead, for example to post a report in a staff channel when someone clicks a button. The bot sends this message, so it needs permission to send messages in that channel. You need the Manage Webhooks permission in your server's role settings to use it. See [Channel Permissions](./channel-permissions#actions-that-send-to-other-channels) if channels are greyed out.
+With "Other Channel", which needs [Embed Generator Premium](../premium), the message is sent to a channel of your choice instead, for example to post a report in a staff channel when someone clicks a button. The bot sends this message, so it needs permission to send messages in that channel. You need the Manage Webhooks permission in your server's role settings to use it. See [Channel Permissions](./channel-permissions#actions-that-send-to-other-channels) if channels are greyed out.
 
 ![Action Text Response](./actions-text-response.png)
 
