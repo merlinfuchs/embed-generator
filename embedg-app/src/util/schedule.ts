@@ -218,6 +218,33 @@ export function isOnDates(msg: ScheduledMessageWire): boolean {
   return !!msg.run_times?.length;
 }
 
+// What a saved message is doing: sending, turned off by the user, past its end date, done with
+// its dates, or turned off by an error, on its last date or before.
+export type MessageState =
+  | "active"
+  | "paused"
+  | "ended"
+  | "sent"
+  | "failed"
+  | "stopped";
+
+export function messageState(msg: ScheduledMessageWire): MessageState {
+  // The manager turns it off once it's past the end date, an error may have come before.
+  if (msg.end_at !== null && Date.parse(msg.next_at) > Date.parse(msg.end_at)) {
+    return "ended";
+  }
+  if (msg.enabled) return "active";
+
+  // Off because its last date ran, not because it was paused.
+  const last = msg.run_times?.at(-1);
+  const ran = [msg.last_sent_at, msg.last_error_at].filter((t) => t !== null);
+  const datesDone =
+    !!last && ran.some((t) => Date.parse(t) >= Date.parse(last));
+
+  if (msg.last_error) return datesDone ? "failed" : "stopped";
+  return datesDone ? "sent" : "paused";
+}
+
 export function scheduleDraftFromMessage(
   msg: ScheduledMessageWire,
 ): ScheduleDraft {

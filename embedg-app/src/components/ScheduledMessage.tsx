@@ -36,6 +36,8 @@ import ScheduleEditor, {
 import {
   describeSchedule,
   isOnDates,
+  type MessageState,
+  messageState,
   scheduleDraftFromMessage,
   scheduleFromDraft,
 } from "../util/schedule";
@@ -193,6 +195,9 @@ export default function ScheduledMessage({
     );
   }
 
+  const state = messageState(msg);
+  const inactive = state !== "active";
+
   return (
     <div ref={ref}>
       <AutoAnimate
@@ -246,7 +251,7 @@ export default function ScheduledMessage({
             <div className="space-y-5">
               {msg.last_error && (
                 <div className="border border-red/70 rounded-lg px-3 py-2">
-                  <LastError msg={msg} />
+                  <LastError msg={msg} state={state} />
                   <div className="text-mist-400 text-sm font-light mt-1">
                     Saving clears this error.
                   </div>
@@ -343,16 +348,27 @@ export default function ScheduledMessage({
           <div className="flex justify-between items-start py-4 px-5" key="2">
             <div className="flex-auto truncate">
               <div className="flex items-center space-x-2 truncate text-lg mb-1">
-                <div className="text-white truncate flex space-x-2 items-center">
+                <div
+                  className={clsx(
+                    "text-white truncate flex space-x-2 items-center",
+                    inactive && "opacity-60",
+                  )}
+                >
                   {isOnDates(msg) ? (
                     <CalendarDaysIcon className="text-mist-500 h-6 w-6" />
                   ) : (
                     <ClockIcon className="text-mist-500 h-6 w-6" />
                   )}
-                  <div>{msg.name}</div>
+                  <div className="truncate">{msg.name}</div>
                 </div>
+                <StateBadge state={state} />
               </div>
-              <div className="text-mist-400 text-sm font-light whitespace-normal">
+              <div
+                className={clsx(
+                  "text-mist-400 text-sm font-light whitespace-normal",
+                  inactive && "opacity-60",
+                )}
+              >
                 {isOnDates(msg)
                   ? describeDates(msg.run_times!, storedTimezone)
                   : describeSchedule(
@@ -361,8 +377,8 @@ export default function ScheduledMessage({
                     )}{" "}
                 ({storedTimezone})
               </div>
-              <Status msg={msg} />
-              <LastError msg={msg} />
+              <Status msg={msg} state={state} />
+              <LastError msg={msg} state={state} />
             </div>
             <div className="flex flex-none items-center space-x-4 md:space-x-3">
               <button
@@ -402,14 +418,20 @@ export default function ScheduledMessage({
   );
 }
 
-function LastError({ msg }: { msg: ScheduledMessageWire }) {
+function LastError({
+  msg,
+  state,
+}: {
+  msg: ScheduledMessageWire;
+  state: MessageState;
+}) {
   if (!msg.last_error) return null;
 
   // A schedule that ran past its end date is off too, but the error didn't stop it.
   const label =
-    msg.enabled || ended(msg)
+    state === "active" || state === "ended"
       ? "Last run failed"
-      : datesDone(msg)
+      : state === "failed"
         ? "Failed to send"
         : "Stopped";
   const at = msg.last_error_at
@@ -429,36 +451,50 @@ function describeDates(dates: string[], timezone: string): string {
   return `${dates.length} dates from ${formatDay(dates[0], timezone)} to ${formatDay(dates[dates.length - 1], timezone)}`;
 }
 
-// Whether a message on dates is off because its last date ran, not because it was paused.
-function datesDone(msg: ScheduledMessageWire): boolean {
-  const last = msg.run_times?.at(-1);
-  const ran = [msg.last_sent_at, msg.last_error_at].filter((t) => t !== null);
+const stateBadges: Record<MessageState, [string, string]> = {
+  active: ["Active", "bg-green/15 text-green"],
+  paused: ["Paused", "bg-ink-600 text-mist-300"],
+  ended: ["Ended", "bg-ink-600 text-mist-300"],
+  sent: ["Sent", "bg-ink-600 text-mist-300"],
+  failed: ["Failed", "bg-red/15 text-red"],
+  stopped: ["Stopped", "bg-red/15 text-red"],
+};
+
+function StateBadge({ state }: { state: MessageState }) {
+  const [label, className] = stateBadges[state];
   return (
-    !msg.enabled && !!last && ran.some((t) => Date.parse(t) >= Date.parse(last))
+    <div
+      className={clsx(
+        "flex-none rounded-full px-2 py-0.5 text-xs font-medium",
+        className,
+      )}
+    >
+      {label}
+    </div>
   );
 }
 
-function ended(msg: ScheduledMessageWire): boolean {
-  return (
-    msg.end_at !== null && Date.parse(msg.next_at) > Date.parse(msg.end_at)
-  );
-}
-
-// What happens next, an error shows below it on its own.
-function Status({ msg }: { msg: ScheduledMessageWire }) {
-  if (msg.last_error && !msg.enabled && !ended(msg)) return null;
-
+// What happens next or what happened last, an error shows below it on its own.
+function Status({
+  msg,
+  state,
+}: {
+  msg: ScheduledMessageWire;
+  state: MessageState;
+}) {
   let text: string;
   let className = "text-mist-500";
-  if (ended(msg)) {
-    text = `Ended ${new Date(msg.end_at!).toLocaleDateString()}`;
-  } else if (msg.enabled) {
+  if (state === "active") {
     text = `Next send ${new Date(msg.next_at).toLocaleString()}, ${relativeRun(msg.next_at)}`;
     className = "text-mist-300";
-  } else if (datesDone(msg) && msg.last_sent_at) {
+  } else if (state === "ended") {
+    text = `Ended ${new Date(msg.end_at!).toLocaleDateString()}`;
+  } else if (state === "sent" && msg.last_sent_at) {
     text = `Sent ${new Date(msg.last_sent_at).toLocaleString()}`;
+  } else if (state === "paused" && msg.last_sent_at) {
+    text = `Last sent ${new Date(msg.last_sent_at).toLocaleString()}`;
   } else {
-    text = "Paused";
+    return null;
   }
 
   return (

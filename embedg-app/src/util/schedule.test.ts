@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { ScheduledMessageWire } from "../api/wire";
 import {
   dateOnDay,
   defaultRepeat,
   describeRepeat,
   describeSchedule,
+  messageState,
   parseRepeat,
   type Repeat,
   repeatToCron,
@@ -152,5 +154,86 @@ describe("dateOnDay", () => {
   it("moves a time that is over to the next five minutes", () => {
     vi.useFakeTimers({ now: new Date("2026-10-07T15:02:10Z") });
     expect(dateOnDay("2026-10-07", "UTC")).toBe("2026-10-07T15:05:00.000Z");
+  });
+});
+
+describe("messageState", () => {
+  const base: ScheduledMessageWire = {
+    id: "1",
+    creator_id: "1",
+    guild_id: "1",
+    channel_id: "1",
+    message_id: null,
+    thread_name: null,
+    saved_message_id: "1",
+    name: "Test",
+    description: null,
+    cron_expression: "0 12 * * *",
+    cron_timezone: "UTC",
+    cron_interval: 1,
+    start_at: "2026-10-01T00:00:00Z",
+    end_at: null,
+    next_at: "2026-10-08T12:00:00Z",
+    run_times: null,
+    enabled: true,
+    created_at: "2026-10-01T00:00:00Z",
+    updated_at: "2026-10-01T00:00:00Z",
+    last_sent_at: null,
+    last_error: null,
+    last_error_at: null,
+  };
+  const dates = {
+    cron_expression: null,
+    run_times: ["2026-10-06T18:00:00Z", "2026-10-07T18:00:00Z"],
+    next_at: "2026-10-07T18:00:00Z",
+    enabled: false,
+  };
+
+  it("tells active, paused and ended apart", () => {
+    expect(messageState(base)).toBe("active");
+    expect(messageState({ ...base, last_error: "Missing Access" })).toBe(
+      "active",
+    );
+    expect(messageState({ ...base, enabled: false })).toBe("paused");
+    expect(
+      messageState({ ...base, enabled: false, end_at: "2026-10-08T00:00:00Z" }),
+    ).toBe("ended");
+  });
+
+  it("tells an error stopping it apart from the last date failing", () => {
+    const error = { last_error: "Unknown Channel" };
+    expect(
+      messageState({
+        ...base,
+        ...error,
+        enabled: false,
+        last_error_at: "2026-10-07T12:00:00Z",
+      }),
+    ).toBe("stopped");
+    expect(
+      messageState({
+        ...base,
+        ...dates,
+        ...error,
+        last_error_at: "2026-10-06T18:00:00Z",
+      }),
+    ).toBe("stopped");
+    expect(
+      messageState({
+        ...base,
+        ...dates,
+        ...error,
+        last_error_at: "2026-10-07T18:00:01Z",
+      }),
+    ).toBe("failed");
+  });
+
+  it("is sent once the last date went out", () => {
+    expect(
+      messageState({ ...base, ...dates, last_sent_at: "2026-10-07T18:00:02Z" }),
+    ).toBe("sent");
+    expect(
+      messageState({ ...base, ...dates, last_sent_at: "2026-10-06T18:00:02Z" }),
+    ).toBe("paused");
   });
 });
