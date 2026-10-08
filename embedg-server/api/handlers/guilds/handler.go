@@ -155,6 +155,7 @@ func (h *GuildsHanlder) HandleListGuildChannels(c *fiber.Ctx) error {
 			UserPermissions: fmt.Sprintf("%d", channel.Access.UserPermissions),
 			BotAccess:       channel.Access.BotAccess(),
 			BotPermissions:  fmt.Sprintf("%d", channel.Access.BotPermissions),
+			BotCanSend:      channel.Access.BotCanSend(channel.Channel),
 		})
 	}
 

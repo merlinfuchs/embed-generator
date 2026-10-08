@@ -192,7 +192,8 @@ export interface GuildWire {
   icon: null | string;
   /**
    * CanManageWebhooks comes from the user's server level permissions. A channel overwrite can still
-   * grant it in a single channel, so it only puts likely servers first, it isn't an access check.
+   * grant it in a single channel, so for sending it only puts likely servers first. Actions that
+   * send to another channel do require it at the server level, and the picker greys out channels by it.
    */
   can_manage_webhooks: boolean;
 }
@@ -208,6 +209,10 @@ export interface GuildChannelWire {
   user_permissions: string;
   bot_access: boolean;
   bot_permissions: string;
+  /**
+   * BotCanSend is whether the bot can post its own messages here, as opposed to through a webhook.
+   */
+  bot_can_send: boolean;
 }
 export type ListChannelsResponseWire = APIResponse<GuildChannelWire[]>;
 export interface GuildRoleWire {

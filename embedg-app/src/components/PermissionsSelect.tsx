@@ -13,7 +13,7 @@ interface Props {
   onChange: (permissions: string) => void;
 }
 
-export const permissionFlags: Record<string, bigint> = {
+const permissionFlags: Record<string, bigint> = {
   CREATE_INSTANT_INVITE: BigInt("0x0000000000000001"),
   KICK_MEMBERS: BigInt("0x0000000000000002"),
   BAN_MEMBERS: BigInt("0x0000000000000004"),

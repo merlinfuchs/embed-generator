@@ -408,7 +408,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				}
 			}
 		case actions.ActionTypeTextChannel, actions.ActionTypeSavedMessageChannel:
-			channelID, err := m.channelTarget(interaction, action, derivedPerms)
+			channelID, err := m.channelTarget(*interaction.GuildID(), action, derivedPerms)
 			if err != nil {
 				return err
 			}
@@ -595,15 +595,10 @@ func roleTarget(
 // channelTarget resolves the channel a message action sends to and checks that the message creator
 // may send to other channels.
 func (m *ActionHandler) channelTarget(
-	interaction discord.Interaction,
+	guildID common.ID,
 	action actions.Action,
 	derivedPerms *actions.ActionDerivedPermissions,
 ) (snowflake.ID, error) {
-	guildID := interaction.GuildID()
-	if guildID == nil {
-		return 0, userErr("Messages can only be sent to a channel from a server.")
-	}
-
 	// Messages from before the permission context was added have nothing to check against.
 	if derivedPerms == nil {
 		return 0, userErr("This message is too old to send messages to other channels. Send it again to use this action.")
@@ -625,7 +620,7 @@ func (m *ActionHandler) channelTarget(
 		return 0, fmt.Errorf("failed to get channel: %w", err)
 	}
 	// The action is stored with the message, so the id could point anywhere the bot is.
-	if channel.GuildID() != *guildID {
+	if channel.GuildID() != guildID {
 		return 0, userErr("The channel <#%s> isn't in this server.", channelID)
 	}
 

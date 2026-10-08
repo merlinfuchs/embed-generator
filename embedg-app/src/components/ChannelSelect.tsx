@@ -15,13 +15,12 @@ import Tooltip from "./Tooltip";
 import { useToasts } from "../util/toasts";
 import { isThreadOnlyChannel } from "../discord/util";
 import type { GuildChannelWire } from "../api/wire";
-import { permissionFlags } from "./PermissionsSelect";
 
 type Sender = "webhook" | "bot";
 
 type ChannelAccess = Pick<
   GuildChannelWire,
-  "type" | "user_access" | "bot_access" | "bot_permissions"
+  "type" | "user_access" | "bot_access" | "bot_can_send"
 >;
 
 interface Props {
@@ -57,25 +56,12 @@ function canSelectChannelType(type: number, sender: Sender) {
   return selectableChannelTypes.has(type);
 }
 
-// The permissions are the bot's in the channel, which are all of them for an administrator.
-function hasBotAccess(channel: ChannelAccess, sender: Sender) {
-  if (sender === "webhook") return channel.bot_access;
-  const needed = threadChannelTypes.has(channel.type)
-    ? permissionFlags.SEND_MESSAGES_IN_THREADS
-    : permissionFlags.SEND_MESSAGES;
-  return (BigInt(channel.bot_permissions) & needed) !== 0n;
-}
-
-function hasUserAccess(channel: ChannelAccess, ctx: PickContext) {
-  return ctx.sender === "bot" ? ctx.serverManageWebhooks : channel.user_access;
-}
-
 function canSelect(channel: ChannelAccess, ctx: PickContext) {
-  return (
-    hasUserAccess(channel, ctx) &&
-    hasBotAccess(channel, ctx.sender) &&
-    canSelectChannelType(channel.type, ctx.sender)
-  );
+  const access =
+    ctx.sender === "bot"
+      ? ctx.serverManageWebhooks && channel.bot_can_send
+      : channel.user_access && channel.bot_access;
+  return access && canSelectChannelType(channel.type, ctx.sender);
 }
 
 const channelPermissionsDocsUrl =
@@ -83,22 +69,22 @@ const channelPermissionsDocsUrl =
 
 const otherChannelsDocsUrl = `${channelPermissionsDocsUrl}#actions-that-send-to-other-channels`;
 
-// Most often a channel or category overwrite that takes Manage Webhooks away from a role, which the
-// server wide role settings don't show. Administrator skips overwrites, so it "fixes" this too.
 function missingAccessReason(channel: ChannelAccess, ctx: PickContext) {
+  if (ctx.sender === "bot" && isThreadOnlyChannel(channel.type))
+    return "The bot can't post here directly. Pick a post in this channel instead.";
+  if (!selectableChannelTypes.has(channel.type)) return null;
+
   if (ctx.sender === "bot") {
-    if (isThreadOnlyChannel(channel.type))
-      return "The bot can't post here directly. Pick a post in this channel instead.";
-    if (!canSelectChannelType(channel.type, ctx.sender)) return null;
     // The same for every channel, so it comes first to not hide behind a bot permission.
     if (!ctx.serverManageWebhooks)
       return "You need Manage Webhooks in the server's role settings to send to other channels. Click for help.";
-    if (!hasBotAccess(channel, ctx.sender))
+    if (!channel.bot_can_send)
       return "The bot needs Send Messages in this channel. Click for help.";
     return null;
   }
 
-  if (!canSelectChannelType(channel.type, ctx.sender)) return null;
+  // Most often a channel or category overwrite that takes Manage Webhooks away from a role, which
+  // the server wide role settings don't show. Administrator skips overwrites, so it "fixes" this too.
   if (!channel.bot_access)
     return "The bot needs Manage Webhooks in this channel. Click for help.";
   if (!channel.user_access)
@@ -130,10 +116,14 @@ export function ChannelSelect({
 }: Props) {
   const { data } = useGuildChannelsQuery(guildId);
   const { data: guilds } = useGuildsQuery();
-  const serverManageWebhooks =
-    (guilds?.success &&
-      guilds.data.find((g) => g.id === guildId)?.can_manage_webhooks) ||
-    false;
+  const serverManageWebhooks = !!(
+    guilds?.success &&
+    guilds.data.find((g) => g.id === guildId)?.can_manage_webhooks
+  );
+  const ctx = useMemo<PickContext>(
+    () => ({ sender, serverManageWebhooks }),
+    [sender, serverManageWebhooks],
+  );
   const toast = useToasts((state) => state.create);
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -167,7 +157,6 @@ export function ChannelSelect({
   }, [data]);
 
   const channels = useMemo(() => {
-    const ctx: PickContext = { sender, serverManageWebhooks };
     // Already sorted by position in the query, which the tree building below depends on.
     const rawChannels = data?.success ? data.data : [];
 
@@ -228,7 +217,7 @@ export function ChannelSelect({
     }
 
     return res;
-  }, [data, sender, serverManageWebhooks]);
+  }, [data, ctx]);
 
   const filteredChannels = useMemo(() => {
     if (!query) return channels;
@@ -288,9 +277,7 @@ export function ChannelSelect({
           <SelectDropdown>
             {filteredChannels.length ? (
               filteredChannels.map((c) => {
-                const reason = c.canSelect
-                  ? null
-                  : missingAccessReason(c, { sender, serverManageWebhooks });
+                const reason = c.canSelect ? null : missingAccessReason(c, ctx);
                 return (
                   <button
                     type="button"
