@@ -66,3 +66,35 @@ test("without premium another day moves the one date", () => {
 
   expect(latest).toEqual([`${nextMonthDay(17)}T12:00:00.000Z`]);
 });
+
+test("a day can have several times", () => {
+  renderEditor(<Harness />);
+  fireEvent.click(screen.getByRole("button", { name: "Next month" }));
+  fireEvent.click(screen.getByRole("button", { name: nextMonthDay(9) }));
+
+  const add = () =>
+    fireEvent.click(screen.getByRole("button", { name: /^Add a time on / }));
+  add();
+  add();
+  expect(latest).toEqual([
+    `${nextMonthDay(9)}T12:00:00.000Z`,
+    `${nextMonthDay(9)}T13:00:00.000Z`,
+    `${nextMonthDay(9)}T14:00:00.000Z`,
+  ]);
+
+  fireEvent.click(screen.getByRole("button", { name: / at 13:00$/ }));
+  expect(latest).toEqual([
+    `${nextMonthDay(9)}T12:00:00.000Z`,
+    `${nextMonthDay(9)}T14:00:00.000Z`,
+  ]);
+});
+
+test("without premium a day has one time", () => {
+  renderEditor(<Harness periodicAllowed={false} />);
+  fireEvent.click(screen.getByRole("button", { name: "Next month" }));
+  fireEvent.click(screen.getByRole("button", { name: nextMonthDay(9) }));
+
+  expect(
+    screen.queryByRole("button", { name: /^Add a time on / }),
+  ).not.toBeInTheDocument();
+});

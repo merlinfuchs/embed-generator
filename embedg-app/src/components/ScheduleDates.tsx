@@ -1,6 +1,7 @@
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
+  PlusIcon,
   XMarkIcon,
 } from "@heroicons/react/20/solid";
 import clsx from "clsx";
@@ -57,6 +58,22 @@ export default function ScheduleDates({
     [sorted, timezone],
   );
 
+  // Grouped by day, a day can have several times. Each keeps its place in dates, so editing its
+  // time doesn't replace its row.
+  const days = useMemo(() => {
+    const res: { day: string; times: { date: string; pos: number }[] }[] = [];
+    const entries = dates
+      .map((date, pos) => ({ date, pos }))
+      .sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
+    for (const entry of entries) {
+      const day = zonedDate(entry.date, timezone);
+      const last = res.at(-1);
+      if (last?.day === day) last.times.push(entry);
+      else res.push({ day, times: [entry] });
+    }
+    return res;
+  }, [dates, timezone]);
+
   const [month, setMonth] = useState(() =>
     zonedDate(sorted.find((d) => d >= now) ?? now, timezone).slice(0, 7),
   );
@@ -80,20 +97,30 @@ export default function ScheduleDates({
     onChange(periodicAllowed ? [...dates, date] : [date]);
   }
 
-  function setTime(date: string, time: string) {
+  function setTime(pos: number, time: string) {
     const [hour, minute] = time.split(":").map(Number);
     if (!Number.isFinite(hour) || !Number.isFinite(minute)) return;
     const moved = zonedDateTime(
-      zonedDate(date, timezone),
+      zonedDate(dates[pos], timezone),
       timezone,
       hour,
       minute,
     );
-    onChange(dates.map((d) => (d === date ? moved : d)));
+    onChange(dates.map((d, i) => (i === pos ? moved : d)));
+  }
+
+  // Another time on a day, an hour after its latest one and at most its last minute.
+  function addTime(day: string, latest: string) {
+    const [hour, minute] = zonedTime(latest, timezone).split(":").map(Number);
+    const date =
+      hour < 23
+        ? zonedDateTime(day, timezone, hour + 1, minute)
+        : zonedDateTime(day, timezone, 23, 59);
+    if (!dates.includes(date)) onChange([...dates, date]);
   }
 
   const full = dates.length >= MaxRunTimes;
-  const { days, firstColumn } = monthDays(month);
+  const { days: monthDayList, firstColumn } = monthDays(month);
 
   return (
     <div className="grid sm:grid-cols-[16rem_1fr] gap-5">
@@ -123,7 +150,7 @@ export default function ScheduleDates({
           ))}
         </div>
         <div className="grid grid-cols-7 gap-1">
-          {days.map((day, i) => (
+          {monthDayList.map((day, i) => (
             <button
               key={day}
               type="button"
@@ -148,45 +175,61 @@ export default function ScheduleDates({
       </div>
 
       <div className="min-w-0">
-        {sorted.length === 0 ? (
+        {days.length === 0 ? (
           <div className="text-mist-400 text-sm font-light">
             Pick the days to send on in the calendar.
           </div>
         ) : (
-          <ul className="space-y-2">
-            {sorted.map((date) => {
-              const past = date < now;
-              const label = formatDay(date, timezone);
+          <ul className="space-y-3">
+            {days.map(({ day, times }) => {
+              const label = formatDay(times[0].date, timezone);
               return (
-                // Not the date itself, changing its time would replace the row and drop the focus.
-                <li
-                  key={zonedDate(date, timezone)}
-                  className="flex items-center gap-2"
-                >
-                  <span
-                    className={clsx(
-                      "flex-auto text-sm",
-                      past ? "text-mist-500" : "text-white",
-                    )}
-                  >
+                <li key={day} className="flex items-start gap-2">
+                  <span className="text-sm text-white w-28 flex-none pt-2">
                     {label}
-                    {past && " (past)"}
                   </span>
-                  <input
-                    type="time"
-                    aria-label={`Time on ${label}`}
-                    className="bg-ink-900 rounded-lg px-3 h-9 text-white"
-                    value={zonedTime(date, timezone)}
-                    onChange={(e) => setTime(date, e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    aria-label={`Remove ${label}`}
-                    className="text-mist-500 hover:text-white p-1"
-                    onClick={() => onChange(dates.filter((d) => d !== date))}
-                  >
-                    <XMarkIcon className="h-5 w-5" />
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {times.map(({ date, pos }) => {
+                      const time = zonedTime(date, timezone);
+                      return (
+                        <span key={pos} className="flex items-center">
+                          <input
+                            type="time"
+                            aria-label={`Time on ${label}`}
+                            className={clsx(
+                              "bg-ink-900 rounded-lg px-3 h-9",
+                              // Past times stay listed, they were sent already.
+                              date < now ? "text-mist-500" : "text-white",
+                            )}
+                            value={time}
+                            onChange={(e) => setTime(pos, e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            aria-label={`Remove ${label} at ${time}`}
+                            className="text-mist-500 hover:text-white p-1"
+                            onClick={() =>
+                              onChange(dates.filter((_, i) => i !== pos))
+                            }
+                          >
+                            <XMarkIcon className="h-5 w-5" />
+                          </button>
+                        </span>
+                      );
+                    })}
+                    {periodicAllowed && !full && (
+                      <button
+                        type="button"
+                        aria-label={`Add a time on ${label}`}
+                        className="text-mist-500 hover:text-white p-1"
+                        onClick={() =>
+                          addTime(day, times[times.length - 1].date)
+                        }
+                      >
+                        <PlusIcon className="h-5 w-5" />
+                      </button>
+                    )}
+                  </div>
                 </li>
               );
             })}
