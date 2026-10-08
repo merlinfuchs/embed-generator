@@ -8,10 +8,9 @@
 [![Status](https://uptime.betterstack.com/status-badges/v2/monitor/2y8eg.svg)](https://status.message.style/)
 [![Discord Server](https://img.shields.io/discord/730045476459642900)](https://message.style/discord)
 
-A powerful tool for creating rich-embed Discord messages using webhooks.
+**[Embed Generator](https://message.style)** is a free visual editor for Discord messages. Build embeds, [button roles](https://message.style/features/interactive-components), [scheduled messages](https://message.style/features/scheduled-messages) and [Components V2](https://message.style/features/components-v2) layouts, then send them through a [Discord webhook](https://message.style/features/discord-webhooks) or the Embed Generator bot.
 
-You will usually want to use the hosted version at https://message.style. There is not much benefit in hosting this
-yourself.
+Use the hosted version at [message.style](https://message.style). Self-hosting works too, but there is not much benefit to it.
 
 ## YouTube tutorial
 
