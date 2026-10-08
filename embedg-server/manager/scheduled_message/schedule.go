@@ -87,7 +87,10 @@ func (s Schedule) next(ref time.Time, inclusive bool) (time.Time, error) {
 		if period > anchor {
 			due = period + interval - (period-anchor)%interval
 		}
-		tick, err = nextTick(s.Expression, unit.start(due, loc), s.Timezone, true)
+		// It's later than ref. Searching from the wall clock the period starts at still finds a
+		// tick on a midnight that DST skips, which maps to after the start.
+		wall, start := unit.start(due, loc)
+		tick, err = searchTicks(s.Expression, wall, loc, start, true)
 		if err != nil {
 			return time.Time{}, err
 		}
@@ -176,19 +179,22 @@ func (u periodUnit) index(t time.Time) int64 {
 	}
 }
 
-// start returns when the period with the given index begins in loc. time.Date carries the
-// overflowing field into the larger ones.
-func (u periodUnit) start(index int64, loc *time.Location) time.Time {
+// start returns when the period with the given index begins in loc, as the wall clock written as
+// UTC and as the instant. time.Date carries the overflowing field into the larger ones.
+func (u periodUnit) start(index int64, loc *time.Location) (wall, instant time.Time) {
 	switch u {
 	case unitMinute:
-		return time.Unix(index*60, 0).In(loc)
+		instant = time.Unix(index*60, 0)
+		return asWall(instant.In(loc)), instant
 	case unitHour:
-		return time.Unix(index*3600, 0).In(loc)
+		instant = time.Unix(index*3600, 0)
+		return asWall(instant.In(loc)), instant
 	case unitWeek:
-		return time.Date(1970, 1, 1+int(index)*7+4, 0, 0, 0, 0, loc)
+		wall = time.Date(1970, 1, 1+int(index)*7+4, 0, 0, 0, 0, time.UTC)
 	case unitMonth:
-		return time.Date(0, time.Month(index+1), 1, 0, 0, 0, 0, loc)
+		wall = time.Date(0, time.Month(index+1), 1, 0, 0, 0, 0, time.UTC)
 	default:
-		return time.Date(1970, 1, 1+int(index), 0, 0, 0, 0, loc)
+		wall = time.Date(1970, 1, 1+int(index), 0, 0, 0, 0, time.UTC)
 	}
+	return wall, wallToInstant(wall, loc)
 }

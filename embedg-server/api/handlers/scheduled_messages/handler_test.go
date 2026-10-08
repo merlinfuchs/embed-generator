@@ -69,4 +69,13 @@ func TestFirstRun(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "only works with a schedule") {
 		t.Errorf("want an unsupported interval to be rejected, got %v", err)
 	}
+
+	// The first two runs are a day apart, but every day it runs twice within a second.
+	_, err = firstRun(recurring("0,1 0 12 * * *", "UTC", 1, startAt), now.Add(2*time.Hour+500*time.Millisecond))
+	if err == nil || !strings.Contains(err.Error(), "too tight") {
+		t.Errorf("want a schedule with seconds to be rejected, got %v", err)
+	}
+	if _, err := firstRun(recurring("* * * * *", "UTC", 1, startAt), now); err != nil {
+		t.Errorf("want every minute to be allowed, got %v", err)
+	}
 }

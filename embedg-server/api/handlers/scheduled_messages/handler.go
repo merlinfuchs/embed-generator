@@ -7,6 +7,7 @@ import (
 
 	"log/slog"
 
+	"github.com/adhocore/gronx"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/access"
@@ -427,6 +428,11 @@ func firstRun(s *wire.ScheduledMessageScheduleWire, now time.Time) (time.Time, e
 		return s.StartAt, nil
 	}
 
+	// Without seconds every run is on a different minute, so it can't run more than once a minute.
+	if segs, err := gronx.Segments(s.CronExpression.String); err == nil && segs[0] != "0" {
+		return time.Time{}, handlers.BadRequest("invalid_cron_expression", "The cron expression is too tight and will trigger too often.")
+	}
+
 	sched := schedule(s)
 	nextAt, err := sched.First(now)
 	if errors.Is(err, scheduled_messages.ErrUnsupportedInterval) {
@@ -437,15 +443,6 @@ func firstRun(s *wire.ScheduledMessageScheduleWire, now time.Time) (time.Time, e
 	}
 	if err != nil {
 		return time.Time{}, handlers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
-	}
-
-	nextNextAt, err := sched.Next(nextAt)
-	if err != nil {
-		return time.Time{}, handlers.BadRequest("invalid_cron_expression", "The cron expression is invalid.")
-	}
-
-	if nextNextAt.Sub(nextAt) < time.Minute {
-		return time.Time{}, handlers.BadRequest("invalid_cron_expression", "The cron expression is too tight and will trigger too often.")
 	}
 
 	return nextAt, nil
