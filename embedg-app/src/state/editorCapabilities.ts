@@ -43,6 +43,16 @@ export const COMPONENT_EMBED_CAPABILITIES: EditorCapabilities = {
   interactive: false,
 };
 
+/**
+ * A message an action responds with can't have interactive components of its
+ * own, and has no attachments for a file to show.
+ */
+export const RESPONSE_MESSAGE_CAPABILITIES: EditorCapabilities = {
+  componentTypes: [1, 9, 10, 12, 14, 17],
+  linkButtonsOnly: true,
+  interactive: false,
+};
+
 export const EditorCapabilitiesContext = createContext(MESSAGE_CAPABILITIES);
 
 export const useEditorCapabilities = () =>

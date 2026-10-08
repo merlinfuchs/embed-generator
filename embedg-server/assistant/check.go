@@ -257,7 +257,8 @@ func checkIDs(sets map[string]actions.ActionSet, guild Guild) []string {
 					))
 				}
 			case actions.ActionTypeSavedMessageResponse, actions.ActionTypeSavedMessageDM, actions.ActionTypeSavedMessageEdit, actions.ActionTypeSavedMessageChannel:
-				if !saved[action.TargetID] {
+				// A response that carries its own message names no saved message.
+				if action.Message == nil && !saved[action.TargetID] {
 					unknown = append(unknown, "saved message "+action.TargetID)
 				}
 			case actions.ActionTypePermissionCheck:

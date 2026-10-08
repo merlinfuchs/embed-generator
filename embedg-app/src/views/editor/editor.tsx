@@ -15,23 +15,21 @@ import { messageSchema } from "../../discord/schema";
 import {
   currentMessageIsBlank,
   takeFirstVisit,
-  useDebouncedCurrentDocument,
+  useDocumentValidation,
 } from "../../state/currentMessage";
-import { useComponentsV2Enabled } from "../../state/document";
+import {
+  messageDocumentStore,
+  useComponentsV2Enabled,
+} from "../../state/document";
 import { useValidationErrorStore } from "../../state/validationError";
 import EditorErrorBoundary from "../../components/EditorErrorBoundary";
 
 export default function EditorView() {
-  const setValidationError = useValidationErrorStore((state) => state.setError);
-
-  const document = useDebouncedCurrentDocument(250);
-
-  useEffect(() => {
-    if (!document) return;
-
-    const res = messageSchema.safeParse(document.message);
-    setValidationError(res.success ? null : res.error, document.idToPath);
-  }, [document, setValidationError]);
+  useDocumentValidation(
+    messageDocumentStore,
+    messageSchema,
+    useValidationErrorStore,
+  );
 
   const componentsV2Enabled = useComponentsV2Enabled();
   const assistantOpen = !!useMatch("/editor/assistant");

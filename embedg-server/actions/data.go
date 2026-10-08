@@ -149,6 +149,17 @@ type ComponentWithActions struct {
 	AccentColor int `json:"accent_color,omitempty"`
 }
 
+// Interactive is whether the component needs the bot to handle it, unlike a link button.
+func (c ComponentWithActions) Interactive() bool {
+	switch c.Type {
+	case discord.ComponentTypeButton:
+		return c.Style != discord.ButtonStyleLink
+	case discord.ComponentTypeStringSelectMenu:
+		return true
+	}
+	return false
+}
+
 type UnfurledMediaItem struct {
 	URL string `json:"url"`
 }
@@ -194,6 +205,9 @@ type Action struct {
 	DisableDefaultResponse bool       `json:"disable_default_response"`
 	Permissions            string     `json:"permissions"`
 	RoleIDs                []string   `json:"role_ids"`
+	// Message is what the saved message types respond with when the action carries the message
+	// itself instead of naming a saved message in TargetID.
+	Message *MessageWithActions `json:"message,omitempty"`
 }
 
 type ActionSet struct {

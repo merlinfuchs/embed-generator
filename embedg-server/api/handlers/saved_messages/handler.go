@@ -2,6 +2,7 @@ package saved_messages
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/access"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
@@ -79,7 +81,14 @@ func (h *SavedMessagesHandler) HandleCreateSavedMessage(c *fiber.Ctx, req wire.S
 		}
 	}
 
-	if err := h.checkSavedMessageLimit(c.UserContext(), session.UserID, guildID, 1); err != nil {
+	features, err := h.planFeatures(c.UserContext(), session.UserID, guildID)
+	if err != nil {
+		return err
+	}
+	if err := h.checkSavedMessageLimit(c.UserContext(), features, session.UserID, guildID, 1); err != nil {
+		return err
+	}
+	if err := checkActionMessages(features, req.Data); err != nil {
 		return err
 	}
 
@@ -132,6 +141,9 @@ func (h *SavedMessagesHandler) HandleUpdateSavedMessage(c *fiber.Ctx, req wire.S
 	if req.Data != nil {
 		features, err := h.planFeatures(c.UserContext(), session.UserID, guildID)
 		if err != nil {
+			return err
+		}
+		if err := checkActionMessages(features, req.Data); err != nil {
 			return err
 		}
 		keepVersions = features.MaxSavedMessageVersions
@@ -205,8 +217,17 @@ func (h *SavedMessagesHandler) HandleImportSavedMessages(c *fiber.Ctx, req wire.
 		}
 	}
 
-	if err := h.checkSavedMessageLimit(c.UserContext(), session.UserID, guildID, len(req.Messages)); err != nil {
+	features, err := h.planFeatures(c.UserContext(), session.UserID, guildID)
+	if err != nil {
 		return err
+	}
+	if err := h.checkSavedMessageLimit(c.UserContext(), features, session.UserID, guildID, len(req.Messages)); err != nil {
+		return err
+	}
+	for _, msg := range req.Messages {
+		if err := checkActionMessages(features, msg.Data); err != nil {
+			return err
+		}
 	}
 
 	res := make([]wire.SavedMessageWire, len(req.Messages))
@@ -331,13 +352,9 @@ func (h *SavedMessagesHandler) planFeatures(ctx context.Context, userID common.I
 
 // checkSavedMessageLimit checks that adding messages stays within the plan of the guild, or of the
 // user for their personal messages.
-func (h *SavedMessagesHandler) checkSavedMessageLimit(ctx context.Context, userID common.ID, guildID common.NullID, adding int) error {
-	features, err := h.planFeatures(ctx, userID, guildID)
-	if err != nil {
-		return err
-	}
-
+func (h *SavedMessagesHandler) checkSavedMessageLimit(ctx context.Context, features model.PlanFeatures, userID common.ID, guildID common.NullID, adding int) error {
 	var existing int64
+	var err error
 	if guildID.Valid {
 		existing, err = h.savedMessageStore.CountSavedMessagesForGuild(ctx, guildID.ID)
 	} else {
@@ -349,6 +366,31 @@ func (h *SavedMessagesHandler) checkSavedMessageLimit(ctx context.Context, userI
 
 	if int(existing)+adding > features.MaxSavedMessages {
 		return handlers.Forbidden("insufficient_plan", "You have reached the maximum number of saved messages for your plan!")
+	}
+	return nil
+}
+
+// checkActionMessages checks the response messages that actions in the message carry themselves.
+// A saved message brings its actions along when it's sent or used as a response, so they're
+// checked when it's saved like they are when a message is sent.
+func checkActionMessages(features model.PlanFeatures, data json.RawMessage) error {
+	if len(data) == 0 {
+		return nil
+	}
+
+	var msg struct {
+		Actions map[string]actions.ActionSet `json:"actions"`
+	}
+	// Saved messages have always been stored as they come. One whose actions don't decode can't
+	// run them either, sent or as a response, so there's nothing to check.
+	if err := json.Unmarshal(data, &msg); err != nil {
+		return nil
+	}
+
+	for _, actionSet := range msg.Actions {
+		if err := handlers.CheckActionMessages(actionSet, features); err != nil {
+			return err
+		}
 	}
 	return nil
 }

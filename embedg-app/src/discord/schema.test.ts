@@ -132,4 +132,43 @@ test("actions sending to another channel need a channel", () => {
   expect(valid({ type: 11, channel_id: "", text: "Hi" })).toBe(false);
   expect(valid({ type: 12, channel_id: "123", target_id: "abc" })).toBe(true);
   expect(valid({ type: 12, target_id: "abc" })).toBe(false);
+  expect(
+    valid({ type: 12, channel_id: "123", message: { content: "Hi" } }),
+  ).toBe(true);
+});
+
+/** A message whose button responds with `response`. */
+function respondingMessage(response: unknown) {
+  return {
+    content: "Click below",
+    components: [
+      {
+        id: 1,
+        type: 1,
+        components: [
+          { id: 2, type: 2, style: 1, label: "Click", action_set_id: "set" },
+        ],
+      },
+    ],
+    actions: {
+      set: { actions: [{ type: 5, id: 3, message: response }] },
+    },
+  };
+}
+
+test("a response can carry a message of its own", () => {
+  const result = messageSchema.safeParse(
+    respondingMessage({ content: "", embeds: [{ id: 4, title: "Thanks!" }] }),
+  );
+
+  expect(result.success).toBe(true);
+});
+
+test("issues in a response message are flagged where they are", () => {
+  const result = messageSchema.safeParse(respondingMessage({ content: "" }));
+  const issues = result.success ? [] : result.error.issues;
+
+  expect(issues.map((issue) => issue.path)).toEqual([
+    ["actions", "set", "actions", 0, "message", "content"],
+  ]);
 });

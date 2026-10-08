@@ -481,83 +481,6 @@ export const componentSchema = z.union([
 
 export type MessageComponent = z.infer<typeof componentSchema>;
 
-// The fields shared by the actions that send to another channel.
-const channelActionFields = {
-  id: uniqueIdSchema.default(() => getUniqueId()),
-  channel_id: z.string().min(1),
-  allow_role_mentions: z.boolean().default(false),
-  disable_default_response: z.boolean().default(false),
-};
-
-export const messageActionSchema = z
-  .object({
-    type: z.literal(1).or(z.literal(6)).or(z.literal(8)), // text response
-    id: uniqueIdSchema.default(() => getUniqueId()),
-    text: z.string().min(1).max(2000),
-    public: z.boolean().default(false),
-    allow_role_mentions: z.boolean().default(false),
-  })
-  .or(
-    z.object({
-      type: z.literal(5).or(z.literal(7)).or(z.literal(9)), // saved messages responses
-      id: uniqueIdSchema.default(() => getUniqueId()),
-      target_id: z.string().min(1),
-      public: z.boolean().default(false),
-      allow_role_mentions: z.boolean().default(false),
-    }),
-  )
-  .or(
-    z.object({
-      type: z.literal(2).or(z.literal(3)).or(z.literal(4)), // toggle, add, remove role
-      id: uniqueIdSchema.default(() => getUniqueId()),
-      target_id: z.string().min(1),
-      public: z.boolean().default(false),
-      allow_role_mentions: z.boolean().default(false),
-      disable_default_response: z.boolean().default(false),
-    }),
-  )
-  .or(
-    z.object({
-      type: z.literal(11), // text message to another channel
-      ...channelActionFields,
-      text: z.string().min(1).max(2000),
-    }),
-  )
-  .or(
-    z.object({
-      type: z.literal(12), // saved message to another channel
-      ...channelActionFields,
-      target_id: z.string().min(1),
-    }),
-  )
-  .or(
-    z.object({
-      type: z.literal(10), // permission check with default response
-      id: uniqueIdSchema.default(() => getUniqueId()),
-      permissions: z.string().default("0"),
-      role_ids: z.array(z.string()),
-      disable_default_response: z.literal(false),
-    }),
-  )
-  .or(
-    z.object({
-      type: z.literal(10), // permission check with custom response
-      id: uniqueIdSchema.default(() => getUniqueId()),
-      permissions: z.string().default("0"),
-      role_ids: z.array(z.string()),
-      disable_default_response: z.literal(true),
-      text: z.string().min(1).max(2000),
-    }),
-  );
-
-export type MessageAction = z.infer<typeof messageActionSchema>;
-
-export const messageActionSetSchema = z.object({
-  actions: z.array(messageActionSchema), // .max(5), //.min(1),
-});
-
-export type MessageActionSet = z.infer<typeof messageActionSetSchema>;
-
 export const messageContentSchema = z.string().max(2000);
 
 export type MessageContent = z.infer<typeof messageContentSchema>;
@@ -622,64 +545,187 @@ function textDisplays(
   });
 }
 
-export const messageSchema = z
-  .object({
-    content: messageContentSchema.default(""),
-    username: webhookUsernameSchema,
-    avatar_url: webhookAvatarUrlSchema,
-    tts: messageTtsSchema.default(false),
-    embeds: z.array(embedSchema).max(10).default([]),
-    allowed_mentions: messageAllowedMentionsSchema,
-    components: z.array(componentSchema).max(5).default([]),
-    thread_name: messageThreadName,
-    actions: z.record(z.string(), messageActionSetSchema).default({}),
-    flags: z.number().optional(),
-  })
-  .superRefine((data, ctx) => {
-    const flags = data.flags ?? 0;
-    if (flags & COMPONENTS_V2_FLAG) {
-      if (data.components.length === 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["components"],
-          message: "Components are required when components v2 is enabled",
-        });
-      }
+const messageFieldsSchema = z.object({
+  content: messageContentSchema.default(""),
+  username: webhookUsernameSchema,
+  avatar_url: webhookAvatarUrlSchema,
+  tts: messageTtsSchema.default(false),
+  embeds: z.array(embedSchema).max(10).default([]),
+  allowed_mentions: messageAllowedMentionsSchema,
+  components: z.array(componentSchema).max(5).default([]),
+  thread_name: messageThreadName,
+  flags: z.number().optional(),
+});
 
-      const displays = textDisplays(data.components, ["components"]);
-      const length = displays.reduce((sum, d) => sum + d.content.length, 0);
-      if (length > TEXT_DISPLAYS_TEXT_LIMIT) {
-        // On every text display, as any of them can be shortened to fix it.
-        for (const display of displays) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: [...display.path, "content"],
-            message: `All text displays together can't have more than ${TEXT_DISPLAYS_TEXT_LIMIT} characters (currently ${length})`,
-          });
-        }
-      }
-    } else {
-      // this currently doesn't take attachments into account
-      if (!data.content && !data.embeds.length && !data.components.length) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["content"],
-          message: "Content is required when no other fields are set",
-        });
-      }
+/** Discord's rules for a message as a whole, beyond those of its fields. */
+function refineMessage(
+  data: Pick<
+    z.infer<typeof messageFieldsSchema>,
+    "content" | "embeds" | "components" | "flags"
+  >,
+  ctx: z.RefinementCtx,
+) {
+  const flags = data.flags ?? 0;
+  if (flags & COMPONENTS_V2_FLAG) {
+    if (data.components.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["components"],
+        message: "Components are required when components v2 is enabled",
+      });
+    }
 
-      const length = data.embeds.reduce(
-        (sum, embed) => sum + embedTextLength(embed, embed.fields),
-        0,
-      );
-      if (length > EMBEDS_TEXT_LIMIT) {
+    const displays = textDisplays(data.components, ["components"]);
+    const length = displays.reduce((sum, d) => sum + d.content.length, 0);
+    if (length > TEXT_DISPLAYS_TEXT_LIMIT) {
+      // On every text display, as any of them can be shortened to fix it.
+      for (const display of displays) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          path: ["embeds"],
-          message: `All embeds together can't have more than ${EMBEDS_TEXT_LIMIT} characters (currently ${length})`,
+          path: [...display.path, "content"],
+          message: `All text displays together can't have more than ${TEXT_DISPLAYS_TEXT_LIMIT} characters (currently ${length})`,
         });
       }
     }
-  });
+  } else {
+    // this currently doesn't take attachments into account
+    if (!data.content && !data.embeds.length && !data.components.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["content"],
+        message: "Content is required when no other fields are set",
+      });
+    }
+
+    const length = data.embeds.reduce(
+      (sum, embed) => sum + embedTextLength(embed, embed.fields),
+      0,
+    );
+    if (length > EMBEDS_TEXT_LIMIT) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["embeds"],
+        message: `All embeds together can't have more than ${EMBEDS_TEXT_LIMIT} characters (currently ${length})`,
+      });
+    }
+  }
+}
+
+/** What a message has that a response doesn't send. */
+export const RESPONSE_MESSAGE_OMIT = {
+  username: true,
+  avatar_url: true,
+  tts: true,
+  thread_name: true,
+} as const;
+
+/**
+ * A message that an action responds with itself instead of naming a saved
+ * message. It can only have link buttons, so it has no actions of its own.
+ */
+export const responseMessageSchema = messageFieldsSchema
+  .omit(RESPONSE_MESSAGE_OMIT)
+  .superRefine(refineMessage);
+
+export type ResponseMessage = z.infer<typeof responseMessageSchema>;
+
+// The fields shared by the actions that send to another channel.
+const channelActionFields = {
+  id: uniqueIdSchema.default(() => getUniqueId()),
+  channel_id: z.string().min(1),
+  allow_role_mentions: z.boolean().default(false),
+  disable_default_response: z.boolean().default(false),
+};
+
+export const messageActionSchema = z
+  .object({
+    type: z.literal(1).or(z.literal(6)).or(z.literal(8)), // text response
+    id: uniqueIdSchema.default(() => getUniqueId()),
+    text: z.string().min(1).max(2000),
+    public: z.boolean().default(false),
+    allow_role_mentions: z.boolean().default(false),
+  })
+  .or(
+    z.object({
+      type: z.literal(5).or(z.literal(7)).or(z.literal(9)), // responses with a message of their own
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      message: responseMessageSchema,
+      public: z.boolean().default(false),
+      allow_role_mentions: z.boolean().default(false),
+    }),
+  )
+  .or(
+    z.object({
+      type: z.literal(5).or(z.literal(7)).or(z.literal(9)), // saved messages responses
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      target_id: z.string().min(1),
+      public: z.boolean().default(false),
+      allow_role_mentions: z.boolean().default(false),
+    }),
+  )
+  .or(
+    z.object({
+      type: z.literal(2).or(z.literal(3)).or(z.literal(4)), // toggle, add, remove role
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      target_id: z.string().min(1),
+      public: z.boolean().default(false),
+      allow_role_mentions: z.boolean().default(false),
+      disable_default_response: z.boolean().default(false),
+    }),
+  )
+  .or(
+    z.object({
+      type: z.literal(11), // text message to another channel
+      ...channelActionFields,
+      text: z.string().min(1).max(2000),
+    }),
+  )
+  .or(
+    z.object({
+      type: z.literal(12), // message of its own to another channel
+      ...channelActionFields,
+      message: responseMessageSchema,
+    }),
+  )
+  .or(
+    z.object({
+      type: z.literal(12), // saved message to another channel
+      ...channelActionFields,
+      target_id: z.string().min(1),
+    }),
+  )
+  .or(
+    z.object({
+      type: z.literal(10), // permission check with default response
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      permissions: z.string().default("0"),
+      role_ids: z.array(z.string()),
+      disable_default_response: z.literal(false),
+    }),
+  )
+  .or(
+    z.object({
+      type: z.literal(10), // permission check with custom response
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      permissions: z.string().default("0"),
+      role_ids: z.array(z.string()),
+      disable_default_response: z.literal(true),
+      text: z.string().min(1).max(2000),
+    }),
+  );
+
+export type MessageAction = z.infer<typeof messageActionSchema>;
+
+export const messageActionSetSchema = z.object({
+  actions: z.array(messageActionSchema), // .max(5), //.min(1),
+});
+
+export type MessageActionSet = z.infer<typeof messageActionSetSchema>;
+
+export const messageSchema = messageFieldsSchema
+  .extend({
+    actions: z.record(z.string(), messageActionSetSchema).default({}),
+  })
+  .superRefine(refineMessage);
 
 export type Message = z.infer<typeof messageSchema>;

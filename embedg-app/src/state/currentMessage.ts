@@ -2,14 +2,17 @@ import debounce from "just-debounce-it";
 import { useEffect, useMemo, useState } from "react";
 import { defaultMessage } from "../discord/defaultMessage";
 import { parseMessageWithAction } from "../discord/importSchema";
+import type { ZodTypeAny } from "zod";
 import type { Message } from "../discord/schema";
 import {
+  type DocumentStoreApi,
   MESSAGE_STORE_KEY,
   type NodeId,
   persistedDocument,
   messageDocumentStore,
 } from "./document";
 import { toMessage } from "./documentConvert";
+import type { createValidationErrorStore } from "./validationError";
 
 export function getCurrentMessage(): Message {
   return getCurrentDocument().message;
@@ -20,7 +23,11 @@ export function getCurrentDocument(): {
   message: Message;
   idToPath: Map<NodeId, string>;
 } {
-  const { message, idToPath } = toMessage(messageDocumentStore.getState());
+  return getDocument(messageDocumentStore);
+}
+
+function getDocument(store: DocumentStoreApi) {
+  const { message, idToPath } = toMessage(store.getState());
 
   return { message, idToPath };
 }
@@ -31,22 +38,50 @@ export function getCurrentDocument(): {
  * everything that reads the message.
  */
 export function useDebouncedCurrentDocument(wait: number) {
+  return useDebouncedDocument(messageDocumentStore, wait);
+}
+
+/** Like `useDebouncedCurrentDocument`, for any document store. */
+export function useDebouncedDocument(store: DocumentStoreApi, wait: number) {
   const [document, setDocument] = useState<ReturnType<
-    typeof getCurrentDocument
+    typeof getDocument
   > | null>(null);
 
   // Debouncing the work rather than the value keeps a typing burst from
   // converting the whole document once per keystroke.
   const update = useMemo(
-    () => debounce(() => setDocument(getCurrentDocument()), wait),
-    [wait],
+    () => debounce(() => setDocument(getDocument(store)), wait),
+    [store, wait],
   );
 
   useEffect(() => {
     update();
 
-    return messageDocumentStore.subscribe(update);
-  }, [update]);
+    return store.subscribe(update);
+  }, [store, update]);
+
+  return document;
+}
+
+/**
+ * Checks the document against the schema whenever it settles and publishes the
+ * issues to the validation store. Returns the document it checked.
+ */
+export function useDocumentValidation(
+  store: DocumentStoreApi,
+  schema: ZodTypeAny,
+  validationStore: ReturnType<typeof createValidationErrorStore>,
+) {
+  const document = useDebouncedDocument(store, 250);
+
+  useEffect(() => {
+    if (!document) return;
+
+    const res = schema.safeParse(document.message);
+    validationStore
+      .getState()
+      .setError(res.success ? null : res.error, document.idToPath);
+  }, [document, schema, validationStore]);
 
   return document;
 }

@@ -11,6 +11,14 @@ const maxWidths = {
   xl: "max-w-7xl",
 } as const;
 
+/** The open modals, the topmost last. */
+const openModals: object[] = [];
+
+/** Whether a modal covers the page, so shortcuts meant for it should rest. */
+export function modalOpen() {
+  return openModals.length > 0;
+}
+
 interface Props {
   children: ReactNode;
   width?: keyof typeof maxWidths;
@@ -32,12 +40,19 @@ export default function Modal({
   close.current = onClose;
 
   useEffect(() => {
+    const modal = {};
+    openModals.push(modal);
+
+    // Only the topmost modal closes, not the one it was opened from.
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") close.current();
+      if (e.key === "Escape" && openModals.at(-1) === modal) close.current();
     }
 
     document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      openModals.splice(openModals.indexOf(modal), 1);
+    };
   }, []);
 
   // Portaled so that a transformed ancestor, like an animating editor section, can't trap the fixed overlay.

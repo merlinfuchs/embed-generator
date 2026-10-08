@@ -38,17 +38,6 @@ func New(
 // allowed.
 var ErrInteractiveNotAllowed = errors.New("buttons with actions and select menus need the bot to handle them")
 
-// isInteractive is whether the component needs the bot to handle it, unlike a link button.
-func isInteractive(data actions.ComponentWithActions) bool {
-	switch data.Type {
-	case discord.ComponentTypeButton:
-		return data.Style != discord.ButtonStyleLink
-	case discord.ComponentTypeStringSelectMenu:
-		return true
-	}
-	return false
-}
-
 // ParseMessageComponents turns the components into what Discord takes. Without allowInteractive,
 // buttons with actions and select menus are refused, as only the bot can handle them.
 func (m *ActionParser) ParseMessageComponents(data []actions.ComponentWithActions, allowInteractive bool) ([]discord.LayoutComponent, error) {
@@ -72,7 +61,7 @@ func (m *ActionParser) ParseMessageComponents(data []actions.ComponentWithAction
 }
 
 func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions, allowInteractive bool) (discord.Component, error) {
-	if !allowInteractive && isInteractive(data) {
+	if !allowInteractive && data.Interactive() {
 		return nil, ErrInteractiveNotAllowed
 	}
 

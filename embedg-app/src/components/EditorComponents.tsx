@@ -6,6 +6,7 @@ import {
   useDocument,
 } from "../state/document";
 import {
+  type EditorCapabilities,
   EditorCapabilitiesContext,
   FLUXER_MESSAGE_CAPABILITIES,
   MESSAGE_CAPABILITIES,
@@ -21,22 +22,29 @@ import { FluxerComponentsNotice } from "./WebhookNotice";
 
 export default function EditorComponents({
   defaultCollapsed = true,
+  capabilities: fixedCapabilities,
 }: {
   defaultCollapsed?: boolean;
+  /** What can be added regardless of where the message is sent. */
+  capabilities?: EditorCapabilities;
 }) {
   const rootId = useDocument((state) => state.rootId);
   const components = useChildIds(rootId, "components");
   const { removeChildren } = useDocumentStoreApi().getState();
 
   const webhook = useSendSettingsStore((state) => state.mode) === "webhook";
-  const fluxer = useSendsToFluxer();
+  // A message with fixed capabilities isn't the one sent to the webhook.
+  const sendsToFluxer = useSendsToFluxer();
+  const fluxer = !fixedCapabilities && sendsToFluxer;
 
   // Nothing to add on Fluxer, but components already there stay so they can be removed.
   if (fluxer && components.length === 0) return null;
 
   let capabilities = MESSAGE_CAPABILITIES;
   let notice: ReactNode = null;
-  if (fluxer) {
+  if (fixedCapabilities) {
+    capabilities = fixedCapabilities;
+  } else if (fluxer) {
     capabilities = FLUXER_MESSAGE_CAPABILITIES;
     notice = <FluxerComponentsNotice className="mb-3" />;
   } else if (webhook) {

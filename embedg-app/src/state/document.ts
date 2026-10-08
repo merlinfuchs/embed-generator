@@ -4,7 +4,7 @@ import { useShallow } from "zustand/react/shallow";
 import debounce from "just-debounce-it";
 import { type TemporalState, temporal } from "zundo";
 import { create, useStore } from "zustand";
-import { persist } from "zustand/middleware";
+import { type PersistStorage, persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import { COMPONENTS_V2_FLAG } from "../discord/schema";
 import type {
@@ -346,8 +346,16 @@ function slotOfChild(parent: Node, childId: NodeId): ChildSlot | null {
   return null;
 }
 
+/** For a document that lives only as long as the editor it's open in. */
+const noStorage: PersistStorage<unknown> = {
+  getItem: () => null,
+  setItem: () => {},
+  removeItem: () => {},
+};
+
+/** Without a key, nothing is persisted. */
 export const createDocumentStore = (
-  key: string,
+  key: string | null,
   initialMessage: Message = defaultMessage,
 ) =>
   create<DocumentStore>()(
@@ -496,9 +504,9 @@ export const createDocumentStore = (
           },
         ),
         {
-          name: key,
+          name: key ?? "",
           version: DOCUMENT_VERSION,
-          storage: localStorageJSON,
+          storage: key ? localStorageJSON : noStorage,
           // The node tree itself is unchanged between versions; what a version
           // says is which parts of the message this store owns, which
           // `seedDocumentStore` reconciles once both stores have rehydrated.

@@ -1,4 +1,8 @@
-import type { MessageAction, MessageActionSet } from "../discord/schema";
+import type {
+  MessageAction,
+  MessageActionSet,
+  ResponseMessage,
+} from "../discord/schema";
 import { getUniqueId } from "../util";
 
 /** The state an action set slice needs; both stores that mount it have it. */
@@ -18,6 +22,7 @@ export interface ActionSetActions {
   setActionText: (id: string, i: number, text: string) => void;
   setActionTargetId: (id: string, i: number, target: string) => void;
   setActionChannelId: (id: string, i: number, channelId: string) => void;
+  setActionMessage: (id: string, i: number, message: ResponseMessage) => void;
   setActionPublic: (id: string, i: number, val: boolean) => void;
   setActionAllowRoleMentions: (id: string, i: number, val: boolean) => void;
   setActionDisableDefaultResponse: (
@@ -162,6 +167,25 @@ export function createActionSetSlice<T extends ActionSetState>(
     setActionChannelId: (id, i, channelId) =>
       withAction(id, i, (action) => {
         if ("channel_id" in action) action.channel_id = channelId;
+      }),
+
+    // Replaces the saved message of a response, if it has one, with a message
+    // of its own.
+    setActionMessage: (id, i, message) =>
+      withAction(id, i, (action, actionSet) => {
+        if (
+          action.type !== 5 &&
+          action.type !== 7 &&
+          action.type !== 9 &&
+          action.type !== 12
+        ) {
+          return;
+        }
+
+        const { target_id: _, ...rest } = action as typeof action & {
+          target_id?: string;
+        };
+        actionSet.actions[i] = { ...rest, message } as MessageAction;
       }),
 
     setActionPublic: (id, i, val) =>
