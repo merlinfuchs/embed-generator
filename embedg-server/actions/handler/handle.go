@@ -407,6 +407,65 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 					return fmt.Errorf("failed to create actions for message: %w", err)
 				}
 			}
+		case actions.ActionTypeTextChannel, actions.ActionTypeSavedMessageChannel:
+			channelID, err := m.channelTarget(*interaction.GuildID(), action, derivedPerms)
+			if err != nil {
+				return err
+			}
+
+			var msg discord.MessageCreate
+			var msgActions map[string]actions.ActionSet
+			if action.Type == actions.ActionTypeTextChannel {
+				content, err := templates.ParseAndExecute(action.Text)
+				if err != nil {
+					return templateErr(err)
+				}
+				msg = discord.MessageCreate{
+					Content:         content,
+					AllowedMentions: actionAllowedMentions(action, nil),
+				}
+			} else {
+				data, err := m.savedMessage(*interaction.GuildID(), action.TargetID)
+				if err != nil {
+					return err
+				}
+
+				if err := templates.ParseAndExecuteMessage(data); err != nil {
+					return templateErr(err)
+				}
+
+				components, err := m.parser.ParseMessageComponents(data.Components, true)
+				if err != nil {
+					return userErr("Invalid components: %s", err)
+				}
+
+				msg = discord.MessageCreate{
+					Content:         data.Content,
+					Embeds:          data.Embeds,
+					Components:      components,
+					Flags:           data.Flags,
+					AllowedMentions: actionAllowedMentions(action, data.AllowedMentions),
+				}
+				msgActions = data.Actions
+			}
+
+			newMsg, err := sendToChannel(restClient, channelID, msg)
+			if err != nil {
+				return err
+			}
+
+			if len(msgActions) != 0 {
+				err = m.parser.CreateActionsForMessage(context.TODO(), msgActions, *derivedPerms, newMsg.ID, false)
+				if err != nil {
+					return fmt.Errorf("failed to create actions for message: %w", err)
+				}
+			}
+			if !action.DisableDefaultResponse {
+				i.Respond(discord.MessageCreate{
+					Content: fmt.Sprintf("Sent a message to <#%s>.", channelID),
+					Flags:   discord.MessageFlagEphemeral,
+				})
+			}
 		case actions.ActionTypePermissionCheck:
 			rawPerms, _ := strconv.ParseInt(action.Permissions, 10, 64)
 			perms := discord.Permissions(rawPerms)
@@ -533,6 +592,46 @@ func roleTarget(
 	return member, roleID, nil
 }
 
+// channelTarget resolves the channel a message action sends to and checks that the message creator
+// may send to other channels.
+func (m *ActionHandler) channelTarget(
+	guildID common.ID,
+	action actions.Action,
+	derivedPerms *actions.ActionDerivedPermissions,
+) (snowflake.ID, error) {
+	// Messages from before the permission context was added have nothing to check against.
+	if derivedPerms == nil {
+		return 0, userErr("This message is too old to send messages to other channels. Send it again to use this action.")
+	}
+	if !derivedPerms.CanSendToOtherChannels() {
+		return 0, userErr("The user that has created this message needs the Manage Webhooks permission in the server settings to send messages to other channels.")
+	}
+
+	channelID, err := snowflake.Parse(action.ChannelID)
+	if err != nil {
+		return 0, userErr("This action has an invalid channel configured.")
+	}
+
+	channel, err := m.guildState.Channel(context.TODO(), channelID)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return 0, userErr("The channel <#%s> doesn't exist anymore or the bot can't see it.", channelID)
+		}
+		return 0, fmt.Errorf("failed to get channel: %w", err)
+	}
+	// The action is stored with the message, so the id could point anywhere the bot is.
+	if channel.GuildID() != guildID {
+		return 0, userErr("The channel <#%s> isn't in this server.", channelID)
+	}
+
+	switch channel.Type() {
+	case discord.ChannelTypeGuildCategory, discord.ChannelTypeGuildForum, discord.ChannelTypeGuildMedia, discord.ChannelTypeGuildDirectory:
+		return 0, userErr("Messages can't be sent to <#%s> directly. Pick a text channel or a thread.", channelID)
+	}
+
+	return channelID, nil
+}
+
 func roleErr(err error, roleID snowflake.ID) error {
 	if common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeLackPermissionsToPerformAction, rest.JSONErrorCodeMissingAccess) {
 		return userErr(roleErrorMessage)
@@ -557,4 +656,25 @@ func sendDM(restClient rest.Rest, userID snowflake.ID, msg discord.MessageCreate
 		return fmt.Errorf("failed to send DM: %w", err)
 	}
 	return nil
+}
+
+func sendToChannel(restClient rest.Rest, channelID snowflake.ID, msg discord.MessageCreate) (*discord.Message, error) {
+	newMsg, err := restClient.CreateMessage(channelID, msg, rest.WithCtx(context.TODO()))
+	if err != nil {
+		switch {
+		case common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeLackPermissionsToPerformAction, rest.JSONErrorCodeMissingAccess):
+			return nil, userErr("The bot doesn't have permissions to send messages in <#%s>.", channelID)
+		case common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeUnknownChannel):
+			return nil, userErr("The channel <#%s> doesn't exist anymore.", channelID)
+		case common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeOperationOnArchivedThread, rest.JSONErrorCodeThreadLocked):
+			return nil, userErr("The thread <#%s> is archived or locked.", channelID)
+		case common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeCannotSendEmptyMessage):
+			return nil, userErr("The message for <#%s> is empty.", channelID)
+		case common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeInvalidFormBody):
+			// Discord's field errors say what's wrong, like text that got too long once variables were filled in.
+			return nil, userErr("Discord rejected the message for <#%s>:\n```%s```", channelID, err)
+		}
+		return nil, fmt.Errorf("failed to send message to channel: %w", err)
+	}
+	return newMsg, nil
 }

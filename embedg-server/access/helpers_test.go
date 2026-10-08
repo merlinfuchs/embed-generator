@@ -144,3 +144,18 @@ func TestGuildPermissionsTimedOut(t *testing.T) {
 		t.Fatalf("permissions = %d, want %d", got, discord.PermissionViewChannel)
 	}
 }
+
+func TestBotCanSend(t *testing.T) {
+	text := channel(t, `{"id":"10","type":0,"guild_id":"1","name":"text","permission_overwrites":[]}`)
+	thread := channel(t, `{"id":"20","type":11,"guild_id":"1","name":"thread","parent_id":"10"}`)
+
+	send := ChannelAccess{BotPermissions: discord.PermissionViewChannel | discord.PermissionSendMessages}
+	threads := ChannelAccess{BotPermissions: discord.PermissionViewChannel | discord.PermissionSendMessagesInThreads}
+
+	if !send.BotCanSend(text) || send.BotCanSend(thread) {
+		t.Fatal("Send Messages should allow channels but not threads")
+	}
+	if threads.BotCanSend(text) || !threads.BotCanSend(thread) {
+		t.Fatal("Send Messages in Threads should allow threads but not channels")
+	}
+}

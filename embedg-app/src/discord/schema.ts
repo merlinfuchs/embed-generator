@@ -481,6 +481,14 @@ export const componentSchema = z.union([
 
 export type MessageComponent = z.infer<typeof componentSchema>;
 
+// The fields shared by the actions that send to another channel.
+const channelActionFields = {
+  id: uniqueIdSchema.default(() => getUniqueId()),
+  channel_id: z.string().min(1),
+  allow_role_mentions: z.boolean().default(false),
+  disable_default_response: z.boolean().default(false),
+};
+
 export const messageActionSchema = z
   .object({
     type: z.literal(1).or(z.literal(6)).or(z.literal(8)), // text response
@@ -506,6 +514,20 @@ export const messageActionSchema = z
       public: z.boolean().default(false),
       allow_role_mentions: z.boolean().default(false),
       disable_default_response: z.boolean().default(false),
+    }),
+  )
+  .or(
+    z.object({
+      type: z.literal(11), // text message to another channel
+      ...channelActionFields,
+      text: z.string().min(1).max(2000),
+    }),
+  )
+  .or(
+    z.object({
+      type: z.literal(12), // saved message to another channel
+      ...channelActionFields,
+      target_id: z.string().min(1),
     }),
   )
   .or(

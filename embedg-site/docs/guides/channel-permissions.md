@@ -28,3 +28,14 @@ A green check on a role wins over a red X on @everyone or on another role. Don't
 If only some channels in a category work, the others probably have their own settings. The Permissions page says whether a channel is synced with its category. Fix each channel that isn't, or sync it again.
 
 Changes can take up to two minutes to show up in the picker.
+
+## Actions that send to other channels
+
+The [Other Channel](./interactive-components#text-response) target of an action works differently, because the bot posts the message itself instead of through a webhook.
+
+- You need **Manage Webhooks** in **Server Settings > Roles**, on one of your roles or through Administrator. Channel settings don't count here, neither to grant it nor to take it away. Without it every channel in the picker is greyed out.
+- The bot needs **Send Messages** in the channel, or **Send Messages in Threads** for a thread. Fix it in the channel's permission settings as described above, with Send Messages instead of Manage Webhooks.
+- To send a saved message with embeds, the bot also needs **Embed Links** in the channel. Webhooks don't need it, so it's easy to miss. The editor warns you when it's missing.
+- Forum and media channels can't be picked themselves. Pick one of their posts instead.
+
+What counts is the permission of whoever sent the message or saved the command, at the time they did. If the action says its creator is missing the permission, send the message again as someone who has it.

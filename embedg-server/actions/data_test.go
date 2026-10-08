@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 	"time"
+
+	"github.com/disgoorg/disgo/discord"
 )
 
 func TestMessageWithActionsEmbedTimestamp(t *testing.T) {
@@ -64,5 +66,26 @@ func TestMessageWithActionsEmptyEmbeds(t *testing.T) {
 	}
 	if m.Embeds == nil || len(m.Embeds) != 0 {
 		t.Errorf("embeds = %#v, want an empty list so edits clear them with [] and not null", m.Embeds)
+	}
+}
+
+func TestCanSendToOtherChannels(t *testing.T) {
+	tests := []struct {
+		name  string
+		perms ActionDerivedPermissions
+		want  bool
+	}{
+		{"manage webhooks", ActionDerivedPermissions{GuildPermissions: uint64(discord.PermissionManageWebhooks)}, true},
+		{"administrator", ActionDerivedPermissions{GuildPermissions: uint64(discord.PermissionAdministrator)}, true},
+		{"owner", ActionDerivedPermissions{GuildIsOwner: true}, true},
+		{"send messages only", ActionDerivedPermissions{GuildPermissions: uint64(discord.PermissionSendMessages)}, false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := test.perms.CanSendToOtherChannels(); got != test.want {
+				t.Fatalf("CanSendToOtherChannels = %v, want %v", got, test.want)
+			}
+		})
 	}
 }

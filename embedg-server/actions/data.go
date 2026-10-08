@@ -180,11 +180,14 @@ const (
 	ActionTypeTextEdit             ActionType = 8
 	ActionTypeSavedMessageEdit     ActionType = 9
 	ActionTypePermissionCheck      ActionType = 10
+	ActionTypeTextChannel          ActionType = 11
+	ActionTypeSavedMessageChannel  ActionType = 12
 )
 
 type Action struct {
 	Type                   ActionType `json:"type"`
 	TargetID               string     `json:"target_id"`
+	ChannelID              string     `json:"channel_id"`
 	Text                   string     `json:"text"`
 	Public                 bool       `json:"public"`
 	AllowRoleMentions      bool       `json:"allow_role_mentions"`
@@ -221,4 +224,10 @@ func (a *ActionDerivedPermissions) CanManageRole(roleID common.ID) bool {
 	}
 
 	return a.HasGuildPermission(discord.PermissionManageRoles) && slices.Contains(a.AllowedRoleIDs, roleID)
+}
+
+// CanSendToOtherChannels reports whether the creator may make actions send messages to other
+// channels. Only server level permissions count, so a channel overwrite can't grant or take it away.
+func (a *ActionDerivedPermissions) CanSendToOtherChannels() bool {
+	return a.HasGuildPermission(discord.PermissionManageWebhooks)
 }

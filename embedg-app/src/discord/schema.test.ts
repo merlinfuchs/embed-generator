@@ -4,6 +4,7 @@ import {
   embedImageUrlSchema,
   embedTextLength,
   embedTimestampSchema,
+  messageActionSchema,
   messageSchema,
   unfurledMediaItemSchema,
 } from "./schema";
@@ -121,4 +122,14 @@ test("embed timestamps must be dates the server can parse", () => {
   ]) {
     expect(valid(v), v).toBe(false);
   }
+});
+
+test("actions sending to another channel need a channel", () => {
+  const valid = (action: object) =>
+    messageActionSchema.safeParse(action).success;
+
+  expect(valid({ type: 11, channel_id: "123", text: "Hi" })).toBe(true);
+  expect(valid({ type: 11, channel_id: "", text: "Hi" })).toBe(false);
+  expect(valid({ type: 12, channel_id: "123", target_id: "abc" })).toBe(true);
+  expect(valid({ type: 12, target_id: "abc" })).toBe(false);
 });

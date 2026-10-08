@@ -111,6 +111,16 @@ func (c *ChannelAccess) BotAccess() bool {
 	return HasRequiredPermissions(c.BotPermissions)
 }
 
+// BotCanSend reports whether the bot can post its own messages in the channel, as actions that send
+// to another channel do. A thread's permissions are its parent's, where posting in threads is its
+// own permission.
+func (c *ChannelAccess) BotCanSend(channel discord.GuildChannel) bool {
+	if _, ok := channel.(discord.GuildThread); ok {
+		return c.BotPermissions.Has(discord.PermissionSendMessagesInThreads)
+	}
+	return c.BotPermissions.Has(discord.PermissionSendMessages)
+}
+
 // GetGuildAccessForSession resolves the user's member with their own OAuth token.
 func (m *AccessManager) GetGuildAccessForSession(ctx context.Context, sess *session.Session, guildID common.ID) (GuildAccess, error) {
 	res := GuildAccess{}
