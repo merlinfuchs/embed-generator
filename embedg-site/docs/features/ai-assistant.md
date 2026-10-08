@@ -13,4 +13,4 @@ Changes land in the editor right away. You can keep editing them by hand, undo t
 
 Every server gets a few prompts each month for free, and [Embed Generator Premium](../premium) raises the limit. Only requests that change the message count. Questions, answers where the assistant asks you something, and fixes of its own mistakes are free.
 
-![AI Assistant Feature Preview](./ai-assistant-feature.png)
+![AI Assistant Feature Preview](./ai-assistant-feature.webp)

@@ -10,8 +10,8 @@ Message variables are a way to dynamically adjust the content of your message ba
 To use a variable in your message just put `{{ .VariableName }}` where you want the value to appear. For example put `{{ .Interaction.User.Mention }}` in your message content to ping the user that has used a command.
 Please notice the dot (`.`) in front of each variable name!
 
-![Variables in Button](./variables-button.png)
-![Variables in response](./variables-response.png)
+![Variables in Button](./variables-button.webp)
+![Variables in response](./variables-response.webp)
 
 ## List of Variables
 

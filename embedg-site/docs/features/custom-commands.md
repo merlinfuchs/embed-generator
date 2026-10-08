@@ -12,6 +12,6 @@ With Embed Generator Premium you can add your own slash commands to your server.
 
 Commands run through your own bot, so they need [White Label](./white-label) set up first. Combined with [message variables](../guides/variables) you can build things like `/profile` commands that show the member's name and join date, or `/rules` that posts your saved rules message.
 
-![Custom Commands Feature Preview](./custom-commands-feature.png)
+![Custom Commands Feature Preview](./custom-commands-feature.webp)
 
 Read the full guide on [creating commands](../guides/custom-commands).

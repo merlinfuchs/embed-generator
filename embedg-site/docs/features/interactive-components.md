@@ -13,6 +13,6 @@ Buttons with actions and select menus need the Embed Generator bot on your serve
 
 Limits: 2 actions per component for free, 5 with [Premium](../premium).
 
-![Interactive Components Feature Preview](./interactive-components-feature.png)
+![Interactive Components Feature Preview](./interactive-components-feature.webp)
 
 Read the full guide on [buttons, select menus and actions](../guides/interactive-components).

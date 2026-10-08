@@ -18,12 +18,12 @@ One important difference is that you will want to login with your Discord accoun
 
 Migrating your message backups from Discohook to Embed Generator is very easy and only requires a few clicks. Just open up the message backups list on Discohook and click on "Export All":
 
-![Discohook message backups](./discohook-message-backups.png)
+![Discohook message backups](./discohook-message-backups.webp)
 
 The open up the [saved messages](https://message.style/app/messages) on Embed Generator. You first have to login with your Discord account so your saved messages can be stored securely in the cloud. You can choose between saving messages associated with your Discord account or with a Discord server you are in. Messages associated with a Discord server can be accessed by all members of that server that have the necessary permissions.
 
 To import your messages from Discohook click on "Import" and select the file that you got from Discohook.
 
-![Saved messaages](../features/save-messages-feature.png)
+![Saved messaages](../features/save-messages-feature.webp)
 
 That's it, your messages should be there!
