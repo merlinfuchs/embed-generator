@@ -15,7 +15,9 @@ export default function ScheduledMessagesView() {
   const { data: user } = useUserQuery();
 
   // A new message, on the day it was started on in the calendar.
-  const [create, setCreate] = useState<false | { day?: string }>(false);
+  const [create, setCreate] = useState<
+    false | { day?: string; timezone?: string }
+  >(false);
   const [tab, setTab] = useState<"list" | "calendar">("list");
   // The message to open, picked in the calendar.
   const [focusId, setFocusId] = useState<string | null>(null);
@@ -26,6 +28,7 @@ export default function ScheduledMessagesView() {
   const messageCount = messagesQuery.data?.success
     ? messagesQuery.data.data.length
     : 0;
+  const showCalendar = tab === "calendar" && messageCount !== 0;
 
   const guildFeatures = usePremiumGuildFeatures(guildId);
   const maxMessages = guildFeatures?.max_scheduled_messages || 0;
@@ -68,26 +71,29 @@ export default function ScheduledMessagesView() {
                 }}
               />
             )}
-            {tab === "calendar" && messageCount !== 0 && (
+            {showCalendar && (
               <ScheduledMessagesCalendar
                 guildId={guildId}
                 messages={messages}
-                canCreate={messageCount < maxMessages}
                 onOpen={(id) => {
                   setTab("list");
                   setFocusId(id);
                 }}
-                onCreate={(day) => {
-                  setTab("list");
-                  setCreate({ day });
-                }}
+                onCreate={
+                  messageCount < maxMessages
+                    ? (day, timezone) => {
+                        setTab("list");
+                        setCreate({ day, timezone });
+                      }
+                    : undefined
+                }
               />
             )}
             {/* Hidden instead of unmounted, an open form keeps its edits while the calendar shows. */}
             <AutoAnimate
               className={clsx(
                 "space-y-5 overflow-y-auto",
-                tab === "calendar" && messageCount !== 0 && "hidden",
+                showCalendar && "hidden",
               )}
             >
               {messages.map((msg) => (
@@ -100,8 +106,8 @@ export default function ScheduledMessagesView() {
               {(messageCount === 0 || create) && (
                 <ScheduledMessageCreate
                   // A day picked in the calendar starts the form over on it.
-                  key={create ? create.day : undefined}
-                  initialDay={create ? create.day : undefined}
+                  key={create ? `${create.day}:${create.timezone}` : undefined}
+                  initial={create || undefined}
                   setCreate={(b) => setCreate(b && {})}
                   cancelable={messageCount !== 0}
                 />

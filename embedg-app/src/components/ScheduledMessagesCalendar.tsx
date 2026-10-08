@@ -10,23 +10,25 @@ import { useMemo, useState } from "react";
 import { useScheduledMessageRunsQuery } from "../api/queries";
 import type { ScheduledMessageWire } from "../api/wire";
 import { isOnDates, weekdayName, weekdayOrder } from "../util/schedule";
+import {
+  addDays,
+  addMonths,
+  formatDay,
+  formatMonth,
+  formatTime,
+  getCurrentTimezone,
+  weekdayFromMonday,
+  zonedDate,
+  zonedDateTime,
+} from "../util/time";
+import TimezoneSelect from "./TimezoneSelect";
 
-// The calendar shows the browser's local time, the messages can each be in another timezone.
-export function localDay(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-// The six weeks shown for a month, from the Monday on or before its first day, and the day
-// after them where the range ends.
-function gridDays(year: number, month: number): Date[] {
-  const first = new Date(year, month, 1);
-  const start = new Date(year, month, 1 - ((first.getDay() + 6) % 7));
-  return Array.from(
-    { length: 43 },
-    (_, i) =>
-      new Date(start.getFullYear(), start.getMonth(), start.getDate() + i),
-  );
+// The six weeks shown for a YYYY-MM month, from the Monday on or before its first day, and the
+// day after them where the range ends.
+function gridDays(month: string): string[] {
+  const first = `${month}-01`;
+  const start = addDays(first, -weekdayFromMonday(first));
+  return Array.from({ length: 43 }, (_, i) => addDays(start, i));
 }
 
 const colors = [
@@ -45,7 +47,7 @@ function colorOf(id: string): string {
 }
 
 interface Run {
-  at: Date;
+  at: string;
   msg: ScheduledMessageWire;
 }
 
@@ -53,9 +55,9 @@ interface Props {
   guildId: string | null;
   messages: ScheduledMessageWire[];
   onOpen: (messageId: string) => void;
-  // Starts a new scheduled message on a YYYY-MM-DD day, when the plan has room for one.
-  onCreate: (day: string) => void;
-  canCreate: boolean;
+  // Starts a new scheduled message on a YYYY-MM-DD day in the timezone. Left out when the plan
+  // has no room for one.
+  onCreate?: (day: string, timezone: string) => void;
 }
 
 export default function ScheduledMessagesCalendar({
@@ -63,23 +65,18 @@ export default function ScheduledMessagesCalendar({
   messages,
   onOpen,
   onCreate,
-  canCreate,
 }: Props) {
   // A day whose runs don't fit its cell, showing all of them.
   const [expanded, setExpanded] = useState<string | null>(null);
-  const now = new Date();
-  const today = localDay(now);
-  const [month, setMonth] = useState({
-    year: now.getFullYear(),
-    month: now.getMonth(),
-  });
+  // One timezone for all messages, whichever each of them is in.
+  const [timezone, setTimezone] = useState(getCurrentTimezone);
+  const today = zonedDate(new Date().toISOString(), timezone);
+  const todayMonth = today.slice(0, 7);
+  const [month, setMonth] = useState(todayMonth);
 
-  const days = useMemo(
-    () => gridDays(month.year, month.month),
-    [month.year, month.month],
-  );
-  const from = days[0].toISOString();
-  const to = days[42].toISOString();
+  const days = useMemo(() => gridDays(month), [month]);
+  const from = zonedDateTime(days[0], timezone, 0, 0);
+  const to = zonedDateTime(days[42], timezone, 0, 0);
 
   const runsQuery = useScheduledMessageRunsQuery(guildId, from, to);
   const data = runsQuery.data?.success ? runsQuery.data.data : null;
@@ -90,57 +87,61 @@ export default function ScheduledMessagesCalendar({
     for (const run of data?.runs ?? []) {
       const msg = byId.get(run.scheduled_message_id);
       if (!msg) continue;
-      const at = new Date(run.at);
-      const day = localDay(at);
+      const day = zonedDate(run.at, timezone);
       const runs = res.get(day);
-      if (runs) runs.push({ at, msg });
-      else res.set(day, [{ at, msg }]);
+      if (runs) runs.push({ at: run.at, msg });
+      else res.set(day, [{ at: run.at, msg }]);
     }
     for (const runs of res.values()) {
-      runs.sort((a, b) => a.at.getTime() - b.at.getTime());
+      runs.sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
     }
     return res;
-  }, [data, messages]);
+  }, [data, messages, timezone]);
 
-  const monthLabel = new Date(month.year, month.month, 1).toLocaleDateString(
-    undefined,
-    { month: "long", year: "numeric" },
-  );
-  const move = (n: number) =>
-    setMonth((m) => {
-      const d = new Date(m.year, m.month + n, 1);
-      return { year: d.getFullYear(), month: d.getMonth() };
-    });
-
-  const inMonth = (d: Date) => d.getMonth() === month.month;
-  const agenda = days.slice(0, 42).flatMap((d) => {
-    const day = localDay(d);
+  const inMonth = (day: string) => day.startsWith(month);
+  const agenda = days.slice(0, 42).flatMap((day) => {
     const runs = runsByDay.get(day);
-    return inMonth(d) && day >= today && runs ? [{ d, day, runs }] : [];
+    return inMonth(day) && day >= today && runs ? [{ day, runs }] : [];
   });
-  const thisMonth =
-    month.year === now.getFullYear() && month.month === now.getMonth();
+  const thisMonth = month === todayMonth;
 
-  const chips = (runs: Run[]) =>
-    runs.map((run) => (
-      <RunChip
-        key={`${run.msg.id}-${run.at.getTime()}`}
-        run={run}
-        onOpen={onOpen}
-      />
-    ));
+  // A day's runs up to the limit, with a toggle for the rest.
+  const chips = (day: string, runs: Run[], limit: number) => (
+    <>
+      {(expanded === day ? runs : runs.slice(0, limit)).map((run) => (
+        <RunChip
+          key={`${run.msg.id}-${run.at}`}
+          run={run}
+          timezone={timezone}
+          onOpen={onOpen}
+        />
+      ))}
+      {runs.length > limit && (
+        <button
+          type="button"
+          className="text-mist-500 hover:text-white text-xs px-1"
+          onClick={() => setExpanded(expanded === day ? null : day)}
+        >
+          {expanded === day ? "Show less" : `${runs.length - limit} more`}
+        </button>
+      )}
+    </>
+  );
 
   return (
     <div className="bg-ink-700 rounded-lg p-4 md:p-5">
-      <div className="flex items-center justify-between mb-4">
-        <div className="text-white font-medium text-lg">{monthLabel}</div>
-        <div className="flex items-center gap-1 text-mist-300">
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+        <div className="text-white font-medium text-lg">
+          {formatMonth(month)}
+        </div>
+        <div className="flex items-center gap-1 text-mist-300 flex-wrap">
+          <div className="w-56 mr-2">
+            <TimezoneSelect value={timezone} onChange={setTimezone} />
+          </div>
           <button
             type="button"
             className="px-2 py-1 rounded-lg hover:bg-ink-600 text-sm"
-            onClick={() =>
-              setMonth({ year: now.getFullYear(), month: now.getMonth() })
-            }
+            onClick={() => setMonth(todayMonth)}
           >
             Today
           </button>
@@ -150,7 +151,7 @@ export default function ScheduledMessagesCalendar({
             // Past months show nothing, only upcoming sends are known.
             disabled={thisMonth}
             className="p-1 rounded-lg hover:bg-ink-600 disabled:text-ink-500 disabled:hover:bg-transparent"
-            onClick={() => move(-1)}
+            onClick={() => setMonth((m) => addMonths(m, -1))}
           >
             <ChevronLeftIcon className="h-5 w-5" />
           </button>
@@ -158,7 +159,7 @@ export default function ScheduledMessagesCalendar({
             type="button"
             aria-label="Next month"
             className="p-1 rounded-lg hover:bg-ink-600"
-            onClick={() => move(1)}
+            onClick={() => setMonth((m) => addMonths(m, 1))}
           >
             <ChevronRightIcon className="h-5 w-5" />
           </button>
@@ -174,15 +175,14 @@ export default function ScheduledMessagesCalendar({
           ))}
         </div>
         <div className="grid grid-cols-7 gap-px bg-ink-600 rounded-lg overflow-hidden">
-          {days.slice(0, 42).map((d) => {
-            const day = localDay(d);
+          {days.slice(0, 42).map((day) => {
             const runs = runsByDay.get(day) ?? [];
             return (
               <div
                 key={day}
                 className={clsx(
                   "group min-h-24 p-1.5 text-xs",
-                  inMonth(d) ? "bg-ink-800" : "bg-ink-900",
+                  inMonth(day) ? "bg-ink-800" : "bg-ink-900",
                 )}
               >
                 <div className="flex justify-between items-center mb-1">
@@ -190,35 +190,26 @@ export default function ScheduledMessagesCalendar({
                     className={clsx(
                       day === today
                         ? "bg-azure-500 text-white rounded-full w-5 h-5 grid place-items-center"
-                        : inMonth(d)
+                        : inMonth(day)
                           ? "text-mist-400"
                           : "text-ink-500",
                     )}
                   >
-                    {d.getDate()}
+                    {Number(day.slice(8))}
                   </span>
-                  {canCreate && day >= today && (
+                  {onCreate && day >= today && (
                     <button
                       type="button"
                       aria-label={`Schedule a message on ${day}`}
                       // Invisible until hovered, but still there for the keyboard and touch.
                       className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-mist-500 hover:text-white"
-                      onClick={() => onCreate(day)}
+                      onClick={() => onCreate(day, timezone)}
                     >
                       <PlusIcon className="h-4 w-4" />
                     </button>
                   )}
                 </div>
-                {chips(expanded === day ? runs : runs.slice(0, 3))}
-                {runs.length > 3 && (
-                  <button
-                    type="button"
-                    className="text-mist-500 hover:text-white px-1"
-                    onClick={() => setExpanded(expanded === day ? null : day)}
-                  >
-                    {expanded === day ? "Show less" : `${runs.length - 3} more`}
-                  </button>
-                )}
+                {chips(day, runs, 3)}
               </div>
             );
           })}
@@ -228,27 +219,16 @@ export default function ScheduledMessagesCalendar({
       <div className="md:hidden space-y-4">
         {agenda.length === 0 ? (
           <div className="text-mist-400 text-sm font-light">
-            Nothing is scheduled for the rest of {monthLabel}.
+            Nothing is scheduled for the rest of {formatMonth(month)}.
           </div>
         ) : (
-          agenda.map(({ d, day, runs }) => (
+          agenda.map(({ day, runs }) => (
             <div key={day}>
               <div className="text-mist-300 text-sm font-medium mb-1.5">
-                {agendaDayFormat.format(d)}
+                {formatDay(`${day}T12:00:00Z`, "UTC")}
               </div>
               <div className="space-y-1 text-sm">
-                {chips(expanded === day ? runs : runs.slice(0, maxAgendaRuns))}
-                {runs.length > maxAgendaRuns && (
-                  <button
-                    type="button"
-                    className="text-mist-500 hover:text-white text-xs px-1"
-                    onClick={() => setExpanded(expanded === day ? null : day)}
-                  >
-                    {expanded === day
-                      ? "Show less"
-                      : `${runs.length - maxAgendaRuns} more`}
-                  </button>
-                )}
+                {chips(day, runs, maxAgendaRuns)}
               </div>
             </div>
           ))
@@ -272,25 +252,18 @@ export default function ScheduledMessagesCalendar({
   );
 }
 
-const timeFormat = new Intl.DateTimeFormat(undefined, {
-  hour: "numeric",
-  minute: "2-digit",
-});
-const agendaDayFormat = new Intl.DateTimeFormat(undefined, {
-  weekday: "long",
-  month: "short",
-  day: "numeric",
-});
 const maxAgendaRuns = 10;
 
 function RunChip({
   run,
+  timezone,
   onOpen,
 }: {
   run: Run;
+  timezone: string;
   onOpen: (messageId: string) => void;
 }) {
-  const time = timeFormat.format(run.at);
+  const time = formatTime(run.at, timezone);
   const Icon = isOnDates(run.msg) ? CalendarDaysIcon : ArrowPathIcon;
 
   return (

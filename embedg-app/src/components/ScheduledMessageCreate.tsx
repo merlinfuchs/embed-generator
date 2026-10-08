@@ -31,12 +31,12 @@ import {
 export default function ScheduledMessageCreate({
   setCreate,
   cancelable,
-  initialDay,
+  initial,
 }: {
   setCreate: (b: boolean) => void;
   cancelable: boolean;
-  // A YYYY-MM-DD day picked in the calendar to send on.
-  initialDay?: string;
+  // A YYYY-MM-DD day picked in the calendar to send on, in the calendar's timezone.
+  initial?: { day?: string; timezone?: string };
 }) {
   const guildId = useSendSettingsStore((s) => s.guildId);
   const features = usePremiumGuildFeatures(guildId);
@@ -46,10 +46,10 @@ export default function ScheduledMessageCreate({
 
   const [name, setName] = useState("");
   const [schedule, setSchedule] = useState(() => {
-    const timezone = getCurrentTimezone();
+    const timezone = initial?.timezone ?? getCurrentTimezone();
     const draft = newScheduleDraft(timezone);
-    return initialDay
-      ? { ...draft, dates: [dateOnDay(initialDay, timezone)] }
+    return initial?.day
+      ? { ...draft, dates: [dateOnDay(initial.day, timezone)] }
       : draft;
   });
   const preview = useSchedulePreview(guildId, schedule);

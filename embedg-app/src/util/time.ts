@@ -142,3 +142,35 @@ export function formatDay(iso: string, timezone: string): string {
     day: "numeric",
   }).format(new Date(iso));
 }
+
+// "5:50 AM" in the timezone.
+export function formatTime(iso: string, timezone: string): string {
+  return cachedFormatter("time", undefined, timezone, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(iso));
+}
+
+// Calendar days and months as YYYY-MM-DD and YYYY-MM, independent of any timezone.
+
+export function addDays(day: string, n: number): string {
+  const [y, m, d] = day.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+}
+
+export function addMonths(month: string, n: number): string {
+  const [y, m] = month.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1 + n, 1)).toISOString().slice(0, 7);
+}
+
+// The day of the week of a YYYY-MM-DD day, counted from Monday.
+export function weekdayFromMonday(day: string): number {
+  return (new Date(`${day}T00:00:00Z`).getUTCDay() + 6) % 7;
+}
+
+export function formatMonth(month: string): string {
+  return cachedFormatter("month", undefined, "UTC", {
+    month: "long",
+    year: "numeric",
+  }).format(new Date(`${month}-01T00:00:00Z`));
+}

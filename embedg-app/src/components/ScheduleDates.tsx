@@ -13,7 +13,15 @@ import {
   weekdayName,
   weekdayOrder,
 } from "../util/schedule";
-import { formatDay, zonedDate, zonedDateTime, zonedTime } from "../util/time";
+import {
+  addMonths,
+  formatDay,
+  formatMonth,
+  weekdayFromMonday,
+  zonedDate,
+  zonedDateTime,
+  zonedTime,
+} from "../util/time";
 
 // The YYYY-MM-DD days of a YYYY-MM month, and the grid column its first day is in.
 function monthDays(month: string): { days: string[]; firstColumn: number } {
@@ -25,21 +33,8 @@ function monthDays(month: string): { days: string[]; firstColumn: number } {
       (_, i) => `${month}-${String(i + 1).padStart(2, "0")}`,
     ),
     // Weeks start on Monday.
-    firstColumn: ((new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7) + 1,
+    firstColumn: weekdayFromMonday(`${month}-01`) + 1,
   };
-}
-
-function addMonths(month: string, n: number): string {
-  const [y, m] = month.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1 + n, 1)).toISOString().slice(0, 7);
-}
-
-function formatMonth(month: string): string {
-  return new Date(`${month}-01T00:00:00Z`).toLocaleDateString(undefined, {
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  });
 }
 
 interface Props {
@@ -94,6 +89,8 @@ export default function ScheduleDates({
       ? zonedTime(last, timezone).split(":").map(Number)
       : [12, 0];
     const date = dateOnDay(day, timezone, hour, minute);
+    // Minutes before midnight the soonest time is tomorrow already, too late for this day.
+    if (zonedDate(date, timezone) !== day) return;
     // Without premium a message goes out on one date, picking another one moves it.
     onChange(periodicAllowed ? [...dates, date] : [date]);
   }

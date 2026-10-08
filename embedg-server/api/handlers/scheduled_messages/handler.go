@@ -412,14 +412,18 @@ func (h *ScheduledMessageHandler) HandleListScheduledMessageRuns(c *fiber.Ctx) e
 		return err
 	}
 
+	// Every message gets the same share, a few that send often can't push out the others.
+	enabled := 0
+	for _, msg := range messages {
+		if msg.Enabled {
+			enabled++
+		}
+	}
+	limit := min(maxRunsPerMessage, maxRuns/max(enabled, 1))
+
 	now := time.Now().UTC()
 	res := wire.ScheduledMessageRunsWire{Runs: []wire.ScheduledMessageRunWire{}}
 	for _, msg := range messages {
-		limit := min(maxRunsPerMessage, maxRuns-len(res.Runs))
-		if limit == 0 {
-			res.Truncated = true
-			break
-		}
 		runs, more, err := scheduled_messages.UpcomingRuns(msg, from, to, limit, now)
 		if err != nil {
 			// Its schedule is broken, the manager stops it on its next run.

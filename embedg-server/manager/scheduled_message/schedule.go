@@ -81,19 +81,12 @@ func UpcomingRuns(msg model.ScheduledMessage, from, to time.Time, limit int, now
 		return runs, more, nil
 	}
 
-	sched := ScheduleOf(msg)
+	// Runs come strictly after this, from itself counts too.
 	if after.Before(from) {
-		first, err := sched.First(from)
-		if err != nil {
-			return nil, false, err
-		}
-		if !add(first) {
-			return runs, more, nil
-		}
-		after = first
+		after = from.Add(-time.Nanosecond)
 	}
 
-	next, err := sched.Runs(after)
+	next, err := ScheduleOf(msg).Runs(after)
 	if err != nil {
 		return nil, false, err
 	}
