@@ -44,18 +44,18 @@ export default function EditorActionSet({ setId }: Props) {
           <EditorAction setId={setId} actionIndex={i} key={action.id} />
         ))}
       </AutoAnimate>
-      <div className="space-x-3 mt-3 text-sm">
+      <div className="flex flex-wrap gap-3 mt-3 text-sm">
         <LimitButton
           limit="max_actions_per_component"
           features={features}
           count={actions?.length ?? 0}
-          className="bg-azure-500 px-3 py-2 rounded-lg transition-colors hover:bg-azure-400 text-white"
+          className="bg-azure-500 px-3 py-2 rounded-lg transition-colors hover:bg-azure-400 text-white whitespace-nowrap"
           onClick={add}
         >
           Add Action
         </LimitButton>
         <button
-          className="px-3 py-2 rounded-lg border-2 border-red/70 hover:bg-red hover:border-red transition-colors text-white"
+          className="px-3 py-2 rounded-lg border-2 border-red/70 hover:bg-red hover:border-red transition-colors text-white whitespace-nowrap"
           onClick={() => clearActions(setId)}
         >
           Clear Actions

@@ -102,7 +102,7 @@ export default function EditorComponentContainer({
               </div>
             ))}
             <div>
-              <div className="flex space-x-3 mt-3 items-center">
+              <div className="flex flex-wrap gap-3 mt-3 items-center">
                 <EditorComponentAddDropdown
                   context="container"
                   parentId={id}
@@ -112,7 +112,7 @@ export default function EditorComponentContainer({
                 />
                 <button
                   type="button"
-                  className="px-3 py-2 rounded-lg border-2 border-red/70 hover:bg-red hover:border-red transition-colors text-white"
+                  className="px-3 py-2 rounded-lg border-2 border-red/70 hover:bg-red hover:border-red transition-colors text-white whitespace-nowrap"
                   onClick={() => removeChildren(id, "components")}
                 >
                   Clear Components

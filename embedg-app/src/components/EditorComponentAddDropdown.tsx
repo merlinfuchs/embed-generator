@@ -117,7 +117,7 @@ export default function EditorComponentAddDropdown({
       <div className="relative">
         <button
           className={clsx(
-            "rounded-lg text-white flex items-center space-x-2",
+            "rounded-lg text-white flex items-center space-x-2 whitespace-nowrap",
             size === "large" ? "py-3 px-3" : "py-2 px-2",
             disabled
               ? "bg-ink-700 cursor-not-allowed"
