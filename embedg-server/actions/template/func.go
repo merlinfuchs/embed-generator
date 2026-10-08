@@ -97,13 +97,14 @@ var standardFuncMap = map[string]interface{}{
 	"shuffle": shuffle,
 
 	// time functions
-	"currentTime":     tmplCurrentTime,
-	"parseTime":       tmplParseTime,
-	"formatTime":      tmplFormatTime,
-	"loadLocation":    time.LoadLocation,
-	"newDate":         tmplNewDate,
-	"timestampToTime": tmplTimestampToTime,
-	"weekNumber":      tmplWeekNumber,
+	"currentTime":      tmplCurrentTime,
+	"discordTimestamp": tmplDiscordTimestamp,
+	"parseTime":        tmplParseTime,
+	"formatTime":       tmplFormatTime,
+	"loadLocation":     time.LoadLocation,
+	"newDate":          tmplNewDate,
+	"timestampToTime":  tmplTimestampToTime,
+	"weekNumber":       tmplWeekNumber,
 }
 
 // dictionary creates a map[string]interface{} from the given parameters by
@@ -1056,6 +1057,39 @@ func tmplFormatTime(t time.Time, args ...string) string {
 
 func tmplTimestampToTime(v interface{}) time.Time {
 	return time.Unix(ToInt64(v), 0).UTC()
+}
+
+// tmplDiscordTimestamp formats a time or Unix timestamp as Discord's <t:...> markup, which every
+// viewer sees in their own timezone.
+func tmplDiscordTimestamp(v interface{}, style ...string) (string, error) {
+	var unix int64
+	switch t := v.(type) {
+	case time.Time:
+		unix = t.Unix()
+	case int, int32, int64, uint, uint32, uint64, float32, float64:
+		unix = ToInt64(t)
+	case string:
+		parsed, err := strconv.ParseInt(t, 10, 64)
+		if err != nil {
+			return "", fmt.Errorf("discordTimestamp: %q is not a Unix timestamp", t)
+		}
+		unix = parsed
+	default:
+		return "", fmt.Errorf("discordTimestamp: expected a time or Unix timestamp, got %T", v)
+	}
+
+	switch len(style) {
+	case 0:
+		return fmt.Sprintf("<t:%d>", unix), nil
+	case 1:
+		switch style[0] {
+		case "t", "T", "d", "D", "f", "F", "R":
+			return fmt.Sprintf("<t:%d:%s>", unix, style[0]), nil
+		}
+		return "", fmt.Errorf("discordTimestamp: unknown style %q, use one of t, T, d, D, f, F or R", style[0])
+	default:
+		return "", errors.New("discordTimestamp: too many arguments")
+	}
 }
 
 type variadicFunc func([]reflect.Value) (reflect.Value, error)

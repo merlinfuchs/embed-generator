@@ -73,3 +73,30 @@ func TestPrintfIsBounded(t *testing.T) {
 		t.Fatalf("failed with %v, want a length error", err)
 	}
 }
+
+func TestDiscordTimestamp(t *testing.T) {
+	c := NewContext("TEST", 0)
+
+	for tmpl, want := range map[string]string{
+		`{{ discordTimestamp (newDate 2026 10 2 0 0 0) "D" }}`: "<t:1790899200:D>",
+		`{{ discordTimestamp 1790899200 "R" }}`:                "<t:1790899200:R>",
+		`{{ discordTimestamp "1790899200" }}`:                  "<t:1790899200>",
+	} {
+		got, err := c.ParseAndExecute(tmpl)
+		if err != nil {
+			t.Errorf("%s failed: %v", tmpl, err)
+		} else if got != want {
+			t.Errorf("%s = %q, want %q", tmpl, got, want)
+		}
+	}
+
+	for _, tmpl := range []string{
+		`{{ discordTimestamp currentTime "x" }}`,
+		`{{ discordTimestamp "tomorrow" }}`,
+		`{{ discordTimestamp currentTime "D" "R" }}`,
+	} {
+		if _, err := c.ParseAndExecute(tmpl); err == nil {
+			t.Errorf("%s was allowed", tmpl)
+		}
+	}
+}
