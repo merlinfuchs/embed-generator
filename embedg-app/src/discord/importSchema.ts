@@ -12,6 +12,7 @@
  */
 import { z } from "zod";
 import { getUniqueId } from "../util";
+import { RESPONSE_MESSAGE_OMIT } from "./schema";
 
 export const uniqueIdSchema = z.preprocess(
   (d) => {
@@ -438,98 +439,6 @@ export const componentSchema = z.union([
   componentContainerSchema,
 ]);
 
-// The fields shared by the actions that send to another channel.
-const channelActionFields = {
-  id: uniqueIdSchema.default(() => getUniqueId()),
-  channel_id: z.preprocess((d) => d ?? undefined, z.string().default("")),
-  allow_role_mentions: z.preprocess(
-    (d) => d ?? undefined,
-    z.boolean().default(false),
-  ),
-  disable_default_response: z.preprocess(
-    (d) => d ?? undefined,
-    z.boolean().default(false),
-  ),
-};
-
-export const messageActionSchema = z
-  .object({
-    type: z.literal(1).or(z.literal(6)).or(z.literal(8)), // text response
-    id: uniqueIdSchema,
-    text: z.preprocess((d) => d ?? undefined, z.string().default("")),
-    public: z.preprocess((d) => d ?? undefined, z.boolean().default(false)),
-    allow_role_mentions: z.preprocess(
-      (d) => d ?? undefined,
-      z.boolean().default(false),
-    ),
-  })
-  .or(
-    z.object({
-      type: z.literal(5).or(z.literal(7)).or(z.literal(9)), // saved messages responses, // toggle, add, remove role
-      id: uniqueIdSchema,
-      target_id: z.string(),
-      public: z.preprocess((d) => d ?? undefined, z.boolean().default(false)),
-      allow_role_mentions: z.preprocess(
-        (d) => d ?? undefined,
-        z.boolean().default(false),
-      ),
-    }),
-  )
-  .or(
-    z.object({
-      type: z.literal(2).or(z.literal(3)).or(z.literal(4)), // toggle, add, remove role
-      id: uniqueIdSchema.default(() => getUniqueId()),
-      target_id: z.string(),
-      public: z.preprocess((d) => d ?? undefined, z.boolean().default(false)),
-      allow_role_mentions: z.preprocess(
-        (d) => d ?? undefined,
-        z.boolean().default(false),
-      ),
-      disable_default_response: z.preprocess(
-        (d) => d ?? undefined,
-        z.boolean().default(false),
-      ),
-    }),
-  )
-  .or(
-    z.object({
-      type: z.literal(11), // text message to another channel
-      ...channelActionFields,
-      text: z.preprocess((d) => d ?? undefined, z.string().default("")),
-    }),
-  )
-  .or(
-    z.object({
-      type: z.literal(12), // saved message to another channel
-      ...channelActionFields,
-      target_id: z.preprocess((d) => d ?? undefined, z.string().default("")),
-    }),
-  )
-  .or(
-    z.object({
-      type: z.literal(10), // permission check
-      id: uniqueIdSchema.default(() => getUniqueId()),
-      permissions: z.preprocess((d) => d ?? undefined, z.string().default("0")),
-      role_ids: z.preprocess(
-        (d) => d ?? undefined,
-        z.array(z.string()).default([]),
-      ),
-      disable_default_response: z.preprocess(
-        (d) => d ?? undefined,
-        z.boolean().default(false),
-      ),
-      text: z.preprocess((d) => d ?? undefined, z.string().default("")),
-    }),
-  );
-
-export type MessageAction = z.infer<typeof messageActionSchema>;
-
-export const messageActionSetSchema = z.object({
-  actions: z.array(messageActionSchema),
-});
-
-export type MessageActionSet = z.infer<typeof messageActionSetSchema>;
-
 export const messageContentSchema = z.preprocess(
   (d) => d ?? undefined,
   z.string().default(""),
@@ -574,7 +483,7 @@ export const messageAllowedMentionsSchema = z.preprocess(
 
 export const messageThreadName = z.optional(z.string());
 
-export const messageSchema = z.object({
+const messageFieldsSchema = z.object({
   content: z.preprocess(
     (d) => d ?? undefined,
     messageContentSchema.default(""),
@@ -589,11 +498,125 @@ export const messageSchema = z.object({
     z.array(componentSchema).default([]),
   ),
   thread_name: messageThreadName,
+  flags: z.preprocess((d) => d ?? 0, z.number()),
+});
+
+// The fields shared by the actions that send to another channel.
+const channelActionFields = {
+  id: uniqueIdSchema.default(() => getUniqueId()),
+  channel_id: z.preprocess((d) => d ?? undefined, z.string().default("")),
+  allow_role_mentions: z.preprocess(
+    (d) => d ?? undefined,
+    z.boolean().default(false),
+  ),
+  disable_default_response: z.preprocess(
+    (d) => d ?? undefined,
+    z.boolean().default(false),
+  ),
+};
+
+export const messageActionSchema = z
+  .object({
+    type: z.literal(1).or(z.literal(6)).or(z.literal(8)), // text response
+    id: uniqueIdSchema,
+    text: z.preprocess((d) => d ?? undefined, z.string().default("")),
+    public: z.preprocess((d) => d ?? undefined, z.boolean().default(false)),
+    allow_role_mentions: z.preprocess(
+      (d) => d ?? undefined,
+      z.boolean().default(false),
+    ),
+  })
+  .or(
+    z.object({
+      type: z.literal(5).or(z.literal(7)).or(z.literal(9)), // responses with a message of their own
+      id: uniqueIdSchema,
+      message: messageFieldsSchema.omit(RESPONSE_MESSAGE_OMIT),
+      public: z.preprocess((d) => d ?? undefined, z.boolean().default(false)),
+      allow_role_mentions: z.preprocess(
+        (d) => d ?? undefined,
+        z.boolean().default(false),
+      ),
+    }),
+  )
+  .or(
+    z.object({
+      type: z.literal(5).or(z.literal(7)).or(z.literal(9)), // saved messages responses, // toggle, add, remove role
+      id: uniqueIdSchema,
+      target_id: z.string(),
+      public: z.preprocess((d) => d ?? undefined, z.boolean().default(false)),
+      allow_role_mentions: z.preprocess(
+        (d) => d ?? undefined,
+        z.boolean().default(false),
+      ),
+    }),
+  )
+  .or(
+    z.object({
+      type: z.literal(2).or(z.literal(3)).or(z.literal(4)), // toggle, add, remove role
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      target_id: z.string(),
+      public: z.preprocess((d) => d ?? undefined, z.boolean().default(false)),
+      allow_role_mentions: z.preprocess(
+        (d) => d ?? undefined,
+        z.boolean().default(false),
+      ),
+      disable_default_response: z.preprocess(
+        (d) => d ?? undefined,
+        z.boolean().default(false),
+      ),
+    }),
+  )
+  .or(
+    z.object({
+      type: z.literal(11), // text message to another channel
+      ...channelActionFields,
+      text: z.preprocess((d) => d ?? undefined, z.string().default("")),
+    }),
+  )
+  .or(
+    z.object({
+      type: z.literal(12), // message of its own to another channel
+      ...channelActionFields,
+      message: messageFieldsSchema.omit(RESPONSE_MESSAGE_OMIT),
+    }),
+  )
+  .or(
+    z.object({
+      type: z.literal(12), // saved message to another channel
+      ...channelActionFields,
+      target_id: z.preprocess((d) => d ?? undefined, z.string().default("")),
+    }),
+  )
+  .or(
+    z.object({
+      type: z.literal(10), // permission check
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      permissions: z.preprocess((d) => d ?? undefined, z.string().default("0")),
+      role_ids: z.preprocess(
+        (d) => d ?? undefined,
+        z.array(z.string()).default([]),
+      ),
+      disable_default_response: z.preprocess(
+        (d) => d ?? undefined,
+        z.boolean().default(false),
+      ),
+      text: z.preprocess((d) => d ?? undefined, z.string().default("")),
+    }),
+  );
+
+export type MessageAction = z.infer<typeof messageActionSchema>;
+
+export const messageActionSetSchema = z.object({
+  actions: z.array(messageActionSchema),
+});
+
+export type MessageActionSet = z.infer<typeof messageActionSetSchema>;
+
+export const messageSchema = messageFieldsSchema.extend({
   actions: z.preprocess(
     (d) => d ?? undefined,
     z.record(z.string(), messageActionSetSchema).default({}),
   ),
-  flags: z.preprocess((d) => d ?? 0, z.number()),
 });
 
 export type Message = z.infer<typeof messageSchema>;

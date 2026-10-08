@@ -313,7 +313,10 @@ export const evalCases: EvalCase[] = [
     check: (m) =>
       expect(
         actions(m).some(
-          (a) => (a.type === 5 || a.type === 7) && a.target_id === "faqMsg01",
+          (a) =>
+            (a.type === 5 || a.type === 7) &&
+            "target_id" in a &&
+            a.target_id === "faqMsg01",
         ),
         "no FAQ response",
       ),

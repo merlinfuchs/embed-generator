@@ -1,7 +1,7 @@
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import {
   type ValidationTarget,
-  useValidationErrorStore,
+  useValidationError,
 } from "../state/validationError";
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function ValidationError({ target }: Props) {
-  const issue = useValidationErrorStore((state) =>
+  const issue = useValidationError((state) =>
     target === undefined ? undefined : state.getIssue(target)?.message,
   );
 

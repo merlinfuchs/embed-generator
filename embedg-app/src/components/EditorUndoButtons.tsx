@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useDocumentStoreApi, useDocumentUndoStore } from "../state/document";
 import { useSettingsStore } from "../state/settings";
 import EditorIconButton from "./EditorIconButton";
+import { modalOpen } from "./Modal";
 
 export default function EditorUndoButtons() {
   const historyEnabled = useSettingsStore((s) => s.editHistoryEnabled);
@@ -21,7 +22,8 @@ export default function EditorUndoButtons() {
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (!e.ctrlKey) return;
+      // A modal edits something else, like a response message.
+      if (!e.ctrlKey || modalOpen()) return;
 
       if (e.key === "z" || e.key === "Z") {
         e.preventDefault();

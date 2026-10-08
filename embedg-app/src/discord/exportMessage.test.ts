@@ -57,3 +57,24 @@ test("exported JSON imports again", () => {
   expect(again.embeds[0].title).toBe("Title");
   expect(again.embeds[0].fields[0].name).toBe("Name");
 });
+
+test("messages that actions respond with lose the editor's ids too", () => {
+  const message = parseMessageWithAction({
+    actions: {
+      set: {
+        actions: [
+          {
+            type: 5,
+            message: { embeds: [{ title: "Thanks", fields: [{ name: "A" }] }] },
+          },
+        ],
+      },
+    },
+  });
+
+  const exported = exportMessage(message) as any;
+
+  expect(exported.actions.set.actions[0].message.embeds).toEqual([
+    { title: "Thanks", fields: [{ name: "A", value: "" }] },
+  ]);
+});

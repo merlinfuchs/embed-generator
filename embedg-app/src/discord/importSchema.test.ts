@@ -201,3 +201,22 @@ test("an empty embed timestamp is no timestamp", () => {
 
   expect(message.embeds[0].timestamp).toBeUndefined();
 });
+
+test("a response keeps the message it carries", () => {
+  const message = parseMessageWithAction({
+    content: "Click below",
+    actions: {
+      set: {
+        actions: [
+          { type: 7, id: 1, message: { content: "Thanks!", embeds: null } },
+        ],
+      },
+    },
+  });
+
+  expect(message.actions.set.actions[0]).toMatchObject({
+    type: 7,
+    message: { content: "Thanks!", embeds: [] },
+  });
+  expect(message.actions.set.actions[0]).not.toHaveProperty("target_id");
+});

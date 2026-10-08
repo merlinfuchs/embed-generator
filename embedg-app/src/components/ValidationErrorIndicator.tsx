@@ -1,7 +1,7 @@
 import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import {
   type ValidationScope,
-  useValidationErrorStore,
+  useValidationError,
 } from "../state/validationError";
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function ValidationErrorIndicator({ scope }: Props) {
-  const error = useValidationErrorStore((state) => state.hasIssue(scope));
+  const error = useValidationError((state) => state.hasIssue(scope));
 
   if (error) {
     return <ExclamationCircleIcon className="h-5 w-5 text-red" />;

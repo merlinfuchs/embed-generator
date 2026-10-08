@@ -30,6 +30,7 @@ export default function EditorAction({ setId, actionIndex }: Props) {
     setActionText,
     setActionTargetId,
     setActionChannelId,
+    setActionMessage,
     setActionPublic,
     setActionAllowRoleMentions,
     setActionDisableDefaultResponse,
@@ -54,6 +55,7 @@ export default function EditorAction({ setId, actionIndex }: Props) {
       setType={(type) => setActionType(setId, actionIndex, type)}
       setTargetId={(id) => setActionTargetId(setId, actionIndex, id)}
       setChannelId={(id) => setActionChannelId(setId, actionIndex, id)}
+      setMessage={(message) => setActionMessage(setId, actionIndex, message)}
       setPublic={(public_) => setActionPublic(setId, actionIndex, public_)}
       setAllowRoleMentions={(allow) =>
         setActionAllowRoleMentions(setId, actionIndex, allow)

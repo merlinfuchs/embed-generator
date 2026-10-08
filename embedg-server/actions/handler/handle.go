@@ -268,7 +268,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				continue
 			}
 
-			data, err := m.savedMessage(*interaction.GuildID(), action.TargetID)
+			data, err := m.responseMessage(*interaction.GuildID(), action)
 			if err != nil {
 				return err
 			}
@@ -328,7 +328,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				continue
 			}
 
-			data, err := m.savedMessage(*interaction.GuildID(), action.TargetID)
+			data, err := m.responseMessage(*interaction.GuildID(), action)
 			if err != nil {
 				return err
 			}
@@ -371,7 +371,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				continue
 			}
 
-			data, err := m.savedMessage(*interaction.GuildID(), action.TargetID)
+			data, err := m.responseMessage(*interaction.GuildID(), action)
 			if err != nil {
 				return err
 			}
@@ -429,7 +429,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 					AllowedMentions: actionAllowedMentions(action, nil),
 				}
 			} else {
-				data, err := m.savedMessage(*interaction.GuildID(), action.TargetID)
+				data, err := m.responseMessage(*interaction.GuildID(), action)
 				if err != nil {
 					return err
 				}
@@ -554,6 +554,15 @@ func actionAllowedMentions(action actions.Action, saved *discord.AllowedMentions
 
 func templateErr(err error) error {
 	return userErr("Failed to execute template variables:\n```%s```", err)
+}
+
+// responseMessage is the message an action responds with: the one it carries itself, or the saved
+// message it names.
+func (m *ActionHandler) responseMessage(guildID common.ID, action actions.Action) (*actions.MessageWithActions, error) {
+	if action.Message != nil {
+		return action.Message, nil
+	}
+	return m.savedMessage(guildID, action.TargetID)
 }
 
 func (m *ActionHandler) savedMessage(guildID common.ID, id string) (*actions.MessageWithActions, error) {

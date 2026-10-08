@@ -24,6 +24,25 @@ function exportComponent(component: Json): Json {
  */
 export function exportMessage(message: Message): Json {
   return {
+    ...exportContent(message),
+    actions:
+      message.actions &&
+      mapValues(message.actions, (set) => ({
+        ...set,
+        actions: set.actions.map((action) =>
+          "message" in action
+            ? { ...action, message: exportContent(action.message) }
+            : action,
+        ),
+      })),
+  };
+}
+
+/** The message itself, or one that an action responds with. */
+function exportContent<T extends Pick<Message, "embeds" | "components">>(
+  message: T,
+): Json {
+  return {
     ...message,
     embeds: message.embeds?.map((embed) => ({
       ...withoutId(embed),
@@ -31,4 +50,13 @@ export function exportMessage(message: Message): Json {
     })),
     components: message.components?.map((c) => exportComponent(c as Json)),
   };
+}
+
+function mapValues<T, U>(
+  record: Record<string, T>,
+  fn: (value: T) => U,
+): Record<string, U> {
+  return Object.fromEntries(
+    Object.entries(record).map(([key, value]) => [key, fn(value)]),
+  );
 }

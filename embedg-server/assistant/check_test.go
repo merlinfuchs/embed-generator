@@ -69,13 +69,14 @@ func TestCheck(t *testing.T) {
 		"flags": 32768,
 		"components": [{"type": 13, "file": {"url": "attachment://a.png"}}, {"type": 9, "accessory": {"type": 2, "style": 1}}],
 		"actions": {
-			"b": {"actions": [{"type": 2, "target_id": "2"}, {"type": 3, "target_id": "99"}]},
+			"b": {"actions": [{"type": 2, "target_id": "2"}, {"type": 3, "target_id": "99"}, {"type": 7, "message": {"content": "Thanks!"}}]},
 			"a": {"actions": [{"type": 1, "text": "hi"}, {"type": 5, "target_id": "made_up"}, {"type": 10, "role_ids": ["2", "4", "98"]}, {"type": 4, "target_id": "4"}]}
 		}
 	}`), &msg)
 
 	guild := testGuild
 	guild.Features = model.PlanFeatures{MaxActionsPerComponent: 3}
+	// A response with a message of its own names no saved message to look for.
 	want := []string{
 		"actions.a: The plan allows 3 actions per button or option, not 4.",
 		`Action 2 of action set "a" uses saved message made_up, which the server doesn't have. Use one from the list, or remove the action and ask the user.`,

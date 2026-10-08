@@ -1,5 +1,6 @@
+import { createContext, useContext } from "react";
 import type { ZodError, ZodIssue } from "zod";
-import { create } from "zustand";
+import { create, useStore } from "zustand";
 import type { FieldPath, Node, NodeId } from "./document";
 import type { ChildSlot } from "./documentConvert";
 
@@ -82,8 +83,8 @@ export interface ValidationErrorStore {
   hasAnyIssue(): boolean;
 }
 
-export const useValidationErrorStore = create<ValidationErrorStore>()(
-  (set, get) => ({
+export const createValidationErrorStore = () =>
+  create<ValidationErrorStore>()((set, get) => ({
     index: buildIndex(null),
     idToPath: new Map(),
     setError: (error, idToPath) => {
@@ -131,5 +132,21 @@ export const useValidationErrorStore = create<ValidationErrorStore>()(
         : state.index.prefixes.has(path);
     },
     hasAnyIssue: () => get().index.issues.size > 0,
-  }),
+  }));
+
+/** The issues of the message in the editor. */
+export const useValidationErrorStore = createValidationErrorStore();
+
+/**
+ * Which issues the editor components below this point show. Unset means the
+ * message's, so only a surface that edits something else has to provide one.
+ */
+export const ValidationErrorStoreContext = createContext(
+  useValidationErrorStore,
 );
+
+export function useValidationError<T>(
+  selector: (state: ValidationErrorStore) => T,
+): T {
+  return useStore(useContext(ValidationErrorStoreContext), selector);
+}
