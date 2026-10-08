@@ -12,6 +12,6 @@ With Embed Generator Premium you can connect your own Discord bot. Once it is se
 
 You create the bot in the Discord Developer Portal, paste its token into the Embed Generator settings, invite it to your server and point its interaction endpoint at Embed Generator. The whole setup takes a few minutes and is covered step by step in the guide.
 
-![White Label Feature Preview](./white-label-feature.png)
+![White Label Feature Preview](./white-label-feature.webp)
 
 Read the full guide on [setting up a custom bot](../guides/custom-bots).

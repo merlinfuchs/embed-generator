@@ -236,7 +236,7 @@ export default function DiscordWebhook(): JSX.Element {
         steps={steps}
         aside={
           <Screenshot
-            src="/img/features/discord-webhooks/create-webhook.png"
+            src="/img/features/discord-webhooks/create-webhook.webp"
             alt="Creating a webhook under Integrations in Discord's server settings"
           />
         }

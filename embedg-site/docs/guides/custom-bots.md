@@ -24,7 +24,7 @@ Click on "New Application" and give your Application a name. This is the usernam
 
 Once you are happy with the appearance of Custom Bot continue by clicking on "Bot" on the left side of the screen. Here you can grab the token for your Application by clicking on "Reset Token". Once you have the token you are done on Discord Developer Portal and you can go back to the [Settings page](https://message.style/app/settings) on message.style.
 
-![Custom Bot Developer Portal](./custom-bots-devportal.png)
+![Custom Bot Developer Portal](./custom-bots-devportal.webp)
 
 ### Adding The Custom Bot
 
@@ -48,7 +48,7 @@ Once all of this is done your Custom Bot should work and will be used to respond
 
 For even most customizability you can set a Custom Status for your Custom Bot. You can select a status (e.g. online or Do Not Disturb) and set a status message that will appear in the member list on your server.
 
-![Configure Custom Bot](./custom-bots-configure.png)
+![Configure Custom Bot](./custom-bots-configure.webp)
 
 ## Caveats & Limitations
 

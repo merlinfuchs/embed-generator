@@ -13,4 +13,4 @@ Saved messages are also what [scheduled messages](../guides/scheduled-messages),
 
 Limits: 25 saved messages for free, 100 with [Premium](../premium).
 
-![Save Messages Feature Preview](./save-messages-feature.png)
+![Save Messages Feature Preview](./save-messages-feature.webp)

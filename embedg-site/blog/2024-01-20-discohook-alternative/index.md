@@ -25,7 +25,7 @@ To send these messages Discohook uses so called Webhooks. Discord allows server 
 
 Discohook lets users create "backups" of their messages which they can restore at a later point. This way users can work on multiple messages without losing progress. These message backups are sadly only stored locally and are not synchronized across the devices of the user. Sometimes they are even deleted when the user clears their browser cache.
 
-![Embed Example](embed.jpg)
+![Embed Example](embed.webp)
 
 While the most basic features of Discohook are easily accessible through their website, for more advanced features like scheduled messages and interactive components you have to leave their website and invite a third party bot or even install a browser extension.
 
@@ -61,26 +61,26 @@ Embed Generator allows you take advantage of all Discord embed features, includi
 
 All features are available through a user-friendly web interface. It's all in one place, you never have to leave the site to some other third party service to get all the features.
 
-![Editor](./editor.png)
+![Editor](./editor.webp)
 
 ### No Webhook URLs
 
 While you can still manually create Webhooks and use the Webhook URL to send the message, with Embed Generator there is an easier way to do it. Simply select the server and channel where you want to send the message and our bot will handle the rest. You can still change the username and avatar!
 
-![No Webhook Needed](./no-webhook.png)
+![No Webhook Needed](./no-webhook.webp)
 
 ### Real-Time Preview
 
 While you are working on your message you don't want to constantly check Discord to see how it will look like in the end. Embed Generator has a live preview built in which matches the Discord UI as close as possible.
 
-![User Interface](./interface.png)
+![User Interface](./interface.webp)
 
 ### Interactive Components
 
 Adding interactive components to your message is easier than ever with Embed Generator! Simply add a button or select menu in the message editor and define what you want to happen when a user interacts with it.
 
-![Buttons](./buttons.png)
-![Interactive Button](./component.png)
+![Buttons](./buttons.webp)
+![Interactive Button](./component.webp)
 
 ### Scheduled Messages
 

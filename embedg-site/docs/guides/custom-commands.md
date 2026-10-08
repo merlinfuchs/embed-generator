@@ -24,7 +24,7 @@ You can input a name and description for your command. The name is used by your 
 
 After you have decided a name and description for your command you can now add actions to it. These actions define what happens when a user runs the command. There are different types of actions for creating text responses, responding with saved messages, or assigning roles. See [Interactive Components](./interactive-components#actions) for more information.
 
-![First Custom Commands](./custom-commands-first.png)
+![First Custom Commands](./custom-commands-first.webp)
 
 Once you are happy with your command you can click on "Create Command" to save it. You will notice that your command is not yet available on your server. To change that you have to click on "Deploy Commands" at the bottom right.
 

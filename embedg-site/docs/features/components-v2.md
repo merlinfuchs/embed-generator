@@ -11,7 +11,7 @@ Components V2 is Discord's newer message layout system. Instead of one text bloc
 
 Components V2 replaces regular embeds. A message uses one or the other, not both.
 
-![Components V2 Example](./components-v2.png)
+![Components V2 Example](./components-v2.webp)
 
 ## What you can build with it
 
@@ -29,7 +29,7 @@ A typical announcement is a container with a section for the headline and a thum
 
 To enable Components V2, click on the "Components V2" button in the editor menu bar. This will remove all existing data from the editor.
 
-![Enable Components V2](./components-v2-enable.png)
+![Enable Components V2](./components-v2-enable.webp)
 
 You can also disable Components V2 by clicking on the "Components V2" button again. This will again remove all existing data from the editor.
 

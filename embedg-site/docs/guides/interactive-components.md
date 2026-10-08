@@ -9,7 +9,7 @@ Interactive Components can be added to your messages to allow users to interact 
 
 Buttons with actions and select menus are only available after logging in and selecting a channel. When sending to a webhook, only link buttons work. The option can be found at the very bottom of the message editor.
 
-![Interactive Components](./interactive-components.png)
+![Interactive Components](./interactive-components.webp)
 
 ## Buttons
 
@@ -21,7 +21,7 @@ A button must have a label which is displayed to the user and can optionally hav
 
 If you have selected the "Link" style you have to input an URL that the button will link to. Otherwise you can add a number of [Actions](#actions) to your button. These are used to respond to interactions or assign roles to the user.
 
-![Interactive Buttons](./interactive-components-buttons.png)
+![Interactive Buttons](./interactive-components-buttons.webp)
 
 ## Select Menus
 
@@ -33,7 +33,7 @@ Each select menu can have up to 25 options. These options are what your users wi
 
 Additionally you can add a number of [Actions](#actions). These are used to respond to interactions or assign roles to the user when they select the option.
 
-![Interactive Select Menus](./interactive-components-select.png)
+![Interactive Select Menus](./interactive-components-select.webp)
 
 ## Actions
 
@@ -49,7 +49,7 @@ You can also select where the message should be send. By default a new message w
 
 With "Other Channel", which needs [Embed Generator Premium](../premium), the message is sent to a channel of your choice instead, for example to post a report in a staff channel when someone clicks a button. The bot sends this message, so it needs permission to send messages in that channel. You need the Manage Webhooks permission in your server's role settings to use it. See [Channel Permissions](./channel-permissions#actions-that-send-to-other-channels) if channels are greyed out.
 
-![Action Text Response](./actions-text-response.png)
+![Action Text Response](./actions-text-response.webp)
 
 ### Saved Message Response
 
@@ -59,7 +59,7 @@ You can create a saved message by creating a message in the editor and the going
 
 Once you have selected the message that you want to respond with you can select if you want to create a public response and how the message should be send. This works the same as for text responses above.
 
-![Action Saved Message Response](./actions-saved-response.png)
+![Action Saved Message Response](./actions-saved-response.webp)
 
 ### Add, Remove, or Toggle Roles
 
@@ -70,4 +70,4 @@ If you have a [Custom Bot](./custom-bots) configured make sure it also has the n
 
 By default Embed Generator will send a text response to the user to indicate that a role has been addeed or removed. If you don't want to have custom response instead unselect the "Default Response" options.
 
-![Actions Assign Roles](./actions-assign-roles.png)
+![Actions Assign Roles](./actions-assign-roles.webp)

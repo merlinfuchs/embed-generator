@@ -11,6 +11,6 @@ This works for every message sent through a webhook. Each message can use a diff
 
 Replies to buttons and select menus come from the bot that handles the interaction. If you want those to carry your own name and avatar too, connect your own bot with [White Label](./white-label).
 
-![Custom Branding Feature Preview](./custom-branding-feature.png)
+![Custom Branding Feature Preview](./custom-branding-feature.webp)
 
-![Custom Branding Preview](./custom-branding-preview.png)
+![Custom Branding Preview](./custom-branding-preview.webp)
