@@ -116,10 +116,12 @@ export function ChannelSelect({
 }: Props) {
   const { data } = useGuildChannelsQuery(guildId);
   const { data: guilds } = useGuildsQuery();
-  const serverManageWebhooks = !!(
-    guilds?.success &&
-    guilds.data.find((g) => g.id === guildId)?.can_manage_webhooks
-  );
+  // Assumed until the server list says otherwise, so channels don't flash greyed out while it loads.
+  // The server checks it again when the action runs.
+  const serverManageWebhooks =
+    (guilds?.success &&
+      guilds.data.find((g) => g.id === guildId)?.can_manage_webhooks) ??
+    true;
   const ctx = useMemo<PickContext>(
     () => ({ sender, serverManageWebhooks }),
     [sender, serverManageWebhooks],

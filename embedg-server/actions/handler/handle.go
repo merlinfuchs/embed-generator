@@ -670,6 +670,9 @@ func sendToChannel(restClient rest.Rest, channelID snowflake.ID, msg discord.Mes
 			return nil, userErr("The thread <#%s> is archived or locked.", channelID)
 		case common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeCannotSendEmptyMessage):
 			return nil, userErr("The message for <#%s> is empty.", channelID)
+		case common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeInvalidFormBody):
+			// Discord's field errors say what's wrong, like text that got too long once variables were filled in.
+			return nil, userErr("Discord rejected the message for <#%s>:\n```%s```", channelID, err)
 		}
 		return nil, fmt.Errorf("failed to send message to channel: %w", err)
 	}
