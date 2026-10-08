@@ -78,7 +78,7 @@ export default function EditorComponents({
             </div>
           ))}
         </AutoAnimate>
-        <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 items-center">
+        <div className="flex flex-wrap gap-3 items-center">
           <EditorComponentAddDropdown
             context="root"
             size="large"
@@ -87,7 +87,7 @@ export default function EditorComponents({
           />
 
           <button
-            className="px-3 py-2.5 rounded-lg text-white border-2 border-red/70 hover:bg-red hover:border-red transition-colors"
+            className="px-3 py-2.5 rounded-lg text-white border-2 border-red/70 hover:bg-red hover:border-red transition-colors whitespace-nowrap"
             onClick={() => removeChildren(rootId, "components")}
           >
             Clear Components

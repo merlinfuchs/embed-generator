@@ -17,12 +17,12 @@ export default function EditorSlotButtons({
   onClear,
 }: Props) {
   return (
-    <div className="space-x-3 mt-3">
+    <div className="flex flex-wrap gap-3 mt-3">
       <button
         type="button"
         disabled={!canAdd}
         className={clsx(
-          "px-3 py-2 rounded-lg transition-colors",
+          "px-3 py-2 rounded-lg transition-colors whitespace-nowrap",
           canAdd
             ? "bg-azure-500 hover:bg-azure-400 text-white"
             : "bg-ink-900 cursor-not-allowed text-mist-300",
@@ -33,7 +33,7 @@ export default function EditorSlotButtons({
       </button>
       <button
         type="button"
-        className="px-3 py-2 rounded-lg border-2 border-red/70 hover:bg-red hover:border-red transition-colors text-white"
+        className="px-3 py-2 rounded-lg border-2 border-red/70 hover:bg-red hover:border-red transition-colors text-white whitespace-nowrap"
         onClick={onClear}
       >
         {clearLabel}

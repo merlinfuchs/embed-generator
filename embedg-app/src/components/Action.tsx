@@ -278,8 +278,8 @@ export default function Action({
         }
       >
         <div className="space-y-4">
-          <div className="flex flex-col space-y-3 xl:flex-row xl:space-x-3 xl:space-y-0">
-            <div className="flex flex-col space-y-3 lg:flex-row lg:space-x-3 lg:space-y-0">
+          <div className="flex flex-wrap gap-3">
+            <div className="contents">
               <div className="flex-none">
                 <div className="mb-1.5 flex">
                   <div className="uppercase text-mist-300 text-sm font-medium">
@@ -330,7 +330,7 @@ export default function Action({
                 </div>
               )}
             </div>
-            <div className="flex flex-col space-y-3 lg:flex-row lg:space-x-3 lg:space-y-0">
+            <div className="contents">
               {(action.type === 1 || action.type === 5) && (
                 <div className="flex-none">
                   <div className="mb-1.5 flex">
