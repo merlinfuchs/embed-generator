@@ -77,12 +77,16 @@ test("every text display is flagged when they go over 4000 together", () => {
   expect(issues[0].message).toContain("(currently 4001)");
 });
 
-function containersMessage(flags: number, containers: number) {
+function containersMessage(
+  flags: number,
+  containers: number,
+  child: object = { type: 10, content: "a" },
+) {
   return {
     flags,
     components: Array.from({ length: containers }, () => ({
       type: 17,
-      components: [{ type: 10, content: "a" }],
+      components: [child],
     })),
   };
 }
@@ -109,19 +113,13 @@ test("components v2 can have 40 components, nested ones included", () => {
 
 test("accessories count towards the 40 components", () => {
   // Each container is 4 components with its section, text display and button.
-  const message = (containers: number) => ({
-    flags: COMPONENTS_V2_FLAG,
-    components: Array.from({ length: containers }, () => ({
-      type: 17,
-      components: [
-        {
-          type: 9,
-          components: [{ type: 10, content: "a" }],
-          accessory: { type: 2, style: 5, label: "Open", url: "https://a.io" },
-        },
-      ],
-    })),
-  });
+  const section = {
+    type: 9,
+    components: [{ type: 10, content: "a" }],
+    accessory: { type: 2, style: 5, label: "Open", url: "https://a.io" },
+  };
+  const message = (containers: number) =>
+    containersMessage(COMPONENTS_V2_FLAG, containers, section);
 
   expect(messageSchema.safeParse(message(10)).success).toBe(true);
   expect(messageSchema.safeParse(message(11)).success).toBe(false);

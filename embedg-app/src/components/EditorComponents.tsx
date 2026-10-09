@@ -3,8 +3,7 @@ import {
   useChildIds,
   useDocumentStoreApi,
   useDocument,
-  useMessageComponentCount,
-  useMessageComponentLimit,
+  useMessageComponentBudget,
 } from "../state/document";
 import {
   type EditorCapabilities,
@@ -31,8 +30,7 @@ export default function EditorComponents({
 }) {
   const rootId = useDocument((state) => state.rootId);
   const components = useChildIds(rootId, "components");
-  const count = useMessageComponentCount();
-  const limit = useMessageComponentLimit();
+  const { count, limit } = useMessageComponentBudget();
   const { removeChildren } = useDocumentStoreApi().getState();
 
   const webhook = useSendSettingsStore((state) => state.mode) === "webhook";

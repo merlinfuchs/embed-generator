@@ -10,6 +10,7 @@ import {
   ACTION_ROWS_LIMIT,
   COMPONENTS_V2_FLAG,
   COMPONENTS_V2_LIMIT,
+  componentCount,
 } from "../discord/schema";
 import type {
   EmbedAuthor,
@@ -35,6 +36,7 @@ import {
   childSlots,
   fromMessage,
   setChildIds,
+  toMessage,
 } from "./documentConvert";
 
 export type NodeId = string;
@@ -258,7 +260,6 @@ export { COMPONENTS_V2_FLAG };
  */
 const SLOT_LIMITS: Record<string, number> = {
   "message.embeds": 10,
-  "message.components": ACTION_ROWS_LIMIT,
   "embed.fields": 25,
   "actionRow.components": 5,
   "section.components": 3,
@@ -288,31 +289,19 @@ export const useSlotLimit = (id: NodeId) =>
 function selectMessageComponentLimit(state: DocumentData) {
   return selectComponentsV2Enabled(state)
     ? COMPONENTS_V2_LIMIT
-    : slotLimit("message", "components");
+    : ACTION_ROWS_LIMIT;
 }
 
-function countComponents(state: DocumentData, ids: NodeId[]): number {
-  return ids.reduce((count, id) => {
-    const node = state.nodes[id];
-    const children = [
-      ...childIds(node, "components"),
-      ...childIds(node, "accessory"),
-    ];
-    return count + 1 + countComponents(state, children);
-  }, 0);
-}
-
-/** What the message's component counter shows, counted the way its limit is. */
-export const useMessageComponentCount = () =>
-  useDocument((state) => {
-    const ids = childIds(state.nodes[state.rootId], "components");
-    return selectComponentsV2Enabled(state)
-      ? countComponents(state, ids)
-      : ids.length;
-  });
-
-export const useMessageComponentLimit = () =>
-  useDocument(selectMessageComponentLimit);
+/** The message's components against their limit, counted the way the schema counts them. */
+export const useMessageComponentBudget = () =>
+  useDocument(
+    useShallow((state) => {
+      const { components } = toMessage(state).message;
+      return selectComponentsV2Enabled(state)
+        ? { count: componentCount(components), limit: COMPONENTS_V2_LIMIT }
+        : { count: components.length, limit: ACTION_ROWS_LIMIT };
+    }),
+  );
 
 export const DOCUMENT_STORE_KEY = "current-document";
 

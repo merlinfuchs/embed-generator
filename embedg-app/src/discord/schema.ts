@@ -536,7 +536,7 @@ export const ACTION_ROWS_LIMIT = 5;
 export const COMPONENTS_V2_LIMIT = 40;
 
 /** All components, nested ones and accessories included, as Discord counts them. */
-function componentCount(components: MessageComponent[]): number {
+export function componentCount(components: MessageComponent[]): number {
   return components.reduce((count, component) => {
     count += 1;
     if ("components" in component) {
