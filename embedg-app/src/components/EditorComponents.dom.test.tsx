@@ -240,8 +240,23 @@ test("moving a component down reorders the message", async () => {
   ]);
 });
 
-test("the list counter follows the slot limit", () => {
+test("the list counter counts action rows without components v2", () => {
+  loadMessage({ content: "Hello", components: [] });
   renderEditor(<EditorComponents defaultCollapsed={false} />);
 
   expect(screen.getByText("0 / 5")).toBeInTheDocument();
+});
+
+test("the list counter counts nested components with components v2", () => {
+  loadMessage({
+    content: "",
+    flags: COMPONENTS_V2_FLAG,
+    components: [
+      { type: 10, content: "First" },
+      { type: 17, components: [{ type: 10, content: "Second" }] },
+    ],
+  });
+  renderEditor(<EditorComponents defaultCollapsed={false} />);
+
+  expect(screen.getByText("3 / 40")).toBeInTheDocument();
 });

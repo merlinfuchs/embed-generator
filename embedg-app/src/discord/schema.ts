@@ -529,6 +529,26 @@ export const messageThreadName = z.optional(z.string().max(100));
 /** How much text Discord allows across all text displays of a message. */
 const TEXT_DISPLAYS_TEXT_LIMIT = 4000;
 
+/** How many action rows Discord allows in a message without components v2. */
+export const ACTION_ROWS_LIMIT = 5;
+
+/** How many components Discord allows in a components v2 message, nested ones included. */
+export const COMPONENTS_V2_LIMIT = 40;
+
+/** All components, nested ones and accessories included, as Discord counts them. */
+function componentCount(components: MessageComponent[]): number {
+  return components.reduce((count, component) => {
+    count += 1;
+    if ("components" in component) {
+      count += componentCount(component.components);
+    }
+    if ("accessory" in component && component.accessory) {
+      count += 1;
+    }
+    return count;
+  }, 0);
+}
+
 /** Every text display in the components, with the path to it. */
 function textDisplays(
   components: MessageComponent[],
@@ -552,7 +572,7 @@ const messageFieldsSchema = z.object({
   tts: messageTtsSchema.default(false),
   embeds: z.array(embedSchema).max(10).default([]),
   allowed_mentions: messageAllowedMentionsSchema,
-  components: z.array(componentSchema).max(5).default([]),
+  components: z.array(componentSchema).default([]),
   thread_name: messageThreadName,
   flags: z.number().optional(),
 });
@@ -575,6 +595,15 @@ function refineMessage(
       });
     }
 
+    const count = componentCount(data.components);
+    if (count > COMPONENTS_V2_LIMIT) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["components"],
+        message: `A message can't have more than ${COMPONENTS_V2_LIMIT} components, nested ones included (currently ${count})`,
+      });
+    }
+
     const displays = textDisplays(data.components, ["components"]);
     const length = displays.reduce((sum, d) => sum + d.content.length, 0);
     if (length > TEXT_DISPLAYS_TEXT_LIMIT) {
@@ -594,6 +623,14 @@ function refineMessage(
         code: z.ZodIssueCode.custom,
         path: ["content"],
         message: "Content is required when no other fields are set",
+      });
+    }
+
+    if (data.components.length > ACTION_ROWS_LIMIT) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["components"],
+        message: `A message can't have more than ${ACTION_ROWS_LIMIT} action rows without components v2`,
       });
     }
 

@@ -6,7 +6,11 @@ import { type TemporalState, temporal } from "zundo";
 import { create, useStore } from "zustand";
 import { type PersistStorage, persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import { COMPONENTS_V2_FLAG } from "../discord/schema";
+import {
+  ACTION_ROWS_LIMIT,
+  COMPONENTS_V2_FLAG,
+  COMPONENTS_V2_LIMIT,
+} from "../discord/schema";
 import type {
   EmbedAuthor,
   EmbedFooter,
@@ -254,7 +258,7 @@ export { COMPONENTS_V2_FLAG };
  */
 const SLOT_LIMITS: Record<string, number> = {
   "message.embeds": 10,
-  "message.components": 5,
+  "message.components": ACTION_ROWS_LIMIT,
   "embed.fields": 25,
   "actionRow.components": 5,
   "section.components": 3,
@@ -274,8 +278,41 @@ export const useSlotLimit = (id: NodeId) =>
     const parent = node?.parentId ? state.nodes[node.parentId] : undefined;
     const slot = parent && slotOfChild(parent, id);
 
+    if (parent?.type === "message" && slot === "components") {
+      return selectMessageComponentLimit(state);
+    }
     return parent && slot ? slotLimit(parent.type, slot) : 1;
   });
+
+/** Components v2 limits all components of the message, the others its action rows. */
+function selectMessageComponentLimit(state: DocumentData) {
+  return selectComponentsV2Enabled(state)
+    ? COMPONENTS_V2_LIMIT
+    : slotLimit("message", "components");
+}
+
+function countComponents(state: DocumentData, ids: NodeId[]): number {
+  return ids.reduce((count, id) => {
+    const node = state.nodes[id];
+    const children = [
+      ...childIds(node, "components"),
+      ...childIds(node, "accessory"),
+    ];
+    return count + 1 + countComponents(state, children);
+  }, 0);
+}
+
+/** What the message's component counter shows, counted the way its limit is. */
+export const useMessageComponentCount = () =>
+  useDocument((state) => {
+    const ids = childIds(state.nodes[state.rootId], "components");
+    return selectComponentsV2Enabled(state)
+      ? countComponents(state, ids)
+      : ids.length;
+  });
+
+export const useMessageComponentLimit = () =>
+  useDocument(selectMessageComponentLimit);
 
 export const DOCUMENT_STORE_KEY = "current-document";
 

@@ -77,6 +77,70 @@ test("every text display is flagged when they go over 4000 together", () => {
   expect(issues[0].message).toContain("(currently 4001)");
 });
 
+function containersMessage(flags: number, containers: number) {
+  return {
+    flags,
+    components: Array.from({ length: containers }, () => ({
+      type: 17,
+      components: [{ type: 10, content: "a" }],
+    })),
+  };
+}
+
+test("components v2 can have more than 5 top-level components", () => {
+  // 7 containers with a text display each are 14 components.
+  expect(
+    messageSchema.safeParse(containersMessage(COMPONENTS_V2_FLAG, 7)).success,
+  ).toBe(true);
+});
+
+test("components v2 can have 40 components, nested ones included", () => {
+  expect(
+    messageSchema.safeParse(containersMessage(COMPONENTS_V2_FLAG, 20)).success,
+  ).toBe(true);
+
+  const result = messageSchema.safeParse(
+    containersMessage(COMPONENTS_V2_FLAG, 21),
+  );
+  const issues = result.success ? [] : result.error.issues;
+  expect(issues.map((issue) => issue.path)).toEqual([["components"]]);
+  expect(issues[0].message).toContain("(currently 42)");
+});
+
+test("accessories count towards the 40 components", () => {
+  // Each container is 4 components with its section, text display and button.
+  const message = (containers: number) => ({
+    flags: COMPONENTS_V2_FLAG,
+    components: Array.from({ length: containers }, () => ({
+      type: 17,
+      components: [
+        {
+          type: 9,
+          components: [{ type: 10, content: "a" }],
+          accessory: { type: 2, style: 5, label: "Open", url: "https://a.io" },
+        },
+      ],
+    })),
+  });
+
+  expect(messageSchema.safeParse(message(10)).success).toBe(true);
+  expect(messageSchema.safeParse(message(11)).success).toBe(false);
+});
+
+test("a message without components v2 can have 5 action rows", () => {
+  const row = {
+    type: 1,
+    components: [{ type: 2, style: 5, label: "Open", url: "https://a.io" }],
+  };
+
+  expect(
+    messageSchema.safeParse({ components: Array(5).fill(row) }).success,
+  ).toBe(true);
+  expect(
+    messageSchema.safeParse({ components: Array(6).fill(row) }).success,
+  ).toBe(false);
+});
+
 function embedsMessage(...descriptionLengths: number[]) {
   return {
     embeds: descriptionLengths.map((length) => ({
