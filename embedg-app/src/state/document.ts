@@ -10,7 +10,6 @@ import {
   ACTION_ROWS_LIMIT,
   COMPONENTS_V2_FLAG,
   COMPONENTS_V2_LIMIT,
-  componentCount,
 } from "../discord/schema";
 import type {
   EmbedAuthor,
@@ -36,7 +35,6 @@ import {
   childSlots,
   fromMessage,
   setChildIds,
-  toMessage,
 } from "./documentConvert";
 
 export type NodeId = string;
@@ -292,14 +290,28 @@ function selectMessageComponentLimit(state: DocumentData) {
     : ACTION_ROWS_LIMIT;
 }
 
-/** The message's components against their limit, counted the way the schema counts them. */
+/** All components under the given ones, accessories included, as the schema's `componentCount`. */
+function countComponents(state: DocumentData, ids: NodeId[]): number {
+  let count = 0;
+  for (const id of ids) {
+    const node = state.nodes[id];
+    count += 1 + countComponents(state, childIds(node, "components"));
+    count += childIds(node, "accessory").length;
+  }
+  return count;
+}
+
+/** The message's components against their limit, counted the way the limit counts them. */
 export const useMessageComponentBudget = () =>
   useDocument(
     useShallow((state) => {
-      const { components } = toMessage(state).message;
-      return selectComponentsV2Enabled(state)
-        ? { count: componentCount(components), limit: COMPONENTS_V2_LIMIT }
-        : { count: components.length, limit: ACTION_ROWS_LIMIT };
+      const ids = childIds(state.nodes[state.rootId], "components");
+      return {
+        count: selectComponentsV2Enabled(state)
+          ? countComponents(state, ids)
+          : ids.length,
+        limit: selectMessageComponentLimit(state),
+      };
     }),
   );
 
