@@ -31,6 +31,7 @@ import {
   childSlots,
   fromMessage,
   setChildIds,
+  toMessage,
 } from "./documentConvert";
 
 export type NodeId = string;
@@ -483,15 +484,30 @@ export const createDocumentStore = (
             clear: () => set(fromMessage(initialMessage)),
 
             // The two modes cannot hold each other's content, so the toggle
-            // replaces the message rather than editing it. Who gets pinged is
-            // not content and carries over.
-            setComponentsV2: (enabled) =>
-              set(
-                fromMessage({
-                  ...(enabled ? emptyComponentsV2Message : defaultMessage),
-                  allowed_mentions: selectAllowedMentions(get()),
-                }),
-              ),
+            // replaces the message rather than editing it. Top-level action
+            // rows are valid in both and carry over with their actions, as
+            // does who gets pinged.
+            setComponentsV2: (enabled) => {
+              const { message } = toMessage(get());
+              const next = fromMessage({
+                ...(enabled ? emptyComponentsV2Message : defaultMessage),
+                allowed_mentions: message.allowed_mentions,
+                components: message.components.filter((c) => c.type === 1),
+                actions: message.actions,
+              });
+
+              const kept = new Set(
+                Object.values(next.nodes).flatMap((node) =>
+                  node.type === "button" || node.type === "selectOption"
+                    ? [node.action_set_id]
+                    : [],
+                ),
+              );
+              next.actions = Object.fromEntries(
+                Object.entries(next.actions).filter(([id]) => kept.has(id)),
+              );
+              set(next);
+            },
           }),
           {
             limit: 10,

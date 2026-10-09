@@ -52,7 +52,7 @@ export default function EditorComponentsV2Toggle() {
       {componentsV2EnableModal && (
         <ConfirmModal
           title="Are you sure that you want to enable Components V2?"
-          subTitle="This will change the way the editor works and will remove all existing data."
+          subTitle="This will change the way the editor works and will remove the content and embeds. Button and select menu rows are kept."
           onClose={() => setComponentsV2EnableModal(false)}
           onConfirm={toggleComponentsV2}
         >
@@ -70,7 +70,7 @@ export default function EditorComponentsV2Toggle() {
       {componentsV2DisableModal && (
         <ConfirmModal
           title="Are you sure that you want to disable Components V2?"
-          subTitle="This will change the way the editor works and will remove all existing data."
+          subTitle="This will change the way the editor works and will remove everything except button and select menu rows outside of containers."
           onClose={() => setComponentsV2DisableModal(false)}
           onConfirm={toggleComponentsV2}
         >

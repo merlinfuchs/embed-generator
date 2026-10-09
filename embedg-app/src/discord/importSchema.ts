@@ -12,7 +12,7 @@
  */
 import { z } from "zod";
 import { getUniqueId } from "../util";
-import { RESPONSE_MESSAGE_OMIT } from "./schema";
+import { COMPONENTS_V2_FLAG, RESPONSE_MESSAGE_OMIT } from "./schema";
 
 export const uniqueIdSchema = z.preprocess(
   (d) => {
@@ -646,8 +646,26 @@ function collectActionSetIds(components: any[], ids: Set<string>) {
   }
 }
 
+/**
+ * Whether a message is components v2 without saying so. Only action rows can sit at the top
+ * of any other message, and content and embeds can't be part of a components v2 one, so a
+ * message with both is left alone for validation to flag.
+ */
+function isUnflaggedComponentsV2(message: Message) {
+  return (
+    !(message.flags & COMPONENTS_V2_FLAG) &&
+    !message.content &&
+    message.embeds.length === 0 &&
+    message.components.some((component) => component.type !== 1)
+  );
+}
+
 export function parseMessageWithAction(raw: any) {
   const parsedData = messageSchema.parse(raw);
+
+  if (isUnflaggedComponentsV2(parsedData)) {
+    parsedData.flags |= COMPONENTS_V2_FLAG;
+  }
 
   const actionSetIds = new Set<string>();
   collectActionSetIds(parsedData.components, actionSetIds);

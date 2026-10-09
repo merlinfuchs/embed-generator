@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { parseMessageWithAction } from "./importSchema";
-import { messageSchema } from "./schema";
+import { COMPONENTS_V2_FLAG, messageSchema } from "./schema";
 
 /** A message the way Discord returns one, nulls and all. */
 const discordMessage = {
@@ -192,6 +192,47 @@ test("a container with no components imports", () => {
   });
 
   expect(message.components).toHaveLength(1);
+});
+
+test("a message with components v2 components is components v2 without the flag", () => {
+  const message = parseMessageWithAction({
+    content: "",
+    flags: 0,
+    components: [
+      { type: 17, components: [{ type: 10, content: "Text" }] },
+      { type: 1, components: [{ type: 2, style: 1, label: "Button" }] },
+    ],
+  });
+
+  expect(message.flags & COMPONENTS_V2_FLAG).toBe(COMPONENTS_V2_FLAG);
+});
+
+test("other flags stay when components v2 is inferred", () => {
+  const message = parseMessageWithAction({
+    flags: 1 << 2,
+    components: [{ type: 10, content: "Text" }],
+  });
+
+  expect(message.flags).toBe(COMPONENTS_V2_FLAG | (1 << 2));
+});
+
+test("a message with only action rows stays without components v2", () => {
+  const message = parseMessageWithAction({
+    components: [
+      { type: 1, components: [{ type: 2, style: 1, label: "Button" }] },
+    ],
+  });
+
+  expect(message.flags).toBe(0);
+});
+
+test("components v2 isn't inferred for a message with content or embeds", () => {
+  const components = [{ type: 10, content: "Text" }];
+
+  expect(parseMessageWithAction({ content: "Hi", components }).flags).toBe(0);
+  expect(
+    parseMessageWithAction({ embeds: [{ title: "Title" }], components }).flags,
+  ).toBe(0);
 });
 
 test("an empty embed timestamp is no timestamp", () => {
