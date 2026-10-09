@@ -23,6 +23,7 @@ import {
   defaultMessage,
   emptyComponentsV2Message,
 } from "../discord/defaultMessage";
+import { collectActionSetIds } from "../discord/importSchema";
 import { getUniqueId } from "../util";
 import { type ActionSetActions, createActionSetSlice } from "./actionSetSlice";
 import {
@@ -489,24 +490,22 @@ export const createDocumentStore = (
             // does who gets pinged.
             setComponentsV2: (enabled) => {
               const { message } = toMessage(get());
-              const next = fromMessage({
-                ...(enabled ? emptyComponentsV2Message : defaultMessage),
-                allowed_mentions: message.allowed_mentions,
-                components: message.components.filter((c) => c.type === 1),
-                actions: message.actions,
-              });
+              const rows = message.components.filter((c) => c.type === 1);
+              const kept = new Set<string>();
+              collectActionSetIds(rows, kept);
 
-              const kept = new Set(
-                Object.values(next.nodes).flatMap((node) =>
-                  node.type === "button" || node.type === "selectOption"
-                    ? [node.action_set_id]
-                    : [],
-                ),
+              set(
+                fromMessage({
+                  ...(enabled ? emptyComponentsV2Message : defaultMessage),
+                  allowed_mentions: message.allowed_mentions,
+                  components: rows,
+                  actions: Object.fromEntries(
+                    Object.entries(message.actions).filter(([id]) =>
+                      kept.has(id),
+                    ),
+                  ),
+                }),
               );
-              next.actions = Object.fromEntries(
-                Object.entries(next.actions).filter(([id]) => kept.has(id)),
-              );
-              set(next);
             },
           }),
           {

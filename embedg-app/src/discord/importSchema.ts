@@ -624,7 +624,7 @@ export type Message = z.infer<typeof messageSchema>;
 // Buttons and select options carry an action set id wherever they sit, so this has to walk the
 // whole tree: components v2 puts them inside containers and as section accessories, which the
 // editor then showed with no action set at all.
-function collectActionSetIds(components: any[], ids: Set<string>) {
+export function collectActionSetIds(components: any[], ids: Set<string>) {
   for (const component of components) {
     if (component.action_set_id) {
       ids.add(component.action_set_id);
