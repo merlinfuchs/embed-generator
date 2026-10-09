@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import {
-  slotLimit,
   useChildIds,
   useDocumentStoreApi,
   useDocument,
+  useMessageComponentBudget,
 } from "../state/document";
 import {
   type EditorCapabilities,
@@ -30,6 +30,7 @@ export default function EditorComponents({
 }) {
   const rootId = useDocument((state) => state.rootId);
   const components = useChildIds(rootId, "components");
+  const { count, limit } = useMessageComponentBudget();
   const { removeChildren } = useDocumentStoreApi().getState();
 
   const webhook = useSendSettingsStore((state) => state.mode) === "webhook";
@@ -62,7 +63,7 @@ export default function EditorComponents({
         extra={
           <div className="flex space-x-2">
             <div className="text-sm italic font-light text-mist-400">
-              {components.length} / {slotLimit("message", "components")}
+              {count} / {limit}
             </div>
             <div className="bg-azure-500 px-1 rounded-lg text-white text-xs items-center flex font-bold">
               ADVANCED
@@ -83,7 +84,7 @@ export default function EditorComponents({
             context="root"
             size="large"
             parentId={rootId}
-            disabled={components.length >= slotLimit("message", "components")}
+            disabled={count >= limit}
           />
 
           <button
