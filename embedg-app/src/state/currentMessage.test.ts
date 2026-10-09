@@ -103,7 +103,12 @@ test("a version 2 document keeps its components and takes the root fields", asyn
   const document = await documentAt(2, {
     content: "",
     embeds: [{ title: "Document embed", fields: [] }],
-    components: [{ type: 10, content: "Document text" }],
+    components: [
+      {
+        type: 1,
+        components: [{ type: 2, style: 1, label: "Document button" }],
+      },
+    ],
   });
 
   const message = await seedWith({
@@ -112,7 +117,9 @@ test("a version 2 document keeps its components and takes the root fields", asyn
   });
 
   expect(message.embeds).toMatchObject([{ title: "Document embed" }]);
-  expect(message.components).toMatchObject([{ content: "Document text" }]);
+  expect(message.components).toMatchObject([
+    { components: [{ label: "Document button" }] },
+  ]);
   expect(message.content).toBe("Draft content");
 });
 

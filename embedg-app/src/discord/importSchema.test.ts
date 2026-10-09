@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { parseMessageWithAction } from "./importSchema";
-import { messageSchema } from "./schema";
+import { COMPONENTS_V2_FLAG, messageSchema } from "./schema";
 
 /** A message the way Discord returns one, nulls and all. */
 const discordMessage = {
@@ -192,6 +192,90 @@ test("a container with no components imports", () => {
   });
 
   expect(message.components).toHaveLength(1);
+});
+
+test("a message with components v2 components is components v2 without the flag", () => {
+  const message = parseMessageWithAction({
+    content: "",
+    flags: 0,
+    components: [
+      { type: 17, components: [{ type: 10, content: "Text" }] },
+      { type: 1, components: [{ type: 2, style: 1, label: "Button" }] },
+    ],
+  });
+
+  expect(message.flags & COMPONENTS_V2_FLAG).toBe(COMPONENTS_V2_FLAG);
+});
+
+test("other flags stay when components v2 is inferred", () => {
+  const message = parseMessageWithAction({
+    flags: 1 << 2,
+    components: [{ type: 10, content: "Text" }],
+  });
+
+  expect(message.flags).toBe(COMPONENTS_V2_FLAG | (1 << 2));
+});
+
+test("a message with only action rows stays without components v2", () => {
+  const message = parseMessageWithAction({
+    components: [
+      { type: 1, components: [{ type: 2, style: 1, label: "Button" }] },
+    ],
+  });
+
+  expect(message.flags).toBe(0);
+});
+
+test("content and embeds become components when components v2 is inferred", () => {
+  const message = parseMessageWithAction({
+    content: "Hello",
+    embeds: [
+      {
+        title: "Title",
+        url: "https://a.io",
+        description: "Description",
+        color: 123,
+        fields: [{ name: "Name", value: "Value" }],
+        footer: { text: "Footer" },
+        thumbnail: { url: "https://a.io/thumb.png" },
+        image: { url: "https://a.io/image.png" },
+      },
+      { image: { url: "https://a.io/only.png" } },
+      {},
+    ],
+    components: [{ type: 10, content: "Text" }],
+  });
+
+  expect(message.content).toBe("");
+  expect(message.embeds).toEqual([]);
+  expect(message.components).toMatchObject([
+    { type: 10, content: "Hello" },
+    {
+      type: 17,
+      accent_color: 123,
+      components: [
+        {
+          type: 9,
+          components: [
+            {
+              type: 10,
+              content:
+                "### [Title](https://a.io)\nDescription\n**Name**\nValue\n-# Footer",
+            },
+          ],
+          accessory: { type: 11, media: { url: "https://a.io/thumb.png" } },
+        },
+        { type: 12, items: [{ media: { url: "https://a.io/image.png" } }] },
+      ],
+    },
+    {
+      type: 17,
+      components: [
+        { type: 12, items: [{ media: { url: "https://a.io/only.png" } }] },
+      ],
+    },
+    { type: 10, content: "Text" },
+  ]);
 });
 
 test("an empty embed timestamp is no timestamp", () => {

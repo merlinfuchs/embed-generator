@@ -228,6 +228,64 @@ test("setComponentsV2 toggles the flag", () => {
   expect((root().flags ?? 0) & COMPONENTS_V2_FLAG).toBe(COMPONENTS_V2_FLAG);
 });
 
+test("switching modes keeps top-level action rows and their actions", () => {
+  const textAction = { type: 1, text: "Hi" };
+  const store = createDocumentStore(
+    "test-switch",
+    messageSchema.parse({
+      content: "Content",
+      embeds: [{ title: "Title" }],
+      components: [
+        {
+          type: 1,
+          components: [
+            { type: 2, style: 1, label: "Kept", action_set_id: "kept" },
+          ],
+        },
+      ],
+      actions: { kept: { actions: [textAction] } },
+    }),
+  );
+
+  store.getState().setComponentsV2(true);
+  const v2 = toMessage(store.getState()).message;
+  expect(v2.content).toBe("");
+  expect(v2.embeds).toEqual([]);
+  expect(v2.components).toMatchObject([
+    { type: 1, components: [{ label: "Kept", action_set_id: "kept" }] },
+  ]);
+  expect(v2.actions).toMatchObject({ kept: { actions: [textAction] } });
+
+  store.getState().setComponentsV2(false);
+  expect(toMessage(store.getState()).message.components).toMatchObject([
+    { type: 1, components: [{ label: "Kept" }] },
+  ]);
+});
+
+test("switching to components v2 keeps every component", () => {
+  const store = createDocumentStore(
+    "test-switch-all",
+    messageSchema.parse({
+      components: [{ type: 17, components: [{ type: 10, content: "Text" }] }],
+    }),
+  );
+
+  store.getState().setComponentsV2(true);
+
+  expect(toMessage(store.getState()).message.components).toMatchObject([
+    { type: 17, components: [{ type: 10, content: "Text" }] },
+  ]);
+});
+
+test("switching off components v2 drops what only it can hold", () => {
+  state().setComponentsV2(false);
+  const message = toMessage(state()).message;
+
+  // The container and the actions of its buttons go, nothing is left over.
+  expect(message.components).toEqual([]);
+  expect(message.actions).toEqual({});
+});
+
 test("replaceAll swaps the whole document", () => {
   state().replaceAll(messageSchema.parse({ content: "Replaced" }));
 

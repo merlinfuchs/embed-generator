@@ -12,7 +12,7 @@
  */
 import { z } from "zod";
 import { getUniqueId } from "../util";
-import { RESPONSE_MESSAGE_OMIT } from "./schema";
+import { COMPONENTS_V2_FLAG, RESPONSE_MESSAGE_OMIT } from "./schema";
 
 export const uniqueIdSchema = z.preprocess(
   (d) => {
@@ -624,7 +624,7 @@ export type Message = z.infer<typeof messageSchema>;
 // Buttons and select options carry an action set id wherever they sit, so this has to walk the
 // whole tree: components v2 puts them inside containers and as section accessories, which the
 // editor then showed with no action set at all.
-function collectActionSetIds(components: any[], ids: Set<string>) {
+export function collectActionSetIds(components: any[], ids: Set<string>) {
   for (const component of components) {
     if (component.action_set_id) {
       ids.add(component.action_set_id);
@@ -646,8 +646,94 @@ function collectActionSetIds(components: any[], ids: Set<string>) {
   }
 }
 
+/**
+ * Whether a message is components v2 without saying so: only action rows can sit at the top of
+ * any other message.
+ */
+function isUnflaggedComponentsV2(message: Message) {
+  return (
+    !(message.flags & COMPONENTS_V2_FLAG) &&
+    message.components.some((component) => component.type !== 1)
+  );
+}
+
+function markdownLink(text: string, url: string | undefined) {
+  return url ? `[${text}](${url})` : text;
+}
+
+/** An embed as a container, as close as components v2 gets to how it looked. */
+function embedToContainer(embed: MessageEmbed) {
+  const lines: string[] = [];
+  if (embed.author?.name) {
+    lines.push(`-# ${markdownLink(embed.author.name, embed.author.url)}`);
+  }
+  if (embed.title) {
+    lines.push(`### ${markdownLink(embed.title, embed.url)}`);
+  }
+  if (embed.description) {
+    lines.push(embed.description);
+  }
+  for (const field of embed.fields) {
+    lines.push(`**${field.name}**\n${field.value}`);
+  }
+
+  const time = embed.timestamp ? Date.parse(embed.timestamp) : Number.NaN;
+  const footer = [
+    embed.footer?.text,
+    Number.isNaN(time) ? undefined : `<t:${Math.floor(time / 1000)}:f>`,
+  ].filter(Boolean);
+  if (footer.length > 0) {
+    lines.push(`-# ${footer.join(" • ")}`);
+  }
+
+  const components: unknown[] = [];
+  const media = [embed.image?.url].filter(Boolean);
+  if (lines.length > 0) {
+    const text = { type: 10, content: lines.join("\n") };
+    components.push(
+      embed.thumbnail?.url
+        ? {
+            type: 9,
+            components: [text],
+            accessory: { type: 11, media: { url: embed.thumbnail.url } },
+          }
+        : text,
+    );
+  } else if (embed.thumbnail?.url) {
+    media.unshift(embed.thumbnail.url);
+  }
+  if (media.length > 0) {
+    components.push({
+      type: 12,
+      items: media.map((url) => ({ media: { url } })),
+    });
+  }
+
+  return components.length > 0
+    ? { type: 17, accent_color: embed.color, components }
+    : undefined;
+}
+
 export function parseMessageWithAction(raw: any) {
-  const parsedData = messageSchema.parse(raw);
+  let parsedData = messageSchema.parse(raw);
+
+  // Components v2 can't have content or embeds, so they become components of their own instead
+  // of being lost.
+  if (isUnflaggedComponentsV2(parsedData)) {
+    parsedData = messageSchema.parse({
+      ...parsedData,
+      content: "",
+      embeds: [],
+      flags: parsedData.flags | COMPONENTS_V2_FLAG,
+      components: [
+        ...(parsedData.content
+          ? [{ type: 10, content: parsedData.content }]
+          : []),
+        ...parsedData.embeds.map(embedToContainer).filter(Boolean),
+        ...parsedData.components,
+      ],
+    });
+  }
 
   const actionSetIds = new Set<string>();
   collectActionSetIds(parsedData.components, actionSetIds);
