@@ -262,6 +262,21 @@ test("switching modes keeps top-level action rows and their actions", () => {
   ]);
 });
 
+test("switching to components v2 keeps every component", () => {
+  const store = createDocumentStore(
+    "test-switch-all",
+    messageSchema.parse({
+      components: [{ type: 17, components: [{ type: 10, content: "Text" }] }],
+    }),
+  );
+
+  store.getState().setComponentsV2(true);
+
+  expect(toMessage(store.getState()).message.components).toMatchObject([
+    { type: 17, components: [{ type: 10, content: "Text" }] },
+  ]);
+});
+
 test("switching off components v2 drops what only it can hold", () => {
   state().setComponentsV2(false);
   const message = toMessage(state()).message;

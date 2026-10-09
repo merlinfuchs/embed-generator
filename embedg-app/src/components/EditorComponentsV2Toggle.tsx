@@ -52,7 +52,7 @@ export default function EditorComponentsV2Toggle() {
       {componentsV2EnableModal && (
         <ConfirmModal
           title="Are you sure that you want to enable Components V2?"
-          subTitle="This will change the way the editor works and will remove the content and embeds. Button and select menu rows are kept."
+          subTitle="This will change the way the editor works and will remove the content and embeds. Components are kept."
           onClose={() => setComponentsV2EnableModal(false)}
           onConfirm={toggleComponentsV2}
         >

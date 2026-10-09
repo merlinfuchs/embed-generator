@@ -226,13 +226,56 @@ test("a message with only action rows stays without components v2", () => {
   expect(message.flags).toBe(0);
 });
 
-test("components v2 isn't inferred for a message with content or embeds", () => {
-  const components = [{ type: 10, content: "Text" }];
+test("content and embeds become components when components v2 is inferred", () => {
+  const message = parseMessageWithAction({
+    content: "Hello",
+    embeds: [
+      {
+        title: "Title",
+        url: "https://a.io",
+        description: "Description",
+        color: 123,
+        fields: [{ name: "Name", value: "Value" }],
+        footer: { text: "Footer" },
+        thumbnail: { url: "https://a.io/thumb.png" },
+        image: { url: "https://a.io/image.png" },
+      },
+      { image: { url: "https://a.io/only.png" } },
+      {},
+    ],
+    components: [{ type: 10, content: "Text" }],
+  });
 
-  expect(parseMessageWithAction({ content: "Hi", components }).flags).toBe(0);
-  expect(
-    parseMessageWithAction({ embeds: [{ title: "Title" }], components }).flags,
-  ).toBe(0);
+  expect(message.content).toBe("");
+  expect(message.embeds).toEqual([]);
+  expect(message.components).toMatchObject([
+    { type: 10, content: "Hello" },
+    {
+      type: 17,
+      accent_color: 123,
+      components: [
+        {
+          type: 9,
+          components: [
+            {
+              type: 10,
+              content:
+                "### [Title](https://a.io)\nDescription\n**Name**\nValue\n-# Footer",
+            },
+          ],
+          accessory: { type: 11, media: { url: "https://a.io/thumb.png" } },
+        },
+        { type: 12, items: [{ media: { url: "https://a.io/image.png" } }] },
+      ],
+    },
+    {
+      type: 17,
+      components: [
+        { type: 12, items: [{ media: { url: "https://a.io/only.png" } }] },
+      ],
+    },
+    { type: 10, content: "Text" },
+  ]);
 });
 
 test("an empty embed timestamp is no timestamp", () => {

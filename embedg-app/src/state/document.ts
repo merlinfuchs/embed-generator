@@ -485,20 +485,23 @@ export const createDocumentStore = (
             clear: () => set(fromMessage(initialMessage)),
 
             // The two modes cannot hold each other's content, so the toggle
-            // replaces the message rather than editing it. Top-level action
-            // rows are valid in both and carry over with their actions, as
-            // does who gets pinged.
+            // replaces the message rather than editing it. Components valid
+            // in the new mode carry over with their actions, as does who
+            // gets pinged.
             setComponentsV2: (enabled) => {
               const { message } = toMessage(get());
-              const rows = message.components.filter((c) => c.type === 1);
+              // Everything is valid in components v2, only action rows outside of it.
+              const components = enabled
+                ? message.components
+                : message.components.filter((c) => c.type === 1);
               const kept = new Set<string>();
-              collectActionSetIds(rows, kept);
+              collectActionSetIds(components, kept);
 
               set(
                 fromMessage({
                   ...(enabled ? emptyComponentsV2Message : defaultMessage),
                   allowed_mentions: message.allowed_mentions,
-                  components: rows,
+                  components,
                   actions: Object.fromEntries(
                     Object.entries(message.actions).filter(([id]) =>
                       kept.has(id),
