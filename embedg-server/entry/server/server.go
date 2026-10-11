@@ -102,6 +102,12 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 	}, guildState, accessManager, embedg.Rest(), embedg, pg, actionParser, webhookManager)
 	embedg.Client().AddEventListeners(commandHandler)
 
+	if shards.IsLeader() {
+		if err := commandHandler.SyncCommands(ctx); err != nil {
+			slog.Error("Failed to sync commands", slog.Any("error", err))
+		}
+	}
+
 	scheduledMessageManager := scheduled_messages.NewScheduledMessageManager(
 		pg,
 		pg,
