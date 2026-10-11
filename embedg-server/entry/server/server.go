@@ -28,7 +28,10 @@ import (
 	"github.com/openai/openai-go/v2/option"
 )
 
-const gatewayCloseTimeout = 10 * time.Second
+const (
+	gatewayCloseTimeout = 10 * time.Second
+	commandSyncTimeout  = 30 * time.Second
+)
 
 func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.RootConfig) error {
 	if cfg.Discord.RestURL != "" {
@@ -103,9 +106,15 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 	embedg.Client().AddEventListeners(commandHandler)
 
 	if shards.IsLeader() {
-		if err := commandHandler.SyncCommands(ctx); err != nil {
-			slog.Error("Failed to sync commands", slog.Any("error", err))
-		}
+		// disgo waits out every 429 it gets, so a rate limit could otherwise hang this for hours.
+		go func() {
+			ctx, cancel := context.WithTimeout(ctx, commandSyncTimeout)
+			defer cancel()
+
+			if err := commandHandler.SyncCommands(ctx); err != nil {
+				slog.Error("Failed to sync commands", slog.Any("error", err))
+			}
+		}()
 	}
 
 	scheduledMessageManager := scheduled_messages.NewScheduledMessageManager(
