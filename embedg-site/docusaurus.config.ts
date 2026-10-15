@@ -272,10 +272,7 @@ const config: Config = {
     },
   ],
 
-  scripts: [
-    { src: "/js/setupop.js", defer: true },
-    { src: "https://analytics.xenon.bot/op1.js", defer: true },
-  ],
+  clientModules: ["./src/analytics.ts"],
 };
 
 module.exports = config;
