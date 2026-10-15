@@ -67,7 +67,7 @@ message.style {
 
 	# OpenPanel's track endpoint, on our own domain and under a path block
 	# lists don't match. The app and site rewrite /track to /ops.
-	handle /relay/ops {
+	handle /ops {
 		request_body {
 			max_size 1MB
 		}
