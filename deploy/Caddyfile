@@ -65,6 +65,21 @@ message.style {
 		reverse_proxy 127.0.0.1:8080
 	}
 
+	# OpenPanel's track endpoint, on our own domain and under a path block
+	# lists don't match. The app and site rewrite /track to /ops.
+	handle /relay/ops {
+		request_body {
+			max_size 1MB
+		}
+		rewrite * /api/track
+		reverse_proxy https://analytics.xenon.bot {
+			header_up Host {upstream_hostport}
+			# OpenPanel reads this before X-Forwarded-For for geo and visitor hashing.
+			header_up openpanel-client-ip {client_ip}
+			header_up -Cookie
+		}
+	}
+
 	handle /e/* {
 		request_body {
 			max_size 1MB
