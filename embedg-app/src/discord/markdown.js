@@ -457,6 +457,7 @@ const CACHE_LIMIT = 500;
 const htmlCache = new Map();
 
 export function toHTML(source, options) {
+  source = source.trim();
   const cacheable = !options?.discordCallback && !options?.cssModuleNames;
   const cacheKey = cacheable
     ? `${options?.isTitle ? "t" : "b"}\u0000${source}`
@@ -508,5 +509,5 @@ function renderHTML(source, options) {
     ),
   };
 
-  return _htmlOutput(_parser(source.trim(), state), state);
+  return _htmlOutput(_parser(source, state), state);
 }
