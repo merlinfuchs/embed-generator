@@ -14,6 +14,13 @@
     <meta name="twitter:image" content="https://message.style/img/og.png" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta property="og:site_name" content="message.style" />
+    <!-- pages.ts puts a heading and text in #root for crawlers that don't run JS.
+         Hide it so it doesn't flash before the app mounts and replaces it. -->
+    <style>
+      #root > main {
+        display: none;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
