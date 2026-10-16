@@ -22,7 +22,7 @@ You need the **Manage Webhooks** permission in the channel.
 
 ## Send a message with Embed Generator
 
-1. Open the [editor](https://message.style/app).
+1. Open the [editor](https://message.style/app/editor).
 2. At the top, choose **Webhook** as the target and paste the URL.
 3. Build your message: content, embeds, images, or a [Components V2](../features/components-v2) layout. Optionally set a username and avatar for this message.
 4. Click **Send Message**.

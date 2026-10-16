@@ -99,7 +99,11 @@ message.style {
 	@moved_webhook_post path /blog/executing-webhooks /blog/executing-webhooks/
 	redir @moved_webhook_post /features/discord-webhooks 301
 
-	redir /app /app/
+	# The app's root is the editor. Redirect so search engines see one URL for it
+	# instead of three. The app redirects / to /editor the same way, keeping the query.
+	@app_root path /app /app/
+	redir @app_root /app/editor{?query} 301
+
 	handle_path /app/* {
 		root * /srv/message.style/app
 
@@ -114,10 +118,9 @@ message.style {
 		}
 
 		# Pages people search for have their own title and text, see embedg-app/pages.ts.
-		# Everything else gets index.html, which is noindex. /app itself is the editor.
+		# Everything else gets index.html, which is noindex.
 		handle {
 			header Cache-Control "no-cache"
-			rewrite / /pages/editor.html
 			rewrite /editor/share/* /pages/shared.html
 			try_files /pages{path}.html {path} {path}/ /index.html
 			file_server

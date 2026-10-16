@@ -38,7 +38,7 @@ export default function HomeHeader(): JSX.Element {
             </a>
           ))}
           <a
-            href="/app"
+            href="/app/editor"
             className="ml-1 flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-azure-500 px-3 py-2 text-sm font-semibold text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)_inset] transition-colors hover:bg-azure-400 hover:text-white hover:no-underline sm:ml-2 sm:px-4"
           >
             <SparklesIcon className="hidden h-4 w-4 sm:block" />

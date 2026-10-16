@@ -13,4 +13,4 @@ echo "==> building embedg-app"
 
 deploy_static embedg-app/dist /srv/message.style/app
 
-curl -sf -o /dev/null -w "==> https://message.style/app/ %{http_code}\n" https://message.style/app/
+curl -sf -o /dev/null -w "==> https://message.style/app/editor %{http_code}\n" https://message.style/app/editor

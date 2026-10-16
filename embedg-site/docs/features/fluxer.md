@@ -10,7 +10,7 @@ description: Send embeds to Fluxer with Embed Generator. Paste a Fluxer webhook 
 ## Send a message to Fluxer
 
 1. In Fluxer, create a webhook in the settings of the channel you want to post in and copy its URL. It starts with `https://api.fluxer.app/webhooks/`.
-2. Open the [editor](https://message.style/app), choose **Webhook** as the target and paste the URL.
+2. Open the [editor](https://message.style/app/editor), choose **Webhook** as the target and paste the URL.
 3. Build the message and click **Send Message**.
 
 Paste the link of a message you sent into **Message ID or URL** to edit it later, or click **Restore Message** to load it back into the editor.

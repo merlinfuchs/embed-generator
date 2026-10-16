@@ -22,7 +22,7 @@ export default function HomeHero(): JSX.Element {
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <a
-              href="/app"
+              href="/app/editor"
               className="flex items-center gap-2 rounded-lg bg-azure-500 px-5 py-3 text-base font-semibold text-white transition-colors hover:bg-azure-400 hover:text-white hover:no-underline"
             >
               <SparklesIcon className="h-5 w-5" />

@@ -182,7 +182,7 @@ const config: Config = {
             position: "right",
           },
           {
-            href: "https://message.style/app",
+            href: "https://message.style/app/editor",
             label: "Open App",
             position: "right",
             className: "navbar__item--cta",
@@ -195,7 +195,7 @@ const config: Config = {
           {
             title: "Product",
             items: [
-              { label: "Open App", href: "https://message.style/app" },
+              { label: "Open App", href: "https://message.style/app/editor" },
               { label: "Premium", href: "https://message.style/premium" },
               { label: "Documentation", to: "/docs" },
               { label: "Blog", to: "/blog" },
