@@ -57,7 +57,7 @@ const titleRules = {
     match: (source) =>
       markdown.defaultRules.inlineCode.match.regex.exec(source),
     html: (node, _output, state) =>
-      htmlTag("code", markdown.sanitizeText(node.content.trim()), null, state),
+      htmlTag("code", markdown.sanitizeText(node.content), null, state),
   }),
   text: Object.assign({}, markdown.defaultRules.text, {
     match: (source) =>
@@ -457,6 +457,7 @@ const CACHE_LIMIT = 500;
 const htmlCache = new Map();
 
 export function toHTML(source, options) {
+  source = source.trim();
   const cacheable = !options?.discordCallback && !options?.cssModuleNames;
   const cacheKey = cacheable
     ? `${options?.isTitle ? "t" : "b"}\u0000${source}`

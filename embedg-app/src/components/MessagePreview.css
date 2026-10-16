@@ -449,6 +449,7 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   font-size: 0.875rem;
   font-weight: 400;
   line-height: 1.125rem;
+  white-space: break-spaces;
 }
 
 .discord-embed code.multiline {
