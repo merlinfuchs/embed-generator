@@ -21,4 +21,12 @@ describe("toHTML", () => {
   it("drops javascript: links", () => {
     expect(toHTML("[click](javascript:alert(1))")).not.toContain("javascript:");
   });
+
+  it("keeps spaces inside inline code", () => {
+    expect(toHTML("` a `")).toContain("<code> a </code>");
+  });
+
+  it("trims spaces around the whole text", () => {
+    expect(toHTML("  hello  ")).toBe("hello");
+  });
 });

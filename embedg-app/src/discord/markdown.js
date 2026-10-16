@@ -57,7 +57,7 @@ const titleRules = {
     match: (source) =>
       markdown.defaultRules.inlineCode.match.regex.exec(source),
     html: (node, _output, state) =>
-      htmlTag("code", markdown.sanitizeText(node.content.trim()), null, state),
+      htmlTag("code", markdown.sanitizeText(node.content), null, state),
   }),
   text: Object.assign({}, markdown.defaultRules.text, {
     match: (source) =>
@@ -508,5 +508,5 @@ function renderHTML(source, options) {
     ),
   };
 
-  return _htmlOutput(_parser(source, state), state);
+  return _htmlOutput(_parser(source.trim(), state), state);
 }
