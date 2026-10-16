@@ -10,7 +10,7 @@ If you are coming from Discohook and would like to start using Embed Generator i
 
 ## Getting started
 
-To get started with Embed Generator go [message.style/app](https://message.style/app). You will see a message editor that should look fairly similar to what you are used to from Discohook. There are a few differences, but all the features you are used to are there and work the same way - or better - as with Discohook.
+To get started with Embed Generator go [message.style/app](https://message.style/app/editor). You will see a message editor that should look fairly similar to what you are used to from Discohook. There are a few differences, but all the features you are used to are there and work the same way - or better - as with Discohook.
 
 One important difference is that you will want to login with your Discord account when you are using Embed Generator. This makes it possible to save your messages in the cloud so you can access them on any device. With Discohook your message backups are stored locally and are no synchronized between devices, this makes it easy to lose your messages accidentally.
 

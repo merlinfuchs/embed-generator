@@ -10,7 +10,7 @@ import (
 
 func (g *CommandHandler) handleEmbedCommand(e *handler.CommandEvent) error {
 	return e.Respond(discord.InteractionResponseTypeCreateMessage, discord.MessageCreate{
-		Content:    "If you want to have more options to customize your message go to [message.style](<https://message.style/app>)!",
+		Content:    "If you want to have more options to customize your message go to [message.style](<https://message.style/app/editor>)!",
 		Components: embedEditComponents(),
 		Flags:      discord.MessageFlagEphemeral,
 	})
