@@ -185,8 +185,8 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0(react@18.2.0)
       '@openpanel/web':
-        specifier: ^1.3.0
-        version: 1.3.0
+        specifier: ^1.4.1
+        version: 1.4.1
       '@tanstack/react-query':
         specifier: ^5
         version: 5.103.1(react@18.2.0)
@@ -661,11 +661,11 @@ packages:
     os: [linux]
     libc: [glibc]
 
-  '@openpanel/sdk@1.3.0':
-    resolution: {integrity: sha512-VK/1oawBjGdxA+oYtqcWlNXlLT1zRJ9tslHoMvqqsqlcLNOhH26ltcHpyGp5RhtIF7uIkCltiicALfFN7fyldw==}
+  '@openpanel/sdk@1.3.1':
+    resolution: {integrity: sha512-mQ5xaBUGXnyRg3qYxwnbVaUYyW7w8u+munrWk/ClnqxEeR2j+FYPiA6noHbHMCFC2aZutYD5OoRzEvw3FBNFxw==}
 
-  '@openpanel/web@1.3.0':
-    resolution: {integrity: sha512-geUPcn35oMqWlBS7rB4ejP6qzKGs4VDAZhoSw9MD3q/UYkD/pfTEx70z1ydGVJMjHREdXoAL1XVhBLdZmu1gsw==}
+  '@openpanel/web@1.4.1':
+    resolution: {integrity: sha512-DgUWeocZw+b57YiJjefZPg+6sceR7TdOF8x7Ut75lu3CwcwqGi5jZNPXjikNemGL37aNWXCB4buhcoNan2j7RA==}
 
   '@radix-ui/primitive@1.0.1':
     resolution: {integrity: sha512-yQ8oGX2GVsEYMWGxcovu1uGWPCxV5BFfeeYxqPmuAzUyLT9qmaMXSAhXpb0WrspIeqYzdJpkh2vHModJPgRIaw==}
@@ -2705,11 +2705,11 @@ snapshots:
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     optional: true
 
-  '@openpanel/sdk@1.3.0': {}
+  '@openpanel/sdk@1.3.1': {}
 
-  '@openpanel/web@1.3.0':
+  '@openpanel/web@1.4.1':
     dependencies:
-      '@openpanel/sdk': 1.3.0
+      '@openpanel/sdk': 1.3.1
       '@rrweb/types': 2.0.0-alpha.20
       rrweb: 2.0.0-alpha.20
 
