@@ -42,6 +42,12 @@ if (typeof window !== "undefined") {
   }
 }
 
+// The OpenPanel client reads location on import and would send events
+// through the tests' fetch stubs.
+vi.mock("../util/analytics", () => ({
+  op: { track: vi.fn(), identify: vi.fn() },
+}));
+
 if (typeof window !== "undefined") {
   // Auto cleanup only hooks itself up when vitest globals are enabled.
   const { cleanup } = await import("@testing-library/react");

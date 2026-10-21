@@ -13,7 +13,7 @@ if (ExecutionEnvironment.canUseDOM) {
     });
 
     // Block lists match OpenPanel's /track endpoint. Caddy maps /ops back to it.
-    // Keep in sync with embedg-app/src/components/AnalyticsProvider.tsx.
+    // Keep in sync with embedg-app/src/util/analytics.ts.
     const fetchApi = op.api.fetch.bind(op.api);
     op.api.fetch = (path, data, options) =>
       fetchApi(path === "/track" ? "/ops" : path, data, options);

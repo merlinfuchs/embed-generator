@@ -43,7 +43,7 @@ The specific cookies served may vary depending on which parts of the site you vi
 
 We measure how the website and the editor are used with OpenPanel, which we run on our own infrastructure, including the script your browser loads for it. The data stays with us, no analytics data is sent to a third-party provider.
 
-OpenPanel does not set cookies and does not store an identifier in your browser, so there is nothing to opt out of on the cookie level. It records page views and clicks on links to other websites, along with the technical information every web request carries, such as your IP address, user agent, and referrer. Visitors who are not logged in are counted using a hash derived from that data, which cannot be used to recognize you on other websites.
+OpenPanel does not set cookies and does not store an identifier in your browser, so there is nothing to opt out of on the cookie level. It records page views and clicks on links to other websites. In the editor it also records actions like sending or scheduling a message, with details such as the number of embeds or the template you started from, but never the content of your message. All of this comes along with the technical information every web request carries, such as your IP address, user agent, and referrer. Visitors who are not logged in are counted using a hash derived from that data, which cannot be used to recognize you on other websites.
 
 When you are logged in to the editor, we also send your Discord user ID and username with these events. That links your usage to your account across visits and devices, so we can see how the people who use the editor use its features. You can object to this, or ask us to delete that data, by emailing privacy@message.style.
 
@@ -76,4 +76,4 @@ Alte Str. 5
 04229 Leipzig  
 Germany
 
-_Last updated September 25, 2026_
+_Last updated October 21, 2026_

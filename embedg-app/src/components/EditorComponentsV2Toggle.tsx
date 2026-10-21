@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useState } from "react";
 import { useComponentsV2Enabled, useDocumentStoreApi } from "../state/document";
+import { op } from "../util/analytics";
 import ConfirmModal from "./ConfirmModal";
 
 export default function EditorComponentsV2Toggle() {
@@ -15,6 +16,7 @@ export default function EditorComponentsV2Toggle() {
     setComponentsV2EnableModal(false);
 
     store.getState().setComponentsV2(!componentsV2Enabled);
+    op.track("components_v2_toggled", { enabled: !componentsV2Enabled });
   };
 
   return (

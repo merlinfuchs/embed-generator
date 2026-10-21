@@ -42,6 +42,45 @@ import type {
   UploadImageResponseWire,
 } from "./wire";
 import { handleApiResponse } from "./queries";
+import type { APIResponse } from "./base";
+import { op } from "../util/analytics";
+import { COMPONENTS_V2_FLAG } from "../discord/schema";
+
+// The shape of a sent message, never its content.
+function messageProperties(data: Record<string, any> | null) {
+  return {
+    components_v2: ((data?.flags ?? 0) & COMPONENTS_V2_FLAG) !== 0,
+    embeds: data?.embeds?.length ?? 0,
+    components: data?.components?.length ?? 0,
+  };
+}
+
+function trackSend<V>(
+  mode: string,
+  properties: (req: V) => Record<string, unknown>,
+) {
+  return {
+    onSuccess: (res: APIResponse<unknown>, req: V) => {
+      if (res.success) {
+        op.track("message_sent", { mode, ...properties(req) });
+      } else {
+        op.track("message_send_failed", { mode, code: res.error.code });
+      }
+    },
+    // The request failed or the response wasn't JSON, like a proxy error page.
+    onError: () =>
+      op.track("message_send_failed", { mode, code: "request_failed" }),
+  };
+}
+
+function trackOnSuccess<V>(
+  name: string,
+  properties?: (vars: V) => Record<string, unknown>,
+) {
+  return (res: APIResponse<unknown>, vars: V) => {
+    if (res.success) op.track(name, properties?.(vars));
+  };
+}
 
 export function useAssistantChatMutation() {
   const queryClient = useQueryClient();
@@ -65,6 +104,14 @@ export function useAssistantChatMutation() {
       );
     },
     onSettled: (res, _err, { guildId }) => {
+      if (res) {
+        op.track("assistant_prompt", {
+          success: res.success,
+          changed: res.success && !!res.data.data,
+          code: res.success ? undefined : res.error.code,
+        });
+      }
+
       if (res?.success) {
         queryClient.setQueryData(["assistant", "usage", guildId], {
           success: true,
@@ -91,6 +138,12 @@ export function useSendMessageToChannelMutation() {
         },
       }).then((res) => handleApiResponse<MessageSendResponseWire>(res.json()));
     },
+    ...trackSend("channel", (req: MessageSendToChannelRequestWire) => ({
+      edit: !!req.message_id,
+      new_thread: !!req.thread_name,
+      attachments: req.attachments.length,
+      ...messageProperties(req.data),
+    })),
   });
 }
 
@@ -105,6 +158,13 @@ export function useSendMessageToWebhookMutation() {
         },
       }).then((res) => handleApiResponse<MessageSendResponseWire>(res.json()));
     },
+    ...trackSend("webhook", (req: MessageSendToWebhookRequestWire) => ({
+      platform: req.webhook_platform,
+      edit: !!req.message_id,
+      in_thread: !!req.thread_id,
+      attachments: req.attachments.length,
+      ...messageProperties(req.data),
+    })),
   });
 }
 
@@ -164,6 +224,10 @@ export function useCreatedSavedMessageMutation() {
         handleApiResponse<SavedMessageCreateResponseWire>(res.json()),
       );
     },
+    onSuccess: trackOnSuccess("message_saved", ({ guildId }) => ({
+      new: true,
+      guild: !!guildId,
+    })),
   });
 }
 
@@ -192,6 +256,12 @@ export function useUpdateSavedMessageMutation() {
       }).then((res) =>
         handleApiResponse<SavedMessageUpdateResponseWire>(res.json()),
       );
+    },
+    onSuccess: (res, { req, guildId }) => {
+      // Renames leave the data out and aren't a save of the message.
+      if (res.success && req.data !== undefined) {
+        op.track("message_saved", { new: false, guild: !!guildId });
+      }
     },
   });
 }
@@ -246,6 +316,10 @@ export function useImportSavedMessagesMutation() {
         handleApiResponse<SavedMessagesImportResponseWire>(res.json()),
       );
     },
+    onSuccess: trackOnSuccess("messages_imported", ({ req, guildId }) => ({
+      count: req.messages.length,
+      guild: !!guildId,
+    })),
   });
 }
 
@@ -262,6 +336,7 @@ export function useSharedMessageCreateMutation() {
         handleApiResponse<SharedMessageGetResponseWire>(res.json()),
       );
     },
+    onSuccess: trackOnSuccess("message_shared"),
   });
 }
 
@@ -284,6 +359,7 @@ export function useCustomBotConfigureMutation() {
         handleApiResponse<CustomBotConfigureResponseWire>(res.json()),
       );
     },
+    onSuccess: trackOnSuccess("custom_bot_configured"),
   });
 }
 
@@ -343,6 +419,9 @@ export function useCustomCommandCreateMutation() {
         handleApiResponse<CustomCommandCreateResponseWire>(res.json()),
       );
     },
+    onSuccess: trackOnSuccess("custom_command_created", ({ req }) => ({
+      parameters: req.parameters.length,
+    })),
   });
 }
 
@@ -385,6 +464,7 @@ export function useCustomCommandsDeployMutation() {
         handleApiResponse<CustomCommandsDeployResponseWire>(res.json()),
       );
     },
+    onSuccess: trackOnSuccess("custom_commands_deployed"),
   });
 }
 
@@ -428,6 +508,7 @@ export function useUploadImageMutation() {
         body,
       }).then((res) => handleApiResponse<UploadImageResponseWire>(res.json()));
     },
+    onSuccess: trackOnSuccess("image_uploaded"),
   });
 }
 
@@ -450,6 +531,11 @@ export function useScheduledMessageCreateMutation() {
         handleApiResponse<ScheduledMessageCreateResponseWire>(res.json()),
       );
     },
+    onSuccess: trackOnSuccess("scheduled_message_created", ({ req }) => ({
+      repeating: !!req.cron_expression,
+      run_times: req.run_times?.length ?? 0,
+      enabled: req.enabled,
+    })),
   });
 }
 
@@ -533,6 +619,9 @@ export function useEmbedLinkCreateMutation() {
         handleApiResponse<EmbedLinkCreateResponseWire>(res.json()),
       );
     },
+    onSuccess: trackOnSuccess("embed_link_created", (req) => ({
+      component_embed: !!req.component_embed,
+    })),
   });
 }
 

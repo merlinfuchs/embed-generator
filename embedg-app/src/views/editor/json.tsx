@@ -1,5 +1,6 @@
 import ReactCodeMirror from "@uiw/react-codemirror";
 import { useEffect, useState } from "react";
+import { op } from "../../util/analytics";
 import Modal from "../../components/Modal";
 import {
   setCurrentMessage,
@@ -20,6 +21,8 @@ export default function JsonView() {
   const msg = useDebouncedCurrentDocument(250)?.message;
 
   const [raw, setRaw] = useState("{}");
+  // Saving without an edit is just closing the view, not an import.
+  const [edited, setEdited] = useState(false);
 
   useEffect(() => {
     setRaw(msg ? JSON.stringify(exportMessage(msg), null, 2) : "{}");
@@ -31,6 +34,7 @@ export default function JsonView() {
       const parsedData = parseMessageWithAction(data);
 
       setCurrentMessage(parsedData);
+      if (edited) op.track("json_imported");
       navigate("/editor");
     } catch (e) {
       console.error(e);
@@ -58,7 +62,10 @@ export default function JsonView() {
           }}
           extensions={[lintGutter(), json(), linter(jsonParseLinter())]}
           theme={githubDark}
-          onChange={(v) => setRaw(v)}
+          onChange={(v) => {
+            setRaw(v);
+            setEdited(true);
+          }}
         />
         <div className="mt-3 flex justify-end space-x-2">
           <button

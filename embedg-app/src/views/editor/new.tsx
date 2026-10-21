@@ -8,6 +8,7 @@ import clsx from "clsx";
 import { type ReactNode, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserQuery } from "../../api/queries";
+import { op } from "../../util/analytics";
 import { ChannelSelect } from "../../components/ChannelSelect";
 import ConfirmModal from "../../components/ConfirmModal";
 import LoginLink from "../../components/LoginLink";
@@ -88,7 +89,8 @@ export default function NewMessageView() {
     else setPendingReplace({ run });
   }
 
-  function applyTemplate(message: Message) {
+  function applyTemplate(template: MessageTemplate, message: Message) {
+    op.track("message_started", { from: template.id, format });
     setCurrentMessage(message);
     if (needsBot(message)) {
       useSendSettingsStore.getState().setMode("channel");
@@ -103,11 +105,15 @@ export default function NewMessageView() {
     if (features && guildId && template.fields?.length) {
       setFilling(template);
     } else {
-      replace(() => applyTemplate(message));
+      replace(() => applyTemplate(template, message));
     }
   }
 
   function startBlank(path: string) {
+    op.track("message_started", {
+      from: path === "/editor/assistant" ? "assistant" : "blank",
+      format,
+    });
     setCurrentMessage(
       format === "componentsV2" ? emptyComponentsV2Message : defaultMessage,
     );
@@ -124,7 +130,9 @@ export default function NewMessageView() {
               format={format}
               guildId={guildId}
               onBack={() => setFilling(null)}
-              onUse={(message) => replace(() => applyTemplate(message))}
+              onUse={(message) =>
+                replace(() => applyTemplate(filling, message))
+              }
             />
           ) : (
             <>
