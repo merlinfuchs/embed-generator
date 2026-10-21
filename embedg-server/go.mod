@@ -1,6 +1,6 @@
 module github.com/merlinfuchs/embed-generator/embedg-server
 
-go 1.25.0
+go 1.27.3
 
 require (
 	endobit.io/clog v0.6.0
