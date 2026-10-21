@@ -43,7 +43,7 @@ import type {
 } from "./wire";
 import { handleApiResponse } from "./queries";
 import type { APIResponse } from "./base";
-import { op } from "../components/AnalyticsProvider";
+import { op } from "../util/analytics";
 import { COMPONENTS_V2_FLAG } from "../discord/schema";
 
 // The shape of a sent message, never its content.
@@ -55,18 +55,31 @@ function messageProperties(data: Record<string, any> | null) {
   };
 }
 
-function trackSend(
-  res: APIResponse<unknown>,
-  properties: Record<string, unknown>,
+function trackSend<V>(
+  mode: string,
+  properties: (req: V) => Record<string, unknown>,
 ) {
-  if (res.success) {
-    op.track("message_sent", properties);
-  } else {
-    op.track("message_send_failed", {
-      mode: properties.mode,
-      code: res.error.code,
-    });
-  }
+  return {
+    onSuccess: (res: APIResponse<unknown>, req: V) => {
+      if (res.success) {
+        op.track("message_sent", { mode, ...properties(req) });
+      } else {
+        op.track("message_send_failed", { mode, code: res.error.code });
+      }
+    },
+    // The request failed or the response wasn't JSON, like a proxy error page.
+    onError: () =>
+      op.track("message_send_failed", { mode, code: "request_failed" }),
+  };
+}
+
+function trackOnSuccess<V>(
+  name: string,
+  properties?: (vars: V) => Record<string, unknown>,
+) {
+  return (res: APIResponse<unknown>, vars: V) => {
+    if (res.success) op.track(name, properties?.(vars));
+  };
 }
 
 export function useAssistantChatMutation() {
@@ -95,6 +108,7 @@ export function useAssistantChatMutation() {
         op.track("assistant_prompt", {
           success: res.success,
           changed: res.success && !!res.data.data,
+          code: res.success ? undefined : res.error.code,
         });
       }
 
@@ -124,14 +138,12 @@ export function useSendMessageToChannelMutation() {
         },
       }).then((res) => handleApiResponse<MessageSendResponseWire>(res.json()));
     },
-    onSuccess: (res, req) =>
-      trackSend(res, {
-        mode: "channel",
-        edit: !!req.message_id,
-        thread: !!req.thread_name,
-        attachments: req.attachments.length,
-        ...messageProperties(req.data),
-      }),
+    ...trackSend("channel", (req: MessageSendToChannelRequestWire) => ({
+      edit: !!req.message_id,
+      new_thread: !!req.thread_name,
+      attachments: req.attachments.length,
+      ...messageProperties(req.data),
+    })),
   });
 }
 
@@ -146,15 +158,13 @@ export function useSendMessageToWebhookMutation() {
         },
       }).then((res) => handleApiResponse<MessageSendResponseWire>(res.json()));
     },
-    onSuccess: (res, req) =>
-      trackSend(res, {
-        mode: "webhook",
-        platform: req.webhook_platform,
-        edit: !!req.message_id,
-        thread: !!req.thread_id,
-        attachments: req.attachments.length,
-        ...messageProperties(req.data),
-      }),
+    ...trackSend("webhook", (req: MessageSendToWebhookRequestWire) => ({
+      platform: req.webhook_platform,
+      edit: !!req.message_id,
+      in_thread: !!req.thread_id,
+      attachments: req.attachments.length,
+      ...messageProperties(req.data),
+    })),
   });
 }
 
@@ -171,9 +181,6 @@ export function useRestoreMessageFromWebhookMutation() {
         handleApiResponse<MessageRestoreResponseWire>(res.json()),
       );
     },
-    onSuccess: (res) => {
-      if (res.success) op.track("message_restored", { mode: "webhook" });
-    },
   });
 }
 
@@ -189,9 +196,6 @@ export function useRestoreMessageFromChannelMutation() {
       }).then((res) =>
         handleApiResponse<MessageRestoreResponseWire>(res.json()),
       );
-    },
-    onSuccess: (res) => {
-      if (res.success) op.track("message_restored", { mode: "channel" });
     },
   });
 }
@@ -220,11 +224,10 @@ export function useCreatedSavedMessageMutation() {
         handleApiResponse<SavedMessageCreateResponseWire>(res.json()),
       );
     },
-    onSuccess: (res, { guildId }) => {
-      if (res.success) {
-        op.track("message_saved", { new: true, guild: !!guildId });
-      }
-    },
+    onSuccess: trackOnSuccess("message_saved", ({ guildId }) => ({
+      new: true,
+      guild: !!guildId,
+    })),
   });
 }
 
@@ -313,14 +316,10 @@ export function useImportSavedMessagesMutation() {
         handleApiResponse<SavedMessagesImportResponseWire>(res.json()),
       );
     },
-    onSuccess: (res, { req, guildId }) => {
-      if (res.success) {
-        op.track("messages_imported", {
-          count: req.messages.length,
-          guild: !!guildId,
-        });
-      }
-    },
+    onSuccess: trackOnSuccess("messages_imported", ({ req, guildId }) => ({
+      count: req.messages.length,
+      guild: !!guildId,
+    })),
   });
 }
 
@@ -337,9 +336,7 @@ export function useSharedMessageCreateMutation() {
         handleApiResponse<SharedMessageGetResponseWire>(res.json()),
       );
     },
-    onSuccess: (res) => {
-      if (res.success) op.track("message_shared");
-    },
+    onSuccess: trackOnSuccess("message_shared"),
   });
 }
 
@@ -362,9 +359,7 @@ export function useCustomBotConfigureMutation() {
         handleApiResponse<CustomBotConfigureResponseWire>(res.json()),
       );
     },
-    onSuccess: (res) => {
-      if (res.success) op.track("custom_bot_configured");
-    },
+    onSuccess: trackOnSuccess("custom_bot_configured"),
   });
 }
 
@@ -424,13 +419,9 @@ export function useCustomCommandCreateMutation() {
         handleApiResponse<CustomCommandCreateResponseWire>(res.json()),
       );
     },
-    onSuccess: (res, { req }) => {
-      if (res.success) {
-        op.track("custom_command_created", {
-          parameters: req.parameters.length,
-        });
-      }
-    },
+    onSuccess: trackOnSuccess("custom_command_created", ({ req }) => ({
+      parameters: req.parameters.length,
+    })),
   });
 }
 
@@ -473,9 +464,7 @@ export function useCustomCommandsDeployMutation() {
         handleApiResponse<CustomCommandsDeployResponseWire>(res.json()),
       );
     },
-    onSuccess: (res) => {
-      if (res.success) op.track("custom_commands_deployed");
-    },
+    onSuccess: trackOnSuccess("custom_commands_deployed"),
   });
 }
 
@@ -519,9 +508,7 @@ export function useUploadImageMutation() {
         body,
       }).then((res) => handleApiResponse<UploadImageResponseWire>(res.json()));
     },
-    onSuccess: (res) => {
-      if (res.success) op.track("image_uploaded");
-    },
+    onSuccess: trackOnSuccess("image_uploaded"),
   });
 }
 
@@ -544,15 +531,11 @@ export function useScheduledMessageCreateMutation() {
         handleApiResponse<ScheduledMessageCreateResponseWire>(res.json()),
       );
     },
-    onSuccess: (res, { req }) => {
-      if (res.success) {
-        op.track("scheduled_message_created", {
-          repeating: !!req.cron_expression,
-          run_times: req.run_times?.length ?? 0,
-          enabled: req.enabled,
-        });
-      }
-    },
+    onSuccess: trackOnSuccess("scheduled_message_created", ({ req }) => ({
+      repeating: !!req.cron_expression,
+      run_times: req.run_times?.length ?? 0,
+      enabled: req.enabled,
+    })),
   });
 }
 
@@ -636,13 +619,9 @@ export function useEmbedLinkCreateMutation() {
         handleApiResponse<EmbedLinkCreateResponseWire>(res.json()),
       );
     },
-    onSuccess: (res, req) => {
-      if (res.success) {
-        op.track("embed_link_created", {
-          component_embed: !!req.component_embed,
-        });
-      }
-    },
+    onSuccess: trackOnSuccess("embed_link_created", (req) => ({
+      component_embed: !!req.component_embed,
+    })),
   });
 }
 

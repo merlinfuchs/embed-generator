@@ -6,6 +6,7 @@ import {
 } from "../api/mutations";
 import type { MessageRestoreResponseDataWire } from "../api/wire";
 import { parseMessageWithAction } from "../discord/importSchema";
+import { op } from "../util/analytics";
 import { useCurrentAttachmentsStore } from "../state/attachments";
 import { getUniqueId } from "../util";
 import { useToasts } from "../util/toasts";
@@ -31,6 +32,7 @@ export default function MessageRestoreButton() {
     try {
       const parsedData = parseMessageWithAction(data.data);
       setCurrentMessage(parsedData);
+      op.track("message_restored", { mode });
 
       if (data.attachments) {
         useCurrentAttachmentsStore.getState().replaceAttachments(

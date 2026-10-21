@@ -8,7 +8,7 @@ import clsx from "clsx";
 import { type ReactNode, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserQuery } from "../../api/queries";
-import { op } from "../../components/AnalyticsProvider";
+import { op } from "../../util/analytics";
 import { ChannelSelect } from "../../components/ChannelSelect";
 import ConfirmModal from "../../components/ConfirmModal";
 import LoginLink from "../../components/LoginLink";

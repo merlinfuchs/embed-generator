@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { useState } from "react";
 import { useComponentsV2Enabled, useDocumentStoreApi } from "../state/document";
-import { op } from "./AnalyticsProvider";
+import { op } from "../util/analytics";
 import ConfirmModal from "./ConfirmModal";
 
 export default function EditorComponentsV2Toggle() {

@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import type { GetPremiumPlanFeaturesResponseDataWire } from "../api/wire";
 import type { Limit } from "../util/plans";
-import { op } from "./AnalyticsProvider";
+import { op } from "../util/analytics";
 import Modal from "./Modal";
 
 const limitNames: Record<Limit, string> = {

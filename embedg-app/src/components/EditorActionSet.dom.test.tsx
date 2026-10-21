@@ -11,7 +11,7 @@ vi.mock("../util/premium", () => ({
   usePremiumUserFeatures: () => ({}),
 }));
 
-vi.mock("./AnalyticsProvider", () => ({ op: { track: vi.fn() } }));
+vi.mock("../util/analytics", () => ({ op: { track: vi.fn() } }));
 
 vi.mock("../util/plans", async (importOriginal) => {
   const { defaultPlanFeatures } = await import("../test/plan");
