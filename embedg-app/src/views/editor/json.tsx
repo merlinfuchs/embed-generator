@@ -1,5 +1,6 @@
 import ReactCodeMirror from "@uiw/react-codemirror";
 import { useEffect, useState } from "react";
+import { op } from "../../components/AnalyticsProvider";
 import Modal from "../../components/Modal";
 import {
   setCurrentMessage,
@@ -31,6 +32,7 @@ export default function JsonView() {
       const parsedData = parseMessageWithAction(data);
 
       setCurrentMessage(parsedData);
+      op.track("json_imported");
       navigate("/editor");
     } catch (e) {
       console.error(e);

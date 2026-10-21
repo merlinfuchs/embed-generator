@@ -42,6 +42,32 @@ import type {
   UploadImageResponseWire,
 } from "./wire";
 import { handleApiResponse } from "./queries";
+import type { APIResponse } from "./base";
+import { op } from "../components/AnalyticsProvider";
+import { COMPONENTS_V2_FLAG } from "../discord/schema";
+
+// The shape of a sent message, never its content.
+function messageProperties(data: Record<string, any> | null) {
+  return {
+    components_v2: ((data?.flags ?? 0) & COMPONENTS_V2_FLAG) !== 0,
+    embeds: data?.embeds?.length ?? 0,
+    components: data?.components?.length ?? 0,
+  };
+}
+
+function trackSend(
+  res: APIResponse<unknown>,
+  properties: Record<string, unknown>,
+) {
+  if (res.success) {
+    op.track("message_sent", properties);
+  } else {
+    op.track("message_send_failed", {
+      mode: properties.mode,
+      code: res.error.code,
+    });
+  }
+}
 
 export function useAssistantChatMutation() {
   const queryClient = useQueryClient();
@@ -65,6 +91,13 @@ export function useAssistantChatMutation() {
       );
     },
     onSettled: (res, _err, { guildId }) => {
+      if (res) {
+        op.track("assistant_prompt", {
+          success: res.success,
+          changed: res.success && !!res.data.data,
+        });
+      }
+
       if (res?.success) {
         queryClient.setQueryData(["assistant", "usage", guildId], {
           success: true,
@@ -91,6 +124,14 @@ export function useSendMessageToChannelMutation() {
         },
       }).then((res) => handleApiResponse<MessageSendResponseWire>(res.json()));
     },
+    onSuccess: (res, req) =>
+      trackSend(res, {
+        mode: "channel",
+        edit: !!req.message_id,
+        thread: !!req.thread_name,
+        attachments: req.attachments.length,
+        ...messageProperties(req.data),
+      }),
   });
 }
 
@@ -105,6 +146,15 @@ export function useSendMessageToWebhookMutation() {
         },
       }).then((res) => handleApiResponse<MessageSendResponseWire>(res.json()));
     },
+    onSuccess: (res, req) =>
+      trackSend(res, {
+        mode: "webhook",
+        platform: req.webhook_platform,
+        edit: !!req.message_id,
+        thread: !!req.thread_id,
+        attachments: req.attachments.length,
+        ...messageProperties(req.data),
+      }),
   });
 }
 
@@ -121,6 +171,9 @@ export function useRestoreMessageFromWebhookMutation() {
         handleApiResponse<MessageRestoreResponseWire>(res.json()),
       );
     },
+    onSuccess: (res) => {
+      if (res.success) op.track("message_restored", { mode: "webhook" });
+    },
   });
 }
 
@@ -136,6 +189,9 @@ export function useRestoreMessageFromChannelMutation() {
       }).then((res) =>
         handleApiResponse<MessageRestoreResponseWire>(res.json()),
       );
+    },
+    onSuccess: (res) => {
+      if (res.success) op.track("message_restored", { mode: "channel" });
     },
   });
 }
@@ -163,6 +219,11 @@ export function useCreatedSavedMessageMutation() {
       }).then((res) =>
         handleApiResponse<SavedMessageCreateResponseWire>(res.json()),
       );
+    },
+    onSuccess: (res, { guildId }) => {
+      if (res.success) {
+        op.track("message_saved", { new: true, guild: !!guildId });
+      }
     },
   });
 }
@@ -192,6 +253,12 @@ export function useUpdateSavedMessageMutation() {
       }).then((res) =>
         handleApiResponse<SavedMessageUpdateResponseWire>(res.json()),
       );
+    },
+    onSuccess: (res, { req, guildId }) => {
+      // Renames leave the data out and aren't a save of the message.
+      if (res.success && req.data !== undefined) {
+        op.track("message_saved", { new: false, guild: !!guildId });
+      }
     },
   });
 }
@@ -246,6 +313,14 @@ export function useImportSavedMessagesMutation() {
         handleApiResponse<SavedMessagesImportResponseWire>(res.json()),
       );
     },
+    onSuccess: (res, { req, guildId }) => {
+      if (res.success) {
+        op.track("messages_imported", {
+          count: req.messages.length,
+          guild: !!guildId,
+        });
+      }
+    },
   });
 }
 
@@ -261,6 +336,9 @@ export function useSharedMessageCreateMutation() {
       }).then((res) =>
         handleApiResponse<SharedMessageGetResponseWire>(res.json()),
       );
+    },
+    onSuccess: (res) => {
+      if (res.success) op.track("message_shared");
     },
   });
 }
@@ -283,6 +361,9 @@ export function useCustomBotConfigureMutation() {
       }).then((res) =>
         handleApiResponse<CustomBotConfigureResponseWire>(res.json()),
       );
+    },
+    onSuccess: (res) => {
+      if (res.success) op.track("custom_bot_configured");
     },
   });
 }
@@ -343,6 +424,13 @@ export function useCustomCommandCreateMutation() {
         handleApiResponse<CustomCommandCreateResponseWire>(res.json()),
       );
     },
+    onSuccess: (res, { req }) => {
+      if (res.success) {
+        op.track("custom_command_created", {
+          parameters: req.parameters.length,
+        });
+      }
+    },
   });
 }
 
@@ -384,6 +472,9 @@ export function useCustomCommandsDeployMutation() {
       }).then((res) =>
         handleApiResponse<CustomCommandsDeployResponseWire>(res.json()),
       );
+    },
+    onSuccess: (res) => {
+      if (res.success) op.track("custom_commands_deployed");
     },
   });
 }
@@ -428,6 +519,9 @@ export function useUploadImageMutation() {
         body,
       }).then((res) => handleApiResponse<UploadImageResponseWire>(res.json()));
     },
+    onSuccess: (res) => {
+      if (res.success) op.track("image_uploaded");
+    },
   });
 }
 
@@ -449,6 +543,15 @@ export function useScheduledMessageCreateMutation() {
       }).then((res) =>
         handleApiResponse<ScheduledMessageCreateResponseWire>(res.json()),
       );
+    },
+    onSuccess: (res, { req }) => {
+      if (res.success) {
+        op.track("scheduled_message_created", {
+          repeating: !!req.cron_expression,
+          run_times: req.run_times?.length ?? 0,
+          enabled: req.enabled,
+        });
+      }
     },
   });
 }
@@ -532,6 +635,13 @@ export function useEmbedLinkCreateMutation() {
       }).then((res) =>
         handleApiResponse<EmbedLinkCreateResponseWire>(res.json()),
       );
+    },
+    onSuccess: (res, req) => {
+      if (res.success) {
+        op.track("embed_link_created", {
+          component_embed: !!req.component_embed,
+        });
+      }
     },
   });
 }
