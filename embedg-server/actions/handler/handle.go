@@ -25,6 +25,8 @@ const (
 		"Please make sure the role is below the 'Embed Generator' role and that the bot has the manage roles permission."
 	dmErrorMessage       = "You have blocked the bot from sending you DMs. Please allow DMs from server members in your privacy settings."
 	internalErrorMessage = "Something went wrong while handling this interaction."
+	noActionsMessage     = "This component isn't connected to any actions anymore.\n\n" +
+		"To fix it, edit or re-send the message with Embed Generator."
 )
 
 // userError is caused by misconfiguration or missing permissions. It's shown to the user instead of being logged.
@@ -113,13 +115,10 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 		if strings.HasPrefix(actionSetID, "options:") {
 			// Handle select menu values
 			selectData, ok := data.(discord.StringSelectMenuInteractionData)
-			if !ok {
-				return nil
-			}
-
 			// A select menu with min_values 0 can be submitted with nothing selected, which leaves
-			// no action set to run.
-			if len(selectData.Values) == 0 || !strings.HasPrefix(selectData.Values[0], "action:") {
+			// no action set to run. Discord still needs an answer or it shows an error.
+			if !ok || len(selectData.Values) == 0 || !strings.HasPrefix(selectData.Values[0], "action:") {
+				i.Respond(discord.MessageCreate{}, discord.InteractionResponseTypeDeferredUpdateMessage)
 				return nil
 			}
 
@@ -128,8 +127,10 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 
 		col, err := m.actionSetStore.GetMessageActionSet(context.TODO(), compInteraction.Message.ID, actionSetID)
 		if err != nil {
+			// The editor stores a set for every button and option, even an empty one, so the
+			// message's actions are gone.
 			if errors.Is(err, store.ErrNotFound) {
-				return nil
+				return userErr(noActionsMessage)
 			}
 
 			return fmt.Errorf("failed to get message action set: %w", err)
