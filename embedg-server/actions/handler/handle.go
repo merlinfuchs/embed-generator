@@ -25,8 +25,8 @@ const (
 		"Please make sure the role is below the 'Embed Generator' role and that the bot has the manage roles permission."
 	dmErrorMessage       = "You have blocked the bot from sending you DMs. Please allow DMs from server members in your privacy settings."
 	internalErrorMessage = "Something went wrong while handling this interaction."
-	noActionsMessage     = "This component isn't connected to any actions anymore.\n\n" +
-		"To fix it, edit or re-send the message with Embed Generator."
+	noActionsMessage     = "This component isn't connected to any actions.\n\n" +
+		"If you manage this server, edit or re-send the message with Embed Generator."
 )
 
 // userError is caused by misconfiguration or missing permissions. It's shown to the user instead of being logged.
@@ -137,9 +137,11 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 
 		col, err := m.actionSetStore.GetMessageActionSet(context.TODO(), compInteraction.Message.ID, actionSetID)
 		if err != nil {
-			// The editor stores a set for every button and option, even an empty one, so the
-			// message's actions are gone.
 			if errors.Is(err, store.ErrNotFound) {
+				// Components of messages sent to DMs aren't hooked up to actions.
+				if interaction.GuildID() == nil {
+					return nil
+				}
 				return userErr(noActionsMessage)
 			}
 

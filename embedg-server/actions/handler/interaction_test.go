@@ -48,7 +48,7 @@ func componentInteraction(t *testing.T) discord.Interaction {
 
 func componentInteractionWithData(t *testing.T, data string) discord.Interaction {
 	return mustInteraction(t, `{"id":"1","application_id":"2","type":3,"token":"t","version":1,
-		"data":`+data+`,"message":{"id":"3","channel_id":"4"}}`)
+		"guild_id":"6","data":`+data+`,"message":{"id":"3","channel_id":"4"}}`)
 }
 
 func commandInteraction(t *testing.T) discord.Interaction {
