@@ -46,9 +46,9 @@ func TestMessageWithActionsDecodeError(t *testing.T) {
 	for in, want := range map[string]string{
 		`{"flags":"x"}`:                              "flags must be a number, got string",
 		`{"content":5}`:                              "content must be text, got number",
-		`{"embeds":[{"color":"red"}]}`:               "embeds.color must be a number, got string",
-		`{"embeds":[{"fields":[{"inline":"yes"}]}]}`: "embeds.fields.inline must be true or false, got string",
-		`{"components":[{"type":"button"}]}`:         "components.type must be a number, got string",
+		`{"embeds":[{"color":"red"}]}`:               "embeds.0.color must be a number, got string",
+		`{"embeds":[{"fields":[{"inline":"yes"}]}]}`: "embeds.0.fields.0.inline must be true or false, got string",
+		`{"components":[{"type":"button"}]}`:         "components.0.type must be a number, got string",
 		`[]`:                                         "the message must be a JSON object, got array",
 	} {
 		var m MessageWithActions
