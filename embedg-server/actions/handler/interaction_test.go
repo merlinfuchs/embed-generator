@@ -43,9 +43,12 @@ func mustInteraction(t *testing.T, raw string) discord.Interaction {
 }
 
 func componentInteraction(t *testing.T) discord.Interaction {
+	return componentInteractionWithData(t, `{"component_type":2,"custom_id":"action:a"}`)
+}
+
+func componentInteractionWithData(t *testing.T, data string) discord.Interaction {
 	return mustInteraction(t, `{"id":"1","application_id":"2","type":3,"token":"t","version":1,
-		"data":{"component_type":2,"custom_id":"action:a"},
-		"message":{"id":"3","channel_id":"4"}}`)
+		"guild_id":"6","data":`+data+`,"message":{"id":"3","channel_id":"4"}}`)
 }
 
 func commandInteraction(t *testing.T) discord.Interaction {
@@ -53,10 +56,10 @@ func commandInteraction(t *testing.T) discord.Interaction {
 		"data":{"id":"5","name":"cmd","type":1}}`)
 }
 
-// newTestInteraction doesn't start the timer, the tests defer by calling autoDefer themselves.
+// newTestInteraction's timer never fires, the tests defer by calling autoDefer themselves.
 func newTestInteraction(inner discord.Interaction) (*actionInteraction, *fakeRest) {
 	f := &fakeRest{}
-	return &actionInteraction{inner: inner, rest: f, initial: f.respond}, f
+	return &actionInteraction{inner: inner, rest: f, initial: f.respond, timer: time.NewTimer(time.Hour)}, f
 }
 
 func TestRespondInTime(t *testing.T) {

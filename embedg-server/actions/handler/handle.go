@@ -25,6 +25,8 @@ const (
 		"Please make sure the role is below the 'Embed Generator' role and that the bot has the manage roles permission."
 	dmErrorMessage       = "You have blocked the bot from sending you DMs. Please allow DMs from server members in your privacy settings."
 	internalErrorMessage = "Something went wrong while handling this interaction."
+	noActionsMessage     = "This component isn't connected to any actions.\n\n" +
+		"If you manage this server, edit or re-send the message with Embed Generator."
 )
 
 // userError is caused by misconfiguration or missing permissions. It's shown to the user instead of being logged.
@@ -77,6 +79,17 @@ func (m *ActionHandler) HandleActionInteraction(restClient rest.Rest, i Interact
 
 	err := m.handleActionInteraction(restClient, i)
 	if err == nil {
+		// Discord shows an error for an interaction that got no response at all.
+		if !i.HasResponded() {
+			if i.Interaction().Type() == discord.InteractionTypeComponent {
+				i.Respond(discord.MessageCreate{}, discord.InteractionResponseTypeDeferredUpdateMessage)
+			} else {
+				i.Respond(discord.MessageCreate{
+					Content: "No response",
+					Flags:   discord.MessageFlagEphemeral,
+				})
+			}
+		}
 		return nil
 	}
 
@@ -113,13 +126,9 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 		if strings.HasPrefix(actionSetID, "options:") {
 			// Handle select menu values
 			selectData, ok := data.(discord.StringSelectMenuInteractionData)
-			if !ok {
-				return nil
-			}
-
 			// A select menu with min_values 0 can be submitted with nothing selected, which leaves
 			// no action set to run.
-			if len(selectData.Values) == 0 || !strings.HasPrefix(selectData.Values[0], "action:") {
+			if !ok || len(selectData.Values) == 0 || !strings.HasPrefix(selectData.Values[0], "action:") {
 				return nil
 			}
 
@@ -129,7 +138,11 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 		col, err := m.actionSetStore.GetMessageActionSet(context.TODO(), compInteraction.Message.ID, actionSetID)
 		if err != nil {
 			if errors.Is(err, store.ErrNotFound) {
-				return nil
+				// Components of messages sent to DMs aren't hooked up to actions.
+				if interaction.GuildID() == nil {
+					return nil
+				}
+				return userErr(noActionsMessage)
 			}
 
 			return fmt.Errorf("failed to get message action set: %w", err)
@@ -512,17 +525,6 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 					}
 				}
 			}
-		}
-	}
-
-	if !i.HasResponded() {
-		if interaction.Type() == discord.InteractionTypeComponent {
-			i.Respond(discord.MessageCreate{}, discord.InteractionResponseTypeDeferredUpdateMessage)
-		} else {
-			i.Respond(discord.MessageCreate{
-				Content: "No response",
-				Flags:   discord.MessageFlagEphemeral,
-			})
 		}
 	}
 
