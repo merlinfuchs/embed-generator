@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/merlinfuchs/embed-generator/embedg-server/common"
@@ -45,9 +44,7 @@ func TestComponentWithoutActionsResponds(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := &ActionHandler{actionSetStore: missingActionSetStore{}}
-			i, f := newTestInteraction(mustInteraction(t, `{"id":"1","application_id":"2","type":3,"token":"t","version":1,
-				"data":`+tt.data+`,"message":{"id":"3","channel_id":"4"}}`))
-			i.timer = time.NewTimer(time.Hour)
+			i, f := newTestInteraction(componentInteractionWithData(t, tt.data))
 
 			if err := h.HandleActionInteraction(f, i); err != nil {
 				t.Fatal(err)

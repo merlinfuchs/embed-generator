@@ -79,6 +79,17 @@ func (m *ActionHandler) HandleActionInteraction(restClient rest.Rest, i Interact
 
 	err := m.handleActionInteraction(restClient, i)
 	if err == nil {
+		// Discord shows an error for an interaction that got no response at all.
+		if !i.HasResponded() {
+			if i.Interaction().Type() == discord.InteractionTypeComponent {
+				i.Respond(discord.MessageCreate{}, discord.InteractionResponseTypeDeferredUpdateMessage)
+			} else {
+				i.Respond(discord.MessageCreate{
+					Content: "No response",
+					Flags:   discord.MessageFlagEphemeral,
+				})
+			}
+		}
 		return nil
 	}
 
@@ -116,9 +127,8 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 			// Handle select menu values
 			selectData, ok := data.(discord.StringSelectMenuInteractionData)
 			// A select menu with min_values 0 can be submitted with nothing selected, which leaves
-			// no action set to run. Discord still needs an answer or it shows an error.
+			// no action set to run.
 			if !ok || len(selectData.Values) == 0 || !strings.HasPrefix(selectData.Values[0], "action:") {
-				i.Respond(discord.MessageCreate{}, discord.InteractionResponseTypeDeferredUpdateMessage)
 				return nil
 			}
 
@@ -513,17 +523,6 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 					}
 				}
 			}
-		}
-	}
-
-	if !i.HasResponded() {
-		if interaction.Type() == discord.InteractionTypeComponent {
-			i.Respond(discord.MessageCreate{}, discord.InteractionResponseTypeDeferredUpdateMessage)
-		} else {
-			i.Respond(discord.MessageCreate{
-				Content: "No response",
-				Flags:   discord.MessageFlagEphemeral,
-			})
 		}
 	}
 
