@@ -1,6 +1,7 @@
 package scheduled_messages
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -50,6 +51,31 @@ func TestClassifyFailure(t *testing.T) {
 			}
 			if !strings.Contains(reason, c.contains) {
 				t.Errorf("reason %q doesn't contain %q", reason, c.contains)
+			}
+		})
+	}
+}
+
+func TestCrosspostFailure(t *testing.T) {
+	cases := []struct {
+		name     string
+		err      error
+		contains string
+	}{
+		{"published", nil, ""},
+		{"already published", discordError(http.StatusBadRequest, 40033, "This message has already been crossposted.", ""), ""},
+		{"missing permissions", fmt.Errorf("crosspost: %w", discordError(http.StatusForbidden, 50013, "Missing Permissions", "")), "Manage Messages"},
+		{"not an announcement channel", discordError(http.StatusBadRequest, 50024, "Cannot execute action on this channel type", ""), "announcement channel"},
+		{"timed out", context.DeadlineExceeded, "10 messages per hour"},
+		{"rate limited", discordError(http.StatusTooManyRequests, 0, "", ""), "10 messages per hour"},
+		{"discord outage", discordError(http.StatusServiceUnavailable, 0, "", ""), "temporary error"},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			reason := crosspostFailure(c.err)
+			if reason.Valid != (c.contains != "") || !strings.Contains(reason.String, c.contains) {
+				t.Errorf("reason = %v, want one containing %q", reason, c.contains)
 			}
 		})
 	}

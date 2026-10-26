@@ -19,6 +19,7 @@ import { usePremiumGuildFeatures } from "../util/premium";
 import { getCurrentTimezone } from "../util/time";
 import { useGuildChannelsQuery } from "../api/queries";
 import ScheduleTestButton from "./ScheduleTestButton";
+import ScheduleCrosspost from "./ScheduleCrosspost";
 import ScheduleEditor, {
   scheduleError,
   useSchedulePreview,
@@ -58,12 +59,14 @@ export default function ScheduledMessageCreate({
   const [channelId, setChannelId] = useState<string | null>(null);
   const [threadName, setThreadName] = useState<string | null>(null);
   const [messageId, setMessageId] = useState<string | null>(null);
+  const [crosspost, setCrosspost] = useState(false);
 
-  // Both belong to the channel they were set for.
+  // They belong to the channel they were set for.
   function selectChannel(id: string | null) {
     setChannelId(id);
     setThreadName(null);
     setMessageId(null);
+    setCrosspost(false);
   }
 
   const selectedChannel = useMemo(
@@ -109,6 +112,8 @@ export default function ScheduledMessageCreate({
           channel_id: channelId,
           message_id: messageId,
           thread_name: threadName,
+          // An edited message stays published or not.
+          crosspost: crosspost && messageId === null,
           saved_message_id: savedMessageId,
           ...scheduleFromDraft(schedule),
           enabled: true,
@@ -230,6 +235,12 @@ export default function ScheduledMessageCreate({
             </div>
           </div>
         )}
+        <ScheduleCrosspost
+          channelType={selectedChannel?.type}
+          messageId={messageId}
+          checked={crosspost}
+          onChange={setCrosspost}
+        />
         {isThreadOnlyChannel(selectedChannel?.type) && (
           <div>
             <EditorInput

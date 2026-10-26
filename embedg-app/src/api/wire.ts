@@ -433,6 +433,7 @@ export interface ScheduledMessageWire {
   channel_id: string;
   message_id: null | string;
   thread_name: null | string;
+  crosspost: boolean;
   saved_message_id: string;
   name: string;
   description: null | string;
@@ -452,6 +453,10 @@ export interface ScheduledMessageWire {
    */
   last_error: null | string;
   last_error_at: null | string /* RFC3339 */;
+  /**
+   * LastCrosspostError is why the last sent message wasn't published.
+   */
+  last_crosspost_error: null | string;
 }
 export type ScheduledMessageListResponseWire = APIResponse<ScheduledMessageWire[]>;
 export type ScheduledMessageGetResponseWire = APIResponse<ScheduledMessageWire>;
@@ -485,6 +490,7 @@ export interface ScheduledMessageCreateRequestWire extends ScheduledMessageSched
   channel_id: string;
   message_id: null | string;
   thread_name: null | string;
+  crosspost: boolean;
   saved_message_id: string;
   name: string;
   description: null | string;

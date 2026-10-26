@@ -15,6 +15,7 @@ type ScheduledMessageWire struct {
 	ChannelID      common.ID     `json:"channel_id"`
 	MessageID      common.NullID `json:"message_id"`
 	ThreadName     null.String   `json:"thread_name"`
+	Crosspost      bool          `json:"crosspost"`
 	SavedMessageID string        `json:"saved_message_id"`
 	Name           string        `json:"name"`
 	Description    null.String   `json:"description"`
@@ -32,6 +33,8 @@ type ScheduledMessageWire struct {
 	// LastError is why the last run failed, or why the message was stopped when it's disabled.
 	LastError   null.String `json:"last_error"`
 	LastErrorAt null.Time   `json:"last_error_at"`
+	// LastCrosspostError is why the last sent message wasn't published.
+	LastCrosspostError null.String `json:"last_crosspost_error"`
 }
 
 type ScheduledMessageListResponseWire APIResponse[[]ScheduledMessageWire]
@@ -92,6 +95,7 @@ type ScheduledMessageCreateRequestWire struct {
 	ChannelID                    common.ID     `json:"channel_id"`
 	MessageID                    common.NullID `json:"message_id"`
 	ThreadName                   null.String   `json:"thread_name"`
+	Crosspost                    bool          `json:"crosspost"`
 	SavedMessageID               string        `json:"saved_message_id"`
 	Name                         string        `json:"name"`
 	Description                  null.String   `json:"description"`
@@ -108,6 +112,8 @@ func (req ScheduledMessageCreateRequestWire) Validate() error {
 		validation.Field(&req.SavedMessageID, validation.Required),
 		// Editing a message can't create a thread.
 		validation.Field(&req.ThreadName, validation.When(req.MessageID.Valid, validation.Empty)),
+		// An edit reaches the following servers by itself, a published message stays published.
+		validation.Field(&req.Crosspost, validation.When(req.MessageID.Valid, validation.Empty)),
 		validation.Field(&req.Name, validation.Required, validation.Length(1, 32)),
 	)
 }

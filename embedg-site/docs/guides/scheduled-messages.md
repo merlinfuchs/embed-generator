@@ -37,6 +37,10 @@ The **Calendar** tab shows the upcoming sends of all scheduled messages of the s
 
 ![Scheduled Messages Calendar](./scheduled-messages-calendar.webp)
 
+## Publish in Announcement Channels
+
+When the channel is an announcement channel, check **Publish** to publish every message to the servers following the channel, like the Publish button in Discord does. Embed Generator needs the **Manage Messages** permission in the channel for it. Discord allows publishing 10 messages per hour in a channel. When a message can't be published, it's still sent and the scheduled message shows why it wasn't published.
+
 ## Checks and Errors
 
 When you save, the saved message is checked for errors, so a broken message is caught before its first send. **Send test** sends it to the channel right away.

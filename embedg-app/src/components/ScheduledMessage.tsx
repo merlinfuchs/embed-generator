@@ -28,6 +28,7 @@ import { usePremiumGuildFeatures } from "../util/premium";
 import { formatDay, formatRun, timezoneOrUTC } from "../util/time";
 import CheckBox from "./CheckBox";
 import ScheduleTestButton from "./ScheduleTestButton";
+import ScheduleCrosspost from "./ScheduleCrosspost";
 import ScheduleEditor, {
   relativeRun,
   scheduleError,
@@ -78,6 +79,7 @@ export default function ScheduledMessage({
   const [channelId, setChannelId] = useState<string | null>(msg.channel_id);
   const [threadName, setThreadName] = useState<string | null>(msg.thread_name);
   const [messageId, setMessageId] = useState<string | null>(msg.message_id);
+  const [crosspost, setCrosspost] = useState(msg.crosspost);
 
   // Leaving manage mode without saving has to put every field back, the edits live in local state.
   function cancel() {
@@ -88,14 +90,16 @@ export default function ScheduledMessage({
     setChannelId(msg.channel_id);
     setThreadName(msg.thread_name);
     setMessageId(msg.message_id);
+    setCrosspost(msg.crosspost);
     setManage(false);
   }
 
-  // Both belong to the channel they were set for.
+  // They belong to the channel they were set for.
   function selectChannel(id: string | null) {
     setChannelId(id);
     setThreadName(null);
     setMessageId(null);
+    setCrosspost(false);
   }
 
   const selectedChannel = useMemo(
@@ -142,6 +146,8 @@ export default function ScheduledMessage({
           channel_id: channelId,
           message_id: messageId,
           thread_name: threadName,
+          // An edited message stays published or not.
+          crosspost: crosspost && messageId === null,
           saved_message_id: savedMessageId,
           ...scheduleFromDraft(schedule),
           enabled: enabled,
@@ -249,9 +255,10 @@ export default function ScheduledMessage({
               </div>
             </div>
             <div className="space-y-5">
-              {msg.last_error && (
+              {(msg.last_error || msg.last_crosspost_error) && (
                 <div className="border border-red/70 rounded-lg px-3 py-2">
                   <LastError msg={msg} state={state} />
+                  <CrosspostError msg={msg} />
                   <div className="text-mist-400 text-sm font-light mt-1">
                     Saving clears this error.
                   </div>
@@ -322,6 +329,12 @@ export default function ScheduledMessage({
                   </div>
                 </div>
               )}
+              <ScheduleCrosspost
+                channelType={selectedChannel?.type}
+                messageId={messageId}
+                checked={crosspost}
+                onChange={setCrosspost}
+              />
               {isThreadOnlyChannel(selectedChannel?.type) && (
                 <div>
                   <EditorInput
@@ -379,6 +392,7 @@ export default function ScheduledMessage({
               </div>
               <Status msg={msg} state={state} />
               <LastError msg={msg} state={state} />
+              <CrosspostError msg={msg} />
             </div>
             <div className="flex flex-none items-center space-x-4 md:space-x-3">
               <button
@@ -441,6 +455,17 @@ function LastError({
   return (
     <div className="text-red text-sm font-light whitespace-pre-line">
       {`${label}${at}: ${msg.last_error}`}
+    </div>
+  );
+}
+
+// The message of the last run went out, only publishing it failed.
+function CrosspostError({ msg }: { msg: ScheduledMessageWire }) {
+  if (!msg.last_crosspost_error) return null;
+
+  return (
+    <div className="text-amber-300 text-sm font-light whitespace-pre-line">
+      {`Not published: ${msg.last_crosspost_error}`}
     </div>
   );
 }

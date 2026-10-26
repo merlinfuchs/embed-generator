@@ -149,29 +149,31 @@ type SavedMessageVersion struct {
 }
 
 type ScheduledMessage struct {
-	ID               string
-	CreatorID        string
-	GuildID          string
-	ChannelID        string
-	MessageID        pgtype.Text
-	SavedMessageID   string
-	Name             string
-	Description      pgtype.Text
-	CronExpression   pgtype.Text
-	StartAt          pgtype.Timestamp
-	EndAt            pgtype.Timestamp
-	NextAt           pgtype.Timestamp
-	Enabled          bool
-	CreatedAt        pgtype.Timestamp
-	UpdatedAt        pgtype.Timestamp
-	CronTimezone     pgtype.Text
-	ThreadName       pgtype.Text
-	MessageWebhookID pgtype.Text
-	LastSentAt       pgtype.Timestamp
-	LastError        pgtype.Text
-	LastErrorAt      pgtype.Timestamp
-	CronInterval     int16
-	RunTimes         []pgtype.Timestamp
+	ID                 string
+	CreatorID          string
+	GuildID            string
+	ChannelID          string
+	MessageID          pgtype.Text
+	SavedMessageID     string
+	Name               string
+	Description        pgtype.Text
+	CronExpression     pgtype.Text
+	StartAt            pgtype.Timestamp
+	EndAt              pgtype.Timestamp
+	NextAt             pgtype.Timestamp
+	Enabled            bool
+	CreatedAt          pgtype.Timestamp
+	UpdatedAt          pgtype.Timestamp
+	CronTimezone       pgtype.Text
+	ThreadName         pgtype.Text
+	MessageWebhookID   pgtype.Text
+	LastSentAt         pgtype.Timestamp
+	LastError          pgtype.Text
+	LastErrorAt        pgtype.Timestamp
+	CronInterval       int16
+	RunTimes           []pgtype.Timestamp
+	Crosspost          bool
+	LastCrosspostError pgtype.Text
 }
 
 type Session struct {

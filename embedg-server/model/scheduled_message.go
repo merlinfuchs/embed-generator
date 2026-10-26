@@ -32,10 +32,14 @@ type ScheduledMessage struct {
 	// CronInterval runs the cron expression only in every Nth period, see scheduled_messages.Schedule.
 	CronInterval int
 	ThreadName   null.String
-	LastSentAt   null.Time
+	// Crosspost publishes every new message to the servers following the announcement channel.
+	Crosspost  bool
+	LastSentAt null.Time
 	// LastError explains to the user why the last run failed or why the message was stopped.
 	LastError   null.String
 	LastErrorAt null.Time
+	// LastCrosspostError is why the message of the last run wasn't published.
+	LastCrosspostError null.String
 }
 
 // OnDates is whether the message is sent on a list of dates instead of repeating.
@@ -52,4 +56,6 @@ type ScheduledMessageRun struct {
 	LastError   null.String
 	LastErrorAt null.Time
 	UpdatedAt   time.Time
+	// LastCrosspostError is why the message of the run wasn't published.
+	LastCrosspostError null.String
 }

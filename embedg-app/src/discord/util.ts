@@ -16,6 +16,10 @@ export function parseMessageId(input: string): string | null {
   return /^\d+$/.test(id) ? id : null;
 }
 
+export function isAnnouncementChannel(type: number | undefined): boolean {
+  return type === 5;
+}
+
 /** Forum and media channels, where a message can only be sent as a new thread. */
 export function isThreadOnlyChannel(type: number | undefined): boolean {
   return type === 15 || type === 16;

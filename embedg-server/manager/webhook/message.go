@@ -121,6 +121,21 @@ func (m *WebhookManager) UpdateMessageInChannel(ctx context.Context, channelID c
 	return m.updateAsSender(ctx, channel, restClient, customBot, messageID, sender, params)
 }
 
+// CrosspostMessage publishes a message in an announcement channel to the servers following it. The
+// bot needs Manage Messages for messages it didn't send itself, like those sent through webhooks.
+func (m *WebhookManager) CrosspostMessage(ctx context.Context, guildID common.ID, channelID common.ID, messageID common.ID) error {
+	restClient, _, err := m.customBotManager.GetRestForGuild(ctx, guildID)
+	if err != nil {
+		return fmt.Errorf("Failed to get custom bot: %w", err)
+	}
+
+	_, err = restClient.CrosspostMessage(channelID, messageID, rest.WithCtx(ctx))
+	if err != nil {
+		return fmt.Errorf("Failed to crosspost message: %w", err)
+	}
+	return nil
+}
+
 // MessageSender finds who can edit a message: the webhook that sent it, or the custom bot when it
 // sent the message itself, which is reported as an invalid id. It fetches the message, which
 // Discord only allows with Read Message History, so callers that edit the same message again

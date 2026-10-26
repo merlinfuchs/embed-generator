@@ -31,9 +31,10 @@ INSERT INTO scheduled_messages (
     created_at, 
     updated_at,
     message_webhook_id,
-    cron_interval
+    cron_interval,
+    crosspost
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
 ) RETURNING *;
 
 -- name: UpdateScheduledMessage :one
@@ -54,8 +55,10 @@ UPDATE scheduled_messages SET
     cron_timezone = $16,
     message_webhook_id = $17,
     cron_interval = $18,
+    crosspost = $19,
     last_error = NULL,
-    last_error_at = NULL
+    last_error_at = NULL,
+    last_crosspost_error = NULL
 WHERE id = $1 AND guild_id = $2 RETURNING *;
 
 -- name: RecordScheduledMessageRun :exec
@@ -66,6 +69,7 @@ UPDATE scheduled_messages SET
     last_sent_at = COALESCE(sqlc.narg(last_sent_at), last_sent_at),
     last_error = sqlc.narg(last_error),
     last_error_at = sqlc.narg(last_error_at),
+    last_crosspost_error = sqlc.narg(last_crosspost_error),
     updated_at = sqlc.arg(updated_at)
 WHERE id = sqlc.arg(id) AND guild_id = sqlc.arg(guild_id);
 

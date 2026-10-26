@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"time"
 
 	"github.com/disgoorg/disgo/bot"
@@ -26,6 +27,9 @@ import (
 // How long a due message keeps being retried on transient failures before
 // it moves on to the next run, or is disabled after its last date.
 const sendRetryWindow = 30 * time.Minute
+
+// How long recording a run may take, on top of the time the run had.
+const recordTimeout = 5 * time.Second
 
 type ScheduledMessageManager struct {
 	scheduledMessageStore store.ScheduledMessageStore
@@ -112,15 +116,17 @@ func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, s
 	// disabled instead of staying enabled without ever sending again.
 	if scheduledMessage.EndAt.Valid && scheduledMessage.NextAt.After(scheduledMessage.EndAt.Time) {
 		return m.record(ctx, scheduledMessage, model.ScheduledMessageRun{
-			NextAt:      scheduledMessage.NextAt,
-			LastError:   scheduledMessage.LastError,
-			LastErrorAt: scheduledMessage.LastErrorAt,
-			UpdatedAt:   now,
+			NextAt:             scheduledMessage.NextAt,
+			LastError:          scheduledMessage.LastError,
+			LastErrorAt:        scheduledMessage.LastErrorAt,
+			LastCrosspostError: scheduledMessage.LastCrosspostError,
+			UpdatedAt:          now,
 		})
 	}
 
 	var failure null.String
-	if sendErr := m.SendScheduledMessage(ctx, scheduledMessage); sendErr != nil {
+	messageID, sendErr := m.SendScheduledMessage(ctx, scheduledMessage)
+	if sendErr != nil {
 		outcome, reason := classifyFailure(sendErr)
 		if outcome == outcomeRetry && now.Sub(scheduledMessage.NextAt) < sendRetryWindow {
 			slog.Warn(
@@ -148,6 +154,9 @@ func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, s
 		run.LastErrorAt = null.TimeFrom(now)
 	} else {
 		run.LastSentAt = null.TimeFrom(now)
+		if scheduledMessage.Crosspost {
+			run.LastCrosspostError = m.crosspost(ctx, scheduledMessage, messageID)
+		}
 	}
 
 	if scheduledMessage.OnDates() {
@@ -177,6 +186,10 @@ func (m *ScheduledMessageManager) processScheduledMessage(ctx context.Context, s
 }
 
 func (m *ScheduledMessageManager) record(ctx context.Context, scheduledMessage model.ScheduledMessage, run model.ScheduledMessageRun) error {
+	// A run that used up its time sending still has to be recorded, or it's sent again.
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), recordTimeout)
+	defer cancel()
+
 	err := m.scheduledMessageStore.RecordScheduledMessageRun(ctx, scheduledMessage.GuildID, scheduledMessage.ID, run)
 	if err != nil {
 		return fmt.Errorf("failed to record run of scheduled message: %w", err)
@@ -261,24 +274,24 @@ func (m *ScheduledMessageManager) CheckScheduledMessage(ctx context.Context, sch
 	return nil
 }
 
-func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, scheduledMessage model.ScheduledMessage) error {
+func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, scheduledMessage model.ScheduledMessage) (common.ID, error) {
 	features, err := m.planStore.GetPlanFeaturesForGuild(ctx, scheduledMessage.GuildID)
 	if err != nil {
-		return fmt.Errorf("could not get plan features: %w", err)
+		return 0, fmt.Errorf("could not get plan features: %w", err)
 	}
 
 	templateSource := template.NewSource(ctx, m.guildState)
 	data, templates, err := m.loadMessage(ctx, scheduledMessage, features, templateSource)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	if err := templates.ParseAndExecuteMessage(data); err != nil {
 		// Unless a lookup behind the template failed, it fails the same way on the next try.
 		if internalErr := templateSource.Err(); internalErr != nil {
-			return fmt.Errorf("failed to parse and execute message template: %w", internalErr)
+			return 0, fmt.Errorf("failed to parse and execute message template: %w", internalErr)
 		}
-		return skipWith("Template error: "+err.Error(), err)
+		return 0, skipWith("Template error: "+err.Error(), err)
 	}
 
 	params := discord.WebhookMessageCreate{
@@ -297,7 +310,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 
 	params.Components, err = m.actionParser.ParseMessageComponents(data.Components, true)
 	if err != nil {
-		return skipWith("Invalid components: "+err.Error(), err)
+		return 0, skipWith("Invalid components: "+err.Error(), err)
 	}
 
 	// Actions carry the creator's authority, so resolve the creator before sending. Without a member
@@ -314,9 +327,9 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 				rest.JSONErrorCodeUnknownGuild,
 				rest.JSONErrorCodeMissingAccess,
 			) {
-				return stopWith("The member who created it left the server.")
+				return 0, stopWith("The member who created it left the server.")
 			}
-			return fmt.Errorf("failed to get scheduled message creator: %w", err)
+			return 0, fmt.Errorf("failed to get scheduled message creator: %w", err)
 		}
 	}
 
@@ -339,9 +352,9 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 	if err != nil {
 		if errors.Is(err, webhook.ErrChannelNotFound) {
 			if m.channelGone(ctx, scheduledMessage.ChannelID) {
-				return stopWith("The channel was deleted.")
+				return 0, stopWith("The channel was deleted.")
 			}
-			return fmt.Errorf("channel not in cache: %w", err)
+			return 0, fmt.Errorf("channel not in cache: %w", err)
 		}
 
 		// Another user's message is one the custom bot sent before it was replaced by another bot.
@@ -350,7 +363,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 			rest.JSONErrorCodeUnknownMessage,
 			rest.JSONErrorCodeCannotEditMessageAuthoredByAnotherUser,
 		) {
-			return stopWith("The message it edits was deleted or can't be edited anymore.")
+			return 0, stopWith("The message it edits was deleted or can't be edited anymore.")
 		}
 
 		if common.IsDiscordRestErrorCode(
@@ -360,10 +373,10 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 			rest.JSONErrorCodeMissingAccess,
 			rest.JSONErrorCodeLackPermissionsToPerformAction,
 		) {
-			return stopWith("Embed Generator can't access the channel anymore.")
+			return 0, stopWith("Embed Generator can't access the channel anymore.")
 		}
 
-		return fmt.Errorf("failed to send or edit message: %w", err)
+		return 0, fmt.Errorf("failed to send or edit message: %w", err)
 	}
 
 	// The message is out at this point, failures below must not trigger a resend.
@@ -378,7 +391,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 				)
 			}
 		}
-		return nil
+		return msg.ID, nil
 	}
 
 	permContext, err := m.actionParser.DerivePermissionsForActions(ctx, *creator, scheduledMessage.GuildID, scheduledMessage.ChannelID)
@@ -388,7 +401,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 			slog.Any("error", err),
 			slog.String("scheduled_message_id", scheduledMessage.ID),
 		)
-		return nil
+		return msg.ID, nil
 	}
 
 	err = m.actionParser.CreateActionsForMessage(ctx, data.Actions, permContext, msg.ID, false)
@@ -400,7 +413,46 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		)
 	}
 
-	return nil
+	return msg.ID, nil
+}
+
+// How long publishing a sent message may take. Past Discord's limit of 10 per hour in a channel the
+// rate limiter waits for much longer, which must not hold up the other due messages.
+const crosspostTimeout = 5 * time.Second
+
+// crosspost publishes a sent message to the servers following its channel and returns why it
+// couldn't, if it couldn't.
+func (m *ScheduledMessageManager) crosspost(ctx context.Context, scheduledMessage model.ScheduledMessage, messageID common.ID) null.String {
+	ctx, cancel := context.WithTimeout(ctx, crosspostTimeout)
+	defer cancel()
+
+	err := m.webhookManager.CrosspostMessage(ctx, scheduledMessage.GuildID, scheduledMessage.ChannelID, messageID)
+	reason := crosspostFailure(err)
+	if reason.Valid {
+		slog.Warn(
+			"Failed to publish scheduled message",
+			slog.Any("error", err),
+			slog.String("scheduled_message_id", scheduledMessage.ID),
+		)
+	}
+	return reason
+}
+
+// crosspostFailure explains to the user why publishing failed, invalid when it didn't.
+func crosspostFailure(err error) null.String {
+	switch {
+	case err == nil || common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeMessageAlreadyCrossposted):
+		return null.String{}
+	case common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeCannotExecuteActionOnThisChannelType):
+		return null.StringFrom("The channel isn't an announcement channel anymore.")
+	case common.IsDiscordRestErrorCode(err, rest.JSONErrorCodeMissingAccess, rest.JSONErrorCodeLackPermissionsToPerformAction):
+		return null.StringFrom("Embed Generator needs the Manage Messages permission in the channel to publish it.")
+	// Past the limit the rate limiter waits until the timeout instead of failing.
+	case errors.Is(err, context.DeadlineExceeded) || common.IsDiscordRestStatusCode(err, http.StatusTooManyRequests):
+		return null.StringFrom("Discord didn't publish it in time, it only allows publishing 10 messages per hour in a channel.")
+	default:
+		return null.StringFrom("Publishing failed because of a temporary error.")
+	}
 }
 
 func (m *ScheduledMessageManager) OnEvent(event bot.Event) {
