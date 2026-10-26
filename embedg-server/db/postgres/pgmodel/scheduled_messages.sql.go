@@ -37,7 +37,7 @@ func (q *Queries) DeleteScheduledMessage(ctx context.Context, arg DeleteSchedule
 }
 
 const getDueScheduledMessages = `-- name: GetDueScheduledMessages :many
-SELECT id, creator_id, guild_id, channel_id, message_id, saved_message_id, name, description, cron_expression, start_at, end_at, next_at, enabled, created_at, updated_at, cron_timezone, thread_name, message_webhook_id, last_sent_at, last_error, last_error_at, cron_interval, run_times FROM scheduled_messages WHERE next_at <= $1 AND enabled = true
+SELECT id, creator_id, guild_id, channel_id, message_id, saved_message_id, name, description, cron_expression, start_at, end_at, next_at, enabled, created_at, updated_at, cron_timezone, thread_name, message_webhook_id, last_sent_at, last_error, last_error_at, cron_interval, run_times, crosspost, last_crosspost_error FROM scheduled_messages WHERE next_at <= $1 AND enabled = true
 `
 
 func (q *Queries) GetDueScheduledMessages(ctx context.Context, nextAt pgtype.Timestamp) ([]ScheduledMessage, error) {
@@ -73,6 +73,8 @@ func (q *Queries) GetDueScheduledMessages(ctx context.Context, nextAt pgtype.Tim
 			&i.LastErrorAt,
 			&i.CronInterval,
 			&i.RunTimes,
+			&i.Crosspost,
+			&i.LastCrosspostError,
 		); err != nil {
 			return nil, err
 		}
@@ -85,7 +87,7 @@ func (q *Queries) GetDueScheduledMessages(ctx context.Context, nextAt pgtype.Tim
 }
 
 const getScheduledMessage = `-- name: GetScheduledMessage :one
-SELECT id, creator_id, guild_id, channel_id, message_id, saved_message_id, name, description, cron_expression, start_at, end_at, next_at, enabled, created_at, updated_at, cron_timezone, thread_name, message_webhook_id, last_sent_at, last_error, last_error_at, cron_interval, run_times FROM scheduled_messages WHERE id = $1 AND guild_id = $2
+SELECT id, creator_id, guild_id, channel_id, message_id, saved_message_id, name, description, cron_expression, start_at, end_at, next_at, enabled, created_at, updated_at, cron_timezone, thread_name, message_webhook_id, last_sent_at, last_error, last_error_at, cron_interval, run_times, crosspost, last_crosspost_error FROM scheduled_messages WHERE id = $1 AND guild_id = $2
 `
 
 type GetScheduledMessageParams struct {
@@ -120,12 +122,14 @@ func (q *Queries) GetScheduledMessage(ctx context.Context, arg GetScheduledMessa
 		&i.LastErrorAt,
 		&i.CronInterval,
 		&i.RunTimes,
+		&i.Crosspost,
+		&i.LastCrosspostError,
 	)
 	return i, err
 }
 
 const getScheduledMessages = `-- name: GetScheduledMessages :many
-SELECT id, creator_id, guild_id, channel_id, message_id, saved_message_id, name, description, cron_expression, start_at, end_at, next_at, enabled, created_at, updated_at, cron_timezone, thread_name, message_webhook_id, last_sent_at, last_error, last_error_at, cron_interval, run_times FROM scheduled_messages WHERE guild_id = $1 ORDER BY updated_at DESC
+SELECT id, creator_id, guild_id, channel_id, message_id, saved_message_id, name, description, cron_expression, start_at, end_at, next_at, enabled, created_at, updated_at, cron_timezone, thread_name, message_webhook_id, last_sent_at, last_error, last_error_at, cron_interval, run_times, crosspost, last_crosspost_error FROM scheduled_messages WHERE guild_id = $1 ORDER BY updated_at DESC
 `
 
 func (q *Queries) GetScheduledMessages(ctx context.Context, guildID string) ([]ScheduledMessage, error) {
@@ -161,6 +165,8 @@ func (q *Queries) GetScheduledMessages(ctx context.Context, guildID string) ([]S
 			&i.LastErrorAt,
 			&i.CronInterval,
 			&i.RunTimes,
+			&i.Crosspost,
+			&i.LastCrosspostError,
 		); err != nil {
 			return nil, err
 		}
@@ -193,10 +199,11 @@ INSERT INTO scheduled_messages (
     created_at, 
     updated_at,
     message_webhook_id,
-    cron_interval
+    cron_interval,
+    crosspost
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
-) RETURNING id, creator_id, guild_id, channel_id, message_id, saved_message_id, name, description, cron_expression, start_at, end_at, next_at, enabled, created_at, updated_at, cron_timezone, thread_name, message_webhook_id, last_sent_at, last_error, last_error_at, cron_interval, run_times
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
+) RETURNING id, creator_id, guild_id, channel_id, message_id, saved_message_id, name, description, cron_expression, start_at, end_at, next_at, enabled, created_at, updated_at, cron_timezone, thread_name, message_webhook_id, last_sent_at, last_error, last_error_at, cron_interval, run_times, crosspost, last_crosspost_error
 `
 
 type InsertScheduledMessageParams struct {
@@ -220,6 +227,7 @@ type InsertScheduledMessageParams struct {
 	UpdatedAt        pgtype.Timestamp
 	MessageWebhookID pgtype.Text
 	CronInterval     int16
+	Crosspost        bool
 }
 
 func (q *Queries) InsertScheduledMessage(ctx context.Context, arg InsertScheduledMessageParams) (ScheduledMessage, error) {
@@ -244,6 +252,7 @@ func (q *Queries) InsertScheduledMessage(ctx context.Context, arg InsertSchedule
 		arg.UpdatedAt,
 		arg.MessageWebhookID,
 		arg.CronInterval,
+		arg.Crosspost,
 	)
 	var i ScheduledMessage
 	err := row.Scan(
@@ -270,6 +279,8 @@ func (q *Queries) InsertScheduledMessage(ctx context.Context, arg InsertSchedule
 		&i.LastErrorAt,
 		&i.CronInterval,
 		&i.RunTimes,
+		&i.Crosspost,
+		&i.LastCrosspostError,
 	)
 	return i, err
 }
@@ -282,19 +293,21 @@ UPDATE scheduled_messages SET
     last_sent_at = COALESCE($3, last_sent_at),
     last_error = $4,
     last_error_at = $5,
-    updated_at = $6
-WHERE id = $7 AND guild_id = $8
+    last_crosspost_error = $6,
+    updated_at = $7
+WHERE id = $8 AND guild_id = $9
 `
 
 type RecordScheduledMessageRunParams struct {
-	NextAt      pgtype.Timestamp
-	Enabled     bool
-	LastSentAt  pgtype.Timestamp
-	LastError   pgtype.Text
-	LastErrorAt pgtype.Timestamp
-	UpdatedAt   pgtype.Timestamp
-	ID          string
-	GuildID     string
+	NextAt             pgtype.Timestamp
+	Enabled            bool
+	LastSentAt         pgtype.Timestamp
+	LastError          pgtype.Text
+	LastErrorAt        pgtype.Timestamp
+	LastCrosspostError pgtype.Text
+	UpdatedAt          pgtype.Timestamp
+	ID                 string
+	GuildID            string
 }
 
 func (q *Queries) RecordScheduledMessageRun(ctx context.Context, arg RecordScheduledMessageRunParams) error {
@@ -304,6 +317,7 @@ func (q *Queries) RecordScheduledMessageRun(ctx context.Context, arg RecordSched
 		arg.LastSentAt,
 		arg.LastError,
 		arg.LastErrorAt,
+		arg.LastCrosspostError,
 		arg.UpdatedAt,
 		arg.ID,
 		arg.GuildID,
@@ -329,9 +343,11 @@ UPDATE scheduled_messages SET
     cron_timezone = $16,
     message_webhook_id = $17,
     cron_interval = $18,
+    crosspost = $19,
     last_error = NULL,
-    last_error_at = NULL
-WHERE id = $1 AND guild_id = $2 RETURNING id, creator_id, guild_id, channel_id, message_id, saved_message_id, name, description, cron_expression, start_at, end_at, next_at, enabled, created_at, updated_at, cron_timezone, thread_name, message_webhook_id, last_sent_at, last_error, last_error_at, cron_interval, run_times
+    last_error_at = NULL,
+    last_crosspost_error = NULL
+WHERE id = $1 AND guild_id = $2 RETURNING id, creator_id, guild_id, channel_id, message_id, saved_message_id, name, description, cron_expression, start_at, end_at, next_at, enabled, created_at, updated_at, cron_timezone, thread_name, message_webhook_id, last_sent_at, last_error, last_error_at, cron_interval, run_times, crosspost, last_crosspost_error
 `
 
 type UpdateScheduledMessageParams struct {
@@ -353,6 +369,7 @@ type UpdateScheduledMessageParams struct {
 	CronTimezone     pgtype.Text
 	MessageWebhookID pgtype.Text
 	CronInterval     int16
+	Crosspost        bool
 }
 
 func (q *Queries) UpdateScheduledMessage(ctx context.Context, arg UpdateScheduledMessageParams) (ScheduledMessage, error) {
@@ -375,6 +392,7 @@ func (q *Queries) UpdateScheduledMessage(ctx context.Context, arg UpdateSchedule
 		arg.CronTimezone,
 		arg.MessageWebhookID,
 		arg.CronInterval,
+		arg.Crosspost,
 	)
 	var i ScheduledMessage
 	err := row.Scan(
@@ -401,6 +419,8 @@ func (q *Queries) UpdateScheduledMessage(ctx context.Context, arg UpdateSchedule
 		&i.LastErrorAt,
 		&i.CronInterval,
 		&i.RunTimes,
+		&i.Crosspost,
+		&i.LastCrosspostError,
 	)
 	return i, err
 }

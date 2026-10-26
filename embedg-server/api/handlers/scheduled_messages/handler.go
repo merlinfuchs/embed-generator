@@ -9,6 +9,7 @@ import (
 	"log/slog"
 
 	"github.com/adhocore/gronx"
+	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/access"
@@ -39,6 +40,14 @@ func New(scheduledMessageStore store.ScheduledMessageStore, am *access.AccessMan
 		webhookManager:        webhookManager,
 		manager:               manager,
 	}
+}
+
+// checkCrosspost rejects publishing in a channel that has no following servers to publish to.
+func checkCrosspost(channel discord.GuildChannel, crosspost bool) error {
+	if crosspost && channel.Type() != discord.ChannelTypeGuildNews {
+		return handlers.BadRequest("invalid_crosspost", "Only messages in announcement channels can be published.")
+	}
+	return nil
 }
 
 // checkSavedMessage rejects a saved message the scheduled message couldn't send, so that shows
@@ -93,7 +102,12 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 		return err
 	}
 
-	if err := h.am.CheckChannelAccessForRequestInGuild(c, req.ChannelID, guildID); err != nil {
+	channel, err := h.am.CheckChannelAccessForRequestInGuild(c, req.ChannelID, guildID)
+	if err != nil {
+		return err
+	}
+
+	if err := checkCrosspost(channel, req.Crosspost); err != nil {
 		return err
 	}
 
@@ -153,6 +167,7 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 		MessageID:        req.MessageID,
 		MessageWebhookID: messageSender,
 		ThreadName:       req.ThreadName,
+		Crosspost:        req.Crosspost,
 		SavedMessageID:   req.SavedMessageID,
 		Name:             req.Name,
 		Description:      req.Description,
@@ -242,7 +257,12 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		return err
 	}
 
-	if err := h.am.CheckChannelAccessForRequestInGuild(c, req.ChannelID, guildID); err != nil {
+	channel, err := h.am.CheckChannelAccessForRequestInGuild(c, req.ChannelID, guildID)
+	if err != nil {
+		return err
+	}
+
+	if err := checkCrosspost(channel, req.Crosspost); err != nil {
 		return err
 	}
 
@@ -321,6 +341,7 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 		MessageID:        req.MessageID,
 		MessageWebhookID: messageSender,
 		ThreadName:       req.ThreadName,
+		Crosspost:        req.Crosspost,
 		SavedMessageID:   req.SavedMessageID,
 		Name:             req.Name,
 		Description:      req.Description,
@@ -364,11 +385,11 @@ func (h *ScheduledMessageHandler) HandleTestScheduledMessage(c *fiber.Ctx, req w
 		return err
 	}
 
-	if err := h.am.CheckChannelAccessForRequestInGuild(c, req.ChannelID, guildID); err != nil {
+	if _, err := h.am.CheckChannelAccessForRequestInGuild(c, req.ChannelID, guildID); err != nil {
 		return err
 	}
 
-	err = h.manager.SendScheduledMessage(c.UserContext(), model.ScheduledMessage{
+	_, err = h.manager.SendScheduledMessage(c.UserContext(), model.ScheduledMessage{
 		CreatorID:      session.UserID,
 		GuildID:        guildID,
 		ChannelID:      req.ChannelID,
@@ -692,27 +713,29 @@ func checkRunsBeforeEnd(nextAt time.Time, endAt null.Time, cronTimezone string) 
 
 func scheduledMessageModelToWire(model *model.ScheduledMessage) wire.ScheduledMessageWire {
 	return wire.ScheduledMessageWire{
-		ID:             model.ID,
-		CreatorID:      model.CreatorID,
-		GuildID:        model.GuildID,
-		ChannelID:      model.ChannelID,
-		MessageID:      model.MessageID,
-		ThreadName:     model.ThreadName,
-		SavedMessageID: model.SavedMessageID,
-		Name:           model.Name,
-		Description:    model.Description,
-		CronExpression: model.CronExpression,
-		CronTimezone:   model.CronTimezone,
-		CronInterval:   model.CronInterval,
-		StartAt:        model.StartAt,
-		EndAt:          model.EndAt,
-		NextAt:         model.NextAt,
-		RunTimes:       model.RunTimes,
-		Enabled:        model.Enabled,
-		CreatedAt:      model.CreatedAt,
-		UpdatedAt:      model.UpdatedAt,
-		LastSentAt:     model.LastSentAt,
-		LastError:      model.LastError,
-		LastErrorAt:    model.LastErrorAt,
+		ID:                 model.ID,
+		CreatorID:          model.CreatorID,
+		GuildID:            model.GuildID,
+		ChannelID:          model.ChannelID,
+		MessageID:          model.MessageID,
+		ThreadName:         model.ThreadName,
+		Crosspost:          model.Crosspost,
+		SavedMessageID:     model.SavedMessageID,
+		Name:               model.Name,
+		Description:        model.Description,
+		CronExpression:     model.CronExpression,
+		CronTimezone:       model.CronTimezone,
+		CronInterval:       model.CronInterval,
+		StartAt:            model.StartAt,
+		EndAt:              model.EndAt,
+		NextAt:             model.NextAt,
+		RunTimes:           model.RunTimes,
+		Enabled:            model.Enabled,
+		CreatedAt:          model.CreatedAt,
+		UpdatedAt:          model.UpdatedAt,
+		LastSentAt:         model.LastSentAt,
+		LastError:          model.LastError,
+		LastErrorAt:        model.LastErrorAt,
+		LastCrosspostError: model.LastCrosspostError,
 	}
 }

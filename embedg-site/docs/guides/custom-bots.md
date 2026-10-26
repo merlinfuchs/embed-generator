@@ -34,7 +34,7 @@ You will see a few tasks that have to be done before your Custom Bot can be used
 
 ### Inviting The Custom Bot
 
-First you have to invite the Custom Bot to your Discord server. You can easily do that by clicking on the "Invite Bot" button. Make sure to keep the "Manage Webhooks" and "Manage Roles" permissions selected for your Custom Bot to work properly.
+First you have to invite the Custom Bot to your Discord server. You can easily do that by clicking on the "Invite Bot" button. Make sure to keep the "Manage Webhooks", "Manage Roles" and "Manage Messages" permissions selected for your Custom Bot to work properly. It needs "Manage Messages" to publish scheduled messages in announcement channels.
 
 ### Setting The Interaction Endpoint
 

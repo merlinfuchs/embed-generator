@@ -165,6 +165,7 @@ describe("messageState", () => {
     channel_id: "1",
     message_id: null,
     thread_name: null,
+    crosspost: false,
     saved_message_id: "1",
     name: "Test",
     description: null,
@@ -181,6 +182,7 @@ describe("messageState", () => {
     last_sent_at: null,
     last_error: null,
     last_error_at: null,
+    last_crosspost_error: null,
   };
   const dates = {
     cron_expression: null,

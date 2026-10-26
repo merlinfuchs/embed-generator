@@ -28,6 +28,26 @@ func TestScheduledMessageEditCantCreateThread(t *testing.T) {
 	}
 }
 
+func TestScheduledMessageEditCantCrosspost(t *testing.T) {
+	req := ScheduledMessageCreateRequestWire{
+		ChannelID:      1,
+		SavedMessageID: "saved",
+		Name:           "publish",
+		Crosspost:      true,
+		ScheduledMessageScheduleWire: ScheduledMessageScheduleWire{
+			RunTimes: []time.Time{time.Now()},
+		},
+	}
+	if err := req.Validate(); err != nil {
+		t.Fatalf("want publishing new messages to be valid, got %v", err)
+	}
+
+	req.MessageID = common.NullID{ID: 2, Valid: true}
+	if err := req.Validate(); err == nil {
+		t.Fatal("want publishing an edited message to be rejected")
+	}
+}
+
 func TestScheduledMessageTimezone(t *testing.T) {
 	for tz, valid := range map[string]bool{
 		"":              true,

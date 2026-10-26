@@ -3,6 +3,7 @@ package access
 import (
 	"errors"
 
+	"github.com/disgoorg/disgo/discord"
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
@@ -72,18 +73,22 @@ func (c *ChannelAccess) Denied() error {
 // guild id alongside the channel. Checking the two separately lets a caller pair a guild they
 // have access to with a channel in an entirely different one: the row is then stored under, and
 // billed to, the wrong guild, and the guild it actually posts in never sees it in its dashboard.
-func (m *AccessManager) CheckChannelAccessForRequestInGuild(c *fiber.Ctx, channelID common.ID, guildID common.ID) error {
+// It returns the channel it checked.
+func (m *AccessManager) CheckChannelAccessForRequestInGuild(c *fiber.Ctx, channelID common.ID, guildID common.ID) (discord.GuildChannel, error) {
 	channel, err := m.guildState.Channel(c.UserContext(), channelID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			return handlers.NotFound("unknown_channel", "The channel does not exist.")
+			return nil, handlers.NotFound("unknown_channel", "The channel does not exist.")
 		}
-		return err
+		return nil, err
 	}
 
 	if channel.GuildID() != guildID {
-		return handlers.BadRequest("channel_guild_mismatch", "The channel doesn't belong to this server.")
+		return nil, handlers.BadRequest("channel_guild_mismatch", "The channel doesn't belong to this server.")
 	}
 
-	return m.CheckChannelAccessForRequest(c, channelID)
+	if err := m.CheckChannelAccessForRequest(c, channelID); err != nil {
+		return nil, err
+	}
+	return channel, nil
 }
