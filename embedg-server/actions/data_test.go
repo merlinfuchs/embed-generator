@@ -69,6 +69,16 @@ func TestMessageWithActionsEmptyEmbeds(t *testing.T) {
 	}
 }
 
+func TestMessageWithActionsSuppressEmbeds(t *testing.T) {
+	var m MessageWithActions
+	if err := json.Unmarshal([]byte(`{"flags":32772}`), &m); err != nil {
+		t.Fatal(err)
+	}
+	if m.Flags != discord.MessageFlagIsComponentsV2 {
+		t.Errorf("flags = %d, want only components v2 with suppress embeds dropped", m.Flags)
+	}
+}
+
 func TestCanSendToOtherChannels(t *testing.T) {
 	tests := []struct {
 		name  string

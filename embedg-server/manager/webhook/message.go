@@ -205,6 +205,7 @@ func (m *WebhookManager) updateAsSender(ctx context.Context, channel discord.Gui
 		Files:           params.Files,
 		AllowedMentions: params.AllowedMentions,
 		Attachments:     params.Attachments,
+		Flags:           params.Flags,
 	}, rest.WithCtx(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("Failed to edit message: %w", err)

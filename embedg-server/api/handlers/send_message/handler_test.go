@@ -31,6 +31,11 @@ func TestEditsComponentsV2ToLegacy(t *testing.T) {
 		t.Error("components v2 rejection not recognized")
 	}
 
+	removed := &rest.Error{Code: 50035, Errors: json.RawMessage(`{"flags":{"_errors":[{"code":"MESSAGE_CANNOT_REMOVE_COMPONENTS_V2_FLAG","message":"The MessageFlags.IS_COMPONENTS_V2 flag cannot be removed from a message once it has been set."}]}}`)}
+	if !editsComponentsV2ToLegacy(removed) {
+		t.Error("removing the components v2 flag not recognized")
+	}
+
 	other := &rest.Error{Code: 50035, Errors: json.RawMessage(`{"username":{"_errors":[{"code":"USERNAME_INVALID"}]}}`)}
 	if editsComponentsV2ToLegacy(other) {
 		t.Error("unrelated invalid form body taken for a components v2 rejection")

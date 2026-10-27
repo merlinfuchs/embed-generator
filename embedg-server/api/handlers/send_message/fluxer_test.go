@@ -236,6 +236,9 @@ func TestRestoreFromFluxerWebhook(t *testing.T) {
 	if data.AvatarURL != "https://fluxerusercontent.com/avatars/1500000000000000001/abc.png" {
 		t.Fatalf("want the avatar from Fluxer's CDN, got %s", data.AvatarURL)
 	}
+	if data.Flags != 0 {
+		t.Fatalf("want the suppressed embeds flag left out, got %d", data.Flags)
+	}
 }
 
 func TestFluxerErrors(t *testing.T) {
