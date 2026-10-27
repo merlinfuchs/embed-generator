@@ -61,15 +61,8 @@ func New(
 func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.MessageSendToChannelRequestWire) error {
 	session := c.Locals("session").(*session.Session)
 
-	if err := h.accessManager.CheckChannelAccessForRequest(c, req.ChannelID); err != nil {
-		return err
-	}
-
-	channel, err := h.guildState.Channel(c.UserContext(), req.ChannelID)
+	channel, err := h.accessManager.CheckChannelAccessForRequestInGuild(c, req.ChannelID, req.GuildID)
 	if err != nil {
-		if errors.Is(err, store.ErrNotFound) {
-			return handlers.BadRequest("channel_not_found", "Channel not found")
-		}
 		return err
 	}
 
@@ -129,6 +122,17 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return handlers.BadRequest("invalid_actions", err.Error())
 	}
 
+	// Derived before sending, so a failure doesn't leave a sent message without its actions.
+	member, err := h.accessManager.GetMemberForUser(c.UserContext(), session, req.GuildID)
+	if err != nil {
+		return fmt.Errorf("Failed to get member: %w", err)
+	}
+
+	permContext, err := h.actionParser.DerivePermissionsForActions(c.UserContext(), *member, req.GuildID, req.ChannelID)
+	if err != nil {
+		return fmt.Errorf("Failed to create permission context: %w", err)
+	}
+
 	var msg *discord.Message
 	if req.MessageID.Valid {
 		msg, err = h.webhookManager.UpdateMessageInChannel(c.UserContext(), req.ChannelID, req.MessageID.ID, discord.WebhookMessageUpdate{
@@ -150,16 +154,6 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 			return componentsV2EditError
 		}
 		return fmt.Errorf("Failed to send or edit message: %w", err)
-	}
-
-	member, err := h.accessManager.GetMemberForUser(c.UserContext(), session, req.GuildID)
-	if err != nil {
-		return fmt.Errorf("Failed to get member: %w", err)
-	}
-
-	permContext, err := h.actionParser.DerivePermissionsForActions(c.UserContext(), *member, req.GuildID, req.ChannelID)
-	if err != nil {
-		return fmt.Errorf("Failed to create permission context: %w", err)
 	}
 
 	err = h.actionParser.CreateActionsForMessage(c.UserContext(), data.Actions, permContext, msg.ID, false)

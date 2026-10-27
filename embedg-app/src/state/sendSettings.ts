@@ -42,7 +42,13 @@ export const useSendSettingsStore = create<SendSettingsStore>()(
       setMessageId: (messageId: string | null) => set({ messageId }),
       setWebhookUrl: (webhookUrl: string | null) => set({ webhookUrl }),
       setThreadId: (threadId: string | null) => set({ threadId }),
-      setGuildId: (guildId: string | null) => set({ guildId }),
+      // The channel belongs to the old server, and would still be sent to while not shown as selected.
+      setGuildId: (guildId: string | null) =>
+        set((state) =>
+          state.guildId === guildId
+            ? state
+            : { guildId, channelId: null, threadName: null },
+        ),
       setChannelId: (channelId: string | null) => set({ channelId }),
       setThreadName: (threadName: string | null) => set({ threadName }),
     }),
