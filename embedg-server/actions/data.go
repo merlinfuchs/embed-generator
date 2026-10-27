@@ -29,6 +29,9 @@ type MessageWithActions struct {
 // UnmarshalJSON reads embed timestamps itself. Imported and older saved messages carry
 // "timestamp": "" for an embed without one, which time.Time rejects; anything else that
 // isn't a date is still an error.
+//
+// It also drops the suppress embeds flag, which hides every embed in the message. Drafts restored
+// from a message whose link preview was hidden in Discord carry it without the user knowing.
 func (m *MessageWithActions) UnmarshalJSON(data []byte) error {
 	type message MessageWithActions
 	var raw struct {
@@ -43,6 +46,7 @@ func (m *MessageWithActions) UnmarshalJSON(data []byte) error {
 	}
 
 	*m = MessageWithActions(raw.message)
+	m.Flags &^= discord.MessageFlagSuppressEmbeds
 	m.Embeds = nil
 	if raw.Embeds != nil {
 		m.Embeds = make([]discord.Embed, 0, len(raw.Embeds))
@@ -101,6 +105,14 @@ func decodeError(err error) error {
 
 func (m MessageWithActions) ComponentsV2Enabled() bool {
 	return m.Flags&(1<<15) != 0
+}
+
+// EditFlags are the flags to edit a message with. They turn it into a Components V2 one, which
+// Discord needs to be told on edits too. Sending them either way also shows embeds that were hidden
+// in Discord, which an edit without flags leaves hidden.
+func (m MessageWithActions) EditFlags() *discord.MessageFlags {
+	flags := m.Flags & discord.MessageFlagIsComponentsV2
+	return &flags
 }
 
 type ComponentWithActions struct {

@@ -97,6 +97,10 @@ func (h *SendMessageHandler) HandleRestoreMessageFromWebhook(c *fiber.Ctx, req w
 
 // restoreResponse sends the message back to the editor, with the attachments it can download.
 func restoreResponse(c *fiber.Ctx, data *actions.MessageWithActions, attachments []discord.Attachment) error {
+	// The other flags describe the message as it is now, like embeds the user hid in Discord. Kept,
+	// they would go out with every message sent from the draft and hide its embeds too.
+	data.Flags &= discord.MessageFlagIsComponentsV2
+
 	rawData, err := json.Marshal(data)
 	if err != nil {
 		return fmt.Errorf("Failed to marshal message data: %w", err)

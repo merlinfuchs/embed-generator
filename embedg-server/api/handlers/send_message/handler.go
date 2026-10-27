@@ -141,7 +141,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 			Components:      &params.Components,
 			AllowedMentions: params.AllowedMentions,
 			Files:           params.Files,
-			Flags:           componentsV2Flag(data),
+			Flags:           data.EditFlags(),
 		})
 	} else {
 		msg, err = h.webhookManager.SendMessageToChannel(c.UserContext(), req.ChannelID, params)
@@ -221,7 +221,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 				Components:      &params.Components,
 				AllowedMentions: params.AllowedMentions,
 				Files:           params.Files,
-				Flags:           componentsV2Flag(data),
+				Flags:           data.EditFlags(),
 			},
 			rest.UpdateWebhookMessageParams{
 				ThreadID:       req.ThreadID.ID,
@@ -282,21 +282,12 @@ var componentsV2EditError = handlers.BadRequest(
 )
 
 // editsComponentsV2ToLegacy reports whether Discord refused an edit because it sends content or
-// embeds to a message that is already Components V2.
+// embeds to a message that is already Components V2, or takes the flag away from it.
 func editsComponentsV2ToLegacy(err error) bool {
 	var restErr *rest.Error
 	return errors.As(err, &restErr) &&
-		bytes.Contains(restErr.Errors, []byte("MESSAGE_CANNOT_USE_LEGACY_FIELDS_WITH_COMPONENTS_V2"))
-}
-
-// componentsV2Flag turns an edited message into a Components V2 one, which Discord needs to be told
-// on edits too. It can't be turned back, so it's left out otherwise.
-func componentsV2Flag(data *actions.MessageWithActions) *discord.MessageFlags {
-	if !data.ComponentsV2Enabled() {
-		return nil
-	}
-	flags := discord.MessageFlagIsComponentsV2
-	return &flags
+		(bytes.Contains(restErr.Errors, []byte("MESSAGE_CANNOT_USE_LEGACY_FIELDS_WITH_COMPONENTS_V2")) ||
+			bytes.Contains(restErr.Errors, []byte("MESSAGE_CANNOT_REMOVE_COMPONENTS_V2_FLAG")))
 }
 
 func checkMessageLimits(data *actions.MessageWithActions, features model.PlanFeatures) error {
