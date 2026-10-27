@@ -210,5 +210,7 @@ func (g *CommandHandler) dumpMessage(ctx context.Context, message *discord.Messa
 		Embeds:     message.Embeds,
 		Components: components,
 		Actions:    actionSets,
+		// The other flags describe the message as it is now, like embeds hidden in Discord.
+		Flags: message.Flags & discord.MessageFlagIsComponentsV2,
 	}, "", "  ")
 }
