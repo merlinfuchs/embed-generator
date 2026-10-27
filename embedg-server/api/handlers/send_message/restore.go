@@ -19,7 +19,7 @@ import (
 )
 
 func (h *SendMessageHandler) HandleRestoreMessageFromChannel(c *fiber.Ctx, req wire.MessageRestoreFromChannelRequestWire) error {
-	if err := h.accessManager.CheckChannelAccessForRequest(c, req.ChannelID); err != nil {
+	if _, err := h.accessManager.CheckChannelAccessForRequestInGuild(c, req.ChannelID, req.GuildID); err != nil {
 		return err
 	}
 
