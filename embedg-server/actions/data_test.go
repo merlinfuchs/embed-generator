@@ -79,6 +79,18 @@ func TestMessageWithActionsSuppressEmbeds(t *testing.T) {
 	}
 }
 
+func TestMessageWithActionsEditFlags(t *testing.T) {
+	legacy := MessageWithActions{Flags: discord.MessageFlagSuppressNotifications}
+	if got := legacy.EditFlags(); got == nil || *got != 0 {
+		t.Errorf("legacy edit flags = %v, want 0 so hidden embeds show again", got)
+	}
+
+	cv2 := MessageWithActions{Flags: discord.MessageFlagIsComponentsV2 | discord.MessageFlagSuppressNotifications}
+	if got := cv2.EditFlags(); got == nil || *got != discord.MessageFlagIsComponentsV2 {
+		t.Errorf("components v2 edit flags = %v, want only components v2", got)
+	}
+}
+
 func TestCanSendToOtherChannels(t *testing.T) {
 	tests := []struct {
 		name  string

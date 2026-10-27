@@ -107,6 +107,14 @@ func (m MessageWithActions) ComponentsV2Enabled() bool {
 	return m.Flags&(1<<15) != 0
 }
 
+// EditFlags are the flags to edit a message with. They turn it into a Components V2 one, which
+// Discord needs to be told on edits too. Sending them either way also shows embeds that were hidden
+// in Discord, which an edit without flags leaves hidden.
+func (m MessageWithActions) EditFlags() *discord.MessageFlags {
+	flags := m.Flags & discord.MessageFlagIsComponentsV2
+	return &flags
+}
+
 type ComponentWithActions struct {
 	ID       int                   `json:"id,omitempty"`
 	Type     discord.ComponentType `json:"type"`

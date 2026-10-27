@@ -340,10 +340,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 			Embeds:          &params.Embeds,
 			Components:      &params.Components,
 			AllowedMentions: params.AllowedMentions,
-		}
-		// Only when needed, the flags of a message can't be taken away by an edit.
-		if data.ComponentsV2Enabled() {
-			update.Flags = &params.Flags
+			Flags:           data.EditFlags(),
 		}
 		msg, err = m.webhookManager.UpdateMessageAsSender(ctx, scheduledMessage.ChannelID, scheduledMessage.MessageID.ID, scheduledMessage.MessageWebhookID, update)
 	} else {

@@ -141,7 +141,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 			Components:      &params.Components,
 			AllowedMentions: params.AllowedMentions,
 			Files:           params.Files,
-			Flags:           editFlags(data),
+			Flags:           data.EditFlags(),
 		})
 	} else {
 		msg, err = h.webhookManager.SendMessageToChannel(c.UserContext(), req.ChannelID, params)
@@ -221,7 +221,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 				Components:      &params.Components,
 				AllowedMentions: params.AllowedMentions,
 				Files:           params.Files,
-				Flags:           editFlags(data),
+				Flags:           data.EditFlags(),
 			},
 			rest.UpdateWebhookMessageParams{
 				ThreadID:       req.ThreadID.ID,
@@ -288,14 +288,6 @@ func editsComponentsV2ToLegacy(err error) bool {
 	return errors.As(err, &restErr) &&
 		(bytes.Contains(restErr.Errors, []byte("MESSAGE_CANNOT_USE_LEGACY_FIELDS_WITH_COMPONENTS_V2")) ||
 			bytes.Contains(restErr.Errors, []byte("MESSAGE_CANNOT_REMOVE_COMPONENTS_V2_FLAG")))
-}
-
-// editFlags turns an edited message into a Components V2 one, which Discord needs to be told on
-// edits too. Sending the flags either way also shows embeds that were hidden in Discord, which an
-// edit without flags leaves hidden.
-func editFlags(data *actions.MessageWithActions) *discord.MessageFlags {
-	flags := data.Flags & discord.MessageFlagIsComponentsV2
-	return &flags
 }
 
 func checkMessageLimits(data *actions.MessageWithActions, features model.PlanFeatures) error {
