@@ -18,6 +18,7 @@ message.style {
 				delete data
 			}
 			request>headers>Referer regexp "([?&]data=)[^&]*" "${1}redacted"
+			resp_headers>Location regexp "([?&]data=)[^&]*" "${1}redacted"
 			wrap json
 		}
 	}
