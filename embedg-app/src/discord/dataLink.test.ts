@@ -44,8 +44,34 @@ test("standard base64 survives the + becoming a space in the query", () => {
   expect(parseDataLink(param).message.content).toBe("~~~");
 });
 
-test("links without messages fail", () => {
+test("a message link opens the message with its actions", () => {
+  const { message, messageCount } = parseDataLink(
+    encode({
+      content: "Pick a role",
+      components: [
+        {
+          type: 1,
+          components: [
+            { type: 2, style: 1, label: "Gamer", action_set_id: "roles" },
+          ],
+        },
+      ],
+      actions: {
+        roles: { actions: [{ type: 2, target_id: "123" }] },
+      },
+    }),
+  );
+
+  expect(message.content).toBe("Pick a role");
+  expect(message.actions.roles.actions).toMatchObject([
+    { type: 2, target_id: "123" },
+  ]);
+  expect(messageCount).toBe(1);
+});
+
+test("links that aren't a message fail", () => {
   expect(() => parseDataLink(encode({ messages: [] }))).toThrow();
-  expect(() => parseDataLink(encode({ content: "Hi" }))).toThrow();
+  expect(() => parseDataLink(encode([{ content: "Hi" }]))).toThrow();
+  expect(() => parseDataLink(encode("Hi"))).toThrow();
   expect(() => parseDataLink("not base64!")).toThrow();
 });

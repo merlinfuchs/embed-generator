@@ -2,13 +2,14 @@ import { z } from "zod";
 import { parseMessageWithAction } from "./importSchema";
 
 // The format Discohook uses for its ?data= links, so links made for it open here too.
-const dataLinkSchema = z.object({
+const discohookSchema = z.object({
   messages: z.array(z.object({ data: z.unknown() })).min(1),
 });
 
 /**
- * Parses the ?data= param of a message link: URL-safe base64 of UTF-8 JSON. Only the first
- * message is returned because the editor holds one message at a time.
+ * Parses the ?data= param of a message link: URL-safe base64 of UTF-8 JSON. The JSON is a message
+ * the way the JSON editor shows it, or Discohook's list of messages. Of those only the first is
+ * returned because the editor holds one message at a time.
  */
 export function parseDataLink(param: string) {
   const base64 = param
@@ -19,10 +20,16 @@ export function parseDataLink(param: string) {
   const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
   const json = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
 
-  const { messages } = dataLinkSchema.parse(JSON.parse(json));
+  const data = z.record(z.unknown()).parse(JSON.parse(json));
 
-  return {
-    message: parseMessageWithAction(messages[0].data),
-    messageCount: messages.length,
-  };
+  // A message never has a messages field, so this can't mistake one for the other.
+  if ("messages" in data) {
+    const { messages } = discohookSchema.parse(data);
+    return {
+      message: parseMessageWithAction(messages[0].data),
+      messageCount: messages.length,
+    };
+  }
+
+  return { message: parseMessageWithAction(data), messageCount: 1 };
 }
