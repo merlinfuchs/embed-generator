@@ -12,6 +12,7 @@ import {
   sortDates,
   weekdayName,
   weekdayOrder,
+  periodicLimitMessage,
 } from "../util/schedule";
 import {
   addMonths,
@@ -235,7 +236,7 @@ export default function ScheduleDates({
         )}
         {!periodicAllowed && (
           <div className="text-mist-400 text-sm font-light mt-3">
-            Sending on more than one date needs Premium.
+            {periodicLimitMessage}
           </div>
         )}
         {full && (

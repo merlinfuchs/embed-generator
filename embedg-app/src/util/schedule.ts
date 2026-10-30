@@ -311,3 +311,19 @@ export function dateOnDay(
   const soonest = new Date(Math.ceil(Date.now() / 300_000) * 300_000);
   return Date.parse(date) < soonest.getTime() ? soonest.toISOString() : date;
 }
+
+// Whether another message can repeat or be sent on more than one date, like the server counts
+// it. excludeId is the message being edited, which doesn't take a slot from itself.
+export function periodicAllowed(
+  maxPeriodic: number,
+  messages: ScheduledMessageWire[],
+  excludeId?: string,
+): boolean {
+  const periodic = messages.filter(
+    (msg) => msg.id !== excludeId && msg.run_times?.length !== 1,
+  );
+  return periodic.length < maxPeriodic;
+}
+
+export const periodicLimitMessage =
+  "Your free scheduled message that repeats or is sent on more than one date is already in use. Premium allows more.";

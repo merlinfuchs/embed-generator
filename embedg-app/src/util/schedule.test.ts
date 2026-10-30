@@ -11,6 +11,7 @@ import {
   repeatToCron,
   scheduleFromDraft,
   newScheduleDraft,
+  periodicAllowed,
 } from "./schedule";
 
 describe("parseRepeat", () => {
@@ -237,5 +238,25 @@ describe("messageState", () => {
     expect(
       messageState({ ...base, ...dates, last_sent_at: "2026-10-06T18:00:02Z" }),
     ).toBe("paused");
+  });
+});
+
+describe("periodicAllowed", () => {
+  const msg = (id: string, run_times: string[] | null) =>
+    ({ id, run_times }) as ScheduledMessageWire;
+  const once = msg("once", ["2026-10-06T18:00:00Z"]);
+  const repeating = msg("repeating", null);
+  const dates = msg("dates", ["2026-10-06T18:00:00Z", "2026-10-07T18:00:00Z"]);
+
+  it("counts repeats and lists of dates, not single sends", () => {
+    expect(periodicAllowed(1, [once])).toBe(true);
+    expect(periodicAllowed(1, [once, repeating])).toBe(false);
+    expect(periodicAllowed(1, [dates])).toBe(false);
+    expect(periodicAllowed(2, [dates])).toBe(true);
+  });
+
+  it("lets the message being edited keep its slot", () => {
+    expect(periodicAllowed(1, [once, repeating], "repeating")).toBe(true);
+    expect(periodicAllowed(1, [once, repeating], "once")).toBe(false);
   });
 });

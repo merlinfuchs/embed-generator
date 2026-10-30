@@ -11,6 +11,25 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countPeriodicScheduledMessages = `-- name: CountPeriodicScheduledMessages :one
+SELECT COUNT(*) FROM scheduled_messages
+WHERE guild_id = $1 AND id != $2
+  AND (run_times IS NULL OR cardinality(run_times) > 1)
+`
+
+type CountPeriodicScheduledMessagesParams struct {
+	GuildID   string
+	ExcludeID string
+}
+
+// Messages that repeat or are sent on more than one date, leaving out the one being edited.
+func (q *Queries) CountPeriodicScheduledMessages(ctx context.Context, arg CountPeriodicScheduledMessagesParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countPeriodicScheduledMessages, arg.GuildID, arg.ExcludeID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countScheduledMessages = `-- name: CountScheduledMessages :one
 SELECT COUNT(*) FROM scheduled_messages WHERE guild_id = $1
 `

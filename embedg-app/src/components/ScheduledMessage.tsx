@@ -41,8 +41,12 @@ import {
   messageState,
   scheduleDraftFromMessage,
   scheduleFromDraft,
+  periodicAllowed,
 } from "../util/schedule";
-import { useGuildChannelsQuery } from "../api/queries";
+import {
+  useGuildChannelsQuery,
+  useScheduledMessagesQuery,
+} from "../api/queries";
 
 export default function ScheduledMessage({
   msg,
@@ -57,6 +61,12 @@ export default function ScheduledMessage({
   const { data: channels } = useGuildChannelsQuery(guildId);
 
   const features = usePremiumGuildFeatures(guildId);
+  const { data: scheduledMessages } = useScheduledMessagesQuery(guildId);
+  const canRepeat = periodicAllowed(
+    features?.max_periodic_scheduled_messages ?? 0,
+    scheduledMessages?.success ? scheduledMessages.data : [],
+    msg.id,
+  );
 
   const [manage, setManage] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -122,11 +132,7 @@ export default function ScheduledMessage({
       return;
     }
 
-    const blocked = scheduleError(
-      schedule,
-      preview,
-      !!features?.periodic_scheduled_messages,
-    );
+    const blocked = scheduleError(schedule, preview, canRepeat);
     if (blocked) {
       createToast({
         title: "The schedule can't be saved yet",
@@ -353,7 +359,7 @@ export default function ScheduledMessage({
                 draft={schedule}
                 onChange={setSchedule}
                 preview={preview}
-                periodicAllowed={!!features?.periodic_scheduled_messages}
+                periodicAllowed={canRepeat}
               />
             </div>
           </div>

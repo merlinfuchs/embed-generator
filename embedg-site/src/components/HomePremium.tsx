@@ -6,7 +6,7 @@ const perks = [
   "Up to 5 actions per component",
   "Your own bot name and avatar",
   "Custom slash commands",
-  "Recurring scheduled messages",
+  "More recurring scheduled messages",
   "More AI assistant prompts",
 ];
 

@@ -147,7 +147,7 @@ const faq: Faq[] = [
   },
   {
     q: "Is it free?",
-    a: "Scheduling a message to send once is free. Repeating schedules, lists of dates and more scheduled messages per server come with Premium.",
+    a: "Sending once is free, and so is one message per server that repeats or goes out on a list of dates. More of those, and more scheduled messages per server, come with Premium.",
     link: { label: "Premium", href: "/docs/premium" },
   },
   {

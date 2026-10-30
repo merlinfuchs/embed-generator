@@ -27,7 +27,7 @@ You can also repeat a message, like "every 2 weeks on Monday and Thursday at 18:
 
 With **Advanced: use a cron expression** you can enter a cron expression instead. A schedule can't send more than once a minute.
 
-Sending on more than one date and repeating schedules are only available to [Embed Generator Premium](../premium) subscribers. Sending once is free.
+Every server can have one scheduled message that repeats or is sent on more than one date for free. [Embed Generator Premium](../premium) allows more. Sending once is always free.
 
 ![Scheduled Messages Periodic](./scheduled-messages-periodic.webp)
 

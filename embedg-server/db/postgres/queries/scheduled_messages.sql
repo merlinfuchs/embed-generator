@@ -75,3 +75,9 @@ WHERE id = sqlc.arg(id) AND guild_id = sqlc.arg(guild_id);
 
 -- name: CountScheduledMessages :one
 SELECT COUNT(*) FROM scheduled_messages WHERE guild_id = $1;
+
+-- Messages that repeat or are sent on more than one date, leaving out the one being edited.
+-- name: CountPeriodicScheduledMessages :one
+SELECT COUNT(*) FROM scheduled_messages
+WHERE guild_id = sqlc.arg(guild_id) AND id != sqlc.arg(exclude_id)
+  AND (run_times IS NULL OR cardinality(run_times) > 1);

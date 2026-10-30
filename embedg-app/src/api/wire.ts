@@ -390,7 +390,7 @@ export interface GetPremiumPlanFeaturesResponseDataWire {
   is_premium: boolean;
   max_image_upload_size: number /* int */;
   max_scheduled_messages: number /* int */;
-  periodic_scheduled_messages: boolean;
+  max_periodic_scheduled_messages: number /* int */;
   max_template_ops: number /* int */;
   max_kv_keys: number /* int */;
 }

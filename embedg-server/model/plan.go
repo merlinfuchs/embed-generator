@@ -11,17 +11,19 @@ type Plan struct {
 }
 
 type PlanFeatures struct {
-	MaxSavedMessages          int  `toml:"max_saved_messages"`
-	MaxActionsPerComponent    int  `toml:"max_actions_per_component"`
-	AdvancedActionTypes       bool `toml:"advanced_action_types"`
-	CustomBot                 bool `toml:"custom_bot"`
-	MaxCustomCommands         int  `toml:"max_custom_commands"`
-	IsPremium                 bool `toml:"is_premium"`
-	MaxImageUploadSize        int  `toml:"max_image_upload_size"`
-	MaxScheduledMessages      int  `toml:"max_scheduled_messages"`
-	PeriodicScheduledMessages bool `toml:"periodic_scheduled_messages"`
-	MaxTemplateOps            int  `toml:"max_template_ops"`
-	MaxKVKeys                 int  `toml:"max_kv_keys"`
+	MaxSavedMessages       int  `toml:"max_saved_messages"`
+	MaxActionsPerComponent int  `toml:"max_actions_per_component"`
+	AdvancedActionTypes    bool `toml:"advanced_action_types"`
+	CustomBot              bool `toml:"custom_bot"`
+	MaxCustomCommands      int  `toml:"max_custom_commands"`
+	IsPremium              bool `toml:"is_premium"`
+	MaxImageUploadSize     int  `toml:"max_image_upload_size"`
+	MaxScheduledMessages   int  `toml:"max_scheduled_messages"`
+	// MaxPeriodicScheduledMessages is how many scheduled messages can repeat or be sent on more
+	// than one date. The rest can only be sent once.
+	MaxPeriodicScheduledMessages int `toml:"max_periodic_scheduled_messages"`
+	MaxTemplateOps               int `toml:"max_template_ops"`
+	MaxKVKeys                    int `toml:"max_kv_keys"`
 	// MaxAIPromptsPerMonth is how many prompts that change the message the AI assistant takes a
 	// month. 0 turns it off.
 	MaxAIPromptsPerMonth int `toml:"max_ai_prompts_per_month"`
@@ -49,6 +51,9 @@ func (f *PlanFeatures) Merge(b PlanFeatures) {
 	if b.MaxScheduledMessages > f.MaxScheduledMessages {
 		f.MaxScheduledMessages = b.MaxScheduledMessages
 	}
+	if b.MaxPeriodicScheduledMessages > f.MaxPeriodicScheduledMessages {
+		f.MaxPeriodicScheduledMessages = b.MaxPeriodicScheduledMessages
+	}
 	if b.MaxTemplateOps > f.MaxTemplateOps {
 		f.MaxTemplateOps = b.MaxTemplateOps
 	}
@@ -62,5 +67,4 @@ func (f *PlanFeatures) Merge(b PlanFeatures) {
 	f.AdvancedActionTypes = f.AdvancedActionTypes || b.AdvancedActionTypes
 	f.IsPremium = f.IsPremium || b.IsPremium
 	f.CustomBot = f.CustomBot || b.CustomBot
-	f.PeriodicScheduledMessages = f.PeriodicScheduledMessages || b.PeriodicScheduledMessages
 }

@@ -119,7 +119,7 @@ func (h *ScheduledMessageHandler) HandleCreateScheduledMessage(c *fiber.Ctx, req
 	if err := normalizeSchedule(&req.ScheduledMessageScheduleWire); err != nil {
 		return err
 	}
-	if err := checkPlan(features, &req.ScheduledMessageScheduleWire); err != nil {
+	if err := h.checkPlan(c, features, guildID, "", &req.ScheduledMessageScheduleWire); err != nil {
 		return err
 	}
 
@@ -283,7 +283,7 @@ func (h *ScheduledMessageHandler) HandleUpdateScheduledMessage(c *fiber.Ctx, req
 	if err := normalizeSchedule(&req.ScheduledMessageScheduleWire); err != nil {
 		return err
 	}
-	if err := checkPlan(features, &req.ScheduledMessageScheduleWire); err != nil {
+	if err := h.checkPlan(c, features, guildID, existing.ID, &req.ScheduledMessageScheduleWire); err != nil {
 		return err
 	}
 	now := time.Now().UTC()
@@ -629,9 +629,22 @@ func pendingDatesAfter(existing *model.ScheduledMessage, now time.Time) time.Tim
 	return after
 }
 
-func checkPlan(features model.PlanFeatures, s *wire.ScheduledMessageScheduleWire) error {
-	if !features.PeriodicScheduledMessages && !s.SendsOnce() {
-		return handlers.Forbidden("insufficient_plan", "Repeating scheduled messages and sending on more than one date are not available on your plan.")
+// checkPlan checks that a schedule that doesn't send once fits the plan, next to the guild's
+// other ones. excludeID is the message being edited.
+func (h *ScheduledMessageHandler) checkPlan(c *fiber.Ctx, features model.PlanFeatures, guildID common.ID, excludeID string, s *wire.ScheduledMessageScheduleWire) error {
+	if s.SendsOnce() {
+		return nil
+	}
+
+	count, err := h.scheduledMessageStore.CountPeriodicScheduledMessages(c.UserContext(), guildID, excludeID)
+	if err != nil {
+		return err
+	}
+	if int(count) >= features.MaxPeriodicScheduledMessages {
+		return handlers.Forbidden("insufficient_plan", fmt.Sprintf(
+			"Your plan allows %d scheduled messages that repeat or are sent on more than one date.",
+			features.MaxPeriodicScheduledMessages,
+		))
 	}
 	return nil
 }
