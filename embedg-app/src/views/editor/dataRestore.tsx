@@ -39,6 +39,11 @@ export default function DataRestoreView() {
 
   if (!parsed) return null;
 
+  // Actions don't show in the preview, and one from a stranger's link could hand out roles.
+  const hasActions = Object.values(parsed.message.actions).some(
+    (set) => set.actions.length > 0,
+  );
+
   const restore = () => {
     setCurrentMessage(parsed.message);
     op.track("data_link_restored", { messages: parsed.messageCount });
@@ -49,11 +54,21 @@ export default function DataRestoreView() {
     <MessageRestoreModal
       msg={parsed.message}
       notice={
-        parsed.messageCount > 1 && (
-          <Notice tone="warning">
-            The link contains {parsed.messageCount} messages. Only the first one
-            can be opened.
-          </Notice>
+        (parsed.messageCount > 1 || hasActions) && (
+          <div className="space-y-2">
+            {parsed.messageCount > 1 && (
+              <Notice tone="warning">
+                The link contains {parsed.messageCount} messages. Only the first
+                one can be opened.
+              </Notice>
+            )}
+            {hasActions && (
+              <Notice tone="warning">
+                The buttons or select menus in this message have actions, like
+                giving out roles. Check them before you send it.
+              </Notice>
+            )}
+          </div>
         )
       }
       onRestore={restore}

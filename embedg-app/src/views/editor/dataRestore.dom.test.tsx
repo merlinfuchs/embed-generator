@@ -1,5 +1,6 @@
 import { screen } from "@testing-library/react";
 import { expect, test } from "vitest";
+import { useToasts } from "../../util/toasts";
 import { encodeDataLink } from "../../test/dataLink";
 import {
   currentMessage,
@@ -30,11 +31,30 @@ test("a data link replaces the draft only after restoring", async () => {
   expect(currentMessage().content).toBe("From the link");
 });
 
-test("an invalid or missing data link leaves the draft alone", () => {
+test("an invalid data link says so and leaves the draft alone", () => {
   loadMessage({ content: "Old message" });
+  useToasts.setState({ toasts: [] });
   renderAt("?data=nope");
-  renderAt("");
 
   expect(screen.queryByRole("button", { name: "Restore" })).toBeNull();
+  expect(useToasts.getState().toasts).toMatchObject([
+    { title: "Failed to open message link" },
+  ]);
   expect(currentMessage().content).toBe("Old message");
+});
+
+test("a link with actions warns about them", () => {
+  renderAt(
+    `?data=${encodeDataLink({
+      components: [
+        {
+          type: 1,
+          components: [{ type: 2, style: 1, label: "Hi", action_set_id: "a" }],
+        },
+      ],
+      actions: { a: { actions: [{ type: 2, target_id: "123" }] } },
+    })}`,
+  );
+
+  expect(screen.getByText(/have actions, like giving out roles/)).toBeTruthy();
 });

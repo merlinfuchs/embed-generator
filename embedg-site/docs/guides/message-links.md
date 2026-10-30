@@ -5,7 +5,7 @@ description: "Link to a Discord message so it opens in the Embed Generator edito
 
 # Message Links
 
-A message link opens a message in the editor, ready to edit and send. Use it to add an **Open in Embed Generator** button to your bot, docs or tool.
+A message link opens a message in the editor, ready to edit and send. Use it to add an **Open in Embed Generator** link to your website, docs or tool. Most messages make links longer than the 512 characters Discord allows for link buttons, so they don't fit in a button on a Discord message.
 
 ```
 https://message.style/app/editor/open?data=<message>
@@ -16,7 +16,7 @@ https://message.style/app/editor/open?data=<message>
 ```js
 const message = { content: "Hello!", embeds: [{ title: "Welcome" }] };
 const bytes = new TextEncoder().encode(JSON.stringify(message));
-const data = btoa(String.fromCharCode(...bytes))
+const data = btoa(Array.from(bytes, (b) => String.fromCharCode(b)).join(""))
   .replace(/\+/g, "-")
   .replace(/\//g, "_")
   .replace(/=+$/, "");
@@ -24,7 +24,7 @@ const data = btoa(String.fromCharCode(...bytes))
 const url = `https://message.style/app/editor/open?data=${data}`;
 ```
 
-The editor shows a preview first and only replaces the current message when you click **Restore**.
+The editor shows a preview first and only replaces the current message when you click **Restore**. If the message's buttons or select menus have actions, it says so, since those can hand out roles and aren't visible in the preview.
 
 ## Discohook links
 

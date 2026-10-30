@@ -12,7 +12,14 @@ message.style {
 			roll_size 100MiB
 			roll_keep 10
 		}
-		format json
+		# Message links carry the whole message in ?data=, Discohook's with webhook URLs.
+		format filter {
+			request>uri query {
+				delete data
+			}
+			request>headers>Referer regexp "([?&]data=)[^&]*" "${1}redacted"
+			wrap json
+		}
 	}
 
 	encode zstd gzip

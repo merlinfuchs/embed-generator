@@ -13,4 +13,19 @@ export const op = new OpenPanel({
 // Keep in sync with embedg-site/src/analytics.ts.
 const fetchApi = op.api.fetch.bind(op.api);
 op.api.fetch = (path, data, options) =>
-  fetchApi(path === "/track" ? "/ops" : path, data, options);
+  fetchApi(path === "/track" ? "/ops" : path, redactDataLink(data), options);
+
+// Message links carry the whole message in ?data=, Discohook's with webhook URLs. Every event
+// sends the page URL as __path.
+function redactDataLink<T>(data: T): T {
+  const properties = (
+    data as { payload?: { properties?: Record<string, unknown> } }
+  )?.payload?.properties;
+  if (typeof properties?.__path === "string") {
+    properties.__path = properties.__path.replace(
+      /([?&]data=)[^&#]*/,
+      "$1redacted",
+    );
+  }
+  return data;
+}
