@@ -5,14 +5,13 @@ description: "Move from Discohook to Embed Generator in a few minutes: export yo
 
 # Migrating from Discohook
 
-**Embed Generator is the better alternative to Discohook with native support for buttons and select menus**. You don't need an additional bot to get started. No more configuration inside Discord using confusing commands, it's all on the website with an easy to use interface.  
 If you are coming from Discohook and would like to start using Embed Generator instead you are right here. With a few simple steps you can migrate your message backups and get started with Embed Generator.
 
 ## Getting started
 
-To get started with Embed Generator go [message.style/app](https://message.style/app/editor). You will see a message editor that should look fairly similar to what you are used to from Discohook. There are a few differences, but all the features you are used to are there and work the same way - or better - as with Discohook.
+To get started with Embed Generator go [message.style/app](https://message.style/app/editor). You will see a message editor that should look fairly similar to what you are used to from Discohook. Building and sending messages works much the same way.
 
-One important difference is that you will want to login with your Discord account when you are using Embed Generator. This makes it possible to save your messages in the cloud so you can access them on any device. With Discohook your message backups are stored locally and are no synchronized between devices, this makes it easy to lose your messages accidentally.
+You can send through a webhook without logging in, just like on Discohook. To save messages, or to send to a channel without copying a webhook URL, log in with your Discord account. Your saved messages are stored in the cloud so you can open them on any device. For how the two compare, see [Embed Generator vs Discohook](/blog/discohook-alternative).
 
 ## Migrating your messages
 
