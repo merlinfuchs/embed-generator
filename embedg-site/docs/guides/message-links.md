@@ -8,7 +8,7 @@ description: "Link to a Discord message so it opens in the Embed Generator edito
 A message link opens a message in the editor, ready to edit and send. Use it to add an **Open in Embed Generator** button to your bot, docs or tool.
 
 ```
-https://message.style/app/editor?data=<message>
+https://message.style/app/editor/open?data=<message>
 ```
 
 `<message>` is the message as JSON, encoded as URL-safe base64 without padding. The JSON is what the editor's **JSON Code** view shows: the fields Discord takes for a webhook message, like `content`, `embeds` and `components`, plus `actions` for what buttons and select menus do.
@@ -21,7 +21,7 @@ const data = btoa(String.fromCharCode(...bytes))
   .replace(/\//g, "_")
   .replace(/=+$/, "");
 
-const url = `https://message.style/app/editor?data=${data}`;
+const url = `https://message.style/app/editor/open?data=${data}`;
 ```
 
 The editor shows a preview first and only replaces the current message when you click **Restore**.

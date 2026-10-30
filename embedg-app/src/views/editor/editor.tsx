@@ -1,12 +1,7 @@
 import { DocumentMagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import clsx from "clsx";
-import {
-  Outlet,
-  useMatch,
-  useNavigate,
-  useSearchParams,
-} from "react-router-dom";
+import { Outlet, useMatch, useNavigate } from "react-router-dom";
 import { Drawer } from "vaul";
 import EditorAttachments from "../../components/EditorAttachments";
 import EditorComponents from "../../components/EditorComponents";
@@ -39,20 +34,13 @@ export default function EditorView() {
   const componentsV2Enabled = useComponentsV2Enabled();
   const assistantOpen = !!useMatch("/editor/assistant");
 
-  // Taken on any editor route, so opening a shared message or a ?data= link
-  // first doesn't bring the templates up once it's loaded. A message restored
-  // before the editor opened isn't blank anymore.
+  // Taken on any editor route, so opening a shared message first doesn't
+  // bring the templates up once it's loaded. A message restored before the
+  // editor opened isn't blank anymore.
   const navigate = useNavigate();
   const editorRoot = !!useMatch("/editor");
-  const [searchParams] = useSearchParams();
-  const dataLink = searchParams.has("data");
   useEffect(() => {
-    if (
-      takeFirstVisit() &&
-      editorRoot &&
-      !dataLink &&
-      currentMessageIsBlank()
-    ) {
+    if (takeFirstVisit() && editorRoot && currentMessageIsBlank()) {
       navigate("/editor/new", { replace: true });
     }
   }, []);

@@ -7,7 +7,7 @@ import { setCurrentMessage } from "../../state/currentMessage";
 import { op } from "../../util/analytics";
 import { useToasts } from "../../util/toasts";
 
-/** Opens a message from a ?data= link, the format Discohook uses for its links. */
+/** Opens a message from a ?data= link, ours or Discohook's. */
 export default function DataRestoreView() {
   const [searchParams] = useSearchParams();
   const dataParam = searchParams.get("data");
@@ -16,36 +16,34 @@ export default function DataRestoreView() {
   const createToast = useToasts((state) => state.create);
 
   const parsed = useMemo(() => {
-    if (!dataParam) return null;
-
     try {
-      return parseDataLink(dataParam);
+      return dataParam ? parseDataLink(dataParam) : null;
     } catch (e) {
       console.error(e);
-      return "invalid" as const;
+      return null;
     }
   }, [dataParam]);
 
+  const close = () => navigate("/editor", { replace: true });
+
   useEffect(() => {
-    if (parsed !== "invalid") return;
+    if (parsed) return;
 
     createToast({
       type: "error",
       title: "Failed to open message link",
       message: "The link doesn't contain a valid message.",
     });
-    navigate("/editor", { replace: true });
+    close();
   }, [parsed]);
 
-  if (!parsed || parsed === "invalid") return null;
+  if (!parsed) return null;
 
-  function restore() {
-    if (!parsed || parsed === "invalid") return;
-
+  const restore = () => {
     setCurrentMessage(parsed.message);
     op.track("data_link_restored", { messages: parsed.messageCount });
-    navigate("/editor", { replace: true });
-  }
+    close();
+  };
 
   return (
     <MessageRestoreModal
@@ -59,7 +57,7 @@ export default function DataRestoreView() {
         )
       }
       onRestore={restore}
-      onClose={() => navigate("/editor", { replace: true })}
+      onClose={close}
     />
   );
 }

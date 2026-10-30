@@ -5,7 +5,6 @@ import EditorView from "./views/editor/editor";
 import RequestLoadingIndicator from "./components/RequestLoadingIndicator";
 import MessageSettingsView from "./views/editor/messageSettings";
 import ShareView from "./views/editor/share";
-import DataRestoreView from "./views/editor/dataRestore";
 import EditorSideNav from "./components/SideNav";
 import UpsellPopup from "./components/UpsellPopup";
 import ConfirmOnExit from "./components/ConfirmOnExit";
@@ -19,6 +18,9 @@ const LazyMessagesView = lazyView(() => import("./views/messages"));
 const LazyPremiumView = lazyView(() => import("./views/premium"));
 const LazyShareRestoreView = lazyView(
   () => import("./views/editor/shareRestore"),
+);
+const LazyDataRestoreView = lazyView(
+  () => import("./views/editor/dataRestore"),
 );
 const LazySettingsView = lazyView(() => import("./views/settings"));
 const LazyCommandsView = lazyView(() => import("./views/commands"));
@@ -49,7 +51,6 @@ function App() {
         <EditorSideNav />
         <Routes>
           <Route path="/editor" element={<EditorView />}>
-            <Route index element={<DataRestoreView />} />
             <Route
               path="new"
               element={
@@ -77,6 +78,14 @@ function App() {
 
             <Route path="share" element={<ShareView />} />
             <Route path="settings" element={<MessageSettingsView />} />
+            <Route
+              path="open"
+              element={
+                <SuspendedView>
+                  <LazyDataRestoreView />
+                </SuspendedView>
+              }
+            />
             <Route
               path="share/:sharedMessageId"
               element={

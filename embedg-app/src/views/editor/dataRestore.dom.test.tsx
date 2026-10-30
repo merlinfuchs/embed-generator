@@ -1,31 +1,21 @@
-import { render, screen } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MemoryRouter } from "react-router-dom";
+import { screen } from "@testing-library/react";
 import { expect, test } from "vitest";
-import { currentMessage, editorUser, loadMessage } from "../../test/editor";
+import { encodeDataLink } from "../../test/dataLink";
+import {
+  currentMessage,
+  editorUser,
+  loadMessage,
+  renderEditor,
+} from "../../test/editor";
 import DataRestoreView from "./dataRestore";
 
-function encode(value: unknown) {
-  const bytes = new TextEncoder().encode(JSON.stringify(value));
-  return btoa(String.fromCharCode(...bytes))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-}
-
 function renderAt(search: string) {
-  return render(
-    <QueryClientProvider client={new QueryClient()}>
-      <MemoryRouter initialEntries={[`/editor${search}`]}>
-        <DataRestoreView />
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
+  return renderEditor(<DataRestoreView />, `/editor/open${search}`);
 }
 
 test("a data link replaces the draft only after restoring", async () => {
   loadMessage({ content: "Old message" });
-  const data = encode({
+  const data = encodeDataLink({
     messages: [{ data: { content: "From the link" } }, { data: {} }],
   });
   renderAt(`?data=${data}`);
@@ -40,16 +30,11 @@ test("a data link replaces the draft only after restoring", async () => {
   expect(currentMessage().content).toBe("From the link");
 });
 
-test("an invalid data link leaves the draft alone", () => {
+test("an invalid or missing data link leaves the draft alone", () => {
   loadMessage({ content: "Old message" });
   renderAt("?data=nope");
-
-  expect(screen.queryByRole("button", { name: "Restore" })).toBeNull();
-  expect(currentMessage().content).toBe("Old message");
-});
-
-test("the editor without a data link shows nothing", () => {
   renderAt("");
 
   expect(screen.queryByRole("button", { name: "Restore" })).toBeNull();
+  expect(currentMessage().content).toBe("Old message");
 });

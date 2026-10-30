@@ -1,13 +1,6 @@
 import { expect, test } from "vitest";
+import { encodeDataLink as encode } from "../test/dataLink";
 import { parseDataLink } from "./dataLink";
-
-function encode(value: unknown) {
-  const bytes = new TextEncoder().encode(JSON.stringify(value));
-  return btoa(String.fromCharCode(...bytes))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-}
 
 test("a Discohook link opens its first message", () => {
   const { message, messageCount } = parseDataLink(

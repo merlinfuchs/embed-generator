@@ -12,11 +12,8 @@ const discohookSchema = z.object({
  * returned because the editor holds one message at a time.
  */
 export function parseDataLink(param: string) {
-  const base64 = param
-    // URLSearchParams turns the + of standard base64 into a space.
-    .replace(/ /g, "+")
-    .replace(/-/g, "+")
-    .replace(/_/g, "/");
+  // URLSearchParams turns the + of standard base64 into a space.
+  const base64 = param.replace(/[ -]/g, "+").replace(/_/g, "/");
   const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
   const json = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
 

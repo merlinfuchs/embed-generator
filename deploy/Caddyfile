@@ -109,7 +109,7 @@ message.style {
 		path /
 		query data=*
 	}
-	redir @data_link /app/editor{?query} 302
+	redir @data_link /app/editor/open{?query} 302
 
 	handle_path /app/* {
 		root * /srv/message.style/app
