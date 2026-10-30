@@ -50,7 +50,7 @@ Discohook has no paid plan. In Embed Generator the editor, webhooks, role button
 | ------------------------------------- | ----------------------------------- | ---------------------------- |
 | Send through a webhook without login  | Yes                                 | Yes                          |
 | Self-assignable roles                 | Buttons and select menus            | Buttons, select menus, emoji reactions |
-| Scheduled messages                    | Once for free, recurring on Premium | Yes, also recurring          |
+| Scheduled messages                    | Once for free, recurring or on a list of dates with Premium, calendar view | Yes, also recurring |
 | Components V2                         | Yes                                 | Yes                          |
 | Custom slash commands                 | Premium                             | No                           |
 | AI assistant                          | Yes                                 | No                           |
