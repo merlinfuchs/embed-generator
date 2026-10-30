@@ -12,7 +12,14 @@ message.style {
 			roll_size 100MiB
 			roll_keep 10
 		}
-		format json
+		# Message links carry the whole message in ?data=, Discohook's with webhook URLs.
+		format filter {
+			request>uri query {
+				delete data
+			}
+			request>headers>Referer regexp "([?&]data=)[^&]*" "${1}redacted"
+			wrap json
+		}
 	}
 
 	encode zstd gzip
@@ -103,6 +110,13 @@ message.style {
 	# instead of three. The app redirects / to /editor the same way, keeping the query.
 	@app_root path /app /app/
 	redir @app_root /app/editor{?query} 301
+
+	# Discohook links with the domain swapped for ours open in the editor.
+	@data_link {
+		path /
+		query data=*
+	}
+	redir @data_link /app/editor/open{?query} 302
 
 	handle_path /app/* {
 		root * /srv/message.style/app

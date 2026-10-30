@@ -39,14 +39,14 @@ export function rootId() {
 }
 
 /** Editors reach for the router and the query client, so tests wrap them. */
-export function renderEditor(ui: ReactElement) {
+export function renderEditor(ui: ReactElement, route = "/") {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>{ui}</MemoryRouter>
+      <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
     </QueryClientProvider>,
   );
 }

@@ -19,6 +19,9 @@ const LazyPremiumView = lazyView(() => import("./views/premium"));
 const LazyShareRestoreView = lazyView(
   () => import("./views/editor/shareRestore"),
 );
+const LazyDataRestoreView = lazyView(
+  () => import("./views/editor/dataRestore"),
+);
 const LazySettingsView = lazyView(() => import("./views/settings"));
 const LazyCommandsView = lazyView(() => import("./views/commands"));
 const LazyScheduledMessagesView = lazyView(() => import("./views/scheduled"));
@@ -75,6 +78,14 @@ function App() {
 
             <Route path="share" element={<ShareView />} />
             <Route path="settings" element={<MessageSettingsView />} />
+            <Route
+              path="open"
+              element={
+                <SuspendedView>
+                  <LazyDataRestoreView />
+                </SuspendedView>
+              }
+            />
             <Route
               path="share/:sharedMessageId"
               element={
