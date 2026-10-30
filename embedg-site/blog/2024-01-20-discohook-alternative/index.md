@@ -26,7 +26,7 @@ Discohook was rewritten from scratch in 2024 under a new maintainer. Older compa
 
 ![Buttons in the editor](./buttons.webp)
 
-**Scheduled messages with a calendar.** Sending once at a set time is free. With Premium a message can repeat every few hours, days, weeks or months, or go out on a list of dates. A calendar shows what's coming up. See [scheduled messages](/docs/guides/scheduled-messages).
+**Scheduled messages with a calendar.** A message can go out once, repeat every few hours, days, weeks or months, or go out on a list of dates. A calendar shows what's coming up. Sending once is free, and so is one repeating schedule per server. See [scheduled messages](/docs/guides/scheduled-messages).
 
 **Custom slash commands and your own bot.** With Premium you can add [slash commands](/docs/guides/custom-commands) that reply with your messages, and [connect your own bot](/docs/guides/custom-bots) so replies carry its name and avatar.
 
@@ -42,7 +42,7 @@ Discohook can post a message when someone joins or leaves the server. Embed Gene
 
 Discohook's flows can check conditions and wait between steps, which helps with multi-step logic.
 
-Discohook has no paid plan. In Embed Generator the editor, webhooks, role buttons and one-time schedules are free. Recurring schedules, custom commands and replies from your own bot need [Premium](/docs/premium), $4.99 a month per server.
+Discohook has no paid plan. In Embed Generator the editor, webhooks, role buttons, one-time schedules and one repeating schedule are free. More repeating schedules, custom commands and replies from your own bot need [Premium](/docs/premium), $4.99 a month per server.
 
 ## Side by side
 
@@ -50,7 +50,7 @@ Discohook has no paid plan. In Embed Generator the editor, webhooks, role button
 | ------------------------------------- | ----------------------------------- | ---------------------------- |
 | Send through a webhook without login  | Yes                                 | Yes                          |
 | Self-assignable roles                 | Buttons and select menus            | Buttons, select menus, emoji reactions |
-| Scheduled messages                    | Once for free, recurring or on a list of dates with Premium, calendar view | Yes, also recurring |
+| Scheduled messages                    | Yes, with a calendar view. One recurring free, more with Premium | Yes, also recurring |
 | Components V2                         | Yes                                 | Yes                          |
 | Custom slash commands                 | Premium                             | No                           |
 | AI assistant                          | Yes                                 | No                           |
