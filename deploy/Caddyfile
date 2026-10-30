@@ -104,6 +104,13 @@ message.style {
 	@app_root path /app /app/
 	redir @app_root /app/editor{?query} 301
 
+	# Discohook links with the domain swapped for ours open in the editor.
+	@data_link {
+		path /
+		query data=*
+	}
+	redir @data_link /app/editor{?query} 302
+
 	handle_path /app/* {
 		root * /srv/message.style/app
 

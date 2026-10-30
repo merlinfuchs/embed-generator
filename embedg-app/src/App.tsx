@@ -5,6 +5,7 @@ import EditorView from "./views/editor/editor";
 import RequestLoadingIndicator from "./components/RequestLoadingIndicator";
 import MessageSettingsView from "./views/editor/messageSettings";
 import ShareView from "./views/editor/share";
+import DataRestoreView from "./views/editor/dataRestore";
 import EditorSideNav from "./components/SideNav";
 import UpsellPopup from "./components/UpsellPopup";
 import ConfirmOnExit from "./components/ConfirmOnExit";
@@ -48,6 +49,7 @@ function App() {
         <EditorSideNav />
         <Routes>
           <Route path="/editor" element={<EditorView />}>
+            <Route index element={<DataRestoreView />} />
             <Route
               path="new"
               element={
