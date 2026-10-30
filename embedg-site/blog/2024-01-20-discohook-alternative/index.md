@@ -10,7 +10,7 @@ tags: [discohook, alternative, embed, discord, webhook]
 
 Embed Generator and Discohook are both free, open source editors for Discord messages. You design a message in the browser, watch a live preview, and send it through a webhook or a bot. We build Embed Generator, so keep that in mind while reading. We checked every claim about Discohook against its current version.
 
-TLDR: Both send webhook messages without an account. Pick Embed Generator if you want role buttons, recurring schedules, custom slash commands or an AI assistant, all set up on one website. Pick Discohook if you need welcome messages or reaction roles. Already using Discohook? Embed Generator opens your messages as they are.
+TLDR: Both send webhook messages without an account. Pick Embed Generator if you want role buttons, recurring schedules, custom slash commands or an AI assistant, all set up on one website. Pick Discohook if you need welcome messages or roles on emoji reactions. Already using Discohook? Embed Generator opens your messages as they are.
 
 <!--truncate-->
 
@@ -38,7 +38,7 @@ Discohook was rewritten from scratch in 2024 under a new maintainer. Older compa
 
 ## When Discohook is the better pick
 
-Discohook can post a message when someone joins or leaves the server, and it has reaction roles. Embed Generator has neither: its bot doesn't receive member events, and it uses buttons and select menus for roles instead.
+Discohook can post a message when someone joins or leaves the server. Embed Generator can't, because its bot doesn't receive member events. Discohook can also hand out roles when members react with an emoji. Embed Generator does roles with buttons and select menus only.
 
 Discohook's flows can check conditions and wait between steps, which helps with multi-step logic.
 
@@ -49,13 +49,12 @@ Discohook has no paid plan. In Embed Generator the editor, webhooks, role button
 |                                       | Embed Generator                     | Discohook                    |
 | ------------------------------------- | ----------------------------------- | ---------------------------- |
 | Send through a webhook without login  | Yes                                 | Yes                          |
-| Buttons and select menus with roles   | Yes                                 | Yes, through flows           |
+| Self-assignable roles                 | Buttons and select menus            | Buttons, select menus, emoji reactions |
 | Scheduled messages                    | Once for free, recurring on Premium | Yes, also recurring          |
 | Components V2                         | Yes                                 | Yes                          |
 | Custom slash commands                 | Premium                             | No                           |
 | AI assistant                          | Yes                                 | No                           |
 | Create embeds with a Discord command  | Yes, `/embed`                       | No                           |
-| Reaction roles                        | No                                  | Yes                          |
 | Welcome and goodbye messages          | No                                  | Yes                          |
 | Price                                 | Free, Premium $4.99/month/server    | Free, optional donor perks   |
 
