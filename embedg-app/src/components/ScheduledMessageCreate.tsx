@@ -17,7 +17,10 @@ import SavedMessageSelect from "./SavedMessageSelect";
 import { ChannelSelect } from "./ChannelSelect";
 import { usePremiumGuildFeatures } from "../util/premium";
 import { getCurrentTimezone } from "../util/time";
-import { useGuildChannelsQuery } from "../api/queries";
+import {
+  useGuildChannelsQuery,
+  useScheduledMessagesQuery,
+} from "../api/queries";
 import ScheduleTestButton from "./ScheduleTestButton";
 import ScheduleCrosspost from "./ScheduleCrosspost";
 import ScheduleEditor, {
@@ -28,6 +31,7 @@ import {
   dateOnDay,
   newScheduleDraft,
   scheduleFromDraft,
+  periodicAllowed,
 } from "../util/schedule";
 
 export default function ScheduledMessageCreate({
@@ -42,6 +46,11 @@ export default function ScheduledMessageCreate({
 }) {
   const guildId = useSendSettingsStore((s) => s.guildId);
   const features = usePremiumGuildFeatures(guildId);
+  const { data: scheduledMessages } = useScheduledMessagesQuery(guildId);
+  const canRepeat = periodicAllowed(
+    features?.max_periodic_scheduled_messages ?? 0,
+    scheduledMessages?.success ? scheduledMessages.data : [],
+  );
   const { data: channels } = useGuildChannelsQuery(guildId);
 
   const createToast = useToasts((s) => s.create);
@@ -89,11 +98,7 @@ export default function ScheduledMessageCreate({
       return;
     }
 
-    const blocked = scheduleError(
-      schedule,
-      preview,
-      !!features?.periodic_scheduled_messages,
-    );
+    const blocked = scheduleError(schedule, preview, canRepeat);
     if (blocked) {
       createToast({
         title: "The schedule can't be saved yet",
@@ -259,7 +264,7 @@ export default function ScheduledMessageCreate({
           draft={schedule}
           onChange={setSchedule}
           preview={preview}
-          periodicAllowed={!!features?.periodic_scheduled_messages}
+          periodicAllowed={canRepeat}
         />
       </div>
     </div>

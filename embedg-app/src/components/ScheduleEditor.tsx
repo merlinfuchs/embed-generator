@@ -14,6 +14,7 @@ import {
   scheduleFromDraft,
   weekdayName,
   weekdayOrder,
+  periodicLimitMessage,
 } from "../util/schedule";
 import { formatRun, rezone, zonedDate, zonedDateTime } from "../util/time";
 import ScheduleDates from "./ScheduleDates";
@@ -81,7 +82,7 @@ export function scheduleError(
   if (schedule.onDates) {
     if (!schedule.dates.length) return "Pick at least one date.";
     if (schedule.dates.length > 1 && !periodicAllowed) {
-      return "Sending on more than one date needs Premium.";
+      return periodicLimitMessage;
     }
     return null;
   }
@@ -180,7 +181,12 @@ export default function ScheduleEditor({
           </div>
         </div>
       ) : !periodicAllowed ? (
-        <PremiumSuggest />
+        <div className="space-y-3">
+          <div className="text-mist-400 text-sm font-light">
+            {periodicLimitMessage}
+          </div>
+          <PremiumSuggest />
+        </div>
       ) : (
         <div className="grid md:grid-cols-[1fr_16rem] gap-5">
           <div className="space-y-4 min-w-0">

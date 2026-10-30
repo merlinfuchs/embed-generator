@@ -87,20 +87,20 @@ func (h *PremiumHandler) HandleListPlans(c *fiber.Ctx) error {
 
 func planFeaturesToWire(plan string, features model.PlanFeatures) wire.GetPremiumPlanFeaturesResponseDataWire {
 	return wire.GetPremiumPlanFeaturesResponseDataWire{
-		Plan:                      plan,
-		MaxSavedMessages:          features.MaxSavedMessages,
-		MaxSavedMessageVersions:   features.MaxSavedMessageVersions,
-		MaxActionsPerComponent:    features.MaxActionsPerComponent,
-		AdvancedActionTypes:       features.AdvancedActionTypes,
-		MaxAIPromptsPerMonth:      features.MaxAIPromptsPerMonth,
-		CustomBot:                 features.CustomBot,
-		MaxCustomCommands:         features.MaxCustomCommands,
-		IsPremium:                 features.IsPremium,
-		MaxImageUploadSize:        features.MaxImageUploadSize,
-		MaxScheduledMessages:      features.MaxScheduledMessages,
-		PeriodicScheduledMessages: features.PeriodicScheduledMessages,
-		MaxTemplateOps:            features.MaxTemplateOps,
-		MaxKVKeys:                 features.MaxKVKeys,
+		Plan:                         plan,
+		MaxSavedMessages:             features.MaxSavedMessages,
+		MaxSavedMessageVersions:      features.MaxSavedMessageVersions,
+		MaxActionsPerComponent:       features.MaxActionsPerComponent,
+		AdvancedActionTypes:          features.AdvancedActionTypes,
+		MaxAIPromptsPerMonth:         features.MaxAIPromptsPerMonth,
+		CustomBot:                    features.CustomBot,
+		MaxCustomCommands:            features.MaxCustomCommands,
+		IsPremium:                    features.IsPremium,
+		MaxImageUploadSize:           features.MaxImageUploadSize,
+		MaxScheduledMessages:         features.MaxScheduledMessages,
+		MaxPeriodicScheduledMessages: features.MaxPeriodicScheduledMessages,
+		MaxTemplateOps:               features.MaxTemplateOps,
+		MaxKVKeys:                    features.MaxKVKeys,
 	}
 }
 

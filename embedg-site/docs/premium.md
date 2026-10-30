@@ -1,6 +1,6 @@
 ---
 sidebar_position: 2
-description: What Embed Generator Premium includes for $4.99 a month per server, 100 saved messages, more actions per component, your own bot, custom commands, recurring schedules, more AI assistant prompts.
+description: What Embed Generator Premium includes for $4.99 a month per server, 100 saved messages, more actions per component, your own bot, custom commands, more recurring schedules, more AI assistant prompts.
 ---
 
 # Embed Generator Premium
@@ -14,9 +14,9 @@ You pay $4.99 a month to **support the development of Embed Generator** and unlo
 - **Custom bot**: Connect [your own bot](./features/white-label) so interaction responses use its name and avatar
 - **Custom commands**: Add [slash commands](./features/custom-commands) to your bot that your server members can use
 - **Send to other channels**: Let [buttons, select menus](./guides/interactive-components#text-response) and commands send messages to a channel of your choice, like reports to a staff channel
-- **Recurring scheduled messages**: [Schedule messages](./guides/scheduled-messages) to be sent repeatedly, every few hours, days, weeks or months, or on a list of dates
+- **More recurring scheduled messages**: [Schedule messages](./guides/scheduled-messages) to be sent repeatedly, every few hours, days, weeks or months, or on a list of dates. One is free, Premium allows up to 25
 - **More AI prompts**: Let the [AI assistant](./features/ai-assistant) build many more messages for you each month
 
-Everything else stays free: the editor, webhooks, buttons and select menus, one-time scheduled messages and 25 saved messages. You can cancel anytime and pick which server the subscription applies to.
+Everything else stays free: the editor, webhooks, buttons and select menus, one-time scheduled messages, one recurring scheduled message and 25 saved messages. You can cancel anytime and pick which server the subscription applies to.
 
 -> [Get it now!](https://message.style/premium)

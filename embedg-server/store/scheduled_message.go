@@ -13,6 +13,8 @@ type ScheduledMessageStore interface {
 	GetScheduledMessages(ctx context.Context, guildID common.ID) ([]model.ScheduledMessage, error)
 	GetScheduledMessage(ctx context.Context, guildID common.ID, id string) (*model.ScheduledMessage, error)
 	CountScheduledMessages(ctx context.Context, guildID common.ID) (int64, error)
+	// CountPeriodicScheduledMessages counts the messages that don't send once, leaving out excludeID.
+	CountPeriodicScheduledMessages(ctx context.Context, guildID common.ID, excludeID string) (int64, error)
 	DeleteScheduledMessage(ctx context.Context, guildID common.ID, id string) error
 	CreateScheduledMessage(ctx context.Context, msg model.ScheduledMessage) (*model.ScheduledMessage, error)
 	UpdateScheduledMessage(ctx context.Context, msg model.ScheduledMessage) (*model.ScheduledMessage, error)

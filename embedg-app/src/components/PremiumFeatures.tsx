@@ -77,10 +77,14 @@ export default function PremiumFeatures() {
           <ClockIcon className="h-4 w-4" />
         </span>
         <div className="text-mist-300 text-sm">
-          Create scheduled messages that are sent{" "}
+          Create{" "}
           <span className="font-medium text-white">
-            periodically multiple times
-          </span>
+            {premium
+              ? `up to ${premium.max_periodic_scheduled_messages}`
+              : "more"}{" "}
+            scheduled messages
+          </span>{" "}
+          that repeat or are sent on several dates
         </div>
       </div>
       <div className="flex items-center gap-4">

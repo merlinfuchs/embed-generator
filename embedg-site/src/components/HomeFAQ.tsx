@@ -3,7 +3,7 @@ import React from "react";
 export const faq = [
   {
     q: "Is Embed Generator free?",
-    a: "Yes. Building and sending embeds, buttons and select menus is free with no account required to start. Premium is optional and adds things like more saved messages, recurring scheduled messages, custom commands and your own bot.",
+    a: "Yes. Building and sending embeds, buttons and select menus is free with no account required to start. Premium is optional and adds things like more saved messages, more recurring scheduled messages, custom commands and your own bot.",
   },
   {
     q: "Do I need a webhook or a bot?",

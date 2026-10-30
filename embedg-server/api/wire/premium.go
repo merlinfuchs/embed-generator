@@ -10,20 +10,20 @@ import (
 
 type GetPremiumPlanFeaturesResponseDataWire struct {
 	// Plan is the name of the plan. For a user or guild it's their most expensive one, or empty for free.
-	Plan                      string `json:"plan"`
-	MaxSavedMessages          int    `json:"max_saved_messages"`
-	MaxSavedMessageVersions   int    `json:"max_saved_message_versions"`
-	MaxActionsPerComponent    int    `json:"max_actions_per_component"`
-	AdvancedActionTypes       bool   `json:"advanced_action_types"`
-	MaxAIPromptsPerMonth      int    `json:"max_ai_prompts_per_month"`
-	CustomBot                 bool   `json:"custom_bot"`
-	MaxCustomCommands         int    `json:"max_custom_commands"`
-	IsPremium                 bool   `json:"is_premium"`
-	MaxImageUploadSize        int    `json:"max_image_upload_size"`
-	MaxScheduledMessages      int    `json:"max_scheduled_messages"`
-	PeriodicScheduledMessages bool   `json:"periodic_scheduled_messages"`
-	MaxTemplateOps            int    `json:"max_template_ops"`
-	MaxKVKeys                 int    `json:"max_kv_keys"`
+	Plan                         string `json:"plan"`
+	MaxSavedMessages             int    `json:"max_saved_messages"`
+	MaxSavedMessageVersions      int    `json:"max_saved_message_versions"`
+	MaxActionsPerComponent       int    `json:"max_actions_per_component"`
+	AdvancedActionTypes          bool   `json:"advanced_action_types"`
+	MaxAIPromptsPerMonth         int    `json:"max_ai_prompts_per_month"`
+	CustomBot                    bool   `json:"custom_bot"`
+	MaxCustomCommands            int    `json:"max_custom_commands"`
+	IsPremium                    bool   `json:"is_premium"`
+	MaxImageUploadSize           int    `json:"max_image_upload_size"`
+	MaxScheduledMessages         int    `json:"max_scheduled_messages"`
+	MaxPeriodicScheduledMessages int    `json:"max_periodic_scheduled_messages"`
+	MaxTemplateOps               int    `json:"max_template_ops"`
+	MaxKVKeys                    int    `json:"max_kv_keys"`
 }
 
 type GetPremiumPlanFeaturesResponseWire APIResponse[GetPremiumPlanFeaturesResponseDataWire]
