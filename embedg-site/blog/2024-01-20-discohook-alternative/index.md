@@ -10,19 +10,13 @@ tags: [discohook, alternative, embed, discord, webhook]
 
 Embed Generator and Discohook are both free, open source editors for Discord messages. You design a message in the browser, watch a live preview, and send it through a webhook or a bot. We build Embed Generator, so keep that in mind while reading. We checked every claim about Discohook against its current version.
 
-TLDR: For a quick webhook message, both work and neither needs an account. Discohook has no paid plan and its bot can welcome new members. Embed Generator fits better if you want role buttons, recurring schedules and custom slash commands managed from one dashboard. It opens your Discohook messages as they are.
+TLDR: Both send webhook messages without an account. Pick Embed Generator if you want role buttons, recurring schedules, custom slash commands or an AI assistant, all set up on one website. Pick Discohook if you need welcome messages or reaction roles. Already using Discohook? Embed Generator opens your messages as they are.
 
 <!--truncate-->
 
-## Discohook today
+Discohook was rewritten from scratch in 2024 under a new maintainer. Older comparisons, including an earlier version of this post, describe the original site and are out of date.
 
-Discohook launched in 2019. In 2024 its original authors handed it to a new maintainer, who rewrote it from scratch. Older comparisons, including an earlier version of this post, describe the original site and are out of date.
-
-The current Discohook at discohook.app is webhook-first: paste a webhook URL and send, no login needed. With an account you get backups in the cloud, and backups can be scheduled, also on a repeating schedule. Its bot adds "flows" to buttons and select menus. A flow can add or remove roles, send messages, create threads and branch on conditions. Discohook also has reaction roles, welcome and goodbye messages when members join or leave, and Components V2. It's free, with optional perks for donors.
-
-Many tools and bot docs link to Discohook to preview message JSON, so you'll run into it a lot.
-
-## What Embed Generator does differently
+## Why pick Embed Generator
 
 **Send to a channel without a webhook URL.** Webhook mode works like Discohook: paste the URL and send, without logging in. In Channel mode you log in, pick a server and channel, and the Embed Generator bot sends the message with the name and avatar you set. See [Webhook or Channel?](/docs/guides/send-modes)
 
@@ -36,29 +30,32 @@ Many tools and bot docs link to Discohook to preview message JSON, so you'll run
 
 **Custom slash commands and your own bot.** With Premium you can add [slash commands](/docs/guides/custom-commands) that reply with your messages, and [connect your own bot](/docs/guides/custom-bots) so replies carry its name and avatar.
 
-**More ways in.** The `/embed` command builds an embed right inside Discord. The [AI assistant](/docs/features/ai-assistant) builds a message from a description, with a few free prompts per server each month. You can also send to [Fluxer](/docs/features/fluxer) webhooks.
+**An AI assistant.** Describe the message you want and the [AI assistant](/docs/features/ai-assistant) builds it in the editor. Every server gets a few free prompts each month.
+
+**Embeds from inside Discord.** The `/embed` command builds an embed message right in Discord, without opening the website.
 
 ![The Embed Generator editor](./editor.webp)
 
-## Where Discohook is the better pick
+## When Discohook is the better pick
 
-Discohook has no paid plan. In Embed Generator, recurring schedules, custom commands and replies from your own bot need [Premium](/docs/premium), $4.99 a month per server.
+Discohook can post a message when someone joins or leaves the server, and it has reaction roles. Embed Generator has neither: its bot doesn't receive member events, and it uses buttons and select menus for roles instead.
 
-Discohook's flows can check conditions, set variables and wait between steps. They handle more complex logic than Embed Generator's actions.
+Discohook's flows can check conditions and wait between steps, which helps with multi-step logic.
 
-Discohook can post a message when someone joins or leaves the server. Embed Generator can't, because its bot doesn't receive member events.
+Discohook has no paid plan. In Embed Generator the editor, webhooks, role buttons and one-time schedules are free. Recurring schedules, custom commands and replies from your own bot need [Premium](/docs/premium), $4.99 a month per server.
 
 ## Side by side
 
 |                                       | Embed Generator                     | Discohook                    |
 | ------------------------------------- | ----------------------------------- | ---------------------------- |
 | Send through a webhook without login  | Yes                                 | Yes                          |
-| Saved messages in the cloud           | 25 free, 100 with Premium           | Yes, as backups              |
 | Buttons and select menus with roles   | Yes                                 | Yes, through flows           |
-| Reaction roles                        | No                                  | Yes                          |
 | Scheduled messages                    | Once for free, recurring on Premium | Yes, also recurring          |
 | Components V2                         | Yes                                 | Yes                          |
 | Custom slash commands                 | Premium                             | No                           |
+| AI assistant                          | Yes                                 | No                           |
+| Create embeds with a Discord command  | Yes, `/embed`                       | No                           |
+| Reaction roles                        | No                                  | Yes                          |
 | Welcome and goodbye messages          | No                                  | Yes                          |
 | Price                                 | Free, Premium $4.99/month/server    | Free, optional donor perks   |
 
