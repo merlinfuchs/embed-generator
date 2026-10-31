@@ -1328,3 +1328,116 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   top: 50%;
   transform: translate(-50%, -50%);
 }
+
+/* Discord's light theme, used when the app is in light mode. */
+html.light .discord-messages {
+  color: #060607;
+}
+html.light .discord-message,
+html.light .discord-attachment,
+html.light .discord-embed,
+html.light .discord-embed-footer,
+html.light .discord-embed-footer .discord-footer-separator,
+html.light .discord-component-container,
+html.light .discord-component-file {
+  color: #2e3338;
+}
+html.light .discord-message .discord-author-info .discord-author-username,
+html.light .discord-replied-message .discord-replied-message-username,
+html.light .discord-embed .discord-embed-author,
+html.light .discord-embed .discord-embed-author a,
+html.light .discord-embed .discord-embed-title,
+html.light .discord-embed .discord-embed-field .discord-field-title,
+html.light .discord-message h1,
+html.light .discord-message h2,
+html.light .discord-message h3,
+html.light .discord-component-spoiler-label {
+  color: #060607;
+}
+html.light .discord-message .discord-message-timestamp,
+html.light .discord-message-ephemeral,
+html.light .discord-message small,
+html.light .discord-select-menu-placeholder {
+  color: #5c5e66;
+}
+html.light .discord-replied-message {
+  color: #4f5660;
+}
+html.light .discord-message a,
+html.light .discord-embed .discord-embed-title a,
+html.light .discord-message-ephemeral .discord-message-ephemeral-link {
+  color: #006ce7;
+}
+html.light .discord-message .discord-mention,
+html.light .discord-message .message-variable {
+  color: #505cdc;
+  background-color: rgba(88, 101, 242, 0.15);
+}
+html.light .discord-message .discord-mention:hover {
+  color: #fff;
+  background-color: #5865f2;
+}
+html.light .discord-embed .discord-embed-wrapper,
+html.light .discord-component-container {
+  background-color: #f2f3f5;
+  border-color: rgba(204, 204, 204, 0.3);
+}
+html.light .discord-embed .discord-left-border {
+  background-color: #e3e5e8;
+}
+html.light .discord-embed code,
+html.light .discord-message .discord-message-body code {
+  background: #ebedef;
+}
+html.light .discord-message .discord-message-body pre,
+html.light .discord-component-file {
+  border-color: #e3e5e8;
+}
+html.light .discord-embed .discord-embed-description .spoiler,
+html.light .discord-message .discord-spoiler {
+  background-color: #e3e5e8;
+}
+html.light .discord-embed .discord-embed-description .spoiler:hover,
+html.light .discord-message .discord-spoiler:hover {
+  background-color: #d4d7dc;
+}
+html.light .discord-embed .discord-embed-description blockquote::before,
+html.light
+  .discord-message
+  .discord-message-body
+  .discord-quote-container
+  > .discord-quote-divider {
+  background-color: #c4c9ce;
+}
+html.light .discord-replied-message:before {
+  border-color: #c4c9ce;
+}
+html.light .discord-button.discord-button-secondary {
+  background-color: #6d6f78;
+}
+html.light
+  .discord-button.discord-button-secondary.discord-button-hoverable:hover {
+  background-color: #4e5058;
+}
+html.light .discord-select-menu {
+  background-color: #ebedef;
+}
+html.light .discord-time {
+  background-color: rgba(6, 6, 7, 0.06);
+}
+html.light .discord-message .discord-message-body u {
+  text-decoration-color: #2e3338;
+}
+html.light .hljs {
+  --header-secondary: #4f5660;
+  --interactive-muted: #c7ccd1;
+}
+html.light .discord-timestamp {
+  background-color: rgba(6, 6, 7, 0.08);
+}
+html.light .discord-component-divider {
+  background-color: #dcdee1;
+}
+html.light .discord-message a.discord-button {
+  color: #fff;
+}
