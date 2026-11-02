@@ -103,7 +103,7 @@ const faq: Faq[] = [
   },
   {
     q: "How many actions can a button have?",
-    a: "2 per button or select menu option for free, and 5 with Premium.",
+    a: "Up to 3 per button or select menu option for free, 10 with Premium and 15 with Ultimate.",
     link: { label: "Premium", href: "/docs/premium" },
   },
   {
@@ -265,7 +265,7 @@ export default function InteractiveComponents(): JSX.Element {
         icon={UserCircleIcon}
         title="Replies from your own bot."
         text="Clicks are answered by the Embed Generator bot. With Premium you can connect your own bot, so replies and role messages come with your server's name and avatar."
-        link={{ label: "White label bot", href: "/docs/features/white-label" }}
+        link={{ label: "Custom bot", href: "/docs/features/white-label" }}
       />
       <Questions faq={faq} />
       <ClosingCta

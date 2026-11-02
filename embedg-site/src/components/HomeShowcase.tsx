@@ -77,7 +77,6 @@ const features: {
     blurb: "Send once, or every hour, day or week.",
     href: "/features/scheduled-messages",
     icon: ClockIcon,
-    premium: true,
   },
   {
     id: "commands",
@@ -89,7 +88,7 @@ const features: {
   },
   {
     id: "whitelabel",
-    name: "Your own bot",
+    name: "Custom bot",
     blurb: "Replies come from your bot, not ours.",
     href: "/docs/features/white-label",
     icon: TagIcon,
@@ -344,10 +343,10 @@ export default function HomeShowcase(): JSX.Element {
           ! You're member #12,481. Say hi 👋
         </div>
         <Note>
-          Written as{" "}
+          The reply to a Verify button, written as{" "}
           <code className="rounded bg-ink-700 px-1 text-mist-300">
-            Welcome {"{{"} .User.Mention {"}}"}! You're member #
-            {"{{"} .Guild.MemberCount {"}}"}
+            Welcome {"{{"} .Interaction.User.Mention {"}}"}! You're member #
+            {"{{"} .Server.MemberCount {"}}"}
           </code>
         </Note>
       </Message>

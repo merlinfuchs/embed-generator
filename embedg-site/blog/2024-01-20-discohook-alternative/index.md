@@ -26,7 +26,7 @@ Discohook was rewritten from scratch in 2024 under a new maintainer. Older compa
 
 ![Buttons in the editor](./buttons.webp)
 
-**Scheduled messages with a calendar.** A message can go out once, repeat every few hours, days, weeks or months, or go out on a list of dates. A calendar shows what's coming up. Sending once is free, and so is one repeating schedule per server. See [scheduled messages](/docs/guides/scheduled-messages).
+**Scheduled messages with a calendar.** A message can go out once, repeat every few hours, days, weeks or months, or go out on a list of dates. A calendar shows what's coming up. Up to 5 scheduled messages per server are free, and one of them can be recurring. See [scheduled messages](/docs/guides/scheduled-messages).
 
 **Custom slash commands and your own bot.** With Premium you can add [slash commands](/docs/guides/custom-commands) that reply with your messages, and [connect your own bot](/docs/guides/custom-bots) so replies carry its name and avatar.
 
@@ -42,7 +42,7 @@ Discohook can post a message when someone joins or leaves the server. Embed Gene
 
 Discohook's flows can check conditions and wait between steps, which helps with multi-step logic.
 
-Discohook has no paid plan. In Embed Generator the editor, webhooks, role buttons, one-time schedules and one repeating schedule are free. More repeating schedules, custom commands and replies from your own bot need [Premium](/docs/premium), $4.99 a month per server.
+Discohook has no paid plan. In Embed Generator the editor, webhooks, role buttons and up to 5 scheduled messages, one of them recurring, are free. More recurring schedules, custom commands and replies from your own bot need [Premium](/docs/premium), $4.99 a month per server.
 
 ## Side by side
 

@@ -76,7 +76,7 @@ export default function GuildOrUserSelect({ value, onChange }: Props) {
               />
             </div>
           ) : (
-            <div className="text-mist-300">Select guild</div>
+            <div className="text-mist-300">Select a server</div>
           )}
         </button>
         {open && (

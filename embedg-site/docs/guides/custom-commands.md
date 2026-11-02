@@ -45,4 +45,4 @@ You can add arguments to your Custom Commands which your members must fill out w
 
 ### Command Actions
 
-You can have to up to 5 actions for each command.
+A command can run up to 10 actions with Premium and 15 with Ultimate.

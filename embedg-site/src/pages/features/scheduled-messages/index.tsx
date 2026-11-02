@@ -52,7 +52,7 @@ const ways = [
     icon: ClockIcon,
     name: "Once",
     example: "Sat, Oct 31 at 7:00 PM",
-    text: "One date and time. Free on every server.",
+    text: "One date and time. Free for up to 5 scheduled messages per server.",
   },
   {
     icon: CalendarDaysIcon,
@@ -143,11 +143,11 @@ const features = [
 const faq: Faq[] = [
   {
     q: "Can you schedule messages on Discord?",
-    a: "Yes, with a bot. Embed Generator's bot posts a saved message to a channel at the time you set: once, on a list of dates, or on a repeating schedule.",
+    a: "Yes, with a bot. Embed Generator's bot posts a saved message to a channel at the time you set: once, on a list of dates, or on a recurring schedule.",
   },
   {
     q: "Is it free?",
-    a: "Sending once is free, and so is one message per server that repeats or goes out on a list of dates. More of those, and more scheduled messages per server, come with Premium.",
+    a: "Yes, for up to 5 scheduled messages per server. One of them can be recurring, so it repeats or goes out on a list of dates. Premium allows 25, all of them recurring.",
     link: { label: "Premium", href: "/docs/premium" },
   },
   {
