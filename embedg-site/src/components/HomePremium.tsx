@@ -3,7 +3,7 @@ import { CheckIcon } from "@heroicons/react/24/solid";
 
 const perks = [
   "Up to 100 saved messages",
-  "Up to 10 actions per button or select menu",
+  "10 actions per button instead of 3",
   "A custom bot with your own name and avatar",
   "Custom slash commands",
   "More recurring scheduled messages",

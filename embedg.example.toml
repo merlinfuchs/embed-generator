@@ -110,7 +110,7 @@ sku_id = "456"
 [premium.plans.features]
 max_saved_messages = 500
 max_saved_message_versions = 50
-max_actions_per_component = 20
+max_actions_per_component = 15
 advanced_action_types = true
 max_ai_prompts_per_month = 250
 is_premium = true
