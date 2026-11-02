@@ -67,7 +67,7 @@ Trial, refunds, cancellation:
 
 Stats (number | what it counts | source | date checked):
 - 289,000 | servers the bot is in | guild_count in Discord's app directory | 2026-11-02
-- 250,000+ | servers, shown on the landing page and the directory description | rounded down by hand, still true | 2026-11-02
+- 280,000+ | servers, shown on the landing page and in the Discord directory description | rounded down by hand from the count above | 2026-11-02
 - 3,000,000+ | messages sent
 - 717 | GitHub stars on merlinfuchs/embed-generator | GitHub API | 2026-11-02
 - 2018 | year the Embed Generator bot was created | creation date in the bot's Discord application ID | 2026-11-02
@@ -102,8 +102,15 @@ Project-specific rules:
 - A recurring scheduled message is one sent more than once, on a regular interval or on a list of dates. Both count toward the 1 free one. "Repeat" only appears as the name of the tab in the schedule editor.
 - Say "buttons and select menus" when it's about what the user builds or clicks. Say "interactive components" when a general term reads better, like in a heading over both. Never "button roles" alone, since the actions do more than roles. "Role menu" is fine for the role use case.
 - The feature is "custom bot" in the app, docs, and prose. Marketing pages about it also say "white label" once, in the title, a heading, or the meta description, so people searching for it find the page: "Use a custom bot (white label) for replies and commands." Write "white label" as a noun and "white-label" before a noun, like "white-label bot". Never "whitelabel".
-- Limits shown in the app come from /api/premium/plans at runtime. Numbers typed into the site, docs, blog, and the Discord directory description go stale when the config changes. Prefer wording without a number where the number isn't the point, and update these places when a limit changes.
-- The Premium price is typed by hand in embedg-site/src/components/HomePremium.tsx, embedg-site/docs/premium.md, the Discohook comparison post, and the Discord directory description. Change all of them together.
+- Limits shown in the app come from /api/premium/plans at runtime. Everywhere else they're typed by hand and go stale when the config changes. Prefer wording without a number where the number isn't the point. When a limit changes, update these places:
+  - embedg-site/docs/premium.md, the limits table
+  - embedg-site/src/components/HomePremium.tsx
+  - embedg-site/docs/features/interactive-components.md, embedg-site/docs/guides/interactive-components.md, and the FAQ in embedg-site/src/pages/features/interactive-components/index.tsx
+  - embedg-site/docs/guides/custom-commands.md
+  - embedg-site/docs/guides/scheduled-messages.md and embedg-site/src/pages/features/scheduled-messages/index.tsx
+  - the Discohook comparison post in embedg-site/blog
+  - the Discord directory description and the store tier benefits in the Developer Portal
+- The Premium price is typed by hand in embedg-site/src/components/HomePremium.tsx, embedg-site/docs/premium.md, the Discohook comparison post, and the Discord directory description. The Ultimate price is in docs/premium.md and the directory description. Change all of them together with the store.
 - The bot doesn't see members join or leave. Never promise welcome messages, member events, or anything that needs a member list.
 - Never claim Embed Generator does everything another product does, or is the only tool that does something.
 - Legal pages (terms, privacy, cookies, imprint) are written separately. Don't edit them in a copy pass.
