@@ -24,7 +24,7 @@ The video below shows the same flow in a few minutes.
 ## Where to go next
 
 - [Interactive components](./guides/interactive-components.md): buttons and select menus that hand out roles or reply.
-- [Scheduled messages](./guides/scheduled-messages.md): send once at a set time, or on a repeating schedule.
+- [Scheduled messages](./guides/scheduled-messages.md): send once at a set time, or on a recurring schedule.
 - [Components V2](./features/components-v2.md): Discord's newer layout system with sections, separators and galleries.
 - [Custom commands](./guides/custom-commands.md) and [your own bot](./guides/custom-bots.md): Premium features for servers that want slash commands under their own name.
 - [Message variables](./guides/variables.md): member names, counts and dates filled in when the message is sent.

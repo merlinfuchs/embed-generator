@@ -39,7 +39,7 @@ Additionally you can add a number of [Actions](#actions). These are used to resp
 
 Actions define what happens when a user interacts with your components or runs one of your [custom commands](./custom-commands).
 
-Normally you can add 2 actions to each of your components, but [Embed Generator Premium](../premium) subscribers can add up to 5!
+You can add up to 3 actions to each button or select menu for free, 10 with [Embed Generator Premium](../premium) and 15 with Ultimate.
 
 ### Text Response
 
@@ -60,6 +60,10 @@ You can create a saved message by creating a message in the editor and the going
 Once you have selected the message that you want to respond with you can select if you want to create a public response and how the message should be send. This works the same as for text responses above.
 
 ![Action Saved Message Response](./actions-saved-response.webp)
+
+### Message Response
+
+This action replies with a message that you build right in the action, so you don't need a saved message for it. It can have embeds, link buttons or a Components V2 layout, but no buttons with actions or select menus. It needs [Embed Generator Premium](../premium). Who sees the reply and where it's sent work the same as for text responses above.
 
 ### Add, Remove, or Toggle Roles
 
