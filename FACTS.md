@@ -39,7 +39,7 @@ Features (feature | what it means for the user | free or paid):
 - Fluxer webhooks | send the same messages to Fluxer | free
 - /embed, /message, /format, and /image in Discord | build or copy messages without opening the website | free
 
-Plan limits are read from the prod config, /root/embedg.toml on embedg-main, on 2026-11-02. That file is the source of truth. https://message.style/api/premium/plans serves the paid plans from it, but not the free one. embedg.example.toml is the dev config and doesn't match production.
+Plan limits are read from the prod config on 2026-11-02. That file is the source of truth. https://message.style/api/premium/plans serves the paid plans from it, but not the free one. embedg.example.toml is the dev config and doesn't match production.
 
 Free plan:
 - 25 saved messages, with no earlier versions kept.
@@ -53,19 +53,19 @@ Paid plans:
 - Premium: $4.99 a month per server. 100 saved messages, 5 versions each. 10 actions per component. 25 scheduled messages, all of them can be recurring. 100 AI prompts a month. Custom bot. 25 custom commands. Images up to 8 MB.
 - Ultimate: $9.99 a month per server. Everything in Premium. 500 saved messages, 50 versions each. 15 actions per component. 100 scheduled messages, all of them can be recurring. 250 AI prompts a month. 50 custom commands. Images up to 8 MB.
 - Premium Lifetime €99.99 and Ultimate Lifetime €199.99, paid once. The store showed euros, so check the dollar price before quoting one. You buy one and activate it on a server from /premium in the app. It can't be moved to another server after that.
-- Some servers have an older limit bump, or a lifetime purchase from an earlier version of the store. Neither is sold anymore. Don't mention them in copy.
+- Don't mention plans that aren't for sale.
 - A plan belongs to one server, not to your account.
 - Prices are set in Discord's store, not in the config, read from a screenshot of the store on 2026-11-02. The store lists the plans as Premium Server, Ultimate Server, Premium Server Lifetime, and Ultimate Server Lifetime.
 - Payment runs through Discord's app subscriptions. message.style/premium opens the Embed Generator store page in Discord.
 Trial, refunds, cancellation:
 - No trial. The free plan has no time limit and needs no payment details.
-- Discord handles refunds under its own rules, because it takes the payment. Point people to Discord support. embedg-site/src/pages/terms.md still describes refund rules of our own and needs updating.
+- Discord handles refunds under its own rules, because it takes the payment. Point people to Discord support.
 - Cancel any time. The subscription is managed in Discord, and "Manage Subscription" on /premium leads there.
 
 Stats (number | what it counts | source | date checked):
 - 289,000 | servers the bot is in | guild_count in Discord's app directory | 2026-11-02
 - 250,000+ | servers, shown on the landing page and the directory description | rounded down by hand, still true | 2026-11-02
-- 3,000,000+ | messages sent | landing page hero, moved in with #297, source not recorded | unknown
+- 3,000,000+ | messages sent
 - 717 | GitHub stars on merlinfuchs/embed-generator | GitHub API | 2026-11-02
 - 2018 | year the Embed Generator bot was created | creation date in the bot's Discord application ID | 2026-11-02
 
