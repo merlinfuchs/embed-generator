@@ -5,14 +5,16 @@ Product: Embed Generator
 One-line description: A visual editor for Discord messages. Build embeds, buttons, and select menus in the browser, then send them through a webhook or the Embed Generator bot.
 Who it's for: Discord server owners, admins, and moderators who post announcements, rules, role menus, and other messages that need to look a certain way.
 Reader's technical level: Server admins, mostly non-technical. They know Discord's own words, like server, channel, role, embed, slash command, and permission. Webhook is fine because the editor asks for a webhook URL, but say where to get one. Explain or avoid JSON, bot token, interaction, intent, and API.
-Situations that bring people here:
-- Posting rules or an announcement that looks better than a plain text message.
+Situations that bring people here, most common first. Ranked from search queries, landing pages, and editor events on 2026-11-02:
+- Posting rules, an announcement, or another message as an embed instead of plain text.
+- Colored text in a Discord message, through the Colored Text Generator.
+- Fixing or updating a message that's already posted.
+- Trying Discord's newer Components V2 layouts.
 - A role menu where members pick their own roles with buttons or a select menu.
-- A message that goes out on a schedule, once or every few hours, days, weeks, or months.
 - Sending as a webhook with any name and avatar, without adding a bot.
-- Moving over from Discohook, or opening a message someone shared as a link.
-- A custom slash command, like /rules, that replies with a prepared message.
-- Editing a message that was already sent, or copying one from another server.
+- Moving over from Discohook, or opening a message someone shared as JSON or a link.
+- A message that goes out on a schedule, once or on a recurring schedule.
+- A custom slash command, like /rules, that replies with a prepared message. This one is rare.
 Main alternatives:
 - Discohook, also free and open source. It has welcome and goodbye messages, reaction roles, and flows with conditions. Checked 2026-10-30 for the Discohook comparison post.
 - Discord's own message box, which can't build embeds or buttons.
@@ -37,6 +39,7 @@ Features (feature | what it means for the user | free or paid):
 - Restore and edit sent messages | fix a typo in a message that's already posted | free
 - Import Discohook JSON, backups, and ?data= links | bring existing messages over without rebuilding them | free
 - Fluxer webhooks | send the same messages to Fluxer | free
+- Colored Text Generator | text in red, green, blue, and other colors that Discord shows inside a code block | free
 - /embed, /message, /format, and /image in Discord | build or copy messages without opening the website | free
 
 Plan limits are read from the prod config on 2026-11-02. That file is the source of truth. https://message.style/api/premium/plans serves the paid plans from it, but not the free one. embedg.example.toml is the dev config and doesn't match production.
@@ -79,7 +82,7 @@ Exact names of commands, settings, and pages users see:
 - /help, /invite, /website
 - Message context menu: Restore Message, Dump Message. User context menu: Avatar Url, Format Mention.
 - Send modes: Webhook and Channel.
-- App pages: Message Editor, Saved Messages, Scheduled Messages, Commands, Utility Tools, Premium, Settings. The editor is at message.style/app/editor.
+- App pages: Message Editor, Saved Messages, Scheduled Messages, Commands, Utility Tools (Colored Text Generator, Embed Links, Webhook Info), Premium, Settings. The editor is at message.style/app/editor.
 - Plans: Free, Premium, and Ultimate.
 - Links: message.style/premium, /invite, /discord (support server), /source (GitHub), status.message.style.
 - Discord permissions by Discord's names, like Manage Webhooks, which /embed needs.
