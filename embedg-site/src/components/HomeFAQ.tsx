@@ -27,7 +27,7 @@ export const faq = [
   },
   {
     q: "Is it a Discohook alternative?",
-    a: "Yes. You can paste Discohook JSON straight into the editor, and there is a short migration guide in the docs. Embed Generator sets up role menus, recurring scheduled messages and custom slash commands on the website, and has an AI assistant. Discohook has welcome messages and emoji reaction roles, which Embed Generator doesn't.",
+    a: "Yes. You can paste Discohook JSON straight into the editor, and there is a short migration guide in the docs. Embed Generator sets up role menus, recurring scheduled messages and custom slash commands on the website, and has an AI assistant. Discohook can send a welcome message automatically when someone joins and hand out roles on emoji reactions, which Embed Generator can't.",
   },
   {
     q: "Is it open source?",
