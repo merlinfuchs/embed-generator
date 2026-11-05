@@ -60,16 +60,16 @@ export const pages: Page[] = [
   {
     file: "scheduled",
     path: "/scheduled",
-    title: "How to Schedule Messages in a Discord Server | Embed Generator",
+    title: "Schedule Messages in a Discord Server | Embed Generator",
     description:
-      "Pick a channel in your server, a date and a time, and the Embed Generator bot posts your message then. Send once or on repeat. Free for up to 5 per server.",
-    heading: "Schedule Discord Messages",
+      "Schedule a message in your Discord server with the free Embed Generator bot, used in 280,000+ servers. Send once or on repeat. 5 schedules free per server.",
+    heading: "Schedule Messages in a Discord Server",
     preview: {
       byline: "Embed Generator",
       open: "Schedule a message",
       docs: `${ORIGIN}/docs/guides/scheduled-messages`,
     },
-    text: "Pick a saved message with embeds and buttons, a channel in your server and a time, and the bot sends it then. Free for up to 5 scheduled messages per server, one of them repeating. Premium allows 25, all of them repeating.",
+    text: "You can schedule messages in a Discord server with a bot. Embed Generator is a free one, used in 280,000+ servers. Pick a saved message, a channel and a time, and the bot posts it once, on up to 100 dates, or on repeat as often as every minute. 5 scheduled messages per server are free, one of them repeating. Premium allows 25, all of them repeating. It posts to server channels, not DMs.",
   },
   {
     file: "tools",
