@@ -24,10 +24,9 @@ import {
   Steps,
 } from "../../../components/landing";
 
-const TITLE =
-  "Schedule Discord Messages: Once, on Dates or on Repeat | Embed Generator";
+const TITLE = "Schedule Discord Messages Once or on Repeat | Embed Generator";
 const DESCRIPTION =
-  "Schedule Discord messages with embeds and buttons. Send once, on a list of dates, or every few minutes, hours, days, weeks or months, in any timezone. Free to send once.";
+  "Schedule messages with embeds and buttons in your Discord server. Send once, on a list of dates, or on repeat in any timezone. Free for up to 5 per server.";
 const SCHEDULE = { label: "Schedule a message", href: "/app/scheduled" };
 const IMG = "/img/features/scheduled-messages";
 
@@ -144,6 +143,18 @@ const faq: Faq[] = [
   {
     q: "Can you schedule messages on Discord?",
     a: "Yes, with a bot. Embed Generator's bot posts a saved message to a channel at the time you set: once, on a list of dates, or on a recurring schedule.",
+  },
+  {
+    q: "Can I schedule a message in a DM?",
+    a: "No. The bot posts to channels in servers you've added it to. It can't send from your own account or into DMs.",
+  },
+  {
+    q: "Does it work on mobile?",
+    a: "Yes. Embed Generator runs in the browser, so you can schedule a message from your phone too.",
+  },
+  {
+    q: "How do I edit or cancel a scheduled message?",
+    a: "Open it under Scheduled Messages. Turn off Enabled to pause it, or click Delete to cancel it. To change what it says, edit the saved message it sends.",
   },
   {
     q: "Is it free?",
