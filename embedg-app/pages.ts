@@ -25,6 +25,8 @@ interface Page {
   description: string;
   heading: string;
   text: string;
+  // A link under the text, for a page on the site that explains the feature.
+  link?: { label: string; href: string };
   // The Discord link preview, see componentEmbedScript.
   preview?: Preview;
 }
@@ -60,16 +62,20 @@ export const pages: Page[] = [
   {
     file: "scheduled",
     path: "/scheduled",
-    title: "Schedule Discord Messages | Embed Generator",
+    title: "Schedule Messages in a Discord Server | Embed Generator",
     description:
-      "Schedule a Discord message to be sent to a channel later, once at a set time or repeating every hour, day or week. Free to send once.",
-    heading: "Schedule Discord Messages",
+      "Schedule a message in your Discord server with the free Embed Generator bot. Send once, on up to 100 dates, or on repeat. 5 schedules free per server.",
+    heading: "Schedule Messages in a Discord Server",
     preview: {
       byline: "Embed Generator",
       open: "Schedule a message",
       docs: `${ORIGIN}/docs/guides/scheduled-messages`,
     },
-    text: "Pick a saved message with embeds and buttons, a channel in your server and a time, and the bot sends it then. Sending once is free, repeating schedules come with Premium.",
+    text: "You can schedule messages in a Discord server with a bot. Embed Generator is a free one, used in 280,000+ servers. Pick a saved message, a channel and a time, and the bot posts it once, on up to 100 dates, or on repeat as often as every minute. 5 scheduled messages per server are free, one of them repeating. Premium allows 25, all of them repeating. It posts to server channels, not DMs.",
+    link: {
+      label: "How scheduled messages work",
+      href: `${ORIGIN}/features/scheduled-messages`,
+    },
   },
   {
     file: "tools",
@@ -228,10 +234,13 @@ export function renderPage(html: string, meta: string, body?: string): string {
 }
 
 export function renderPageHtml(html: string, page: Page): string {
+  const link = page.link
+    ? `<p><a href="${escapeHtml(page.link.href)}">${escapeHtml(page.link.label)}</a></p>`
+    : "";
   return renderPage(
     html,
     pageMeta(page),
-    `<main><h1>${escapeHtml(page.heading)}</h1><p>${escapeHtml(page.text)}</p></main>`,
+    `<main><h1>${escapeHtml(page.heading)}</h1><p>${escapeHtml(page.text)}</p>${link}</main>`,
   );
 }
 
