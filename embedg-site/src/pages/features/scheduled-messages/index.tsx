@@ -688,10 +688,10 @@ export default function ScheduledMessages(): JSX.Element {
             any way you like
           </>
         }
-        text="Send once, on a handful of dates, every other Tuesday or every 6 hours. You see the next sends before you save, and Embed Generator's bot posts the message on time in your timezone."
+        text="Embed Generator's bot posts your message to a channel in your server at the time you set. Send once, on a handful of dates, every other Tuesday or every 6 hours, and see the next sends before you save."
         cta={SCHEDULE}
         stats={[
-          { value: "Free", label: "to send once" },
+          { value: "5", label: "free per server" },
           { value: "1 min", label: "shortest repeat" },
           { value: "100", label: "dates per message" },
           { value: "Any", label: "timezone" },
