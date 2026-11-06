@@ -42,7 +42,7 @@ require (
 require (
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
-	github.com/disgoorg/godave v0.1.0 // indirect
+	github.com/disgoorg/godave v0.3.0 // indirect
 	github.com/disgoorg/json/v2 v2.0.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
@@ -58,7 +58,7 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
-	github.com/klauspost/compress v1.18.4 // indirect
+	github.com/klauspost/compress v1.19.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.11 // indirect
 	github.com/klauspost/crc32 v1.3.0 // indirect
 	github.com/knadh/koanf/maps v0.1.2 // indirect
@@ -100,4 +100,4 @@ replace github.com/merlinfuchs/embed-generator/embedg-app v0.0.0 => ../embedg-ap
 
 replace github.com/merlinfuchs/embed-generator/embedg-site v0.0.0 => ../embedg-site
 
-replace github.com/disgoorg/disgo => github.com/merlinfuchs/disgo v0.0.0-20261105225911-6bfafcc919ec
+replace github.com/disgoorg/disgo => github.com/merlinfuchs/disgo v0.0.0-20261106084025-8d7ab3bc4bc0

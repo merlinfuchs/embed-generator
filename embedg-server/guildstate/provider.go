@@ -35,6 +35,8 @@ type State struct {
 	Roles    []discord.Role
 	Emojis   []discord.Emoji
 	Stickers []discord.Sticker
+	// ApproximateMemberCount comes from GET /guilds/{id}?with_counts=true. REST never returns the exact count.
+	ApproximateMemberCount int
 }
 
 func (s *State) Role(roleID common.ID) (discord.Role, bool) {
@@ -114,15 +116,16 @@ func (p *Provider) Guild(ctx context.Context, guildID common.ID) (*State, error)
 
 		group, ctx := errgroup.WithContext(ctx)
 		group.Go(func() error {
-			guild, err := p.rest.GetGuild(guildID, false, rest.WithCtx(ctx))
+			guild, err := p.rest.GetGuild(guildID, true, rest.WithCtx(ctx))
 			if err != nil {
 				return fmt.Errorf("failed to get guild: %w", err)
 			}
-			// GET /guilds/{id} carries these three, so nothing else has to fetch them.
+			// GET /guilds/{id} carries these, so nothing else has to fetch them.
 			state.Guild = guild.Guild
 			state.Roles = guild.Roles
 			state.Emojis = guild.Emojis
 			state.Stickers = guild.Stickers
+			state.ApproximateMemberCount = guild.ApproximateMemberCount
 			return nil
 		})
 		group.Go(func() error {
