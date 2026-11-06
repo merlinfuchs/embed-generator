@@ -26,7 +26,7 @@ func TestTokenRateLimiterIsPerToken(t *testing.T) {
 	call := func(token string) time.Duration {
 		start := time.Now()
 		ctx := withRateLimitKey(context.Background(), token)
-		if _, err := client.GetCurrentUserGuilds(token, 0, 0, 200, false, rest.WithCtx(ctx)); err != nil {
+		if _, err := client.GetCurrentUserGuilds(token, 0, 0, 200, 0, false, rest.WithCtx(ctx)); err != nil {
 			t.Fatal(err)
 		}
 		return time.Since(start)
@@ -61,7 +61,7 @@ func TestTokenRateLimiterHonoursGlobal(t *testing.T) {
 	client := rest.New(rest.NewClient("", rest.WithRateLimiter(newTokenRateLimiter()), rest.WithURL(srv.URL)))
 	start := time.Now()
 	ctx := withRateLimitKey(context.Background(), "a")
-	if _, err := client.GetCurrentUserGuilds("a", 0, 0, 200, false, rest.WithCtx(ctx)); err != nil {
+	if _, err := client.GetCurrentUserGuilds("a", 0, 0, 200, 0, false, rest.WithCtx(ctx)); err != nil {
 		t.Fatal(err)
 	}
 	if d := time.Since(start); d < 250*time.Millisecond {
