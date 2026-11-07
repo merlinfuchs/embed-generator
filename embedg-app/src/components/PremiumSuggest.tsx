@@ -19,7 +19,7 @@ export default function PremiumSuggest({ alwaysExpanded }: Props) {
     useConsumableEntitlement(PREMIUM_PLAN);
 
   return (
-    <AutoAnimate className="relative overflow-hidden p-3 rounded-2xl border border-amber-400/10 bg-[linear-gradient(135deg,#2B2D31_0%,#2F2E2C_65%,#3A3222_100%)] select-none">
+    <AutoAnimate className="relative overflow-hidden p-3 rounded-2xl border border-amber-400/10 bg-premium select-none">
       <div
         aria-hidden
         className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-amber-400/15 blur-[90px]"

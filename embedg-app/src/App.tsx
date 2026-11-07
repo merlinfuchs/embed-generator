@@ -10,6 +10,7 @@ import UpsellPopup from "./components/UpsellPopup";
 import ConfirmOnExit from "./components/ConfirmOnExit";
 import LoginErrorHandler from "./components/LoginErrorHandler";
 import { lazyView } from "./util/lazyView";
+import { useApplyTheme } from "./util/theme";
 
 const LazyJsonView = lazyView(() => import("./views/editor/json"));
 const LazyNewMessageView = lazyView(() => import("./views/editor/new"));
@@ -41,6 +42,8 @@ function SuspendedView({ children }: { children: ReactNode }) {
 }
 
 function App() {
+  useApplyTheme();
+
   return (
     <div className="h-[100dvh] w-[100dvw] overflow-y-auto">
       <RequestLoadingIndicator />

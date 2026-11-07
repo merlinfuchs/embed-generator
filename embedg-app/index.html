@@ -16,6 +16,24 @@
     <meta property="og:site_name" content="message.style" />
     <!-- pages.ts puts a heading and text in #root for crawlers that don't run JS.
          Hide it so it doesn't flash before the app mounts and replaces it. -->
+    <!-- Applies the light theme before the app loads so it doesn't flash dark.
+         util/theme.ts keeps it in sync afterwards. -->
+    <script>
+      (() => {
+        try {
+          const theme = JSON.parse(localStorage.getItem("settings")).state
+            .theme;
+          if (
+            theme === "light" ||
+            (theme === "system" &&
+              window.matchMedia("(prefers-color-scheme: light)").matches)
+          ) {
+            document.documentElement.classList.add("light");
+            document.documentElement.style.colorScheme = "light";
+          }
+        } catch {}
+      })();
+    </script>
     <style>
       #root > main {
         display: none;

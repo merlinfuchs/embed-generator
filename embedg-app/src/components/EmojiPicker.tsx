@@ -3,6 +3,7 @@ import ClickOutsideHandler from "./ClickOutsideHandler";
 import { useGuildEmojisQuery } from "../api/queries";
 import clsx from "clsx";
 import { lazyView } from "../util/lazyView";
+import { useResolvedTheme } from "../util/theme";
 
 // The picker and its dataset are only needed once someone opens it, and they
 // are a sizeable part of the main chunk otherwise.
@@ -32,6 +33,7 @@ export default function EmojiPicker({
   align,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const theme = useResolvedTheme();
 
   const { data: emojis } = useGuildEmojisQuery(guildId ?? null);
 
@@ -91,7 +93,7 @@ export default function EmojiPicker({
                 "symbols",
                 "flags",
               ]}
-              theme="dark"
+              theme={theme}
               set="twitter"
               getSpritesheetURL={() => {
                 return "https://cdn.jsdelivr.net/npm/emoji-datasource-twitter@15.0.0/img/twitter/sheets-256/64.png";
