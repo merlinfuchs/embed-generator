@@ -1,22 +1,45 @@
 ---
 sidebar_position: 2
-description: What Embed Generator Premium includes for $4.99 a month per server, 100 saved messages, more actions per component, your own bot, custom commands, more recurring schedules, more AI assistant prompts.
+description: What Embed Generator Premium and Ultimate include. Premium is $4.99 a month per server and adds a custom bot, custom commands, more recurring scheduled messages and higher limits. Ultimate is $9.99 a month for large servers.
 ---
 
 # Embed Generator Premium
 
-You want to get the most out of Embed Generator? Then [Embed Generator Premium](https://message.style/premium) is the right thing for you.
+Embed Generator Premium adds a custom bot, custom commands and higher limits to one server for $4.99 a month. Ultimate has the same features with much higher limits for large servers, for $9.99 a month.
 
-You pay $4.99 a month to **support the development of Embed Generator** and unlock the following perks for one server of your choice:
+The editor, webhooks, buttons and select menus, and one-time scheduled messages are free on every server. Premium is what pays for hosting and keeps them free.
 
-- **Up to 100 saved messages**: Save up to 100 messages instead of 25
-- **Up to 5 component actions**: Add up to 5 actions to each button or select menu instead of 2
-- **Custom bot**: Connect [your own bot](./features/white-label) so interaction responses use its name and avatar
-- **Custom commands**: Add [slash commands](./features/custom-commands) to your bot that your server members can use
-- **Send to other channels**: Let [buttons, select menus](./guides/interactive-components#text-response) and commands send messages to a channel of your choice, like reports to a staff channel
-- **More recurring scheduled messages**: [Schedule messages](./guides/scheduled-messages) to be sent repeatedly, every few hours, days, weeks or months, or on a list of dates. One is free, Premium allows up to 25
-- **More AI prompts**: Let the [AI assistant](./features/ai-assistant) build many more messages for you each month
+## What Premium adds
 
-Everything else stays free: the editor, webhooks, buttons and select menus, one-time scheduled messages, one recurring scheduled message and 25 saved messages. You can cancel anytime and pick which server the subscription applies to.
+- A [custom bot](./features/white-label), so replies to buttons, select menus and custom commands use your bot's name and avatar.
+- [Custom commands](./features/custom-commands), slash commands your members can use that reply with your messages.
+- Buttons, select menus and commands that [send a message to another channel](./guides/interactive-components#text-response), like reports to a staff channel.
+- The Message Response action, which replies with a message you build right in the action instead of a saved message.
+- More [recurring scheduled messages](./guides/scheduled-messages), sent every few hours, days, weeks or months, or on a list of dates.
+- Earlier versions of your saved messages, so you can go back after overwriting one.
+- More prompts for the [AI assistant](./features/ai-assistant).
 
--> [Get it now!](https://message.style/premium)
+## Limits
+
+|                                            | Free | Premium | Ultimate |
+| ------------------------------------------ | ---- | ------- | -------- |
+| Saved messages                             | 25   | 100     | 500      |
+| Earlier versions kept of each message      | None | 5       | 50       |
+| Actions per button or select menu          | 3    | 10      | 15       |
+| Scheduled messages                         | 5    | 25      | 100      |
+| Recurring scheduled messages               | 1    | 25      | 100      |
+| AI assistant prompts a month               | 5    | 100     | 250      |
+| Custom commands                            | None | 25      | 50       |
+| Image uploads                              | 1 MB | 8 MB    | 8 MB     |
+
+## Subscribing and canceling
+
+Subscriptions run through Discord. Open the [store page](https://message.style/premium), pick Premium or Ultimate, and choose the server it's for. A subscription belongs to that one server.
+
+You can cancel any time in Discord under User Settings, then Subscriptions. The paid features stay until the end of the month you paid for. Discord takes the payment, so refunds go through [Discord support](https://support.discord.com).
+
+## Lifetime
+
+Premium and Ultimate are also sold as a one-time purchase in the same store. After buying, open [Premium in the app](https://message.style/app/premium), select the server and activate it there. Once activated, it can't be moved to another server.
+
+-> [Get Premium](https://message.style/premium)

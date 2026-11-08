@@ -24,7 +24,7 @@ const columns = [
       { label: "Components V2", href: "/features/components-v2" },
       { label: "Scheduled Messages", href: "/features/scheduled-messages" },
       { label: "Custom Commands", href: "/docs/features/custom-commands" },
-      { label: "White Label Bot", href: "/docs/features/white-label" },
+      { label: "Custom Bot", href: "/docs/features/white-label" },
       { label: "AI Assistant", href: "/docs/features/ai-assistant" },
       { label: "All Features", href: "/features" },
     ],

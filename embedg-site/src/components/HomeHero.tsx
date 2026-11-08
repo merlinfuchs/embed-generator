@@ -37,7 +37,7 @@ export default function HomeHero(): JSX.Element {
           </div>
           <div className="mt-10 flex flex-wrap gap-x-10 gap-y-4">
             <div>
-              <div className="text-2xl font-bold text-mist-100">250,000+</div>
+              <div className="text-2xl font-bold text-mist-100">280,000+</div>
               <div className="text-sm text-mist-500">servers</div>
             </div>
             <div>

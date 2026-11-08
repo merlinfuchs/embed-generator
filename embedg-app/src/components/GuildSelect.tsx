@@ -21,7 +21,7 @@ export default function GuildSelect({ guildId, onChange }: Props) {
   useEffect(() => {
     if (guilds?.success === false) {
       toast({
-        title: "Failed to load guilds",
+        title: "Couldn't load your servers",
         message: guilds.error.message,
         type: "error",
       });

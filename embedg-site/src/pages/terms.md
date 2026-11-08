@@ -26,13 +26,8 @@ We (Embed Generator or more specifically Merlin Fuchs) own and retain all rights
 - Any premium or paid features are not guaranteed. They may change or be revoked at any time.
 - Access to all or specific features of Embed Generator may be revoked, for all or a specific user, at any time.
 
-## Refund Policy
+## Payments and Refunds
 
-Refunds for payments may be issued when the user requests it and one of the following requirements is met:
+Premium, Ultimate and their lifetime versions are sold through Discord. Discord processes the payment, and Discord's own terms and refund rules apply to it. To request a refund, contact Discord support at https://support.discord.com.
 
-- it's the first payment and the user requests a refund on the same day
-- it's a monthly recurring payment and the user requests a refund in a three day period
-- it's an annual recurring payment and the user requests a refund in a seven day period
-- A major premium or paid feature was removed and the user bought the tier specifically because of that feature
-
-We still require a comprehensible explanation of the situation and never guarantee a refund. Partial refunds might be issued for annual payments under special circumstances. Refunds are never issued if you have broken our Terms of Service and therefore lost access to certain or all features.
+Subscriptions can be canceled at any time in Discord. Paid features stay available until the end of the paid period. A lifetime purchase is activated on one server and can't be moved to another server afterwards.

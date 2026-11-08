@@ -51,7 +51,7 @@ func (m *AccessManager) GetGuildsForUser(ctx context.Context, sess *session.Sess
 			return nil, fmt.Errorf("failed to get user token: %w", err)
 		}
 
-		guilds, err := m.userRest.GetCurrentUserGuilds(token, 0, 0, 200, false, rest.WithCtx(withRateLimitKey(ctx, sess.TokenHash)))
+		guilds, err := m.userRest.GetCurrentUserGuilds(token, 0, 0, 200, 0, false, rest.WithCtx(withRateLimitKey(ctx, sess.TokenHash)))
 		if err != nil {
 			if common.IsDiscordRestStatusCode(err, http.StatusUnauthorized) {
 				return nil, m.sessionManager.InvalidateSession(ctx, sess)

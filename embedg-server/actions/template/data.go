@@ -390,11 +390,7 @@ func (d *GuildData) BannerURL() (string, error) {
 }
 
 func (d *GuildData) MemberCount() (int, error) {
-	if err := d.ensureGuild(); err != nil {
-		return 0, err
-	}
-
-	return d.guild.MemberCount, nil
+	return d.src.guildMemberCount(d.guildID)
 }
 
 func (d *GuildData) BoostCount() (int, error) {

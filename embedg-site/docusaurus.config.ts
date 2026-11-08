@@ -5,7 +5,7 @@ import componentEmbeds from "./plugins/component-embeds";
 
 const config: Config = {
   title: "Embed Generator",
-  tagline: "The best way to create Discord embeds!",
+  tagline: "The visual editor for Discord messages. Free and open source.",
   // Search engines and DuckDuckGo look for /favicon.ico and skip SVG icons.
   favicon: "favicon.ico",
 

@@ -10,7 +10,7 @@ sidebar_class_name: sidebar-premium
 
 With Embed Generator Premium you can add your own slash commands to your server. A command has a name, an optional description and arguments, and a list of actions that run when a member uses it: reply with a text or saved message, add or remove roles, or a combination.
 
-Commands run through your own bot, so they need [White Label](./white-label) set up first. Combined with [message variables](../guides/variables) you can build things like `/profile` commands that show the member's name and join date, or `/rules` that posts your saved rules message.
+Commands run through your own bot, so they need a [custom bot](./white-label) set up first. Combined with [message variables](../guides/variables) you can build things like `/profile` commands that show the member's name and join date, or `/rules` that posts your saved rules message.
 
 ![Custom Commands Feature Preview](./custom-commands-feature.webp)
 
