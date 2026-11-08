@@ -31,7 +31,7 @@ shard_count = 0
 identify_concurrency = 0
 
 [assistant]
-model = "gpt-5-mini"
-reasoning_effort = "low"
+model = "gpt-6-luna"
+reasoning_effort = "medium"
 max_output_tokens = 16000
 max_repairs = 2
