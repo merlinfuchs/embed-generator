@@ -217,3 +217,32 @@ test("select option action sets survive the round trip", () => {
   const { message } = toMessage(fromMessage(withActions));
   expect(message.actions).toEqual({ "set-1": { actions: [] } });
 });
+
+test("action sets the editor doesn't show are left out", () => {
+  const withActions = parse({
+    content: "",
+    components: [
+      {
+        type: 1,
+        components: [
+          { type: 2, style: 1, label: "Click", action_set_id: "button" },
+          {
+            type: 2,
+            style: 5,
+            label: "Link",
+            url: "https://message.style",
+            action_set_id: "link",
+          },
+        ],
+      },
+    ],
+    actions: {
+      button: { actions: [] },
+      link: { actions: [{ type: 1, text: "Hidden" }] },
+      orphan: { actions: [] },
+    },
+  });
+
+  const { message } = toMessage(fromMessage(withActions));
+  expect(Object.keys(message.actions)).toEqual(["button"]);
+});
