@@ -17,7 +17,10 @@ export default function MessagePreviewEmbed({
   const authorUrl = safeHref(embed.author?.url);
   const titleUrl = safeHref(embed.url);
   let timestamp = "";
-  if (embed.timestamp) {
+  // The time of sending is only known once the message is sent, so the preview shows now.
+  if (embed.timestamp_now) {
+    timestamp = format(new Date(), "dd/MM/yyyy");
+  } else if (embed.timestamp) {
     const date = parseISO(embed.timestamp);
     if (!Number.isNaN(date.getTime())) {
       timestamp = format(date, "dd/MM/yyyy");
@@ -133,7 +136,7 @@ export default function MessagePreviewEmbed({
                 className="discord-embed-thumbnail"
               />
             )}
-            {(embed.footer?.text || embed.timestamp) && (
+            {(embed.footer?.text || timestamp) && (
               <div className="discord-embed-footer overflow-hidden break-all">
                 {embed.footer?.icon_url && (
                   <img
@@ -143,7 +146,7 @@ export default function MessagePreviewEmbed({
                   />
                 )}
                 {embed.footer?.text}
-                {embed.footer?.text && embed.timestamp && (
+                {embed.footer?.text && timestamp && (
                   <div className="discord-footer-separator">•</div>
                 )}
                 <div className="flex-none">{timestamp}</div>

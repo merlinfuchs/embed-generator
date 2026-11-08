@@ -207,6 +207,11 @@ export const embedTimestampSchema = z.preprocess(
 
 export type EmbedTimestamp = z.infer<typeof embedTimestampSchema>;
 
+export const embedTimestampNowSchema = z.preprocess(
+  (d) => d ?? undefined,
+  z.optional(z.boolean()),
+);
+
 export const embedColor = z.preprocess(
   (d) => d ?? undefined,
   z.optional(z.number()),
@@ -220,6 +225,7 @@ export const embedSchema = z.object({
   description: embedDescriptionSchema,
   url: embedUrlSchema,
   timestamp: embedTimestampSchema,
+  timestamp_now: embedTimestampNowSchema,
   color: embedColor,
   footer: embedFooterSchema,
   author: embedAuthorSchema,
