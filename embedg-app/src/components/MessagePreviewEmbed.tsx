@@ -1,4 +1,4 @@
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
 import type { MessageEmbed } from "../discord/schema";
 // @ts-expect-error untyped
 import { toHTML } from "../discord/markdown";
@@ -20,7 +20,8 @@ export default function MessagePreviewEmbed({
   if (embed.timestamp) {
     const date = parseISO(embed.timestamp);
     if (!Number.isNaN(date.getTime())) {
-      timestamp = format(date, "dd/MM/yyyy");
+      // The viewer's locale decides the layout, like Discord's own date formats.
+      timestamp = date.toLocaleDateString(undefined, { dateStyle: "short" });
     }
   }
   return (
