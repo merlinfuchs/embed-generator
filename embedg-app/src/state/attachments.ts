@@ -68,3 +68,95 @@ export const useCurrentAttachmentsStore = create<AttachmentsStore>()(
       }),
   })),
 );
+
+export const ATTACHMENT_URL_PREFIX = "attachment://";
+
+export function attachmentUrl(name: string): string {
+  return `${ATTACHMENT_URL_PREFIX}${name}`;
+}
+
+/** The attachment an attachment:// URL points to, if the message has it. */
+export function findAttachment(
+  attachments: MessageAttachment[],
+  url: string | undefined | null,
+): MessageAttachment | undefined {
+  if (!url?.startsWith(ATTACHMENT_URL_PREFIX)) return undefined;
+
+  const ref = url.slice(ATTACHMENT_URL_PREFIX.length);
+  let decoded = ref;
+  try {
+    decoded = decodeURIComponent(ref);
+  } catch {
+    // Not escaped, so the name is taken as typed.
+  }
+
+  return attachments.find((a) => a.name === ref || a.name === decoded);
+}
+
+/** Subscribes to the attachment a URL points to, so a preview follows renames and removals. */
+export function useAttachmentForUrl(
+  url: string | undefined | null,
+): MessageAttachment | undefined {
+  return useCurrentAttachmentsStore((state) =>
+    findAttachment(state.attachments, url),
+  );
+}
+
+/**
+ * What an image in the preview should load: the file itself for an
+ * attachment, nothing for one the message doesn't have, and any other URL as
+ * it is.
+ */
+export function resolvePreviewUrl(
+  attachments: MessageAttachment[],
+  url: string | undefined | null,
+): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith(ATTACHMENT_URL_PREFIX)) {
+    return findAttachment(attachments, url)?.data_url;
+  }
+  return url;
+}
+
+export function usePreviewUrl(
+  url: string | undefined | null,
+): string | undefined {
+  return useCurrentAttachmentsStore((state) =>
+    resolvePreviewUrl(state.attachments, url),
+  );
+}
+
+/** The size the way Discord shows it next to a file. */
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024)
+    return `${Math.round((bytes / 1024) * 100) / 100} KB`;
+  return formatMB(bytes);
+}
+
+/**
+ * A name that Discord keeps as it is, since it turns spaces and the like into
+ * underscores and an attachment:// reference only matches the name it stored.
+ */
+export function sanitizeAttachmentName(name: string): string {
+  const cleaned = name.replace(/[^A-Za-z0-9._-]+/g, "_").replace(/^[._]+/, "");
+  return cleaned || "file";
+}
+
+/** The name, or the name with a counter before its extension when another attachment has it. */
+export function uniqueAttachmentName(name: string, taken: string[]): string {
+  if (!taken.includes(name)) return name;
+
+  const dot = name.lastIndexOf(".");
+  const base = dot > 0 ? name.slice(0, dot) : name;
+  const ext = dot > 0 ? name.slice(dot) : "";
+
+  for (let i = 1; ; i++) {
+    const candidate = `${base}-${i}${ext}`;
+    if (!taken.includes(candidate)) return candidate;
+  }
+}
+
+export function formatMB(bytes: number): string {
+  return `${Math.round((bytes / 1024 / 1024) * 100) / 100} MB`;
+}

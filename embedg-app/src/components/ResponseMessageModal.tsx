@@ -115,7 +115,7 @@ function ResponseMessageEditor({ onClose }: { onClose: () => void }) {
         </div>
       </div>
       <div className="hidden lg:block flex-1 min-w-0 border-l border-white/5 px-5 py-2 overflow-y-auto no-scrollbar">
-        <EditorMessagePreview />
+        <EditorMessagePreview attachments={false} />
       </div>
     </div>
   );

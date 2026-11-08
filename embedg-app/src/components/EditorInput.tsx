@@ -4,6 +4,7 @@ import TextareaAutosize from "react-textarea-autosize";
 import InputControlBar from "./InputControlBar";
 import { useRef } from "react";
 import ImageUploadButton from "./ImageUploadButton";
+import FileUploadButton from "./FileUploadButton";
 import clsx from "clsx";
 
 interface Props {
@@ -17,7 +18,10 @@ interface Props {
   className?: string;
   validationPath?: ValidationTarget;
   controls?: boolean;
+  /** Offers uploading an image to the CDN. */
   imageUpload?: boolean;
+  /** Offers adding a file to the attachments of the message, or picking one it already has. */
+  fileUpload?: boolean;
 }
 
 export default function EditorInput({
@@ -32,6 +36,7 @@ export default function EditorInput({
   validationPath,
   controls,
   imageUpload,
+  fileUpload,
 }: Props) {
   const inputRef = useRef<HTMLInputElement & HTMLTextAreaElement>(null);
 
@@ -98,6 +103,7 @@ export default function EditorInput({
         {imageUpload && (
           <ImageUploadButton onChange={(url) => onChange(url || "")} />
         )}
+        {fileUpload && <FileUploadButton onChange={onChange} />}
       </div>
       <ValidationError target={validationPath} />
     </div>

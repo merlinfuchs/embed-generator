@@ -10,7 +10,10 @@ import { useSendSettingsStore } from "../state/sendSettings";
 import Twemoji from "./Twemoji";
 import { useGuildBrandingQuery } from "../api/queries";
 import { getRelativeUrl } from "../util/url";
-import PreviewComponents, { Markup } from "./MessagePreviewComponents";
+import PreviewComponents, {
+  Markup,
+  PreviewAttachments,
+} from "./MessagePreviewComponents";
 import MessagePreviewEmbed from "./MessagePreviewEmbed";
 
 interface ButtonResponse {
@@ -26,9 +29,18 @@ interface Props {
    * itself, so it sits alongside the content rather than replacing it.
    */
   unfurledComponent?: MessageComponent;
+  /**
+   * Whether the attachments of the editor are shown below the message. They belong to the message
+   * being edited, not to one that was restored or comes from a link.
+   */
+  showAttachments?: boolean;
 }
 
-export default function MessagePreview({ msg, unfurledComponent }: Props) {
+export default function MessagePreview({
+  msg,
+  unfurledComponent,
+  showAttachments,
+}: Props) {
   const currentTime = format(new Date(), "hh:mm aa");
   // A Components V2 message carries its content in the components instead.
   const componentsV2 = ((msg.flags ?? 0) & COMPONENTS_V2_FLAG) !== 0;
@@ -84,6 +96,10 @@ export default function MessagePreview({ msg, unfurledComponent }: Props) {
                     {msg.embeds.map((embed) => (
                       <MessagePreviewEmbed key={embed.id} embed={embed} />
                     ))}
+
+                    {showAttachments && (
+                      <PreviewAttachments embeds={msg.embeds} />
+                    )}
 
                     <div className="discord-attachments">
                       <PreviewComponents

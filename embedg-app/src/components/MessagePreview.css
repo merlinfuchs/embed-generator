@@ -1328,3 +1328,14 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   top: 50%;
   transform: translate(-50%, -50%);
 }
+
+.discord-component-file-size {
+  color: #949ba4;
+  font-size: 12px;
+}
+
+.discord-attachment-image {
+  border-radius: 8px;
+  max-height: 350px;
+  max-width: 100%;
+}

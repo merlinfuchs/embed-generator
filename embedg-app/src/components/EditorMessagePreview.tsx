@@ -5,7 +5,12 @@ import { lazyView } from "../util/lazyView";
 
 const LazyMessagePreview = lazyView(() => import("./MessagePreview"));
 
-export default function EditorMessagePreview() {
+interface Props {
+  /** Whether the message is sent with the attachments of the editor, which a response is not. */
+  attachments?: boolean;
+}
+
+export default function EditorMessagePreview({ attachments = true }: Props) {
   // We debounce the message preview to prevent it from updating too often.
   const msg = useDebouncedDocument(useDocumentStoreApi(), 250)?.message;
 
@@ -13,7 +18,7 @@ export default function EditorMessagePreview() {
 
   return (
     <Suspense>
-      <LazyMessagePreview msg={msg} />
+      <LazyMessagePreview msg={msg} showAttachments={attachments} />
     </Suspense>
   );
 }

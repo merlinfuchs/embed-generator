@@ -2,17 +2,16 @@ import { useShallow } from "zustand/react/shallow";
 import clsx from "clsx";
 import {
   MAX_ATTACHMENTS,
-  MAX_FILE_BYTES,
   MAX_TOTAL_ATTACHMENT_BYTES,
+  formatMB,
   useCurrentAttachmentsStore,
 } from "../state/attachments";
 import { AutoAnimate } from "../util/autoAnimate";
 import Collapsable from "./Collapsable";
 import { type ChangeEvent, useRef } from "react";
-import { getUniqueId } from "../util";
 import EditorAttachment from "./EditorAttachment";
 import { useComponentsV2Enabled } from "../state/document";
-import { useToasts } from "../util/toasts";
+import { useAddAttachments } from "../util/useAddAttachments";
 
 export default function EditorAttachments() {
   const attachments = useCurrentAttachmentsStore(
@@ -25,11 +24,11 @@ export default function EditorAttachments() {
     state.attachments.reduce((acc, curr) => acc + curr.size, 0),
   );
 
-  const [addAttachment, clearAttachments] = useCurrentAttachmentsStore(
-    useShallow((state) => [state.addAttachment, state.clearAttachments]),
+  const clearAttachments = useCurrentAttachmentsStore(
+    (state) => state.clearAttachments,
   );
 
-  const createToast = useToasts((s) => s.create);
+  const addAttachments = useAddAttachments();
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -46,52 +45,7 @@ export default function EditorAttachments() {
     // Reset, or picking the same file again after an error does nothing.
     input.value = "";
 
-    let remaining = MAX_ATTACHMENTS - attachments.length;
-    let total = totalBytes;
-
-    for (const file of files) {
-      if (file.size > MAX_FILE_BYTES) {
-        createToast({
-          title: "File too large",
-          message: `'${file.name}' is larger than the ${formatMB(MAX_FILE_BYTES)} limit.`,
-          type: "error",
-        });
-        continue;
-      }
-      if (total + file.size > MAX_TOTAL_ATTACHMENT_BYTES) {
-        createToast({
-          title: "Attachments too large",
-          message: `All attachments together can't be larger than ${formatMB(MAX_TOTAL_ATTACHMENT_BYTES)}.`,
-          type: "error",
-        });
-        continue;
-      }
-
-      // The count was only checked before the picker opened, so selecting several files at once
-      // could take it past the limit.
-      if (remaining <= 0) {
-        createToast({
-          title: "Too many attachments",
-          message: `A message can have at most ${MAX_ATTACHMENTS} attachments.`,
-          type: "error",
-        });
-        break;
-      }
-      remaining--;
-      total += file.size;
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        addAttachment({
-          id: getUniqueId(),
-          size: file.size,
-          name: file.name,
-          description: null,
-          data_url: e.target?.result as string,
-        });
-      };
-      reader.readAsDataURL(file);
-    }
+    addAttachments(files);
   }
 
   return (
@@ -121,8 +75,8 @@ export default function EditorAttachments() {
     >
       <div className="text-mist-400 mb-3">
         {componentsV2Enabled
-          ? "Attachments do not directly appear in the message. Instead, you can use them in File components."
-          : "Attachments do currently not appear in the preview."}
+          ? "Files sent with the message. They only appear through File components, which have a + button to add one."
+          : "Files sent with the message. They are shown below it, like any file posted in Discord."}
       </div>
       <AutoAnimate className="flex flex-wrap">
         {attachments.map((id, i) => (
@@ -159,8 +113,4 @@ export default function EditorAttachments() {
       />
     </Collapsable>
   );
-}
-
-function formatMB(bytes: number) {
-  return `${Math.round((bytes / 1024 / 1024) * 100) / 100} MB`;
 }

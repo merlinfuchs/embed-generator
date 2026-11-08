@@ -11,6 +11,7 @@ import type {
   MessageComponentSelectMenu,
   MessageComponentSeparator,
   MessageComponentThumbnail,
+  MessageEmbed,
   UnfurledMediaItem,
 } from "../discord/schema";
 // @ts-expect-error untyped
@@ -18,6 +19,16 @@ import { toHTML } from "../discord/markdown";
 import { emojiUrl } from "../discord/cdn";
 import { colorIntToHex } from "../util/discord";
 import { safeHref } from "../util/url";
+import {
+  ATTACHMENT_URL_PREFIX,
+  type MessageAttachment,
+  findAttachment,
+  formatFileSize,
+  resolvePreviewUrl,
+  useAttachmentForUrl,
+  useCurrentAttachmentsStore,
+  usePreviewUrl,
+} from "../state/attachments";
 import Twemoji from "./Twemoji";
 
 const buttonColors = {
@@ -177,12 +188,13 @@ function PreviewThumbnail({
 }: {
   thumbnail: MessageComponentThumbnail;
 }) {
-  if (!thumbnail.media.url) return null;
+  const src = usePreviewUrl(thumbnail.media.url);
+  if (!src) return null;
 
   return (
     <Spoiler spoiler={thumbnail.spoiler}>
       <img
-        src={thumbnail.media.url}
+        src={src}
         alt={thumbnail.description ?? ""}
         className="discord-component-thumbnail"
       />
@@ -228,7 +240,13 @@ function PreviewMediaGallery({
 }: {
   gallery: MessageComponentMediaGallery;
 }) {
-  const items = gallery.items.filter((item) => item.media.url);
+  const attachments = useCurrentAttachmentsStore((state) => state.attachments);
+  const items = gallery.items
+    .map((item) => ({
+      item,
+      src: resolvePreviewUrl(attachments, item.media.url),
+    }))
+    .filter((entry) => entry.src);
   if (!items.length) return null;
 
   return (
@@ -241,10 +259,10 @@ function PreviewMediaGallery({
         gridTemplateColumns: `repeat(${galleryColumns(items.length)}, 1fr)`,
       }}
     >
-      {items.map((item) => (
+      {items.map(({ item, src }) => (
         <Spoiler key={item.id} spoiler={item.spoiler}>
           <img
-            src={item.media.url}
+            src={src}
             alt={item.description ?? ""}
             className="discord-component-gallery-item"
           />
@@ -255,6 +273,10 @@ function PreviewMediaGallery({
 }
 
 function fileName(media: UnfurledMediaItem): string {
+  if (media.url.startsWith(ATTACHMENT_URL_PREFIX)) {
+    return media.url.slice(ATTACHMENT_URL_PREFIX.length) || "file";
+  }
+
   try {
     const path = new URL(media.url).pathname;
     return decodeURIComponent(path.slice(path.lastIndexOf("/") + 1)) || "file";
@@ -264,6 +286,8 @@ function fileName(media: UnfurledMediaItem): string {
 }
 
 function PreviewFile({ file }: { file: MessageComponentFile }) {
+  const attachment = useAttachmentForUrl(file.file.url);
+
   return (
     <Spoiler spoiler={file.spoiler}>
       <div className="discord-component-file">
@@ -273,9 +297,66 @@ function PreviewFile({ file }: { file: MessageComponentFile }) {
             d="M13 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V9L13 2ZM13 10V3.5L18.5 10H13Z"
           ></path>
         </svg>
-        <span>{fileName(file.file)}</span>
+        <span>{attachment?.name ?? fileName(file.file)}</span>
+        {attachment && (
+          <span className="discord-component-file-size">
+            {formatFileSize(attachment.size)}
+          </span>
+        )}
       </div>
     </Spoiler>
+  );
+}
+
+/**
+ * The attachments Discord shows below the body of a message that isn't using Components V2, which
+ * leaves out the ones an embed has taken for its images.
+ */
+export function PreviewAttachments({ embeds }: { embeds: MessageEmbed[] }) {
+  const attachments = useCurrentAttachmentsStore((state) => state.attachments);
+
+  const used = new Set<MessageAttachment>();
+  for (const embed of embeds) {
+    for (const url of [
+      embed.image?.url,
+      embed.thumbnail?.url,
+      embed.author?.icon_url,
+      embed.footer?.icon_url,
+    ]) {
+      const attachment = findAttachment(attachments, url);
+      if (attachment) used.add(attachment);
+    }
+  }
+
+  const shown = attachments.filter((a) => !used.has(a));
+  if (!shown.length) return null;
+
+  return (
+    <div className="discord-attachments">
+      {shown.map((attachment) =>
+        attachment.data_url.startsWith("data:image/") ? (
+          <img
+            key={attachment.id}
+            src={attachment.data_url}
+            alt={attachment.name}
+            className="discord-attachment-image"
+          />
+        ) : (
+          <div key={attachment.id} className="discord-component-file">
+            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M13 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V9L13 2ZM13 10V3.5L18.5 10H13Z"
+              ></path>
+            </svg>
+            <span>{attachment.name}</span>
+            <span className="discord-component-file-size">
+              {formatFileSize(attachment.size)}
+            </span>
+          </div>
+        ),
+      )}
+    </div>
   );
 }
 

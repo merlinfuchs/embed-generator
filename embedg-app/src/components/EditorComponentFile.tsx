@@ -6,10 +6,10 @@ import {
   useDocumentStoreApi,
 } from "../state/document";
 import { nodeField, nodeScope } from "../state/validationError";
-import { useCurrentAttachmentsStore } from "../state/attachments";
+import { useAttachmentForUrl } from "../state/attachments";
 import CheckBox from "./CheckBox";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
-import ValidationError from "./ValidationError";
+import EditorInput from "./EditorInput";
 
 interface Props {
   id: NodeId;
@@ -25,9 +25,13 @@ export default function EditorComponentFile({
   const data = useNode<FileNode>(id);
   const actions = useNodeActions(id);
   const { update } = useDocumentStoreApi().getState();
-  const attachments = useCurrentAttachmentsStore((state) => state.attachments);
+
+  const attachment = useAttachmentForUrl(data?.file.url);
 
   if (!data) return null;
+
+  // A saved or shared message keeps the reference but not the file.
+  const missing = data.file.url.startsWith("attachment://") && !attachment;
 
   return (
     <EditorComponentCollapsable
@@ -39,32 +43,15 @@ export default function EditorComponentFile({
     >
       <div className="space-y-4">
         <div className="flex space-x-3">
-          <div className="flex-auto">
-            <div className="mb-1.5 flex">
-              <div className="uppercase text-mist-300 text-sm font-medium">
-                Attachment
-              </div>
-            </div>
-            <select
-              aria-label="Attachment"
-              className="bg-ink-900 rounded-lg p-2 w-full font-light cursor-pointer text-white"
-              value={data.file.url}
-              onChange={(e) =>
-                update<FileNode>(id, { file: { url: e.target.value } })
-              }
-            >
-              {attachments.map((attachment) => (
-                <option
-                  key={attachment.name}
-                  value={`attachment://${attachment.name}`}
-                >
-                  {attachment.name}
-                </option>
-              ))}
-              <option value="">Select Attachment</option>
-            </select>
-            <ValidationError target={nodeField<FileNode>(id, "file.url")} />
-          </div>
+          <EditorInput
+            label="File URL"
+            value={data.file.url}
+            onChange={(v) => update<FileNode>(id, { file: { url: v } })}
+            className="flex-auto"
+            fileUpload={true}
+            props={{ placeholder: "attachment://file.pdf" }}
+            validationPath={nodeField<FileNode>(id, "file.url")}
+          />
           <div className="flex-none">
             <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
               Spoiler
@@ -80,6 +67,12 @@ export default function EditorComponentFile({
             />
           </div>
         </div>
+        {missing && (
+          <div className="text-sm text-amber-300">
+            This message has no attachment with that name. Add the file again
+            with the + button.
+          </div>
+        )}
       </div>
     </EditorComponentCollapsable>
   );
