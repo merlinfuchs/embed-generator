@@ -1,10 +1,20 @@
 import { useState } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { useSettingsStore } from "../state/settings";
+import { type Theme, useSettingsStore } from "../state/settings";
 import CheckBox from "./CheckBox";
 import ConfirmModal from "./ConfirmModal";
+import SegmentedControl from "./SegmentedControl";
+
+const themeOptions: { value: Theme; label: string }[] = [
+  { value: "dark", label: "Dark" },
+  { value: "light", label: "Light" },
+  { value: "system", label: "System" },
+];
 
 export default function SettingsGeneral() {
+  const [theme, setTheme] = useSettingsStore(
+    useShallow((s) => [s.theme, s.setTheme]),
+  );
   const [editHistoryEnabled, setEditHistoryEnabled] = useSettingsStore(
     useShallow((s) => [s.editHistoryEnabled, s.setEditHistoryEnabled]),
   );
@@ -28,6 +38,20 @@ export default function SettingsGeneral() {
         <div>App Settings</div>
       </div>
       <div className="space-y-6 mb-10">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
+          <div className="flex-auto">
+            <div className="text-white font-medium text-lg">Theme</div>
+            <div className="text-mist-400 font-light text-sm">
+              Choose between the dark and light look of the app, or follow your
+              system setting.
+            </div>
+          </div>
+          <SegmentedControl
+            options={themeOptions}
+            value={theme}
+            onChange={setTheme}
+          />
+        </div>
         <div className="flex items-center">
           <CheckBox
             checked={editHistoryEnabled}

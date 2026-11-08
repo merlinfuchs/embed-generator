@@ -54,6 +54,104 @@
   --scale-101: 1.01;
 }
 
+/* Light theme. The app is written against the dark palette, so instead of
+   doubling every class this swaps the palette: ink becomes the light
+   surfaces, mist the dark text, and white (text-white, the white/5 overlays
+   and white/10 hairlines) turns near black. Toggled by util/theme.ts. */
+html.light {
+  --color-ink-950: #d4d7dc;
+  --color-ink-900: #e6e8eb;
+  --color-ink-800: #f2f3f5;
+  --color-ink-700: #ffffff;
+  --color-ink-600: #e3e5e8;
+  --color-ink-500: #d4d7dc;
+
+  --color-mist-100: #060607;
+  --color-mist-300: #2e3338;
+  --color-mist-400: #4e5058;
+  --color-mist-500: #6d6f78;
+
+  --color-white: #060607;
+}
+
+/* Tailwind inlines theme shadows into the utility, so this can't go through
+   a variable like the colors. */
+html.light .shadow-card {
+  --tw-shadow: 0 20px 40px -24px rgba(0, 0, 0, 0.18);
+}
+
+/* Accent text that's tuned to read on dark surfaces, darkened to read on
+   light ones. */
+html.light .text-azure-300,
+html.light .text-azure-400 {
+  color: var(--color-azure-600);
+}
+html.light .text-amber-300 {
+  color: #b26b00;
+}
+html.light .text-green {
+  color: #1f8b4c;
+}
+html.light .text-red {
+  color: #d22d39;
+}
+html.light .text-yellow {
+  color: #a17d00;
+}
+html.light .text-fuchsia {
+  color: #c2287b;
+}
+
+/* Solid accent fills keep the dark palette inside them, so their white
+   text and ink-900 text on amber stay as they are. Same for the Discord
+   message preview, which always renders like Discord's dark theme. */
+html.light
+:is(
+  .bg-azure-400,
+  .bg-azure-500,
+  .bg-amber-400,
+  .bg-red,
+  .bg-red\/90,
+  .bg-green,
+  .hover\:bg-azure-400:hover,
+  .hover\:bg-azure-500:hover,
+  .hover\:bg-amber-300:hover,
+  .hover\:bg-red:hover,
+  .hover\:bg-green:hover,
+  .theme-dark-island
+) {
+  --color-ink-950: #111214;
+  --color-ink-900: #1e1f22;
+  --color-ink-800: #2b2d31;
+  --color-ink-700: #313338;
+  --color-ink-600: #404249;
+  --color-ink-500: #4e5058;
+  --color-mist-100: #f2f3f5;
+  --color-mist-300: #dbdee1;
+  --color-mist-400: #b5bac1;
+  --color-mist-500: #949ba4;
+  --color-white: #fff;
+}
+
+/* Warm card behind the premium upsells. */
+@utility bg-premium {
+  background-image: linear-gradient(
+    135deg,
+    #2b2d31 0%,
+    #2f2e2c 65%,
+    #3a3222 100%
+  );
+
+  html.light & {
+    background-image: linear-gradient(
+      135deg,
+      #ffffff 0%,
+      #fdf8ee 65%,
+      #fbeccc 100%
+    );
+  }
+}
+
 @layer base {
   /* v4's preflight gives buttons the default cursor; the app was built
      against v3, where they were pointers. */
