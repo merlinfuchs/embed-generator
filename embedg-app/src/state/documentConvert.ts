@@ -379,6 +379,11 @@ export function toMessage(state: DocumentData): ConvertedMessage {
   const pathToId = new Map<string, NodeId>();
   const idToPath = new Map<NodeId, string>();
 
+  // A button keeps its action set when it becomes a link button, and imported
+  // JSON can carry sets nothing points to. The editor shows neither, so they
+  // are left out instead of failing validation where the user can't fix them.
+  const usedActionSetIds = new Set<string>();
+
   function record(id: NodeId, path: string) {
     pathToId.set(path, id);
     idToPath.set(id, path);
@@ -433,6 +438,7 @@ export function toMessage(state: DocumentData): ConvertedMessage {
       throw new Error(`not an option: ${id}`);
 
     record(id, path);
+    usedActionSetIds.add(option.action_set_id);
     return {
       id: option.discordId,
       label: option.label,
@@ -478,6 +484,9 @@ export function toMessage(state: DocumentData): ConvertedMessage {
           ),
         } satisfies MessageComponentActionRow;
       case "button":
+        if (componentNode.style !== 5) {
+          usedActionSetIds.add(componentNode.action_set_id);
+        }
         return componentNode.style === 5
           ? ({
               id: componentNode.discordId,
@@ -605,7 +614,9 @@ export function toMessage(state: DocumentData): ConvertedMessage {
     components: root.componentIds.map((id, i) =>
       component(id, `components.${i}`),
     ),
-    actions: state.actions,
+    actions: Object.fromEntries(
+      Object.entries(state.actions).filter(([id]) => usedActionSetIds.has(id)),
+    ),
   };
 
   const converted = { message, pathToId, idToPath };
