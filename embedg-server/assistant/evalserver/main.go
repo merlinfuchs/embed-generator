@@ -20,8 +20,8 @@ import (
 
 func main() {
 	addr := flag.String("addr", "localhost:4456", "address to listen on")
-	modelName := flag.String("model", "gpt-5-mini", "model to use")
-	effort := flag.String("effort", "low", "reasoning effort")
+	modelName := flag.String("model", "gpt-6-luna", "model to use")
+	effort := flag.String("effort", "medium", "reasoning effort")
 	maxRepairs := flag.Int("max-repairs", 2, "how often the model may fix its message")
 	flag.Parse()
 
