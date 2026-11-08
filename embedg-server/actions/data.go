@@ -34,11 +34,15 @@ type MessageWithActions struct {
 // from a message whose link preview was hidden in Discord carry it without the user knowing.
 func (m *MessageWithActions) UnmarshalJSON(data []byte) error {
 	type message MessageWithActions
+	// Without its UnmarshalJSON, which would otherwise be promoted and decode the whole embed.
+	type embed discord.Embed
 	var raw struct {
 		message
 		Embeds []struct {
-			discord.Embed
+			embed
 			Timestamp string `json:"timestamp"`
+			// Only Discord's own "components" embeds carry these. They can't be sent, so they're ignored.
+			Components json.RawMessage `json:"components"`
 		} `json:"embeds"`
 	}
 	if err := json.Unmarshal(data, &raw); err != nil {
@@ -52,7 +56,7 @@ func (m *MessageWithActions) UnmarshalJSON(data []byte) error {
 		m.Embeds = make([]discord.Embed, 0, len(raw.Embeds))
 	}
 	for i, e := range raw.Embeds {
-		embed := e.Embed
+		embed := discord.Embed(e.embed)
 		if e.Timestamp != "" {
 			t, err := time.Parse(time.RFC3339, e.Timestamp)
 			if err != nil {

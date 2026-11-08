@@ -364,7 +364,7 @@ func (m *WebhookManager) fetchOrCreateWebhook(ctx context.Context, channel disco
 		if !ok {
 			continue
 		}
-		if incomingWebhook.ApplicationID != nil && incomingWebhook.Token != "" {
+		if incomingWebhook.ApplicationID != 0 && incomingWebhook.Token != "" {
 			return &incomingWebhook, nil
 		}
 	}

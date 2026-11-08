@@ -3,11 +3,11 @@ import React from "react";
 export const faq = [
   {
     q: "Is Embed Generator free?",
-    a: "Yes. Building and sending embeds, buttons and select menus is free with no account required to start. Premium is optional and adds things like more saved messages, more recurring scheduled messages, custom commands and your own bot.",
+    a: "Yes. Building and sending embeds, buttons and select menus is free with no account required to start. Premium is optional and adds a custom bot, custom commands, more recurring scheduled messages and higher limits.",
   },
   {
     q: "Do I need a webhook or a bot?",
-    a: "A webhook is enough for plain messages and embeds. Buttons that hand out roles, select menus, scheduled messages and slash commands need the Embed Generator bot on your server, which takes one click to add.",
+    a: "A webhook is enough for plain messages and embeds. Buttons and select menus with actions, and scheduled messages, need the Embed Generator bot on your server, which takes one click to add. Custom slash commands run through your own bot, which needs Premium.",
   },
   {
     q: "How do I send an embed with a Discord webhook?",
@@ -23,11 +23,11 @@ export const faq = [
   },
   {
     q: "Can I change the name and avatar of the message?",
-    a: "Yes. Webhook messages can use any name and avatar. With Premium you can also connect your own bot so replies to buttons and commands come from it instead of Embed Generator.",
+    a: "Yes. Webhook messages can use any name and avatar. With Premium you can also connect a custom bot, so replies to buttons and commands come from it instead of Embed Generator.",
   },
   {
     q: "Is it a Discohook alternative?",
-    a: "Yes. Embed Generator does everything Discohook does and adds buttons, roles, scheduling and commands without extra bots. You can paste Discohook JSON straight into the editor. There is a short migration guide in the docs.",
+    a: "Yes. You can paste Discohook JSON straight into the editor, and there is a short migration guide in the docs. Embed Generator sets up role menus, recurring scheduled messages and custom slash commands on the website, and has an AI assistant. Discohook can send a welcome message automatically when someone joins and hand out roles on emoji reactions, which Embed Generator can't.",
   },
   {
     q: "Is it open source?",

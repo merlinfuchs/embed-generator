@@ -1,6 +1,6 @@
 ---
 sidebar_position: 3
-description: "Schedule Discord messages to be sent later, once, on a list of dates or on a repeating schedule every few hours, days, weeks or months. Set it up in Embed Generator without a bot command."
+description: "Schedule Discord messages to be sent later, once, on a list of dates or on a recurring schedule every few hours, days, weeks or months. Set it up in Embed Generator without a bot command."
 ---
 
 # Scheduled Messages
@@ -21,13 +21,13 @@ Pick more than one date to send the same message on each of them, like the days 
 
 ![Scheduled Messages Dates](./scheduled-messages-dates.webp)
 
-## Send Periodically
+## Send on a Recurring Schedule
 
 You can also repeat a message, like "every 2 weeks on Monday and Thursday at 18:00" or "every 3 months on the 1st at 12:00". The preview below the schedule lists the next sends, so you can check it does what you expect before saving. Counting starts at the first send on or after the start date. You can end the schedule on a date or after a number of sends.
 
 With **Advanced: use a cron expression** you can enter a cron expression instead. A schedule can't send more than once a minute.
 
-Every server can have one scheduled message that repeats or is sent on more than one date for free. [Embed Generator Premium](../premium) allows more. Sending once is always free.
+Every server can have up to 5 scheduled messages for free. One of them can be recurring, which means it repeats or is sent on more than one date. [Embed Generator Premium](../premium) allows 25, and all of them can be recurring.
 
 ![Scheduled Messages Periodic](./scheduled-messages-periodic.webp)
 
@@ -51,4 +51,4 @@ Each scheduled message in the list shows whether it's active, paused, ended or s
 
 ## Timezone
 
-All times of a scheduled message are in the timezone you select for it, which defaults to the timezone of your browser. Pick UTC if you'd rather enter times in UTC. Repeating schedules follow daylight saving time changes of their timezone, so a message sent every day at 9:00 stays at 9:00. A time the clocks skip, like 2:30 on the night they move forward, is sent when the clocks show 3:30 instead.
+All times of a scheduled message are in the timezone you select for it, which defaults to the timezone of your browser. Pick UTC if you'd rather enter times in UTC. Recurring schedules follow daylight saving time changes of their timezone, so a message sent every day at 9:00 stays at 9:00. A time the clocks skip, like 2:30 on the night they move forward, is sent when the clocks show 3:30 instead.

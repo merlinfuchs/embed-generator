@@ -11,7 +11,7 @@ Interactive components are buttons and select menus attached to your message. Ea
 
 Buttons with actions and select menus need the Embed Generator bot on your server, because the bot is what receives the click. Log in and pick a channel as the target instead of a webhook. Link buttons work with webhooks too. Up to 5 rows of buttons or select menus per message.
 
-Limits: 2 actions per component for free, 5 with [Premium](../premium).
+Each button or select menu can run up to 3 actions for free, 10 with [Premium](../premium) and 15 with Ultimate.
 
 ![Interactive Components Feature Preview](./interactive-components-feature.webp)
 

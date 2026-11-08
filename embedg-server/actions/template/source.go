@@ -53,6 +53,15 @@ func (s Source) guild(guildID common.ID) (*discord.Guild, error) {
 	return &state.Guild, nil
 }
 
+func (s Source) guildMemberCount(guildID common.ID) (int, error) {
+	state, err := s.guildState.Guild(s.ctx, guildID)
+	if err != nil {
+		return 0, s.internal(err)
+	}
+
+	return state.ApproximateMemberCount, nil
+}
+
 func (s Source) channel(channelID common.ID) (discord.GuildChannel, error) {
 	channel, err := s.guildState.Channel(s.ctx, channelID)
 	return channel, s.internal(err)

@@ -22,7 +22,7 @@ const steps: { n: string; title: string; text: React.ReactNode }[] = [
         Paste a{" "}
         <Link href="/features/discord-webhooks">Discord webhook</Link> URL for
         plain messages, or add the Embed Generator bot to your server when you
-        want buttons that hand out roles, reply, or open links.
+        want buttons and select menus that hand out roles or reply.
       </>
     ),
   },
@@ -33,7 +33,7 @@ const steps: { n: string; title: string; text: React.ReactNode }[] = [
       <>
         Keep your messages in the cloud, send them again in other channels,{" "}
         <Link href="/features/scheduled-messages">schedule them for later</Link>,
-        or turn them into slash commands your members can run.
+        or with Premium turn them into slash commands your members can run.
       </>
     ),
   },

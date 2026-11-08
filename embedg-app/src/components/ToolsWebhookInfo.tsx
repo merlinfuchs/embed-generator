@@ -112,7 +112,7 @@ export default function ToolsWebhookInfo() {
             )}
 
             <div>
-              <div className="font-bold text-mist-100 mb-2">Guild ID</div>
+              <div className="font-bold text-mist-100 mb-2">Server ID</div>
               <div className="text-mist-300">{webhookInfo.guild_id}</div>
             </div>
             <div>
