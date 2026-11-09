@@ -29,18 +29,9 @@ interface Props {
    * itself, so it sits alongside the content rather than replacing it.
    */
   unfurledComponent?: MessageComponent;
-  /**
-   * Whether the attachments of the editor are shown below the message. They belong to the message
-   * being edited, not to one that was restored or comes from a link.
-   */
-  showAttachments?: boolean;
 }
 
-export default function MessagePreview({
-  msg,
-  unfurledComponent,
-  showAttachments,
-}: Props) {
+export default function MessagePreview({ msg, unfurledComponent }: Props) {
   const currentTime = format(new Date(), "hh:mm aa");
   // A Components V2 message carries its content in the components instead.
   const componentsV2 = ((msg.flags ?? 0) & COMPONENTS_V2_FLAG) !== 0;
@@ -93,13 +84,11 @@ export default function MessagePreview({
                   )}
 
                   <div className="discord-message-compact-indent">
+                    <PreviewAttachments embeds={msg.embeds} />
+
                     {msg.embeds.map((embed) => (
                       <MessagePreviewEmbed key={embed.id} embed={embed} />
                     ))}
-
-                    {showAttachments && (
-                      <PreviewAttachments embeds={msg.embeds} />
-                    )}
 
                     <div className="discord-attachments">
                       <PreviewComponents

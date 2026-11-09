@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useContext, useState } from "react";
 import type {
   MessageComponent,
   MessageComponentActionRow,
@@ -22,11 +22,12 @@ import { safeHref } from "../util/url";
 import {
   ATTACHMENT_URL_PREFIX,
   type MessageAttachment,
+  PreviewAttachmentsContext,
   findAttachment,
   formatFileSize,
+  isInlineImage,
   resolvePreviewUrl,
-  useAttachmentForUrl,
-  useCurrentAttachmentsStore,
+  usePreviewAttachment,
   usePreviewUrl,
 } from "../state/attachments";
 import Twemoji from "./Twemoji";
@@ -240,7 +241,7 @@ function PreviewMediaGallery({
 }: {
   gallery: MessageComponentMediaGallery;
 }) {
-  const attachments = useCurrentAttachmentsStore((state) => state.attachments);
+  const attachments = useContext(PreviewAttachmentsContext);
   const items = gallery.items
     .map((item) => ({
       item,
@@ -285,37 +286,46 @@ function fileName(media: UnfurledMediaItem): string {
   }
 }
 
+function FileRow({ name, size }: { name: string; size?: number }) {
+  return (
+    <div className="discord-component-file">
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          fill="currentColor"
+          d="M13 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V9L13 2ZM13 10V3.5L18.5 10H13Z"
+        ></path>
+      </svg>
+      <span>{name}</span>
+      {size !== undefined && (
+        <span className="discord-component-file-size">
+          {formatFileSize(size)}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function PreviewFile({ file }: { file: MessageComponentFile }) {
-  const attachment = useAttachmentForUrl(file.file.url);
+  const attachment = usePreviewAttachment(file.file.url);
 
   return (
     <Spoiler spoiler={file.spoiler}>
-      <div className="discord-component-file">
-        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M13 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V9L13 2ZM13 10V3.5L18.5 10H13Z"
-          ></path>
-        </svg>
-        <span>{attachment?.name ?? fileName(file.file)}</span>
-        {attachment && (
-          <span className="discord-component-file-size">
-            {formatFileSize(attachment.size)}
-          </span>
-        )}
-      </div>
+      <FileRow
+        name={attachment?.name ?? fileName(file.file)}
+        size={attachment?.size}
+      />
     </Spoiler>
   );
 }
 
 /**
- * The attachments Discord shows below the body of a message that isn't using Components V2, which
- * leaves out the ones an embed has taken for its images.
+ * The attachments Discord shows between the body of a message that isn't using Components V2 and
+ * its embeds, which leaves out the ones an embed has taken for its images.
  */
 export function PreviewAttachments({ embeds }: { embeds: MessageEmbed[] }) {
-  const attachments = useCurrentAttachmentsStore((state) => state.attachments);
+  const attachments = useContext(PreviewAttachmentsContext);
 
-  const used = new Set<MessageAttachment>();
+  const used = new Set<MessageAttachment | undefined>();
   for (const embed of embeds) {
     for (const url of [
       embed.image?.url,
@@ -323,8 +333,7 @@ export function PreviewAttachments({ embeds }: { embeds: MessageEmbed[] }) {
       embed.author?.icon_url,
       embed.footer?.icon_url,
     ]) {
-      const attachment = findAttachment(attachments, url);
-      if (attachment) used.add(attachment);
+      used.add(findAttachment(attachments, url));
     }
   }
 
@@ -334,7 +343,7 @@ export function PreviewAttachments({ embeds }: { embeds: MessageEmbed[] }) {
   return (
     <div className="discord-attachments">
       {shown.map((attachment) =>
-        attachment.data_url.startsWith("data:image/") ? (
+        isInlineImage(attachment) ? (
           <img
             key={attachment.id}
             src={attachment.data_url}
@@ -342,18 +351,11 @@ export function PreviewAttachments({ embeds }: { embeds: MessageEmbed[] }) {
             className="discord-attachment-image"
           />
         ) : (
-          <div key={attachment.id} className="discord-component-file">
-            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                fill="currentColor"
-                d="M13 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V9L13 2ZM13 10V3.5L18.5 10H13Z"
-              ></path>
-            </svg>
-            <span>{attachment.name}</span>
-            <span className="discord-component-file-size">
-              {formatFileSize(attachment.size)}
-            </span>
-          </div>
+          <FileRow
+            key={attachment.id}
+            name={attachment.name}
+            size={attachment.size}
+          />
         ),
       )}
     </div>

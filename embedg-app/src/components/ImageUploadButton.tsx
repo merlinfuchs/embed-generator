@@ -1,4 +1,4 @@
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { DocumentArrowUpIcon } from "@heroicons/react/24/outline";
 import { type ChangeEvent, useRef } from "react";
 import { useUploadImageMutation } from "../api/mutations";
 import { useToasts } from "../util/toasts";
@@ -74,7 +74,7 @@ function UploadButton({ onChange }: Props) {
         className="h-10 w-10 bg-ink-900 rounded-lg flex items-center justify-center text-mist-300 hover:text-white"
         onClick={() => inputRef.current?.click()}
       >
-        <PlusIcon className="h-6 w-6" />
+        <DocumentArrowUpIcon className="h-6 w-6" />
       </button>
     </div>
   );

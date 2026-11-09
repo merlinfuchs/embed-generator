@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { MessageAttachmentWire } from "../api/wire";
 import { immer } from "zustand/middleware/immer";
+import { createContext, useContext } from "react";
 
 /** Discord's per message attachment limit. */
 export const MAX_ATTACHMENTS = 10;
@@ -93,7 +94,7 @@ export function findAttachment(
   return attachments.find((a) => a.name === ref || a.name === decoded);
 }
 
-/** Subscribes to the attachment a URL points to, so a preview follows renames and removals. */
+/** Subscribes to the attachment a URL points to in the editor, so it follows removals. */
 export function useAttachmentForUrl(
   url: string | undefined | null,
 ): MessageAttachment | undefined {
@@ -103,27 +104,43 @@ export function useAttachmentForUrl(
 }
 
 /**
- * What an image in the preview should load: the file itself for an
- * attachment, nothing for one the message doesn't have, and any other URL as
- * it is.
+ * The attachments a preview resolves attachment:// URLs against. Only the editor's own preview
+ * provides them, as a restored, shared or response message isn't sent with these files.
+ */
+export const PreviewAttachmentsContext = createContext<MessageAttachment[]>([]);
+
+/** The attachment a preview's attachment:// URL points to. */
+export function usePreviewAttachment(
+  url: string | undefined | null,
+): MessageAttachment | undefined {
+  return findAttachment(useContext(PreviewAttachmentsContext), url);
+}
+
+/**
+ * What an image in the preview should load: the file itself for an attachment, nothing for one the
+ * message doesn't have, and any other URL as it is.
  */
 export function resolvePreviewUrl(
   attachments: MessageAttachment[],
   url: string | undefined | null,
 ): string | undefined {
-  if (!url) return undefined;
-  if (url.startsWith(ATTACHMENT_URL_PREFIX)) {
+  if (url?.startsWith(ATTACHMENT_URL_PREFIX)) {
     return findAttachment(attachments, url)?.data_url;
   }
-  return url;
+  return url || undefined;
 }
 
 export function usePreviewUrl(
   url: string | undefined | null,
 ): string | undefined {
-  return useCurrentAttachmentsStore((state) =>
-    resolvePreviewUrl(state.attachments, url),
-  );
+  return resolvePreviewUrl(useContext(PreviewAttachmentsContext), url);
+}
+
+// The formats Discord shows inline. Anything else, SVG included, is shown as a file.
+const INLINE_IMAGE_RE = /^data:image\/(png|jpeg|gif|webp)[;,]/;
+
+export function isInlineImage(attachment: MessageAttachment): boolean {
+  return INLINE_IMAGE_RE.test(attachment.data_url);
 }
 
 /** The size the way Discord shows it next to a file. */

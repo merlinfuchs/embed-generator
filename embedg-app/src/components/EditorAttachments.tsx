@@ -75,8 +75,8 @@ export default function EditorAttachments() {
     >
       <div className="text-mist-400 mb-3">
         {componentsV2Enabled
-          ? "Files sent with the message. They only appear through File components, which have a + button to add one."
-          : "Files sent with the message. They are shown below it, like any file posted in Discord."}
+          ? "These files are sent with the message. They only show up where a File or an image in the message uses them."
+          : "These files are sent with the message. Discord shows them above the embeds, except the ones an embed uses as an image."}
       </div>
       <AutoAnimate className="flex flex-wrap">
         {attachments.map((id, i) => (

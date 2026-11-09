@@ -1,4 +1,8 @@
-import { DocumentIcon, PlusIcon } from "@heroicons/react/24/outline";
+import {
+  DocumentIcon,
+  PaperClipIcon,
+  PlusIcon,
+} from "@heroicons/react/24/outline";
 import { type ChangeEvent, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import {
@@ -37,7 +41,7 @@ export default function FileUploadButton({ onChange }: Props) {
     e.target.value = "";
     if (!file) return;
 
-    const [added] = await addAttachments([file], { sanitize: true });
+    const [added] = await addAttachments([file]);
     if (added) onChange(attachmentUrl(added.name));
   }
 
@@ -60,7 +64,7 @@ export default function FileUploadButton({ onChange }: Props) {
         className="h-10 w-10 bg-ink-900 rounded-lg flex items-center justify-center text-mist-300 hover:text-white"
         onClick={() => (existing.length > 0 ? setOpen(!open) : pickFile())}
       >
-        <PlusIcon className="h-6 w-6" />
+        <PaperClipIcon className="h-6 w-6" />
       </button>
       {open && (
         <div className="absolute right-0 top-full mt-1 w-64 bg-ink-900 rounded-lg shadow-lg border-2 border-white/10 z-10 text-white overflow-hidden">

@@ -21,23 +21,17 @@ function readAsDataUrl(file: File): Promise<string> {
   });
 }
 
-interface Options {
-  /** Rewrites names Discord would change, so an attachment:// reference to the file keeps working. */
-  sanitize?: boolean;
-}
-
 /**
  * Adds files to the message's attachments within Discord's limits, telling the user about each one
- * that doesn't fit. Resolves with what was added, under the names it ended up with.
+ * that doesn't fit. Names are rewritten the way Discord would store them, so an attachment://
+ * reference to the file keeps working. Resolves with what was added, under the names it ended up
+ * with.
  */
 export function useAddAttachments() {
   const createToast = useToasts((s) => s.create);
 
   return useCallback(
-    async (
-      files: File[],
-      options: Options = {},
-    ): Promise<MessageAttachment[]> => {
+    async (files: File[]): Promise<MessageAttachment[]> => {
       const store = useCurrentAttachmentsStore;
       const current = store.getState().attachments;
 
@@ -83,8 +77,8 @@ export function useAddAttachments() {
         dataUrls = await Promise.all(accepted.map(readAsDataUrl));
       } catch {
         createToast({
-          title: "Couldn't read file",
-          message: "The selected file could not be read.",
+          title: "Couldn't read the file",
+          message: "Try picking it again.",
           type: "error",
         });
         return [];
@@ -94,7 +88,7 @@ export function useAddAttachments() {
       accepted.forEach((file, i) => {
         const taken = store.getState().attachments.map((a) => a.name);
         const name = uniqueAttachmentName(
-          options.sanitize ? sanitizeAttachmentName(file.name) : file.name,
+          sanitizeAttachmentName(file.name),
           taken,
         );
 

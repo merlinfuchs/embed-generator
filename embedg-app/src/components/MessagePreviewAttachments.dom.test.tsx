@@ -1,29 +1,34 @@
 import { screen } from "@testing-library/react";
-import { beforeEach, expect, test } from "vitest";
+import { expect, test } from "vitest";
 import { parseMessageWithAction } from "../discord/importSchema";
-import { useCurrentAttachmentsStore } from "../state/attachments";
+import {
+  type MessageAttachment,
+  PreviewAttachmentsContext,
+} from "../state/attachments";
 import { renderEditor } from "../test/editor";
 import MessagePreview from "./MessagePreview";
 
 const PNG = "data:image/png;base64,iVBORw0KGgo=";
 
-beforeEach(() => {
-  useCurrentAttachmentsStore.getState().replaceAttachments([
-    { id: 1, name: "pic.png", description: null, data_url: PNG, size: 10 },
-    {
-      id: 2,
-      name: "notes.txt",
-      description: null,
-      data_url: "data:text/plain;base64,aGk=",
-      size: 2048,
-    },
-  ]);
-});
+const ATTACHMENTS: MessageAttachment[] = [
+  { id: 1, name: "pic.png", description: null, data_url: PNG, size: 10 },
+  {
+    id: 2,
+    name: "notes.txt",
+    description: null,
+    data_url: "data:text/plain;base64,aGk=",
+    size: 2048,
+  },
+];
 
-function preview(raw: unknown, showAttachments = true) {
+function preview(raw: unknown, withAttachments = true) {
   const msg = parseMessageWithAction(raw);
   return renderEditor(
-    <MessagePreview msg={msg} showAttachments={showAttachments} />,
+    <PreviewAttachmentsContext.Provider
+      value={withAttachments ? ATTACHMENTS : []}
+    >
+      <MessagePreview msg={msg} />
+    </PreviewAttachmentsContext.Provider>,
   );
 }
 
@@ -70,9 +75,50 @@ test("an attachment an embed uses isn't listed again", () => {
 });
 
 test("attachments stay out of a message that isn't the one being edited", () => {
-  preview({ content: "hi" }, false);
+  const { container } = preview(
+    {
+      content: "hi",
+      embeds: [{ description: "x", image: { url: "attachment://pic.png" } }],
+    },
+    false,
+  );
 
   expect(screen.queryByText("notes.txt")).toBeNull();
+  expect(container.querySelector(".discord-embed-image")).toBeNull();
+});
+
+test("attachments are shown above the embeds", () => {
+  const { container } = preview({
+    content: "hi",
+    embeds: [{ description: "x" }],
+  });
+
+  const file = screen.getByText("notes.txt");
+  const embed = container.querySelector(".discord-embed")!;
+  expect(
+    file.compareDocumentPosition(embed) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+});
+
+test("an SVG attachment is shown as a file", () => {
+  const { container } = renderEditor(
+    <PreviewAttachmentsContext.Provider
+      value={[
+        {
+          id: 3,
+          name: "logo.svg",
+          description: null,
+          data_url: "data:image/svg+xml;base64,PHN2Zy8+",
+          size: 5,
+        },
+      ]}
+    >
+      <MessagePreview msg={parseMessageWithAction({ content: "hi" })} />
+    </PreviewAttachmentsContext.Provider>,
+  );
+
+  expect(container.querySelector(".discord-attachment-image")).toBeNull();
+  expect(screen.getByText("logo.svg")).toBeVisible();
 });
 
 test("a Components V2 message only shows the attachments its components use", () => {

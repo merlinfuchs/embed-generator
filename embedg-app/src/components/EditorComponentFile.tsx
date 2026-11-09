@@ -44,7 +44,7 @@ export default function EditorComponentFile({
       <div className="space-y-4">
         <div className="flex space-x-3">
           <EditorInput
-            label="File URL"
+            label="Attachment"
             value={data.file.url}
             onChange={(v) => update<FileNode>(id, { file: { url: v } })}
             className="flex-auto"
@@ -69,8 +69,8 @@ export default function EditorComponentFile({
         </div>
         {missing && (
           <div className="text-sm text-amber-300">
-            This message has no attachment with that name. Add the file again
-            with the + button.
+            No file with this name is attached. Saved and shared messages don't
+            keep their files, so attach it again.
           </div>
         )}
       </div>

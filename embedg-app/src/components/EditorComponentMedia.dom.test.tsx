@@ -168,7 +168,7 @@ test("a file with no attachment of that name says so", () => {
   });
   renderEditor(<EditorComponents defaultCollapsed={false} />);
 
-  expect(screen.getByText(/no attachment with that name/)).toBeVisible();
+  expect(screen.getByText(/No file with this name/)).toBeVisible();
 });
 
 test("a file with an attachment of that name doesn't", () => {
@@ -184,5 +184,5 @@ test("a file with an attachment of that name doesn't", () => {
   });
   renderEditor(<EditorComponents defaultCollapsed={false} />);
 
-  expect(screen.queryByText(/no attachment with that name/)).toBeNull();
+  expect(screen.queryByText(/No file with this name/)).toBeNull();
 });
