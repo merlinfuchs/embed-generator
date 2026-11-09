@@ -47,3 +47,13 @@ test("files that go over the per message limit together are refused", async () =
     expect(useCurrentAttachmentsStore.getState().attachments).toHaveLength(1),
   );
 });
+
+test("names are cleaned and kept apart so attachment:// references match", async () => {
+  select(new File(["a"], "my notes.txt"), new File(["b"], "my notes.txt"));
+
+  await waitFor(() =>
+    expect(
+      useCurrentAttachmentsStore.getState().attachments.map((a) => a.name),
+    ).toEqual(["my_notes.txt", "my_notes-1.txt"]),
+  );
+});

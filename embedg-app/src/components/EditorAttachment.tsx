@@ -1,9 +1,10 @@
 import { useShallow } from "zustand/react/shallow";
-import { useCurrentAttachmentsStore } from "../state/attachments";
+import {
+  isInlineImage,
+  useCurrentAttachmentsStore,
+} from "../state/attachments";
 import { TrashIcon } from "@heroicons/react/20/solid";
 import { DocumentIcon } from "@heroicons/react/24/outline";
-
-const isImageRegex = /^data:image\//;
 
 interface Props {
   index: number;
@@ -22,7 +23,7 @@ export default function EditorAttachment({ index }: Props) {
     useShallow((state) => [state.removeAttachment]),
   );
 
-  const isImage = isImageRegex.test(dataUrl);
+  const isImage = isInlineImage(dataUrl);
 
   return (
     <div className="bg-ink-700 w-56 mr-3 mb-3 rounded-lg space-y-2 p-2 overflow-none">

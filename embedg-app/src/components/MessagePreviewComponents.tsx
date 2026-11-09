@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useContext, useState } from "react";
 import type {
   MessageComponent,
   MessageComponentActionRow,
@@ -11,6 +11,7 @@ import type {
   MessageComponentSelectMenu,
   MessageComponentSeparator,
   MessageComponentThumbnail,
+  MessageEmbed,
   UnfurledMediaItem,
 } from "../discord/schema";
 // @ts-expect-error untyped
@@ -18,6 +19,16 @@ import { toHTML } from "../discord/markdown";
 import { emojiUrl } from "../discord/cdn";
 import { colorIntToHex } from "../util/discord";
 import { safeHref } from "../util/url";
+import {
+  type MessageAttachment,
+  attachmentNames,
+  PreviewAttachmentsContext,
+  findAttachment,
+  formatFileSize,
+  isInlineImage,
+  resolvePreviewUrl,
+  usePreviewUrl,
+} from "../state/attachments";
 import Twemoji from "./Twemoji";
 
 const buttonColors = {
@@ -177,12 +188,13 @@ function PreviewThumbnail({
 }: {
   thumbnail: MessageComponentThumbnail;
 }) {
-  if (!thumbnail.media.url) return null;
+  const src = usePreviewUrl(thumbnail.media.url);
+  if (!src) return null;
 
   return (
     <Spoiler spoiler={thumbnail.spoiler}>
       <img
-        src={thumbnail.media.url}
+        src={src}
         alt={thumbnail.description ?? ""}
         className="discord-component-thumbnail"
       />
@@ -228,7 +240,13 @@ function PreviewMediaGallery({
 }: {
   gallery: MessageComponentMediaGallery;
 }) {
-  const items = gallery.items.filter((item) => item.media.url);
+  const attachments = useContext(PreviewAttachmentsContext);
+  const items = gallery.items
+    .map((item) => ({
+      item,
+      src: resolvePreviewUrl(attachments, item.media.url),
+    }))
+    .filter((entry) => entry.src);
   if (!items.length) return null;
 
   return (
@@ -241,10 +259,10 @@ function PreviewMediaGallery({
         gridTemplateColumns: `repeat(${galleryColumns(items.length)}, 1fr)`,
       }}
     >
-      {items.map((item) => (
+      {items.map(({ item, src }) => (
         <Spoiler key={item.id} spoiler={item.spoiler}>
           <img
-            src={item.media.url}
+            src={src}
             alt={item.description ?? ""}
             className="discord-component-gallery-item"
           />
@@ -255,6 +273,9 @@ function PreviewMediaGallery({
 }
 
 function fileName(media: UnfurledMediaItem): string {
+  const names = attachmentNames(media.url);
+  if (names) return names[1] || "file";
+
   try {
     const path = new URL(media.url).pathname;
     return decodeURIComponent(path.slice(path.lastIndexOf("/") + 1)) || "file";
@@ -263,19 +284,82 @@ function fileName(media: UnfurledMediaItem): string {
   }
 }
 
+function FileRow({ name, size }: { name: string; size?: number }) {
+  return (
+    <div className="discord-component-file">
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          fill="currentColor"
+          d="M13 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V9L13 2ZM13 10V3.5L18.5 10H13Z"
+        ></path>
+      </svg>
+      <span>{name}</span>
+      {size !== undefined && (
+        <span className="discord-component-file-size">
+          {formatFileSize(size)}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function PreviewFile({ file }: { file: MessageComponentFile }) {
+  const attachment = findAttachment(
+    useContext(PreviewAttachmentsContext),
+    file.file.url,
+  );
+
   return (
     <Spoiler spoiler={file.spoiler}>
-      <div className="discord-component-file">
-        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M13 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V9L13 2ZM13 10V3.5L18.5 10H13Z"
-          ></path>
-        </svg>
-        <span>{fileName(file.file)}</span>
-      </div>
+      <FileRow
+        name={attachment?.name ?? fileName(file.file)}
+        size={attachment?.size}
+      />
     </Spoiler>
+  );
+}
+
+/**
+ * The attachments Discord shows between the body of a message that isn't using Components V2 and
+ * its embeds, which leaves out the ones an embed has taken for its images.
+ */
+export function PreviewAttachments({ embeds }: { embeds: MessageEmbed[] }) {
+  const attachments = useContext(PreviewAttachmentsContext);
+
+  const used = new Set<MessageAttachment | undefined>();
+  for (const embed of embeds) {
+    for (const url of [
+      embed.image?.url,
+      embed.thumbnail?.url,
+      embed.author?.icon_url,
+      embed.footer?.icon_url,
+    ]) {
+      used.add(findAttachment(attachments, url));
+    }
+  }
+
+  const shown = attachments.filter((a) => !used.has(a));
+  if (!shown.length) return null;
+
+  return (
+    <div className="discord-attachments">
+      {shown.map((attachment) =>
+        isInlineImage(attachment.data_url) ? (
+          <img
+            key={attachment.id}
+            src={attachment.data_url}
+            alt={attachment.name}
+            className="discord-attachment-image"
+          />
+        ) : (
+          <FileRow
+            key={attachment.id}
+            name={attachment.name}
+            size={attachment.size}
+          />
+        ),
+      )}
+    </div>
   );
 }
 

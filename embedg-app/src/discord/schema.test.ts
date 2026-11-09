@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import {
   COMPONENTS_V2_FLAG,
+  componentFileSchema,
   embedImageUrlSchema,
   embedTextLength,
   embedTimestampSchema,
@@ -27,6 +28,16 @@ test("an attachment reference is a valid url", () => {
 test("an attachment reference needs a filename", () => {
   expect(isValidMediaUrl("attachment://")).toBe(false);
   expect(isValidMediaUrl("see attachment://clip.mp4")).toBe(false);
+});
+
+test("a file component only takes an attachment", () => {
+  const isValid = (url: string) =>
+    componentFileSchema.safeParse({ type: 13, file: { url } }).success;
+
+  expect(isValid("attachment://notes.txt")).toBe(true);
+  expect(isValid("{{file}}")).toBe(true);
+  expect(isValid("https://message.style/notes.txt")).toBe(false);
+  expect(isValid("")).toBe(false);
 });
 
 test("embed text counts what Discord counts towards its limit", () => {

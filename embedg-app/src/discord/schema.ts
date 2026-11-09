@@ -21,6 +21,19 @@ const urlRefinement: [(v: string) => boolean, string] = [
   "Invalid URL",
 ];
 
+// Discord only takes files sent with the message here, not links.
+const attachmentRefinement: [
+  (v: string) => boolean,
+  (v: string) => { message: string },
+] = [
+  (v) => !!v.match(VARIABLE_RE) || !!v.match(ATTACHMENT_RE),
+  (v) => ({
+    message: v
+      ? "Attach a file instead. Discord doesn't accept links here."
+      : "Attach a file.",
+  }),
+];
+
 const _IMAGE_PATH_RE = /\.(png|jpg|jpeg|webp|gif)$/;
 const imageUrlRefinement: [(v: string) => boolean, string] = [
   (v) => {
@@ -424,7 +437,9 @@ export type MessageComponentMediaGallery = z.infer<
 export const componentFileSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
   type: z.literal(13),
-  file: unfurledMediaItemSchema,
+  file: z.object({
+    url: z.string().refine(...attachmentRefinement),
+  }),
   spoiler: z.optional(z.boolean()),
 });
 
