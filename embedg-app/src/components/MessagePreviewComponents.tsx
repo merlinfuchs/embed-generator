@@ -20,8 +20,8 @@ import { emojiUrl } from "../discord/cdn";
 import { colorIntToHex } from "../util/discord";
 import { safeHref } from "../util/url";
 import {
-  ATTACHMENT_URL_PREFIX,
   type MessageAttachment,
+  attachmentNames,
   PreviewAttachmentsContext,
   findAttachment,
   formatFileSize,
@@ -273,9 +273,8 @@ function PreviewMediaGallery({
 }
 
 function fileName(media: UnfurledMediaItem): string {
-  if (media.url.startsWith(ATTACHMENT_URL_PREFIX)) {
-    return media.url.slice(ATTACHMENT_URL_PREFIX.length) || "file";
-  }
+  const names = attachmentNames(media.url);
+  if (names) return names[1] || "file";
 
   try {
     const path = new URL(media.url).pathname;
@@ -345,7 +344,7 @@ export function PreviewAttachments({ embeds }: { embeds: MessageEmbed[] }) {
   return (
     <div className="discord-attachments">
       {shown.map((attachment) =>
-        isInlineImage(attachment) ? (
+        isInlineImage(attachment.data_url) ? (
           <img
             key={attachment.id}
             src={attachment.data_url}

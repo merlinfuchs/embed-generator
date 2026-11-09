@@ -22,9 +22,16 @@ const urlRefinement: [(v: string) => boolean, string] = [
 ];
 
 // Discord only takes files sent with the message here, not links.
-const attachmentRefinement: [(v: string) => boolean, string] = [
+const attachmentRefinement: [
+  (v: string) => boolean,
+  (v: string) => { message: string },
+] = [
   (v) => !!v.match(VARIABLE_RE) || !!v.match(ATTACHMENT_RE),
-  "Attach a file instead. Discord doesn't accept links here.",
+  (v) => ({
+    message: v
+      ? "Attach a file instead. Discord doesn't accept links here."
+      : "Attach a file.",
+  }),
 ];
 
 const _IMAGE_PATH_RE = /\.(png|jpg|jpeg|webp|gif)$/;

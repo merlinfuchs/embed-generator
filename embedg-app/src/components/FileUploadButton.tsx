@@ -25,6 +25,10 @@ export default function FileUploadButton({ onChange }: Props) {
   const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Ids for keys, as names from a restored message aren't always unique.
+  const ids = useCurrentAttachmentsStore(
+    useShallow((state) => state.attachments.map((a) => a.id)),
+  );
   const existing = useCurrentAttachmentsStore(
     useShallow((state) => state.attachments.map((a) => a.name)),
   );
@@ -80,9 +84,9 @@ export default function FileUploadButton({ onChange }: Props) {
               Attachments
             </div>
             <div className="max-h-48 overflow-y-auto">
-              {existing.map((name) => (
+              {existing.map((name, i) => (
                 <button
-                  key={name}
+                  key={ids[i]}
                   type="button"
                   className="w-full text-left px-3 py-2 hover:bg-ink-700 flex items-center space-x-2"
                   onClick={() => {

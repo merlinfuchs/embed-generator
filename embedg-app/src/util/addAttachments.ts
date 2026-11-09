@@ -20,6 +20,36 @@ function readAsDataUrl(file: File): Promise<string> {
   });
 }
 
+type LimitError = { title: string; message: string; full?: boolean };
+
+/** Why a file can't join attachments that already take `count` slots and `total` bytes. */
+function limitError(
+  file: File,
+  count: number,
+  total: number,
+): LimitError | null {
+  if (file.size > MAX_FILE_BYTES) {
+    return {
+      title: "File too large",
+      message: `'${file.name}' is larger than the ${formatMB(MAX_FILE_BYTES)} limit.`,
+    };
+  }
+  if (total + file.size > MAX_TOTAL_ATTACHMENT_BYTES) {
+    return {
+      title: "Attachments too large",
+      message: `All attachments together can't be larger than ${formatMB(MAX_TOTAL_ATTACHMENT_BYTES)}.`,
+    };
+  }
+  if (count >= MAX_ATTACHMENTS) {
+    return {
+      title: "Too many attachments",
+      message: `A message can have at most ${MAX_ATTACHMENTS} attachments.`,
+      full: true,
+    };
+  }
+  return null;
+}
+
 /**
  * Adds files to the message's attachments within Discord's limits, telling the user about each one
  * that doesn't fit. Names are rewritten the way Discord would store them, so an attachment://
@@ -31,68 +61,60 @@ export async function addAttachments(
 ): Promise<MessageAttachment[]> {
   const createToast = useToasts.getState().create;
   const store = useCurrentAttachmentsStore;
-  const current = store.getState().attachments;
 
-  let remaining = MAX_ATTACHMENTS - current.length;
+  // Tells the user why a file doesn't fit, if it doesn't.
+  function refuse(file: File, count: number, total: number) {
+    const error = limitError(file, count, total);
+    if (error) createToast({ ...error, type: "error" });
+    return error;
+  }
+
+  const current = store.getState().attachments;
+  let count = current.length;
   let total = current.reduce((sum, a) => sum + a.size, 0);
   const accepted: File[] = [];
 
   for (const file of files) {
-    if (file.size > MAX_FILE_BYTES) {
-      createToast({
-        title: "File too large",
-        message: `'${file.name}' is larger than the ${formatMB(MAX_FILE_BYTES)} limit.`,
-        type: "error",
-      });
-      continue;
-    }
-    if (total + file.size > MAX_TOTAL_ATTACHMENT_BYTES) {
-      createToast({
-        title: "Attachments too large",
-        message: `All attachments together can't be larger than ${formatMB(MAX_TOTAL_ATTACHMENT_BYTES)}.`,
-        type: "error",
-      });
-      continue;
-    }
-
-    // The count is only known to be full once files are being picked, as several can arrive at
-    // once.
-    if (remaining <= 0) {
-      createToast({
-        title: "Too many attachments",
-        message: `A message can have at most ${MAX_ATTACHMENTS} attachments.`,
-        type: "error",
-      });
-      break;
-    }
-    remaining--;
+    const error = refuse(file, count, total);
+    if (error?.full) break;
+    if (error) continue;
+    count++;
     total += file.size;
     accepted.push(file);
   }
 
-  let dataUrls: string[];
-  try {
-    dataUrls = await Promise.all(accepted.map(readAsDataUrl));
-  } catch {
-    createToast({
-      title: "Couldn't read the file",
-      message: "Try picking it again.",
-      type: "error",
-    });
-    return [];
-  }
+  const read = await Promise.allSettled(accepted.map(readAsDataUrl));
 
   const added: MessageAttachment[] = [];
   accepted.forEach((file, i) => {
-    const taken = store.getState().attachments.map((a) => a.name);
-    const name = uniqueAttachmentName(sanitizeAttachmentName(file.name), taken);
+    const result = read[i];
+    if (result.status === "rejected") {
+      createToast({
+        title: "Couldn't read the file",
+        message: `'${file.name}' couldn't be read. Try picking it again.`,
+        type: "error",
+      });
+      return;
+    }
+
+    // Other files may have been added while these were read.
+    const attachments = store.getState().attachments;
+    const error = refuse(
+      file,
+      attachments.length,
+      attachments.reduce((sum, a) => sum + a.size, 0),
+    );
+    if (error) return;
 
     const attachment: MessageAttachment = {
       id: getUniqueId(),
       size: file.size,
-      name,
+      name: uniqueAttachmentName(
+        sanitizeAttachmentName(file.name),
+        attachments.map((a) => a.name),
+      ),
       description: null,
-      data_url: dataUrls[i],
+      data_url: result.value,
     };
     store.getState().addAttachment(attachment);
     added.push(attachment);

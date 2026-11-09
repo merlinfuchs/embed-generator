@@ -37,6 +37,7 @@ test("a file component only takes an attachment", () => {
   expect(isValid("attachment://notes.txt")).toBe(true);
   expect(isValid("{{file}}")).toBe(true);
   expect(isValid("https://message.style/notes.txt")).toBe(false);
+  expect(isValid("")).toBe(false);
 });
 
 test("embed text counts what Discord counts towards its limit", () => {

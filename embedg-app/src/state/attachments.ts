@@ -76,22 +76,29 @@ export function attachmentUrl(name: string): string {
   return `${ATTACHMENT_URL_PREFIX}${name}`;
 }
 
+/** The file name an attachment:// URL refers to, as typed and unescaped. */
+export function attachmentNames(
+  url: string | undefined | null,
+): [string, string] | undefined {
+  if (!url?.startsWith(ATTACHMENT_URL_PREFIX)) return undefined;
+
+  const ref = url.slice(ATTACHMENT_URL_PREFIX.length);
+  try {
+    return [ref, decodeURIComponent(ref)];
+  } catch {
+    // Not escaped, so the name is taken as typed.
+    return [ref, ref];
+  }
+}
+
 /** The attachment an attachment:// URL points to, if the message has it. */
 export function findAttachment(
   attachments: MessageAttachment[],
   url: string | undefined | null,
 ): MessageAttachment | undefined {
-  if (!url?.startsWith(ATTACHMENT_URL_PREFIX)) return undefined;
-
-  const ref = url.slice(ATTACHMENT_URL_PREFIX.length);
-  let decoded = ref;
-  try {
-    decoded = decodeURIComponent(ref);
-  } catch {
-    // Not escaped, so the name is taken as typed.
-  }
-
-  return attachments.find((a) => a.name === ref || a.name === decoded);
+  const names = attachmentNames(url);
+  if (!names) return undefined;
+  return attachments.find((a) => names.includes(a.name));
 }
 
 /**
@@ -123,8 +130,8 @@ export function usePreviewUrl(
 // The formats Discord shows inline. Anything else, SVG included, is shown as a file.
 const INLINE_IMAGE_RE = /^data:image\/(png|jpeg|gif|webp)[;,]/;
 
-export function isInlineImage(attachment: MessageAttachment): boolean {
-  return INLINE_IMAGE_RE.test(attachment.data_url);
+export function isInlineImage(dataUrl: string): boolean {
+  return INLINE_IMAGE_RE.test(dataUrl);
 }
 
 /** The size the way Discord shows it next to a file. */
@@ -135,13 +142,20 @@ export function formatFileSize(bytes: number): string {
   return formatMB(bytes);
 }
 
+const UNSAFE_NAME_CHARS_RE = /[^A-Za-z0-9._-]+/g;
+
 /**
  * A name that Discord keeps as it is, since it turns spaces and the like into
  * underscores and an attachment:// reference only matches the name it stored.
  */
 export function sanitizeAttachmentName(name: string): string {
-  const cleaned = name.replace(/[^A-Za-z0-9._-]+/g, "_").replace(/^[._]+/, "");
-  return cleaned || "file";
+  const dot = name.lastIndexOf(".");
+  const base = dot > 0 ? name.slice(0, dot) : name;
+  const ext = dot > 0 ? name.slice(dot).replace(UNSAFE_NAME_CHARS_RE, "") : "";
+
+  const cleaned = base.replace(UNSAFE_NAME_CHARS_RE, "_").replace(/^[._]+/, "");
+  // A name in another script has nothing left, so it keeps only its extension.
+  return (/[A-Za-z0-9]/.test(cleaned) ? cleaned : "file") + ext;
 }
 
 /** The name, or the name with a counter before its extension when another attachment has it. */
