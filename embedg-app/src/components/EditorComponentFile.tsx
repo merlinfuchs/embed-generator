@@ -6,7 +6,11 @@ import {
   useDocumentStoreApi,
 } from "../state/document";
 import { nodeField, nodeScope } from "../state/validationError";
-import { useAttachmentForUrl } from "../state/attachments";
+import {
+  ATTACHMENT_URL_PREFIX,
+  findAttachment,
+  useCurrentAttachmentsStore,
+} from "../state/attachments";
 import CheckBox from "./CheckBox";
 import EditorComponentCollapsable from "./EditorComponentCollapsable";
 import EditorInput from "./EditorInput";
@@ -26,12 +30,14 @@ export default function EditorComponentFile({
   const actions = useNodeActions(id);
   const { update } = useDocumentStoreApi().getState();
 
-  const attachment = useAttachmentForUrl(data?.file.url);
+  // A saved or shared message keeps the reference but not the file.
+  const missing = useCurrentAttachmentsStore(
+    (state) =>
+      !!data?.file.url.startsWith(ATTACHMENT_URL_PREFIX) &&
+      !findAttachment(state.attachments, data.file.url),
+  );
 
   if (!data) return null;
-
-  // A saved or shared message keeps the reference but not the file.
-  const missing = data.file.url.startsWith("attachment://") && !attachment;
 
   return (
     <EditorComponentCollapsable

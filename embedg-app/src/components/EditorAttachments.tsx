@@ -11,7 +11,7 @@ import Collapsable from "./Collapsable";
 import { type ChangeEvent, useRef } from "react";
 import EditorAttachment from "./EditorAttachment";
 import { useComponentsV2Enabled } from "../state/document";
-import { useAddAttachments } from "../util/useAddAttachments";
+import { addAttachments } from "../util/addAttachments";
 
 export default function EditorAttachments() {
   const attachments = useCurrentAttachmentsStore(
@@ -27,8 +27,6 @@ export default function EditorAttachments() {
   const clearAttachments = useCurrentAttachmentsStore(
     (state) => state.clearAttachments,
   );
-
-  const addAttachments = useAddAttachments();
 
   const inputRef = useRef<HTMLInputElement>(null);
 

@@ -94,27 +94,11 @@ export function findAttachment(
   return attachments.find((a) => a.name === ref || a.name === decoded);
 }
 
-/** Subscribes to the attachment a URL points to in the editor, so it follows removals. */
-export function useAttachmentForUrl(
-  url: string | undefined | null,
-): MessageAttachment | undefined {
-  return useCurrentAttachmentsStore((state) =>
-    findAttachment(state.attachments, url),
-  );
-}
-
 /**
  * The attachments a preview resolves attachment:// URLs against. Only the editor's own preview
  * provides them, as a restored, shared or response message isn't sent with these files.
  */
 export const PreviewAttachmentsContext = createContext<MessageAttachment[]>([]);
-
-/** The attachment a preview's attachment:// URL points to. */
-export function usePreviewAttachment(
-  url: string | undefined | null,
-): MessageAttachment | undefined {
-  return findAttachment(useContext(PreviewAttachmentsContext), url);
-}
 
 /**
  * What an image in the preview should load: the file itself for an attachment, nothing for one the

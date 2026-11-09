@@ -9,7 +9,7 @@ import {
   attachmentUrl,
   useCurrentAttachmentsStore,
 } from "../state/attachments";
-import { useAddAttachments } from "../util/useAddAttachments";
+import { addAttachments } from "../util/addAttachments";
 import ClickOutsideHandler from "./ClickOutsideHandler";
 
 interface Props {
@@ -24,7 +24,6 @@ interface Props {
 export default function FileUploadButton({ onChange }: Props) {
   const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const addAttachments = useAddAttachments();
 
   const existing = useCurrentAttachmentsStore(
     useShallow((state) => state.attachments.map((a) => a.name)),

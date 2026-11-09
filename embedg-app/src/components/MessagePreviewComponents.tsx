@@ -27,7 +27,6 @@ import {
   formatFileSize,
   isInlineImage,
   resolvePreviewUrl,
-  usePreviewAttachment,
   usePreviewUrl,
 } from "../state/attachments";
 import Twemoji from "./Twemoji";
@@ -306,7 +305,10 @@ function FileRow({ name, size }: { name: string; size?: number }) {
 }
 
 function PreviewFile({ file }: { file: MessageComponentFile }) {
-  const attachment = usePreviewAttachment(file.file.url);
+  const attachment = findAttachment(
+    useContext(PreviewAttachmentsContext),
+    file.file.url,
+  );
 
   return (
     <Spoiler spoiler={file.spoiler}>
