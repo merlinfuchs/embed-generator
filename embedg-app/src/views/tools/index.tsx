@@ -1,4 +1,5 @@
 import {
+  ClockIcon,
   CodeBracketSquareIcon,
   PhotoIcon,
   SwatchIcon,
@@ -75,8 +76,7 @@ export default function ToolsView() {
               </div>
             </div>
           </Link>
-          {/* 
-        <Link
+          <Link
             className="p-5 bg-ink-700 rounded-xl flex cursor-pointer space-x-5 transform hover:scale-101"
             to="/tools/timestamps"
           >
@@ -85,7 +85,7 @@ export default function ToolsView() {
             </div>
             <div>
               <div className="text-white font-medium mb-3 text-xl transition-transform">
-                Timestamp Formatter
+                Timestamp Generator
               </div>
               <div className="text-mist-400 font-light text-sm">
                 Discord supports putting timestamps in messages which respect
@@ -94,7 +94,6 @@ export default function ToolsView() {
               </div>
             </div>
           </Link>
-          */}
         </div>
       </div>
     </div>

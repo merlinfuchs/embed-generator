@@ -82,14 +82,14 @@ export const pages: Page[] = [
     path: "/tools",
     title: "Free Discord Tools | Embed Generator",
     description:
-      "Free Discord tools: a colored text generator, embed links that unfurl into rich previews and a webhook info lookup. No account needed.",
+      "Free Discord tools: a colored text generator, a timestamp generator, embed links that unfurl into rich previews and a webhook info lookup. No account needed.",
     heading: "Free Discord Tools",
     preview: {
       byline: "Embed Generator · Tools",
       open: "All tools",
       docs: `${ORIGIN}/docs/tools`,
     },
-    text: "Besides the message editor, Embed Generator has a few small tools: a colored text generator for ANSI code blocks, embed links that turn into a rich preview when posted, and a lookup that shows who created a webhook.",
+    text: "Besides the message editor, Embed Generator has a few small tools: a colored text generator for ANSI code blocks, a timestamp generator for times that show in everyone's own timezone, embed links that turn into a rich preview when posted, and a lookup that shows who created a webhook.",
   },
   {
     file: "tools/colored-text",
@@ -110,6 +110,16 @@ export const pages: Page[] = [
     heading: "Discord Embed Link Generator",
     preview: toolPreview,
     text: "An embed link is a URL that Discord shows as an embed when it's posted. Set a title, description, image and color, or a Components V2 layout, and share the link anywhere in Discord, no webhook or bot required.",
+  },
+  {
+    file: "tools/timestamps",
+    path: "/tools/timestamps",
+    title: "Discord Timestamp Generator | Embed Generator",
+    description:
+      'Make Discord timestamps: pick a date, time and timezone, then copy the code for any format, including relative times like "in 3 hours".',
+    heading: "Discord Timestamp Generator",
+    preview: toolPreview,
+    text: "A Discord timestamp shows the same moment in every reader's own timezone and language. Pick a date, time and timezone, and copy the format you want into any Discord message.",
   },
   {
     file: "tools/webhook-info",
