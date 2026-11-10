@@ -155,8 +155,14 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 			// Discord shows the picked option until the message changes. Sending its components back
 			// unchanged shows the placeholder again, and lets the same option be picked twice in a
 			// row. The actions' responses go out as followups.
+			//
+			// Without allowed mentions Discord pings every mention in the message again. An empty
+			// parse list is what turns that off, a missing or null one means the default of all.
 			components := compInteraction.Message.Components
-			i.Respond(discord.MessageUpdate{Components: &components}, discord.InteractionResponseTypeUpdateMessage)
+			i.Respond(discord.MessageUpdate{
+				Components:      &components,
+				AllowedMentions: &discord.AllowedMentions{Parse: []discord.AllowedMentionType{}},
+			}, discord.InteractionResponseTypeUpdateMessage)
 		}
 	} else if interaction.Type() == discord.InteractionTypeApplicationCommand {
 		appCommandInteraction := interaction.(discord.ApplicationCommandInteraction)

@@ -2,6 +2,8 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/disgoorg/disgo/discord"
@@ -146,6 +148,14 @@ func TestSelectMenuReset(t *testing.T) {
 			}
 			if f.initial[0].Type != discord.InteractionResponseTypeUpdateMessage || len(*update.Components) != 1 {
 				t.Fatalf("want the message's components back, got %+v", f.initial[0])
+			}
+			// Re-sending the components must not ping the mentions in them again.
+			raw, err := json.Marshal(update)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(string(raw), `"allowed_mentions":{"parse":[]`) {
+				t.Fatalf("want no mentions allowed, got %s", raw)
 			}
 			if len(f.followups) != 1 || f.followups[0].Content != "hi" {
 				t.Fatalf("want the reply as a followup, got %+v", f.followups)
