@@ -151,7 +151,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 		actionSet = col.Actions
 		derivedPerms = col.DerivedPermissions
 
-		if resetSelection && !editsMessage(actionSet) {
+		if resetSelection && !startsWithEdit(actionSet) {
 			// Discord shows the picked option until the message changes. Sending its components back
 			// unchanged shows the placeholder again, and lets the same option be picked twice in a
 			// row. The actions' responses go out as followups.
@@ -540,12 +540,15 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 	return nil
 }
 
-// editsMessage is whether the action set edits the message its component is on, which resets a
-// select menu by itself.
-func editsMessage(actionSet actions.ActionSet) bool {
-	return slices.ContainsFunc(actionSet.Actions, func(a actions.Action) bool {
-		return a.Type == actions.ActionTypeTextEdit || a.Type == actions.ActionTypeSavedMessageEdit
-	})
+// startsWithEdit is whether the action set's first response edits the message its component is on,
+// which resets a select menu by itself. An edit after another response would edit that response
+// instead, unless the reset went first.
+func startsWithEdit(actionSet actions.ActionSet) bool {
+	if len(actionSet.Actions) == 0 {
+		return false
+	}
+	t := actionSet.Actions[0].Type
+	return t == actions.ActionTypeTextEdit || t == actions.ActionTypeSavedMessageEdit
 }
 
 // actionAllowedMentions is who an action's response may ping: users, and roles and @everyone only

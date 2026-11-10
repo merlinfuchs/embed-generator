@@ -118,6 +118,7 @@ func TestSelectMenuReset(t *testing.T) {
 		{"reset", "action:options:reset:a", actions.ActionSet{Actions: []actions.Action{reply}}, true},
 		{"no reset", "action:options:a", actions.ActionSet{Actions: []actions.Action{reply}}, false},
 		{"reset with an edit", "action:options:reset:a", actions.ActionSet{Actions: []actions.Action{edit}}, false},
+		{"reset with an edit after a reply", "action:options:reset:a", actions.ActionSet{Actions: []actions.Action{reply, edit}}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -148,6 +149,12 @@ func TestSelectMenuReset(t *testing.T) {
 			}
 			if len(f.followups) != 1 || f.followups[0].Content != "hi" {
 				t.Fatalf("want the reply as a followup, got %+v", f.followups)
+			}
+			// After the reset, an edit goes to the original response, which is the select's message.
+			for _, e := range f.edits {
+				if e.Content == nil || *e.Content != "edited" {
+					t.Fatalf("want the edit of the select's message, got %+v", e)
+				}
 			}
 		})
 	}
