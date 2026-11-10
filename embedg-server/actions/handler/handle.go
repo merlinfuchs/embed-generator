@@ -122,8 +122,9 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 		}
 
 		actionSetID := data.CustomID()[7:]
+		resetSelection := strings.HasPrefix(data.CustomID(), actions.ResetSelectMenuCustomIDPrefix)
 
-		if strings.HasPrefix(actionSetID, "options:") {
+		if strings.HasPrefix(data.CustomID(), actions.SelectMenuCustomIDPrefix) {
 			// Handle select menu values
 			selectData, ok := data.(discord.StringSelectMenuInteractionData)
 			// A select menu with min_values 0 can be submitted with nothing selected, which leaves
@@ -149,6 +150,14 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 		}
 		actionSet = col.Actions
 		derivedPerms = col.DerivedPermissions
+
+		if resetSelection && !startsWithEdit(actionSet) {
+			// Discord shows the picked option until the message changes. Sending its components back
+			// unchanged shows the placeholder again, and lets the same option be picked twice in a
+			// row. The actions' responses go out as followups.
+			components := compInteraction.Message.Components
+			i.Respond(discord.MessageUpdate{Components: &components}, discord.InteractionResponseTypeUpdateMessage)
+		}
 	} else if interaction.Type() == discord.InteractionTypeApplicationCommand {
 		appCommandInteraction := interaction.(discord.ApplicationCommandInteraction)
 		slashData := appCommandInteraction.SlashCommandInteractionData()
@@ -529,6 +538,17 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 	}
 
 	return nil
+}
+
+// startsWithEdit is whether the action set's first response edits the message its component is on,
+// which resets a select menu by itself. An edit after another response would edit that response
+// instead, unless the reset went first.
+func startsWithEdit(actionSet actions.ActionSet) bool {
+	if len(actionSet.Actions) == 0 {
+		return false
+	}
+	t := actionSet.Actions[0].Type
+	return t == actions.ActionTypeTextEdit || t == actions.ActionTypeSavedMessageEdit
 }
 
 // actionAllowedMentions is who an action's response may ping: users, and roles and @everyone only

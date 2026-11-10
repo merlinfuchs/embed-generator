@@ -305,6 +305,7 @@ export const componentSelectMenuSchema = z.object({
   type: z.literal(3),
   placeholder: z.preprocess((d) => d ?? undefined, z.optional(z.string())),
   disabled: z.preprocess((d) => d ?? undefined, z.optional(z.boolean())),
+  reset_selection: z.preprocess((d) => d ?? undefined, z.optional(z.boolean())),
   options: z.preprocess(
     (d) => d ?? undefined,
     z.array(componentSelectMenuOptionSchema).default([]),

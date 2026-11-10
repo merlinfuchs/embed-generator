@@ -106,6 +106,8 @@ export type SelectMenuNode = BaseNode & {
   type: "selectMenu";
   placeholder?: string;
   disabled?: boolean;
+  /** Shows the placeholder again after each pick. */
+  reset_selection?: boolean;
   optionIds: NodeId[];
 };
 
