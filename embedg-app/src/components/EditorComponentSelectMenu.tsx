@@ -48,6 +48,18 @@ export default function EditorComponentSelectMenu({ id }: Props) {
             onChange={(v) => update<SelectMenuNode>(id, { disabled: v })}
           />
         </div>
+        <div className="flex-none">
+          <div className="uppercase text-mist-300 text-sm font-medium mb-1.5 whitespace-nowrap">
+            Clear after use
+          </div>
+          <CheckBox
+            label="Show the placeholder again after each pick"
+            checked={data.reset_selection ?? false}
+            onChange={(v) =>
+              update<SelectMenuNode>(id, { reset_selection: v || undefined })
+            }
+          />
+        </div>
       </div>
       <Collapsable
         id={`${id}.options`}

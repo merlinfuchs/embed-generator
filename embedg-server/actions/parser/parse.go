@@ -116,8 +116,13 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions, 
 			}
 		}
 
+		customID := actions.SelectMenuCustomIDPrefix
+		if data.ResetSelection {
+			customID = actions.ResetSelectMenuCustomIDPrefix
+		}
+
 		return discord.StringSelectMenuComponent{
-			CustomID:    "action:options:" + common.InternalID(),
+			CustomID:    customID + common.InternalID(),
 			Placeholder: data.Placeholder,
 			MinValues:   data.MinValues,
 			MaxValues:   data.MaxValues,
@@ -278,12 +283,13 @@ func (m *ActionParser) UnparseMessageComponent(data discord.Component) (actions.
 		}
 
 		return actions.ComponentWithActions{
-			Type:        discord.ComponentTypeStringSelectMenu,
-			Disabled:    c.Disabled,
-			Placeholder: c.Placeholder,
-			MinValues:   c.MinValues,
-			MaxValues:   c.MaxValues,
-			Options:     options,
+			Type:           discord.ComponentTypeStringSelectMenu,
+			Disabled:       c.Disabled,
+			Placeholder:    c.Placeholder,
+			MinValues:      c.MinValues,
+			MaxValues:      c.MaxValues,
+			Options:        options,
+			ResetSelection: strings.HasPrefix(c.CustomID, actions.ResetSelectMenuCustomIDPrefix),
 		}, nil
 	case discord.SectionComponent:
 		se := actions.ComponentWithActions{

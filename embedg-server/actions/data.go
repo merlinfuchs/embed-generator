@@ -140,6 +140,8 @@ type ComponentWithActions struct {
 	MinValues   *int                               `json:"min_values,omitempty"`
 	MaxValues   int                                `json:"max_values,omitempty"`
 	Options     []ComponentSelectOptionWithActions `json:"options,omitempty"`
+	// ResetSelection puts the select menu back to its placeholder after each use.
+	ResetSelection bool `json:"reset_selection,omitempty"`
 
 	// Section
 	Accessory *ComponentWithActions `json:"accessory"`
@@ -164,6 +166,14 @@ type ComponentWithActions struct {
 	// Container
 	AccentColor int `json:"accent_color,omitempty"`
 }
+
+// SelectMenuCustomIDPrefix starts the custom ID of every select menu with actions. The handler can
+// only tell from the custom ID that a select menu resets, so those carry
+// ResetSelectMenuCustomIDPrefix instead.
+const (
+	SelectMenuCustomIDPrefix      = "action:options:"
+	ResetSelectMenuCustomIDPrefix = SelectMenuCustomIDPrefix + "reset:"
+)
 
 // Interactive is whether the component needs the bot to handle it, unlike a link button.
 func (c ComponentWithActions) Interactive() bool {

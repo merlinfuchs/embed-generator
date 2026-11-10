@@ -353,6 +353,7 @@ export const componentSelectMenuSchema = z.object({
   type: z.literal(3),
   placeholder: z.optional(z.string().max(150)),
   disabled: z.optional(z.boolean()),
+  reset_selection: z.optional(z.boolean()),
   options: z.array(componentSelectMenuOptionSchema).min(1).max(25),
 });
 
