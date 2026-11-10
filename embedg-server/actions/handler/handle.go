@@ -391,8 +391,11 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				return templateErr(err)
 			}
 
+			// Without allowed mentions Discord would ping every mention in the message again, also
+			// the ones the action didn't add.
 			i.Respond(discord.MessageUpdate{
-				Content: &content,
+				Content:         &content,
+				AllowedMentions: actionAllowedMentions(action, nil),
 			}, discord.InteractionResponseTypeUpdateMessage)
 		case actions.ActionTypeSavedMessageEdit:
 			if interaction.GuildID() == nil {
@@ -418,10 +421,11 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 			}
 
 			newMsg := i.Respond(discord.MessageUpdate{
-				Content:    &data.Content,
-				Embeds:     &data.Embeds,
-				Components: &components,
-				Flags:      &data.Flags,
+				Content:         &data.Content,
+				Embeds:          &data.Embeds,
+				Components:      &components,
+				Flags:           &data.Flags,
+				AllowedMentions: actionAllowedMentions(action, data.AllowedMentions),
 			}, discord.InteractionResponseTypeUpdateMessage)
 
 			if compInteraction, ok := interaction.(discord.ComponentInteraction); ok {

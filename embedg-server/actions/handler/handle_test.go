@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"strings"
 	"testing"
 
@@ -167,5 +168,25 @@ func TestSelectMenuReset(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// An edit without allowed mentions would ping every role in the message again.
+func TestTextEditLimitsMentions(t *testing.T) {
+	edit := actions.Action{Type: actions.ActionTypeTextEdit, Text: "edited"}
+	h := &ActionHandler{actionSetStore: actionSetStore{set: actions.ActionSet{Actions: []actions.Action{edit}}}, planStore: freePlanStore{}}
+	i, f := newTestInteraction(mustInteraction(t, `{"id":"1","application_id":"2","type":3,"token":"t","version":1,
+		"guild_id":"6","channel":{"id":"4","type":0,"guild_id":"6","name":"c"},"member":{"user":{"id":"7","username":"u"},"roles":[],"permissions":"0"},
+		"data":{"component_type":2,"custom_id":"action:a"},"message":{"id":"3","channel_id":"4"}}`))
+
+	if err := h.HandleActionInteraction(f, i); err != nil {
+		t.Fatal(err)
+	}
+	if len(f.initial) != 1 {
+		t.Fatalf("want one initial response, got %+v", f.initial)
+	}
+	update, _ := f.initial[0].Data.(discord.MessageUpdate)
+	if update.AllowedMentions == nil || slices.Contains(update.AllowedMentions.Parse, discord.AllowedMentionTypeRoles) {
+		t.Fatalf("want role mentions left out, got %+v", update.AllowedMentions)
 	}
 }
