@@ -40,6 +40,7 @@ Features (feature | what it means for the user | free or paid):
 - Import Discohook JSON, backups, and ?data= links | bring existing messages over without rebuilding them | free
 - Fluxer webhooks | send the same messages to Fluxer | free
 - Colored Text Generator | text in red, green, blue, and other colors that Discord shows inside a code block | free
+- Timestamp Generator | pick a date, time, and timezone and copy a timestamp that shows in each reader's own timezone, including relative times like "in 3 hours" | free
 - /embed, /message, /format, and /image in Discord | build or copy messages without opening the website | free
 
 Plan limits are read from the prod config on 2026-11-02. That file is the source of truth. https://message.style/api/premium/plans serves the paid plans from it, but not the free one. embedg.example.toml is the dev config and doesn't match production.
@@ -82,7 +83,7 @@ Exact names of commands, settings, and pages users see:
 - /help, /invite, /website
 - Message context menu: Restore Message, Dump Message. User context menu: Avatar Url, Format Mention.
 - Send modes: Webhook and Channel.
-- App pages: Message Editor, Saved Messages, Scheduled Messages, Commands, Utility Tools (Colored Text Generator, Embed Links, Webhook Info), Premium, Settings. The editor is at message.style/app/editor.
+- App pages: Message Editor, Saved Messages, Scheduled Messages, Commands, Utility Tools (Colored Text Generator, Timestamp Generator, Embed Links, Webhook Info), Premium, Settings. The editor is at message.style/app/editor.
 - Plans: Free, Premium, and Ultimate.
 - Links: message.style/premium, /invite, /discord (support server), /source (GitHub), status.message.style.
 - Discord permissions by Discord's names, like Manage Webhooks, which /embed needs.

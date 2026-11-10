@@ -1,6 +1,6 @@
 ---
 sidebar_position: 5
-description: Free Discord tools from Embed Generator, a colored text generator using ANSI codes, embed links for sharing rich embeds, and a webhook info lookup.
+description: Free Discord tools from Embed Generator, a colored text generator using ANSI codes, a timestamp generator, embed links for sharing rich embeds, and a webhook info lookup.
 ---
 
 # Tools
@@ -10,6 +10,10 @@ Besides the message editor, Embed Generator has a few small free tools. None of 
 ## Colored Text Generator
 
 Discord renders ANSI color codes inside code blocks. The [Colored Text Generator](https://message.style/app/tools/colored-text) lets you type your text, pick foreground and background colors per word, and copy the result as a code block you can paste into any Discord message.
+
+## Timestamp Generator
+
+A Discord timestamp shows the same moment in each reader's own timezone and language. The [Timestamp Generator](https://message.style/app/tools/timestamps) lets you pick a date, time and timezone, see how every format looks, and copy the code for the one you want. It also has the relative format, like "in 3 hours", which keeps counting without anyone editing the message.
 
 ## Embed Links
 

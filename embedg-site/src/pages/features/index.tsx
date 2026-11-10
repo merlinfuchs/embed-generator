@@ -96,6 +96,12 @@ const more: { icon: Icon; name: string; text: string; href: string; premium?: bo
     href: "/app/tools/colored-text",
   },
   {
+    icon: ClockIcon,
+    name: "Timestamps",
+    text: "Times that show in everyone's own timezone, with relative times like \"in 3 hours\".",
+    href: "/app/tools/timestamps",
+  },
+  {
     icon: LinkIcon,
     name: "Embed links",
     text: "Links that unfurl into a rich embed when posted, no webhook needed.",
