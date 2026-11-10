@@ -1,11 +1,10 @@
 package custom_bots
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
-
-	"slices"
 
 	"log/slog"
 
@@ -110,25 +109,9 @@ func (h *CustomBotsHandler) HandleConfigureCustomBot(c *fiber.Ctx, req wire.Cust
 		}
 	}
 
-	// A guild the main bot can't see means no roles to check, not a failed request.
-	var roles []discord.Role
-	state, err := h.guildState.Guild(c.UserContext(), guildID)
-	if err != nil && !errors.Is(err, store.ErrNotFound) {
-		return fmt.Errorf("Failed to get guild state: %w", err)
-	} else if state != nil {
-		roles = state.Roles
-	}
-
-	hasPermissions := false
-	if isMember {
-		for _, role := range roles {
-			if slices.Contains(member.RoleIDs, role.ID) || role.ID == guildID {
-				if role.Permissions&discord.PermissionManageWebhooks != 0 {
-					hasPermissions = true
-					break
-				}
-			}
-		}
+	hasPermissions, err := h.hasManageWebhooks(c.UserContext(), guildID, member)
+	if err != nil {
+		return err
 	}
 
 	customBot, err := h.customBotManager.UpsertCustomBot(c.UserContext(), model.CustomBot{
@@ -237,6 +220,25 @@ func (h *CustomBotsHandler) HandleDisableCustomBot(c *fiber.Ctx) error {
 	})
 }
 
+// hasManageWebhooks checks the custom bot's guild permissions with the main bot's view of the guild.
+// A nil member is a bot that isn't in the guild, and a guild the main bot can't see has no roles to
+// check, so both are false rather than an error.
+func (h *CustomBotsHandler) hasManageWebhooks(ctx context.Context, guildID common.ID, member *discord.Member) (bool, error) {
+	if member == nil {
+		return false, nil
+	}
+
+	state, err := h.guildState.Guild(ctx, guildID)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return false, nil
+		}
+		return false, fmt.Errorf("Failed to get guild state: %w", err)
+	}
+
+	return access.GuildPermissions(state, *member).Has(discord.PermissionManageWebhooks), nil
+}
+
 func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 	guildID, err := handlers.QueryID(c, "guild_id")
 	if err != nil {
@@ -282,25 +284,9 @@ func (h *CustomBotsHandler) HandleGetCustomBot(c *fiber.Ctx) error {
 		}
 	}
 
-	// A guild the main bot can't see means no roles to check, not a failed request.
-	var roles []discord.Role
-	state, err := h.guildState.Guild(c.UserContext(), guildID)
-	if err != nil && !errors.Is(err, store.ErrNotFound) {
-		return fmt.Errorf("Failed to get guild state: %w", err)
-	} else if state != nil {
-		roles = state.Roles
-	}
-
-	hasPermissions := false
-	if member != nil {
-		for _, role := range roles {
-			if slices.Contains(member.RoleIDs, role.ID) || role.ID == guildID {
-				if role.Permissions&discord.PermissionManageWebhooks != 0 {
-					hasPermissions = true
-					break
-				}
-			}
-		}
+	hasPermissions, err := h.hasManageWebhooks(c.UserContext(), guildID, member)
+	if err != nil {
+		return err
 	}
 
 	return c.JSON(wire.CustomBotGetResponseWire{
