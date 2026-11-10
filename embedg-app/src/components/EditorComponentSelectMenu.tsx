@@ -27,7 +27,7 @@ export default function EditorComponentSelectMenu({ id }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex space-x-3">
+      <div className="flex flex-wrap gap-3">
         <EditorInput
           label="Placeholder"
           maxLength={150}
@@ -35,7 +35,7 @@ export default function EditorComponentSelectMenu({ id }: Props) {
           onChange={(v) =>
             update<SelectMenuNode>(id, { placeholder: v || undefined })
           }
-          className="flex-auto"
+          className="flex-auto basis-56"
           validationPath={nodeField<SelectMenuNode>(id, "placeholder")}
         />
         <div className="flex-none">
