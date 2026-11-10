@@ -1,7 +1,9 @@
 import {
   ArrowPathIcon,
+  ChatBubbleLeftIcon,
   ChatBubbleLeftRightIcon,
   ChevronDownIcon,
+  ChevronRightIcon,
   ExclamationCircleIcon,
   PhotoIcon,
   SpeakerWaveIcon,
@@ -102,6 +104,10 @@ function ChannelIcon({ type }: { type: number }) {
   if (type === 16) {
     return <PhotoIcon className="h-5 w-5 text-mist-300" />;
   }
+  // Threads and forum posts, so they don't look like the channels they're in.
+  if (threadChannelTypes.has(type)) {
+    return <ChatBubbleLeftIcon className="h-5 w-5 text-mist-300" />;
+  }
   if (type === 2 || type === 13) {
     return <SpeakerWaveIcon className="h-5 w-5 text-mist-300" />;
   }
@@ -132,10 +138,25 @@ export function ChannelSelect({
 
   const [open, innerSetOpen] = useState(false);
   const [query, setQuery] = useState("");
+  // Forum and media channels whose posts are shown. Collapsed by default, as they can be hundreds.
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  function toggleExpanded(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  }
 
   function setOpen(open: boolean) {
     innerSetOpen(open);
     if (open) {
+      // Keep the selected post visible.
+      const parentId = channels.find((c) => c.id === channelId)?.parent_id;
+      if (parentId) {
+        setExpanded((prev) => new Set(prev).add(parentId));
+      }
       setTimeout(() => inputRef.current?.focus(), 0);
     } else {
       inputRef.current?.blur();
@@ -221,16 +242,38 @@ export function ChannelSelect({
     return res;
   }, [data, ctx]);
 
-  const filteredChannels = useMemo(() => {
-    if (!query) return channels;
+  // How many posts each forum and media channel has, to show on the toggle.
+  const postCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    const threadOnlyIds = new Set(
+      channels.filter((c) => isThreadOnlyChannel(c.type)).map((c) => c.id),
+    );
+    for (const c of channels) {
+      if (c.parent_id && threadOnlyIds.has(c.parent_id)) {
+        counts.set(c.parent_id, (counts.get(c.parent_id) ?? 0) + 1);
+      }
+    }
+    return counts;
+  }, [channels]);
 
+  const filteredChannels = useMemo(() => {
+    if (!query) {
+      return channels.filter(
+        (c) =>
+          !c.parent_id ||
+          !postCounts.has(c.parent_id) ||
+          expanded.has(c.parent_id),
+      );
+    }
+
+    // Searching looks through collapsed posts too.
     const q = query.toLowerCase();
     if (!q) return channels;
 
     return channels.filter(
       (c) => c.id === q || c.name.toLowerCase().includes(q),
     );
-  }, [channels, query]);
+  }, [channels, query, postCounts, expanded]);
 
   const channel = useMemo(
     () => channels.find((c) => c.id === channelId),
@@ -280,6 +323,8 @@ export function ChannelSelect({
             {filteredChannels.length ? (
               filteredChannels.map((c) => {
                 const reason = c.canSelect ? null : missingAccessReason(c, ctx);
+                const postCount = postCounts.get(c.id) ?? 0;
+                const isExpanded = expanded.has(c.id);
                 return (
                   <button
                     type="button"
@@ -292,7 +337,11 @@ export function ChannelSelect({
                     )}
                     // Not disabled: a disabled button swallows the hover the reason tooltip needs.
                     aria-disabled={!c.canSelect}
-                    onClick={() => c.canSelect && selectChannel(c.id)}
+                    onClick={() => {
+                      if (c.canSelect) selectChannel(c.id);
+                      // A forum the bot can't post in only works as a folder for its posts.
+                      else if (postCount) toggleExpanded(c.id);
+                    }}
                   >
                     <ChannelIcon type={c.type} />
                     <div
@@ -303,10 +352,33 @@ export function ChannelSelect({
                     >
                       {c.name}
                     </div>
+                    {postCount > 0 && (
+                      // Not a button: it can't be nested in the row's button.
+                      <div
+                        role="button"
+                        aria-label={isExpanded ? "Hide posts" : "Show posts"}
+                        aria-expanded={isExpanded}
+                        className="ml-auto flex-none flex items-center space-x-1 text-mist-400 hover:text-mist-100 cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleExpanded(c.id);
+                        }}
+                      >
+                        <span className="text-xs">{postCount}</span>
+                        {isExpanded ? (
+                          <ChevronDownIcon className="h-4 w-4" />
+                        ) : (
+                          <ChevronRightIcon className="h-4 w-4" />
+                        )}
+                      </div>
+                    )}
                     {reason && (
                       // Not a link: an anchor can't be nested in the row's button.
                       <div
-                        className="ml-auto flex-none cursor-pointer"
+                        className={clsx(
+                          "flex-none cursor-pointer",
+                          !postCount && "ml-auto",
+                        )}
                         onClick={(e) => {
                           e.stopPropagation();
                           window.open(
