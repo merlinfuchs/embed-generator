@@ -11,6 +11,7 @@ const columns = [
       { label: "Discord Webhook Sender", href: "/features/discord-webhooks" },
       { label: "Colored Text Generator", href: "/app/tools/colored-text" },
       { label: "Embed Links", href: "/app/tools/embed-links" },
+      { label: "Snowflake Decoder", href: "/app/tools/snowflake" },
       { label: "Webhook Info", href: "/app/tools/webhook-info" },
     ],
   },

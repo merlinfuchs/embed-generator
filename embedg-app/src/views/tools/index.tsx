@@ -1,5 +1,6 @@
 import {
   CodeBracketSquareIcon,
+  HashtagIcon,
   PhotoIcon,
   SwatchIcon,
 } from "@heroicons/react/24/outline";
@@ -72,6 +73,24 @@ export default function ToolsView() {
                 Discord webhooks are a great way to send messages to Discord
                 channels without a bot. This tool lets you easily inspect and
                 get information about a webhook.
+              </div>
+            </div>
+          </Link>
+          <Link
+            className="p-5 bg-ink-700 rounded-xl flex cursor-pointer space-x-5 transform hover:scale-101"
+            to="/tools/snowflake"
+          >
+            <div className="flex-none h-12 w-12 md:h-20 md:w-20 flex items-center justify-center bg-ink-900 rounded-full">
+              <HashtagIcon className="h-8 w-8 md:h-12 md:w-12 text-azure-400" />
+            </div>
+            <div>
+              <div className="text-white font-medium mb-3 text-xl transition-transform">
+                Snowflake Decoder
+              </div>
+              <div className="text-mist-400 font-light text-sm">
+                Every Discord ID holds the time it was created. This tool shows
+                you when a user, server, channel or message was made, and turns
+                a date back into an ID.
               </div>
             </div>
           </Link>
