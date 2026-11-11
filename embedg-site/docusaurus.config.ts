@@ -40,6 +40,23 @@ const config: Config = {
         href: "/img/logo-192.png",
       },
     },
+    // The same manifest and icons as the editor, so the site can be installed
+    // from any page. They are served by the app, see embedg-app/public.
+    {
+      tagName: "link",
+      attributes: { rel: "manifest", href: "/app/manifest.json" },
+    },
+    {
+      tagName: "link",
+      attributes: {
+        rel: "apple-touch-icon",
+        href: "/app/icons/apple-touch-icon.png",
+      },
+    },
+    {
+      tagName: "meta",
+      attributes: { name: "apple-mobile-web-app-title", content: "Embed Generator" },
+    },
     {
       tagName: "script",
       attributes: { type: "application/ld+json" },
