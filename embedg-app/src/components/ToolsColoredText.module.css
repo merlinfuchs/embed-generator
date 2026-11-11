@@ -1,92 +1,190 @@
+/*
+ * The colors and surfaces Discord draws ANSI code blocks with, per theme. The classic colors
+ * follow the theme, and the 8 backgrounds are the same 8 colors as the text. Without a theme
+ * around them, e.g. on the page's color list, everything uses Ash.
+ */
+.root {
+  --chat-base: #323339;
+  --code-bg: hsl(234.935 85.556% 64.706% / 0.0784);
+  --code-border: hsl(240 4% 60.784% / 0.2);
+  --code-text: #ffffff;
+  --ansi-30: #000000;
+  --ansi-31: #ec6361;
+  --ansi-32: #45a366;
+  --ansi-33: #ce8100;
+  --ansi-34: #4591ec;
+  --ansi-35: #f549c9;
+  --ansi-36: #049faa;
+  --ansi-37: #b6b7bc;
+}
+
+.root[data-theme="light"] {
+  --chat-base: #fbfbfb;
+  --code-bg: hsl(234.935 85.556% 64.706% / 0.0392);
+  --code-border: hsl(240 4% 60.784% / 0.4);
+  --code-text: #36373e;
+  --ansi-31: #e75858;
+  --ansi-32: #399b5d;
+  --ansi-33: #c07600;
+  --ansi-34: #3789ea;
+  --ansi-35: #e444bb;
+  --ansi-36: #0098a3;
+}
+
+.root[data-theme="dark"] {
+  --chat-base: #1a1a1e;
+  --code-text: #e4e4e6;
+  --ansi-31: #de464a;
+  --ansi-32: #1b8d4d;
+  --ansi-33: #b36c00;
+  --ansi-34: #1a7ce6;
+  --ansi-35: #d53fae;
+  --ansi-36: #008995;
+}
+
+.root[data-theme="onyx"] {
+  --chat-base: #070709;
+  --code-border: hsl(240 4% 60.784% / 0.239);
+  --code-text: #d1d1d5;
+  --ansi-31: #d22d39;
+  --ansi-32: #008043;
+  --ansi-33: #a56100;
+  --ansi-34: #006dd4;
+  --ansi-35: #bc3699;
+  --ansi-36: #007c87;
+}
+
+/* The chat area and code block as Discord draws them. */
+.chat {
+  background-color: var(--chat-base);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  transition: background-color 150ms;
+}
+
+.codeFont {
+  font-family:
+    Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console",
+    "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono",
+    "Liberation Mono", "Nimbus Mono L", Monaco, "Courier New", Courier,
+    monospace;
+}
+
 .editor {
+  box-sizing: border-box;
+  min-height: 10rem;
+  padding: 7px 7px 7px 11px;
   white-space: pre-wrap;
   font-size: 0.875rem;
   line-height: 1.125rem;
   text-indent: 0;
-  font-family: monospace;
-  color: #b9bbbe;
+  color: var(--code-text);
+  background-color: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 4px;
+  outline: none;
+}
+
+/* The buttons show a sample of the color inside a code block. */
+.swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2rem;
+  width: 2.75rem;
+  border: 1px solid var(--code-border);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  line-height: 1;
+  color: var(--code-text);
+  background: linear-gradient(var(--code-bg), var(--code-bg)), var(--chat-base);
+  cursor: pointer;
+}
+
+/* Black disappears on the dark themes, like it does in Discord. */
+.swatch.ansi30,
+.swatch.ansi40 {
+  box-shadow: inset 0 0 0 1px #888;
+}
+
+.swatch:hover {
+  border-color: rgb(255 255 255 / 0.5);
+}
+
+.swatch:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 1px;
 }
 
 .ansi1 {
   font-weight: 700;
   text-decoration: none;
 }
+.ansi3 {
+  font-style: italic;
+}
 .ansi4 {
   font-weight: 500;
   text-decoration: underline;
 }
+.ansi9 {
+  text-decoration: line-through;
+}
 
 .ansi30 {
-  color: #4f545c;
+  color: var(--ansi-30);
 }
 .ansi31 {
-  color: #dc322f;
+  color: var(--ansi-31);
 }
 .ansi32 {
-  color: #859900;
+  color: var(--ansi-32);
 }
 .ansi33 {
-  color: #b58900;
+  color: var(--ansi-33);
 }
 .ansi34 {
-  color: #268bd2;
+  color: var(--ansi-34);
 }
 .ansi35 {
-  color: #d33682;
+  color: var(--ansi-35);
 }
 .ansi36 {
-  color: #2aa198;
+  color: var(--ansi-36);
 }
 .ansi37 {
-  color: #ffffff;
+  color: var(--ansi-37);
 }
 
-.ansi30bg {
-  background-color: #4f545c;
-}
-.ansi31bg {
-  background-color: #dc322f;
-}
-.ansi32bg {
-  background-color: #859900;
-}
-.ansi33bg {
-  background-color: #b58900;
-}
-.ansi34bg {
-  background-color: #268bd2;
-}
-.ansi35bg {
-  background-color: #d33682;
-}
-.ansi36bg {
-  background-color: #2aa198;
-}
-.ansi37bg {
-  background-color: #ffffff;
-}
-
+.ansi30bg,
 .ansi40 {
-  background-color: #002b36;
+  background: var(--ansi-30);
 }
+.ansi31bg,
 .ansi41 {
-  background-color: #cb4b16;
+  background: var(--ansi-31);
 }
+.ansi32bg,
 .ansi42 {
-  background-color: #586e75;
+  background: var(--ansi-32);
 }
+.ansi33bg,
 .ansi43 {
-  background-color: #657b83;
+  background: var(--ansi-33);
 }
+.ansi34bg,
 .ansi44 {
-  background-color: #839496;
+  background: var(--ansi-34);
 }
+.ansi35bg,
 .ansi45 {
-  background-color: #6c71c4;
+  background: var(--ansi-35);
 }
+.ansi36bg,
 .ansi46 {
-  background-color: #93a1a1;
+  background: var(--ansi-36);
 }
+.ansi37bg,
 .ansi47 {
-  background-color: #fdf6e3;
+  background: var(--ansi-37);
 }
