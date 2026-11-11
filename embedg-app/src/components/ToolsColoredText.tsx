@@ -8,38 +8,59 @@ import {
   useState,
 } from "react";
 import { parseANSI } from "../util/ansi";
-import { useColoredTextStore } from "../state/coloredText";
+import {
+  type ColoredTextTheme,
+  useColoredTextStore,
+} from "../state/coloredText";
+import SegmentedControl from "./SegmentedControl";
 
-// The names Discord users know these colors by.
-export const foregroundColors = [
-  { code: 30, name: "Gray" },
-  { code: 31, name: "Red" },
-  { code: 32, name: "Green" },
-  { code: 33, name: "Yellow" },
-  { code: 34, name: "Blue" },
-  { code: 35, name: "Pink" },
-  { code: 36, name: "Cyan" },
-  { code: 37, name: "White" },
+const themes: { value: ColoredTextTheme; label: string }[] = [
+  { value: "light", label: "Light" },
+  { value: "ash", label: "Ash" },
+  { value: "dark", label: "Dark" },
+  { value: "onyx", label: "Onyx" },
 ];
-export const backgroundColors = [
-  { code: 40, name: "Firefly dark blue" },
-  { code: 41, name: "Orange" },
-  { code: 42, name: "Marble blue" },
-  { code: 43, name: "Grayish turquoise" },
-  { code: 44, name: "Gray" },
-  { code: 45, name: "Indigo" },
-  { code: 46, name: "Light gray" },
-  { code: 47, name: "White" },
+
+// The names Discord users know these colors by. The backgrounds are the same 8 colors.
+const colorNames = [
+  "Black",
+  "Red",
+  "Green",
+  "Gold",
+  "Blue",
+  "Pink",
+  "Teal",
+  "Gray",
 ];
+export const foregroundColors = colorNames.map((name, i) => ({
+  code: 30 + i,
+  name,
+}));
+export const backgroundColors = colorNames.map((name, i) => ({
+  code: 40 + i,
+  name,
+}));
+
+/** Applies the default theme's colors to a list of them outside the tool. */
+export const ansiRootClass = styles.root;
 
 export function ansiClass(code: number): string {
   return styles[`ansi${code}`];
 }
 
-function nodesToANSI(
-  nodes: NodeListOf<ChildNode>,
-  states: Record<string, number>[],
-) {
+// 2 stands for no color, like the filler where a style is the only code.
+interface State {
+  fg: number;
+  bg: number;
+  /** Bold, italic, underline and strikethrough, which apply together. */
+  st: number[];
+}
+
+function sgr(state: State, color: number): string {
+  return `\x1b[${state.st.length ? state.st.join(";") : 2};${color}m`;
+}
+
+function nodesToANSI(nodes: NodeListOf<ChildNode>, states: State[]) {
   let text = "";
   for (const node of nodes) {
     if (node.nodeType === 3) {
@@ -54,29 +75,28 @@ function nodesToANSI(
     const element = node as HTMLElement;
 
     const ansiCode = +element.getAttribute("data-ansi")!;
-    const newState = Object.assign({}, states.at(-1));
+    const newState: State = { ...states.at(-1)!, st: [...states.at(-1)!.st] };
 
-    if (ansiCode < 30) newState.st = ansiCode;
+    if (ansiCode < 30 && !newState.st.includes(ansiCode)) {
+      newState.st = [...newState.st, ansiCode].sort((a, b) => a - b);
+    }
     if (ansiCode >= 30 && ansiCode < 40) newState.fg = ansiCode;
     if (ansiCode >= 40) newState.bg = ansiCode;
 
     states.push(newState);
-    text += `\x1b[${newState.st};${
-      ansiCode >= 40 ? newState.bg : newState.fg
-    }m`;
+    text += sgr(newState, ansiCode >= 40 ? newState.bg : newState.fg);
     text += nodesToANSI(node.childNodes, states);
     states.pop();
     text += `\x1b[0m`;
-    if (states.at(-1)!.fg !== 2)
-      text += `\x1b[${states.at(-1)!.st};${states.at(-1)!.fg}m`;
-    if (states.at(-1)!.bg !== 2)
-      text += `\x1b[${states.at(-1)!.st};${states.at(-1)!.bg}m`;
+    const parent = states.at(-1)!;
+    if (parent.fg !== 2) text += sgr(parent, parent.fg);
+    if (parent.bg !== 2) text += sgr(parent, parent.bg);
   }
   return text;
 }
 
 function editorToANSI(editor: HTMLElement) {
-  return nodesToANSI(editor.childNodes, [{ fg: 2, bg: 2, st: 2 }]);
+  return nodesToANSI(editor.childNodes, [{ fg: 2, bg: 2, st: [] }]);
 }
 
 /** The span the style buttons wrap text in, and nodesToANSI reads back. */
@@ -97,7 +117,7 @@ function ansiToNodes(ansi: string): DocumentFragment {
       if (line) node.appendChild(document.createTextNode(line));
     });
 
-    for (const code of [style.st, style.fg, style.bg]) {
+    for (const code of [...(style.st ?? []), style.fg, style.bg]) {
       if (!code) continue;
       const span = ansiSpan(code);
       span.appendChild(node);
@@ -114,6 +134,8 @@ export default function ToolsColoredText() {
   const [copyButtonText, setCopyButtonText] = useState("Copy Format");
 
   const setSavedText = useColoredTextStore((state) => state.setText);
+  const theme = useColoredTextStore((state) => state.theme);
+  const setTheme = useColoredTextStore((state) => state.setTheme);
 
   // Only read on mount, the editor's DOM is the source of truth after that.
   useLayoutEffect(() => {
@@ -223,79 +245,107 @@ export default function ToolsColoredText() {
   }
 
   return (
-    <div>
+    <div className={styles.root} data-theme={theme}>
+      <div className="mb-4">
+        <div className="text-mist-400 text-xs mb-1.5">Preview theme</div>
+        <SegmentedControl options={themes} value={theme} onChange={setTheme} />
+      </div>
       <div className="flex flex-col md:flex-row md:items-end mb-3">
-        <div className="flex-auto mb-5 md:mb-0">
-          <div className="flex items-center space-x-3">
-            <div className="flex flex-wrap">
+        <div className="flex-auto mb-5 md:mb-0 space-y-3">
+          <div>
+            <div className="text-mist-400 text-xs mb-1.5">Text color</div>
+            <div className="flex flex-wrap gap-2">
               {foregroundColors.map(({ code, name }) => (
                 <button
                   key={code}
+                  type="button"
                   aria-label={`Text color ${name}`}
                   title={name}
                   className={clsx(
-                    "h-8 w-10 rounded-xl cursor-pointer bg-ink-900 mr-2 mb-2",
-                    styles[`ansi${code}`],
+                    styles.swatch,
+                    styles.codeFont,
+                    ansiClass(code),
                   )}
                   onClick={() => handleStyleChange(code)}
                 >
-                  T
+                  Aa
                 </button>
               ))}
             </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <div className="flex flex-wrap">
+          <div>
+            <div className="text-mist-400 text-xs mb-1.5">Background color</div>
+            <div className="flex flex-wrap gap-2">
               {backgroundColors.map(({ code, name }) => (
                 <button
                   key={code}
+                  type="button"
                   aria-label={`Background color ${name}`}
                   title={name}
                   className={clsx(
-                    "h-8 w-10 rounded-xl cursor-pointer text-white mr-2 mb-2",
-                    styles[`ansi${code}`],
+                    styles.swatch,
+                    styles.codeFont,
+                    ansiClass(code),
                   )}
                   onClick={() => handleStyleChange(code)}
-                ></button>
+                >
+                  Aa
+                </button>
               ))}
             </div>
           </div>
         </div>
-        <div className="flex space-x-3 text-mist-100 mb-2">
+        <div className="flex flex-wrap gap-3 text-mist-100 mb-2">
           <button
+            type="button"
             className="bg-ink-600 hover:bg-ink-500 px-2 py-1 rounded-lg"
             onClick={() => handleStyleChange(0)}
           >
             Reset All
           </button>
           <button
-            className="bg-ink-600 hover:bg-ink-500 px-2 py-1 rounded-lg"
+            type="button"
+            className="bg-ink-600 hover:bg-ink-500 px-2 py-1 rounded-lg font-bold"
             onClick={() => handleStyleChange(1)}
           >
             Bold
           </button>
           <button
-            className="bg-ink-600 hover:bg-ink-500 px-2 py-1 rounded-lg"
+            type="button"
+            className="bg-ink-600 hover:bg-ink-500 px-2 py-1 rounded-lg italic"
+            onClick={() => handleStyleChange(3)}
+          >
+            Italic
+          </button>
+          <button
+            type="button"
+            className="bg-ink-600 hover:bg-ink-500 px-2 py-1 rounded-lg underline"
             onClick={() => handleStyleChange(4)}
           >
             Underline
           </button>
+          <button
+            type="button"
+            className="bg-ink-600 hover:bg-ink-500 px-2 py-1 rounded-lg line-through"
+            onClick={() => handleStyleChange(9)}
+          >
+            Strikethrough
+          </button>
         </div>
       </div>
-      <div
-        className={clsx(
-          "rounded-xl bg-ink-900 px-3 py-2 focus:outline-none text-mist-100 min-h-64 mb-5",
-          styles.editor,
-        )}
-        ref={editorRef}
-        role="textbox"
-        aria-label="Colored text"
-        aria-multiline={true}
-        contentEditable={true}
-        suppressContentEditableWarning={true}
-        onInput={save}
-        onPaste={paste}
-      ></div>
+      <div className={clsx(styles.chat, "mb-5")}>
+        <div
+          className={clsx(styles.editor, styles.codeFont)}
+          ref={editorRef}
+          role="textbox"
+          aria-label="Colored text"
+          aria-multiline={true}
+          contentEditable={true}
+          suppressContentEditableWarning={true}
+          onInput={save}
+          onPaste={paste}
+        ></div>
+      </div>
       <div className="flex flex-col md:flex-row md:items-center md:space-x-3 space-y-3 md:space-y-0">
         <button
           className="px-3 py-2 rounded-lg border-2 border-white/15 text-mist-100 hover:bg-white/5 hover:border-white/30 transition-colors cursor-pointer flex-none"
