@@ -12,6 +12,7 @@ const columns = [
       { label: "Colored Text Generator", href: "/app/tools/colored-text" },
       { label: "Timestamp Generator", href: "/app/tools/timestamps" },
       { label: "Embed Links", href: "/app/tools/embed-links" },
+      { label: "Snowflake Decoder", href: "/app/tools/snowflake" },
       { label: "Webhook Info", href: "/app/tools/webhook-info" },
     ],
   },
