@@ -574,3 +574,27 @@ export interface UserWire {
   is_tester: boolean;
 }
 export type UserResponseWire = APIResponse<UserWire>;
+
+//////////
+// source: user_lookup.go
+
+/**
+ * UserLookupWire is what Discord shows publicly about a user. The images are hashes, the app builds
+ * their CDN links.
+ */
+export interface UserLookupWire {
+  id: string;
+  username: string;
+  discriminator: string;
+  global_name: null | string;
+  avatar: null | string;
+  banner: null | string;
+  accent_color: null | number;
+  bot: boolean;
+  system: boolean;
+  /**
+   * PublicFlags are the bits behind a user's badges.
+   */
+  public_flags: number;
+}
+export type UserLookupResponseWire = APIResponse<UserLookupWire>;

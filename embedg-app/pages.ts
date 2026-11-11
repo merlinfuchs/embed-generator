@@ -82,14 +82,14 @@ export const pages: Page[] = [
     path: "/tools",
     title: "Free Discord Tools | Embed Generator",
     description:
-      "Free Discord tools: a colored text generator, embed links that unfurl into rich previews and a webhook info lookup. No account needed.",
+      "Free Discord tools: a colored text generator, embed links that unfurl into rich previews and a webhook info lookup and a Discord user lookup.",
     heading: "Free Discord Tools",
     preview: {
       byline: "Embed Generator · Tools",
       open: "All tools",
       docs: `${ORIGIN}/docs/tools`,
     },
-    text: "Besides the message editor, Embed Generator has a few small tools: a colored text generator for ANSI code blocks, embed links that turn into a rich preview when posted, and a lookup that shows who created a webhook.",
+    text: "Besides the message editor, Embed Generator has a few small tools: a colored text generator for ANSI code blocks, embed links that turn into a rich preview when posted, a lookup that shows who created a webhook, and a user lookup for avatars, banners and badges.",
   },
   {
     file: "tools/colored-text",
@@ -120,6 +120,16 @@ export const pages: Page[] = [
     heading: "Discord Webhook Info",
     preview: toolPreview,
     text: "Found an old webhook URL and don't remember what it's for? Paste it here to see the webhook's name, avatar and who created it.",
+  },
+  {
+    file: "tools/user-lookup",
+    path: "/tools/user-lookup",
+    title: "Discord User Lookup | Embed Generator",
+    description:
+      "Look up a Discord user by ID to see their name, avatar, banner, badges and when the account was created.",
+    heading: "Discord User Lookup",
+    preview: toolPreview,
+    text: "Paste a Discord user ID to see the user's name, avatar, banner, accent color, badges and account creation date. You need to log in with Discord to use it.",
   },
   {
     // Every /editor/share/<id>. Shares expire after a week, so they aren't worth indexing.

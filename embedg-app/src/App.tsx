@@ -32,6 +32,9 @@ const LazyColoredTextToolView = lazyView(
 const LazyWebhookInfoToolView = lazyView(
   () => import("./views/tools/webhookInfo"),
 );
+const LazyUserLookupToolView = lazyView(
+  () => import("./views/tools/userLookup"),
+);
 const LazyEmbedLinksToolView = lazyView(
   () => import("./views/tools/embedLinks"),
 );
@@ -140,6 +143,14 @@ function App() {
             element={
               <SuspendedView>
                 <LazyWebhookInfoToolView />
+              </SuspendedView>
+            }
+          />
+          <Route
+            path="/tools/user-lookup"
+            element={
+              <SuspendedView>
+                <LazyUserLookupToolView />
               </SuspendedView>
             }
           />

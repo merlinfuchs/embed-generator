@@ -9,6 +9,7 @@ import {
   EyeDropperIcon,
   InformationCircleIcon,
   LinkIcon,
+  MagnifyingGlassIcon,
   PaintBrushIcon,
   SparklesIcon,
   Squares2X2Icon,
@@ -106,6 +107,12 @@ const more: { icon: Icon; name: string; text: string; href: string; premium?: bo
     name: "Webhook info",
     text: "See the name, server and creator behind any webhook URL.",
     href: "/app/tools/webhook-info",
+  },
+  {
+    icon: MagnifyingGlassIcon,
+    name: "User lookup",
+    text: "Look up any Discord user's avatar, banner, badges and account age by ID.",
+    href: "/app/tools/user-lookup",
   },
 ];
 

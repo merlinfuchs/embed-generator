@@ -14,6 +14,7 @@ import type {
   SavedMessageVersionListResponseWire,
   SharedMessageGetResponseWire,
   UserResponseWire,
+  UserLookupResponseWire,
   ListEmojisResponseWire,
   GetGuildBrandingResponseWire,
   GuildWire,
@@ -88,6 +89,18 @@ export function useUserQuery(userId = "@me") {
         handleApiResponse(res.json()),
       );
     },
+  });
+}
+
+export function useUserLookupQuery(userId: string | null) {
+  return useQuery<UserLookupResponseWire>({
+    queryKey: ["user-lookup", userId],
+    queryFn: () => {
+      return fetch(`/api/user-lookup/${userId}`).then((res) =>
+        handleApiResponse(res.json()),
+      );
+    },
+    enabled: !!userId,
   });
 }
 
