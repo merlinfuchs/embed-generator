@@ -84,15 +84,15 @@ export default function EditorView() {
           >
             <Drawer.Trigger
               asChild
-              className="fixed bottom-3 right-3 lg:hidden"
+              className="fixed right-3 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-20 lg:hidden"
             >
               <button className="bg-azure-500 hover:bg-azure-400 shadow-lg transition-colors rounded-full w-12 h-12 flex items-center justify-center">
                 <DocumentMagnifyingGlassIcon className="text-mist-100 h-8 w-8" />
               </button>
             </Drawer.Trigger>
             <Drawer.Portal>
-              <Drawer.Overlay className="fixed inset-0 bg-black/40" />
-              <Drawer.Content className="bg-ink-800 flex flex-col fixed bottom-0 left-0 right-0 max-h-[80%] rounded-t-2xl border-t border-white/10 overflow-y-hidden h-full focus:outline-none">
+              <Drawer.Overlay className="fixed inset-0 z-40 bg-black/40" />
+              <Drawer.Content className="bg-ink-800 flex flex-col fixed z-40 bottom-0 left-0 right-0 max-h-[80%] rounded-t-2xl border-t border-white/10 overflow-y-hidden h-full focus:outline-none">
                 <div className="overflow-y-hidden h-full px-3 flex flex-col">
                   <div className="p-4 flex-none">
                     <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-ink-500" />

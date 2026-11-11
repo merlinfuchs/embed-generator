@@ -8,7 +8,6 @@ import {
   ChevronDoubleRightIcon,
   ChevronDownIcon,
   ChevronDoubleLeftIcon,
-  Bars3Icon,
   PlusCircleIcon,
   ArrowRightOnRectangleIcon,
   CommandLineIcon,
@@ -224,14 +223,6 @@ export default function SideNav() {
           onClick={() => setHidden(true)}
         ></div>
       )}
-      <button
-        type="button"
-        aria-label="Toggle navigation"
-        className="xl:hidden fixed w-12 h-12 rounded-full bg-azure-500 hover:bg-azure-400 shadow-lg bottom-3 left-3 flex items-center justify-center cursor-pointer z-10 transition-colors"
-        onClick={() => setHidden((h) => !h)}
-      >
-        <Bars3Icon className="text-white h-7 w-7" />
-      </button>
     </>
   );
 }
