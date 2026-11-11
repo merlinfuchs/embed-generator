@@ -27,7 +27,7 @@ export default function EditorComponentSelectMenu({ id }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex space-x-3">
+      <div className="flex flex-wrap gap-3">
         <EditorInput
           label="Placeholder"
           maxLength={150}
@@ -35,7 +35,7 @@ export default function EditorComponentSelectMenu({ id }: Props) {
           onChange={(v) =>
             update<SelectMenuNode>(id, { placeholder: v || undefined })
           }
-          className="flex-auto"
+          className="flex-auto basis-56"
           validationPath={nodeField<SelectMenuNode>(id, "placeholder")}
         />
         <div className="flex-none">
@@ -46,6 +46,18 @@ export default function EditorComponentSelectMenu({ id }: Props) {
             label="Disabled"
             checked={data.disabled ?? false}
             onChange={(v) => update<SelectMenuNode>(id, { disabled: v })}
+          />
+        </div>
+        <div className="flex-none">
+          <div className="uppercase text-mist-300 text-sm font-medium mb-1.5 whitespace-nowrap">
+            Clear after use
+          </div>
+          <CheckBox
+            label="Show the placeholder again after each pick"
+            checked={data.reset_selection ?? false}
+            onChange={(v) =>
+              update<SelectMenuNode>(id, { reset_selection: v || undefined })
+            }
           />
         </div>
       </div>

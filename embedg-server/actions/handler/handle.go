@@ -122,8 +122,9 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 		}
 
 		actionSetID := data.CustomID()[7:]
+		resetSelection := strings.HasPrefix(data.CustomID(), actions.ResetSelectMenuCustomIDPrefix)
 
-		if strings.HasPrefix(actionSetID, "options:") {
+		if strings.HasPrefix(data.CustomID(), actions.SelectMenuCustomIDPrefix) {
 			// Handle select menu values
 			selectData, ok := data.(discord.StringSelectMenuInteractionData)
 			// A select menu with min_values 0 can be submitted with nothing selected, which leaves
@@ -149,6 +150,20 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 		}
 		actionSet = col.Actions
 		derivedPerms = col.DerivedPermissions
+
+		if resetSelection && !startsWithEdit(actionSet) {
+			// Discord shows the picked option until the message changes. Sending its components back
+			// unchanged shows the placeholder again, and lets the same option be picked twice in a
+			// row. The actions' responses go out as followups.
+			//
+			// Without allowed mentions Discord pings every mention in the message again. An empty
+			// parse list is what turns that off, a missing or null one means the default of all.
+			components := compInteraction.Message.Components
+			i.Respond(discord.MessageUpdate{
+				Components:      &components,
+				AllowedMentions: &discord.AllowedMentions{Parse: []discord.AllowedMentionType{}},
+			}, discord.InteractionResponseTypeUpdateMessage)
+		}
 	} else if interaction.Type() == discord.InteractionTypeApplicationCommand {
 		appCommandInteraction := interaction.(discord.ApplicationCommandInteraction)
 		slashData := appCommandInteraction.SlashCommandInteractionData()
@@ -376,8 +391,11 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				return templateErr(err)
 			}
 
+			// Without allowed mentions Discord would ping every mention in the message again, also
+			// the ones the action didn't add.
 			i.Respond(discord.MessageUpdate{
-				Content: &content,
+				Content:         &content,
+				AllowedMentions: actionAllowedMentions(action, nil),
 			}, discord.InteractionResponseTypeUpdateMessage)
 		case actions.ActionTypeSavedMessageEdit:
 			if interaction.GuildID() == nil {
@@ -403,10 +421,11 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 			}
 
 			newMsg := i.Respond(discord.MessageUpdate{
-				Content:    &data.Content,
-				Embeds:     &data.Embeds,
-				Components: &components,
-				Flags:      &data.Flags,
+				Content:         &data.Content,
+				Embeds:          &data.Embeds,
+				Components:      &components,
+				Flags:           &data.Flags,
+				AllowedMentions: actionAllowedMentions(action, data.AllowedMentions),
 			}, discord.InteractionResponseTypeUpdateMessage)
 
 			if compInteraction, ok := interaction.(discord.ComponentInteraction); ok {
@@ -529,6 +548,17 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 	}
 
 	return nil
+}
+
+// startsWithEdit is whether the action set's first response edits the message its component is on,
+// which resets a select menu by itself. An edit after another response would edit that response
+// instead, unless the reset went first.
+func startsWithEdit(actionSet actions.ActionSet) bool {
+	if len(actionSet.Actions) == 0 {
+		return false
+	}
+	t := actionSet.Actions[0].Type
+	return t == actions.ActionTypeTextEdit || t == actions.ActionTypeSavedMessageEdit
 }
 
 // actionAllowedMentions is who an action's response may ping: users, and roles and @everyone only

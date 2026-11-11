@@ -7,6 +7,7 @@ import {
   CommandLineIcon,
   CursorArrowRippleIcon,
   EyeDropperIcon,
+  HashtagIcon,
   InformationCircleIcon,
   LinkIcon,
   PaintBrushIcon,
@@ -100,6 +101,12 @@ const more: { icon: Icon; name: string; text: string; href: string; premium?: bo
     name: "Embed links",
     text: "Links that unfurl into a rich embed when posted, no webhook needed.",
     href: "/app/tools/embed-links",
+  },
+  {
+    icon: HashtagIcon,
+    name: "Snowflake decoder",
+    text: "See when a user, server, channel or message was created from its ID.",
+    href: "/app/tools/snowflake",
   },
   {
     icon: InformationCircleIcon,
