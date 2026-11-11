@@ -595,6 +595,6 @@ export interface UserLookupWire {
   /**
    * PublicFlags are the bits behind a user's badges.
    */
-  public_flags: number;
+  public_flags: number /* int */;
 }
 export type UserLookupResponseWire = APIResponse<UserLookupWire>;
