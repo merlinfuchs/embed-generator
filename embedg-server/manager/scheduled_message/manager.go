@@ -313,6 +313,11 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		return 0, skipWith("Invalid components: "+err.Error(), err)
 	}
 
+	params.Poll, err = data.PollForSend(scheduledMessage.MessageID.Valid)
+	if err != nil {
+		return 0, skipWith("Invalid poll: "+err.Error(), err)
+	}
+
 	// Actions carry the creator's authority, so resolve the creator before sending. Without a member
 	// the message would go out with empty permissions attached to its actions.
 	hasActions := len(data.Actions) != 0

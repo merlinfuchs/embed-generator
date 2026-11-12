@@ -127,6 +127,7 @@ function toResponseMessage({
   avatar_url,
   tts,
   thread_name,
+  poll,
   actions,
   ...response
 }: Message): ResponseMessage {

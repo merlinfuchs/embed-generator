@@ -6,6 +6,7 @@ import { useSendSettingsStore, useWebhookTarget } from "../state/sendSettings";
 import { parseMessageId } from "../discord/util";
 import {
   FluxerComponentsNotice,
+  FluxerPollNotice,
   InteractiveWebhookNotice,
 } from "./WebhookNotice";
 import MessageRestoreButton from "./MessageRestoreButton";
@@ -15,6 +16,7 @@ import { getCurrentMessage } from "../state/currentMessage";
 import {
   useHasComponents,
   useHasInteractiveComponents,
+  usePoll,
 } from "../state/document";
 
 export default function SendMenuWebhook() {
@@ -23,6 +25,7 @@ export default function SendMenuWebhook() {
   );
   const interactive = useHasInteractiveComponents();
   const hasComponents = useHasComponents();
+  const hasPoll = !!usePoll();
   const hasAttachments = useCurrentAttachmentsStore(
     (state) => state.attachments.length > 0,
   );
@@ -49,6 +52,7 @@ export default function SendMenuWebhook() {
     !validationError &&
     !interactive &&
     !(fluxer && hasComponents) &&
+    !(fluxer && hasPoll) &&
     !!target &&
     !sendToWebhookMutation.isPending;
 
@@ -134,6 +138,7 @@ export default function SendMenuWebhook() {
         </div>
       </div>
       {fluxer && hasComponents && <FluxerComponentsNotice />}
+      {fluxer && hasPoll && <FluxerPollNotice />}
       {!fluxer && interactive && <InteractiveWebhookNotice />}
       {fluxer && messageId && hasAttachments && (
         <div className="text-mist-400 font-light text-sm">

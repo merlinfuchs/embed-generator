@@ -22,6 +22,7 @@ type MessageWithActions struct {
 	Embeds          []discord.Embed          `json:"embeds,omitempty"`
 	AllowedMentions *discord.AllowedMentions `json:"allowed_mentions,omitempty"`
 	Components      []ComponentWithActions   `json:"components,omitempty"`
+	Poll            *Poll                    `json:"poll,omitempty"`
 	Actions         map[string]ActionSet     `json:"actions,omitempty"`
 	Flags           discord.MessageFlags     `json:"flags,omitempty"`
 }
