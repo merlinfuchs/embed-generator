@@ -343,6 +343,7 @@ export function fromMessage(message: Message): DocumentData {
     thread_name: message.thread_name,
     flags: message.flags,
     allowed_mentions: message.allowed_mentions,
+    poll: message.poll,
     embedIds,
     componentIds,
   };
@@ -612,6 +613,7 @@ export function toMessage(state: DocumentData): ConvertedMessage {
     thread_name: root.thread_name,
     flags: root.flags,
     allowed_mentions: root.allowed_mentions,
+    poll: root.poll,
     embeds: root.embedIds.map((id, i) => embed(id, `embeds.${i}`)),
     components: root.componentIds.map((id, i) =>
       component(id, `components.${i}`),

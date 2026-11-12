@@ -78,7 +78,40 @@ func (c *TemplateContext) ParseAndExecuteMessage(m *actions.MessageWithActions) 
 		}
 	}
 
+	if m.Poll != nil {
+		if err := c.parseAndExecutePoll(m.Poll); err != nil {
+			return err
+		}
+	}
+
 	return c.parseAndExecuteComponents(m.Components)
+}
+
+// parseAndExecutePoll renders the question and the answers of a poll in place.
+func (c *TemplateContext) parseAndExecutePoll(poll *actions.Poll) error {
+	if err := c.parseAndExecuteText(&poll.Question.Text); err != nil {
+		return err
+	}
+	for i := range poll.Answers {
+		if err := c.parseAndExecuteText(&poll.Answers[i].PollMedia.Text); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// parseAndExecuteText renders text that may be missing, which stays missing.
+func (c *TemplateContext) parseAndExecuteText(text **string) error {
+	if *text == nil {
+		return nil
+	}
+
+	rendered, err := c.ParseAndExecute(**text)
+	if err != nil {
+		return err
+	}
+	*text = &rendered
+	return nil
 }
 
 // parseAndExecuteEmbed renders every templatable string of one embed in place. Everything below

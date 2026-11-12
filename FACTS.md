@@ -37,6 +37,7 @@ Features (feature | what it means for the user | free or paid):
 - Custom bot | replies to buttons and custom commands use your bot's name and avatar | paid
 - Custom commands | slash commands for your members that reply with your messages | paid
 - Restore and edit sent messages | fix a typo in a message that's already posted | free
+- Polls | a question with up to 10 answers that members vote on, shown below the embeds | free
 - Import Discohook JSON, backups, and ?data= links | bring existing messages over without rebuilding them | free
 - Fluxer webhooks | send the same messages to Fluxer | free
 - Colored Text Generator | text in red, green, blue, and other colors that Discord shows inside a code block | free

@@ -119,3 +119,32 @@ func TestCheckMessageDoesNotRun(t *testing.T) {
 		t.Error("want a template that doesn't parse to fail")
 	}
 }
+
+func TestParseAndExecuteMessageRendersPoll(t *testing.T) {
+	text := func(s string) discord.PollMedia { return discord.PollMedia{Text: &s} }
+
+	msg := &actions.MessageWithActions{
+		Poll: &actions.Poll{
+			Question: text(`{{ "question" }}`),
+			Answers: []discord.PollAnswer{
+				{PollMedia: text(`{{ "first" }}`)},
+				{PollMedia: discord.PollMedia{}},
+			},
+		},
+	}
+
+	c := NewContext("TEST", 0)
+	if err := c.ParseAndExecuteMessage(msg); err != nil {
+		t.Fatal(err)
+	}
+
+	if got := *msg.Poll.Question.Text; got != "question" {
+		t.Errorf("expected the question to be rendered, got %q", got)
+	}
+	if got := *msg.Poll.Answers[0].PollMedia.Text; got != "first" {
+		t.Errorf("expected the first answer to be rendered, got %q", got)
+	}
+	if msg.Poll.Answers[1].PollMedia.Text != nil {
+		t.Error("expected an answer without text to stay without text")
+	}
+}

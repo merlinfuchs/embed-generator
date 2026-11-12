@@ -26,6 +26,8 @@ Paste the link of a message you sent into **Message ID or URL** to edit it later
 
 Fluxer doesn't support components yet, so buttons, select menus and [Components V2](./components-v2) layouts can't be sent there. While a Fluxer webhook is the target, the editor hides them, and a message that already has them can't be sent until they are removed.
 
+It doesn't support [polls](./polls) yet either. A message with a poll can't be sent to Fluxer until the poll is removed.
+
 Fluxer has no threads, so there is no thread ID to fill in. Editing a message changes its content and embeds but keeps the files it was sent with, as Fluxer can't replace them.
 
 [Interactive components](./interactive-components), [scheduled messages](../guides/scheduled-messages) and [custom commands](../guides/custom-commands) run through the Embed Generator bot, which is only on Discord.
