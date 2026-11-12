@@ -35,6 +35,59 @@ function htmlTag(tagName, content, attributes, isClosed = true, state = {}) {
 }
 markdown.htmlTag = htmlTag;
 
+// The escape codes Discord renders inside ```ansi code blocks: 1 bold,
+// 4 underline, 30-37 text color and 40-47 background color.
+// biome-ignore lint/suspicious/noControlCharactersInRegex: matches the escape character on purpose
+const ANSI_SGR_RE = /\x1b\[([\d;]*)m/g;
+
+function ansiToHTML(content, state) {
+  let style = {};
+  let html = "";
+  let last = 0;
+
+  function addText(text) {
+    if (!text) return;
+
+    const escaped = markdown.sanitizeText(text);
+    const classes = [];
+    if (style.bold) classes.push("ansi-bold");
+    if (style.underline) classes.push("ansi-underline");
+    if (style.fg) classes.push(`ansi-fg-${style.fg}`);
+    if (style.bg) classes.push(`ansi-bg-${style.bg}`);
+
+    html += classes.length
+      ? htmlTag("span", escaped, { class: classes.join(" ") }, state)
+      : escaped;
+  }
+
+  for (const match of content.matchAll(ANSI_SGR_RE)) {
+    addText(content.slice(last, match.index));
+    last = match.index + match[0].length;
+
+    const next = { ...style };
+    for (const param of match[1].split(";")) {
+      const code = Number(param || 0);
+      if (code === 0) {
+        next.bold = false;
+        next.underline = false;
+        next.fg = undefined;
+        next.bg = undefined;
+      } else if (code === 1) next.bold = true;
+      else if (code === 4) next.underline = true;
+      else if (code === 22) next.bold = false;
+      else if (code === 24) next.underline = false;
+      else if (code === 39) next.fg = undefined;
+      else if (code === 49) next.bg = undefined;
+      else if (code >= 30 && code <= 37) next.fg = code;
+      else if (code >= 40 && code <= 47) next.bg = code;
+    }
+    style = next;
+  }
+  addText(content.slice(last));
+
+  return html;
+}
+
 const titleRules = {
   newline: markdown.defaultRules.newline,
   escape: markdown.defaultRules.escape,
@@ -171,13 +224,29 @@ const bodyRules = {
     },
   }),
   codeBlock: Object.assign({}, markdown.defaultRules.codeBlock, {
-    match: markdown.inlineRegex(/^```(([a-z0-9-]+?)\n+)?\n*([\s\S]+?)\n*```/i),
+    // Discord swallows a single newline directly after the closing fence
+    match: markdown.inlineRegex(
+      /^```(([a-z0-9-]+?)\n+)?\n*([\s\S]+?)\n*```\n?/i,
+    ),
     parse: (capture, _parse, state) => ({
       lang: (capture[2] || "").trim(),
       content: capture[3] || "",
       inQuote: state.inQuote || false,
     }),
     html: (node, _output, state) => {
+      if (node.lang.toLowerCase() === "ansi")
+        return htmlTag(
+          "pre",
+          htmlTag(
+            "code",
+            ansiToHTML(node.content, state),
+            { class: "hljs ansi" },
+            state,
+          ),
+          null,
+          state,
+        );
+
       let code;
       if (node.lang && highlight.getLanguage(node.lang))
         code = highlight.highlight(node.content, {
@@ -204,13 +273,10 @@ const bodyRules = {
         htmlTag(
           "code",
           code ? code.value : markdown.sanitizeText(node.content),
-          {
-            class: `hljs${code ? ` ${code.language}` : ""}`,
-            style: "padding: 8px;",
-          },
+          { class: `hljs${code ? ` ${code.language}` : ""}` },
           state,
         ),
-        { style: "background-color: #2f3136; margin-top: 6px" },
+        null,
         state,
       );
     },

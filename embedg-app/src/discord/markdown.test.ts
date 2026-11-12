@@ -26,6 +26,41 @@ describe("toHTML", () => {
     expect(toHTML("` a `")).toContain("<code> a </code>");
   });
 
+  it("does not add a line break after a code block", () => {
+    const html = toHTML("```\naaa\n```\nafter");
+
+    expect(html).toContain("</pre>after");
+    expect(html).not.toContain("</pre><br>");
+  });
+
+  it("keeps an empty line after a code block followed by a blank line", () => {
+    expect(toHTML("```\naaa\n```\n\nafter")).toContain("</pre><br>after");
+  });
+
+  it("does not hard-code styles on code blocks", () => {
+    expect(toHTML("```js\nconst x = 1;\n```")).not.toContain("style=");
+  });
+
+  it("renders ansi code blocks with colors, bold and underline", () => {
+    const html = toHTML(
+      "```ansi\n\x1b[1;4;31mhi\x1b[0m \x1b[42mbg\x1b[0m plain\n```",
+    );
+
+    expect(html).toContain(
+      '<span class="ansi-bold ansi-underline ansi-fg-31">hi</span>',
+    );
+    expect(html).toContain('<span class="ansi-bg-42">bg</span>');
+    expect(html).toContain(" plain");
+    expect(html).not.toContain("\x1b");
+  });
+
+  it("escapes HTML inside ansi code blocks", () => {
+    const html = toHTML("```ansi\n\x1b[31m<img src=x>\x1b[0m\n```");
+
+    expect(html).not.toContain("<img");
+    expect(html).toContain("&lt;img");
+  });
+
   it("trims spaces around the whole text", () => {
     expect(toHTML("  hello  ")).toBe("hello");
   });
