@@ -12,6 +12,7 @@ import (
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/gofiber/fiber/v2"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/embedg/rest"
@@ -61,6 +62,10 @@ func (h *CustomBotsHandler) HandleCustomBotInteraction(c *fiber.Ctx) error {
 		}
 	case discord.ApplicationCommandInteraction:
 		handle = true
+	case discord.ModalSubmitInteraction:
+		if strings.HasPrefix(i.Data.CustomID, actions.FormCustomIDPrefix) {
+			handle = true
+		}
 	}
 
 	if handle {

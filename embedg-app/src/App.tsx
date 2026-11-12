@@ -24,6 +24,7 @@ const LazyDataRestoreView = lazyView(
 );
 const LazySettingsView = lazyView(() => import("./views/settings"));
 const LazyCommandsView = lazyView(() => import("./views/commands"));
+const LazyFormsView = lazyView(() => import("./views/forms"));
 const LazyScheduledMessagesView = lazyView(() => import("./views/scheduled"));
 const LazyToolsView = lazyView(() => import("./views/tools"));
 const LazyColoredTextToolView = lazyView(
@@ -108,6 +109,14 @@ function App() {
             element={
               <SuspendedView>
                 <LazyCommandsView />
+              </SuspendedView>
+            }
+          />
+          <Route
+            path="/forms"
+            element={
+              <SuspendedView>
+                <LazyFormsView />
               </SuspendedView>
             }
           />

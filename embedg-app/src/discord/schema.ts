@@ -749,6 +749,13 @@ export const messageActionSchema = z
   )
   .or(
     z.object({
+      type: z.literal(13), // opens a form
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      target_id: z.string().min(1),
+    }),
+  )
+  .or(
+    z.object({
       type: z.literal(10), // permission check with default response
       id: uniqueIdSchema.default(() => getUniqueId()),
       permissions: z.string().default("0"),

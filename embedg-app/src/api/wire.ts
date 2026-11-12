@@ -184,6 +184,89 @@ export interface EmbedLinkOEmbedResponseWire {
 }
 
 //////////
+// source: forms.go
+
+/**
+ * FormFieldOption is one choice of a select, radio or checkboxes field.
+ */
+export interface FormFieldOptionWire {
+  label: string;
+  /**
+   * Value is what the option is called in {{.FormIDs.key}}.
+   */
+  value: string;
+  description?: string;
+  /**
+   * Default is whether the option is picked when the form opens.
+   */
+  default?: boolean;
+}
+export interface FormFieldWire {
+  key: string;
+  /**
+   * Type is "text" (the default), or what a select menu picks: "user", "role", "mentionable" or
+   * "channel".
+   */
+  type?: string;
+  label: string;
+  placeholder?: string;
+  /**
+   * Value is what a text input contains when the form opens.
+   */
+  value?: string;
+  /**
+   * Paragraph makes a text input multiline instead of a single line.
+   */
+  paragraph?: boolean;
+  required: boolean;
+  min_length?: number /* int */;
+  /**
+   * MaxLength is 0 for no limit of its own, which leaves Discord's 4000 characters.
+   */
+  max_length?: number /* int */;
+  /**
+   * MaxValues is how many a select menu or checkboxes field can pick, 0 for just one for a
+   * select menu and for all options for checkboxes.
+   */
+  max_values?: number /* int */;
+  /**
+   * Options are the choices of a select, radio or checkboxes field.
+   */
+  options?: FormFieldOptionWire[];
+  /**
+   * Default is whether a single checkbox is checked when the form opens.
+   */
+  default?: boolean;
+}
+export interface FormWire {
+  id: string;
+  name: string;
+  title: string;
+  fields: FormFieldWire[];
+  actions: Record<string, any> | null;
+  created_at: string /* RFC3339 */;
+  updated_at: string /* RFC3339 */;
+}
+export type FormsListResponseWire = APIResponse<FormWire[]>;
+export type FormGetResponseWire = APIResponse<FormWire>;
+export interface FormCreateRequestWire {
+  name: string;
+  title: string;
+  fields: FormFieldWire[];
+  actions: Record<string, any> | null;
+}
+export type FormCreateResponseWire = APIResponse<FormWire>;
+export interface FormUpdateRequestWire {
+  name: string;
+  title: string;
+  fields: FormFieldWire[];
+  actions: Record<string, any> | null;
+}
+export type FormUpdateResponseWire = APIResponse<FormWire>;
+export type FormDeleteResponseWire = APIResponse<{
+  }>;
+
+//////////
 // source: guild.go
 
 export interface GuildWire {

@@ -47,6 +47,7 @@ type ActionHandler struct {
 	savedMessageStore  store.SavedMessageStore
 	actionSetStore     store.MessageActionSetStore
 	kvEntryStore       store.KVEntryStore
+	formStore          store.FormStore
 	parser             *parser.ActionParser
 	planStore          store.PlanStore
 	guildState         *guildstate.Provider
@@ -57,6 +58,7 @@ func New(
 	savedMessageStore store.SavedMessageStore,
 	actionSetStore store.MessageActionSetStore,
 	kvEntryStore store.KVEntryStore,
+	formStore store.FormStore,
 	parser *parser.ActionParser,
 	planStore store.PlanStore,
 	guildState *guildstate.Provider,
@@ -66,6 +68,7 @@ func New(
 		savedMessageStore:  savedMessageStore,
 		actionSetStore:     actionSetStore,
 		kvEntryStore:       kvEntryStore,
+		formStore:          formStore,
 		parser:             parser,
 		planStore:          planStore,
 		guildState:         guildState,
@@ -112,6 +115,10 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 
 	var actionSet actions.ActionSet
 	var derivedPerms *actions.ActionDerivedPermissions
+	// formValues is what a submitted form contains by field key, nil for anything else.
+	var formValues map[string]string
+	// formIDs is the IDs of what was picked in the select fields of a submitted form.
+	var formIDs map[string]string
 
 	if interaction.Type() == discord.InteractionTypeComponent {
 		compInteraction := interaction.(discord.ComponentInteraction)
@@ -151,7 +158,8 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 		actionSet = col.Actions
 		derivedPerms = col.DerivedPermissions
 
-		if resetSelection && !startsWithEdit(actionSet) {
+		// Opening a form is the response to the interaction, so nothing can respond before it.
+		if resetSelection && !startsWithEdit(actionSet) && !actionSet.ShowsForm() {
 			// Discord shows the picked option until the message changes. Sending its components back
 			// unchanged shows the placeholder again, and lets the same option be picked twice in a
 			// row. The actions' responses go out as followups.
@@ -189,6 +197,26 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 		}
 		actionSet = col.Actions
 		derivedPerms = col.DerivedPermissions
+	} else if interaction.Type() == discord.InteractionTypeModalSubmit {
+		modalInteraction := interaction.(discord.ModalSubmitInteraction)
+
+		customID := modalInteraction.Data.CustomID
+		if !strings.HasPrefix(customID, actions.FormCustomIDPrefix) || interaction.GuildID() == nil {
+			return nil
+		}
+
+		form, err := m.formStore.GetForm(context.TODO(), *interaction.GuildID(), strings.TrimPrefix(customID, actions.FormCustomIDPrefix))
+		if err != nil {
+			if errors.Is(err, store.ErrNotFound) {
+				return userErr("This form doesn't exist anymore.")
+			}
+
+			return fmt.Errorf("failed to get form: %w", err)
+		}
+		actionSet = form.Actions
+		derivedPerms = form.DerivedPermissions
+
+		formValues, formIDs = submittedFormValues(form.Fields, modalInteraction.Data)
 	} else {
 		return fmt.Errorf("invalid interaciont type")
 	}
@@ -210,11 +238,14 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 	}
 
 	templateSource := template.NewSource(context.TODO(), m.guildState)
-	templates := template.NewContext(
-		"HANDLE_ACTION", features.MaxTemplateOps,
+	providers := []template.ContextProvider{
 		template.NewInteractionProvider(templateSource, interaction),
 		template.NewKVProvider(templateSource, *interaction.GuildID(), m.kvEntryStore, features.MaxKVKeys),
-	)
+	}
+	if formValues != nil {
+		providers = append(providers, template.NewFormProvider(formValues, formIDs))
+	}
+	templates := template.NewContext("HANDLE_ACTION", features.MaxTemplateOps, providers...)
 
 	for _, action := range actionSet.Actions {
 		switch action.Type {
@@ -502,6 +533,23 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 					Flags:   discord.MessageFlagEphemeral,
 				})
 			}
+		case actions.ActionTypeShowForm:
+			if interaction.GuildID() == nil {
+				continue
+			}
+
+			// The modal has to be the first response to the interaction.
+			if i.HasResponded() {
+				return userErr("This component is set up to open a form after it already responded. Move the Show Form action to the end of its actions.")
+			}
+
+			modal, err := m.formModal(*interaction.GuildID(), action.TargetID)
+			if err != nil {
+				return err
+			}
+
+			i.Respond(modal, discord.InteractionResponseTypeModal)
+			return nil
 		case actions.ActionTypePermissionCheck:
 			rawPerms, _ := strconv.ParseInt(action.Permissions, 10, 64)
 			perms := discord.Permissions(rawPerms)
@@ -548,6 +596,19 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 	}
 
 	return nil
+}
+
+// formModal is the modal of a form, filled with what the form is set up to start with.
+func (m *ActionHandler) formModal(guildID common.ID, formID string) (discord.ModalCreate, error) {
+	form, err := m.formStore.GetForm(context.TODO(), guildID, formID)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return discord.ModalCreate{}, userErr("The form used by this action doesn't exist anymore.")
+		}
+		return discord.ModalCreate{}, fmt.Errorf("failed to get form: %w", err)
+	}
+
+	return buildFormModal(form), nil
 }
 
 // startsWithEdit is whether the action set's first response edits the message its component is on,

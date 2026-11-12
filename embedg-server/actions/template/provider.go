@@ -226,3 +226,22 @@ func (kv *KVProvider) checkKeyCountLimit() error {
 
 	return nil
 }
+
+// FormProvider makes what was submitted in a form available by the key of each field, like
+// {{.Form.reason}}. For a field that picks users, roles or channels that is their mentions, and
+// their IDs are in {{.FormIDs.key}}, separated by spaces.
+type FormProvider struct {
+	values map[string]string
+	ids    map[string]string
+}
+
+func NewFormProvider(values map[string]string, ids map[string]string) *FormProvider {
+	return &FormProvider{values: values, ids: ids}
+}
+
+func (p *FormProvider) ProvideFuncs(funcs map[string]interface{}) {}
+
+func (p *FormProvider) ProvideData(data map[string]interface{}) {
+	data["Form"] = p.values
+	data["FormIDs"] = p.ids
+}

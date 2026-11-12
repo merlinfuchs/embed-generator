@@ -9,17 +9,22 @@ import { useCommandActionsStore } from "../state/actions";
 
 interface Props {
   cmdId: string;
+  /** The store the action set lives in, the one of custom commands unless given. */
+  store?: typeof useCommandActionsStore;
+  /** The actions run when a form is submitted, so they can't open a form or edit a message. */
+  inForm?: boolean;
 }
 
-export default function ActionSet({ cmdId }: Props) {
+export default function ActionSet({ cmdId, store, inForm }: Props) {
+  const useStore = store ?? useCommandActionsStore;
   const features = usePremiumGuildFeatures();
   const maxActions = features?.max_actions_per_component || 0;
 
-  const actions = useCommandActionsStore(
+  const actions = useStore(
     useShallow((state) => state.actions[cmdId]?.actions.map((a) => a.id) || []),
   );
 
-  const [addAction, clearActions] = useCommandActionsStore(
+  const [addAction, clearActions] = useStore(
     useShallow((state) => [state.addAction, state.clearActions]),
   );
 
@@ -46,7 +51,13 @@ export default function ActionSet({ cmdId }: Props) {
     >
       <AutoAnimate className="space-y-2">
         {actions.map((id, i) => (
-          <CommandAction cmdId={cmdId} actionIndex={i} key={id} />
+          <CommandAction
+            cmdId={cmdId}
+            actionIndex={i}
+            key={id}
+            store={useStore}
+            inForm={inForm}
+          />
         ))}
       </AutoAnimate>
       <div className="flex flex-wrap gap-3 mt-3 text-sm">

@@ -94,6 +94,18 @@ type Entitlement struct {
 	ConsumedGuildID pgtype.Text
 }
 
+type Form struct {
+	ID                 string
+	GuildID            string
+	Name               string
+	Title              string
+	Fields             []byte
+	Actions            []byte
+	DerivedPermissions []byte
+	CreatedAt          pgtype.Timestamp
+	UpdatedAt          pgtype.Timestamp
+}
+
 type Guild struct {
 	ID        int64
 	Name      string
