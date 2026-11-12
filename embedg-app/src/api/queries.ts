@@ -5,6 +5,7 @@ import type {
   GetPremiumPlanFeaturesResponseWire,
   ListChannelsResponseWire,
   CustomCommandsListResponseWire,
+  FormsListResponseWire,
   ListGuildsResponseWire,
   ListPremiumEntitlementsResponseWire,
   ListPremiumPlansResponseWire,
@@ -278,6 +279,17 @@ export function useCustomCmmandsQuery(guildId: string | null) {
     queryKey: ["custom-bot", guildId, "commands"],
     queryFn: () =>
       fetch(`/api/custom-bot/commands?guild_id=${guildId}`)
+        .then((res) => handleApiResponse(res.json()))
+        .then((res) => sorted(res, byGuildName)),
+    enabled: !!guildId,
+  });
+}
+
+export function useFormsQuery(guildId: string | null) {
+  return useQuery<FormsListResponseWire>({
+    queryKey: ["forms", guildId],
+    queryFn: () =>
+      fetch(`/api/forms?guild_id=${guildId}`)
         .then((res) => handleApiResponse(res.json()))
         .then((res) => sorted(res, byGuildName)),
     enabled: !!guildId,

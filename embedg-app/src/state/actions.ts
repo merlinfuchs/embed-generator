@@ -29,3 +29,5 @@ export const createActionStore = (key: string) =>
 export const useCommandActionsStore = createActionStore(
   "custom-commands-actions",
 );
+
+export const useFormActionsStore = createActionStore("form-actions");
