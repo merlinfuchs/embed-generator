@@ -6,6 +6,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/forward"
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 )
 
@@ -124,36 +125,64 @@ func buildFormOptions(field actions.FormField) discord.LabelSubComponent {
 	}
 }
 
-// submittedFormValues is what a submitted form contains by field key: the text of a text input,
-// or the mentions of what was picked in a select field, separated by spaces. The IDs of what was
-// picked are returned the same way for the select fields.
-func submittedFormValues(fields []actions.FormField, data discord.ModalSubmitInteractionData) (values map[string]string, ids map[string]string) {
-	values = make(map[string]string, len(fields))
-	ids = make(map[string]string)
+// formAnswer is what was submitted for a field of a form.
+type formAnswer struct {
+	field actions.FormField
+	// value is the text of a text input, the mentions of what was picked in a select field, the
+	// labels of the picked options, or Yes or No for a checkbox.
+	value string
+	// ids is the IDs of what was picked in a select field, the values of the picked options, or
+	// true or false for a checkbox. It's nil for text inputs.
+	ids []string
+}
 
-	for _, field := range fields {
+// formAnswers is what a submitted form contains for each of its fields.
+func formAnswers(fields []actions.FormField, data discord.ModalSubmitInteractionData) []formAnswer {
+	answers := make([]formAnswer, len(fields))
+	for i, field := range fields {
+		a := formAnswer{field: field}
 		switch {
 		case field.HasOptions():
-			values[field.Key], ids[field.Key] = pickedOptions(data, field)
+			a.value, a.ids = pickedOptions(data, field)
 		case field.IsEntitySelect():
-			values[field.Key], ids[field.Key] = pickedEntities(data, field)
+			a.value, a.ids = pickedEntities(data, field)
 		case field.Type == actions.FormFieldTypeCheckbox:
-			values[field.Key], ids[field.Key] = "No", "false"
+			a.value, a.ids = "No", []string{"false"}
 			if c, ok := data.Component(field.Key); ok {
 				if checkbox, ok := c.(discord.CheckboxComponent); ok && checkbox.Value {
-					values[field.Key], ids[field.Key] = "Yes", "true"
+					a.value, a.ids = "Yes", []string{"true"}
 				}
 			}
 		default:
-			values[field.Key] = data.Text(field.Key)
+			a.value = data.Text(field.Key)
+		}
+		answers[i] = a
+	}
+	return answers
+}
+
+// submittedFormValues is what the answers of a form are in templates by field key. The IDs are
+// separated by commas for options like their labels are, and by spaces for selects like the
+// mentions are.
+func submittedFormValues(answers []formAnswer) (values map[string]string, ids map[string]string) {
+	values = make(map[string]string, len(answers))
+	ids = make(map[string]string)
+
+	for _, a := range answers {
+		values[a.field.Key] = a.value
+		switch {
+		case a.field.HasOptions():
+			ids[a.field.Key] = strings.Join(a.ids, ", ")
+		case a.ids != nil:
+			ids[a.field.Key] = strings.Join(a.ids, " ")
 		}
 	}
 	return values, ids
 }
 
-// pickedOptions is the labels and the values of the options that were picked in a field with
-// options, each separated by commas.
-func pickedOptions(data discord.ModalSubmitInteractionData, field actions.FormField) (labels string, values string) {
+// pickedOptions is the labels, separated by commas, and the values of the options that were
+// picked in a field with options.
+func pickedOptions(data discord.ModalSubmitInteractionData, field actions.FormField) (labels string, values []string) {
 	var picked []string
 	if c, ok := data.Component(field.Key); ok {
 		switch component := c.(type) {
@@ -169,7 +198,7 @@ func pickedOptions(data discord.ModalSubmitInteractionData, field actions.FormFi
 	}
 
 	labelList := make([]string, 0, len(picked))
-	valueList := make([]string, 0, len(picked))
+	values = make([]string, 0, len(picked))
 	for _, value := range picked {
 		label := value
 		for _, o := range field.Options {
@@ -179,22 +208,63 @@ func pickedOptions(data discord.ModalSubmitInteractionData, field actions.FormFi
 			}
 		}
 		labelList = append(labelList, label)
-		valueList = append(valueList, value)
+		values = append(values, value)
 	}
-	return strings.Join(labelList, ", "), strings.Join(valueList, ", ")
+	return strings.Join(labelList, ", "), values
 }
 
-// pickedEntities is the mentions and the IDs of what was picked in a field that picks users, roles
-// or channels, each separated by spaces.
-func pickedEntities(data discord.ModalSubmitInteractionData, field actions.FormField) (mentions string, ids string) {
+// pickedEntities is the mentions, separated by spaces, and the IDs of what was picked in a field
+// that picks users, roles or channels.
+func pickedEntities(data discord.ModalSubmitInteractionData, field actions.FormField) (mentions string, ids []string) {
 	picked := modalSelectIDs(data, field)
 	mentionList := make([]string, 0, len(picked))
-	idList := make([]string, 0, len(picked))
+	ids = make([]string, 0, len(picked))
 	for _, id := range picked {
 		mentionList = append(mentionList, formMention(data, field.Type, id))
-		idList = append(idList, id.String())
+		ids = append(ids, id.String())
 	}
-	return strings.Join(mentionList, " "), strings.Join(idList, " ")
+	return strings.Join(mentionList, " "), ids
+}
+
+// formSubmission is what's sent to a URL for a submitted form.
+func formSubmission(form *model.Form, interaction discord.Interaction, answers []formAnswer) forward.Submission {
+	user := interaction.User()
+	sub := forward.Submission{
+		Type:    "form_submission",
+		Form:    forward.SubmissionForm{ID: form.ID, Name: form.Name},
+		GuildID: form.GuildID.String(),
+		User: forward.SubmissionUser{
+			ID:       user.ID.String(),
+			Username: user.Username,
+		},
+		Fields:      make([]forward.SubmissionField, len(answers)),
+		SubmittedAt: interaction.CreatedAt().UTC(),
+	}
+	if user.GlobalName != nil {
+		sub.User.GlobalName = *user.GlobalName
+	}
+	if channel := interaction.Channel(); channel.MessageChannel != nil {
+		sub.ChannelID = channel.ID().String()
+	}
+
+	for i, a := range answers {
+		fieldType := a.field.Type
+		if fieldType == "" {
+			fieldType = actions.FormFieldTypeText
+		}
+		ids := a.ids
+		if ids == nil {
+			ids = []string{}
+		}
+		sub.Fields[i] = forward.SubmissionField{
+			Key:   a.field.Key,
+			Label: a.field.Label,
+			Type:  fieldType,
+			Value: a.value,
+			IDs:   ids,
+		}
+	}
+	return sub
 }
 
 // modalSelectIDs is the IDs picked in the select menu of a field of a submitted modal.

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/merlinfuchs/embed-generator/embedg-server/access"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/forward"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api"
@@ -86,6 +87,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		actionParser,
 		premiumManager,
 		guildState,
+		forward.New(pg),
 	)
 	customBotManager := custom_bot.NewCustomBotManager(pg, embedg.Rest(), shards)
 	go customBotManager.Run(ctx)

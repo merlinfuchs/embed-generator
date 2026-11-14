@@ -4,6 +4,7 @@ import CommandActionSet from "./CommandActionSet";
 import EditorInput from "./EditorInput";
 import FormFields from "./FormFields";
 import FormPreview from "./FormPreview";
+import FormSigningSecret from "./FormSigningSecret";
 
 interface Props {
   formId: string;
@@ -13,6 +14,8 @@ interface Props {
   setTitle: (title: string) => void;
   fields: FormFieldWire[];
   setFields: (fields: FormFieldWire[]) => void;
+  /** Null until the form is saved. */
+  signingSecret: string | null;
 }
 
 /** The inputs of a form next to its preview, for creating and editing it. */
@@ -24,6 +27,7 @@ export default function FormEditor({
   setTitle,
   fields,
   setFields,
+  signingSecret,
 }: Props) {
   return (
     <div className="lg:flex lg:items-start lg:gap-6">
@@ -46,6 +50,7 @@ export default function FormEditor({
         />
         <FormFields formId={formId} fields={fields} setFields={setFields} />
         <CommandActionSet cmdId={formId} store={useFormActionsStore} inForm />
+        <FormSigningSecret formId={formId} secret={signingSecret} />
       </div>
       <div className="mt-8 lg:mt-0 lg:sticky lg:top-4 lg:w-[26rem] lg:flex-none">
         <FormPreview title={title} fields={fields} />
