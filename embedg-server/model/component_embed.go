@@ -87,7 +87,7 @@ const (
 // without a paid plan. Whoever posts a link can hide its URL behind an
 // invisible masked link, and the preview then looks like their own message,
 // which is how fake Nitro gifts were made with it.
-const ComponentEmbedAttribution = "-# " + componentEmbedAttributionText
+const ComponentEmbedAttribution = "-# Link preview from [message.style](https://message.style)"
 
 const componentEmbedAttributionText = "Link preview from message.style"
 

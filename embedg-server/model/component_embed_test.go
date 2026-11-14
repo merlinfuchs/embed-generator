@@ -175,7 +175,7 @@ func TestComponentEmbedWithAttribution(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	want := `{"component":{"type":17,"components":[{"type":10,"content":"Hi"},{"type":10,"content":"-# Link preview from message.style"}]}}`
+	want := `{"component":{"type":17,"components":[{"type":10,"content":"Hi"},{"type":10,"content":"-# Link preview from [message.style](https://message.style)"}]}}`
 	if string(payload) != want {
 		t.Fatalf("got %s, want %s", payload, want)
 	}

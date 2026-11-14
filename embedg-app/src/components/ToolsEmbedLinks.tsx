@@ -20,7 +20,8 @@ import {
 
 /** The line the server adds to the end of the preview for anyone without a
  * paid plan. */
-const ATTRIBUTION = "-# Link preview from message.style";
+const ATTRIBUTION =
+  "-# Link preview from [message.style](https://message.style)";
 
 /** Subscribes to the component embed on its own, so typing in the editor
  * doesn't re-render the whole tool. */

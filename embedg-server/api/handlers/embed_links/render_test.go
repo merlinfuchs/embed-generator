@@ -48,7 +48,7 @@ func TestComponentEmbedToHTMLAddsAttribution(t *testing.T) {
 		`{"component": {"type": 17, "components": [{"type": 10, "content": "<b>hi</b>"}]}}`,
 	), true)
 
-	want := componentEmbedPrefix + `{"component":{"type":17,"components":[{"type":10,"content":"\u003cb\u003ehi\u003c/b\u003e"},{"type":10,"content":"-# Link preview from message.style"}]}}` + "</script>\n"
+	want := componentEmbedPrefix + `{"component":{"type":17,"components":[{"type":10,"content":"\u003cb\u003ehi\u003c/b\u003e"},{"type":10,"content":"-# Link preview from [message.style](https://message.style)"}]}}` + "</script>\n"
 	if html != want {
 		t.Fatalf("got %q, want %q", html, want)
 	}
