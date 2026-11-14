@@ -44,7 +44,7 @@ Buttons have to be link buttons, carrying a `url` and a label or an emoji. A but
 
 Discord enforces the size limits strictly. A payload holds at most 40 components. A container holds 1 to 10 children, an action row 1 to 5 buttons, a section 1 to 3 text displays, and a media gallery up to 10 items. Any URL is capped at 2,048 characters, and the whole payload at 3,000 bytes. Embed Generator checks all of this before it gives you a link, so a broken payload fails with a message instead of silently falling back.
 
-Links from Embed Generator end with a small "Link preview from message.style" line, which takes one of the 10 spots in the container. It's left out if you're logged in and bought Premium or Ultimate.
+Links from Embed Generator end with a small "Link preview from message.style" line, which takes one of the 10 spots in the container. It's left out if you're logged in and bought Premium, Ultimate, or the one-time removal.
 
 ## If you're adding this to your own site
 

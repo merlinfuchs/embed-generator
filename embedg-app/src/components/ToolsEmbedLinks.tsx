@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { type ReactNode, useMemo, useRef, useState } from "react";
 import MessagePreview from "./MessagePreview";
 import EditorInput from "./EditorInput";
 import type { Message } from "../discord/schema";
@@ -66,7 +66,7 @@ export default function ToolsEmbedLinks() {
 
   const [componentEmbed, setComponentEmbed] = useState(false);
   const previewEmbedId = useMemo(getUniqueId, []);
-  const attribution = !usePremiumUserFeatures()?.is_premium;
+  const attribution = usePremiumUserFeatures()?.embed_link_attribution ?? true;
 
   // What the fallback preview is built from, and what Discord shows when
   // there is no custom component.
@@ -196,6 +196,12 @@ export default function ToolsEmbedLinks() {
               Create New
             </button>
           </div>
+          {componentEmbed && attribution && (
+            <AttributionUpsell>
+              This link ends with the "Link preview from message.style" line.
+              Links you create after buying the one-time removal won't have it.
+            </AttributionUpsell>
+          )}
         </div>
       ) : (
         <div className="w-full lg:w-7/12 space-y-5">
@@ -307,18 +313,7 @@ export default function ToolsEmbedLinks() {
             }
           >
             {componentEmbed ? (
-              <>
-                <ComponentEmbedEditor />
-                {attribution && (
-                  <div
-                    className={clsx(PADDED, "text-sm font-light text-mist-400")}
-                  >
-                    Discord shows a small "Link preview from message.style" line
-                    at the end. It's left out if you're logged in and bought
-                    Premium or Ultimate.
-                  </div>
-                )}
-              </>
+              <ComponentEmbedEditor />
             ) : (
               <div className={clsx(PADDED, "text-sm font-light text-mist-400")}>
                 Replace the Discord preview with components: markdown, images,
@@ -348,10 +343,38 @@ export default function ToolsEmbedLinks() {
           )}
         </div>
         {componentEmbed ? (
-          <ComponentEmbedPreview msg={previewMsg} attribution={attribution} />
+          <>
+            <ComponentEmbedPreview msg={previewMsg} attribution={attribution} />
+            {attribution && !newLinkUrl && (
+              <AttributionUpsell>
+                Links made without a paid plan end with this line. Buy the
+                one-time removal to leave it out of every link you create while
+                logged in. Premium and Ultimate leave it out too.
+              </AttributionUpsell>
+            )}
+          </>
         ) : (
           <MessagePreview msg={previewMsg} />
         )}
+      </div>
+    </div>
+  );
+}
+
+function AttributionUpsell({ children }: { children: ReactNode }) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-ink-900/60 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className="text-sm text-mist-300 flex-auto">{children}</div>
+      <div className="flex-none flex flex-col items-start sm:items-end gap-1">
+        <a
+          href="/premium/embed-links"
+          target="_blank"
+          rel="noopener"
+          className="px-3 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-ink-900 font-semibold transition-colors whitespace-nowrap"
+        >
+          Remove the line
+        </a>
+        <div className="text-xs text-mist-400">Paid once, no subscription</div>
       </div>
     </div>
   );

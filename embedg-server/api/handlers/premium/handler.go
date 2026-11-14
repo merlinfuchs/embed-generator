@@ -101,6 +101,7 @@ func planFeaturesToWire(plan string, features model.PlanFeatures) wire.GetPremiu
 		MaxPeriodicScheduledMessages: features.MaxPeriodicScheduledMessages,
 		MaxTemplateOps:               features.MaxTemplateOps,
 		MaxKVKeys:                    features.MaxKVKeys,
+		EmbedLinkAttribution:         features.EmbedLinkAttribution(),
 	}
 }
 
@@ -173,6 +174,12 @@ func (h *PremiumHandler) HandleConsumeEntitlement(c *fiber.Ctx, req wire.Consume
 			return handlers.NotFound("entitlement_not_found", "Entitlement not found")
 		}
 		return err
+	}
+
+	// Only lifetime plans are activated on a server. The others, like the one-time removal of the
+	// embed link attribution, already apply to the user who bought them.
+	if plan := h.planStore.GetPlanBySKUID(entitlement.SkuID); plan == nil || !plan.Consumable {
+		return handlers.BadRequest("entitlement_not_consumable", "This purchase can't be activated on a server")
 	}
 
 	if entitlement.ConsumedGuildID.Valid {

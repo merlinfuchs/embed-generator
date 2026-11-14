@@ -393,6 +393,10 @@ export interface GetPremiumPlanFeaturesResponseDataWire {
   max_periodic_scheduled_messages: number /* int */;
   max_template_ops: number /* int */;
   max_kv_keys: number /* int */;
+  /**
+   * EmbedLinkAttribution is whether embed links end with the "Link preview from message.style" line.
+   */
+  embed_link_attribution: boolean;
 }
 export type GetPremiumPlanFeaturesResponseWire = APIResponse<GetPremiumPlanFeaturesResponseDataWire>;
 /**
