@@ -12,6 +12,8 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"golang.org/x/net/idna"
 )
 
 const (
@@ -134,21 +136,36 @@ func findDomain(domains map[string]struct{}, hosts []string) string {
 	return ""
 }
 
-var urlPattern = regexp.MustCompile(`(?i)https?://[^\s<>"'()\[\]]+`)
+// Browsers accept any number of slashes and backslashes after the scheme, so "https:/evil.test"
+// and "https:\\evil.test" lead to evil.test too. The group is the authority, up to where the path,
+// query or fragment starts.
+var urlPattern = regexp.MustCompile(`(?i)https?:[/\\]*([^/\\?#\s<>"'()\[\]]+)`)
 
-// Hosts returns the hosts of the http and https links in text.
+// Hosts returns the hosts of the http and https links in text, in the form a browser would go to.
 func Hosts(text string) []string {
 	var hosts []string
-	for _, raw := range urlPattern.FindAllString(text, -1) {
-		u, err := url.Parse(raw)
-		if err != nil {
-			continue
-		}
-		if host := normalizeHost(u.Hostname()); host != "" {
+	for _, m := range urlPattern.FindAllStringSubmatch(text, -1) {
+		if host := authorityHost(m[1]); host != "" {
 			hosts = append(hosts, host)
 		}
 	}
 	return hosts
+}
+
+// authorityHost returns the host of an authority like "user@Example.com:443", decoded like a
+// browser does, so "%65vil.test" and lookalike Unicode domains match the list too.
+func authorityHost(authority string) string {
+	host := authority[strings.LastIndex(authority, "@")+1:]
+	if i := strings.LastIndex(host, ":"); i != -1 {
+		host = host[:i]
+	}
+	if unescaped, err := url.PathUnescape(host); err == nil {
+		host = unescaped
+	}
+	if ascii, err := idna.Lookup.ToASCII(host); err == nil {
+		host = ascii
+	}
+	return normalizeHost(host)
 }
 
 func normalizeHost(host string) string {

@@ -6,10 +6,24 @@ import (
 )
 
 func TestHosts(t *testing.T) {
-	got := Hosts("[Accept](https://Evil.example.com./gift?x=1) and <http://other.test:8080/a> but not ftp://no.test or example.org")
-	want := []string{"evil.example.com", "other.test"}
-	if !slices.Equal(got, want) {
-		t.Errorf("Hosts() = %v, want %v", got, want)
+	tests := []struct {
+		text string
+		want []string
+	}{
+		{"[Accept](https://Evil.example.com./gift?x=1) and <http://other.test:8080/a>", []string{"evil.example.com", "other.test"}},
+		{"not ftp://no.test or example.org", nil},
+		// Browsers go to evil.test for all of these.
+		{"https:/evil.test", []string{"evil.test"}},
+		{`https:\\evil.test\gift`, []string{"evil.test"}},
+		{"https:evil.test", []string{"evil.test"}},
+		{"https://user:pass@evil.test", []string{"evil.test"}},
+		{"https://%65vil.test", []string{"evil.test"}},
+		{"https://dіscord.com", []string{"xn--dscord-pvf.com"}},
+	}
+	for _, tt := range tests {
+		if got := Hosts(tt.text); !slices.Equal(got, tt.want) {
+			t.Errorf("Hosts(%q) = %v, want %v", tt.text, got, tt.want)
+		}
 	}
 }
 
