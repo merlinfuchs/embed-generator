@@ -84,6 +84,22 @@ func TestPlacement(t *testing.T) {
 	}
 }
 
+func TestForwardPlacement(t *testing.T) {
+	forward := Action{Type: ActionTypeForwardForm, Text: "https://example.com"}
+	if err := ValidateFormActionSet(ActionSet{Actions: []Action{{Type: ActionTypeTextResponse}, forward}}); err != nil {
+		t.Fatal(err)
+	}
+	if err := ValidateFormActionSet(ActionSet{Actions: []Action{forward, forward}}); err == nil {
+		t.Fatal("expected error for sending to two URLs")
+	}
+	if err := ValidateComponentActionSet(ActionSet{Actions: []Action{{Type: ActionTypeTextResponse}, forward}}); err == nil {
+		t.Fatal("expected error outside a form")
+	}
+	if err := ValidateComponentActionSet(ActionSet{Actions: []Action{{Type: ActionTypeShowForm}}}); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestValidateFormSelects(t *testing.T) {
 	fields := []FormField{
 		{Key: "who", Label: "Who", Type: FormFieldTypeUser, Required: true},

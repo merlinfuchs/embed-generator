@@ -260,14 +260,32 @@ func validateFormOptions(pos int, f FormField) error {
 }
 
 // ValidateFormActionSet checks the actions that run when a form is submitted. The form is already
-// answered when they run, and a message edit has no message to edit, so those can't be used.
+// answered when they run, and a message edit has no message to edit, so those can't be used. The
+// answers can be sent to one URL.
 func ValidateFormActionSet(set ActionSet) error {
+	forwards := 0
 	for i, a := range set.Actions {
 		switch a.Type {
 		case ActionTypeTextEdit, ActionTypeSavedMessageEdit:
 			return fmt.Errorf("action %d edits the message, which a form can't do", i+1)
 		case ActionTypeShowForm:
 			return fmt.Errorf("action %d opens a form, which a form can't do", i+1)
+		case ActionTypeForwardForm:
+			forwards++
+			if forwards > 1 {
+				return fmt.Errorf("action %d sends the answers to a URL, which only one action can do", i+1)
+			}
+		}
+	}
+	return nil
+}
+
+// ValidateComponentActionSet checks the actions of a component or command for the ones that only
+// a form can have.
+func ValidateComponentActionSet(set ActionSet) error {
+	for i, a := range set.Actions {
+		if a.Type == ActionTypeForwardForm {
+			return fmt.Errorf("action %d sends form answers to a URL, which only a form's actions can do", i+1)
 		}
 	}
 	return nil

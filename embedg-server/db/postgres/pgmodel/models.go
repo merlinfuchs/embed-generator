@@ -104,6 +104,15 @@ type Form struct {
 	DerivedPermissions []byte
 	CreatedAt          pgtype.Timestamp
 	UpdatedAt          pgtype.Timestamp
+	SigningSecret      pgtype.Text
+	ForwardError       pgtype.Text
+	ForwardErrorAt     pgtype.Timestamp
+}
+
+type FormForwardCount struct {
+	GuildID     string
+	WindowStart pgtype.Timestamp
+	Count       int32
 }
 
 type Guild struct {
