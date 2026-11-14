@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"gopkg.in/guregu/null.v4"
 )
 
@@ -24,4 +25,8 @@ type EmbedLink struct {
 	ComponentEmbed json.RawMessage
 	ExpiresAt      null.Time
 	CreatedAt      time.Time
+	// UserID is who created the link, if they were logged in.
+	UserID common.NullID
+	// Attribution is whether the component embed ends with ComponentEmbedAttribution.
+	Attribution bool
 }

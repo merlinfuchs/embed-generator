@@ -40,6 +40,7 @@ Features (feature | what it means for the user | free or paid):
 - Import Discohook JSON, backups, and ?data= links | bring existing messages over without rebuilding them | free
 - Fluxer webhooks | send the same messages to Fluxer | free
 - Colored Text Generator | text in red, green, blue, and other colors that Discord shows inside a code block | free
+- Embed Links with a custom component | a link that unfurls in Discord into a layout with markdown, images, and link buttons | free, but the preview ends with a "Link preview from message.style" line unless the logged-in user bought a paid plan
 - /embed, /message, /format, and /image in Discord | build or copy messages without opening the website | free
 
 Plan limits are read from the prod config on 2026-11-02. That file is the source of truth. https://message.style/api/premium/plans serves the paid plans from it, but not the free one. embedg.example.toml is the dev config and doesn't match production.
@@ -51,6 +52,7 @@ Free plan:
 - 5 AI assistant prompts a month.
 - Images up to 1 MB.
 - No custom bot, no custom commands, no sending to other channels, no replies built in the action.
+- Embed Links with a custom component end with a "Link preview from message.style" line. It's left out only for links created while logged in by someone who bought Premium or Ultimate, since a plan bought by someone else for a server doesn't count.
 
 Paid plans:
 - Premium: $4.99 a month per server. 100 saved messages, 5 versions each. 10 actions per component. 25 scheduled messages, all of them can be recurring. 100 AI prompts a month. Custom bot. 25 custom commands. Images up to 8 MB.

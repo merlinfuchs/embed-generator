@@ -43,7 +43,7 @@ func (h *EmbedLinksHandler) renderEmbedLinkHTML(c *fiber.Ctx, el *model.EmbedLin
 		metaTags += fmt.Sprintf(`<link type="application/json+oembed" href="%s" />`, oEmbedURL)
 	}
 
-	metaTags += componentEmbedToHTML(el.ComponentEmbed)
+	metaTags += componentEmbedToHTML(el.ComponentEmbed, el.Attribution)
 
 	html := fmt.Sprintf(embedLinkHTML, metaTags, safeJSURL(el.Url))
 
@@ -57,9 +57,24 @@ func (h *EmbedLinksHandler) renderEmbedLinkHTML(c *fiber.Ctx, el *model.EmbedLin
 // escaped again here: nothing in the payload may close the script element.
 // jsonb also adds spaces after every colon and comma, which count toward
 // Discord's size limit, so they are removed again.
-func componentEmbedToHTML(raw []byte) string {
+//
+// The attribution is added here rather than stored, so links created before
+// it existed get it too.
+func componentEmbedToHTML(raw []byte, attribution bool) string {
 	if len(raw) == 0 {
 		return ""
+	}
+
+	if attribution {
+		var embed model.ComponentEmbed
+		if err := json.Unmarshal(raw, &embed); err != nil {
+			return ""
+		}
+
+		var err error
+		if raw, err = json.Marshal(embed.WithAttribution()); err != nil {
+			return ""
+		}
 	}
 
 	var compact bytes.Buffer

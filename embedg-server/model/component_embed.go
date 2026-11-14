@@ -83,9 +83,29 @@ const (
 	componentEmbedMaxInputBytes = 16 * 1024
 )
 
+// ComponentEmbedAttribution ends the component embed of every link created
+// without a paid plan. Whoever posts a link can hide its URL behind an
+// invisible masked link, and the preview then looks like their own message,
+// which is how fake Nitro gifts were made with it.
+const ComponentEmbedAttribution = "-# " + componentEmbedAttributionText
+
+const componentEmbedAttributionText = "Link preview from message.style"
+
+// WithAttribution returns the embed with ComponentEmbedAttribution as the last
+// component of its container.
+func (e ComponentEmbed) WithAttribution() ComponentEmbed {
+	e.Component.Components = append(slices.Clip(e.Component.Components), ComponentEmbedComponent{
+		Type:    10,
+		Content: ComponentEmbedAttribution,
+	})
+	return e
+}
+
 // ParseComponentEmbed reads a payload from a client and returns it only if
-// Discord would accept it.
-func ParseComponentEmbed(raw []byte) (*ComponentEmbed, error) {
+// Discord would accept it, with the attribution added if it's set. The
+// attribution isn't part of the returned embed, it's added when the page is
+// rendered.
+func ParseComponentEmbed(raw []byte, attribution bool) (*ComponentEmbed, error) {
 	if len(raw) > componentEmbedMaxInputBytes {
 		return nil, fmt.Errorf("component embed is larger than %d bytes", componentEmbedMaxInputBytes)
 	}
@@ -102,13 +122,27 @@ func ParseComponentEmbed(raw []byte) (*ComponentEmbed, error) {
 		return nil, err
 	}
 
+	rendered := embed
+	if attribution {
+		if len(embed.Component.Components) >= componentEmbedChildren[17].max {
+			return nil, fmt.Errorf("the container has room for %d components, the last spot is taken by the %q line", componentEmbedChildren[17].max-1, componentEmbedAttributionText)
+		}
+		if count >= componentEmbedMaxComponents {
+			return nil, fmt.Errorf("the preview has room for %d components, the last spot is taken by the %q line", componentEmbedMaxComponents-1, componentEmbedAttributionText)
+		}
+		rendered = embed.WithAttribution()
+	}
+
 	// json.Marshal escapes the same characters the page does, so this is the
 	// size Discord sees.
-	payload, err := json.Marshal(embed)
+	payload, err := json.Marshal(rendered)
 	if err != nil {
 		return nil, err
 	}
 	if len(payload) > componentEmbedMaxBytes {
+		if attribution {
+			return nil, fmt.Errorf("component embed is %d bytes with the %q line, Discord allows at most %d", len(payload), componentEmbedAttributionText, componentEmbedMaxBytes)
+		}
 		return nil, fmt.Errorf("component embed is %d bytes, Discord allows at most %d", len(payload), componentEmbedMaxBytes)
 	}
 
