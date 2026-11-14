@@ -82,6 +82,5 @@ func rowToEmbedLink(row pgmodel.EmbedLink) *model.EmbedLink {
 		UserID:         nullID(row.UserID),
 		Attribution:    row.Attribution,
 		FlaggedAt:      null.NewTime(row.FlaggedAt.Time, row.FlaggedAt.Valid),
-		FlaggedReason:  null.NewString(row.FlaggedReason.String, row.FlaggedReason.Valid),
 	}
 }

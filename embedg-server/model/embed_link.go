@@ -30,6 +30,5 @@ type EmbedLink struct {
 	// Attribution is whether the component embed ends with ComponentEmbedAttribution.
 	Attribution bool
 	// FlaggedAt is when the link was found to lead to a phishing site, which blocks it.
-	FlaggedAt     null.Time
-	FlaggedReason null.String
+	FlaggedAt null.Time
 }

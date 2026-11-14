@@ -110,9 +110,6 @@ func (c *Checker) SetDomains(list []string) {
 // PhishingDomain returns the first of the hosts that is on the phishing list or a subdomain of
 // one, or "" if there is none.
 func (c *Checker) PhishingDomain(hosts []string) string {
-	if c == nil {
-		return ""
-	}
 	domains := c.domains.Load()
 	if domains == nil {
 		return ""
@@ -122,9 +119,6 @@ func (c *Checker) PhishingDomain(hosts []string) string {
 
 // ShortenerDomain is PhishingDomain for link shorteners.
 func (c *Checker) ShortenerDomain(hosts []string) string {
-	if c == nil {
-		return ""
-	}
 	return findDomain(c.shorteners, hosts)
 }
 

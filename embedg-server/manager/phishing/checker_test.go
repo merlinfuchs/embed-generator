@@ -40,9 +40,4 @@ func TestPhishingDomain(t *testing.T) {
 	if got := c.ShortenerDomain([]string{"example.com", "tinyurl.com"}); got != "tinyurl.com" {
 		t.Errorf("ShortenerDomain() = %q, want tinyurl.com", got)
 	}
-
-	var none *Checker
-	if none.PhishingDomain([]string{"rover.party"}) != "" || none.ShortenerDomain([]string{"tinyurl.com"}) != "" {
-		t.Error("a nil Checker should find nothing")
-	}
 }
