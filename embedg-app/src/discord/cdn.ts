@@ -37,3 +37,29 @@ export function emojiUrl(emoji: { id: string; animated?: boolean }) {
     emoji.animated ? "gif" : "png"
   }`;
 }
+
+/** Animated avatars and banners have a hash that starts with a_ and are GIFs. */
+function userImageUrl(
+  kind: "avatars" | "banners",
+  user: { id: string },
+  hash: string,
+  size: number,
+) {
+  const format = hash.startsWith("a_") ? "gif" : "png";
+  return `https://cdn.discordapp.com/${kind}/${user.id}/${hash}.${format}?size=${size}`;
+}
+
+/** The avatar as the user uploaded it, animated if it is, or null for a default avatar. */
+export function userCustomAvatarUrl(
+  user: { id: string; avatar: string | null },
+  size: number = 1024,
+) {
+  return user.avatar ? userImageUrl("avatars", user, user.avatar, size) : null;
+}
+
+export function userBannerUrl(
+  user: { id: string; banner: string | null },
+  size: number = 1024,
+) {
+  return user.banner ? userImageUrl("banners", user, user.banner, size) : null;
+}

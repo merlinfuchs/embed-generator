@@ -7,9 +7,11 @@ import (
 	"net/http"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	embedgapp "github.com/merlinfuchs/embed-generator/embedg-app"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/assistant"
@@ -25,8 +27,10 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/scheduled_messages"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/send_message"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/shared_messages"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/user_lookup"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/users"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	embedgsite "github.com/merlinfuchs/embed-generator/embedg-site"
 )
 
@@ -53,6 +57,25 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	usersHandler := users.New(env.UserStore, env.PremiumManager)
 	usersGroup := app.Group("/api/users", sessionMiddleware.SessionRequired())
 	usersGroup.Get("/:userID", usersHandler.HandleGetUser)
+
+	// Every lookup is a request to Discord with the shared bot's token, so each user gets a small
+	// allowance. Instances don't share it, which is fine for a limit this soft.
+	userLookupHandler := user_lookup.New(env.Rest)
+	userLookupGroup := app.Group("/api/user-lookup", sessionMiddleware.SessionRequired(), limiter.New(limiter.Config{
+		Max:        30,
+		Expiration: time.Minute,
+		KeyGenerator: func(c *fiber.Ctx) string {
+			return c.Locals("session").(*session.Session).UserID.String()
+		},
+		LimitReached: func(c *fiber.Ctx) error {
+			return &wire.Error{
+				Status:  fiber.StatusTooManyRequests,
+				Code:    "rate_limited",
+				Message: "You are looking up users too fast, try again in a minute.",
+			}
+		},
+	}))
+	userLookupGroup.Get("/:userID", userLookupHandler.HandleLookupUser)
 
 	savedMessagesHandler := saved_messages.New(env.SavedMessageStore, env.AccessManager, env.PremiumManager)
 	savedMessagesGroup := app.Group("/api/saved-messages", sessionMiddleware.SessionRequired())

@@ -86,7 +86,7 @@ Exact names of commands, settings, and pages users see:
 - /help, /invite, /website
 - Message context menu: Restore Message, Dump Message. User context menu: Avatar Url, Format Mention.
 - Send modes: Webhook and Channel.
-- App pages: Message Editor, Saved Messages, Scheduled Messages, Commands, Utility Tools (Colored Text Generator, Embed Links, Webhook Info), Premium, Settings. The editor is at message.style/app/editor.
+- App pages: Message Editor, Saved Messages, Scheduled Messages, Commands, Utility Tools (Colored Text Generator, Embed Links, Webhook Info, User Lookup (needs login)), Premium, Settings. The editor is at message.style/app/editor.
 - Plans: Free, Premium, and Ultimate.
 - Links: message.style/premium, /invite, /discord (support server), /source (GitHub), status.message.style.
 - Discord permissions by Discord's names, like Manage Webhooks, which /embed needs.

@@ -1,11 +1,11 @@
 ---
 sidebar_position: 5
-description: Free Discord tools from Embed Generator, a colored text generator using ANSI codes, embed links for sharing rich embeds, and a webhook info lookup.
+description: Free Discord tools from Embed Generator, a colored text generator using ANSI codes, embed links for sharing rich embeds, and a webhook info lookup and a Discord user lookup.
 ---
 
 # Tools
 
-Besides the message editor, Embed Generator has a few small free tools. None of them need an account.
+Besides the message editor, Embed Generator has a few small free tools. Most of them need no account; the User Lookup needs you to log in with Discord.
 
 ## Colored Text Generator
 
@@ -20,3 +20,7 @@ Turning on **Custom Component** replaces that preview in Discord with a Componen
 ## Webhook Info
 
 Paste any Discord webhook URL into [Webhook Info](https://message.style/app/tools/webhook-info) to see the webhook's name, avatar and who created it. Handy when you find an old URL and don't remember what it was for.
+
+## User Lookup
+
+Paste a Discord user ID, or a mention, into [User Lookup](https://message.style/app/tools/user-lookup) to see the user's name, avatar, banner, accent color, public badges and when their account was created. Discord only gives these details to bots, so the lookup runs on our server and you need to log in with Discord to use it. Each person can do up to 30 lookups a minute, and results are cached for a few minutes.
