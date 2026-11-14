@@ -9,6 +9,7 @@ import EditorEmbeds from "../../components/EditorEmbeds";
 import EditorMenuBar from "../../components/EditorMenuBar";
 import EditorMessageContentField from "../../components/EditorMessageContentField";
 import EditorMessagePreview from "../../components/EditorMessagePreview";
+import EditorPoll from "../../components/EditorPoll";
 import EditorWebhookFields from "../../components/EditorWebhookFields";
 import SendMenu from "../../components/SendMenu";
 import { messageSchema } from "../../discord/schema";
@@ -71,6 +72,7 @@ export default function EditorView() {
               {!componentsV2Enabled && <EditorMessageContentField />}
               <EditorAttachments />
               {!componentsV2Enabled && <EditorEmbeds />}
+              {!componentsV2Enabled && <EditorPoll />}
               <EditorComponents defaultCollapsed={!componentsV2Enabled} />
             </div>
           </div>

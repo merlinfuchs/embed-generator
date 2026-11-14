@@ -1339,3 +1339,85 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   max-height: 350px;
   max-width: 100%;
 }
+
+.discord-poll {
+  background-color: #2b2d31;
+  border: 1px solid #3f4147;
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: #dbdee1;
+  font-size: 14px;
+  line-height: 1.25;
+  margin-bottom: 8px;
+  margin-top: 8px;
+  max-width: 432px;
+  padding: 12px;
+  white-space: normal;
+}
+
+.discord-poll-question {
+  color: #f2f3f5;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.375;
+  overflow-wrap: anywhere;
+}
+
+.discord-poll-hint {
+  color: #b5bac1;
+  font-size: 12px;
+  margin-bottom: 12px;
+  margin-top: 4px;
+}
+
+.discord-poll-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.discord-poll-answer {
+  align-items: center;
+  background-color: #1e1f22;
+  border: 1px solid #3f4147;
+  border-radius: 8px;
+  display: flex;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 12px;
+}
+
+.discord-poll-answer-emoji {
+  flex: none;
+  line-height: 0;
+}
+
+.discord-poll-answer-emoji img {
+  height: 24px;
+  width: 24px;
+}
+
+.discord-poll-answer-text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.discord-poll-answer-select {
+  border: 2px solid #80848e;
+  border-radius: 50%;
+  box-sizing: border-box;
+  flex: none;
+  height: 20px;
+  width: 20px;
+}
+
+.discord-poll-answer-select-multi {
+  border-radius: 4px;
+}
+
+.discord-poll-footer {
+  color: #b5bac1;
+  font-size: 12px;
+  margin-top: 12px;
+}

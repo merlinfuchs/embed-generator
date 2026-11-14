@@ -33,6 +33,9 @@ func CheckResponseMessage(m *MessageWithActions) error {
 	if hasInteractive(m.Components) {
 		return errors.New("it can only have link buttons, not buttons with actions or select menus")
 	}
+	if m.Poll != nil {
+		return errors.New("it can't have a poll")
+	}
 
 	if m.ComponentsV2Enabled() {
 		if m.Content != "" || len(m.Embeds) != 0 {

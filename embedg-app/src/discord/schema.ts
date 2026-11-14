@@ -581,6 +581,37 @@ function textDisplays(
   });
 }
 
+/** Discord's limits on a poll. */
+export const POLL_QUESTION_LIMIT = 300;
+export const POLL_ANSWER_LIMIT = 55;
+export const POLL_ANSWERS_LIMIT = 10;
+/** How long Discord lets a poll stay open, in hours: 32 days. */
+export const POLL_MAX_DURATION = 768;
+/** What Discord uses for a poll without a duration. */
+export const POLL_DEFAULT_DURATION = 24;
+
+export const pollAnswerSchema = z.object({
+  poll_media: z.object({
+    text: z.string().min(1).max(POLL_ANSWER_LIMIT),
+    emoji: z.optional(emojiSchema),
+  }),
+});
+
+export type PollAnswer = z.infer<typeof pollAnswerSchema>;
+
+export const pollSchema = z.object({
+  // Discord only takes text for the question, no emoji.
+  question: z.object({
+    text: z.string().min(1).max(POLL_QUESTION_LIMIT),
+  }),
+  answers: z.array(pollAnswerSchema).min(1).max(POLL_ANSWERS_LIMIT),
+  /** In hours. */
+  duration: z.number().int().min(1).max(POLL_MAX_DURATION),
+  allow_multiselect: z.boolean(),
+});
+
+export type Poll = z.infer<typeof pollSchema>;
+
 const messageFieldsSchema = z.object({
   content: messageContentSchema.default(""),
   username: webhookUsernameSchema,
@@ -589,6 +620,7 @@ const messageFieldsSchema = z.object({
   embeds: z.array(embedSchema).max(10).default([]),
   allowed_mentions: messageAllowedMentionsSchema,
   components: z.array(componentSchema).default([]),
+  poll: z.optional(pollSchema),
   thread_name: messageThreadName,
   flags: z.number().optional(),
 });
@@ -597,7 +629,7 @@ const messageFieldsSchema = z.object({
 function refineMessage(
   data: Pick<
     z.infer<typeof messageFieldsSchema>,
-    "content" | "embeds" | "components" | "flags"
+    "content" | "embeds" | "components" | "poll" | "flags"
   >,
   ctx: z.RefinementCtx,
 ) {
@@ -608,6 +640,14 @@ function refineMessage(
         code: z.ZodIssueCode.custom,
         path: ["components"],
         message: "Components are required when components v2 is enabled",
+      });
+    }
+
+    if (data.poll) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["poll"],
+        message: "A message can't have a poll when components v2 is enabled",
       });
     }
 
@@ -634,7 +674,12 @@ function refineMessage(
     }
   } else {
     // this currently doesn't take attachments into account
-    if (!data.content && !data.embeds.length && !data.components.length) {
+    if (
+      !data.content &&
+      !data.embeds.length &&
+      !data.components.length &&
+      !data.poll
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["content"],
@@ -670,6 +715,8 @@ export const RESPONSE_MESSAGE_OMIT = {
   avatar_url: true,
   tts: true,
   thread_name: true,
+  // Discord has no poll in the response to an interaction.
+  poll: true,
 } as const;
 
 /**

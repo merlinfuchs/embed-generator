@@ -93,6 +93,7 @@ func (m *WebhookManager) SendMessageToChannel(ctx context.Context, channelID com
 			Files:           params.Files,
 			AllowedMentions: params.AllowedMentions,
 			Flags:           params.Flags,
+			Poll:            params.Poll,
 		}, rest.WithCtx(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("Failed to send message: %w", err)
