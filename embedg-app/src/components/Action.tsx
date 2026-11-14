@@ -89,7 +89,7 @@ const actionDescriptions = {
   10: "Check if the user has the required permissions and roles.",
   11: "Send a text message to another channel.",
   12: "Send a saved message to another channel.",
-  13: "Open a form for the user to fill in. This has to be the last action, and the form's own actions run when it's submitted.",
+  13: "Open a form for the user to fill in. This has to be the last action, and no action before it can reply. The form's own actions run when it's submitted.",
 } as const;
 
 const messageActionDescriptions = {

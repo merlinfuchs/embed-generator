@@ -25,7 +25,7 @@ Forms are available on every plan. The actions that run when a form is submitted
 
    A user, role, mentionable or channel select has **Max Values**, how many a member can pick. It is 1 by default and can be up to 25.
 
-   Select menus, radio buttons and checkboxes have **Options**. Each option has a **Label** that members see, a **Value** that you can use in variables, an optional **Description**, and whether it is picked by default. A select menu can have up to 25 options and picks 1 by default, set **Max Values** to allow more. Radio buttons need 2 to 10 options and members pick exactly one. Checkboxes have 1 to 10 options, and **Max Values** limits how many can be checked; it is all of them if you leave it empty.
+   Select menus, radio buttons and checkboxes have **Options**. Each option has a **Label** that members see, a **Value** that you can use in variables, an optional **Description**, and whether it is picked by default. A select menu can have up to 25 options and picks 1 by default, set **Max Values** to allow more. Radio buttons need 2 to 10 options and members pick exactly one. Checkboxes have 1 to 10 options. **Max Values** limits how many can be checked, and leaving it empty allows all of them.
 
    A single checkbox is a yes or no question. Tick **Checked by Default** to have it start checked.
 5. Add the **Actions** that run when a member submits the form. They work like the actions of a button, for example a text response, a message to another channel, or adding a role.
@@ -39,7 +39,7 @@ A form opens from a button, a select menu option or a custom command that has a 
 1. Open the component or command and click **Add Action**.
 2. Set the type to **Show Form** and pick your form.
 
-Opening the form is the reply to the click or command, so **Show Form has to be the last action**. Actions before it can still check permissions, but they can't reply, because a pop-up can only be the first reply.
+Opening the form is the reply to the click or command, and a pop-up can only be the first reply. Show Form has to be the last action, and no action before it can reply. Actions before it can still check permissions, or add and remove roles with **Default Response** turned off.
 
 ## Using What Members Entered
 

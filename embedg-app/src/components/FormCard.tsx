@@ -59,13 +59,16 @@ export default function FormCard({ form }: { form: FormWire }) {
   }
 
   function save() {
-    const actions = useFormActionsStore.getState().actions[form.id];
+    // Without an entry in the store, which happens when the saved actions couldn't be parsed, the
+    // saved ones are sent back so they aren't wiped.
+    const actions =
+      useFormActionsStore.getState().actions[form.id] ?? form.actions;
 
     updateMutation.mutate(
       {
         guildId: guildId!,
         formId: form.id,
-        req: { name, title, fields, actions: actions || null },
+        req: { name, title, fields, actions },
       },
       {
         onSuccess(res) {

@@ -537,7 +537,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 
 			// The modal has to be the first response to the interaction.
 			if i.HasResponded() {
-				return userErr("This component is set up to open a form after it already responded. Move the Show Form action to the end of its actions.")
+				return userErr("This is set up to open a form after it already replied. Make sure no action before Show Form replies.")
 			}
 
 			form, err := m.getForm(*interaction.GuildID(), action.TargetID)
@@ -545,7 +545,9 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				return err
 			}
 
-			i.Respond(buildFormModal(form), discord.InteractionResponseTypeModal)
+			if !i.ShowModal(buildFormModal(form)) {
+				return userErr("Opening the form took too long. Try again.")
+			}
 			return nil
 		case actions.ActionTypePermissionCheck:
 			rawPerms, _ := strconv.ParseInt(action.Permissions, 10, 64)
