@@ -89,7 +89,7 @@ func (h *FormsHandler) HandleGetForm(c *fiber.Ctx) error {
 	})
 }
 
-func (h *FormsHandler) HandleCreateForm(c *fiber.Ctx, req wire.FormCreateRequestWire) error {
+func (h *FormsHandler) HandleCreateForm(c *fiber.Ctx, req wire.FormSaveRequestWire) error {
 	session := c.Locals("session").(*session.Session)
 	req.Normalize()
 
@@ -102,7 +102,7 @@ func (h *FormsHandler) HandleCreateForm(c *fiber.Ctx, req wire.FormCreateRequest
 		return err
 	}
 
-	fields, actionSet, err := h.checkForm(c, guildID, req.Name, req.Title, req.Fields, req.Actions)
+	fields, actionSet, err := h.checkForm(c, guildID, req)
 	if err != nil {
 		return err
 	}
@@ -142,7 +142,7 @@ func (h *FormsHandler) HandleCreateForm(c *fiber.Ctx, req wire.FormCreateRequest
 	})
 }
 
-func (h *FormsHandler) HandleUpdateForm(c *fiber.Ctx, req wire.FormUpdateRequestWire) error {
+func (h *FormsHandler) HandleUpdateForm(c *fiber.Ctx, req wire.FormSaveRequestWire) error {
 	session := c.Locals("session").(*session.Session)
 	req.Normalize()
 
@@ -155,7 +155,7 @@ func (h *FormsHandler) HandleUpdateForm(c *fiber.Ctx, req wire.FormUpdateRequest
 		return err
 	}
 
-	fields, actionSet, err := h.checkForm(c, guildID, req.Name, req.Title, req.Fields, req.Actions)
+	fields, actionSet, err := h.checkForm(c, guildID, req)
 	if err != nil {
 		return err
 	}
@@ -213,26 +213,19 @@ func (h *FormsHandler) HandleDeleteForm(c *fiber.Ctx) error {
 
 // checkForm validates what a request has for a form against Discord's limits for modals and the
 // plan of the server, and returns the fields and actions in the shape they're stored in.
-func (h *FormsHandler) checkForm(
-	c *fiber.Ctx,
-	guildID common.ID,
-	name string,
-	title string,
-	wireFields []wire.FormFieldWire,
-	rawActions json.RawMessage,
-) ([]actions.FormField, actions.ActionSet, error) {
-	fields := make([]actions.FormField, len(wireFields))
-	for i, f := range wireFields {
+func (h *FormsHandler) checkForm(c *fiber.Ctx, guildID common.ID, req wire.FormSaveRequestWire) ([]actions.FormField, actions.ActionSet, error) {
+	fields := make([]actions.FormField, len(req.Fields))
+	for i, f := range req.Fields {
 		fields[i] = fieldFromWire(f)
 	}
 
-	if err := actions.ValidateForm(name, title, fields); err != nil {
+	if err := actions.ValidateForm(req.Name, req.Title, fields); err != nil {
 		return nil, actions.ActionSet{}, handlers.BadRequest("invalid_form", fmt.Sprintf("Invalid form: %s.", err))
 	}
 
 	actionSet := actions.ActionSet{}
-	if len(rawActions) != 0 && string(rawActions) != "null" {
-		if err := json.Unmarshal(rawActions, &actionSet); err != nil {
+	if len(req.Actions) != 0 && string(req.Actions) != "null" {
+		if err := json.Unmarshal(req.Actions, &actionSet); err != nil {
 			return nil, actions.ActionSet{}, handlers.BadRequest("invalid_actions", fmt.Sprintf("Invalid actions: %s", err))
 		}
 	}
@@ -287,12 +280,9 @@ func formToWire(form model.Form) wire.FormWire {
 }
 
 func fieldFromWire(f wire.FormFieldWire) actions.FormField {
-	var options []actions.FormFieldOption
-	if len(f.Options) > 0 {
-		options = make([]actions.FormFieldOption, len(f.Options))
-		for i, o := range f.Options {
-			options[i] = actions.FormFieldOption(o)
-		}
+	options := make([]actions.FormFieldOption, len(f.Options))
+	for i, o := range f.Options {
+		options[i] = actions.FormFieldOption(o)
 	}
 
 	return actions.FormField{
@@ -312,12 +302,9 @@ func fieldFromWire(f wire.FormFieldWire) actions.FormField {
 }
 
 func fieldToWire(f actions.FormField) wire.FormFieldWire {
-	var options []wire.FormFieldOptionWire
-	if len(f.Options) > 0 {
-		options = make([]wire.FormFieldOptionWire, len(f.Options))
-		for i, o := range f.Options {
-			options[i] = wire.FormFieldOptionWire(o)
-		}
+	options := make([]wire.FormFieldOptionWire, len(f.Options))
+	for i, o := range f.Options {
+		options[i] = wire.FormFieldOptionWire(o)
 	}
 
 	return wire.FormFieldWire{

@@ -17,10 +17,12 @@ const (
 	MaxFormPlaceholderLen = 100
 	MaxFormValueLength    = 4000
 	MaxFormNameLength     = 100
-	MaxFormsPerGuild      = 25
 	maxFormFieldKeyLength = 32
 	// MaxFormSelectValues is how many users, roles or channels a select field can take at most.
 	MaxFormSelectValues = 25
+
+	// MaxFormsPerGuild is our own limit, not Discord's.
+	MaxFormsPerGuild = 25
 )
 
 // The types a form field can have. A text field is what a field without a type is.
@@ -60,8 +62,7 @@ type FormFieldOption struct {
 // {{.Form.reason}}, and the custom ID of the input.
 type FormField struct {
 	Key string `json:"key"`
-	// Type is "text" (the default), or what a select menu picks: "user", "role", "mentionable" or
-	// "channel".
+	// Type is one of the FormFieldType constants. Empty is a text input.
 	Type        string `json:"type,omitempty"`
 	Label       string `json:"label"`
 	Placeholder string `json:"placeholder,omitempty"`
@@ -96,6 +97,26 @@ func (f FormField) IsText() bool {
 	return f.Type == "" || f.Type == FormFieldTypeText
 }
 
+// MinPicks is how many values a select, radio or checkboxes field needs: one if it's required.
+func (f FormField) MinPicks() int {
+	if f.Required {
+		return 1
+	}
+	return 0
+}
+
+// MaxPicks is how many values a select or checkboxes field can take. MaxValues 0 means one for a
+// select menu and all options for checkboxes.
+func (f FormField) MaxPicks() int {
+	if f.MaxValues > 0 {
+		return f.MaxValues
+	}
+	if f.Type == FormFieldTypeCheckboxes {
+		return len(f.Options)
+	}
+	return 1
+}
+
 // maxOptions is how many options the field can have at most.
 func (f FormField) maxOptions() int {
 	if f.Type == FormFieldTypeSelect {
@@ -104,8 +125,8 @@ func (f FormField) maxOptions() int {
 	return MaxFormChoiceOptions
 }
 
-// IsSelect is whether the field is a select menu instead of a text input.
-func (f FormField) IsSelect() bool {
+// IsEntitySelect is whether the field is a select menu that picks users, roles or channels.
+func (f FormField) IsEntitySelect() bool {
 	switch f.Type {
 	case FormFieldTypeUser, FormFieldTypeRole, FormFieldTypeMentionable, FormFieldTypeChannel:
 		return true
@@ -146,42 +167,44 @@ func ValidateForm(name string, title string, fields []FormField) error {
 		if utf8.RuneCountInString(f.Placeholder) > MaxFormPlaceholderLen {
 			return fmt.Errorf("the placeholder of field %d can't be longer than %d characters", pos, MaxFormPlaceholderLen)
 		}
+		var err error
 		switch {
 		case f.IsText():
-		case f.IsSelect():
+			err = validateFormText(pos, f)
+		case f.IsEntitySelect():
 			if f.MaxValues < 0 || f.MaxValues > MaxFormSelectValues {
-				return fmt.Errorf("the number of selectable values of field %d must be between 1 and %d", pos, MaxFormSelectValues)
+				err = fmt.Errorf("the number of selectable values of field %d must be between 1 and %d", pos, MaxFormSelectValues)
 			}
-			// The rest only applies to text inputs.
-			continue
 		case f.HasOptions():
-			if err := validateFormOptions(pos, f); err != nil {
-				return err
-			}
-			continue
+			err = validateFormOptions(pos, f)
 		case f.Type == FormFieldTypeCheckbox:
-			continue
 		default:
-			return fmt.Errorf("the type of field %d is not valid", pos)
+			err = fmt.Errorf("the type of field %d is not valid", pos)
 		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
-		if f.MinLength < 0 || f.MinLength > MaxFormValueLength {
-			return fmt.Errorf("the minimum length of field %d must be between 0 and %d", pos, MaxFormValueLength)
-		}
-		if f.MaxLength < 0 || f.MaxLength > MaxFormValueLength {
-			return fmt.Errorf("the maximum length of field %d must be between 0 and %d", pos, MaxFormValueLength)
-		}
-		if f.MaxLength != 0 && f.MinLength > f.MaxLength {
-			return fmt.Errorf("the minimum length of field %d can't be larger than its maximum length", pos)
-		}
+func validateFormText(pos int, f FormField) error {
+	if f.MinLength < 0 || f.MinLength > MaxFormValueLength {
+		return fmt.Errorf("the minimum length of field %d must be between 0 and %d", pos, MaxFormValueLength)
+	}
+	if f.MaxLength < 0 || f.MaxLength > MaxFormValueLength {
+		return fmt.Errorf("the maximum length of field %d must be between 0 and %d", pos, MaxFormValueLength)
+	}
+	if f.MaxLength != 0 && f.MinLength > f.MaxLength {
+		return fmt.Errorf("the minimum length of field %d can't be larger than its maximum length", pos)
+	}
 
-		limit := MaxFormValueLength
-		if f.MaxLength != 0 {
-			limit = f.MaxLength
-		}
-		if n := utf8.RuneCountInString(f.Value); n > limit {
-			return fmt.Errorf("the preset value of field %d can't be longer than %d characters", pos, limit)
-		}
+	limit := MaxFormValueLength
+	if f.MaxLength != 0 {
+		limit = f.MaxLength
+	}
+	if n := utf8.RuneCountInString(f.Value); n > limit {
+		return fmt.Errorf("the preset value of field %d can't be longer than %d characters", pos, limit)
 	}
 	return nil
 }
@@ -222,21 +245,10 @@ func validateFormOptions(pos int, f FormField) error {
 			return fmt.Errorf("only one option of field %d can be picked by default", pos)
 		}
 	case FormFieldTypeSelect, FormFieldTypeCheckboxes:
-		limit := len(f.Options)
-		if f.Type == FormFieldTypeSelect && limit > MaxFormSelectValues {
-			limit = MaxFormSelectValues
+		if f.MaxValues < 0 || f.MaxValues > len(f.Options) {
+			return fmt.Errorf("the number of selectable values of field %d must be between 1 and %d", pos, len(f.Options))
 		}
-		if f.MaxValues < 0 || f.MaxValues > limit {
-			return fmt.Errorf("the number of selectable values of field %d must be between 1 and %d", pos, limit)
-		}
-		maxPick := f.MaxValues
-		if maxPick == 0 && f.Type == FormFieldTypeSelect {
-			maxPick = 1
-		}
-		if maxPick == 0 {
-			maxPick = len(f.Options)
-		}
-		if defaults > maxPick {
+		if defaults > f.MaxPicks() {
 			return fmt.Errorf("field %d has more options picked by default than it can pick", pos)
 		}
 	}

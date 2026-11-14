@@ -85,7 +85,7 @@ func TestValidateFormSelects(t *testing.T) {
 	if err := ValidateForm("n", "t", fields); err != nil {
 		t.Fatal(err)
 	}
-	if !fields[0].IsSelect() || fields[4].IsSelect() || (FormField{}).IsSelect() {
+	if !fields[0].IsEntitySelect() || fields[4].IsEntitySelect() || (FormField{}).IsEntitySelect() {
 		t.Fatal("unexpected IsSelect")
 	}
 }

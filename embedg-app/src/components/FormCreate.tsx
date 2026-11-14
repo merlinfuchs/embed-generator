@@ -6,10 +6,7 @@ import type { FormFieldWire } from "../api/wire";
 import { useFormActionsStore } from "../state/actions";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { useToasts } from "../util/toasts";
-import CommandActionSet from "./CommandActionSet";
-import EditorInput from "./EditorInput";
-import FormFields, { validateFormFields } from "./FormFields";
-import FormPreview from "./FormPreview";
+import FormEditor from "./FormEditor";
 import Tooltip from "./Tooltip";
 
 const newFields = (): FormFieldWire[] => [
@@ -35,25 +32,6 @@ export default function FormCreate({
 
   function create() {
     if (!guildId) return;
-
-    if (name.trim().length === 0 || title.trim().length === 0) {
-      createToast({
-        title: "Missing fields",
-        message: "A form needs both a name and a title.",
-        type: "error",
-      });
-      return;
-    }
-
-    const fieldsError = validateFormFields(fields);
-    if (fieldsError) {
-      createToast({
-        title: "Invalid fields",
-        message: fieldsError,
-        type: "error",
-      });
-      return;
-    }
 
     const actions = useFormActionsStore.getState().actions.new;
 
@@ -115,33 +93,15 @@ export default function FormCreate({
           </button>
         </div>
       </div>
-      <div className="lg:flex lg:items-start lg:gap-6">
-        <div className="min-w-0 flex-1">
-          <div className="space-y-5 mb-5">
-            <EditorInput
-              label="Name"
-              description="How the form is called in the dashboard and when you pick it for a button, select menu or command."
-              type="text"
-              maxLength={100}
-              value={name}
-              onChange={setName}
-            />
-            <EditorInput
-              label="Title"
-              description="Shown at the top of the form in Discord."
-              type="text"
-              maxLength={45}
-              value={title}
-              onChange={setTitle}
-            />
-            <FormFields formId="new" fields={fields} setFields={setFields} />
-            <CommandActionSet cmdId="new" store={useFormActionsStore} inForm />
-          </div>
-        </div>
-        <div className="mt-3 lg:mt-0 lg:sticky lg:top-4 lg:w-[26rem] lg:flex-none">
-          <FormPreview title={title} fields={fields} />
-        </div>
-      </div>
+      <FormEditor
+        formId="new"
+        name={name}
+        setName={setName}
+        title={title}
+        setTitle={setTitle}
+        fields={fields}
+        setFields={setFields}
+      />
     </div>
   );
 }
