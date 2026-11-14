@@ -6,7 +6,7 @@ import { lazyView } from "../util/lazyView";
 
 // The picker and its dataset are only needed once someone opens it, and they
 // are a sizeable part of the main chunk otherwise.
-const Picker = lazyView(() => import("@emoji-mart/react"));
+const Picker = lazyView(() => import("./EmojiMartPicker"));
 
 let emojiData: Promise<unknown> | undefined;
 
@@ -23,6 +23,9 @@ interface Props {
   onEmojiSelect: (emoji: any) => void;
   children: ReactNode;
   align: "left" | "right" | "center";
+  // Keep the picker open after a selection so several emojis can be inserted
+  // in a row. It still closes when clicking outside.
+  keepOpen?: boolean;
 }
 
 export default function EmojiPicker({
@@ -30,6 +33,7 @@ export default function EmojiPicker({
   onEmojiSelect,
   children,
   align,
+  keepOpen = false,
 }: Props) {
   const [open, setOpen] = useState(false);
 
@@ -75,7 +79,7 @@ export default function EmojiPicker({
             <Picker
               data={loadEmojiData}
               onEmojiSelect={(data: any) => {
-                setOpen(false);
+                if (!keepOpen) setOpen(false);
                 onEmojiSelect(data);
               }}
               custom={customEmojis}
