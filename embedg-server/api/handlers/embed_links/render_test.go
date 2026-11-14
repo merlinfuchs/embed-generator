@@ -14,7 +14,7 @@ const componentEmbedPrefix = `<script id="discord:component-embed" type="applica
 func TestComponentEmbedToHTML(t *testing.T) {
 	html := componentEmbedToHTML([]byte(
 		`{"component":{"type":17,"components":[{"type":10,"content":"</script><b>hi</b>"}]}}`,
-	))
+	), false)
 
 	if !strings.HasPrefix(html, componentEmbedPrefix) {
 		t.Fatalf("expected a script element, got %q", html)
@@ -26,7 +26,7 @@ func TestComponentEmbedToHTML(t *testing.T) {
 }
 
 func TestComponentEmbedToHTMLSkipsEmptyPayloads(t *testing.T) {
-	if html := componentEmbedToHTML(nil); html != "" {
+	if html := componentEmbedToHTML(nil, true); html != "" {
 		t.Fatalf("expected no script element, got %q", html)
 	}
 }
@@ -35,7 +35,7 @@ func TestComponentEmbedToHTMLSkipsEmptyPayloads(t *testing.T) {
 func TestComponentEmbedToHTMLCompactsPayload(t *testing.T) {
 	html := componentEmbedToHTML([]byte(
 		`{"component": {"type": 17, "components": [{"type": 10, "content": "a, b: c"}]}}`,
-	))
+	), false)
 
 	want := componentEmbedPrefix + `{"component":{"type":17,"components":[{"type":10,"content":"a, b: c"}]}}` + "</script>\n"
 	if html != want {
@@ -43,8 +43,19 @@ func TestComponentEmbedToHTMLCompactsPayload(t *testing.T) {
 	}
 }
 
+func TestComponentEmbedToHTMLAddsAttribution(t *testing.T) {
+	html := componentEmbedToHTML([]byte(
+		`{"component": {"type": 17, "components": [{"type": 10, "content": "<b>hi</b>"}]}}`,
+	), true)
+
+	want := componentEmbedPrefix + `{"component":{"type":17,"components":[{"type":10,"content":"\u003cb\u003ehi\u003c/b\u003e"},{"type":10,"content":"-# Link preview from [message.style](https://message.style)"}]}}` + "</script>\n"
+	if html != want {
+		t.Fatalf("got %q, want %q", html, want)
+	}
+}
+
 func TestUnknownEmbedLinkIsNotFound(t *testing.T) {
-	h := New(EmbedLinksHandlerConfig{AppPublicURL: "https://message.style/app"}, nil)
+	h := New(EmbedLinksHandlerConfig{AppPublicURL: "https://message.style/app"}, nil, nil)
 	app := fiber.New()
 	app.Get("/e/unknown", h.renderUnknownEmbedLinkHTML)
 

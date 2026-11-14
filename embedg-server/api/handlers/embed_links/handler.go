@@ -9,6 +9,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/wire"
 	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
@@ -22,21 +23,36 @@ type EmbedLinksHandlerConfig struct {
 
 type EmbedLinksHandler struct {
 	embedLinkStore store.EmbedLinkStore
+	planStore      store.PlanStore
 	config         EmbedLinksHandlerConfig
 }
 
-func New(config EmbedLinksHandlerConfig, embedLinkStore store.EmbedLinkStore) *EmbedLinksHandler {
+func New(config EmbedLinksHandlerConfig, embedLinkStore store.EmbedLinkStore, planStore store.PlanStore) *EmbedLinksHandler {
 	return &EmbedLinksHandler{
 		config:         config,
 		embedLinkStore: embedLinkStore,
+		planStore:      planStore,
 	}
 }
 
 func (h *EmbedLinksHandler) HandleCreateEmbedLink(c *fiber.Ctx, req wire.EmbedLinkCreateRequestWire) error {
+	// Logging in is optional. Only a paid plan of the user's own turns off the attribution.
+	var userID common.NullID
+	attribution := true
+	if session, _ := c.Locals("session").(*session.Session); session != nil {
+		userID = common.NullID{Valid: true, ID: session.UserID}
+
+		features, err := h.planStore.GetPlanFeaturesForUser(c.UserContext(), session.UserID)
+		if err != nil {
+			return err
+		}
+		attribution = !features.IsPremium
+	}
+
 	// Stored as the payload that goes into the page, not as the client sent it.
 	var componentEmbed []byte
 	if len(req.ComponentEmbed) != 0 {
-		parsed, err := model.ParseComponentEmbed(req.ComponentEmbed)
+		parsed, err := model.ParseComponentEmbed(req.ComponentEmbed, attribution)
 		if err != nil {
 			return handlers.BadRequest("invalid_component_embed", err.Error())
 		}
@@ -63,6 +79,8 @@ func (h *EmbedLinksHandler) HandleCreateEmbedLink(c *fiber.Ctx, req wire.EmbedLi
 		TwCard:         req.TwCard,
 		ComponentEmbed: componentEmbed,
 		CreatedAt:      time.Now().UTC(),
+		UserID:         userID,
+		Attribution:    attribution,
 	})
 	if err != nil {
 		return err

@@ -76,7 +76,7 @@ func TestParseComponentEmbed(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := model.ParseComponentEmbed([]byte(test.payload))
+			_, err := model.ParseComponentEmbed([]byte(test.payload), false)
 			if test.wantErr && err == nil {
 				t.Fatalf("expected an error")
 			}
@@ -91,7 +91,7 @@ func TestParseComponentEmbed(t *testing.T) {
 func TestComponentEmbedMarshalEscapesHTML(t *testing.T) {
 	embed, err := model.ParseComponentEmbed([]byte(
 		`{"component":{"type":17,"components":[{"type":10,"content":"</script><img src=x onerror=alert(1)>"}]}}`,
-	))
+	), false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -112,14 +112,74 @@ func TestParseComponentEmbedSize(t *testing.T) {
 		return []byte(`{"component":{"type":17,"components":[{"type":10,"content":` + string(b) + `}]}}`)
 	}
 
-	if _, err := model.ParseComponentEmbed(payload(strings.Repeat("a", 2900))); err != nil {
+	if _, err := model.ParseComponentEmbed(payload(strings.Repeat("a", 2900)), false); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if _, err := model.ParseComponentEmbed(payload(strings.Repeat("a", 3000))); err == nil {
+	if _, err := model.ParseComponentEmbed(payload(strings.Repeat("a", 3000)), false); err == nil {
 		t.Fatalf("expected an error for a payload over 3,000 bytes")
 	}
 	// 500 characters, but 3,000 bytes once each one is escaped for the page.
-	if _, err := model.ParseComponentEmbed(payload(strings.Repeat("<", 500))); err == nil {
+	if _, err := model.ParseComponentEmbed(payload(strings.Repeat("<", 500)), false); err == nil {
 		t.Fatalf("expected escape sequences to count toward the limit")
+	}
+}
+
+func TestParseComponentEmbedAttribution(t *testing.T) {
+	textDisplays := func(n int) []byte {
+		components := make([]string, n)
+		for i := range components {
+			components[i] = `{"type":10,"content":"Hi"}`
+		}
+		return []byte(`{"component":{"type":17,"components":[` + strings.Join(components, ",") + `]}}`)
+	}
+
+	embed, err := model.ParseComponentEmbed(textDisplays(9), true)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if n := len(embed.Component.Components); n != 9 {
+		t.Fatalf("expected the attribution to be left out of the stored embed, got %d components", n)
+	}
+
+	// The tenth component is taken by the attribution.
+	if _, err := model.ParseComponentEmbed(textDisplays(10), true); err == nil {
+		t.Fatalf("expected an error for a container that leaves no room for the attribution")
+	}
+	if _, err := model.ParseComponentEmbed(textDisplays(10), false); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestParseComponentEmbedAttributionSize(t *testing.T) {
+	b, _ := json.Marshal(strings.Repeat("a", 2900))
+	payload := []byte(`{"component":{"type":17,"components":[{"type":10,"content":` + string(b) + `}]}}`)
+
+	if _, err := model.ParseComponentEmbed(payload, false); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if _, err := model.ParseComponentEmbed(payload, true); err == nil {
+		t.Fatalf("expected the attribution to count toward the limit")
+	}
+}
+
+func TestComponentEmbedWithAttribution(t *testing.T) {
+	embed, err := model.ParseComponentEmbed([]byte(
+		`{"component":{"type":17,"components":[{"type":10,"content":"Hi"}]}}`,
+	), true)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	payload, err := json.Marshal(embed.WithAttribution())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	want := `{"component":{"type":17,"components":[{"type":10,"content":"Hi"},{"type":10,"content":"-# Link preview from [message.style](https://message.style)"}]}}`
+	if string(payload) != want {
+		t.Fatalf("got %s, want %s", payload, want)
+	}
+	if n := len(embed.Component.Components); n != 1 {
+		t.Fatalf("expected the original embed to be left alone, got %d components", n)
 	}
 }

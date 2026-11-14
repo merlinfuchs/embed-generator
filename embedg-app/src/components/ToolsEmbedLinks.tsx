@@ -11,20 +11,42 @@ import CheckBox from "./CheckBox";
 import Collapsable from "./Collapsable";
 import clsx from "clsx";
 import { PADDED } from "./editorCard";
+import { usePremiumUserFeatures } from "../util/premium";
 import ComponentEmbedEditor from "./ComponentEmbedEditor";
 import {
   componentEmbedPayload,
   useComponentEmbedContainer,
 } from "../state/componentEmbed";
 
+/** The line the server adds to the end of the preview for anyone without a
+ * paid plan. */
+const ATTRIBUTION =
+  "-# Link preview from [message.style](https://message.style)";
+
 /** Subscribes to the component embed on its own, so typing in the editor
  * doesn't re-render the whole tool. */
-function ComponentEmbedPreview({ msg }: { msg: Message }) {
+function ComponentEmbedPreview({
+  msg,
+  attribution,
+}: {
+  msg: Message;
+  attribution: boolean;
+}) {
   const container = useComponentEmbedContainer();
+  const attributionId = useMemo(getUniqueId, []);
 
-  return (
-    <MessagePreview msg={msg} unfurledComponent={container ?? undefined} />
-  );
+  const unfurled =
+    container && attribution
+      ? {
+          ...container,
+          components: [
+            ...container.components,
+            { id: attributionId, type: 10 as const, content: ATTRIBUTION },
+          ],
+        }
+      : container;
+
+  return <MessagePreview msg={msg} unfurledComponent={unfurled ?? undefined} />;
 }
 
 export default function ToolsEmbedLinks() {
@@ -44,6 +66,7 @@ export default function ToolsEmbedLinks() {
 
   const [componentEmbed, setComponentEmbed] = useState(false);
   const previewEmbedId = useMemo(getUniqueId, []);
+  const attribution = !usePremiumUserFeatures()?.is_premium;
 
   // What the fallback preview is built from, and what Discord shows when
   // there is no custom component.
@@ -284,7 +307,18 @@ export default function ToolsEmbedLinks() {
             }
           >
             {componentEmbed ? (
-              <ComponentEmbedEditor />
+              <>
+                <ComponentEmbedEditor />
+                {attribution && (
+                  <div
+                    className={clsx(PADDED, "text-sm font-light text-mist-400")}
+                  >
+                    Discord shows a small "Link preview from message.style" line
+                    at the end. It's left out if you're logged in and bought
+                    Premium or Ultimate.
+                  </div>
+                )}
+              </>
             ) : (
               <div className={clsx(PADDED, "text-sm font-light text-mist-400")}>
                 Replace the Discord preview with components: markdown, images,
@@ -314,7 +348,7 @@ export default function ToolsEmbedLinks() {
           )}
         </div>
         {componentEmbed ? (
-          <ComponentEmbedPreview msg={previewMsg} />
+          <ComponentEmbedPreview msg={previewMsg} attribution={attribution} />
         ) : (
           <MessagePreview msg={previewMsg} />
         )}

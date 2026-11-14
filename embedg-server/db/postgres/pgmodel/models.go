@@ -75,6 +75,8 @@ type EmbedLink struct {
 	ExpiresAt      pgtype.Timestamp
 	CreatedAt      pgtype.Timestamp
 	ComponentEmbed []byte
+	UserID         pgtype.Text
+	Attribution    bool
 }
 
 type Entitlement struct {

@@ -32,6 +32,8 @@ func (c *Client) CreateEmbedLink(ctx context.Context, embedLink model.EmbedLink)
 		ComponentEmbed: embedLink.ComponentEmbed,
 		ExpiresAt:      pgtype.Timestamp{Time: embedLink.ExpiresAt.Time, Valid: embedLink.ExpiresAt.Valid},
 		CreatedAt:      pgtype.Timestamp{Time: embedLink.CreatedAt, Valid: true},
+		UserID:         pgtype.Text{String: embedLink.UserID.ID.String(), Valid: embedLink.UserID.Valid},
+		Attribution:    embedLink.Attribution,
 	})
 	if err != nil {
 		return nil, err
@@ -68,5 +70,7 @@ func rowToEmbedLink(row pgmodel.EmbedLink) *model.EmbedLink {
 		ComponentEmbed: row.ComponentEmbed,
 		ExpiresAt:      null.NewTime(row.ExpiresAt.Time, row.ExpiresAt.Valid),
 		CreatedAt:      row.CreatedAt.Time,
+		UserID:         nullID(row.UserID),
+		Attribution:    row.Attribution,
 	}
 }
