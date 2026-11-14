@@ -176,6 +176,12 @@ func (h *PremiumHandler) HandleConsumeEntitlement(c *fiber.Ctx, req wire.Consume
 		return err
 	}
 
+	// Only lifetime plans are activated on a server. The others, like the one-time removal of the
+	// embed link attribution, already apply to the user who bought them.
+	if plan := h.planStore.GetPlanBySKUID(entitlement.SkuID); plan == nil || !plan.Consumable {
+		return handlers.BadRequest("entitlement_not_consumable", "This purchase can't be activated on a server")
+	}
+
 	if entitlement.ConsumedGuildID.Valid {
 		return handlers.BadRequest("entitlement_already_consumed", "Entitlement already consumed")
 	}
