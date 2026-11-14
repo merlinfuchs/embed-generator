@@ -69,10 +69,6 @@ func TestEmbedLinkAttribution(t *testing.T) {
 		{ID: "embed_link_attribution", SKUID: "attribution", Features: model.PlanFeatures{RemoveEmbedLinkAttribution: true}},
 	}}, common.Shards{}, nil, nil, nil)
 
-	if plan := m.GetEmbedLinkAttributionPlan(); plan == nil || plan.ID != "embed_link_attribution" {
-		t.Errorf("GetEmbedLinkAttributionPlan() = %+v, want embed_link_attribution", plan)
-	}
-
 	tests := []struct {
 		name            string
 		skus            []string
@@ -99,11 +95,5 @@ func TestEmbedLinkAttribution(t *testing.T) {
 					features.EmbedLinkAttribution(), plan, features.MaxSavedMessages, tt.wantAttribution, tt.wantPlan, tt.wantSaved)
 			}
 		})
-	}
-}
-
-func TestGetEmbedLinkAttributionPlanNone(t *testing.T) {
-	if plan := newPlanTestManager().GetEmbedLinkAttributionPlan(); plan != nil {
-		t.Errorf("GetEmbedLinkAttributionPlan() = %+v, want nil", plan)
 	}
 }

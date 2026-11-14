@@ -66,9 +66,7 @@ export default function ToolsEmbedLinks() {
 
   const [componentEmbed, setComponentEmbed] = useState(false);
   const previewEmbedId = useMemo(getUniqueId, []);
-  const features = usePremiumUserFeatures();
-  const attribution =
-    !features?.is_premium && !features?.remove_embed_link_attribution;
+  const attribution = usePremiumUserFeatures()?.embed_link_attribution ?? true;
 
   // What the fallback preview is built from, and what Discord shows when
   // there is no custom component.

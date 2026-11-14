@@ -124,7 +124,7 @@ max_kv_keys = 5000
 
 # Bought once instead of a subscription, and only leaves the "Link preview from message.style" line
 # out of the embed links the user creates. Plans with is_premium leave it out already. Use a durable
-# SKU, /premium/embed-links sends users to its store page.
+# SKU and keep the id, /premium/embed-links sends users to the store page of the plan with this id.
 [[premium.plans]]
 id = "embed_link_attribution"
 sku_id = "789"

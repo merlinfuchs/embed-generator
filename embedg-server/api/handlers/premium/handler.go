@@ -101,7 +101,7 @@ func planFeaturesToWire(plan string, features model.PlanFeatures) wire.GetPremiu
 		MaxPeriodicScheduledMessages: features.MaxPeriodicScheduledMessages,
 		MaxTemplateOps:               features.MaxTemplateOps,
 		MaxKVKeys:                    features.MaxKVKeys,
-		RemoveEmbedLinkAttribution:   features.RemoveEmbedLinkAttribution,
+		EmbedLinkAttribution:         features.EmbedLinkAttribution(),
 	}
 }
 

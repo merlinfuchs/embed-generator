@@ -30,6 +30,9 @@ import (
 	embedgsite "github.com/merlinfuchs/embed-generator/embedg-site"
 )
 
+// The plan that only removes the attribution line from embed links, see embedg.example.toml.
+const embedLinkAttributionPlanID = "embed_link_attribution"
+
 func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	healthHandler := health.New(env.ShardManager)
 	healthGroup := app.Group("/api/health")
@@ -189,8 +192,8 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 		return c.Redirect(fmt.Sprintf("https://discord.com/application-directory/%s/premium", env.AppContext.ApplicationID()), 302)
 	})
 	app.Get("/premium/embed-links", func(c *fiber.Ctx) error {
-		plan := env.PremiumManager.GetEmbedLinkAttributionPlan()
-		if plan == nil {
+		plan := env.PremiumManager.GetPlanByID(embedLinkAttributionPlanID)
+		if plan == nil || plan.SKUID == "" {
 			return c.Redirect("/premium", 302)
 		}
 		return c.Redirect(fmt.Sprintf("https://discord.com/application-directory/%s/store/%s", env.AppContext.ApplicationID(), plan.SKUID), 302)
