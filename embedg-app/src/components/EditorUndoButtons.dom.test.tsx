@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { COMPONENTS_V2_FLAG } from "../state/document";
 import {
@@ -100,4 +100,37 @@ test("redo is offered only after an undo", async () => {
   await user().click(screen.getByRole("button", { name: "Undo" }));
 
   expect(screen.getByRole("button", { name: "Redo" })).toBeEnabled();
+});
+
+async function addComponent() {
+  await user().click(screen.getByRole("button", { name: /Add Component/ }));
+  await user().click(screen.getByRole("button", { name: "Text Display" }));
+}
+
+test.each([
+  ["Ctrl", { ctrlKey: true }],
+  ["Cmd", { metaKey: true }],
+])("%s+Z undoes and %s+Shift+Z redoes", async (_, modifier) => {
+  renderEditor(editor());
+  await addComponent();
+  expect(currentComponents()).toHaveLength(2);
+
+  fireEvent.keyDown(document, { key: "z", ...modifier });
+  expect(currentComponents()).toHaveLength(1);
+
+  fireEvent.keyDown(document, { key: "Z", shiftKey: true, ...modifier });
+  expect(currentComponents()).toHaveLength(2);
+});
+
+test("Ctrl+Y redoes but Cmd+Y is left to the browser", async () => {
+  renderEditor(editor());
+  await addComponent();
+  fireEvent.keyDown(document, { key: "z", ctrlKey: true });
+  expect(currentComponents()).toHaveLength(1);
+
+  fireEvent.keyDown(document, { key: "y", metaKey: true });
+  expect(currentComponents()).toHaveLength(1);
+
+  fireEvent.keyDown(document, { key: "y", ctrlKey: true });
+  expect(currentComponents()).toHaveLength(2);
 });
