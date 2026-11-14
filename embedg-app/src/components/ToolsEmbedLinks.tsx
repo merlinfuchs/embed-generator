@@ -66,7 +66,9 @@ export default function ToolsEmbedLinks() {
 
   const [componentEmbed, setComponentEmbed] = useState(false);
   const previewEmbedId = useMemo(getUniqueId, []);
-  const attribution = !usePremiumUserFeatures()?.is_premium;
+  const features = usePremiumUserFeatures();
+  const attribution =
+    !features?.is_premium && !features?.remove_embed_link_attribution;
 
   // What the fallback preview is built from, and what Discord shows when
   // there is no custom component.
@@ -313,9 +315,20 @@ export default function ToolsEmbedLinks() {
                   <div
                     className={clsx(PADDED, "text-sm font-light text-mist-400")}
                   >
-                    Discord shows a small "Link preview from message.style" line
-                    at the end. It's left out if you're logged in and bought
-                    Premium or Ultimate.
+                    <div>
+                      Discord shows a small "Link preview from message.style"
+                      line at the end. It's left out of links you create while
+                      logged in, once you've bought Premium, Ultimate, or the
+                      one-time removal.
+                    </div>
+                    <a
+                      href="/premium/embed-links"
+                      target="_blank"
+                      rel="noopener"
+                      className="inline-block mt-3 px-3 py-2 rounded-lg border-2 border-white/15 hover:bg-white/5 hover:border-white/30 transition-colors text-white font-normal"
+                    >
+                      Remove the line
+                    </a>
                   </div>
                 )}
               </>

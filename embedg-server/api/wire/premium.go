@@ -24,6 +24,7 @@ type GetPremiumPlanFeaturesResponseDataWire struct {
 	MaxPeriodicScheduledMessages int    `json:"max_periodic_scheduled_messages"`
 	MaxTemplateOps               int    `json:"max_template_ops"`
 	MaxKVKeys                    int    `json:"max_kv_keys"`
+	RemoveEmbedLinkAttribution   bool   `json:"remove_embed_link_attribution"`
 }
 
 type GetPremiumPlanFeaturesResponseWire APIResponse[GetPremiumPlanFeaturesResponseDataWire]

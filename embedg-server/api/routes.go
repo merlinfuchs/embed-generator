@@ -188,6 +188,13 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	app.Get("/premium", func(c *fiber.Ctx) error {
 		return c.Redirect(fmt.Sprintf("https://discord.com/application-directory/%s/premium", env.AppContext.ApplicationID()), 302)
 	})
+	app.Get("/premium/embed-links", func(c *fiber.Ctx) error {
+		plan := env.PremiumManager.GetEmbedLinkAttributionPlan()
+		if plan == nil {
+			return c.Redirect("/premium", 302)
+		}
+		return c.Redirect(fmt.Sprintf("https://discord.com/application-directory/%s/store/%s", env.AppContext.ApplicationID(), plan.SKUID), 302)
+	})
 
 	// Serve static files. Hashed assets are cached long term; index.html points
 	// at those hashed names so it has to be revalidated on every load, or a

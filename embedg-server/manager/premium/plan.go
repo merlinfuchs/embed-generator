@@ -29,6 +29,18 @@ func (m *PremiumManager) GetPlanBySKUID(skuID string) *model.Plan {
 	return nil
 }
 
+// GetEmbedLinkAttributionPlan returns the plan that only removes the attribution line from embed
+// links, or nil if there is none. It's bought once instead of a subscription.
+func (m *PremiumManager) GetEmbedLinkAttributionPlan() *model.Plan {
+	for _, plan := range m.config.Plans {
+		if plan.SKUID != "" && plan.Features.RemoveEmbedLinkAttribution && !plan.Features.IsPremium {
+			return &plan
+		}
+	}
+
+	return nil
+}
+
 // GetPaidPlans returns the named plans that can be bought, once per name, in the order of the
 // config, which goes from the cheapest to the most expensive plan.
 func (m *PremiumManager) GetPaidPlans() []model.Plan {

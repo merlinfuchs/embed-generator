@@ -36,7 +36,7 @@ func New(config EmbedLinksHandlerConfig, embedLinkStore store.EmbedLinkStore, pl
 }
 
 func (h *EmbedLinksHandler) HandleCreateEmbedLink(c *fiber.Ctx, req wire.EmbedLinkCreateRequestWire) error {
-	// Logging in is optional. Only a paid plan of the user's own turns off the attribution.
+	// Logging in is optional. Only a purchase of the user's own turns off the attribution.
 	var userID common.NullID
 	attribution := true
 	if session, _ := c.Locals("session").(*session.Session); session != nil {
@@ -46,7 +46,7 @@ func (h *EmbedLinksHandler) HandleCreateEmbedLink(c *fiber.Ctx, req wire.EmbedLi
 		if err != nil {
 			return err
 		}
-		attribution = !features.IsPremium
+		attribution = features.EmbedLinkAttribution()
 	}
 
 	// Stored as the payload that goes into the page, not as the client sent it.

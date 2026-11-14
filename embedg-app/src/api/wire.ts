@@ -393,6 +393,7 @@ export interface GetPremiumPlanFeaturesResponseDataWire {
   max_periodic_scheduled_messages: number /* int */;
   max_template_ops: number /* int */;
   max_kv_keys: number /* int */;
+  remove_embed_link_attribution: boolean;
 }
 export type GetPremiumPlanFeaturesResponseWire = APIResponse<GetPremiumPlanFeaturesResponseDataWire>;
 /**

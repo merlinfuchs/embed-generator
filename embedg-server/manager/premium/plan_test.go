@@ -61,3 +61,49 @@ func TestPlanForEntitlements(t *testing.T) {
 		})
 	}
 }
+
+func TestEmbedLinkAttribution(t *testing.T) {
+	m := NewPremiumManager(Config{Plans: []model.Plan{
+		{ID: "default", Default: true, Features: model.PlanFeatures{MaxSavedMessages: 25}},
+		{ID: "premium_server", Name: "Premium", SKUID: "premium", Features: model.PlanFeatures{MaxSavedMessages: 100, IsPremium: true}},
+		{ID: "embed_link_attribution", SKUID: "attribution", Features: model.PlanFeatures{RemoveEmbedLinkAttribution: true}},
+	}}, common.Shards{}, nil, nil, nil)
+
+	if plan := m.GetEmbedLinkAttributionPlan(); plan == nil || plan.ID != "embed_link_attribution" {
+		t.Errorf("GetEmbedLinkAttributionPlan() = %+v, want embed_link_attribution", plan)
+	}
+
+	tests := []struct {
+		name            string
+		skus            []string
+		wantAttribution bool
+		wantPlan        string
+		wantSaved       int
+	}{
+		{"free", nil, true, "", 25},
+		{"premium", []string{"premium"}, false, "Premium", 100},
+		// Only the line goes, the rest stays free.
+		{"one-time purchase", []string{"attribution"}, false, "", 25},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			entitlements := make([]model.Entitlement, len(tt.skus))
+			for i, sku := range tt.skus {
+				entitlements[i] = model.Entitlement{SkuID: sku}
+			}
+
+			plan, features := m.planForEntitlements(entitlements)
+			if features.EmbedLinkAttribution() != tt.wantAttribution || plan != tt.wantPlan || features.MaxSavedMessages != tt.wantSaved {
+				t.Errorf("got attribution %v, plan %q and %d saved, want %v, %q and %d",
+					features.EmbedLinkAttribution(), plan, features.MaxSavedMessages, tt.wantAttribution, tt.wantPlan, tt.wantSaved)
+			}
+		})
+	}
+}
+
+func TestGetEmbedLinkAttributionPlanNone(t *testing.T) {
+	if plan := newPlanTestManager().GetEmbedLinkAttributionPlan(); plan != nil {
+		t.Errorf("GetEmbedLinkAttributionPlan() = %+v, want nil", plan)
+	}
+}
