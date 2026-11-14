@@ -219,6 +219,8 @@ const (
 	ActionTypePermissionCheck      ActionType = 10
 	ActionTypeTextChannel          ActionType = 11
 	ActionTypeSavedMessageChannel  ActionType = 12
+	// ActionTypeShowForm opens the form named by TargetID. Submitting it runs the form's own actions.
+	ActionTypeShowForm ActionType = 13
 )
 
 type Action struct {

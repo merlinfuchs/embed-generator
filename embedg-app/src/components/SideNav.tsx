@@ -12,6 +12,7 @@ import {
   PlusCircleIcon,
   ArrowRightOnRectangleIcon,
   CommandLineIcon,
+  ClipboardDocumentListIcon,
   CalendarDaysIcon,
   WrenchScrewdriverIcon,
   QuestionMarkCircleIcon,
@@ -147,6 +148,13 @@ export default function SideNav() {
                 href="/scheduled"
                 label="Scheduled Messages"
                 icon={CalendarDaysIcon}
+                collapsed={collapsed}
+                setHidden={setHidden}
+              />
+              <NavigationButton
+                href="/forms"
+                label="Forms"
+                icon={ClipboardDocumentListIcon}
                 collapsed={collapsed}
                 setHidden={setHidden}
               />

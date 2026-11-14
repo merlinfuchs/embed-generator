@@ -8,6 +8,7 @@ import {
 } from "@heroicons/react/20/solid";
 import EditorInput from "./EditorInput";
 import { RoleSelect } from "./RoleSelect";
+import FormSelect from "./FormSelect";
 import SavedMessageSelect from "./SavedMessageSelect";
 import { Suspense, useMemo, useState } from "react";
 import type { MessageAction, ResponseMessage } from "../discord/schema";
@@ -32,6 +33,8 @@ interface Props {
 
   collapsableId: string;
   valiationPathPrefix?: string;
+  /** The action belongs to a form that was submitted, which can't open a form or edit a message. */
+  inForm?: boolean;
 
   moveUp: () => void;
   moveDown: () => void;
@@ -62,6 +65,7 @@ const actionTypes = {
   10: "Check Permissions",
   11: "Text Message to Channel",
   12: "Saved Message to Channel",
+  13: "Show Form",
 } as const;
 
 /** The names of the response types when they carry a message of their own. */
@@ -85,6 +89,7 @@ const actionDescriptions = {
   10: "Check if the user has the required permissions and roles.",
   11: "Send a text message to another channel.",
   12: "Send a saved message to another channel.",
+  13: "Open a form for the user to fill in. This has to be the last action, and no action before it can reply. The form's own actions run when it's submitted.",
 } as const;
 
 const messageActionDescriptions = {
@@ -109,6 +114,7 @@ export default function Action({
   action,
   collapsableId,
   valiationPathPrefix,
+  inForm,
   moveUp,
   moveDown,
   duplicate,
@@ -154,6 +160,8 @@ export default function Action({
         return "remove_role";
       case 10:
         return "check_permissions";
+      case 13:
+        return "show_form";
     }
   }, [action]);
 
@@ -180,6 +188,9 @@ export default function Action({
         break;
       case "check_permissions":
         setType(10);
+        break;
+      case "show_form":
+        setType(13);
         break;
     }
   }
@@ -303,6 +314,7 @@ export default function Action({
                   <option value="add_role">Add Role</option>
                   <option value="remove_role">Remove Role</option>
                   <option value="check_permissions">Check Permissions</option>
+                  {!inForm && <option value="show_form">Show Form</option>}
                 </select>
               </div>
               {(actionTypeGroup === "text_response" ||
@@ -322,7 +334,7 @@ export default function Action({
                   >
                     <option value="channel">Channel Message</option>
                     <option value="dm">Direct Message</option>
-                    <option value="edit">Edit Message</option>
+                    {!inForm && <option value="edit">Edit Message</option>}
                     <option value="other_channel">
                       Other Channel{advancedLocked ? " (Premium)" : ""}
                     </option>
@@ -420,6 +432,25 @@ export default function Action({
               roleId={action.target_id || null}
               onChange={(v) => setTargetId(v || "")}
             />
+          ) : action.type === 13 ? (
+            <div className="space-y-2">
+              <div className="mb-1.5 flex">
+                <div className="uppercase text-mist-300 text-sm font-medium">
+                  Form
+                </div>
+              </div>
+              <FormSelect
+                guildId={guildId}
+                formId={action.target_id || null}
+                onChange={(v) => setTargetId(v || "")}
+              />
+              {actionIndex < actionCount - 1 && (
+                <div className="text-amber-300 text-sm">
+                  The form opens as the response, so this action has to be the
+                  last one. Move it down.
+                </div>
+              )}
+            </div>
           ) : "message" in action ? (
             <ResponseMessageButton
               message={action.message}

@@ -16,6 +16,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/auth"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/custom_bots"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/embed_links"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/forms"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/guilds"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/health"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/images"
@@ -136,6 +137,13 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	app.Delete("/api/custom-bot/commands/:commandID", sessionMiddleware.SessionRequired(), customBotHandler.HandleDeleteCustomCommand)
 	app.Post("/api/custom-bot/commands/deploy", sessionMiddleware.SessionRequired(), customBotHandler.HandleDeployCustomCommands)
 	app.Post("/api/gateway/:customBotID", customBotHandler.HandleCustomBotInteraction)
+
+	formsHandler := forms.New(env.FormStore, env.AccessManager, env.PremiumManager, env.ActionParser)
+	app.Get("/api/forms", sessionMiddleware.SessionRequired(), formsHandler.HandleListForms)
+	app.Get("/api/forms/:formID", sessionMiddleware.SessionRequired(), formsHandler.HandleGetForm)
+	app.Post("/api/forms", sessionMiddleware.SessionRequired(), handlers.WithRequestBodyValidated(formsHandler.HandleCreateForm))
+	app.Put("/api/forms/:formID", sessionMiddleware.SessionRequired(), handlers.WithRequestBodyValidated(formsHandler.HandleUpdateForm))
+	app.Delete("/api/forms/:formID", sessionMiddleware.SessionRequired(), formsHandler.HandleDeleteForm)
 
 	interactionHandler := interaction.New(interaction.InteractionHandlerConfig{
 		DiscordPublicKey: config.DiscordPublicKey,

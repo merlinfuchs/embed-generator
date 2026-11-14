@@ -184,6 +184,60 @@ export interface EmbedLinkOEmbedResponseWire {
 }
 
 //////////
+// source: forms.go
+
+/**
+ * FormFieldOptionWire is actions.FormFieldOption, which documents the fields.
+ */
+export interface FormFieldOptionWire {
+  label: string;
+  value: string;
+  description?: string;
+  default?: boolean;
+}
+/**
+ * FormFieldWire is actions.FormField, which documents the fields.
+ */
+export interface FormFieldWire {
+  key: string;
+  type?: string;
+  label: string;
+  placeholder?: string;
+  value?: string;
+  paragraph?: boolean;
+  required: boolean;
+  min_length?: number /* int */;
+  max_length?: number /* int */;
+  max_values?: number /* int */;
+  options?: FormFieldOptionWire[];
+  default?: boolean;
+}
+export interface FormWire {
+  id: string;
+  name: string;
+  title: string;
+  fields: FormFieldWire[];
+  actions: Record<string, any> | null;
+  created_at: string /* RFC3339 */;
+  updated_at: string /* RFC3339 */;
+}
+export type FormsListResponseWire = APIResponse<FormWire[]>;
+export type FormGetResponseWire = APIResponse<FormWire>;
+/**
+ * FormSaveRequestWire creates or updates a form.
+ */
+export interface FormSaveRequestWire {
+  name: string;
+  title: string;
+  fields: FormFieldWire[];
+  actions: Record<string, any> | null;
+}
+export type FormCreateResponseWire = APIResponse<FormWire>;
+export type FormUpdateResponseWire = APIResponse<FormWire>;
+export type FormDeleteResponseWire = APIResponse<{
+  }>;
+
+//////////
 // source: guild.go
 
 export interface GuildWire {
