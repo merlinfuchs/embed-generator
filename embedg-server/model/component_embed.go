@@ -117,36 +117,34 @@ func ParseComponentEmbed(raw []byte, attribution bool) (*ComponentEmbed, error) 
 		return nil, fmt.Errorf("invalid component embed: %w", err)
 	}
 
-	count := 0
-	if err := validateComponentEmbedComponent(embed.Component, []int{17}, &count); err != nil {
+	if err := validateComponentEmbed(embed); err != nil {
 		return nil, err
 	}
-
-	rendered := embed
 	if attribution {
-		if len(embed.Component.Components) >= componentEmbedChildren[17].max {
-			return nil, fmt.Errorf("the container has room for %d components, the last spot is taken by the %q line", componentEmbedChildren[17].max-1, componentEmbedAttributionText)
+		if err := validateComponentEmbed(embed.WithAttribution()); err != nil {
+			return nil, fmt.Errorf("%w, with one spot taken by the %q line", err, componentEmbedAttributionText)
 		}
-		if count >= componentEmbedMaxComponents {
-			return nil, fmt.Errorf("the preview has room for %d components, the last spot is taken by the %q line", componentEmbedMaxComponents-1, componentEmbedAttributionText)
-		}
-		rendered = embed.WithAttribution()
+	}
+
+	return &embed, nil
+}
+
+func validateComponentEmbed(embed ComponentEmbed) error {
+	count := 0
+	if err := validateComponentEmbedComponent(embed.Component, []int{17}, &count); err != nil {
+		return err
 	}
 
 	// json.Marshal escapes the same characters the page does, so this is the
 	// size Discord sees.
-	payload, err := json.Marshal(rendered)
+	payload, err := json.Marshal(embed)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if len(payload) > componentEmbedMaxBytes {
-		if attribution {
-			return nil, fmt.Errorf("component embed is %d bytes with the %q line, Discord allows at most %d", len(payload), componentEmbedAttributionText, componentEmbedMaxBytes)
-		}
-		return nil, fmt.Errorf("component embed is %d bytes, Discord allows at most %d", len(payload), componentEmbedMaxBytes)
+		return fmt.Errorf("component embed is %d bytes, Discord allows at most %d", len(payload), componentEmbedMaxBytes)
 	}
-
-	return &embed, nil
+	return nil
 }
 
 // What a component may hold: how many children and of which types. A type

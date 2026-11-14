@@ -6,7 +6,6 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"github.com/merlinfuchs/embed-generator/embedg-server/db/postgres/pgmodel"
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
@@ -54,14 +53,6 @@ func (c *Client) GetEmbedLink(ctx context.Context, id string) (*model.EmbedLink,
 }
 
 func rowToEmbedLink(row pgmodel.EmbedLink) *model.EmbedLink {
-	var userID common.NullID
-	if row.UserID.Valid {
-		userID = common.NullID{
-			Valid: true,
-			ID:    common.DefinitelyID(row.UserID.String),
-		}
-	}
-
 	return &model.EmbedLink{
 		ID:             row.ID,
 		Url:            row.Url,
@@ -79,7 +70,7 @@ func rowToEmbedLink(row pgmodel.EmbedLink) *model.EmbedLink {
 		ComponentEmbed: row.ComponentEmbed,
 		ExpiresAt:      null.NewTime(row.ExpiresAt.Time, row.ExpiresAt.Valid),
 		CreatedAt:      row.CreatedAt.Time,
-		UserID:         userID,
+		UserID:         nullID(row.UserID),
 		Attribution:    row.Attribution,
 	}
 }
