@@ -23,7 +23,7 @@ func (q *Queries) CountForms(ctx context.Context, guildID string) (int64, error)
 }
 
 const deleteForm = `-- name: DeleteForm :one
-DELETE FROM forms WHERE id = $1 AND guild_id = $2 RETURNING id, guild_id, name, title, fields, actions, derived_permissions, created_at, updated_at
+DELETE FROM forms WHERE id = $1 AND guild_id = $2 RETURNING id, guild_id, name, title, fields, actions, derived_permissions, created_at, updated_at, signing_secret, forward_error, forward_error_at
 `
 
 type DeleteFormParams struct {
@@ -44,12 +44,15 @@ func (q *Queries) DeleteForm(ctx context.Context, arg DeleteFormParams) (Form, e
 		&i.DerivedPermissions,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SigningSecret,
+		&i.ForwardError,
+		&i.ForwardErrorAt,
 	)
 	return i, err
 }
 
 const getForm = `-- name: GetForm :one
-SELECT id, guild_id, name, title, fields, actions, derived_permissions, created_at, updated_at FROM forms WHERE id = $1 AND guild_id = $2
+SELECT id, guild_id, name, title, fields, actions, derived_permissions, created_at, updated_at, signing_secret, forward_error, forward_error_at FROM forms WHERE id = $1 AND guild_id = $2
 `
 
 type GetFormParams struct {
@@ -70,12 +73,15 @@ func (q *Queries) GetForm(ctx context.Context, arg GetFormParams) (Form, error) 
 		&i.DerivedPermissions,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SigningSecret,
+		&i.ForwardError,
+		&i.ForwardErrorAt,
 	)
 	return i, err
 }
 
 const getForms = `-- name: GetForms :many
-SELECT id, guild_id, name, title, fields, actions, derived_permissions, created_at, updated_at FROM forms WHERE guild_id = $1 ORDER BY created_at ASC
+SELECT id, guild_id, name, title, fields, actions, derived_permissions, created_at, updated_at, signing_secret, forward_error, forward_error_at FROM forms WHERE guild_id = $1 ORDER BY created_at ASC
 `
 
 func (q *Queries) GetForms(ctx context.Context, guildID string) ([]Form, error) {
@@ -97,6 +103,9 @@ func (q *Queries) GetForms(ctx context.Context, guildID string) ([]Form, error) 
 			&i.DerivedPermissions,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.SigningSecret,
+			&i.ForwardError,
+			&i.ForwardErrorAt,
 		); err != nil {
 			return nil, err
 		}
@@ -108,8 +117,28 @@ func (q *Queries) GetForms(ctx context.Context, guildID string) ([]Form, error) 
 	return items, nil
 }
 
+const incrementFormForwardCount = `-- name: IncrementFormForwardCount :one
+INSERT INTO form_forward_counts (guild_id, window_start, count) VALUES ($1, $2, 1)
+ON CONFLICT (guild_id) DO UPDATE SET
+    count = CASE WHEN form_forward_counts.window_start = EXCLUDED.window_start THEN form_forward_counts.count + 1 ELSE 1 END,
+    window_start = EXCLUDED.window_start
+RETURNING count
+`
+
+type IncrementFormForwardCountParams struct {
+	GuildID     string
+	WindowStart pgtype.Timestamp
+}
+
+func (q *Queries) IncrementFormForwardCount(ctx context.Context, arg IncrementFormForwardCountParams) (int32, error) {
+	row := q.db.QueryRow(ctx, incrementFormForwardCount, arg.GuildID, arg.WindowStart)
+	var count int32
+	err := row.Scan(&count)
+	return count, err
+}
+
 const insertForm = `-- name: InsertForm :one
-INSERT INTO forms (id, guild_id, name, title, fields, actions, derived_permissions, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id, guild_id, name, title, fields, actions, derived_permissions, created_at, updated_at
+INSERT INTO forms (id, guild_id, name, title, fields, actions, derived_permissions, signing_secret, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, guild_id, name, title, fields, actions, derived_permissions, created_at, updated_at, signing_secret, forward_error, forward_error_at
 `
 
 type InsertFormParams struct {
@@ -120,6 +149,7 @@ type InsertFormParams struct {
 	Fields             []byte
 	Actions            []byte
 	DerivedPermissions []byte
+	SigningSecret      pgtype.Text
 	CreatedAt          pgtype.Timestamp
 	UpdatedAt          pgtype.Timestamp
 }
@@ -133,6 +163,7 @@ func (q *Queries) InsertForm(ctx context.Context, arg InsertFormParams) (Form, e
 		arg.Fields,
 		arg.Actions,
 		arg.DerivedPermissions,
+		arg.SigningSecret,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -147,12 +178,36 @@ func (q *Queries) InsertForm(ctx context.Context, arg InsertFormParams) (Form, e
 		&i.DerivedPermissions,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SigningSecret,
+		&i.ForwardError,
+		&i.ForwardErrorAt,
 	)
 	return i, err
 }
 
+const setFormForwardError = `-- name: SetFormForwardError :exec
+UPDATE forms SET forward_error = $3, forward_error_at = $4 WHERE id = $1 AND guild_id = $2
+`
+
+type SetFormForwardErrorParams struct {
+	ID             string
+	GuildID        string
+	ForwardError   pgtype.Text
+	ForwardErrorAt pgtype.Timestamp
+}
+
+func (q *Queries) SetFormForwardError(ctx context.Context, arg SetFormForwardErrorParams) error {
+	_, err := q.db.Exec(ctx, setFormForwardError,
+		arg.ID,
+		arg.GuildID,
+		arg.ForwardError,
+		arg.ForwardErrorAt,
+	)
+	return err
+}
+
 const updateForm = `-- name: UpdateForm :one
-UPDATE forms SET name = $3, title = $4, fields = $5, actions = $6, derived_permissions = $7, updated_at = $8 WHERE id = $1 AND guild_id = $2 RETURNING id, guild_id, name, title, fields, actions, derived_permissions, created_at, updated_at
+UPDATE forms SET name = $3, title = $4, fields = $5, actions = $6, derived_permissions = $7, signing_secret = COALESCE(signing_secret, $8), forward_error = NULL, forward_error_at = NULL, updated_at = $9 WHERE id = $1 AND guild_id = $2 RETURNING id, guild_id, name, title, fields, actions, derived_permissions, created_at, updated_at, signing_secret, forward_error, forward_error_at
 `
 
 type UpdateFormParams struct {
@@ -163,6 +218,7 @@ type UpdateFormParams struct {
 	Fields             []byte
 	Actions            []byte
 	DerivedPermissions []byte
+	SigningSecret      pgtype.Text
 	UpdatedAt          pgtype.Timestamp
 }
 
@@ -175,6 +231,7 @@ func (q *Queries) UpdateForm(ctx context.Context, arg UpdateFormParams) (Form, e
 		arg.Fields,
 		arg.Actions,
 		arg.DerivedPermissions,
+		arg.SigningSecret,
 		arg.UpdatedAt,
 	)
 	var i Form
@@ -188,6 +245,9 @@ func (q *Queries) UpdateForm(ctx context.Context, arg UpdateFormParams) (Form, e
 		&i.DerivedPermissions,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SigningSecret,
+		&i.ForwardError,
+		&i.ForwardErrorAt,
 	)
 	return i, err
 }

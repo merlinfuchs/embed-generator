@@ -88,7 +88,7 @@ func TestSubmittedFormValues(t *testing.T) {
 	label := func(c discord.LabelSubComponent) discord.LayoutComponent {
 		return discord.LabelComponent{Label: "x", Component: c}
 	}
-	values, ids := submittedFormValues(fields, discord.ModalSubmitInteractionData{
+	values, ids := submittedFormValues(formAnswers(fields, discord.ModalSubmitInteractionData{
 		CustomID: "form:abc",
 		Components: []discord.LayoutComponent{
 			label(discord.TextInputComponent{CustomID: "reason", Value: "spam"}),
@@ -101,7 +101,7 @@ func TestSubmittedFormValues(t *testing.T) {
 		Resolved: discord.ResolvedData{
 			Roles: map[snowflake.ID]discord.Role{5: {}},
 		},
-	})
+	}))
 
 	want := map[string]string{
 		"reason": "spam",
@@ -177,7 +177,7 @@ func TestSubmittedOptionFields(t *testing.T) {
 	label := func(c discord.LabelSubComponent) discord.LayoutComponent {
 		return discord.LabelComponent{Label: "x", Component: c}
 	}
-	values, ids := submittedFormValues(fields, discord.ModalSubmitInteractionData{
+	values, ids := submittedFormValues(formAnswers(fields, discord.ModalSubmitInteractionData{
 		Components: []discord.LayoutComponent{
 			label(discord.StringSelectMenuComponent{CustomID: "s", Values: []string{"bug", "gone"}}),
 			label(discord.RadioGroupComponent{CustomID: "r", Value: &idea}),
@@ -186,7 +186,7 @@ func TestSubmittedOptionFields(t *testing.T) {
 			label(discord.CheckboxComponent{CustomID: "yes", Value: true}),
 			label(discord.CheckboxComponent{CustomID: "no"}),
 		},
-	})
+	}))
 
 	want := map[string]string{"s": "Bug, gone", "r": "Idea", "norad": "", "c": "Idea, Bug", "yes": "Yes", "no": "No"}
 	for k, v := range want {
@@ -199,5 +199,28 @@ func TestSubmittedOptionFields(t *testing.T) {
 		if ids[k] != v {
 			t.Errorf("ids %q: want %q, got %q", k, v, ids[k])
 		}
+	}
+}
+
+func TestFormSubmission(t *testing.T) {
+	interaction := mustInteraction(t, `{"id":"1","application_id":"2","type":5,"token":"t","version":1,
+		"guild_id":"10","channel":{"id":"11","type":0},
+		"member":{"user":{"id":"12","username":"ana","global_name":"Ana"},"roles":[],"permissions":"0"},
+		"data":{"custom_id":"form:f1","components":[]}}`)
+	form := &model.Form{ID: "f1", GuildID: 10, Name: "Report"}
+	answers := []formAnswer{
+		{field: actions.FormField{Key: "reason", Label: "Reason"}, value: "spam"},
+		{field: actions.FormField{Key: "who", Label: "Who", Type: actions.FormFieldTypeUser}, value: "<@1> <@2>", ids: []string{"1", "2"}},
+	}
+
+	sub := formSubmission(form, interaction, answers)
+	if sub.GuildID != "10" || sub.ChannelID != "11" || sub.User.ID != "12" || sub.User.GlobalName != "Ana" {
+		t.Fatalf("unexpected submission %+v", sub)
+	}
+	if f := sub.Fields[0]; f.Type != actions.FormFieldTypeText || f.Value != "spam" || f.IDs == nil || len(f.IDs) != 0 {
+		t.Fatalf("unexpected text field %+v", f)
+	}
+	if f := sub.Fields[1]; f.Type != actions.FormFieldTypeUser || f.Value != "<@1> <@2>" || len(f.IDs) != 2 {
+		t.Fatalf("unexpected user field %+v", f)
 	}
 }
