@@ -444,12 +444,12 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
 
 .discord-embed code {
   background-color: #202225;
-  padding: 2.5px;
+  padding: 0.2em;
   border-radius: 3px;
-  font-size: 0.875rem;
+  font-size: 85%;
   font-weight: 400;
   line-height: 1.125rem;
-  white-space: break-spaces;
+  white-space: pre-wrap;
 }
 
 .discord-embed code.multiline {
@@ -746,14 +746,27 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   text-decoration-thickness: auto;
 }
 
-.discord-message .discord-message-body pre {
-  border: 1px solid #202225;
+.discord-message pre {
+  margin: 6px 0 0;
+  background: #202225;
+  border: 1px solid #18191c;
   border-radius: 4px;
 }
 
+.discord-message pre code.hljs {
+  padding: 0.5em;
+  background: transparent;
+  font-size: 0.875rem;
+  line-height: 1.125rem;
+  white-space: pre;
+}
+
 .discord-message .discord-message-body code {
-  background: #2f3136;
-  white-space: break-spaces;
+  background: #202225;
+  padding: 0.2em;
+  border-radius: 3px;
+  font-size: 85%;
+  white-space: pre-wrap;
   font-family:
     Consolas,
     Andale Mono WT,
@@ -1338,4 +1351,81 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   border-radius: 8px;
   max-height: 350px;
   max-width: 100%;
+}
+
+/* ```ansi code blocks, same colors as Discord and the colored text tool */
+.discord-message code.ansi {
+  color: #b9bbbe;
+}
+
+.ansi-bold {
+  font-weight: 700;
+}
+
+.ansi-underline {
+  text-decoration: underline;
+}
+
+.ansi-fg-30 {
+  color: #4f545c;
+}
+
+.ansi-fg-31 {
+  color: #dc322f;
+}
+
+.ansi-fg-32 {
+  color: #859900;
+}
+
+.ansi-fg-33 {
+  color: #b58900;
+}
+
+.ansi-fg-34 {
+  color: #268bd2;
+}
+
+.ansi-fg-35 {
+  color: #d33682;
+}
+
+.ansi-fg-36 {
+  color: #2aa198;
+}
+
+.ansi-fg-37 {
+  color: #ffffff;
+}
+
+.ansi-bg-40 {
+  background-color: #002b36;
+}
+
+.ansi-bg-41 {
+  background-color: #cb4b16;
+}
+
+.ansi-bg-42 {
+  background-color: #586e75;
+}
+
+.ansi-bg-43 {
+  background-color: #657b83;
+}
+
+.ansi-bg-44 {
+  background-color: #839496;
+}
+
+.ansi-bg-45 {
+  background-color: #6c71c4;
+}
+
+.ansi-bg-46 {
+  background-color: #93a1a1;
+}
+
+.ansi-bg-47 {
+  background-color: #fdf6e3;
 }
