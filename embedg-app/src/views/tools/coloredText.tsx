@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import ToolsColoredText, {
   ansiClass,
+  ansiRootClass,
   backgroundColors,
   foregroundColors,
 } from "../../components/ToolsColoredText";
@@ -8,7 +9,7 @@ import ToolsBackButton from "../../components/ToolsBackButton";
 
 const steps = [
   "Type or paste your text into the box above.",
-  "Select the words you want to color and click a text color in the top row or a background color in the bottom row. Bold and Underline work the same way.",
+  "Select the words you want to color and click a text color in the top row or a background color in the bottom row. Bold, Italic, Underline and Strikethrough work the same way.",
   "Click Copy Format to copy the result as an ANSI code block.",
   "Paste it into any Discord message and send it.",
 ];
@@ -63,14 +64,16 @@ export default function ColoredTextToolView() {
           </ol>
         </section>
 
-        <section>
+        <section className={ansiRootClass}>
           <h2 className="text-white font-medium mb-4 text-xl">
             Text and background colors
           </h2>
           <p className="text-mist-400 font-light text-sm mb-6">
-            Discord supports 8 text colors and 8 background colors, plus bold
-            and underline. They can be combined, for example white text on an
-            orange background.
+            Discord supports 8 text colors and the same 8 as background colors,
+            plus bold, italic, underline and strikethrough. They can be
+            combined, for example gold text on a blue background. The colors
+            follow the Discord theme, so they look a little different in light
+            and dark mode.
           </p>
           <div className="grid gap-8 md:grid-cols-2">
             <div>
@@ -80,7 +83,7 @@ export default function ColoredTextToolView() {
                   <li key={code} className="flex items-center gap-3">
                     <span
                       className={clsx(
-                        "flex h-7 w-9 items-center justify-center rounded-lg bg-ink-900 font-mono",
+                        "flex h-7 w-9 items-center justify-center rounded-lg bg-ink-900 ring-1 ring-white/15 font-mono",
                         ansiClass(code),
                       )}
                     >
