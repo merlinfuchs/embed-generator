@@ -213,6 +213,9 @@ export const embedTimestampSchema = z.optional(
 
 export type EmbedTimestamp = z.infer<typeof embedTimestampSchema>;
 
+/** Shows the time the message is sent in the embed footer, instead of a fixed timestamp. */
+export const embedTimestampNowSchema = z.optional(z.boolean());
+
 export const embedColor = z.optional(z.number().max(16777215));
 
 export type EmbedColor = z.infer<typeof embedColor>;
@@ -224,6 +227,7 @@ export const embedSchema = z
     description: embedDescriptionSchema,
     url: embedUrlSchema,
     timestamp: embedTimestampSchema,
+    timestamp_now: embedTimestampNowSchema,
     color: embedColor,
     footer: embedFooterSchema,
     author: embedAuthorSchema,

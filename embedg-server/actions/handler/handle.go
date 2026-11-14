@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
@@ -591,10 +592,16 @@ func templateErr(err error) error {
 // responseMessage is the message an action responds with: the one it carries itself, or the saved
 // message it names.
 func (m *ActionHandler) responseMessage(guildID common.ID, action actions.Action) (*actions.MessageWithActions, error) {
-	if action.Message != nil {
-		return action.Message, nil
+	data := action.Message
+	if data == nil {
+		var err error
+		data, err = m.savedMessage(guildID, action.TargetID)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return m.savedMessage(guildID, action.TargetID)
+	data.ApplySendTime(time.Now())
+	return data, nil
 }
 
 func (m *ActionHandler) savedMessage(guildID common.ID, id string) (*actions.MessageWithActions, error) {

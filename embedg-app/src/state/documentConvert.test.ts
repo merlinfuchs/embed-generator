@@ -246,3 +246,17 @@ test("action sets the editor doesn't show are left out", () => {
   const { message } = toMessage(fromMessage(withActions));
   expect(Object.keys(message.actions)).toEqual(["button"]);
 });
+
+test("an embed that shows the time of sending survives the round trip", () => {
+  const message = parse({
+    embeds: [
+      { description: "Now", timestamp_now: true },
+      { description: "Fixed", timestamp: "2026-01-01T00:00:00.000Z" },
+    ],
+  });
+  const result = toMessage(fromMessage(message)).message;
+
+  expect(result.embeds[0].timestamp_now).toBe(true);
+  expect(result.embeds[1].timestamp_now).toBeUndefined();
+  expect(result.embeds[1].timestamp).toBe("2026-01-01T00:00:00.000Z");
+});
