@@ -20,6 +20,12 @@ reasoning_effort = "medium"
 max_output_tokens = 16000 # per model call, reasoning included
 max_repairs = 2 # fixes of its own mistakes that don't count as prompts
 
+# Embed links can't lead to domains on this JSON list of phishing domains, and existing links that
+# do get blocked when they're opened. Set it to "" to turn the check off. New links can't use the
+# link shorteners in shortener_domains either, see config/default.toml for the list.
+[phishing]
+domain_list_url = "https://phish.sinking.yachts/v2/all"
+
 [database.postgres]
 host = "localhost"
 port = 5432

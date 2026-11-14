@@ -13,7 +13,7 @@ Discord renders ANSI color codes inside code blocks. The [Colored Text Generator
 
 ## Embed Links
 
-[Embed Links](https://message.style/app/tools/embed-links) turn a title, description, image and color into a URL. When that URL is posted in Discord, it unfurls into an embed, so you can share a rich preview without a webhook or bot. Only a subset of embed fields is supported, since Discord builds the preview from the page's meta tags.
+[Embed Links](https://message.style/app/tools/embed-links) turn a title, description, image and color into a URL. When that URL is posted in Discord, it unfurls into an embed, so you can share a rich preview without a webhook or bot. Only a subset of embed fields is supported, since Discord builds the preview from the page's meta tags. Links can't lead to known phishing sites or go through link shorteners like tinyurl.com, since a shortener hides where a link goes.
 
 Turning on **Custom Component** replaces that preview in Discord with a Components V2 layout: markdown text, images, galleries, separators and link buttons. The fields above stay as the fallback for everywhere else and for Discord clients that can't render it. The layout ends with a small "Link preview from message.style" line. It's left out of links you create while logged in, once you've bought Premium, Ultimate, or the [one-time removal](https://message.style/premium/embed-links).
 

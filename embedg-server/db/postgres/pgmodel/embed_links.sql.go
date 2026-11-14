@@ -11,8 +11,23 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const flagEmbedLink = `-- name: FlagEmbedLink :exec
+UPDATE embed_links SET flagged_at = $2, flagged_reason = $3 WHERE id = $1 AND flagged_at IS NULL
+`
+
+type FlagEmbedLinkParams struct {
+	ID            string
+	FlaggedAt     pgtype.Timestamp
+	FlaggedReason pgtype.Text
+}
+
+func (q *Queries) FlagEmbedLink(ctx context.Context, arg FlagEmbedLinkParams) error {
+	_, err := q.db.Exec(ctx, flagEmbedLink, arg.ID, arg.FlaggedAt, arg.FlaggedReason)
+	return err
+}
+
 const getEmbedLink = `-- name: GetEmbedLink :one
-SELECT id, url, theme_color, og_title, og_site_name, og_description, og_image, oe_type, oe_author_name, oe_author_url, oe_provider_name, oe_provider_url, tw_card, expires_at, created_at, component_embed, user_id, attribution FROM embed_links WHERE id = $1
+SELECT id, url, theme_color, og_title, og_site_name, og_description, og_image, oe_type, oe_author_name, oe_author_url, oe_provider_name, oe_provider_url, tw_card, expires_at, created_at, component_embed, user_id, attribution, flagged_at, flagged_reason FROM embed_links WHERE id = $1
 `
 
 func (q *Queries) GetEmbedLink(ctx context.Context, id string) (EmbedLink, error) {
@@ -37,6 +52,8 @@ func (q *Queries) GetEmbedLink(ctx context.Context, id string) (EmbedLink, error
 		&i.ComponentEmbed,
 		&i.UserID,
 		&i.Attribution,
+		&i.FlaggedAt,
+		&i.FlaggedReason,
 	)
 	return i, err
 }
@@ -80,7 +97,7 @@ INSERT INTO embed_links (
     $16,
     $17,
     $18
-) RETURNING id, url, theme_color, og_title, og_site_name, og_description, og_image, oe_type, oe_author_name, oe_author_url, oe_provider_name, oe_provider_url, tw_card, expires_at, created_at, component_embed, user_id, attribution
+) RETURNING id, url, theme_color, og_title, og_site_name, og_description, og_image, oe_type, oe_author_name, oe_author_url, oe_provider_name, oe_provider_url, tw_card, expires_at, created_at, component_embed, user_id, attribution, flagged_at, flagged_reason
 `
 
 type InsertEmbedLinkParams struct {
@@ -145,6 +162,8 @@ func (q *Queries) InsertEmbedLink(ctx context.Context, arg InsertEmbedLinkParams
 		&i.ComponentEmbed,
 		&i.UserID,
 		&i.Attribution,
+		&i.FlaggedAt,
+		&i.FlaggedReason,
 	)
 	return i, err
 }

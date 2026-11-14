@@ -41,6 +41,7 @@ Features (feature | what it means for the user | free or paid):
 - Fluxer webhooks | send the same messages to Fluxer | free
 - Colored Text Generator | text in red, green, blue, and other colors that Discord shows inside a code block | free
 - Embed Links with a custom component | a link that unfurls in Discord into a layout with markdown, images, and link buttons | free, but the preview ends with a "Link preview from message.style" line unless the logged-in user bought a paid plan or the one-time removal
+- Phishing protection for Embed Links | links can't lead to sites on the phish.sinking.yachts list or through link shorteners like tinyurl.com and bit.ly, and a link whose site is added to the list later shows "Link blocked" in Discord and leads to message.style/blocked-link | free
 - /embed, /message, /format, and /image in Discord | build or copy messages without opening the website | free
 
 Plan limits are read from the prod config on 2026-11-02. That file is the source of truth. https://message.style/api/premium/plans serves the paid plans from it, but not the free one. embedg.example.toml is the dev config and doesn't match production.
