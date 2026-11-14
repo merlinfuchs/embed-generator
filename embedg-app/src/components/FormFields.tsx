@@ -349,7 +349,9 @@ function FieldOptions({
           type="button"
           className="mt-2 bg-azure-500 px-3 py-2 rounded-lg transition-colors hover:bg-azure-400 text-white text-sm"
           onClick={() => {
-            const n = options.length + 1;
+            // Counted up past the values in use, which removing an option leaves gaps in.
+            let n = options.length + 1;
+            while (options.some((o) => o.value === `option_${n}`)) n++;
             update({
               options: [
                 ...options,
@@ -451,8 +453,17 @@ function FormFieldCard({
     }
     if (newType.value !== "text") next.type = newType.value;
     if (newType.kind === "options") {
+      // Kept options are cut down to what the new type allows. Max Values starts over, so only
+      // checkboxes can keep more than one default.
+      let defaults = 0;
       next.options = field.options?.length
-        ? field.options
+        ? field.options.slice(0, newType.maxOptions).map((o) => {
+            if (!o.default) return o;
+            defaults++;
+            return defaults > 1 && newType.value !== "checkboxes"
+              ? { ...o, default: undefined }
+              : o;
+          })
         : [
             { label: "Option 1", value: "option_1" },
             { label: "Option 2", value: "option_2" },

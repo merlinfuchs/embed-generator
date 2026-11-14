@@ -167,13 +167,17 @@ func ValidateForm(name string, title string, fields []FormField) error {
 		if utf8.RuneCountInString(f.Placeholder) > MaxFormPlaceholderLen {
 			return fmt.Errorf("the placeholder of field %d can't be longer than %d characters", pos, MaxFormPlaceholderLen)
 		}
+		if len(f.Options) > 0 && !f.HasOptions() {
+			return fmt.Errorf("field %d has options, which its type can't have", pos)
+		}
+
 		var err error
 		switch {
 		case f.IsText():
 			err = validateFormText(pos, f)
 		case f.IsEntitySelect():
 			if f.MaxValues < 0 || f.MaxValues > MaxFormSelectValues {
-				err = fmt.Errorf("the number of selectable values of field %d must be between 1 and %d", pos, MaxFormSelectValues)
+				err = fmt.Errorf("field %d can pick at most %d values", pos, MaxFormSelectValues)
 			}
 		case f.HasOptions():
 			err = validateFormOptions(pos, f)
@@ -246,7 +250,7 @@ func validateFormOptions(pos int, f FormField) error {
 		}
 	case FormFieldTypeSelect, FormFieldTypeCheckboxes:
 		if f.MaxValues < 0 || f.MaxValues > len(f.Options) {
-			return fmt.Errorf("the number of selectable values of field %d must be between 1 and %d", pos, len(f.Options))
+			return fmt.Errorf("field %d can't pick more values than it has options", pos)
 		}
 		if defaults > f.MaxPicks() {
 			return fmt.Errorf("field %d has more options picked by default than it can pick", pos)
@@ -269,9 +273,9 @@ func ValidateFormActionSet(set ActionSet) error {
 	return nil
 }
 
-// ValidateShowFormPlacement checks that an action set opens at most one form and does so last.
-// Opening it is the response to the interaction, so nothing can respond before it, and nothing
-// that runs after it could respond either.
+// ValidateShowFormPlacement checks that an action set opens at most one form, does so last, and
+// that nothing before it replies. Opening the form is the reply to the interaction, so it can't
+// come after another one, and nothing that runs after it could reply either.
 func ValidateShowFormPlacement(set ActionSet) error {
 	for i, a := range set.Actions {
 		if a.Type != ActionTypeShowForm {
@@ -280,8 +284,28 @@ func ValidateShowFormPlacement(set ActionSet) error {
 		if i != len(set.Actions)-1 {
 			return fmt.Errorf("action %d opens a form, which has to be the last action", i+1)
 		}
+		for j, before := range set.Actions[:i] {
+			if repliesToInteraction(before) {
+				return fmt.Errorf("action %d replies before the form opens, which keeps it from opening", j+1)
+			}
+		}
 	}
 	return nil
+}
+
+// repliesToInteraction is whether the action replies to the interaction when it succeeds. A
+// permission check only replies when it stops the actions.
+func repliesToInteraction(a Action) bool {
+	switch a.Type {
+	case ActionTypeTextResponse, ActionTypeSavedMessageResponse,
+		ActionTypeTextDM, ActionTypeSavedMessageDM,
+		ActionTypeTextEdit, ActionTypeSavedMessageEdit:
+		return true
+	case ActionTypeToggleRole, ActionTypeAddRole, ActionTypeRemoveRole,
+		ActionTypeTextChannel, ActionTypeSavedMessageChannel:
+		return !a.DisableDefaultResponse
+	}
+	return false
 }
 
 // ShowsForm is whether the action set opens a form.

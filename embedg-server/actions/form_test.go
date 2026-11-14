@@ -66,6 +66,16 @@ func TestPlacement(t *testing.T) {
 	if err := ValidateShowFormPlacement(ActionSet{Actions: []Action{{Type: ActionTypeShowForm}, {Type: 1}}}); err == nil {
 		t.Fatal("expected error")
 	}
+	// A role action that stays quiet leaves the reply to the form, one that answers doesn't.
+	quietRole := Action{Type: ActionTypeAddRole, DisableDefaultResponse: true}
+	if err := ValidateShowFormPlacement(ActionSet{Actions: []Action{quietRole, {Type: ActionTypeShowForm}}}); err != nil {
+		t.Fatal(err)
+	}
+	for _, before := range []Action{{Type: ActionTypeAddRole}, {Type: ActionTypeTextResponse}, {Type: ActionTypeTextDM, DisableDefaultResponse: true}} {
+		if err := ValidateShowFormPlacement(ActionSet{Actions: []Action{before, {Type: ActionTypeShowForm}}}); err == nil {
+			t.Fatalf("expected error for action type %d before the form", before.Type)
+		}
+	}
 	if err := ValidateFormActionSet(ActionSet{Actions: []Action{{Type: ActionTypeTextEdit}}}); err == nil {
 		t.Fatal("expected error")
 	}

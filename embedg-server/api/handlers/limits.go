@@ -11,10 +11,18 @@ func CheckActionSetLimit(actionSet actions.ActionSet, features model.PlanFeature
 	if len(actionSet.Actions) > features.MaxActionsPerComponent {
 		return Forbidden("insufficient_plan", fmt.Sprintf("Your plan allows up to %d actions per component!", features.MaxActionsPerComponent))
 	}
+	if err := CheckShowForm(actionSet); err != nil {
+		return err
+	}
+	return CheckActionMessages(actionSet, features)
+}
+
+// CheckShowForm checks that a Show Form action can open its form when it runs.
+func CheckShowForm(actionSet actions.ActionSet) error {
 	if err := actions.ValidateShowFormPlacement(actionSet); err != nil {
 		return BadRequest("invalid_actions", fmt.Sprintf("Invalid actions: %s.", err))
 	}
-	return CheckActionMessages(actionSet, features)
+	return nil
 }
 
 // CheckActionMessages checks the response messages that actions carry themselves instead of naming
