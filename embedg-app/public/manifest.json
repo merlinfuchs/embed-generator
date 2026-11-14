@@ -1,0 +1,17 @@
+{
+  "name": "Embed Generator",
+  "short_name": "Embed Generator",
+  "description": "Build Discord messages with embeds, buttons and select menus in a visual editor, then send them through a webhook or bot.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#2b2d31",
+  "theme_color": "#1e1f22",
+  "icons": [
+    { "src": "/app/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/app/icons/icon-maskable-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/app/icons/icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/app/icons/icon-maskable-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

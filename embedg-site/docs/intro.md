@@ -29,3 +29,7 @@ The video below shows the same flow in a few minutes.
 - [Custom commands](./guides/custom-commands.md) and [your own bot](./guides/custom-bots.md): Premium features for servers that want slash commands under their own name.
 - [Message variables](./guides/variables.md): member names, counts and dates filled in when the message is sent.
 - [Migrating from Discohook](./guides/migrating-discohook.md): paste your Discohook JSON and keep going.
+
+## Installing the editor
+
+You can install the editor like an app, so it opens in its own window. In Chrome or Edge on a computer, click the install icon at the end of the address bar. In Chrome on Android, open the menu and tap **Install app**. In Safari on iPhone or iPad, tap the share button and then **Add to Home Screen**.
