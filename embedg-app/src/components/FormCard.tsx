@@ -13,11 +13,8 @@ import { useSendSettingsStore } from "../state/sendSettings";
 import { useFormActionsStore } from "../state/actions";
 import { AutoAnimate } from "../util/autoAnimate";
 import { useToasts } from "../util/toasts";
-import CommandActionSet from "./CommandActionSet";
 import ConfirmModal from "./ConfirmModal";
-import EditorInput from "./EditorInput";
-import FormFields, { validateFormFields } from "./FormFields";
-import FormPreview from "./FormPreview";
+import FormEditor from "./FormEditor";
 import Tooltip from "./Tooltip";
 
 export default function FormCard({ form }: { form: FormWire }) {
@@ -62,25 +59,6 @@ export default function FormCard({ form }: { form: FormWire }) {
   }
 
   function save() {
-    if (name.trim().length === 0 || title.trim().length === 0) {
-      createToast({
-        title: "Missing fields",
-        message: "A form needs both a name and a title.",
-        type: "error",
-      });
-      return;
-    }
-
-    const fieldsError = validateFormFields(fields);
-    if (fieldsError) {
-      createToast({
-        title: "Invalid fields",
-        message: fieldsError,
-        type: "error",
-      });
-      return;
-    }
-
     const actions = useFormActionsStore.getState().actions[form.id];
 
     updateMutation.mutate(
@@ -162,41 +140,15 @@ export default function FormCard({ form }: { form: FormWire }) {
                 </button>
               </div>
             </div>
-            <div className="lg:flex lg:items-start lg:gap-6">
-              <div className="min-w-0 flex-1">
-                <div className="space-y-5">
-                  <EditorInput
-                    label="Name"
-                    description="How the form is called in the dashboard and when you pick it for a button, select menu or command."
-                    type="text"
-                    maxLength={100}
-                    value={name}
-                    onChange={setName}
-                  />
-                  <EditorInput
-                    label="Title"
-                    description="Shown at the top of the form in Discord."
-                    type="text"
-                    maxLength={45}
-                    value={title}
-                    onChange={setTitle}
-                  />
-                  <FormFields
-                    formId={form.id}
-                    fields={fields}
-                    setFields={setFields}
-                  />
-                  <CommandActionSet
-                    cmdId={form.id}
-                    store={useFormActionsStore}
-                    inForm
-                  />
-                </div>
-              </div>
-              <div className="mt-8 lg:mt-0 lg:sticky lg:top-4 lg:w-[26rem] lg:flex-none">
-                <FormPreview title={title} fields={fields} />
-              </div>
-            </div>
+            <FormEditor
+              formId={form.id}
+              name={name}
+              setName={setName}
+              title={title}
+              setTitle={setTitle}
+              fields={fields}
+              setFields={setFields}
+            />
           </div>
         ) : (
           <div className="flex justify-between items-start py-4 px-5" key="2">

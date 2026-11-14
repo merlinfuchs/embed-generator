@@ -1,5 +1,5 @@
 import { useShallow } from "zustand/react/shallow";
-import { useCommandActionsStore } from "../state/actions";
+import type { useCommandActionsStore } from "../state/actions";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { usePremiumGuildFeatures } from "../util/premium";
 import Action from "./Action";
@@ -7,8 +7,8 @@ import Action from "./Action";
 interface Props {
   cmdId: string;
   actionIndex: number;
-  /** The store the action set lives in, the one of custom commands unless given. */
-  store?: typeof useCommandActionsStore;
+  /** The store the action set lives in. */
+  store: typeof useCommandActionsStore;
   /** The action runs when a form is submitted, so it can't open a form or edit a message. */
   inForm?: boolean;
 }
@@ -16,10 +16,9 @@ interface Props {
 export default function EditorAction({
   cmdId,
   actionIndex,
-  store,
+  store: useStore,
   inForm,
 }: Props) {
-  const useStore = store ?? useCommandActionsStore;
   const features = usePremiumGuildFeatures();
   const maxActions = features?.max_actions_per_component || 0;
   const selectedGuildId = useSendSettingsStore((state) => state.guildId);

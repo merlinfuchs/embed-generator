@@ -10,113 +10,147 @@ import CheckBox from "./CheckBox";
 import Collapsable from "./Collapsable";
 import EditorInput from "./EditorInput";
 
-export const MAX_FORM_FIELDS = 5;
-export const MAX_FORM_SELECT_VALUES = 25;
+const MAX_FORM_FIELDS = 5;
+const MAX_SELECT_VALUES = 25;
 const MAX_KEY_LENGTH = 32;
-const KEY_PATTERN = /^[a-z][a-z0-9_]*$/;
 
-export const MAX_SELECT_OPTIONS = 25;
-export const MAX_CHOICE_OPTIONS = 10;
+type FieldKind = "text" | "entity" | "options" | "checkbox";
 
-export const FIELD_TYPES = [
-  { value: "text", label: "Text" },
-  { value: "select", label: "Select Menu" },
-  { value: "radio", label: "Radio Buttons" },
-  { value: "checkboxes", label: "Checkboxes" },
-  { value: "checkbox", label: "Single Checkbox" },
-  { value: "user", label: "User Select" },
-  { value: "role", label: "Role Select" },
-  { value: "mentionable", label: "User & Role Select" },
-  { value: "channel", label: "Channel Select" },
-] as const;
+interface FieldType {
+  value: string;
+  label: string;
+  kind: FieldKind;
+  /** What a new field of this type is labeled, so the label fits what the field asks for. */
+  defaultLabel: string;
+  /** What the select menu shows in the preview while nothing is picked. */
+  pickerPlaceholder?: string;
+  /** Whether Discord shows a placeholder for the field. */
+  placeholder: boolean;
+  /** Whether more than one value can be picked. */
+  maxValues: boolean;
+  /** How many options the field can have. */
+  maxOptions?: number;
+}
 
-/** What a new field of a type is labeled, so the label fits what the field asks for. */
-export const DEFAULT_FIELD_LABELS: Record<string, string> = {
-  text: "Message",
-  user: "User",
-  role: "Role",
-  mentionable: "User or Role",
-  channel: "Channel",
-  select: "Choice",
-  radio: "Choice",
-  checkboxes: "Choices",
-  checkbox: "I agree",
-};
+export const FIELD_TYPES: FieldType[] = [
+  {
+    value: "text",
+    label: "Text",
+    kind: "text",
+    defaultLabel: "Message",
+    placeholder: true,
+    maxValues: false,
+  },
+  {
+    value: "select",
+    label: "Select Menu",
+    kind: "options",
+    defaultLabel: "Choice",
+    pickerPlaceholder: "Make a selection",
+    placeholder: true,
+    maxValues: true,
+    maxOptions: 25,
+  },
+  {
+    value: "radio",
+    label: "Radio Buttons",
+    kind: "options",
+    defaultLabel: "Choice",
+    placeholder: false,
+    maxValues: false,
+    maxOptions: 10,
+  },
+  {
+    value: "checkboxes",
+    label: "Checkboxes",
+    kind: "options",
+    defaultLabel: "Choices",
+    placeholder: false,
+    maxValues: true,
+    maxOptions: 10,
+  },
+  {
+    value: "checkbox",
+    label: "Single Checkbox",
+    kind: "checkbox",
+    defaultLabel: "I agree",
+    placeholder: false,
+    maxValues: false,
+  },
+  {
+    value: "user",
+    label: "User Select",
+    kind: "entity",
+    defaultLabel: "User",
+    pickerPlaceholder: "Select a user",
+    placeholder: true,
+    maxValues: true,
+  },
+  {
+    value: "role",
+    label: "Role Select",
+    kind: "entity",
+    defaultLabel: "Role",
+    pickerPlaceholder: "Select a role",
+    placeholder: true,
+    maxValues: true,
+  },
+  {
+    value: "mentionable",
+    label: "User & Role Select",
+    kind: "entity",
+    defaultLabel: "User or Role",
+    pickerPlaceholder: "Select a user or role",
+    placeholder: true,
+    maxValues: true,
+  },
+  {
+    value: "channel",
+    label: "Channel Select",
+    kind: "entity",
+    defaultLabel: "Channel",
+    pickerPlaceholder: "Select a channel",
+    placeholder: true,
+    maxValues: true,
+  },
+];
 
-/** Whether a field is a select menu that picks users, roles or channels. */
-export function isSelectField(field: FormFieldWire): boolean {
+/** The type of a field. A field without one is a text input. */
+export function fieldType(field: FormFieldWire): FieldType {
   return (
-    field.type === "user" ||
-    field.type === "role" ||
-    field.type === "mentionable" ||
-    field.type === "channel"
+    FIELD_TYPES.find((t) => t.value === (field.type || "text")) ??
+    FIELD_TYPES[0]
   );
 }
 
-/** Whether a field picks from options that are set up in the form. */
-export function hasOptions(field: FormFieldWire): boolean {
-  return (
-    field.type === "select" ||
-    field.type === "radio" ||
-    field.type === "checkboxes"
-  );
-}
-
-/** How many options a field can have at most. */
-export function maxOptions(field: FormFieldWire): number {
-  return field.type === "select" ? MAX_SELECT_OPTIONS : MAX_CHOICE_OPTIONS;
-}
-
-/** What is wrong with the options of a field that the server would refuse, if anything. */
-function validateOptions(field: FormFieldWire, pos: number): string | null {
-  const options = field.options ?? [];
-  const min = field.type === "radio" ? 2 : 1;
-  const max = maxOptions(field);
-  if (options.length < min || options.length > max) {
-    return `Field ${pos} needs between ${min} and ${max} options.`;
-  }
-
-  const values = new Set<string>();
-  for (const [j, o] of options.entries()) {
-    if (o.label.trim().length === 0) {
-      return `Option ${j + 1} of field ${pos} needs a label.`;
-    }
-    if (o.value.trim().length === 0) {
-      return `Option ${j + 1} of field ${pos} needs a value.`;
-    }
-    if (values.has(o.value)) {
-      return `The value "${o.value}" is used by more than one option of field ${pos}.`;
-    }
-    values.add(o.value);
-  }
-
-  const defaults = options.filter((o) => o.default).length;
-  if (field.type === "radio" && defaults > 1) {
-    return `Only one option of field ${pos} can be picked by default.`;
-  }
-  if (field.type !== "radio") {
-    const maxPick =
-      field.max_values || (field.type === "select" ? 1 : options.length);
-    if ((field.max_values ?? 0) > options.length) {
-      return `Field ${pos} can't pick more values than it has options.`;
-    }
-    if (defaults > maxPick) {
-      return `Field ${pos} has more options picked by default than it can pick.`;
-    }
-  }
-  return null;
+function slug(label: string): string {
+  return label
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
 }
 
 /** The name a field's value has in templates, made from its label. */
 export function fieldKeyFromLabel(label: string): string {
-  let key = label
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
+  let key = slug(label);
   if (!/^[a-z]/.test(key)) key = key ? `field_${key}` : "";
   return key.slice(0, MAX_KEY_LENGTH).replace(/_+$/, "");
+}
+
+/** The value an option has by default, made from its label. */
+export function optionValueFromLabel(label: string): string {
+  return slug(label).slice(0, 100);
+}
+
+/** Whether the variable name still follows the label, because it wasn't changed by hand. */
+function keyFollowsLabel(field: FormFieldWire): boolean {
+  return (
+    field.key === "" ||
+    field.key === fieldKeyFromLabel(field.label) ||
+    /^field(_\d+)?$/.test(field.key)
+  );
 }
 
 function uniqueKey(base: string, others: string[]): string {
@@ -128,50 +162,6 @@ function uniqueKey(base: string, others: string[]): string {
     key = root.slice(0, MAX_KEY_LENGTH - suffix.length) + suffix;
   }
   return key;
-}
-
-/** What is wrong with the fields of a form that the server would refuse, if anything. */
-export function validateFormFields(fields: FormFieldWire[]): string | null {
-  if (fields.length === 0) return "A form needs at least one field.";
-
-  const keys = new Set<string>();
-  for (const [i, f] of fields.entries()) {
-    if (f.label.trim().length === 0) {
-      return `Field ${i + 1} needs a label.`;
-    }
-    if (!KEY_PATTERN.test(f.key) || f.key.length > MAX_KEY_LENGTH) {
-      return `The variable name of field ${i + 1} must start with a lowercase letter and only contain lowercase letters, digits and underscores.`;
-    }
-    if (keys.has(f.key)) {
-      return `The variable name "${f.key}" is used by more than one field.`;
-    }
-    keys.add(f.key);
-
-    if (hasOptions(f)) {
-      const err = validateOptions(f, i + 1);
-      if (err) return err;
-      continue;
-    }
-    if (f.type === "checkbox") continue;
-
-    if (isSelectField(f)) {
-      if (
-        (f.max_values ?? 0) < 0 ||
-        (f.max_values ?? 0) > MAX_FORM_SELECT_VALUES
-      ) {
-        return `Field ${i + 1} can pick between 1 and ${MAX_FORM_SELECT_VALUES} values.`;
-      }
-      continue;
-    }
-
-    if (
-      (f.max_length ?? 0) !== 0 &&
-      (f.min_length ?? 0) > (f.max_length ?? 0)
-    ) {
-      return `The minimum length of field ${i + 1} can't be larger than its maximum length.`;
-    }
-  }
-  return null;
 }
 
 interface Props {
@@ -243,16 +233,16 @@ export default function FormFields({ formId, fields, setFields }: Props) {
 
 function variableDescription(field: FormFieldWire): string {
   const name = field.key || "name";
-  if (isSelectField(field)) {
-    return `Use {{.Form.${name}}} in the form's actions to insert the mentions of what was picked, or {{.FormIDs.${name}}} for their IDs.`;
+  switch (fieldType(field).kind) {
+    case "entity":
+      return `Use {{.Form.${name}}} in the form's actions to insert the mentions of what was picked, or {{.FormIDs.${name}}} for their IDs.`;
+    case "options":
+      return `Use {{.Form.${name}}} in the form's actions to insert the labels of what was picked, or {{.FormIDs.${name}}} for their values.`;
+    case "checkbox":
+      return `Use {{.Form.${name}}} for Yes or No, or {{.FormIDs.${name}}} for true or false.`;
+    default:
+      return `Use {{.Form.${name}}} in the form's actions to insert what was typed.`;
   }
-  if (hasOptions(field)) {
-    return `Use {{.Form.${name}}} in the form's actions to insert the labels of what was picked, or {{.FormIDs.${name}}} for their values.`;
-  }
-  if (field.type === "checkbox") {
-    return `Use {{.Form.${name}}} for Yes or No, or {{.FormIDs.${name}}} for true or false.`;
-  }
-  return `Use {{.Form.${name}}} in the form's actions to insert what was typed.`;
 }
 
 function FieldOptions({
@@ -263,7 +253,7 @@ function FieldOptions({
   update: (values: Partial<FormFieldWire>) => void;
 }) {
   const options = field.options ?? [];
-  const multi = field.type !== "radio";
+  const { maxValues: multi, maxOptions = 0 } = fieldType(field);
 
   function set(i: number, values: Partial<FormFieldOptionWire>) {
     const next = [...options];
@@ -294,7 +284,7 @@ function FieldOptions({
           Options
         </div>
         <div className="text-sm italic font-light text-mist-400">
-          {options.length} / {maxOptions(field)}
+          {options.length} / {maxOptions}
         </div>
       </div>
       <div className="space-y-2">
@@ -354,7 +344,7 @@ function FieldOptions({
           </div>
         ))}
       </div>
-      {options.length < maxOptions(field) && (
+      {options.length < maxOptions && (
         <button
           type="button"
           className="mt-2 bg-azure-500 px-3 py-2 rounded-lg transition-colors hover:bg-azure-400 text-white text-sm"
@@ -382,17 +372,6 @@ function FieldOptions({
   );
 }
 
-/** The value an option has by default, made from its label. */
-export function optionValueFromLabel(label: string): string {
-  return label
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .slice(0, 100);
-}
-
 function FormFieldCard({
   formId,
   index,
@@ -405,10 +384,9 @@ function FormFieldCard({
   setFields: (fields: FormFieldWire[]) => void;
 }) {
   const field = fields[index];
-  const select = isSelectField(field);
-  const options = hasOptions(field);
-  const checkbox = field.type === "checkbox";
-  const text = !select && !options && !checkbox;
+  const type = fieldType(field);
+  const text = type.kind === "text";
+  const otherKeys = fields.filter((_, i) => i !== index).map((f) => f.key);
 
   function move(offset: number) {
     const next = [...fields];
@@ -444,22 +422,18 @@ function FormFieldCard({
 
   // The variable name follows the label until it's been changed by hand.
   function setLabel(label: string) {
-    const others = fields.filter((_, i) => i !== index).map((f) => f.key);
-    const followsLabel =
-      field.key === "" ||
-      field.key === fieldKeyFromLabel(field.label) ||
-      /^field(_\d+)?$/.test(field.key);
-
     update({
       label,
-      ...(followsLabel
-        ? { key: uniqueKey(fieldKeyFromLabel(label), others) }
+      ...(keyFollowsLabel(field)
+        ? { key: uniqueKey(fieldKeyFromLabel(label), otherKeys) }
         : {}),
     });
   }
 
   // The settings of the other kind of field are dropped, so they don't linger in the saved form.
-  function setType(type: string) {
+  function setType(value: string) {
+    const newType =
+      FIELD_TYPES.find((t) => t.value === value) ?? FIELD_TYPES[0];
     const next: FormFieldWire = {
       key: field.key,
       label: field.label,
@@ -469,22 +443,14 @@ function FormFieldCard({
 
     // A label that is still the standard one of the old type, or empty, becomes the standard one
     // of the new type, and the variable name follows it unless it was changed by hand.
-    const oldDefault = DEFAULT_FIELD_LABELS[field.type || "text"];
-    if (field.label.trim() === "" || field.label === oldDefault) {
-      const keyFollowed =
-        field.key === "" ||
-        field.key === fieldKeyFromLabel(field.label) ||
-        /^field(_\d+)?$/.test(field.key);
-      next.label = DEFAULT_FIELD_LABELS[type] ?? field.label;
-      if (keyFollowed) {
-        next.key = uniqueKey(
-          fieldKeyFromLabel(next.label),
-          fields.filter((_, i) => i !== index).map((f) => f.key),
-        );
+    if (field.label.trim() === "" || field.label === type.defaultLabel) {
+      next.label = newType.defaultLabel;
+      if (keyFollowsLabel(field)) {
+        next.key = uniqueKey(fieldKeyFromLabel(next.label), otherKeys);
       }
     }
-    if (type !== "text") next.type = type;
-    if (type === "select" || type === "radio" || type === "checkboxes") {
+    if (newType.value !== "text") next.type = newType.value;
+    if (newType.kind === "options") {
       next.options = field.options?.length
         ? field.options
         : [
@@ -492,9 +458,7 @@ function FormFieldCard({
             { label: "Option 2", value: "option_2" },
           ];
     }
-    if (type === "radio" || type === "checkboxes" || type === "checkbox") {
-      next.placeholder = undefined;
-    }
+    if (!newType.placeholder) next.placeholder = undefined;
     const copy = [...fields];
     copy[index] = next;
     setFields(copy);
@@ -504,7 +468,7 @@ function FormFieldCard({
     const digits = value.replace(/\D/g, "").slice(0, 2);
     update({
       max_values: digits
-        ? Math.min(parseInt(digits, 10), MAX_FORM_SELECT_VALUES)
+        ? Math.min(parseInt(digits, 10), MAX_SELECT_VALUES)
         : undefined,
     });
   }
@@ -574,7 +538,7 @@ function FormFieldCard({
             value={field.key}
             onChange={(key) => update({ key: key.toLowerCase() })}
           />
-          {(text || select || field.type === "select") && (
+          {type.placeholder && (
             <EditorInput
               label="Placeholder"
               type="text"
@@ -603,7 +567,7 @@ function FormFieldCard({
               <select
                 aria-label="Type"
                 className="bg-ink-900 rounded-lg p-2 w-full font-light cursor-pointer text-white"
-                value={field.type || "text"}
+                value={type.value}
                 onChange={(v) => setType(v.target.value)}
               >
                 {FIELD_TYPES.map((t) => (
@@ -633,7 +597,7 @@ function FormFieldCard({
                 </select>
               </div>
             )}
-            {checkbox ? (
+            {type.kind === "checkbox" ? (
               <div className="flex-none">
                 <div className="mb-1.5 flex">
                   <div className="uppercase text-mist-300 text-sm font-medium">
@@ -660,9 +624,7 @@ function FormFieldCard({
                 />
               </div>
             )}
-            {select ||
-            field.type === "select" ||
-            field.type === "checkboxes" ? (
+            {type.maxValues ? (
               <EditorInput
                 className="w-32"
                 label="Max Values"
@@ -693,12 +655,8 @@ function FormFieldCard({
               </>
             ) : null}
           </div>
-          {options && (
-            <FieldOptions
-              field={field}
-              update={update}
-              /* the options belong to this field's card */
-            />
+          {type.kind === "options" && (
+            <FieldOptions field={field} update={update} />
           )}
         </div>
       </Collapsable>

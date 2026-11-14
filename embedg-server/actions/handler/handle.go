@@ -17,6 +17,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/template"
 	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"github.com/merlinfuchs/embed-generator/embedg-server/guildstate"
+	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 )
 
@@ -205,13 +206,9 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 			return nil
 		}
 
-		form, err := m.formStore.GetForm(context.TODO(), *interaction.GuildID(), strings.TrimPrefix(customID, actions.FormCustomIDPrefix))
+		form, err := m.getForm(*interaction.GuildID(), strings.TrimPrefix(customID, actions.FormCustomIDPrefix))
 		if err != nil {
-			if errors.Is(err, store.ErrNotFound) {
-				return userErr("This form doesn't exist anymore.")
-			}
-
-			return fmt.Errorf("failed to get form: %w", err)
+			return err
 		}
 		actionSet = form.Actions
 		derivedPerms = form.DerivedPermissions
@@ -543,12 +540,12 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				return userErr("This component is set up to open a form after it already responded. Move the Show Form action to the end of its actions.")
 			}
 
-			modal, err := m.formModal(*interaction.GuildID(), action.TargetID)
+			form, err := m.getForm(*interaction.GuildID(), action.TargetID)
 			if err != nil {
 				return err
 			}
 
-			i.Respond(modal, discord.InteractionResponseTypeModal)
+			i.Respond(buildFormModal(form), discord.InteractionResponseTypeModal)
 			return nil
 		case actions.ActionTypePermissionCheck:
 			rawPerms, _ := strconv.ParseInt(action.Permissions, 10, 64)
@@ -598,17 +595,15 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 	return nil
 }
 
-// formModal is the modal of a form, filled with what the form is set up to start with.
-func (m *ActionHandler) formModal(guildID common.ID, formID string) (discord.ModalCreate, error) {
+func (m *ActionHandler) getForm(guildID common.ID, formID string) (*model.Form, error) {
 	form, err := m.formStore.GetForm(context.TODO(), guildID, formID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			return discord.ModalCreate{}, userErr("The form used by this action doesn't exist anymore.")
+			return nil, userErr("This form doesn't exist anymore.")
 		}
-		return discord.ModalCreate{}, fmt.Errorf("failed to get form: %w", err)
+		return nil, fmt.Errorf("failed to get form: %w", err)
 	}
-
-	return buildFormModal(form), nil
+	return form, nil
 }
 
 // startsWithEdit is whether the action set's first response edits the message its component is on,

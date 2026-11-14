@@ -1,14 +1,6 @@
 import { ChevronDownIcon, XMarkIcon } from "@heroicons/react/20/solid";
 import type { FormFieldWire } from "../api/wire";
-import { hasOptions, isSelectField } from "./FormFields";
-
-const PICKER_PLACEHOLDERS: Record<string, string> = {
-  user: "Select a user",
-  role: "Select a role",
-  mentionable: "Select a user or role",
-  channel: "Select a channel",
-  select: "Make a selection",
-};
+import { fieldType } from "./FormFields";
 
 /** What a select menu shows while nothing is picked, or what is picked by default. */
 function selectText(field: FormFieldWire): { text: string; muted: boolean } {
@@ -17,8 +9,7 @@ function selectText(field: FormFieldWire): { text: string; muted: boolean } {
     return { text: defaults.map((o) => o.label).join(", "), muted: false };
   }
   return {
-    text:
-      field.placeholder || PICKER_PLACEHOLDERS[field.type ?? ""] || "Select",
+    text: field.placeholder || fieldType(field).pickerPlaceholder || "Select",
     muted: true,
   };
 }
@@ -85,7 +76,7 @@ function FieldInput({ field }: { field: FormFieldWire }) {
     );
   }
 
-  if (isSelectField(field) || hasOptions(field)) {
+  if (fieldType(field).pickerPlaceholder) {
     const { text, muted } = selectText(field);
     return (
       <div className="flex items-center justify-between rounded bg-[#1e1f22] border border-black/30 px-3 py-2.5">

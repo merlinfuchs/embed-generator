@@ -11,6 +11,9 @@ func CheckActionSetLimit(actionSet actions.ActionSet, features model.PlanFeature
 	if len(actionSet.Actions) > features.MaxActionsPerComponent {
 		return Forbidden("insufficient_plan", fmt.Sprintf("Your plan allows up to %d actions per component!", features.MaxActionsPerComponent))
 	}
+	if err := actions.ValidateShowFormPlacement(actionSet); err != nil {
+		return BadRequest("invalid_actions", fmt.Sprintf("Invalid actions: %s.", err))
+	}
 	return CheckActionMessages(actionSet, features)
 }
 

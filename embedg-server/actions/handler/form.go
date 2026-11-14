@@ -27,7 +27,7 @@ func buildFormModal(form *model.Form) discord.ModalCreate {
 
 func buildFormFieldComponent(field actions.FormField) discord.LabelSubComponent {
 	switch {
-	case field.IsSelect():
+	case field.IsEntitySelect():
 		return buildFormSelect(field)
 	case field.HasOptions():
 		return buildFormOptions(field)
@@ -55,21 +55,8 @@ func buildFormFieldComponent(field actions.FormField) discord.LabelSubComponent 
 	return input
 }
 
-// formSelectBounds is how many values a select field has to and can have. A field that isn't
-// required can be left empty, one that is needs at least one.
-func formSelectBounds(field actions.FormField) (minValues int, maxValues int) {
-	maxValues = field.MaxValues
-	if maxValues < 1 {
-		maxValues = 1
-	}
-	if field.Required {
-		minValues = 1
-	}
-	return minValues, maxValues
-}
-
 func buildFormSelect(field actions.FormField) discord.LabelSubComponent {
-	minValues, maxValues := formSelectBounds(field)
+	minValues, maxValues := field.MinPicks(), field.MaxPicks()
 
 	switch field.Type {
 	case actions.FormFieldTypeRole:
@@ -115,17 +102,10 @@ func buildFormOptions(field actions.FormField) discord.LabelSubComponent {
 			})
 		}
 
-		minValues := 0
-		if field.Required {
-			minValues = 1
-		}
-		maxValues := field.MaxValues
-		if maxValues < 1 || maxValues > len(options) {
-			maxValues = len(options)
-		}
+		minValues := field.MinPicks()
 		return discord.CheckboxGroupComponent{
 			CustomID: field.Key, Required: field.Required, Options: options,
-			MinValues: &minValues, MaxValues: maxValues,
+			MinValues: &minValues, MaxValues: field.MaxPicks(),
 		}
 
 	default:
@@ -136,10 +116,10 @@ func buildFormOptions(field actions.FormField) discord.LabelSubComponent {
 			})
 		}
 
-		minValues, maxValues := formSelectBounds(field)
+		minValues := field.MinPicks()
 		return discord.StringSelectMenuComponent{
 			CustomID: field.Key, Placeholder: field.Placeholder, Required: field.Required,
-			MinValues: &minValues, MaxValues: maxValues, Options: options,
+			MinValues: &minValues, MaxValues: field.MaxPicks(), Options: options,
 		}
 	}
 }
@@ -155,33 +135,18 @@ func submittedFormValues(fields []actions.FormField, data discord.ModalSubmitInt
 		switch {
 		case field.HasOptions():
 			values[field.Key], ids[field.Key] = pickedOptions(data, field)
-			continue
+		case field.IsEntitySelect():
+			values[field.Key], ids[field.Key] = pickedEntities(data, field)
 		case field.Type == actions.FormFieldTypeCheckbox:
-			checked := false
+			values[field.Key], ids[field.Key] = "No", "false"
 			if c, ok := data.Component(field.Key); ok {
-				if checkbox, ok := c.(discord.CheckboxComponent); ok {
-					checked = checkbox.Value
+				if checkbox, ok := c.(discord.CheckboxComponent); ok && checkbox.Value {
+					values[field.Key], ids[field.Key] = "Yes", "true"
 				}
 			}
-			values[field.Key], ids[field.Key] = "No", "false"
-			if checked {
-				values[field.Key], ids[field.Key] = "Yes", "true"
-			}
-			continue
-		case !field.IsSelect():
+		default:
 			values[field.Key] = data.Text(field.Key)
-			continue
 		}
-
-		picked := modalSelectIDs(data, field)
-		mentions := make([]string, 0, len(picked))
-		idStrings := make([]string, 0, len(picked))
-		for _, id := range picked {
-			mentions = append(mentions, formMention(data, field.Type, id))
-			idStrings = append(idStrings, id.String())
-		}
-		values[field.Key] = strings.Join(mentions, " ")
-		ids[field.Key] = strings.Join(idStrings, " ")
 	}
 	return values, ids
 }
@@ -217,6 +182,19 @@ func pickedOptions(data discord.ModalSubmitInteractionData, field actions.FormFi
 		valueList = append(valueList, value)
 	}
 	return strings.Join(labelList, ", "), strings.Join(valueList, ", ")
+}
+
+// pickedEntities is the mentions and the IDs of what was picked in a field that picks users, roles
+// or channels, each separated by spaces.
+func pickedEntities(data discord.ModalSubmitInteractionData, field actions.FormField) (mentions string, ids string) {
+	picked := modalSelectIDs(data, field)
+	mentionList := make([]string, 0, len(picked))
+	idList := make([]string, 0, len(picked))
+	for _, id := range picked {
+		mentionList = append(mentionList, formMention(data, field.Type, id))
+		idList = append(idList, id.String())
+	}
+	return strings.Join(mentionList, " "), strings.Join(idList, " ")
 }
 
 // modalSelectIDs is the IDs picked in the select menu of a field of a submitted modal.

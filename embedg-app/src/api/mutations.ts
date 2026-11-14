@@ -15,10 +15,9 @@ import type {
   CustomCommandUpdateRequestWire,
   CustomCommandUpdateResponseWire,
   CustomCommandsDeployResponseWire,
-  FormCreateRequestWire,
+  FormSaveRequestWire,
   FormCreateResponseWire,
   FormDeleteResponseWire,
-  FormUpdateRequestWire,
   FormUpdateResponseWire,
   EmbedLinkCreateRequestWire,
   EmbedLinkCreateResponseWire,
@@ -504,7 +503,7 @@ export function useFormCreateMutation() {
       req,
     }: {
       guildId: string;
-      req: FormCreateRequestWire;
+      req: FormSaveRequestWire;
     }) => {
       return fetch(`/api/forms?guild_id=${guildId}`, {
         method: "POST",
@@ -529,7 +528,7 @@ export function useFormUpdateMutation() {
     }: {
       formId: string;
       guildId: string;
-      req: FormUpdateRequestWire;
+      req: FormSaveRequestWire;
     }) => {
       return fetch(`/api/forms/${formId}?guild_id=${guildId}`, {
         method: "PUT",
