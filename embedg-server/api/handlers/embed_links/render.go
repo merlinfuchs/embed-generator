@@ -111,6 +111,22 @@ func (h *EmbedLinksHandler) renderUnknownEmbedLinkHTML(c *fiber.Ctx) error {
 	})
 }
 
+// What a flagged link shows instead of its preview.
+var blockedEmbedLink = model.EmbedLink{
+	OgTitle:        null.StringFrom("Link blocked"),
+	OgSiteName:     null.StringFrom("Embed Generator"),
+	OgDescription:  null.StringFrom("This link was blocked because it leads to a known phishing site."),
+	ThemeColor:     null.StringFrom("#ef4444"),
+	OeProviderName: null.StringFrom("Embed Generator"),
+}
+
+// Visitors go to a page that explains the block instead of the link's URL.
+func (h *EmbedLinksHandler) renderBlockedEmbedLinkHTML(c *fiber.Ctx) error {
+	el := blockedEmbedLink
+	el.Url = h.publicURL() + "/blocked-link"
+	return h.renderEmbedLinkHTML(c, &el)
+}
+
 func metaTagsToHTML(metaTags map[string]string) string {
 	res := ""
 

@@ -171,7 +171,7 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	embedLinksHandler := embed_links.New(embed_links.EmbedLinksHandlerConfig{
 		APIPublicURL: config.APIPublicURL,
 		AppPublicURL: config.AppPublicURL,
-	}, env.EmbedLinkStore, env.PremiumManager)
+	}, env.EmbedLinkStore, env.PremiumManager, env.PhishingChecker)
 	app.Post("/api/embed-links", sessionMiddleware.SessionOptional(), handlers.WithRequestBodyValidated(embedLinksHandler.HandleCreateEmbedLink))
 	app.Get("/api/embed-links/:linkID/oembed", embedLinksHandler.HandleRenderEmbedLinkJSON)
 	app.Get("/e/:linkID", embedLinksHandler.HandleRenderEmbedLinkHTML)

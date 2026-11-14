@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -52,6 +53,14 @@ func (c *Client) GetEmbedLink(ctx context.Context, id string) (*model.EmbedLink,
 	return rowToEmbedLink(row), nil
 }
 
+func (c *Client) FlagEmbedLink(ctx context.Context, id string, flaggedAt time.Time, reason string) error {
+	return c.Q.FlagEmbedLink(ctx, pgmodel.FlagEmbedLinkParams{
+		ID:            id,
+		FlaggedAt:     pgtype.Timestamp{Time: flaggedAt, Valid: true},
+		FlaggedReason: pgtype.Text{String: reason, Valid: true},
+	})
+}
+
 func rowToEmbedLink(row pgmodel.EmbedLink) *model.EmbedLink {
 	return &model.EmbedLink{
 		ID:             row.ID,
@@ -72,5 +81,7 @@ func rowToEmbedLink(row pgmodel.EmbedLink) *model.EmbedLink {
 		CreatedAt:      row.CreatedAt.Time,
 		UserID:         nullID(row.UserID),
 		Attribution:    row.Attribution,
+		FlaggedAt:      null.NewTime(row.FlaggedAt.Time, row.FlaggedAt.Valid),
+		FlaggedReason:  null.NewString(row.FlaggedReason.String, row.FlaggedReason.Valid),
 	}
 }

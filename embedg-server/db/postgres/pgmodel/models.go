@@ -77,6 +77,8 @@ type EmbedLink struct {
 	ComponentEmbed []byte
 	UserID         pgtype.Text
 	Attribution    bool
+	FlaggedAt      pgtype.Timestamp
+	FlaggedReason  pgtype.Text
 }
 
 type Entitlement struct {

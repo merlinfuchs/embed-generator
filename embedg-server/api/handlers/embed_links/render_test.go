@@ -55,7 +55,7 @@ func TestComponentEmbedToHTMLAddsAttribution(t *testing.T) {
 }
 
 func TestUnknownEmbedLinkIsNotFound(t *testing.T) {
-	h := New(EmbedLinksHandlerConfig{AppPublicURL: "https://message.style/app"}, nil, nil)
+	h := New(EmbedLinksHandlerConfig{AppPublicURL: "https://message.style/app"}, nil, nil, nil)
 	app := fiber.New()
 	app.Get("/e/unknown", h.renderUnknownEmbedLinkHTML)
 

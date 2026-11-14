@@ -41,3 +41,6 @@ INSERT INTO embed_links (
 
 -- name: GetEmbedLink :one
 SELECT * FROM embed_links WHERE id = $1;
+
+-- name: FlagEmbedLink :exec
+UPDATE embed_links SET flagged_at = $2, flagged_reason = $3 WHERE id = $1 AND flagged_at IS NULL;
