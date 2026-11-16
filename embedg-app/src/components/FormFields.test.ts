@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { FormFieldWire } from "../api/wire";
 import {
   FIELD_TYPES,
+  answersText,
   fieldKeyFromLabel,
   fieldType,
   optionValueFromLabel,
@@ -58,5 +59,23 @@ describe("fieldType", () => {
     for (const type of FIELD_TYPES) {
       expect(fieldKeyFromLabel(type.defaultLabel)).toMatch(/^[a-z][a-z0-9_]*$/);
     }
+  });
+});
+
+describe("answersText", () => {
+  it("lists every answer under its label", () => {
+    expect(
+      answersText([
+        field(),
+        field({ key: "target", label: "Who {{.User}} *is*" }),
+        field({ key: "", label: "Unnamed" }),
+      ]),
+    ).toBe(
+      [
+        "New answers from {{.User.Mention}}",
+        "**Reason:** {{.Form.reason}}",
+        "**Who .User is:** {{.Form.target}}",
+      ].join("\n"),
+    );
   });
 });
