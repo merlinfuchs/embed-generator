@@ -29,6 +29,7 @@ The editor, webhooks, buttons and select menus, and one-time scheduled messages 
 | Actions per button or select menu          | 3    | 10      | 15       |
 | Scheduled messages                         | 5    | 25      | 100      |
 | Recurring scheduled messages               | 1    | 25      | 100      |
+| Forms                                      | 3    | 10      | 25       |
 | AI assistant prompts a month               | 5    | 100     | 250      |
 | Custom commands                            | None | 25      | 50       |
 | Image uploads                              | 1 MB | 8 MB    | 8 MB     |
