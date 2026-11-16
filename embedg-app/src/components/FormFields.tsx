@@ -144,6 +144,21 @@ export function optionValueFromLabel(label: string): string {
   return slug(label).slice(0, 100);
 }
 
+/**
+ * A message with every answer of a form under its label, for posting the
+ * answers to a staff channel.
+ */
+export function answersText(fields: FormFieldWire[]): string {
+  const lines = fields
+    .filter((f) => f.key)
+    .map((f) => {
+      // Braces in a label would be read as a variable.
+      const label = (f.label || f.key).replace(/[{}*]/g, "");
+      return `**${label}:** {{.Form.${f.key}}}`;
+    });
+  return ["New answers from {{.User.Mention}}", ...lines].join("\n");
+}
+
 /** Whether the variable name still follows the label, because it wasn't changed by hand. */
 function keyFollowsLabel(field: FormFieldWire): boolean {
   return (
