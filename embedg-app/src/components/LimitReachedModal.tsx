@@ -10,6 +10,7 @@ const limitNames: Record<Limit, string> = {
   max_saved_messages: "saved messages",
   max_saved_message_versions: "versions per saved message",
   max_scheduled_messages: "scheduled messages",
+  max_forms: "forms",
   max_custom_commands: "custom commands",
   max_actions_per_component: "actions per component",
   max_ai_prompts_per_month: "AI prompts per month",
