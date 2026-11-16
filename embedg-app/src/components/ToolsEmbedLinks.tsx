@@ -112,6 +112,16 @@ export default function ToolsEmbedLinks() {
       return;
     }
 
+    if (!isWebUrl(url)) {
+      createToast({
+        title: "Enter a full URL",
+        message:
+          "Start the URL with https:// or http://, like https://discord.gg/your-invite",
+        type: "error",
+      });
+      return;
+    }
+
     if (componentEmbed && !title && !description) {
       createToast({
         title: "The fallback preview is missing",
@@ -378,4 +388,9 @@ function AttributionUpsell({ children }: { children: ReactNode }) {
       </div>
     </div>
   );
+}
+
+// The link page only redirects to http and https URLs.
+function isWebUrl(url: string) {
+  return /^https?:\/\/[^/?#\s]/i.test(url);
 }
