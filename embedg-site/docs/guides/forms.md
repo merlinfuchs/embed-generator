@@ -61,7 +61,7 @@ For example, a form with a field called `reason` can reply with:
 Thanks {{.User.Mention}}, your report was received. You wrote: {{.Form.reason}}
 ```
 
-Send the answers to your moderators by adding a **Text Message to Channel** action that posts `{{.User.Mention}} reported: {{.Form.reason}}` to a staff channel. Sending to another channel needs [Embed Generator Premium](../premium).
+To send the answers to your moderators, click **Post Answers to a Channel** under the actions of your form and pick a staff channel. It adds an action that posts every answer under its label, and you can change the text like any other response. Sending to another channel needs [Embed Generator Premium](../premium).
 
 A form with a user select called `target` and a text field called `reason` can post `{{.User.Mention}} reported {{.Form.target}}: {{.Form.reason}}`.
 

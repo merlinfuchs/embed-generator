@@ -2,7 +2,7 @@ import type { FormFieldWire } from "../api/wire";
 import { useFormActionsStore } from "../state/actions";
 import CommandActionSet from "./CommandActionSet";
 import EditorInput from "./EditorInput";
-import FormFields from "./FormFields";
+import FormFields, { answersText } from "./FormFields";
 import FormPreview from "./FormPreview";
 import FormSigningSecret from "./FormSigningSecret";
 
@@ -49,7 +49,12 @@ export default function FormEditor({
           onChange={setTitle}
         />
         <FormFields formId={formId} fields={fields} setFields={setFields} />
-        <CommandActionSet cmdId={formId} store={useFormActionsStore} inForm />
+        <CommandActionSet
+          cmdId={formId}
+          store={useFormActionsStore}
+          inForm
+          answersText={answersText(fields)}
+        />
         <FormSigningSecret formId={formId} secret={signingSecret} />
       </div>
       <div className="mt-8 lg:mt-0 lg:sticky lg:top-4 lg:w-[26rem] lg:flex-none">
