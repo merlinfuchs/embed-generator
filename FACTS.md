@@ -31,7 +31,7 @@ Features (feature | what it means for the user | free or paid):
 - Build the reply message inside the action instead of picking a saved message | one less saved message per reply | paid
 - Saved messages | reuse a message instead of rebuilding it | free, more on paid plans
 - Earlier versions of a saved message, kept when it's overwritten | go back to an older version | paid
-- Forms | pop-ups that ask members for text, to pick users, roles, channels, or from options (select menus, radio buttons, checkboxes), opened from a button, select menu, or custom command, with the answers used in the reply | free
+- Forms | pop-ups that ask members for text, to pick users, roles, channels, or from options (select menus, radio buttons, checkboxes), opened from a button, select menu, or custom command, with the answers used in the reply | free, more forms on paid plans
 - Send form answers to another tool (Zapier, n8n, Make, your own server) with the Send Answers to URL action | applications and reports end up in a spreadsheet or workflow without another bot | paid. One URL per form, up to 60 submissions a minute per server, signed with a per-form signing secret
 - Variables like the member's name or the server's member count | the message fills in details when it goes out | free
 - Scheduled messages: once, on a regular interval, or on a list of dates, with a calendar view | post on time without being online | one-time free, 1 recurring free, more on paid plans
@@ -52,14 +52,15 @@ Free plan:
 - 25 saved messages, with no earlier versions kept.
 - 3 actions per button or select menu.
 - 5 scheduled messages, 1 of them recurring.
+- 3 forms.
 - 5 AI assistant prompts a month.
 - Images up to 1 MB.
 - No custom bot, no custom commands, no sending to other channels, no replies built in the action.
 - Embed Links with a custom component end with a "Link preview from message.style" line. It's left out only for links created while logged in by someone who bought Premium, Ultimate, or the one-time removal, since a plan bought by someone else for a server doesn't count. Links created before the purchase keep the line.
 
 Paid plans:
-- Premium: $4.99 a month per server. 100 saved messages, 5 versions each. 10 actions per component. 25 scheduled messages, all of them can be recurring. 100 AI prompts a month. Custom bot. 25 custom commands. Images up to 8 MB.
-- Ultimate: $9.99 a month per server. Everything in Premium. 500 saved messages, 50 versions each. 15 actions per component. 100 scheduled messages, all of them can be recurring. 250 AI prompts a month. 50 custom commands. Images up to 8 MB.
+- Premium: $4.99 a month per server. 100 saved messages, 5 versions each. 10 actions per component. 25 scheduled messages, all of them can be recurring. 25 forms. 100 AI prompts a month. Custom bot. 25 custom commands. Images up to 8 MB.
+- Ultimate: $9.99 a month per server. Everything in Premium. 500 saved messages, 50 versions each. 15 actions per component. 100 scheduled messages, all of them can be recurring. 100 forms. 250 AI prompts a month. 50 custom commands. Images up to 8 MB.
 - Premium Lifetime €99.99 and Ultimate Lifetime €199.99, paid once. The store showed euros, so check the dollar price before quoting one. You buy one and activate it on a server from /premium in the app. It can't be moved to another server after that.
 - One-time removal of the embed link line: $2.99, paid once. Price decided on 2026-11-14, check the store once the SKU is live. It belongs to your Discord account, not a server, and only removes the "Link preview from message.style" line from Embed Links you create. message.style/premium/embed-links opens its store page in Discord. Its name in the store: [store name].
 - Don't mention plans that aren't for sale.

@@ -83,6 +83,7 @@ max_custom_commands = 0
 max_scheduled_messages = 5
 # How many scheduled messages can repeat or be sent on more than one date.
 max_periodic_scheduled_messages = 1
+max_forms = 3
 max_template_ops = 1000
 max_kv_keys = 10
 
@@ -104,6 +105,7 @@ max_custom_commands = 25
 max_image_upload_size = 8000000
 max_scheduled_messages = 25
 max_periodic_scheduled_messages = 25
+max_forms = 25
 max_template_ops = 10000
 max_kv_keys = 1000
 
@@ -125,6 +127,7 @@ max_custom_commands = 50
 max_image_upload_size = 8000000
 max_scheduled_messages = 100
 max_periodic_scheduled_messages = 100
+max_forms = 100
 max_template_ops = 10000
 max_kv_keys = 5000
 

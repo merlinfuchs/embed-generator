@@ -30,7 +30,7 @@ Forms are available on every plan. The actions that run when a form is submitted
    A single checkbox is a yes or no question. Tick **Checked by Default** to have it start checked.
 5. Add the **Actions** that run when a member submits the form. They work like the actions of a button, for example a text response, a message to another channel, or adding a role.
 
-A server can have up to 25 forms.
+A server can have 3 forms on the free plan, 25 with Premium and 100 with Ultimate. See [Embed Generator Premium](../premium).
 
 ## Opening a Form
 

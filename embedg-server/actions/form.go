@@ -20,9 +20,6 @@ const (
 	maxFormFieldKeyLength = 32
 	// MaxFormSelectValues is how many users, roles or channels a select field can take at most.
 	MaxFormSelectValues = 25
-
-	// MaxFormsPerGuild is our own limit, not Discord's.
-	MaxFormsPerGuild = 25
 )
 
 // The types a form field can have. A text field is what a field without a type is.
