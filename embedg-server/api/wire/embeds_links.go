@@ -2,6 +2,8 @@ package wire
 
 import (
 	"encoding/json"
+	"errors"
+	"net/url"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"gopkg.in/guregu/null.v4"
@@ -26,8 +28,17 @@ type EmbedLinkCreateRequestWire struct {
 func (req EmbedLinkCreateRequestWire) Validate() error {
 	// The component embed is parsed by the handler, which needs the value.
 	return validation.ValidateStruct(&req,
-		validation.Field(&req.Url, validation.Required),
+		validation.Field(&req.Url, validation.Required, validation.By(validateWebURL)),
 	)
+}
+
+// The link page only redirects to http and https URLs, so anything else would be a dead link.
+func validateWebURL(v any) error {
+	u, err := url.Parse(v.(string))
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return errors.New("must start with http:// or https://")
+	}
+	return nil
 }
 
 type EmbedLinkCreateResponseDataWire struct {
