@@ -222,10 +222,10 @@ func KindOf(input interface{}, flag ...bool) (string, error) { //flag used only 
 
 func StructToSdict(value interface{}) (SDict, error) {
 	val, isNil := indirect(reflect.ValueOf(value))
-	typeOfS := val.Type()
 	if isNil || value == nil {
 		return nil, errors.New("Expected - struct, got - Nil ")
 	}
+	typeOfS := val.Type()
 
 	if val.Kind() != reflect.Struct {
 		return nil, errors.New(fmt.Sprintf("Expected - struct, got - %s", val.Type().String()))
@@ -464,9 +464,9 @@ func tmplMult(args ...interface{}) interface{} {
 	}
 }
 
-func tmplDiv(args ...interface{}) interface{} {
+func tmplDiv(args ...interface{}) (interface{}, error) {
 	if len(args) < 1 {
-		return 0
+		return 0, nil
 	}
 
 	switch args[0].(type) {
@@ -479,7 +479,7 @@ func tmplDiv(args ...interface{}) interface{} {
 
 			sumF /= ToFloat64(v)
 		}
-		return sumF
+		return sumF, nil
 	default:
 		sumI := tmplToInt(args[0])
 		for i, v := range args {
@@ -487,9 +487,13 @@ func tmplDiv(args ...interface{}) interface{} {
 				continue
 			}
 
-			sumI /= tmplToInt(v)
+			divisor := tmplToInt(v)
+			if divisor == 0 {
+				return nil, errors.New("can't divide by zero")
+			}
+			sumI /= divisor
 		}
-		return sumI
+		return sumI, nil
 	}
 }
 
@@ -597,11 +601,13 @@ It is using natural logarithm as default to change the base.
 func tmplLog(arguments ...interface{}) (float64, error) {
 	var x, base, logarithm float64
 
-	x = ToFloat64(arguments[0])
-
 	if len(arguments) < 1 || len(arguments) > 2 {
 		return 0, errors.New("wrong number of arguments")
-	} else if len(arguments) == 1 {
+	}
+
+	x = ToFloat64(arguments[0])
+
+	if len(arguments) == 1 {
 		base = math.E
 	} else {
 		base = ToFloat64(arguments[1])
@@ -642,12 +648,20 @@ func tmplBitwiseAndNot(arg1, arg2 interface{}) int {
 	return tmplToInt(arg1) &^ tmplToInt(arg2)
 }
 
-func tmplBitwiseLeftShift(arg1, arg2 interface{}) int {
-	return tmplToInt(arg1) << tmplToInt(arg2)
+func tmplBitwiseLeftShift(arg1, arg2 interface{}) (int, error) {
+	shift := tmplToInt(arg2)
+	if shift < 0 {
+		return 0, errors.New("can't shift by a negative amount")
+	}
+	return tmplToInt(arg1) << shift, nil
 }
 
-func tmplBitwiseRightShift(arg1, arg2 interface{}) int {
-	return tmplToInt(arg1) >> tmplToInt(arg2)
+func tmplBitwiseRightShift(arg1, arg2 interface{}) (int, error) {
+	shift := tmplToInt(arg2)
+	if shift < 0 {
+		return 0, errors.New("can't shift by a negative amount")
+	}
+	return tmplToInt(arg1) >> shift, nil
 }
 
 // tmplHumanizeThousands comma separates thousands

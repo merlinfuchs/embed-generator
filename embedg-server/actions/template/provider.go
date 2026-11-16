@@ -43,7 +43,7 @@ func (p *InteractionProvider) ProvideData(data map[string]interface{}) {
 	commandData := interactionData.Command()
 	if commandData != nil {
 		data["Command"] = commandData
-		data["Args"] = commandData.Args()
+		data["Args"] = commandData.options()
 	}
 
 	guildID := p.interaction.GuildID()

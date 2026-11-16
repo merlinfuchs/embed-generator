@@ -166,7 +166,12 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 		}
 	} else if interaction.Type() == discord.InteractionTypeApplicationCommand {
 		appCommandInteraction := interaction.(discord.ApplicationCommandInteraction)
-		slashData := appCommandInteraction.SlashCommandInteractionData()
+		// Custom commands are slash commands. A custom bot can still get a user or message command
+		// that was registered outside Embed Generator.
+		slashData, ok := appCommandInteraction.Data.(discord.SlashCommandInteractionData)
+		if !ok {
+			return nil
+		}
 		fullName := slashData.CommandName()
 		if slashData.SubCommandGroupName != nil {
 			fullName += " " + *slashData.SubCommandGroupName
