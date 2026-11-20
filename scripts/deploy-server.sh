@@ -6,7 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 DEPLOY_HOST="${DEPLOY_HOST:-root@embedg-main}"
-REMOTE_BIN="${REMOTE_BIN:-/root/embedg-server}"
+REMOTE_BIN="${REMOTE_BIN:-/opt/embedg/embedg-server}"
 
 out="$(mktemp -t embedg-server)"
 trap 'rm -f "$out"' EXIT
