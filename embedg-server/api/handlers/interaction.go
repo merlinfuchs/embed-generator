@@ -48,7 +48,7 @@ func (r *InteractionResponder) Wait(c *fiber.Ctx) error {
 	select {
 	case resp := <-r.ch:
 		r.expire()
-		return c.JSON(resp)
+		return send(c, resp)
 	case <-c.Context().Done():
 		status = fiber.StatusNoContent
 	case <-time.After(3 * time.Second):
@@ -58,10 +58,24 @@ func (r *InteractionResponder) Wait(c *fiber.Ctx) error {
 	// A response that came in while giving up was already reported as sent.
 	select {
 	case resp := <-r.ch:
-		return c.JSON(resp)
+		return send(c, resp)
 	default:
 		return c.SendStatus(status)
 	}
+}
+
+// send answers with JSON, or with multipart form data when the response carries files, which
+// JSON can't hold.
+func send(c *fiber.Ctx, resp *discord.InteractionResponse) error {
+	body, err := resp.ToBody()
+	if err != nil {
+		return err
+	}
+	if mp, ok := body.(*discord.MultipartBuffer); ok {
+		c.Set(fiber.HeaderContentType, mp.ContentType)
+		return c.Send(mp.Buffer.Bytes())
+	}
+	return c.JSON(body)
 }
 
 func (r *InteractionResponder) expire() {

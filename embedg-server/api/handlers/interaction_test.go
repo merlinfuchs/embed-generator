@@ -3,7 +3,11 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"io"
+	"mime"
+	"mime/multipart"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/disgoorg/disgo/discord"
@@ -36,5 +40,49 @@ func TestInteractionResponderAnswersTheRequest(t *testing.T) {
 	}
 	if !errors.Is(second, discord.ErrInteractionAlreadyReplied) {
 		t.Fatalf("want a second response rejected, got %v", second)
+	}
+}
+
+func TestInteractionResponderSendsFiles(t *testing.T) {
+	app := fiber.New()
+	app.Post("/", func(c *fiber.Ctx) error {
+		r := NewInteractionResponder()
+		if err := r.Respond(discord.InteractionResponseTypeCreateMessage, discord.MessageCreate{
+			Content: "hi",
+			Files:   []*discord.File{{Name: "message.json", Reader: strings.NewReader(`{"a":1}`)}},
+			Flags:   discord.MessageFlagEphemeral,
+		}); err != nil {
+			t.Fatal(err)
+		}
+		return r.Wait(c)
+	})
+
+	resp, err := app.Test(httptest.NewRequest("POST", "/", nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mediaType, params, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+	if err != nil || mediaType != "multipart/form-data" {
+		t.Fatalf("want multipart, got %q", resp.Header.Get("Content-Type"))
+	}
+	parts := map[string]string{}
+	mr := multipart.NewReader(resp.Body, params["boundary"])
+	for {
+		p, err := mr.NextPart()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		b, _ := io.ReadAll(p)
+		parts[p.FormName()] = string(b)
+	}
+	if parts["files[0]"] != `{"a":1}` {
+		t.Fatalf("want the file, got %q", parts["files[0]"])
+	}
+	if !strings.Contains(parts["payload_json"], `"flags":64`) {
+		t.Fatalf("want the message in the payload, got %q", parts["payload_json"])
 	}
 }
