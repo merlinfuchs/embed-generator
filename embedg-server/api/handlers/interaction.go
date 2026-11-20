@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -69,7 +70,7 @@ func (r *InteractionResponder) Wait(c *fiber.Ctx) error {
 func send(c *fiber.Ctx, resp *discord.InteractionResponse) error {
 	body, err := resp.ToBody()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to encode interaction response: %w", err)
 	}
 	if mp, ok := body.(*discord.MultipartBuffer); ok {
 		c.Set(fiber.HeaderContentType, mp.ContentType)

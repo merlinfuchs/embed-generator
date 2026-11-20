@@ -48,9 +48,8 @@ func TestInteractionResponderSendsFiles(t *testing.T) {
 	app.Post("/", func(c *fiber.Ctx) error {
 		r := NewInteractionResponder()
 		if err := r.Respond(discord.InteractionResponseTypeCreateMessage, discord.MessageCreate{
-			Content: "hi",
-			Files:   []*discord.File{{Name: "message.json", Reader: strings.NewReader(`{"a":1}`)}},
-			Flags:   discord.MessageFlagEphemeral,
+			Files: []*discord.File{{Name: "message.json", Reader: strings.NewReader(`{"a":1}`)}},
+			Flags: discord.MessageFlagEphemeral,
 		}); err != nil {
 			t.Fatal(err)
 		}
@@ -66,23 +65,25 @@ func TestInteractionResponderSendsFiles(t *testing.T) {
 	if err != nil || mediaType != "multipart/form-data" {
 		t.Fatalf("want multipart, got %q", resp.Header.Get("Content-Type"))
 	}
-	parts := map[string]string{}
-	mr := multipart.NewReader(resp.Body, params["boundary"])
-	for {
-		p, err := mr.NextPart()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			t.Fatal(err)
-		}
-		b, _ := io.ReadAll(p)
-		parts[p.FormName()] = string(b)
+	form, err := multipart.NewReader(resp.Body, params["boundary"]).ReadForm(1 << 20)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if parts["files[0]"] != `{"a":1}` {
-		t.Fatalf("want the file, got %q", parts["files[0]"])
+	if len(form.File["files[0]"]) != 1 {
+		t.Fatalf("want one file, got %v", form.File)
 	}
-	if !strings.Contains(parts["payload_json"], `"flags":64`) {
-		t.Fatalf("want the message in the payload, got %q", parts["payload_json"])
+	f, err := form.File["files[0]"][0].Open()
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, err := io.ReadAll(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(file) != `{"a":1}` {
+		t.Fatalf("want the file, got %q", file)
+	}
+	if payload := form.Value["payload_json"]; len(payload) != 1 || !strings.Contains(payload[0], `"flags":64`) {
+		t.Fatalf("want the message in the payload, got %q", payload)
 	}
 }
