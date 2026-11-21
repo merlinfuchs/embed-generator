@@ -14,6 +14,7 @@ import SelectDropdown from "./SelectDropdown";
 import Tooltip from "./Tooltip";
 import { useToasts } from "../util/toasts";
 import { isThreadOnlyChannel } from "../discord/util";
+import { useListKeyboardNav } from "../util/listKeyboardNav";
 import type { GuildChannelWire } from "../api/wire";
 
 type Sender = "webhook" | "bot";
@@ -237,9 +238,22 @@ export function ChannelSelect({
     [channels, channelId],
   );
 
+  const { onKeyDown, rowProps } = useListKeyboardNav({
+    open,
+    count: filteredChannels.length,
+    isDisabled: (i) => !filteredChannels[i].canSelect,
+    onPick: (i) => selectChannel(filteredChannels[i].id),
+    onOpen: () => setOpen(true),
+    onClose: () => setOpen(false),
+    resetKey: query,
+  });
+
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
-      <div className="px-3 h-10 flex items-center rounded-lg bg-ink-900 relative select-none">
+      <div
+        className="px-3 h-10 flex items-center rounded-lg bg-ink-900 relative select-none"
+        onKeyDown={onKeyDown}
+      >
         {/* Not a button itself: it holds the filter input, which may not be nested inside one. */}
         <div className="flex-auto">
           <input
@@ -278,20 +292,21 @@ export function ChannelSelect({
         {open && (
           <SelectDropdown>
             {filteredChannels.length ? (
-              filteredChannels.map((c) => {
+              filteredChannels.map((c, i) => {
                 const reason = c.canSelect ? null : missingAccessReason(c, ctx);
                 return (
                   <button
                     type="button"
                     key={c.id}
                     className={clsx(
-                      "py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg pr-3",
+                      "py-2 flex space-x-2 items-center hover:bg-ink-700 data-[active]:bg-ink-700 rounded-lg pr-3",
                       c.level === 0 ? "pl-2" : c.level === 1 ? "pl-4" : "pl-6",
                       c.canSelect ? "cursor-pointer" : "cursor-not-allowed",
                       "w-full text-left",
                     )}
                     // Not disabled: a disabled button swallows the hover the reason tooltip needs.
                     aria-disabled={!c.canSelect}
+                    {...rowProps(i)}
                     onClick={() => c.canSelect && selectChannel(c.id)}
                   >
                     <ChannelIcon type={c.type} />

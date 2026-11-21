@@ -5,6 +5,7 @@ import ClickOutsideHandler from "./ClickOutsideHandler";
 import SelectDropdown from "./SelectDropdown";
 import { useGuildRolesQuery } from "../api/queries";
 import { colorIntToHex } from "../util/discord";
+import { useListKeyboardNav } from "../util/listKeyboardNav";
 
 interface Props {
   guildId: string | null;
@@ -27,9 +28,21 @@ export function RoleSelect({ guildId, roleId, onChange }: Props) {
 
   const [open, setOpen] = useState(false);
 
+  const roleList = roles?.success ? roles.data : [];
+  const { onKeyDown, rowProps } = useListKeyboardNav({
+    open,
+    count: roleList.length,
+    onPick: (i) => selectRole(roleList[i].id),
+    onOpen: () => setOpen(true),
+    onClose: () => setOpen(false),
+  });
+
   return (
     <ClickOutsideHandler onClickOutside={() => setOpen(false)}>
-      <div className="px-3 h-10 flex items-center rounded-lg bg-ink-900 relative select-none">
+      <div
+        className="px-3 h-10 flex items-center rounded-lg bg-ink-900 relative select-none"
+        onKeyDown={onKeyDown}
+      >
         <button
           type="button"
           onClick={() => setOpen((prev) => !prev)}
@@ -57,13 +70,14 @@ export function RoleSelect({ guildId, roleId, onChange }: Props) {
         </button>
         {open && (
           <SelectDropdown>
-            {roles?.success && roles.data.length ? (
-              roles.data.map((r) => (
+            {roleList.length ? (
+              roleList.map((r, i) => (
                 <button
                   type="button"
                   key={r.id}
-                  className="py-2 flex space-x-2 items-center hover:bg-ink-700 rounded-lg cursor-pointer px-3 w-full text-left"
+                  className="py-2 flex space-x-2 items-center hover:bg-ink-700 data-[active]:bg-ink-700 rounded-lg cursor-pointer px-3 w-full text-left"
                   onClick={() => selectRole(r.id)}
+                  {...rowProps(i)}
                 >
                   <div
                     className="h-4 w-4 rounded-full"
