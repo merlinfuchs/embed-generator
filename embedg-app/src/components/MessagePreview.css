@@ -1358,74 +1358,74 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   color: #b9bbbe;
 }
 
-.ansi-bold {
+.ansi-1 {
   font-weight: 700;
 }
 
-.ansi-underline {
+.ansi-4 {
   text-decoration: underline;
 }
 
-.ansi-fg-30 {
+.ansi-30 {
   color: #4f545c;
 }
 
-.ansi-fg-31 {
+.ansi-31 {
   color: #dc322f;
 }
 
-.ansi-fg-32 {
+.ansi-32 {
   color: #859900;
 }
 
-.ansi-fg-33 {
+.ansi-33 {
   color: #b58900;
 }
 
-.ansi-fg-34 {
+.ansi-34 {
   color: #268bd2;
 }
 
-.ansi-fg-35 {
+.ansi-35 {
   color: #d33682;
 }
 
-.ansi-fg-36 {
+.ansi-36 {
   color: #2aa198;
 }
 
-.ansi-fg-37 {
+.ansi-37 {
   color: #ffffff;
 }
 
-.ansi-bg-40 {
+.ansi-40 {
   background-color: #002b36;
 }
 
-.ansi-bg-41 {
+.ansi-41 {
   background-color: #cb4b16;
 }
 
-.ansi-bg-42 {
+.ansi-42 {
   background-color: #586e75;
 }
 
-.ansi-bg-43 {
+.ansi-43 {
   background-color: #657b83;
 }
 
-.ansi-bg-44 {
+.ansi-44 {
   background-color: #839496;
 }
 
-.ansi-bg-45 {
+.ansi-45 {
   background-color: #6c71c4;
 }
 
-.ansi-bg-46 {
+.ansi-46 {
   background-color: #93a1a1;
 }
 
-.ansi-bg-47 {
+.ansi-47 {
   background-color: #fdf6e3;
 }

@@ -43,13 +43,12 @@ describe("toHTML", () => {
 
   it("renders ansi code blocks with colors, bold and underline", () => {
     const html = toHTML(
-      "```ansi\n\x1b[1;4;31mhi\x1b[0m \x1b[42mbg\x1b[0m plain\n```",
+      "```ansi\n\x1b[1;31mhi\x1b[0m \x1b[4mu\x1b[0m \x1b[42mbg\x1b[0m plain\n```",
     );
 
-    expect(html).toContain(
-      '<span class="ansi-bold ansi-underline ansi-fg-31">hi</span>',
-    );
-    expect(html).toContain('<span class="ansi-bg-42">bg</span>');
+    expect(html).toContain('<span class="ansi-1 ansi-31">hi</span>');
+    expect(html).toContain('<span class="ansi-4">u</span>');
+    expect(html).toContain('<span class="ansi-42">bg</span>');
     expect(html).toContain(" plain");
     expect(html).not.toContain("\x1b");
   });

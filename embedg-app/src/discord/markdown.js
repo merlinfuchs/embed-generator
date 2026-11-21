@@ -1,6 +1,7 @@
 import markdown from "simple-markdown";
 import highlight from "highlight.js/lib/common";
 import { formatDistanceToNow } from "date-fns";
+import { parseANSI } from "../util/ansi";
 
 // https://github.com/ItzDerock/discord-markdown-parser
 // https://github.com/brussell98/discord-markdown
@@ -35,57 +36,17 @@ function htmlTag(tagName, content, attributes, isClosed = true, state = {}) {
 }
 markdown.htmlTag = htmlTag;
 
-// The escape codes Discord renders inside ```ansi code blocks: 1 bold,
-// 4 underline, 30-37 text color and 40-47 background color.
-// biome-ignore lint/suspicious/noControlCharactersInRegex: matches the escape character on purpose
-const ANSI_SGR_RE = /\x1b\[([\d;]*)m/g;
-
+// One span per styled run of an ```ansi block, with a class per SGR code.
 function ansiToHTML(content, state) {
-  let style = {};
-  let html = "";
-  let last = 0;
-
-  function addText(text) {
-    if (!text) return;
-
-    const escaped = markdown.sanitizeText(text);
-    const classes = [];
-    if (style.bold) classes.push("ansi-bold");
-    if (style.underline) classes.push("ansi-underline");
-    if (style.fg) classes.push(`ansi-fg-${style.fg}`);
-    if (style.bg) classes.push(`ansi-bg-${style.bg}`);
-
-    html += classes.length
-      ? htmlTag("span", escaped, { class: classes.join(" ") }, state)
-      : escaped;
-  }
-
-  for (const match of content.matchAll(ANSI_SGR_RE)) {
-    addText(content.slice(last, match.index));
-    last = match.index + match[0].length;
-
-    const next = { ...style };
-    for (const param of match[1].split(";")) {
-      const code = Number(param || 0);
-      if (code === 0) {
-        next.bold = false;
-        next.underline = false;
-        next.fg = undefined;
-        next.bg = undefined;
-      } else if (code === 1) next.bold = true;
-      else if (code === 4) next.underline = true;
-      else if (code === 22) next.bold = false;
-      else if (code === 24) next.underline = false;
-      else if (code === 39) next.fg = undefined;
-      else if (code === 49) next.bg = undefined;
-      else if (code >= 30 && code <= 37) next.fg = code;
-      else if (code >= 40 && code <= 47) next.bg = code;
-    }
-    style = next;
-  }
-  addText(content.slice(last));
-
-  return html;
+  return parseANSI(content)
+    .map(({ text, style }) => {
+      const escaped = markdown.sanitizeText(text);
+      const codes = [].concat(style.st ?? [], style.fg ?? [], style.bg ?? []);
+      if (!codes.length) return escaped;
+      const classes = codes.map((code) => `ansi-${code}`).join(" ");
+      return htmlTag("span", escaped, { class: classes }, state);
+    })
+    .join("");
 }
 
 const titleRules = {
