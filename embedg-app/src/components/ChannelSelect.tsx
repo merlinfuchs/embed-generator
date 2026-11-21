@@ -138,7 +138,7 @@ export function ChannelSelect({
 
   const [open, innerSetOpen] = useState(false);
   const [query, setQuery] = useState("");
-  // Forum and media channels whose posts are shown. Collapsed by default, as they can be hundreds.
+  // Channels whose threads, or forum posts, are shown. Collapsed by default, as they can be hundreds.
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   function toggleExpanded(id: string) {
@@ -242,14 +242,17 @@ export function ChannelSelect({
     return res;
   }, [data, ctx]);
 
-  // How many posts each forum and media channel has, to show on the toggle.
-  const postCounts = useMemo(() => {
+  // How many threads each channel has, or posts for forum and media channels, to show on the toggle.
+  const threadCounts = useMemo(() => {
     const counts = new Map<string, number>();
-    const threadOnlyIds = new Set(
-      channels.filter((c) => isThreadOnlyChannel(c.type)).map((c) => c.id),
-    );
+    // A thread whose channel isn't listed has nothing to collapse into.
+    const ids = new Set(channels.map((c) => c.id));
     for (const c of channels) {
-      if (c.parent_id && threadOnlyIds.has(c.parent_id)) {
+      if (
+        c.parent_id &&
+        ids.has(c.parent_id) &&
+        threadChannelTypes.has(c.type)
+      ) {
         counts.set(c.parent_id, (counts.get(c.parent_id) ?? 0) + 1);
       }
     }
@@ -261,7 +264,8 @@ export function ChannelSelect({
       return channels.filter(
         (c) =>
           !c.parent_id ||
-          !postCounts.has(c.parent_id) ||
+          !threadChannelTypes.has(c.type) ||
+          !threadCounts.has(c.parent_id) ||
           expanded.has(c.parent_id),
       );
     }
@@ -273,7 +277,7 @@ export function ChannelSelect({
     return channels.filter(
       (c) => c.id === q || c.name.toLowerCase().includes(q),
     );
-  }, [channels, query, postCounts, expanded]);
+  }, [channels, query, threadCounts, expanded]);
 
   const channel = useMemo(
     () => channels.find((c) => c.id === channelId),
@@ -323,8 +327,12 @@ export function ChannelSelect({
             {filteredChannels.length ? (
               filteredChannels.map((c) => {
                 const reason = c.canSelect ? null : missingAccessReason(c, ctx);
-                const postCount = postCounts.get(c.id) ?? 0;
+                const threadCount = threadCounts.get(c.id) ?? 0;
                 const isExpanded = expanded.has(c.id);
+                // Discord calls the threads of forum and media channels posts.
+                const threadWord = isThreadOnlyChannel(c.type)
+                  ? "posts"
+                  : "threads";
                 return (
                   <button
                     type="button"
@@ -340,7 +348,7 @@ export function ChannelSelect({
                     onClick={() => {
                       if (c.canSelect) selectChannel(c.id);
                       // A forum the bot can't post in only works as a folder for its posts.
-                      else if (postCount) toggleExpanded(c.id);
+                      else if (threadCount) toggleExpanded(c.id);
                     }}
                   >
                     <ChannelIcon type={c.type} />
@@ -352,11 +360,11 @@ export function ChannelSelect({
                     >
                       {c.name}
                     </div>
-                    {postCount > 0 && (
+                    {threadCount > 0 && (
                       // Not a button: it can't be nested in the row's button.
                       <div
                         role="button"
-                        aria-label={isExpanded ? "Hide posts" : "Show posts"}
+                        aria-label={`${isExpanded ? "Hide" : "Show"} ${threadWord}`}
                         aria-expanded={isExpanded}
                         className="ml-auto flex-none flex items-center space-x-1 text-mist-400 hover:text-mist-100 cursor-pointer"
                         onClick={(e) => {
@@ -364,7 +372,7 @@ export function ChannelSelect({
                           toggleExpanded(c.id);
                         }}
                       >
-                        <span className="text-xs">{postCount}</span>
+                        <span className="text-xs">{threadCount}</span>
                         {isExpanded ? (
                           <ChevronDownIcon className="h-4 w-4" />
                         ) : (
@@ -377,7 +385,7 @@ export function ChannelSelect({
                       <div
                         className={clsx(
                           "flex-none cursor-pointer",
-                          !postCount && "ml-auto",
+                          !threadCount && "ml-auto",
                         )}
                         onClick={(e) => {
                           e.stopPropagation();
