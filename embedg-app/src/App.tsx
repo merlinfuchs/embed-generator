@@ -35,6 +35,10 @@ const LazyWebhookInfoToolView = lazyView(
 const LazyEmbedLinksToolView = lazyView(
   () => import("./views/tools/embedLinks"),
 );
+const LazyTimestampsToolView = lazyView(
+  () => import("./views/tools/timestamps"),
+);
+const LazySnowflakeToolView = lazyView(() => import("./views/tools/snowflake"));
 
 function SuspendedView({ children }: { children: ReactNode }) {
   return <Suspense>{children}</Suspense>;
@@ -148,6 +152,22 @@ function App() {
             element={
               <SuspendedView>
                 <LazyEmbedLinksToolView />
+              </SuspendedView>
+            }
+          />
+          <Route
+            path="/tools/timestamps"
+            element={
+              <SuspendedView>
+                <LazyTimestampsToolView />
+              </SuspendedView>
+            }
+          />
+          <Route
+            path="/tools/snowflake"
+            element={
+              <SuspendedView>
+                <LazySnowflakeToolView />
               </SuspendedView>
             }
           />

@@ -22,6 +22,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"github.com/merlinfuchs/embed-generator/embedg-server/guildstate"
 	"github.com/merlinfuchs/embed-generator/embedg-server/manager/custom_bot"
+	"github.com/merlinfuchs/embed-generator/embedg-server/manager/phishing"
 	"github.com/merlinfuchs/embed-generator/embedg-server/manager/premium"
 	scheduled_messages "github.com/merlinfuchs/embed-generator/embedg-server/manager/scheduled_message"
 	"github.com/merlinfuchs/embed-generator/embedg-server/manager/webhook"
@@ -189,6 +190,7 @@ type Env struct {
 	EntitlementStore      store.EntitlementStore
 	SessionManager        *session.SessionManager
 	PremiumManager        *premium.PremiumManager
+	PhishingChecker       *phishing.Checker
 	WebhookManager        *webhook.WebhookManager
 	AccessManager         *access.AccessManager
 	// ScheduledMessageManager sends scheduled messages, also to check one before it's saved.

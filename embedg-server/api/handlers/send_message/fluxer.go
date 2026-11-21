@@ -224,6 +224,9 @@ func checkFluxerMessage(data *actions.MessageWithActions, req wire.MessageSendTo
 	if data.ComponentsV2Enabled() || len(data.Components) > 0 {
 		return handlers.BadRequest("invalid_components", "Fluxer doesn't support components yet. Remove them and turn off Components V2 to send the message to Fluxer.")
 	}
+	if data.Poll != nil {
+		return handlers.BadRequest("invalid_poll", "Fluxer doesn't support polls yet. Remove the poll to send the message to Fluxer.")
+	}
 	if req.ThreadID.Valid {
 		return handlers.BadRequest("invalid_thread", "Fluxer doesn't have threads.")
 	}

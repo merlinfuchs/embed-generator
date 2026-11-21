@@ -1,8 +1,9 @@
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
 import type { MessageEmbed } from "../discord/schema";
 // @ts-expect-error untyped
 import { toHTML } from "../discord/markdown";
 import { colorIntToHex } from "../util/discord";
+import { usePreviewUrl } from "../state/attachments";
 import { safeHref } from "../util/url";
 
 /** A classic embed, the body of a message that isn't using Components V2. */
@@ -11,6 +12,10 @@ export default function MessagePreviewEmbed({
 }: {
   embed: MessageEmbed;
 }) {
+  const authorIcon = usePreviewUrl(embed.author?.icon_url);
+  const image = usePreviewUrl(embed.image?.url);
+  const thumbnail = usePreviewUrl(embed.thumbnail?.url);
+  const footerIcon = usePreviewUrl(embed.footer?.icon_url);
   let inlineFieldIndex = 0;
   const hexColor = embed.color ? colorIntToHex(embed.color) : "#1f2225";
   const providerUrl = safeHref(embed.provider?.url);
@@ -22,8 +27,15 @@ export default function MessagePreviewEmbed({
     : embed.timestamp
       ? parseISO(embed.timestamp)
       : undefined;
+  // Same as Discord's short date: the viewer's locale with a 4-digit year.
   const timestamp =
-    date && !Number.isNaN(date.getTime()) ? format(date, "dd/MM/yyyy") : "";
+    date && !Number.isNaN(date.getTime())
+      ? date.toLocaleDateString([], {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        })
+      : "";
   return (
     <div key={embed.id} className="discord-embed overflow-hidden">
       <div
@@ -44,9 +56,9 @@ export default function MessagePreviewEmbed({
             )}
             {!!embed.author?.name && (
               <div className="discord-embed-author overflow-hidden break-all">
-                {!!embed.author.icon_url && (
+                {!!authorIcon && (
                   <img
-                    src={embed.author.icon_url}
+                    src={authorIcon}
                     alt=""
                     className="discord-author-image"
                   />
@@ -118,27 +130,19 @@ export default function MessagePreviewEmbed({
                 ))}
               </div>
             )}
-            {!!embed.image && (
+            {!!image && (
               <div className="discord-embed-media">
-                <img
-                  src={embed.image.url}
-                  alt=""
-                  className="discord-embed-image"
-                />
+                <img src={image} alt="" className="discord-embed-image" />
               </div>
             )}
-            {!!embed.thumbnail && (
-              <img
-                src={embed.thumbnail.url}
-                alt=""
-                className="discord-embed-thumbnail"
-              />
+            {!!thumbnail && (
+              <img src={thumbnail} alt="" className="discord-embed-thumbnail" />
             )}
             {(embed.footer?.text || timestamp) && (
               <div className="discord-embed-footer overflow-hidden break-all">
-                {embed.footer?.icon_url && (
+                {footerIcon && (
                   <img
-                    src={embed.footer?.icon_url}
+                    src={footerIcon}
                     alt=""
                     className="discord-footer-image"
                   />

@@ -33,6 +33,8 @@ Each select menu can have up to 25 options. These options are what your users wi
 
 Additionally you can add a number of [Actions](#actions). These are used to respond to interactions or assign roles to the user when they select the option.
 
+Discord keeps showing the option a user picked until the message changes. While it's shown, picking that option again does nothing. Turn on "Clear after use" to show the placeholder again after each pick, so the same option can be picked twice in a row. Actions that edit the message clear it anyway.
+
 ![Interactive Select Menus](./interactive-components-select.webp)
 
 ## Actions

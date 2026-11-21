@@ -61,6 +61,7 @@ export type MessageNode = BaseNode & {
   thread_name?: string;
   flags?: number;
   allowed_mentions?: Message["allowed_mentions"];
+  poll?: Message["poll"];
   embedIds: NodeId[];
   componentIds: NodeId[];
 };
@@ -108,6 +109,8 @@ export type SelectMenuNode = BaseNode & {
   type: "selectMenu";
   placeholder?: string;
   disabled?: boolean;
+  /** Shows the placeholder again after each pick. */
+  reset_selection?: boolean;
   optionIds: NodeId[];
 };
 
@@ -726,6 +729,14 @@ export function selectAllowedMentions(state: DocumentData) {
 }
 
 export const useAllowedMentions = () => useDocument(selectAllowedMentions);
+
+/** Just the poll: the root node changes with every keystroke in the content. */
+export function selectPoll(state: DocumentData) {
+  const root = state.nodes[state.rootId];
+  return root?.type === "message" ? root.poll : undefined;
+}
+
+export const usePoll = () => useDocument(selectPoll);
 
 /** Whether the message has components only the bot can handle, which webhooks can't send. */
 export const useHasInteractiveComponents = () =>

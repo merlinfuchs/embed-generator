@@ -19,6 +19,7 @@ type RootConfig struct {
 	Database  DatabaseConfig  `toml:"database"`
 	OpenAI    OpenAIConfig    `toml:"openai"`
 	Assistant AssistantConfig `toml:"assistant"`
+	Phishing  PhishingConfig  `toml:"phishing"`
 }
 
 func (cfg *RootConfig) Validate() error {
@@ -144,6 +145,15 @@ func (c PremiumConfig) validatePlans() error {
 		}
 	}
 	return nil
+}
+
+type PhishingConfig struct {
+	// DomainListURL serves a JSON array of phishing domains that embed links can't lead to. Empty
+	// turns the check off.
+	DomainListURL string `toml:"domain_list_url"`
+	// ShortenerDomains are link shorteners new embed links can't use, as they hide where a link
+	// goes from the phishing check.
+	ShortenerDomains []string `toml:"shortener_domains"`
 }
 
 type LinksConfig struct {

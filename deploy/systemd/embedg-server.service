@@ -8,8 +8,10 @@ StartLimitBurst=3
 
 [Service]
 Type=exec
-ExecStart=/root/embedg-server server
-WorkingDirectory=/root
+ExecStart=/opt/embedg/embedg-server server
+WorkingDirectory=/opt/embedg
+User=embedg
+Group=embedg
 
 Restart=always
 RestartSec=30s
@@ -21,10 +23,25 @@ LimitNOFILE=65535
 
 NoNewPrivileges=true
 PrivateTmp=true
-ProtectSystem=full
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectProc=invisible
 ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
 ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictNamespaces=true
+RestrictRealtime=true
 RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+CapabilityBoundingSet=
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
 
 [Install]
 WantedBy=multi-user.target

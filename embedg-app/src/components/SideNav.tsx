@@ -15,6 +15,7 @@ import {
   CalendarDaysIcon,
   WrenchScrewdriverIcon,
   QuestionMarkCircleIcon,
+  BookOpenIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import logo from "../assets/logo.svg";
@@ -174,24 +175,18 @@ export default function SideNav() {
             </div>
           </div>
           <div className="flex flex-col items-center py-5 space-y-7">
-            <a
+            <ExternalNavigationLink
+              href="/docs"
+              label="Documentation"
+              icon={BookOpenIcon}
+              collapsed={collapsed}
+            />
+            <ExternalNavigationLink
               href="/discord"
-              target="_blank"
-              rel="noopener"
-              aria-label="Help & Support"
-              title="Help & Support"
-              className={clsx(
-                "flex w-full items-center group",
-                collapsed ? "px-4" : "px-5",
-              )}
-            >
-              <QuestionMarkCircleIcon className="h-8 w-8 flex-none text-mist-400 group-hover:text-mist-100" />
-              {!collapsed && (
-                <div className="ml-5 text-mist-400 group-hover:text-mist-100">
-                  Help & Support
-                </div>
-              )}
-            </a>
+              label="Help & Support"
+              icon={QuestionMarkCircleIcon}
+              collapsed={collapsed}
+            />
             {user && user.success && (
               <LogoutLink
                 className={clsx(
@@ -291,6 +286,39 @@ function NavigationButton({
         </>
       )}
     </NavLink>
+  );
+}
+
+function ExternalNavigationLink({
+  href,
+  label,
+  icon: Icon,
+  collapsed,
+}: {
+  href: string;
+  label: string;
+  icon: any;
+  collapsed: boolean;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener"
+      aria-label={label}
+      title={label}
+      className={clsx(
+        "flex w-full items-center group",
+        collapsed ? "px-4" : "px-5",
+      )}
+    >
+      <Icon className="h-8 w-8 flex-none text-mist-400 group-hover:text-mist-100" />
+      {!collapsed && (
+        <div className="ml-5 text-mist-400 group-hover:text-mist-100">
+          {label}
+        </div>
+      )}
+    </a>
   );
 }
 

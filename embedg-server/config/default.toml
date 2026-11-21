@@ -35,3 +35,24 @@ model = "gpt-6-luna"
 reasoning_effort = "medium"
 max_output_tokens = 16000
 max_repairs = 2
+
+[phishing]
+domain_list_url = "https://phish.sinking.yachts/v2/all"
+shortener_domains = [
+    "bit.ly",
+    "cutt.ly",
+    "goo.su",
+    "is.gd",
+    "ow.ly",
+    "rb.gy",
+    "rebrand.ly",
+    "s.id",
+    "shorturl.at",
+    "shorturl.win",
+    "sl1nk.com",
+    "t.co",
+    "t.ly",
+    "tiny.cc",
+    "tinyurl.com",
+    "v.gd",
+]

@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -32,6 +33,8 @@ func (c *Client) CreateEmbedLink(ctx context.Context, embedLink model.EmbedLink)
 		ComponentEmbed: embedLink.ComponentEmbed,
 		ExpiresAt:      pgtype.Timestamp{Time: embedLink.ExpiresAt.Time, Valid: embedLink.ExpiresAt.Valid},
 		CreatedAt:      pgtype.Timestamp{Time: embedLink.CreatedAt, Valid: true},
+		UserID:         pgtype.Text{String: embedLink.UserID.ID.String(), Valid: embedLink.UserID.Valid},
+		Attribution:    embedLink.Attribution,
 	})
 	if err != nil {
 		return nil, err
@@ -48,6 +51,14 @@ func (c *Client) GetEmbedLink(ctx context.Context, id string) (*model.EmbedLink,
 		return nil, err
 	}
 	return rowToEmbedLink(row), nil
+}
+
+func (c *Client) FlagEmbedLink(ctx context.Context, id string, flaggedAt time.Time, reason string) error {
+	return c.Q.FlagEmbedLink(ctx, pgmodel.FlagEmbedLinkParams{
+		ID:            id,
+		FlaggedAt:     pgtype.Timestamp{Time: flaggedAt, Valid: true},
+		FlaggedReason: pgtype.Text{String: reason, Valid: true},
+	})
 }
 
 func rowToEmbedLink(row pgmodel.EmbedLink) *model.EmbedLink {
@@ -68,5 +79,8 @@ func rowToEmbedLink(row pgmodel.EmbedLink) *model.EmbedLink {
 		ComponentEmbed: row.ComponentEmbed,
 		ExpiresAt:      null.NewTime(row.ExpiresAt.Time, row.ExpiresAt.Valid),
 		CreatedAt:      row.CreatedAt.Time,
+		UserID:         nullID(row.UserID),
+		Attribution:    row.Attribution,
+		FlaggedAt:      null.NewTime(row.FlaggedAt.Time, row.FlaggedAt.Valid),
 	}
 }

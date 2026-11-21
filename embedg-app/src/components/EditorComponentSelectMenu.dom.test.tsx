@@ -164,3 +164,17 @@ test("duplicating an option copies it without sharing the action set", async () 
   expect(options.map((o) => o.label)).toEqual(["One", "One", "Two"]);
   expect(options[0].action_set_id).not.toBe(options[1].action_set_id);
 });
+
+test("clearing after use is off until turned on", async () => {
+  renderEditor(<EditorComponents defaultCollapsed={false} />);
+  const toggle = screen.getByRole("checkbox", {
+    name: "Show the placeholder again after each pick",
+  });
+  expect(firstSelectMenu()).toMatchObject({ reset_selection: undefined });
+
+  await editorUser().click(toggle);
+  expect(firstSelectMenu()).toMatchObject({ reset_selection: true });
+
+  await editorUser().click(toggle);
+  expect(firstSelectMenu()).toMatchObject({ reset_selection: undefined });
+});

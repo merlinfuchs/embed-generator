@@ -12,7 +12,11 @@
  */
 import { z } from "zod";
 import { getUniqueId } from "../util";
-import { COMPONENTS_V2_FLAG, RESPONSE_MESSAGE_OMIT } from "./schema";
+import {
+  COMPONENTS_V2_FLAG,
+  POLL_DEFAULT_DURATION,
+  RESPONSE_MESSAGE_OMIT,
+} from "./schema";
 
 export const uniqueIdSchema = z.preprocess(
   (d) => {
@@ -311,6 +315,7 @@ export const componentSelectMenuSchema = z.object({
   type: z.literal(3),
   placeholder: z.preprocess((d) => d ?? undefined, z.optional(z.string())),
   disabled: z.preprocess((d) => d ?? undefined, z.optional(z.boolean())),
+  reset_selection: z.preprocess((d) => d ?? undefined, z.optional(z.boolean())),
   options: z.preprocess(
     (d) => d ?? undefined,
     z.array(componentSelectMenuOptionSchema).default([]),
@@ -489,6 +494,46 @@ export const messageAllowedMentionsSchema = z.preprocess(
 
 export const messageThreadName = z.optional(z.string());
 
+export const pollAnswerSchema = z.object({
+  poll_media: z.preprocess(
+    (d) => d ?? undefined,
+    z
+      .object({
+        text: z.preprocess((d) => d ?? undefined, z.string().default("")),
+        emoji: z.preprocess((d) => d ?? undefined, z.optional(emojiSchema)),
+      })
+      .default({ text: "" }),
+  ),
+});
+
+export const pollSchema = z.preprocess(
+  (d) => d ?? undefined,
+  z.optional(
+    z.object({
+      question: z.preprocess(
+        (d) => d ?? undefined,
+        z
+          .object({
+            text: z.preprocess((d) => d ?? undefined, z.string().default("")),
+          })
+          .default({ text: "" }),
+      ),
+      answers: z.preprocess(
+        (d) => d ?? undefined,
+        z.array(pollAnswerSchema).default([]),
+      ),
+      duration: z.preprocess(
+        (d) => d ?? undefined,
+        z.number().default(POLL_DEFAULT_DURATION),
+      ),
+      allow_multiselect: z.preprocess(
+        (d) => d ?? undefined,
+        z.boolean().default(false),
+      ),
+    }),
+  ),
+);
+
 const messageFieldsSchema = z.object({
   content: z.preprocess(
     (d) => d ?? undefined,
@@ -503,6 +548,7 @@ const messageFieldsSchema = z.object({
     (d) => d ?? undefined,
     z.array(componentSchema).default([]),
   ),
+  poll: pollSchema,
   thread_name: messageThreadName,
   flags: z.preprocess((d) => d ?? 0, z.number()),
 });

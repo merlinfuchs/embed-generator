@@ -155,7 +155,7 @@ const cases: [string, ReturnType<typeof v2>][] = [
           { type: 10, content: "Between" },
           { type: 14, divider: false, spacing: 2 },
           { type: 10, content: "Below" },
-          { type: 13, file: { url: "https://message.style/notes.txt" } },
+          { type: 13, file: { url: "attachment://notes.txt" } },
         ],
       },
     ]),

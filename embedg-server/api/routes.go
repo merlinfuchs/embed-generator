@@ -30,6 +30,9 @@ import (
 	embedgsite "github.com/merlinfuchs/embed-generator/embedg-site"
 )
 
+// The plan that only removes the attribution line from embed links, see embedg.example.toml.
+const embedLinkAttributionPlanID = "embed_link_attribution"
+
 func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	healthHandler := health.New(env.ShardManager)
 	healthGroup := app.Group("/api/health")
@@ -168,8 +171,8 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	embedLinksHandler := embed_links.New(embed_links.EmbedLinksHandlerConfig{
 		APIPublicURL: config.APIPublicURL,
 		AppPublicURL: config.AppPublicURL,
-	}, env.EmbedLinkStore)
-	app.Post("/api/embed-links", handlers.WithRequestBodyValidated(embedLinksHandler.HandleCreateEmbedLink))
+	}, env.EmbedLinkStore, env.PremiumManager, env.PhishingChecker)
+	app.Post("/api/embed-links", sessionMiddleware.SessionOptional(), handlers.WithRequestBodyValidated(embedLinksHandler.HandleCreateEmbedLink))
 	app.Get("/api/embed-links/:linkID/oembed", embedLinksHandler.HandleRenderEmbedLinkJSON)
 	app.Get("/e/:linkID", embedLinksHandler.HandleRenderEmbedLinkHTML)
 
@@ -187,6 +190,13 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 
 	app.Get("/premium", func(c *fiber.Ctx) error {
 		return c.Redirect(fmt.Sprintf("https://discord.com/application-directory/%s/premium", env.AppContext.ApplicationID()), 302)
+	})
+	app.Get("/premium/embed-links", func(c *fiber.Ctx) error {
+		plan := env.PremiumManager.GetPlanByID(embedLinkAttributionPlanID)
+		if plan == nil || plan.SKUID == "" {
+			return c.Redirect("/premium", 302)
+		}
+		return c.Redirect(fmt.Sprintf("https://discord.com/application-directory/%s/store/%s", env.AppContext.ApplicationID(), plan.SKUID), 302)
 	})
 
 	// Serve static files. Hashed assets are cached long term; index.html points

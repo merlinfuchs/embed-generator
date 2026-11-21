@@ -21,6 +21,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/guildstate"
 	"github.com/merlinfuchs/embed-generator/embedg-server/manager/custom_bot"
 	"github.com/merlinfuchs/embed-generator/embedg-server/manager/guild"
+	"github.com/merlinfuchs/embed-generator/embedg-server/manager/phishing"
 	"github.com/merlinfuchs/embed-generator/embedg-server/manager/premium"
 	scheduled_messages "github.com/merlinfuchs/embed-generator/embedg-server/manager/scheduled_message"
 	"github.com/merlinfuchs/embed-generator/embedg-server/manager/webhook"
@@ -131,6 +132,12 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 	embedg.Client().AddEventListeners(scheduledMessageManager)
 	go scheduledMessageManager.Run(ctx)
 
+	phishingChecker := phishing.New(phishing.Config{
+		DomainListURL:    cfg.Phishing.DomainListURL,
+		ShortenerDomains: cfg.Phishing.ShortenerDomains,
+	})
+	go phishingChecker.Run(ctx)
+
 	if cfg.API.PprofAddr != "" {
 		go servePprof(ctx, cfg.API.PprofAddr)
 	}
@@ -187,6 +194,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		KVEntryStore:            pg,
 		EntitlementStore:        pg,
 		PremiumManager:          premiumManager,
+		PhishingChecker:         phishingChecker,
 		WebhookManager:          webhookManager,
 		AccessManager:           accessManager,
 		ActionParser:            actionParser,

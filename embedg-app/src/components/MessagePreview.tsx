@@ -10,8 +10,12 @@ import { useSendSettingsStore } from "../state/sendSettings";
 import Twemoji from "./Twemoji";
 import { useGuildBrandingQuery } from "../api/queries";
 import { getRelativeUrl } from "../util/url";
-import PreviewComponents, { Markup } from "./MessagePreviewComponents";
+import PreviewComponents, {
+  Markup,
+  PreviewAttachments,
+} from "./MessagePreviewComponents";
 import MessagePreviewEmbed from "./MessagePreviewEmbed";
+import MessagePreviewPoll from "./MessagePreviewPoll";
 
 interface ButtonResponse {
   id: number;
@@ -81,9 +85,13 @@ export default function MessagePreview({ msg, unfurledComponent }: Props) {
                   )}
 
                   <div className="discord-message-compact-indent">
+                    <PreviewAttachments embeds={msg.embeds} />
+
                     {msg.embeds.map((embed) => (
                       <MessagePreviewEmbed key={embed.id} embed={embed} />
                     ))}
+
+                    {msg.poll && <MessagePreviewPoll poll={msg.poll} />}
 
                     <div className="discord-attachments">
                       <PreviewComponents

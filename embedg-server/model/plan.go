@@ -30,6 +30,9 @@ type PlanFeatures struct {
 	// MaxSavedMessageVersions is how many earlier versions are kept of each saved message when it's
 	// overwritten. 0 turns it off.
 	MaxSavedMessageVersions int `toml:"max_saved_message_versions"`
+	// RemoveEmbedLinkAttribution leaves the attribution line out of the embed links the user
+	// creates. Plans with IsPremium do that already, this is for selling it on its own.
+	RemoveEmbedLinkAttribution bool `toml:"remove_embed_link_attribution"`
 }
 
 func (f *PlanFeatures) Merge(b PlanFeatures) {
@@ -67,4 +70,10 @@ func (f *PlanFeatures) Merge(b PlanFeatures) {
 	f.AdvancedActionTypes = f.AdvancedActionTypes || b.AdvancedActionTypes
 	f.IsPremium = f.IsPremium || b.IsPremium
 	f.CustomBot = f.CustomBot || b.CustomBot
+	f.RemoveEmbedLinkAttribution = f.RemoveEmbedLinkAttribution || b.RemoveEmbedLinkAttribution
+}
+
+// EmbedLinkAttribution is whether the embed links the user creates end with the attribution line.
+func (f PlanFeatures) EmbedLinkAttribution() bool {
+	return !f.IsPremium && !f.RemoveEmbedLinkAttribution
 }

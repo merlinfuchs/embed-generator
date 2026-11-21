@@ -29,6 +29,15 @@ export function InteractiveWebhookNotice({
   );
 }
 
+export function FluxerPollNotice({ className }: { className?: string }) {
+  return (
+    <Notice tone="warning" className={className}>
+      Fluxer doesn't support polls yet. Remove the poll to send the message to
+      Fluxer.
+    </Notice>
+  );
+}
+
 export function FluxerComponentsNotice({ className }: { className?: string }) {
   return (
     <Notice tone="warning" className={className}>

@@ -235,6 +235,7 @@ export function fromMessage(message: Message): DocumentData {
           discordId: component.id,
           placeholder: component.placeholder,
           disabled: component.disabled,
+          reset_selection: component.reset_selection,
           optionIds,
         };
         break;
@@ -343,6 +344,7 @@ export function fromMessage(message: Message): DocumentData {
     thread_name: message.thread_name,
     flags: message.flags,
     allowed_mentions: message.allowed_mentions,
+    poll: message.poll,
     embedIds,
     componentIds,
   };
@@ -515,6 +517,7 @@ export function toMessage(state: DocumentData): ConvertedMessage {
           type: 3,
           placeholder: componentNode.placeholder,
           disabled: componentNode.disabled,
+          reset_selection: componentNode.reset_selection,
           options: componentNode.optionIds.map((optionId, i) =>
             selectOption(optionId, `${path}.options.${i}`),
           ),
@@ -612,6 +615,7 @@ export function toMessage(state: DocumentData): ConvertedMessage {
     thread_name: root.thread_name,
     flags: root.flags,
     allowed_mentions: root.allowed_mentions,
+    poll: root.poll,
     embeds: root.embedIds.map((id, i) => embed(id, `embeds.${i}`)),
     components: root.componentIds.map((id, i) =>
       component(id, `components.${i}`),

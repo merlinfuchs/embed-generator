@@ -37,9 +37,14 @@ Features (feature | what it means for the user | free or paid):
 - Custom bot | replies to buttons and custom commands use your bot's name and avatar | paid
 - Custom commands | slash commands for your members that reply with your messages | paid
 - Restore and edit sent messages | fix a typo in a message that's already posted | free
+- Polls | a question with up to 10 answers that members vote on, shown below the embeds | free
 - Import Discohook JSON, backups, and ?data= links | bring existing messages over without rebuilding them | free
 - Fluxer webhooks | send the same messages to Fluxer | free
 - Colored Text Generator | text in red, green, blue, and other colors that Discord shows inside a code block | free
+- Embed Links with a custom component | a link that unfurls in Discord into a layout with markdown, images, and link buttons | free, but the preview ends with a "Link preview from message.style" line unless the logged-in user bought a paid plan or the one-time removal
+- Phishing protection for Embed Links | links can't lead to sites on the phish.sinking.yachts list or through link shorteners like tinyurl.com and bit.ly, and a link whose site is added to the list later shows "Link blocked" in Discord and leads to message.style/blocked-link | free
+- Timestamp Generator | pick a date, time, and timezone and copy a timestamp that shows in each reader's own timezone, including relative times like "in 3 hours" | free
+- Snowflake Decoder | paste any Discord ID to see when it was created, or turn a date into an ID | free
 - /embed, /message, /format, and /image in Discord | build or copy messages without opening the website | free
 
 Plan limits are read from the prod config on 2026-11-02. That file is the source of truth. https://message.style/api/premium/plans serves the paid plans from it, but not the free one. embedg.example.toml is the dev config and doesn't match production.
@@ -51,13 +56,15 @@ Free plan:
 - 5 AI assistant prompts a month.
 - Images up to 1 MB.
 - No custom bot, no custom commands, no sending to other channels, no replies built in the action.
+- Embed Links with a custom component end with a "Link preview from message.style" line. It's left out only for links created while logged in by someone who bought Premium, Ultimate, or the one-time removal, since a plan bought by someone else for a server doesn't count. Links created before the purchase keep the line.
 
 Paid plans:
 - Premium: $4.99 a month per server. 100 saved messages, 5 versions each. 10 actions per component. 25 scheduled messages, all of them can be recurring. 100 AI prompts a month. Custom bot. 25 custom commands. Images up to 8 MB.
 - Ultimate: $9.99 a month per server. Everything in Premium. 500 saved messages, 50 versions each. 15 actions per component. 100 scheduled messages, all of them can be recurring. 250 AI prompts a month. 50 custom commands. Images up to 8 MB.
 - Premium Lifetime €99.99 and Ultimate Lifetime €199.99, paid once. The store showed euros, so check the dollar price before quoting one. You buy one and activate it on a server from /premium in the app. It can't be moved to another server after that.
+- One-time removal of the embed link line: $2.99, paid once. Price decided on 2026-11-14, check the store once the SKU is live. It belongs to your Discord account, not a server, and only removes the "Link preview from message.style" line from Embed Links you create. message.style/premium/embed-links opens its store page in Discord. Its name in the store: [store name].
 - Don't mention plans that aren't for sale.
-- A plan belongs to one server, not to your account.
+- A plan belongs to one server, not to your account. The one-time removal of the embed link line is the exception.
 - Prices are set in Discord's store, not in the config, read from a screenshot of the store on 2026-11-02. The store lists the plans as Premium Server, Ultimate Server, Premium Server Lifetime, and Ultimate Server Lifetime.
 - Payment runs through Discord's app subscriptions. message.style/premium opens the Embed Generator store page in Discord.
 Trial, refunds, cancellation:
@@ -82,7 +89,7 @@ Exact names of commands, settings, and pages users see:
 - /help, /invite, /website
 - Message context menu: Restore Message, Dump Message. User context menu: Avatar Url, Format Mention.
 - Send modes: Webhook and Channel.
-- App pages: Message Editor, Saved Messages, Scheduled Messages, Commands, Utility Tools (Colored Text Generator, Embed Links, Webhook Info), Premium, Settings. The editor is at message.style/app/editor.
+- App pages: Message Editor, Saved Messages, Scheduled Messages, Commands, Utility Tools (Colored Text Generator, Timestamp Generator, Embed Links, Snowflake Decoder, Webhook Info), Premium, Settings. The editor is at message.style/app/editor.
 - Plans: Free, Premium, and Ultimate.
 - Links: message.style/premium, /invite, /discord (support server), /source (GitHub), status.message.style.
 - Discord permissions by Discord's names, like Manage Webhooks, which /embed needs.
