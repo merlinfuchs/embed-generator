@@ -78,6 +78,10 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 
 	accessManager := access.New(guildState, pg, embedg.Rest(), embedg, sessionManager)
 	actionParser := parser.New(accessManager, pg, pg, guildState)
+	forwarder, err := forward.New(pg, cfg.Forms.ProxyURL)
+	if err != nil {
+		return err
+	}
 	actionHandler := handler.New(
 		pg,
 		pg,
@@ -87,7 +91,7 @@ func Run(ctx context.Context, pg *postgres.Client, blob *s3.Client, cfg *config.
 		actionParser,
 		premiumManager,
 		guildState,
-		forward.New(pg),
+		forwarder,
 	)
 	customBotManager := custom_bot.NewCustomBotManager(pg, embedg.Rest(), shards)
 	go customBotManager.Run(ctx)

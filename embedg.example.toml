@@ -26,6 +26,12 @@ max_repairs = 2 # fixes of its own mistakes that don't count as prompts
 [phishing]
 domain_list_url = "https://phish.sinking.yachts/v2/all"
 
+# Forms with a Send Answers to URL action post to URLs that users pick. Set proxy_url to an egress
+# proxy like Smokescreen to send them through it, so the proxy refuses private addresses and the
+# requests don't come from this server's IP. Unset, they're sent directly and checked here.
+[forms]
+# proxy_url = "http://egress-proxy:4750"
+
 [database.postgres]
 host = "localhost"
 port = 5432

@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/netip"
+	"net/url"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -83,7 +85,7 @@ func TestClientRefusesPrivateAddresses(t *testing.T) {
 	}))
 	defer server.Close()
 
-	_, err := newClient(isPublicAddr).Get(server.URL)
+	_, err := newClient(isPublicAddr, nil).Get(server.URL)
 	if !errors.Is(err, errPrivateAddress) {
 		t.Fatalf("want private address error, got %v", err)
 	}
@@ -98,7 +100,7 @@ func TestClientDoesNotFollowRedirects(t *testing.T) {
 	}))
 	defer server.Close()
 
-	resp, err := newClient(allowAll).Get(server.URL)
+	resp, err := newClient(allowAll, nil).Get(server.URL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -232,11 +234,98 @@ func (s *fakeFormStore) SetFormForwardError(_ context.Context, _ common.ID, _ st
 	return nil
 }
 
+// fakeSmokescreen is an egress proxy that tunnels CONNECT requests, or refuses them like
+// Smokescreen does when refuse is true. It records the hosts it was asked for.
+func fakeSmokescreen(t *testing.T, refuse bool, hosts chan<- string) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodConnect {
+			t.Errorf("want CONNECT, got %s", r.Method)
+			return
+		}
+		hosts <- r.Host
+		conn, _, err := w.(http.Hijacker).Hijack()
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if refuse {
+			// Smokescreen's own reason phrase, which Go returns as the error.
+			_, _ = io.WriteString(conn, "HTTP/1.1 407 "+proxyDenied+"\r\nContent-Length: 0\r\n\r\n")
+			conn.Close()
+			return
+		}
+
+		upstream, err := net.Dial("tcp", r.Host)
+		if err != nil {
+			t.Error(err)
+			conn.Close()
+			return
+		}
+		_, _ = io.WriteString(conn, "HTTP/1.1 200 OK\r\n\r\n")
+		go func() { _, _ = io.Copy(upstream, conn) }()
+		_, _ = io.Copy(conn, upstream)
+		conn.Close()
+		upstream.Close()
+	}))
+}
+
+// newProxiedForwarder sends to server through the proxy at proxyURL.
+func newProxiedForwarder(t *testing.T, server *httptest.Server, proxyURL string) (*Forwarder, *fakeFormStore) {
+	proxy, err := url.Parse(proxyURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f, fs := newTestForwarder(server, 1)
+	client := newClient(isPublicAddr, proxy)
+	client.Transport.(*http.Transport).TLSClientConfig = server.Client().Transport.(*http.Transport).TLSClientConfig
+	f.client = client
+	return f, fs
+}
+
+func TestForwardGoesThroughTheProxy(t *testing.T) {
+	var hits atomic.Int32
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+	}))
+	defer server.Close()
+	hosts := make(chan string, 2)
+	proxy := fakeSmokescreen(t, false, hosts)
+	defer proxy.Close()
+
+	// The server is on loopback, which only the proxy may decide to reach.
+	f, _ := newProxiedForwarder(t, server, proxy.URL)
+	if err := f.forward(context.Background(), testForm(), server.URL, Submission{}); err != nil {
+		t.Fatal(err)
+	}
+	if hits.Load() != 1 || <-hosts != strings.TrimPrefix(server.URL, "https://") {
+		t.Fatal("the request didn't go through the proxy")
+	}
+}
+
+func TestForwardReportsWhatTheProxyRefuses(t *testing.T) {
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("the request reached the server")
+	}))
+	defer server.Close()
+	hosts := make(chan string, 2)
+	proxy := fakeSmokescreen(t, true, hosts)
+	defer proxy.Close()
+
+	f, _ := newProxiedForwarder(t, server, proxy.URL)
+	err := f.forward(context.Background(), testForm(), server.URL, Submission{})
+	if err == nil || err.Error() != cantSendErr(errPrivateAddress).Error() {
+		t.Fatalf("want the private address error, got %v", err)
+	}
+	if len(hosts) != 1 {
+		t.Fatalf("want one try, the proxy was asked %d times", len(hosts))
+	}
+}
+
 // newTestForwarder sends to server, which is on the loopback address, and counts count requests
 // for every submission.
 func newTestForwarder(server *httptest.Server, count int) (*Forwarder, *fakeFormStore) {
 	fs := &fakeFormStore{count: count, errors: make(chan string, 1)}
-	client := newClient(allowAll)
+	client := newClient(allowAll, nil)
 	client.Transport.(*http.Transport).TLSClientConfig = server.Client().Transport.(*http.Transport).TLSClientConfig
 	return &Forwarder{
 		client:      client,

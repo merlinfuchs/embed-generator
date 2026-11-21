@@ -15,7 +15,9 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
@@ -71,14 +73,24 @@ type Forwarder struct {
 	retryDelay  time.Duration
 }
 
-func New(formStore store.FormStore) *Forwarder {
+// New makes a Forwarder that sends through the egress proxy at proxyURL, or directly when it's
+// empty.
+func New(formStore store.FormStore, proxyURL string) (*Forwarder, error) {
+	var proxy *url.URL
+	if proxyURL != "" {
+		var err error
+		if proxy, err = url.Parse(proxyURL); err != nil {
+			return nil, fmt.Errorf("invalid forms proxy URL: %w", err)
+		}
+	}
+
 	return &Forwarder{
-		client:      newClient(isPublicAddr),
+		client:      newClient(isPublicAddr, proxy),
 		formStore:   formStore,
 		now:         time.Now,
 		validateURL: ValidateURL,
 		retryDelay:  2 * time.Second,
-	}
+	}, nil
 }
 
 // NewSigningSecret makes the secret that a form's submissions are signed with.
@@ -167,7 +179,7 @@ func (f *Forwarder) send(ctx context.Context, secret string, url string, body []
 
 	resp, err := f.client.Do(req)
 	if err != nil {
-		if errors.Is(err, errPrivateAddress) {
+		if errors.Is(err, errPrivateAddress) || strings.Contains(err.Error(), proxyDenied) {
 			return false, cantSendErr(errPrivateAddress)
 		}
 		return true, errors.New("The URL couldn't be reached.")

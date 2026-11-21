@@ -79,13 +79,18 @@ func ValidateURL(rawURL string) error {
 	return nil
 }
 
-// newClient is an HTTP client for URLs that users pick. It only connects to public addresses,
-// checked after the hostname is resolved so DNS can't point it elsewhere, and doesn't follow
-// redirects or use a proxy.
-func newClient(allowAddr func(netip.Addr) bool) *http.Client {
-	dialer := &net.Dialer{
-		Timeout: 5 * time.Second,
-		Control: func(_, address string, _ syscall.RawConn) error {
+// proxyDenied is the reason Smokescreen gives when it refuses a destination, which Go returns as
+// the error of the request.
+const proxyDenied = "Request rejected by proxy"
+
+// newClient is an HTTP client for URLs that users pick. It doesn't follow redirects. Without a
+// proxy it only connects to public addresses, checked after the hostname is resolved so DNS can't
+// point it elsewhere. With one, requests go through it and the proxy does that check, as it's the
+// one that resolves the hostname.
+func newClient(allowAddr func(netip.Addr) bool, proxy *url.URL) *http.Client {
+	dialer := &net.Dialer{Timeout: 5 * time.Second}
+	if proxy == nil {
+		dialer.Control = func(_, address string, _ syscall.RawConn) error {
 			host, _, err := net.SplitHostPort(address)
 			if err != nil {
 				return err
@@ -95,12 +100,13 @@ func newClient(allowAddr func(netip.Addr) bool) *http.Client {
 				return errPrivateAddress
 			}
 			return nil
-		},
+		}
 	}
 
 	return &http.Client{
 		Transport: &http.Transport{
-			Proxy:                 nil,
+			// Never the proxy from the environment.
+			Proxy:                 fixedProxy(proxy),
 			DialContext:           dialer.DialContext,
 			ForceAttemptHTTP2:     true,
 			TLSHandshakeTimeout:   5 * time.Second,
@@ -113,4 +119,11 @@ func newClient(allowAddr func(netip.Addr) bool) *http.Client {
 			return http.ErrUseLastResponse
 		},
 	}
+}
+
+func fixedProxy(proxy *url.URL) func(*http.Request) (*url.URL, error) {
+	if proxy == nil {
+		return nil
+	}
+	return http.ProxyURL(proxy)
 }
