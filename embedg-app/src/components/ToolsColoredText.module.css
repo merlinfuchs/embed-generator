@@ -118,13 +118,11 @@
 
 .ansi1 {
   font-weight: 700;
-  text-decoration: none;
 }
 .ansi3 {
   font-style: italic;
 }
 .ansi4 {
-  font-weight: 500;
   text-decoration: underline;
 }
 .ansi9 {

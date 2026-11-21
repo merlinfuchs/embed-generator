@@ -53,6 +53,14 @@ describe("toHTML", () => {
     expect(html).not.toContain("\x1b");
   });
 
+  it("renders combined ansi styles, italic and strikethrough", () => {
+    const html = toHTML("```ansi\n\x1b[1;3;4;9;31mall\x1b[0m\n```");
+
+    expect(html).toContain(
+      '<span class="ansi-1 ansi-3 ansi-4 ansi-9 ansi-31">all</span>',
+    );
+  });
+
   it("escapes HTML inside ansi code blocks", () => {
     const html = toHTML("```ansi\n\x1b[31m<img src=x>\x1b[0m\n```");
 
