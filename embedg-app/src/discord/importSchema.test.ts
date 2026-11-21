@@ -278,6 +278,25 @@ test("content and embeds become components when components v2 is inferred", () =
   ]);
 });
 
+test("a container leaves out the fixed timestamp the time of sending replaced", () => {
+  const message = parseMessageWithAction({
+    embeds: [
+      {
+        description: "Description",
+        footer: { text: "Footer" },
+        timestamp: "2026-01-01T00:00:00Z",
+        timestamp_now: true,
+      },
+    ],
+    components: [{ type: 10, content: "Text" }],
+  });
+
+  expect(message.components).toMatchObject([
+    { type: 17, components: [{ type: 10, content: "Description\n-# Footer" }] },
+    { type: 10, content: "Text" },
+  ]);
+});
+
 test("an empty embed timestamp is no timestamp", () => {
   const message = parseMessageWithAction({
     embeds: [{ title: "Title", timestamp: "" }],

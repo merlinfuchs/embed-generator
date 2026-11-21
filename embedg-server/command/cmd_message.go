@@ -203,7 +203,7 @@ func (g *CommandHandler) dumpMessage(ctx context.Context, message *discord.Messa
 		Username:   message.Author.Username,
 		AvatarURL:  message.Author.EffectiveAvatarURL(discord.WithSize(1024)),
 		Content:    message.Content,
-		Embeds:     message.Embeds,
+		Embeds:     actions.EmbedsFromDiscord(message.Embeds),
 		Components: components,
 		Actions:    actionSets,
 		// The other flags describe the message as it is now, like embeds hidden in Discord.

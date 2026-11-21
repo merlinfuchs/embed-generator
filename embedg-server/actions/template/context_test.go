@@ -13,12 +13,12 @@ func TestParseAndExecuteMessageRendersEverything(t *testing.T) {
 
 	msg := &actions.MessageWithActions{
 		Content: tmpl,
-		Embeds: []discord.Embed{{
+		Embeds: []actions.Embed{{Embed: discord.Embed{
 			Title:       tmpl,
 			Description: tmpl,
 			Fields:      []discord.EmbedField{{Name: tmpl, Value: tmpl}},
 			Author:      &discord.EmbedAuthor{Name: tmpl},
-		}},
+		}}},
 		Components: []actions.ComponentWithActions{{
 			Type: discord.ComponentTypeContainer,
 			Components: []actions.ComponentWithActions{

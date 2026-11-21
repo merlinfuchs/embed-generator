@@ -19,12 +19,32 @@ type MessageWithActions struct {
 	Username        string                   `json:"username,omitempty"`
 	AvatarURL       string                   `json:"avatar_url,omitempty"`
 	TTS             bool                     `json:"tts,omitempty"`
-	Embeds          []discord.Embed          `json:"embeds,omitempty"`
+	Embeds          []Embed                  `json:"embeds,omitempty"`
 	AllowedMentions *discord.AllowedMentions `json:"allowed_mentions,omitempty"`
 	Components      []ComponentWithActions   `json:"components,omitempty"`
 	Poll            *Poll                    `json:"poll,omitempty"`
 	Actions         map[string]ActionSet     `json:"actions,omitempty"`
 	Flags           discord.MessageFlags     `json:"flags,omitempty"`
+}
+
+// Embed is an embed as the editor saves it. MessageWithActions.UnmarshalJSON decodes it, as the
+// UnmarshalJSON promoted from discord.Embed would drop TimestampNow.
+type Embed struct {
+	discord.Embed
+	// TimestampNow shows the time the message is sent instead of Timestamp.
+	TimestampNow bool `json:"timestamp_now,omitempty"`
+}
+
+// EmbedsFromDiscord wraps embeds read from Discord, which only have fixed timestamps.
+func EmbedsFromDiscord(embeds []discord.Embed) []Embed {
+	if embeds == nil {
+		return nil
+	}
+	res := make([]Embed, len(embeds))
+	for i, e := range embeds {
+		res[i] = Embed{Embed: e}
+	}
+	return res
 }
 
 // UnmarshalJSON reads embed timestamps itself. Imported and older saved messages carry
@@ -41,7 +61,8 @@ func (m *MessageWithActions) UnmarshalJSON(data []byte) error {
 		message
 		Embeds []struct {
 			embed
-			Timestamp string `json:"timestamp"`
+			Timestamp    string `json:"timestamp"`
+			TimestampNow bool   `json:"timestamp_now"`
 			// Only Discord's own "components" embeds carry these. They can't be sent, so they're ignored.
 			Components json.RawMessage `json:"components"`
 		} `json:"embeds"`
@@ -54,7 +75,7 @@ func (m *MessageWithActions) UnmarshalJSON(data []byte) error {
 	m.Flags &^= discord.MessageFlagSuppressEmbeds
 	m.Embeds = nil
 	if raw.Embeds != nil {
-		m.Embeds = make([]discord.Embed, 0, len(raw.Embeds))
+		m.Embeds = make([]Embed, 0, len(raw.Embeds))
 	}
 	for i, e := range raw.Embeds {
 		embed := discord.Embed(e.embed)
@@ -65,9 +86,35 @@ func (m *MessageWithActions) UnmarshalJSON(data []byte) error {
 			}
 			embed.Timestamp = &t
 		}
-		m.Embeds = append(m.Embeds, embed)
+		m.Embeds = append(m.Embeds, Embed{Embed: embed, TimestampNow: e.TimestampNow})
 	}
 	return nil
+}
+
+// SendTime is the time of sending for a message: now for a new one, or the time the edited message
+// was first sent, which its ID holds. Editing a message doesn't move its timestamp.
+func SendTime(editedID common.NullID) time.Time {
+	if editedID.Valid {
+		return editedID.ID.Time()
+	}
+	return time.Now()
+}
+
+// DiscordEmbeds are the embeds to send to Discord, with sentAt as the timestamp of those that show
+// the time of sending. Call it when the message is sent or edited, not when it is saved.
+func (m MessageWithActions) DiscordEmbeds(sentAt time.Time) []discord.Embed {
+	if m.Embeds == nil {
+		return nil
+	}
+	t := sentAt.UTC()
+	embeds := make([]discord.Embed, len(m.Embeds))
+	for i, e := range m.Embeds {
+		embeds[i] = e.Embed
+		if e.TimestampNow {
+			embeds[i].Timestamp = &t
+		}
+	}
+	return embeds
 }
 
 // decodeError describes a value of the wrong type by its path in the message JSON, without the Go

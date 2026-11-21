@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
@@ -332,7 +333,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 
 			newMsg := i.Respond(discord.MessageCreate{
 				Content:         data.Content,
-				Embeds:          data.Embeds,
+				Embeds:          data.DiscordEmbeds(time.Now()),
 				Components:      components,
 				Flags:           data.Flags,
 				AllowedMentions: actionAllowedMentions(action, data.AllowedMentions),
@@ -379,7 +380,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 
 			err = sendDM(restClient, interaction.User().ID, discord.MessageCreate{
 				Content:    data.Content,
-				Embeds:     data.Embeds,
+				Embeds:     data.DiscordEmbeds(time.Now()),
 				Components: components,
 				Flags:      data.Flags,
 			})
@@ -425,9 +426,15 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				}
 			}
 
+			// The edited message keeps the time it was first sent.
+			sentAt := time.Now()
+			if compInteraction, ok := interaction.(discord.ComponentInteraction); ok {
+				sentAt = compInteraction.Message.ID.Time()
+			}
+			embeds := data.DiscordEmbeds(sentAt)
 			newMsg := i.Respond(discord.MessageUpdate{
 				Content:         &data.Content,
-				Embeds:          &data.Embeds,
+				Embeds:          &embeds,
 				Components:      &components,
 				Flags:           &data.Flags,
 				AllowedMentions: actionAllowedMentions(action, data.AllowedMentions),
@@ -482,7 +489,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 
 				msg = discord.MessageCreate{
 					Content:         data.Content,
-					Embeds:          data.Embeds,
+					Embeds:          data.DiscordEmbeds(time.Now()),
 					Components:      components,
 					Flags:           data.Flags,
 					AllowedMentions: actionAllowedMentions(action, data.AllowedMentions),

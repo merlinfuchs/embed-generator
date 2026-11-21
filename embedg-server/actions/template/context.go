@@ -73,7 +73,7 @@ func (c *TemplateContext) ParseAndExecuteMessage(m *actions.MessageWithActions) 
 	}
 
 	for i := range m.Embeds {
-		if err := c.parseAndExecuteEmbed(&m.Embeds[i]); err != nil {
+		if err := c.parseAndExecuteEmbed(&m.Embeds[i].Embed); err != nil {
 			return err
 		}
 	}

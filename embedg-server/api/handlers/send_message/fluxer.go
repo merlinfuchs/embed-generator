@@ -249,7 +249,7 @@ func (h *SendMessageHandler) sendToFluxerWebhook(c *fiber.Ctx, req wire.MessageS
 		msg, err = h.fluxer.EditWebhookMessage(c.UserContext(), webhookID, req.WebhookToken, req.MessageID.ID, fluxerMessageEdit{
 			Content: data.Content,
 			// An empty list rather than none, so embeds removed in the editor are removed on Fluxer.
-			Embeds:          append([]discord.Embed{}, data.Embeds...),
+			Embeds:          append([]discord.Embed{}, data.DiscordEmbeds(actions.SendTime(req.MessageID))...),
 			AllowedMentions: data.AllowedMentions,
 		})
 	} else {
@@ -264,7 +264,7 @@ func (h *SendMessageHandler) sendToFluxerWebhook(c *fiber.Ctx, req wire.MessageS
 			Username:        data.Username,
 			AvatarURL:       data.AvatarURL,
 			TTS:             data.TTS,
-			Embeds:          data.Embeds,
+			Embeds:          data.DiscordEmbeds(actions.SendTime(req.MessageID)),
 			AllowedMentions: data.AllowedMentions,
 			Flags:           data.Flags,
 		}, files)
@@ -296,7 +296,7 @@ func (h *SendMessageHandler) restoreFromFluxerWebhook(c *fiber.Ctx, req wire.Mes
 		Content:   msg.Content,
 		Username:  msg.Author.Username,
 		AvatarURL: msg.Author.avatarURL(),
-		Embeds:    msg.Embeds,
+		Embeds:    actions.EmbedsFromDiscord(msg.Embeds),
 		Flags:     msg.Flags,
 	}, msg.Attachments)
 }

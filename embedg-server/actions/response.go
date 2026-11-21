@@ -77,7 +77,7 @@ func CheckResponseMessage(m *MessageWithActions) error {
 
 	total := 0
 	for i, embed := range m.Embeds {
-		n, err := embedTextLength(embed)
+		n, err := embedTextLength(embed.Embed)
 		if err != nil {
 			return fmt.Errorf("embed %d: %w", i+1, err)
 		}

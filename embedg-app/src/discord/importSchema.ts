@@ -211,6 +211,11 @@ export const embedTimestampSchema = z.preprocess(
 
 export type EmbedTimestamp = z.infer<typeof embedTimestampSchema>;
 
+export const embedTimestampNowSchema = z.preprocess(
+  (d) => d ?? undefined,
+  z.optional(z.boolean()),
+);
+
 export const embedColor = z.preprocess(
   (d) => d ?? undefined,
   z.optional(z.number()),
@@ -224,6 +229,7 @@ export const embedSchema = z.object({
   description: embedDescriptionSchema,
   url: embedUrlSchema,
   timestamp: embedTimestampSchema,
+  timestamp_now: embedTimestampNowSchema,
   color: embedColor,
   footer: embedFooterSchema,
   author: embedAuthorSchema,
@@ -723,7 +729,11 @@ function embedToContainer(embed: MessageEmbed) {
     lines.push(`**${field.name}**\n${field.value}`);
   }
 
-  const time = embed.timestamp ? Date.parse(embed.timestamp) : Number.NaN;
+  // A container can't show the time of sending, and the fixed timestamp it replaced is stale.
+  const time =
+    embed.timestamp && !embed.timestamp_now
+      ? Date.parse(embed.timestamp)
+      : Number.NaN;
   const footer = [
     embed.footer?.text,
     Number.isNaN(time) ? undefined : `<t:${Math.floor(time / 1000)}:f>`,

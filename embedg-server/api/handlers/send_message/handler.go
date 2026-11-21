@@ -108,7 +108,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 	}
 	if !data.ComponentsV2Enabled() {
 		params.Content = data.Content
-		params.Embeds = data.Embeds
+		params.Embeds = data.DiscordEmbeds(actions.SendTime(req.MessageID))
 		params.TTS = data.TTS
 	}
 
@@ -195,7 +195,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 	}
 	if !data.ComponentsV2Enabled() {
 		params.Content = data.Content
-		params.Embeds = data.Embeds
+		params.Embeds = data.DiscordEmbeds(actions.SendTime(req.MessageID))
 		params.TTS = data.TTS
 	}
 
