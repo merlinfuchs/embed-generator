@@ -9,6 +9,8 @@ interface Options {
   /** Rows that can't be picked, which the highlight skips. */
   isDisabled?: (index: number) => boolean;
   onPick: (index: number) => void;
+  /** Arrow Right and Arrow Left call this to show or hide the rows under a row. */
+  onExpand?: (index: number, expand: boolean) => void;
   onOpen: () => void;
   onClose: () => void;
   /** The highlight goes back to the first row when this changes, like when the search text does. */
@@ -16,7 +18,7 @@ interface Options {
 }
 
 /**
- * Keyboard control for the dropdown pickers: Arrow keys move a highlight, Enter picks the
+ * Keyboard control for the dropdown pickers: Arrow Up and Down move a highlight, Enter picks the
  * highlighted row and Escape closes the list. Put `onKeyDown` on an element around the
  * trigger and the search input, since the keys bubble up from both.
  */
@@ -25,6 +27,7 @@ export function useListKeyboardNav({
   count,
   isDisabled,
   onPick,
+  onExpand,
   onOpen,
   onClose,
   resetKey,
@@ -32,8 +35,15 @@ export function useListKeyboardNav({
   const [active, setActive] = useState(-1);
 
   // Read at the time of the key press, so callers don't have to memoize their callbacks.
-  const latest = useRef({ count, isDisabled, onPick, onOpen, onClose });
-  latest.current = { count, isDisabled, onPick, onOpen, onClose };
+  const latest = useRef({
+    count,
+    isDisabled,
+    onPick,
+    onExpand,
+    onOpen,
+    onClose,
+  });
+  latest.current = { count, isDisabled, onPick, onExpand, onOpen, onClose };
 
   const rows = useRef<(HTMLElement | null)[]>([]);
 
@@ -48,8 +58,19 @@ export function useListKeyboardNav({
 
   // Start at the first row that can be picked, which for a search is the best match.
   useEffect(() => {
-    setActive(open && count > 0 ? step(-1, 1) : -1);
-  }, [open, count, resetKey, step]);
+    setActive(open ? step(-1, 1) : -1);
+  }, [open, resetKey, step]);
+
+  // Rows shown or hidden under a row come after it, so the highlight can stay where it is,
+  // unless the list loaded after opening or got shorter than it.
+  useEffect(() => {
+    if (!open) return;
+    setActive((prev) =>
+      prev < 0 || prev >= count || latest.current.isDisabled?.(prev)
+        ? step(-1, 1)
+        : prev,
+    );
+  }, [open, count, step]);
 
   useEffect(() => {
     rows.current[active]?.scrollIntoView?.({ block: "nearest" });
@@ -69,6 +90,13 @@ export function useListKeyboardNav({
       case "ArrowUp":
         e.preventDefault();
         setActive((prev) => step(prev, e.key === "ArrowDown" ? 1 : -1));
+        break;
+      case "ArrowRight":
+      case "ArrowLeft":
+        if (active >= 0 && latest.current.onExpand) {
+          e.preventDefault();
+          latest.current.onExpand(active, e.key === "ArrowRight");
+        }
         break;
       case "Enter":
         if (active >= 0) {

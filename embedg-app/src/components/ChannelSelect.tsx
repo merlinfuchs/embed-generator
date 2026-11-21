@@ -285,11 +285,29 @@ export function ChannelSelect({
     [channels, channelId],
   );
 
+  function pickRow(c: (typeof channels)[number]) {
+    if (c.canSelect) selectChannel(c.id);
+    // A forum the bot can't post in only works as a folder for its posts.
+    else if (threadCounts.has(c.id)) toggleExpanded(c.id);
+  }
+
+  function setRowExpanded(id: string, isExpanded: boolean) {
+    if (threadCounts.has(id) && expanded.has(id) !== isExpanded) {
+      toggleExpanded(id);
+    }
+  }
+
   const { onKeyDown, rowProps } = useListKeyboardNav({
     open,
     count: filteredChannels.length,
-    isDisabled: (i) => !filteredChannels[i].canSelect,
-    onPick: (i) => selectChannel(filteredChannels[i].id),
+    isDisabled: (i) =>
+      !filteredChannels[i].canSelect &&
+      (!!query || !threadCounts.has(filteredChannels[i].id)),
+    onPick: (i) => pickRow(filteredChannels[i]),
+    // Searching lists collapsed threads anyway, and the arrows move the cursor in the search then.
+    onExpand: query
+      ? undefined
+      : (i, isExpanded) => setRowExpanded(filteredChannels[i].id, isExpanded),
     onOpen: () => setOpen(true),
     onClose: () => setOpen(false),
     resetKey: query,
@@ -360,11 +378,7 @@ export function ChannelSelect({
                     // Not disabled: a disabled button swallows the hover the reason tooltip needs.
                     aria-disabled={!c.canSelect}
                     {...rowProps(i)}
-                    onClick={() => {
-                      if (c.canSelect) selectChannel(c.id);
-                      // A forum the bot can't post in only works as a folder for its posts.
-                      else if (threadCount) toggleExpanded(c.id);
-                    }}
+                    onClick={() => pickRow(c)}
                   >
                     <ChannelIcon type={c.type} />
                     <div

@@ -160,3 +160,42 @@ test("the forum of the selected post opens with the list", () => {
   expect(listed("question")).not.toBeNull();
   expect(listed("help-thread")).toBeNull();
 });
+
+const active = () => document.querySelector("button[data-active]");
+const press = (key: string) =>
+  fireEvent.keyDown(screen.getByRole("textbox"), { key });
+
+test("Arrow Right and Left show and hide a channel's threads", () => {
+  setup();
+
+  expect(active()).toBe(row("general"));
+  press("ArrowRight");
+  expect(listed("help-thread")).not.toBeNull();
+  expect(active()).toBe(row("general"));
+
+  press("ArrowLeft");
+  expect(listed("help-thread")).toBeNull();
+});
+
+test("for the bot, Enter on a forum shows its posts", () => {
+  const { onChange } = setup({ sender: "bot" });
+
+  press("ArrowDown");
+  expect(active()).toBe(row("support"));
+  press("Enter");
+  expect(onChange).not.toHaveBeenCalled();
+  expect(listed("bug-report")).not.toBeNull();
+  expect(active()).toBe(row("support"));
+
+  press("ArrowDown");
+  press("Enter");
+  expect(onChange).toHaveBeenCalledWith("bug");
+});
+
+test("for the bot, the highlight skips forums while searching", () => {
+  setup({ sender: "bot" });
+
+  fireEvent.change(screen.getByRole("textbox"), { target: { value: "u" } });
+  // support can't be picked and its posts are listed already.
+  expect(active()).toBe(row("bug-report"));
+});
