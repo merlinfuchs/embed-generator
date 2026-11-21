@@ -37,6 +37,10 @@ func TestCheckFluxerMessage(t *testing.T) {
 			data: actions.MessageWithActions{Flags: discord.MessageFlagIsComponentsV2},
 		},
 		{
+			name: "poll",
+			data: actions.MessageWithActions{Poll: &actions.Poll{}},
+		},
+		{
 			name: "thread",
 			req:  wire.MessageSendToWebhookRequestWire{ThreadID: common.NullID{ID: 1, Valid: true}},
 		},

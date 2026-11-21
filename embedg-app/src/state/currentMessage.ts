@@ -101,8 +101,8 @@ export function takeFirstVisit(): boolean {
 
 /** Whether there is nothing in the message that replacing it would lose. */
 export function currentMessageIsBlank(): boolean {
-  const { content, embeds, components } = getCurrentMessage();
-  return !content && embeds.length === 0 && components.length === 0;
+  const { content, embeds, components, poll } = getCurrentMessage();
+  return !content && embeds.length === 0 && components.length === 0 && !poll;
 }
 
 export function setCurrentMessage(message: Message) {

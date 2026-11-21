@@ -15,6 +15,7 @@ import PreviewComponents, {
   PreviewAttachments,
 } from "./MessagePreviewComponents";
 import MessagePreviewEmbed from "./MessagePreviewEmbed";
+import MessagePreviewPoll from "./MessagePreviewPoll";
 
 interface ButtonResponse {
   id: number;
@@ -89,6 +90,8 @@ export default function MessagePreview({ msg, unfurledComponent }: Props) {
                     {msg.embeds.map((embed) => (
                       <MessagePreviewEmbed key={embed.id} embed={embed} />
                     ))}
+
+                    {msg.poll && <MessagePreviewPoll poll={msg.poll} />}
 
                     <div className="discord-attachments">
                       <PreviewComponents
