@@ -1,7 +1,9 @@
 import {
   ArrowPathIcon,
+  ChatBubbleLeftIcon,
   ChatBubbleLeftRightIcon,
   ChevronDownIcon,
+  ChevronRightIcon,
   ExclamationCircleIcon,
   PhotoIcon,
   SpeakerWaveIcon,
@@ -102,6 +104,10 @@ function ChannelIcon({ type }: { type: number }) {
   if (type === 16) {
     return <PhotoIcon className="h-5 w-5 text-mist-300" />;
   }
+  // Threads and forum posts, so they don't look like the channels they're in.
+  if (threadChannelTypes.has(type)) {
+    return <ChatBubbleLeftIcon className="h-5 w-5 text-mist-300" />;
+  }
   if (type === 2 || type === 13) {
     return <SpeakerWaveIcon className="h-5 w-5 text-mist-300" />;
   }
@@ -132,10 +138,25 @@ export function ChannelSelect({
 
   const [open, innerSetOpen] = useState(false);
   const [query, setQuery] = useState("");
+  // Channels whose threads, or forum posts, are shown. Collapsed by default, as they can be hundreds.
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  function toggleExpanded(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  }
 
   function setOpen(open: boolean) {
     innerSetOpen(open);
     if (open) {
+      // Keep the selected post visible.
+      const parentId = channels.find((c) => c.id === channelId)?.parent_id;
+      if (parentId) {
+        setExpanded((prev) => new Set(prev).add(parentId));
+      }
       setTimeout(() => inputRef.current?.focus(), 0);
     } else {
       inputRef.current?.blur();
@@ -221,16 +242,42 @@ export function ChannelSelect({
     return res;
   }, [data, ctx]);
 
-  const filteredChannels = useMemo(() => {
-    if (!query) return channels;
+  // How many threads each channel has, or posts for forum and media channels, to show on the toggle.
+  const threadCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    // A thread whose channel isn't listed has nothing to collapse into.
+    const ids = new Set(channels.map((c) => c.id));
+    for (const c of channels) {
+      if (
+        c.parent_id &&
+        ids.has(c.parent_id) &&
+        threadChannelTypes.has(c.type)
+      ) {
+        counts.set(c.parent_id, (counts.get(c.parent_id) ?? 0) + 1);
+      }
+    }
+    return counts;
+  }, [channels]);
 
+  const filteredChannels = useMemo(() => {
+    if (!query) {
+      return channels.filter(
+        (c) =>
+          !c.parent_id ||
+          !threadChannelTypes.has(c.type) ||
+          !threadCounts.has(c.parent_id) ||
+          expanded.has(c.parent_id),
+      );
+    }
+
+    // Searching looks through collapsed posts too.
     const q = query.toLowerCase();
     if (!q) return channels;
 
     return channels.filter(
       (c) => c.id === q || c.name.toLowerCase().includes(q),
     );
-  }, [channels, query]);
+  }, [channels, query, threadCounts, expanded]);
 
   const channel = useMemo(
     () => channels.find((c) => c.id === channelId),
@@ -280,6 +327,12 @@ export function ChannelSelect({
             {filteredChannels.length ? (
               filteredChannels.map((c) => {
                 const reason = c.canSelect ? null : missingAccessReason(c, ctx);
+                const threadCount = threadCounts.get(c.id) ?? 0;
+                const isExpanded = expanded.has(c.id);
+                // Discord calls the threads of forum and media channels posts.
+                const threadWord = isThreadOnlyChannel(c.type)
+                  ? "posts"
+                  : "threads";
                 return (
                   <button
                     type="button"
@@ -292,7 +345,11 @@ export function ChannelSelect({
                     )}
                     // Not disabled: a disabled button swallows the hover the reason tooltip needs.
                     aria-disabled={!c.canSelect}
-                    onClick={() => c.canSelect && selectChannel(c.id)}
+                    onClick={() => {
+                      if (c.canSelect) selectChannel(c.id);
+                      // A forum the bot can't post in only works as a folder for its posts.
+                      else if (threadCount) toggleExpanded(c.id);
+                    }}
                   >
                     <ChannelIcon type={c.type} />
                     <div
@@ -303,10 +360,33 @@ export function ChannelSelect({
                     >
                       {c.name}
                     </div>
+                    {threadCount > 0 && (
+                      // Not a button: it can't be nested in the row's button.
+                      <div
+                        role="button"
+                        aria-label={`${isExpanded ? "Hide" : "Show"} ${threadWord}`}
+                        aria-expanded={isExpanded}
+                        className="ml-auto flex-none flex items-center space-x-1 text-mist-400 hover:text-mist-100 cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleExpanded(c.id);
+                        }}
+                      >
+                        <span className="text-xs">{threadCount}</span>
+                        {isExpanded ? (
+                          <ChevronDownIcon className="h-4 w-4" />
+                        ) : (
+                          <ChevronRightIcon className="h-4 w-4" />
+                        )}
+                      </div>
+                    )}
                     {reason && (
                       // Not a link: an anchor can't be nested in the row's button.
                       <div
-                        className="ml-auto flex-none cursor-pointer"
+                        className={clsx(
+                          "flex-none cursor-pointer",
+                          !threadCount && "ml-auto",
+                        )}
                         onClick={(e) => {
                           e.stopPropagation();
                           window.open(
