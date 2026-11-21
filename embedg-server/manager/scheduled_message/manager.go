@@ -294,8 +294,6 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		return 0, skipWith("Template error: "+err.Error(), err)
 	}
 
-	data.ApplySendTime(actions.SendTime(scheduledMessage.MessageID))
-
 	params := discord.WebhookMessageCreate{
 		Username:        data.Username,
 		AvatarURL:       data.AvatarURL,
@@ -306,7 +304,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 	// Discord rejects content and embeds on a components v2 message.
 	if !data.ComponentsV2Enabled() {
 		params.Content = data.Content
-		params.Embeds = data.Embeds
+		params.Embeds = data.DiscordEmbeds(actions.SendTime(scheduledMessage.MessageID))
 		params.TTS = data.TTS
 	}
 

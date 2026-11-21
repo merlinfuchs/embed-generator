@@ -25,7 +25,7 @@ func TestCheckFluxerMessage(t *testing.T) {
 	}{
 		{
 			name: "content and embeds",
-			data: actions.MessageWithActions{Content: "hi", Embeds: []discord.Embed{{Title: "title"}}},
+			data: actions.MessageWithActions{Content: "hi", Embeds: []actions.Embed{{Embed: discord.Embed{Title: "title"}}}},
 			ok:   true,
 		},
 		{

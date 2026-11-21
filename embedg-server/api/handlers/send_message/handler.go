@@ -99,8 +99,6 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return handlers.BadRequest("invalid_template", fmt.Sprintf("Failed to render a variable in the message: %v", err))
 	}
 
-	data.ApplySendTime(actions.SendTime(req.MessageID))
-
 	params := discord.WebhookMessageCreate{
 		Username:        data.Username,
 		AvatarURL:       data.AvatarURL,
@@ -110,7 +108,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 	}
 	if !data.ComponentsV2Enabled() {
 		params.Content = data.Content
-		params.Embeds = data.Embeds
+		params.Embeds = data.DiscordEmbeds(actions.SendTime(req.MessageID))
 		params.TTS = data.TTS
 	}
 
@@ -180,8 +178,6 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		return invalidMessage(err)
 	}
 
-	data.ApplySendTime(actions.SendTime(req.MessageID))
-
 	if req.WebhookPlatform == wire.WebhookPlatformFluxer {
 		return h.sendToFluxerWebhook(c, req, data)
 	}
@@ -194,7 +190,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 	}
 	if !data.ComponentsV2Enabled() {
 		params.Content = data.Content
-		params.Embeds = data.Embeds
+		params.Embeds = data.DiscordEmbeds(actions.SendTime(req.MessageID))
 		params.TTS = data.TTS
 	}
 

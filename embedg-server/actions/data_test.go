@@ -44,7 +44,7 @@ func TestMessageWithActionsEmbedTimestamp(t *testing.T) {
 	}
 }
 
-func TestMessageWithActionsApplySendTime(t *testing.T) {
+func TestMessageWithActionsDiscordEmbeds(t *testing.T) {
 	var m MessageWithActions
 	err := json.Unmarshal([]byte(`{"embeds": [
 		{"title": "now", "timestamp_now": true},
@@ -57,18 +57,21 @@ func TestMessageWithActionsApplySendTime(t *testing.T) {
 	}
 
 	now := time.Date(2026, 11, 8, 22, 3, 0, 0, time.FixedZone("CST", -6*60*60))
-	m.ApplySendTime(now)
+	embeds := m.DiscordEmbeds(now)
 
 	for _, i := range []int{0, 1} {
-		if got := m.Embeds[i].Timestamp; got == nil || !got.Equal(now) {
+		if got := embeds[i].Timestamp; got == nil || !got.Equal(now) {
 			t.Errorf("embed %d timestamp = %v, want %v", i, got, now)
 		}
 	}
-	if want := time.Date(2026, 10, 7, 12, 0, 0, 0, time.UTC); m.Embeds[2].Timestamp == nil || !m.Embeds[2].Timestamp.Equal(want) {
-		t.Errorf("fixed timestamp = %v, want %v", m.Embeds[2].Timestamp, want)
+	if want := time.Date(2026, 10, 7, 12, 0, 0, 0, time.UTC); embeds[2].Timestamp == nil || !embeds[2].Timestamp.Equal(want) {
+		t.Errorf("fixed timestamp = %v, want %v", embeds[2].Timestamp, want)
 	}
-	if m.Embeds[3].Timestamp != nil {
-		t.Errorf("embed without a timestamp got %v", m.Embeds[3].Timestamp)
+	if embeds[3].Timestamp != nil {
+		t.Errorf("embed without a timestamp got %v", embeds[3].Timestamp)
+	}
+	if m.Embeds[0].Timestamp != nil {
+		t.Errorf("the saved message got the send time %v", m.Embeds[0].Timestamp)
 	}
 }
 
@@ -91,13 +94,12 @@ func TestMessageWithActionsTimestampNowRoundTrip(t *testing.T) {
 	}
 
 	now := time.Date(2026, 11, 8, 22, 3, 0, 0, time.UTC)
-	m := stored.Actions[0].Message
-	m.ApplySendTime(now)
-	if got := m.Embeds[0].Timestamp; got == nil || !got.Equal(now) {
+	embeds := stored.Actions[0].Message.DiscordEmbeds(now)
+	if got := embeds[0].Timestamp; got == nil || !got.Equal(now) {
 		t.Errorf("stored embed timestamp = %v, want %v", got, now)
 	}
-	if m.Embeds[1].Timestamp != nil {
-		t.Errorf("embed without a timestamp got %v", m.Embeds[1].Timestamp)
+	if embeds[1].Timestamp != nil {
+		t.Errorf("embed without a timestamp got %v", embeds[1].Timestamp)
 	}
 }
 

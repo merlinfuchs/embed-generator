@@ -282,7 +282,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				continue
 			}
 
-			data, err := m.responseMessage(*interaction.GuildID(), action, time.Now())
+			data, err := m.responseMessage(*interaction.GuildID(), action)
 			if err != nil {
 				return err
 			}
@@ -313,7 +313,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 
 			newMsg := i.Respond(discord.MessageCreate{
 				Content:         data.Content,
-				Embeds:          data.Embeds,
+				Embeds:          data.DiscordEmbeds(time.Now()),
 				Components:      components,
 				Flags:           data.Flags,
 				AllowedMentions: actionAllowedMentions(action, data.AllowedMentions),
@@ -342,7 +342,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				continue
 			}
 
-			data, err := m.responseMessage(*interaction.GuildID(), action, time.Now())
+			data, err := m.responseMessage(*interaction.GuildID(), action)
 			if err != nil {
 				return err
 			}
@@ -360,7 +360,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 
 			err = sendDM(restClient, interaction.User().ID, discord.MessageCreate{
 				Content:    data.Content,
-				Embeds:     data.Embeds,
+				Embeds:     data.DiscordEmbeds(time.Now()),
 				Components: components,
 				Flags:      data.Flags,
 			})
@@ -385,11 +385,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				continue
 			}
 
-			sentAt := time.Now()
-			if compInteraction, ok := interaction.(discord.ComponentInteraction); ok {
-				sentAt = compInteraction.Message.ID.Time()
-			}
-			data, err := m.responseMessage(*interaction.GuildID(), action, sentAt)
+			data, err := m.responseMessage(*interaction.GuildID(), action)
 			if err != nil {
 				return err
 			}
@@ -407,9 +403,15 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				}
 			}
 
+			// The edited message keeps the time it was first sent.
+			sentAt := time.Now()
+			if compInteraction, ok := interaction.(discord.ComponentInteraction); ok {
+				sentAt = compInteraction.Message.ID.Time()
+			}
+			embeds := data.DiscordEmbeds(sentAt)
 			newMsg := i.Respond(discord.MessageUpdate{
 				Content:    &data.Content,
-				Embeds:     &data.Embeds,
+				Embeds:     &embeds,
 				Components: &components,
 				Flags:      &data.Flags,
 			}, discord.InteractionResponseTypeUpdateMessage)
@@ -447,7 +449,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 					AllowedMentions: actionAllowedMentions(action, nil),
 				}
 			} else {
-				data, err := m.responseMessage(*interaction.GuildID(), action, time.Now())
+				data, err := m.responseMessage(*interaction.GuildID(), action)
 				if err != nil {
 					return err
 				}
@@ -463,7 +465,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 
 				msg = discord.MessageCreate{
 					Content:         data.Content,
-					Embeds:          data.Embeds,
+					Embeds:          data.DiscordEmbeds(time.Now()),
 					Components:      components,
 					Flags:           data.Flags,
 					AllowedMentions: actionAllowedMentions(action, data.AllowedMentions),
@@ -564,18 +566,12 @@ func templateErr(err error) error {
 }
 
 // responseMessage is the message an action responds with: the one it carries itself, or the saved
-// message it names, with sentAt as its time of sending.
-func (m *ActionHandler) responseMessage(guildID common.ID, action actions.Action, sentAt time.Time) (*actions.MessageWithActions, error) {
-	data := action.Message
-	if data == nil {
-		var err error
-		data, err = m.savedMessage(guildID, action.TargetID)
-		if err != nil {
-			return nil, err
-		}
+// message it names.
+func (m *ActionHandler) responseMessage(guildID common.ID, action actions.Action) (*actions.MessageWithActions, error) {
+	if action.Message != nil {
+		return action.Message, nil
 	}
-	data.ApplySendTime(sentAt)
-	return data, nil
+	return m.savedMessage(guildID, action.TargetID)
 }
 
 func (m *ActionHandler) savedMessage(guildID common.ID, id string) (*actions.MessageWithActions, error) {
