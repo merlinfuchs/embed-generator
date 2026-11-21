@@ -1,6 +1,7 @@
 import markdown from "simple-markdown";
 import highlight from "highlight.js/lib/common";
 import { formatDistanceToNow } from "date-fns";
+import { parseANSI } from "../util/ansi";
 
 // https://github.com/ItzDerock/discord-markdown-parser
 // https://github.com/brussell98/discord-markdown
@@ -34,6 +35,19 @@ function htmlTag(tagName, content, attributes, isClosed = true, state = {}) {
   return unclosedTag;
 }
 markdown.htmlTag = htmlTag;
+
+// One span per styled run of an ```ansi block, with a class per SGR code.
+function ansiToHTML(content, state) {
+  return parseANSI(content)
+    .map(({ text, style }) => {
+      const escaped = markdown.sanitizeText(text);
+      const codes = [].concat(style.st ?? [], style.fg ?? [], style.bg ?? []);
+      if (!codes.length) return escaped;
+      const classes = codes.map((code) => `ansi-${code}`).join(" ");
+      return htmlTag("span", escaped, { class: classes }, state);
+    })
+    .join("");
+}
 
 const titleRules = {
   newline: markdown.defaultRules.newline,
@@ -171,13 +185,29 @@ const bodyRules = {
     },
   }),
   codeBlock: Object.assign({}, markdown.defaultRules.codeBlock, {
-    match: markdown.inlineRegex(/^```(([a-z0-9-]+?)\n+)?\n*([\s\S]+?)\n*```/i),
+    // Discord swallows a single newline directly after the closing fence
+    match: markdown.inlineRegex(
+      /^```(([a-z0-9-]+?)\n+)?\n*([\s\S]+?)\n*```\n?/i,
+    ),
     parse: (capture, _parse, state) => ({
       lang: (capture[2] || "").trim(),
       content: capture[3] || "",
       inQuote: state.inQuote || false,
     }),
     html: (node, _output, state) => {
+      if (node.lang.toLowerCase() === "ansi")
+        return htmlTag(
+          "pre",
+          htmlTag(
+            "code",
+            ansiToHTML(node.content, state),
+            { class: "hljs ansi" },
+            state,
+          ),
+          null,
+          state,
+        );
+
       let code;
       if (node.lang && highlight.getLanguage(node.lang))
         code = highlight.highlight(node.content, {
@@ -204,13 +234,10 @@ const bodyRules = {
         htmlTag(
           "code",
           code ? code.value : markdown.sanitizeText(node.content),
-          {
-            class: `hljs${code ? ` ${code.language}` : ""}`,
-            style: "padding: 8px;",
-          },
+          { class: `hljs${code ? ` ${code.language}` : ""}` },
           state,
         ),
-        { style: "background-color: #2f3136; margin-top: 6px" },
+        null,
         state,
       );
     },
