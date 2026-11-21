@@ -4,6 +4,7 @@ import {
   DEFAULT_COLORED_TEXT,
   useColoredTextStore,
 } from "../state/coloredText";
+import { parseANSI } from "../util/ansi";
 import ToolsColoredText from "./ToolsColoredText";
 
 beforeEach(() => {
@@ -74,4 +75,50 @@ test("pasted plain text keeps its line breaks", () => {
 
   expect(editor.querySelector("br")).not.toBeNull();
   expect(storedText()).toBe("one\ntwo");
+});
+
+test("pasted styles that apply together are kept together", () => {
+  const editor = renderEditor();
+  const range = document.createRange();
+  range.selectNodeContents(editor);
+  window.getSelection()!.removeAllRanges();
+  window.getSelection()!.addRange(range);
+
+  const copied = "```ansi\n\x1b[1;3;4;9;31mall four\x1b[0m\n```";
+  fireEvent.paste(editor, { clipboardData: { getData: () => copied } });
+
+  for (const code of [1, 3, 4, 9, 31]) {
+    expect(editor.querySelector(`[data-ansi="${code}"]`)).toHaveTextContent(
+      "all four",
+    );
+  }
+  // What's copied reads back as the same style.
+  expect(parseANSI(storedText())[0]).toEqual({
+    text: "all four",
+    style: { st: [1, 3, 4, 9], fg: 31 },
+  });
+});
+
+test("the preview theme can be switched", () => {
+  const editor = renderEditor();
+  const root = editor.closest("[data-theme]");
+  expect(root).toHaveAttribute("data-theme", "ash");
+
+  fireEvent.click(screen.getByRole("button", { name: "Onyx" }));
+  expect(root).toHaveAttribute("data-theme", "onyx");
+});
+
+test("every text color, background color and style has a button", () => {
+  renderEditor();
+  for (const name of [
+    "Text color Black",
+    "Text color Gray",
+    "Background color Gold",
+    "Background color Teal",
+  ]) {
+    expect(screen.getByRole("button", { name })).toBeInTheDocument();
+  }
+  for (const name of ["Bold", "Italic", "Underline", "Strikethrough"]) {
+    expect(screen.getByRole("button", { name })).toBeInTheDocument();
+  }
 });

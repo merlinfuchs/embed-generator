@@ -1353,7 +1353,8 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   max-width: 100%;
 }
 
-/* ```ansi code blocks, same colors as Discord and the colored text tool */
+/* ```ansi code blocks, in the colors of Discord's Ash theme like the colored text tool. The
+   backgrounds are the same 8 colors as the text. */
 .discord-message code.ansi {
   color: #b9bbbe;
 }
@@ -1362,70 +1363,78 @@ I don't think this is used anywhere, but I'm keeping it here just in case.
   font-weight: 700;
 }
 
+.ansi-3 {
+  font-style: italic;
+}
+
 .ansi-4 {
   text-decoration: underline;
 }
 
+.ansi-9 {
+  text-decoration: line-through;
+}
+
 .ansi-30 {
-  color: #4f545c;
+  color: #000000;
 }
 
 .ansi-31 {
-  color: #dc322f;
+  color: #ec6361;
 }
 
 .ansi-32 {
-  color: #859900;
+  color: #45a366;
 }
 
 .ansi-33 {
-  color: #b58900;
+  color: #ce8100;
 }
 
 .ansi-34 {
-  color: #268bd2;
+  color: #4591ec;
 }
 
 .ansi-35 {
-  color: #d33682;
+  color: #f549c9;
 }
 
 .ansi-36 {
-  color: #2aa198;
+  color: #049faa;
 }
 
 .ansi-37 {
-  color: #ffffff;
+  color: #b6b7bc;
 }
 
 .ansi-40 {
-  background-color: #002b36;
+  background-color: #000000;
 }
 
 .ansi-41 {
-  background-color: #cb4b16;
+  background-color: #ec6361;
 }
 
 .ansi-42 {
-  background-color: #586e75;
+  background-color: #45a366;
 }
 
 .ansi-43 {
-  background-color: #657b83;
+  background-color: #ce8100;
 }
 
 .ansi-44 {
-  background-color: #839496;
+  background-color: #4591ec;
 }
 
 .ansi-45 {
-  background-color: #6c71c4;
+  background-color: #f549c9;
 }
 
 .ansi-46 {
-  background-color: #93a1a1;
+  background-color: #049faa;
 }
 
 .ansi-47 {
-  background-color: #fdf6e3;
+  background-color: #b6b7bc;
 }
