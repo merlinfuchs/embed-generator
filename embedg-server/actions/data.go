@@ -24,6 +24,10 @@ type MessageWithActions struct {
 	Components      []ComponentWithActions   `json:"components,omitempty"`
 	Actions         map[string]ActionSet     `json:"actions,omitempty"`
 	Flags           discord.MessageFlags     `json:"flags,omitempty"`
+
+	// timestampNow marks the embeds that show the time the message is sent instead of a fixed
+	// one, in the order of Embeds. ApplySendTime fills their timestamps in.
+	timestampNow []bool
 }
 
 // UnmarshalJSON reads embed timestamps itself. Imported and older saved messages carry
@@ -41,6 +45,8 @@ func (m *MessageWithActions) UnmarshalJSON(data []byte) error {
 		Embeds []struct {
 			embed
 			Timestamp string `json:"timestamp"`
+			// Shows the time of sending instead of Timestamp.
+			TimestampNow bool `json:"timestamp_now"`
 			// Only Discord's own "components" embeds carry these. They can't be sent, so they're ignored.
 			Components json.RawMessage `json:"components"`
 		} `json:"embeds"`
@@ -52,12 +58,15 @@ func (m *MessageWithActions) UnmarshalJSON(data []byte) error {
 	*m = MessageWithActions(raw.message)
 	m.Flags &^= discord.MessageFlagSuppressEmbeds
 	m.Embeds = nil
+	m.timestampNow = nil
 	if raw.Embeds != nil {
 		m.Embeds = make([]discord.Embed, 0, len(raw.Embeds))
+		m.timestampNow = make([]bool, 0, len(raw.Embeds))
 	}
 	for i, e := range raw.Embeds {
 		embed := discord.Embed(e.embed)
-		if e.Timestamp != "" {
+		m.timestampNow = append(m.timestampNow, e.TimestampNow)
+		if e.Timestamp != "" && !e.TimestampNow {
 			t, err := time.Parse(time.RFC3339, e.Timestamp)
 			if err != nil {
 				return fmt.Errorf("embed %d has an invalid timestamp %q", i+1, e.Timestamp)
@@ -67,6 +76,17 @@ func (m *MessageWithActions) UnmarshalJSON(data []byte) error {
 		m.Embeds = append(m.Embeds, embed)
 	}
 	return nil
+}
+
+// ApplySendTime sets the timestamp of every embed that shows the time of sending to now. Call it
+// right before the message is sent or edited, not when it is saved.
+func (m *MessageWithActions) ApplySendTime(now time.Time) {
+	for i, useNow := range m.timestampNow {
+		if useNow && i < len(m.Embeds) {
+			t := now.UTC()
+			m.Embeds[i].Timestamp = &t
+		}
+	}
 }
 
 // decodeError describes a value of the wrong type by its path in the message JSON, without the Go

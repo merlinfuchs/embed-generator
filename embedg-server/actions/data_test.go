@@ -42,6 +42,45 @@ func TestMessageWithActionsEmbedTimestamp(t *testing.T) {
 	}
 }
 
+func TestMessageWithActionsApplySendTime(t *testing.T) {
+	var m MessageWithActions
+	err := json.Unmarshal([]byte(`{"embeds": [
+		{"title": "now", "timestamp_now": true},
+		{"title": "now over fixed", "timestamp": "2026-10-07T12:00:00Z", "timestamp_now": true},
+		{"title": "fixed", "timestamp": "2026-10-07T12:00:00Z"},
+		{"title": "none"}
+	]}`), &m)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if m.Embeds[1].Timestamp != nil {
+		t.Errorf("a fixed timestamp is ignored when the time of sending is used, got %v", m.Embeds[1].Timestamp)
+	}
+
+	now := time.Date(2026, 11, 8, 22, 3, 0, 0, time.FixedZone("CST", -6*60*60))
+	m.ApplySendTime(now)
+
+	for _, i := range []int{0, 1} {
+		if got := m.Embeds[i].Timestamp; got == nil || !got.Equal(now) {
+			t.Errorf("embed %d timestamp = %v, want %v", i, got, now)
+		}
+	}
+	if want := time.Date(2026, 10, 7, 12, 0, 0, 0, time.UTC); m.Embeds[2].Timestamp == nil || !m.Embeds[2].Timestamp.Equal(want) {
+		t.Errorf("fixed timestamp = %v, want %v", m.Embeds[2].Timestamp, want)
+	}
+	if m.Embeds[3].Timestamp != nil {
+		t.Errorf("embed without a timestamp got %v", m.Embeds[3].Timestamp)
+	}
+
+	// Applying it again, as every send does, picks up the new time.
+	later := now.Add(time.Minute)
+	m.ApplySendTime(later)
+	if got := m.Embeds[0].Timestamp; !got.Equal(later) {
+		t.Errorf("second send timestamp = %v, want %v", got, later)
+	}
+}
+
 func TestMessageWithActionsDecodeError(t *testing.T) {
 	for in, want := range map[string]string{
 		`{"flags":"x"}`:                              "flags must be a number, got string",

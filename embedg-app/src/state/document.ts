@@ -71,6 +71,8 @@ export type EmbedNode = BaseNode & {
   description?: string;
   url?: string;
   timestamp?: string;
+  /** Shows the time of sending instead of `timestamp`. */
+  timestamp_now?: boolean;
   color?: number;
   footer?: EmbedFooter;
   author?: EmbedAuthor;

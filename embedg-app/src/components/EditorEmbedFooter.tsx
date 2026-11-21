@@ -7,12 +7,17 @@ import {
 } from "../state/document";
 import { patchGroup } from "../util/patch";
 import { nodeField, nodeScope } from "../state/validationError";
+import CheckBox from "./CheckBox";
 import Collapsable from "./Collapsable";
 import DateTimePicker from "./DateTimePicker";
 import EditorInput from "./EditorInput";
 import ValidationError from "./ValidationError";
 
-const FOOTER_FIELDS: FieldPath<EmbedNode>[] = ["footer", "timestamp"];
+const FOOTER_FIELDS: FieldPath<EmbedNode>[] = [
+  "footer",
+  "timestamp",
+  "timestamp_now",
+];
 
 interface Props {
   id: NodeId;
@@ -60,11 +65,29 @@ export default function EditorEmbedFooter({ id }: Props) {
                 Timestamp
               </div>
             </div>
-            <DateTimePicker
-              onChange={(v) => update<EmbedNode>(id, { timestamp: v })}
-              value={embed.timestamp}
-            />
+            {embed.timestamp_now ? (
+              <div className="h-[34px] flex items-center text-sm text-mist-400">
+                Shows the time the message is sent
+              </div>
+            ) : (
+              <DateTimePicker
+                onChange={(v) => update<EmbedNode>(id, { timestamp: v })}
+                value={embed.timestamp}
+              />
+            )}
             <ValidationError target={nodeField<EmbedNode>(id, "timestamp")} />
+            <div className="flex items-center space-x-2 mt-2">
+              <CheckBox
+                label="Use the time of sending as the timestamp"
+                checked={embed.timestamp_now ?? false}
+                onChange={(v) =>
+                  update<EmbedNode>(id, { timestamp_now: v || undefined })
+                }
+              />
+              <div className="text-sm font-medium text-mist-300">
+                Time of sending
+              </div>
+            </div>
           </div>
         </div>
       </div>
