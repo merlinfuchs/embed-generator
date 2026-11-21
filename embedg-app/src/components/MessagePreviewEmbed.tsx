@@ -16,16 +16,14 @@ export default function MessagePreviewEmbed({
   const providerUrl = safeHref(embed.provider?.url);
   const authorUrl = safeHref(embed.author?.url);
   const titleUrl = safeHref(embed.url);
-  let timestamp = "";
   // The time of sending is only known once the message is sent, so the preview shows now.
-  if (embed.timestamp_now) {
-    timestamp = format(new Date(), "dd/MM/yyyy");
-  } else if (embed.timestamp) {
-    const date = parseISO(embed.timestamp);
-    if (!Number.isNaN(date.getTime())) {
-      timestamp = format(date, "dd/MM/yyyy");
-    }
-  }
+  const date = embed.timestamp_now
+    ? new Date()
+    : embed.timestamp
+      ? parseISO(embed.timestamp)
+      : undefined;
+  const timestamp =
+    date && !Number.isNaN(date.getTime()) ? format(date, "dd/MM/yyyy") : "";
   return (
     <div key={embed.id} className="discord-embed overflow-hidden">
       <div

@@ -65,11 +65,7 @@ export default function EditorEmbedFooter({ id }: Props) {
                 Timestamp
               </div>
             </div>
-            {embed.timestamp_now ? (
-              <div className="h-[34px] flex items-center text-sm text-mist-400">
-                Shows the time the message is sent
-              </div>
-            ) : (
+            {!embed.timestamp_now && (
               <DateTimePicker
                 onChange={(v) => update<EmbedNode>(id, { timestamp: v })}
                 value={embed.timestamp}
@@ -78,7 +74,7 @@ export default function EditorEmbedFooter({ id }: Props) {
             <ValidationError target={nodeField<EmbedNode>(id, "timestamp")} />
             <div className="flex items-center space-x-2 mt-2">
               <CheckBox
-                label="Use the time of sending as the timestamp"
+                label="Time of sending"
                 checked={embed.timestamp_now ?? false}
                 onChange={(v) =>
                   update<EmbedNode>(id, { timestamp_now: v || undefined })

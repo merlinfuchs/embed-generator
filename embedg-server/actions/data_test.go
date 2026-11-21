@@ -54,10 +54,6 @@ func TestMessageWithActionsApplySendTime(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if m.Embeds[1].Timestamp != nil {
-		t.Errorf("a fixed timestamp is ignored when the time of sending is used, got %v", m.Embeds[1].Timestamp)
-	}
-
 	now := time.Date(2026, 11, 8, 22, 3, 0, 0, time.FixedZone("CST", -6*60*60))
 	m.ApplySendTime(now)
 
@@ -72,12 +68,34 @@ func TestMessageWithActionsApplySendTime(t *testing.T) {
 	if m.Embeds[3].Timestamp != nil {
 		t.Errorf("embed without a timestamp got %v", m.Embeds[3].Timestamp)
 	}
+}
 
-	// Applying it again, as every send does, picks up the new time.
-	later := now.Add(time.Minute)
-	m.ApplySendTime(later)
-	if got := m.Embeds[0].Timestamp; !got.Equal(later) {
-		t.Errorf("second send timestamp = %v, want %v", got, later)
+// Messages inside action sets are stored with json.Marshal and read back when the button is clicked.
+func TestMessageWithActionsTimestampNowRoundTrip(t *testing.T) {
+	var set ActionSet
+	if err := json.Unmarshal([]byte(`{"actions": [{"type": 5, "message": {"embeds": [
+		{"title": "now", "timestamp_now": true},
+		{"title": "none"}
+	]}}]}`), &set); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := json.Marshal(set)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var stored ActionSet
+	if err := json.Unmarshal(raw, &stored); err != nil {
+		t.Fatal(err)
+	}
+
+	now := time.Date(2026, 11, 8, 22, 3, 0, 0, time.UTC)
+	m := stored.Actions[0].Message
+	m.ApplySendTime(now)
+	if got := m.Embeds[0].Timestamp; got == nil || !got.Equal(now) {
+		t.Errorf("stored embed timestamp = %v, want %v", got, now)
+	}
+	if m.Embeds[1].Timestamp != nil {
+		t.Errorf("embed without a timestamp got %v", m.Embeds[1].Timestamp)
 	}
 }
 

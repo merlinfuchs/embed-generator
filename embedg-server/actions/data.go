@@ -44,9 +44,8 @@ func (m *MessageWithActions) UnmarshalJSON(data []byte) error {
 		message
 		Embeds []struct {
 			embed
-			Timestamp string `json:"timestamp"`
-			// Shows the time of sending instead of Timestamp.
-			TimestampNow bool `json:"timestamp_now"`
+			Timestamp    string `json:"timestamp"`
+			TimestampNow bool   `json:"timestamp_now"`
 			// Only Discord's own "components" embeds carry these. They can't be sent, so they're ignored.
 			Components json.RawMessage `json:"components"`
 		} `json:"embeds"`
@@ -58,15 +57,12 @@ func (m *MessageWithActions) UnmarshalJSON(data []byte) error {
 	*m = MessageWithActions(raw.message)
 	m.Flags &^= discord.MessageFlagSuppressEmbeds
 	m.Embeds = nil
-	m.timestampNow = nil
 	if raw.Embeds != nil {
 		m.Embeds = make([]discord.Embed, 0, len(raw.Embeds))
-		m.timestampNow = make([]bool, 0, len(raw.Embeds))
 	}
 	for i, e := range raw.Embeds {
 		embed := discord.Embed(e.embed)
-		m.timestampNow = append(m.timestampNow, e.TimestampNow)
-		if e.Timestamp != "" && !e.TimestampNow {
+		if e.Timestamp != "" {
 			t, err := time.Parse(time.RFC3339, e.Timestamp)
 			if err != nil {
 				return fmt.Errorf("embed %d has an invalid timestamp %q", i+1, e.Timestamp)
@@ -74,16 +70,35 @@ func (m *MessageWithActions) UnmarshalJSON(data []byte) error {
 			embed.Timestamp = &t
 		}
 		m.Embeds = append(m.Embeds, embed)
+		m.timestampNow = append(m.timestampNow, e.TimestampNow)
 	}
 	return nil
+}
+
+// MarshalJSON writes timestamp_now back onto the embeds, so messages stored inside action sets
+// keep showing the time of sending.
+func (m MessageWithActions) MarshalJSON() ([]byte, error) {
+	type message MessageWithActions
+	type embed struct {
+		discord.Embed
+		TimestampNow bool `json:"timestamp_now,omitempty"`
+	}
+	raw := struct {
+		message
+		Embeds []embed `json:"embeds,omitempty"`
+	}{message: message(m)}
+	for i, e := range m.Embeds {
+		raw.Embeds = append(raw.Embeds, embed{e, i < len(m.timestampNow) && m.timestampNow[i]})
+	}
+	return json.Marshal(raw)
 }
 
 // ApplySendTime sets the timestamp of every embed that shows the time of sending to now. Call it
 // right before the message is sent or edited, not when it is saved.
 func (m *MessageWithActions) ApplySendTime(now time.Time) {
+	t := now.UTC()
 	for i, useNow := range m.timestampNow {
-		if useNow && i < len(m.Embeds) {
-			t := now.UTC()
+		if useNow {
 			m.Embeds[i].Timestamp = &t
 		}
 	}
