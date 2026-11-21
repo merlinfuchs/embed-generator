@@ -82,14 +82,14 @@ export const pages: Page[] = [
     path: "/tools",
     title: "Free Discord Tools | Embed Generator",
     description:
-      "Free Discord tools: a colored text generator, a timestamp generator, embed links that unfurl into rich previews and a webhook info lookup. No account needed.",
+      "Free Discord tools: a colored text generator, a timestamp generator, embed links that unfurl into rich previews, a snowflake decoder and a webhook info lookup. No account needed.",
     heading: "Free Discord Tools",
     preview: {
       byline: "Embed Generator · Tools",
       open: "All tools",
       docs: `${ORIGIN}/docs/tools`,
     },
-    text: "Besides the message editor, Embed Generator has a few small tools: a colored text generator for ANSI code blocks, a timestamp generator for times that show in everyone's own timezone, embed links that turn into a rich preview when posted, and a lookup that shows who created a webhook.",
+    text: "Besides the message editor, Embed Generator has a few small tools: a colored text generator for ANSI code blocks, a timestamp generator for times that show in everyone's own timezone, embed links that turn into a rich preview when posted, a decoder that shows when a Discord ID was created, and a lookup that shows who created a webhook.",
   },
   {
     file: "tools/colored-text",
@@ -120,6 +120,16 @@ export const pages: Page[] = [
     heading: "Discord Timestamp Generator",
     preview: toolPreview,
     text: "A Discord timestamp shows the same moment in every reader's own timezone and language. Pick a date, time and timezone, and copy the format you want into any Discord message.",
+  },
+  {
+    file: "tools/snowflake",
+    path: "/tools/snowflake",
+    title: "Discord Snowflake Decoder | Embed Generator",
+    description:
+      "Paste a Discord ID to see when the user, server, channel or message was created, or turn a date into an ID. Works in your browser, no account needed.",
+    heading: "Discord Snowflake Decoder",
+    preview: toolPreview,
+    text: "Every Discord ID holds the moment it was created. Paste a user, server, channel, role or message ID to see its creation date, or pick a date to get the first ID from that time.",
   },
   {
     file: "tools/webhook-info",
