@@ -385,8 +385,11 @@ const bodyRules = {
           minute: "2-digit",
           second: "2-digit",
         }),
-        // No fixed field order: the viewer's locale decides the layout.
-        d: date.toLocaleDateString([], { dateStyle: "short" }),
+        d: date.toLocaleDateString([], {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }),
         D: date.toLocaleDateString([], {
           weekday: "long",
           year: "numeric",
