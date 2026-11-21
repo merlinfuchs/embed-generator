@@ -1,7 +1,6 @@
 import { expect, test } from "vitest";
 import {
   decodeSnowflake,
-  formatAge,
   parseSnowflake,
   snowflakeBits,
   snowflakeFromTime,
@@ -61,10 +60,4 @@ test("the bits are grouped as 42, 5, 5 and 12", () => {
   expect(groups.map((g) => g.length)).toEqual([42, 5, 5, 12]);
   expect(groups.join("")).toBe(docsId.toString(2).padStart(64, "0"));
   expect(Number.parseInt(groups[3], 2)).toBe(7);
-});
-
-test("ages count in whole units in both directions", () => {
-  const now = 1_000_000_000_000;
-  expect(formatAge(now - 2 * 86400_000 - 5000, now)).toBe("2 days ago");
-  expect(formatAge(now + 3 * 3600_000 + 59_000, now)).toBe("in 3 hours");
 });

@@ -1,43 +1,12 @@
-import { CheckIcon } from "@heroicons/react/20/solid";
-import { ClipboardDocumentIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
+import { formatRelative } from "../util/relativeTime";
 import {
   decodeSnowflake,
-  formatAge,
   parseSnowflake,
   snowflakeBits,
   snowflakeFromTime,
 } from "../util/snowflake";
-
-function CopyButton({ text, label }: { text: string; label: string }) {
-  const [copied, setCopied] = useState(false);
-
-  function copy() {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1000);
-    });
-  }
-
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      onClick={copy}
-      className="flex items-center rounded-lg bg-ink-900 hover:bg-ink-600 text-mist-100 overflow-hidden text-left cursor-pointer max-w-full"
-    >
-      <span className="bg-azure-500 hover:bg-azure-400 self-stretch flex items-center px-2.5 flex-none">
-        {copied ? (
-          <CheckIcon className="h-4 w-4" />
-        ) : (
-          <ClipboardDocumentIcon className="h-4 w-4" />
-        )}
-      </span>
-      <code className="px-3 py-1.5 text-sm font-mono truncate">{text}</code>
-    </button>
-  );
-}
+import CopyCodeButton from "./CopyCodeButton";
 
 function Row({
   name,
@@ -108,17 +77,20 @@ function IdToDate() {
               timeStyle: "long",
             }).format(date)}
             <div className="text-mist-400 text-sm">
-              {formatAge(parts.timestamp, Date.now())}
+              {formatRelative(unix, Math.floor(Date.now() / 1000))}
             </div>
           </Row>
           <Row name="Created (UTC)">
-            <CopyButton text={date.toISOString()} label="Copy UTC date" />
+            <CopyCodeButton text={date.toISOString()} label="Copy UTC date" />
           </Row>
           <Row name="Unix timestamp" hint="Seconds since 1970">
-            <CopyButton text={String(unix)} label="Copy Unix timestamp" />
+            <CopyCodeButton text={String(unix)} label="Copy Unix timestamp" />
           </Row>
           <Row name="Discord timestamp" hint="Paste it into a message">
-            <CopyButton text={`<t:${unix}:F>`} label="Copy Discord timestamp" />
+            <CopyCodeButton
+              text={`<t:${unix}:F>`}
+              label="Copy Discord timestamp"
+            />
           </Row>
           <Row name="Worker ID">{parts.worker}</Row>
           <Row name="Process ID">{parts.process}</Row>
@@ -176,14 +148,14 @@ function DateToId() {
 
       {id === undefined ? (
         <div className="text-red">
-          Pick a date from 1 January 2015 on, that's when Discord's IDs start.
+          Pick a date from January 1, 2015 on. Discord's IDs start there.
         </div>
       ) : (
         <Row
           name="First ID at that time"
           hint="Use it as before or after in the API"
         >
-          <CopyButton text={id.toString()} label="Copy ID" />
+          <CopyCodeButton text={id.toString()} label="Copy ID" />
         </Row>
       )}
     </div>

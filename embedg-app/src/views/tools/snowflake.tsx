@@ -62,7 +62,7 @@ export default function SnowflakeToolView() {
           </h2>
           <p className="text-mist-400 font-light text-sm leading-relaxed">
             Discord IDs are called snowflakes. Each one is a 64-bit number. The
-            first 42 bits are the milliseconds since 1 January 2015, the start
+            first 42 bits are the milliseconds since January 1, 2015, the start
             of Discord's own calendar. The next 10 bits say which worker and
             process made the ID, and the last 12 count the IDs made in the same
             millisecond. That's why IDs from later times are always larger.
