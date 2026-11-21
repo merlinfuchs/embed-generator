@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 // @ts-expect-error - markdown.js is untyped
 import { toHTML } from "./markdown";
+import { formatTimestamp } from "../util/timestamp";
 
 describe("toHTML", () => {
   it("escapes HTML in subtext", () => {
@@ -62,5 +63,21 @@ describe("toHTML", () => {
 
   it("trims spaces around the whole text", () => {
     expect(toHTML("  hello  ")).toBe("hello");
+  });
+
+  it("shows timestamps like the timestamp generator, f when the style is missing or unknown", () => {
+    const unix = 1794291300;
+    const shown = (markdown: string) =>
+      toHTML(markdown).match(
+        /<span class="discord-timestamp">(.*)<\/span>/,
+      )?.[1];
+
+    for (const style of ["d", "D", "t", "T", "f", "F", "s", "S"] as const) {
+      expect(shown(`<t:${unix}:${style}>`)).toBe(
+        formatTimestamp(unix, style, unix),
+      );
+    }
+    expect(shown(`<t:${unix}>`)).toBe(formatTimestamp(unix, "f", unix));
+    expect(shown(`<t:${unix}:x>`)).toBe(formatTimestamp(unix, "f", unix));
   });
 });
