@@ -253,7 +253,7 @@ function FieldOptions({
   update: (values: Partial<FormFieldWire>) => void;
 }) {
   const options = field.options ?? [];
-  const { maxValues: multi, maxOptions = 0 } = fieldType(field);
+  const { maxOptions = 0 } = fieldType(field);
 
   function set(i: number, values: Partial<FormFieldOptionWire>) {
     const next = [...options];
@@ -362,13 +362,6 @@ function FieldOptions({
         >
           Add Option
         </button>
-      )}
-      {multi && (
-        <div className="mt-1 text-xs text-mist-400">
-          {field.type === "select"
-            ? "Members can pick up to Max Values of these."
-            : "Leave Max Values empty to allow picking all of them."}
-        </div>
       )}
     </div>
   );
@@ -534,40 +527,6 @@ function FormFieldCard({
         }
       >
         <div className="space-y-4">
-          <EditorInput
-            label="Label"
-            type="text"
-            maxLength={45}
-            value={field.label}
-            onChange={setLabel}
-          />
-          <EditorInput
-            label="Variable Name"
-            type="text"
-            maxLength={MAX_KEY_LENGTH}
-            description={variableDescription(field)}
-            value={field.key}
-            onChange={(key) => update({ key: key.toLowerCase() })}
-          />
-          {type.placeholder && (
-            <EditorInput
-              label="Placeholder"
-              type="text"
-              maxLength={100}
-              value={field.placeholder ?? ""}
-              onChange={(placeholder) => update({ placeholder })}
-            />
-          )}
-          {text && (
-            <EditorInput
-              label="Preset Value"
-              type={field.paragraph ? "textarea" : "text"}
-              maxLength={field.max_length || 4000}
-              description="What the field contains when the form opens."
-              value={field.value ?? ""}
-              onChange={(value) => update({ value })}
-            />
-          )}
           <div className="flex flex-wrap gap-3">
             <div className="flex-none">
               <div className="mb-1.5 flex">
@@ -635,37 +594,78 @@ function FormFieldCard({
                 />
               </div>
             )}
-            {type.maxValues ? (
-              <EditorInput
-                className="w-32"
-                label="Max Values"
-                type="text"
-                props={{ inputMode: "numeric" }}
-                description="How many can be picked."
-                value={field.max_values ? String(field.max_values) : ""}
-                onChange={setMaxValues}
-              />
-            ) : text ? (
-              <>
-                <EditorInput
-                  className="w-32"
-                  label="Min Length"
-                  type="text"
-                  props={{ inputMode: "numeric" }}
-                  value={field.min_length ? String(field.min_length) : ""}
-                  onChange={(v) => setNumber("min_length", v)}
-                />
-                <EditorInput
-                  className="w-32"
-                  label="Max Length"
-                  type="text"
-                  props={{ inputMode: "numeric" }}
-                  value={field.max_length ? String(field.max_length) : ""}
-                  onChange={(v) => setNumber("max_length", v)}
-                />
-              </>
-            ) : null}
           </div>
+          <EditorInput
+            label="Label"
+            type="text"
+            maxLength={45}
+            value={field.label}
+            onChange={setLabel}
+          />
+          <EditorInput
+            label="Variable Name"
+            type="text"
+            maxLength={MAX_KEY_LENGTH}
+            description={variableDescription(field)}
+            value={field.key}
+            onChange={(key) => update({ key: key.toLowerCase() })}
+          />
+          {type.placeholder && (
+            <EditorInput
+              label="Placeholder"
+              type="text"
+              maxLength={100}
+              value={field.placeholder ?? ""}
+              onChange={(placeholder) => update({ placeholder })}
+            />
+          )}
+          {text && (
+            <EditorInput
+              label="Preset Value"
+              type={field.paragraph ? "textarea" : "text"}
+              maxLength={field.max_length || 4000}
+              description="What the field contains when the form opens."
+              value={field.value ?? ""}
+              onChange={(value) => update({ value })}
+            />
+          )}
+          {(type.maxValues || text) && (
+            <div className="flex flex-wrap gap-3">
+              {type.maxValues ? (
+                <EditorInput
+                  className="w-32"
+                  label="Max Values"
+                  type="text"
+                  props={{
+                    inputMode: "numeric",
+                    // Discord picks 1 by default, and checkboxes allow all of them.
+                    placeholder: field.type === "checkboxes" ? "All" : "1",
+                  }}
+                  value={field.max_values ? String(field.max_values) : ""}
+                  onChange={setMaxValues}
+                />
+              ) : text ? (
+                <>
+                  <EditorInput
+                    className="w-32"
+                    label="Min Length"
+                    type="text"
+                    props={{ inputMode: "numeric", placeholder: "0" }}
+                    value={field.min_length ? String(field.min_length) : ""}
+                    onChange={(v) => setNumber("min_length", v)}
+                  />
+                  <EditorInput
+                    className="w-32"
+                    label="Max Length"
+                    type="text"
+                    props={{ inputMode: "numeric", placeholder: "4000" }}
+                    value={field.max_length ? String(field.max_length) : ""}
+                    onChange={(v) => setNumber("max_length", v)}
+                  />
+                </>
+              ) : null}
+            </div>
+          )}
           {type.kind === "options" && (
             <FieldOptions field={field} update={update} />
           )}
