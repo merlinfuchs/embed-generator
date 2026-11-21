@@ -22,9 +22,8 @@ export default function EditorUndoButtons() {
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      // Cmd on macOS, where ctrl isn't the modifier for undo.
-      // A modal edits something else, like a response message.
-      if ((!e.ctrlKey && !e.metaKey) || modalOpen()) return;
+      // Cmd on macOS. A modal edits something else, like a response message.
+      if (!(e.ctrlKey || e.metaKey) || modalOpen()) return;
 
       if (e.key === "z" || e.key === "Z") {
         e.preventDefault();
