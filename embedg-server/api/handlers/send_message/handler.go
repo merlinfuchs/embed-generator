@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"log/slog"
-	"time"
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
@@ -100,7 +99,7 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 		return handlers.BadRequest("invalid_template", fmt.Sprintf("Failed to render a variable in the message: %v", err))
 	}
 
-	data.ApplySendTime(time.Now())
+	data.ApplySendTime(actions.SendTime(req.MessageID))
 
 	params := discord.WebhookMessageCreate{
 		Username:        data.Username,
@@ -181,7 +180,7 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 		return invalidMessage(err)
 	}
 
-	data.ApplySendTime(time.Now())
+	data.ApplySendTime(actions.SendTime(req.MessageID))
 
 	if req.WebhookPlatform == wire.WebhookPlatformFluxer {
 		return h.sendToFluxerWebhook(c, req, data)

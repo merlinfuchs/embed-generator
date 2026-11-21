@@ -683,7 +683,11 @@ function embedToContainer(embed: MessageEmbed) {
     lines.push(`**${field.name}**\n${field.value}`);
   }
 
-  const time = embed.timestamp ? Date.parse(embed.timestamp) : Number.NaN;
+  // A container can't show the time of sending, and the fixed timestamp it replaced is stale.
+  const time =
+    embed.timestamp && !embed.timestamp_now
+      ? Date.parse(embed.timestamp)
+      : Number.NaN;
   const footer = [
     embed.footer?.text,
     Number.isNaN(time) ? undefined : `<t:${Math.floor(time / 1000)}:f>`,

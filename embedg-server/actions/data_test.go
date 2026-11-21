@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/snowflake/v2"
+	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 )
 
 func TestMessageWithActionsEmbedTimestamp(t *testing.T) {
@@ -166,5 +168,16 @@ func TestCanSendToOtherChannels(t *testing.T) {
 				t.Fatalf("CanSendToOtherChannels = %v, want %v", got, test.want)
 			}
 		})
+	}
+}
+
+func TestSendTime(t *testing.T) {
+	sent := time.Date(2026, 11, 2, 9, 30, 0, 0, time.UTC)
+	edited := common.NullID{Valid: true, ID: snowflake.New(sent)}
+	if got := SendTime(edited); !got.Equal(sent) {
+		t.Errorf("edit send time = %v, want %v", got, sent)
+	}
+	if got := SendTime(common.NullID{}); time.Since(got) > time.Minute {
+		t.Errorf("new message send time = %v, want now", got)
 	}
 }

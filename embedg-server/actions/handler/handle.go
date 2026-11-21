@@ -282,7 +282,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				continue
 			}
 
-			data, err := m.responseMessage(*interaction.GuildID(), action)
+			data, err := m.responseMessage(*interaction.GuildID(), action, time.Now())
 			if err != nil {
 				return err
 			}
@@ -342,7 +342,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				continue
 			}
 
-			data, err := m.responseMessage(*interaction.GuildID(), action)
+			data, err := m.responseMessage(*interaction.GuildID(), action, time.Now())
 			if err != nil {
 				return err
 			}
@@ -385,7 +385,11 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				continue
 			}
 
-			data, err := m.responseMessage(*interaction.GuildID(), action)
+			sentAt := time.Now()
+			if compInteraction, ok := interaction.(discord.ComponentInteraction); ok {
+				sentAt = compInteraction.Message.ID.Time()
+			}
+			data, err := m.responseMessage(*interaction.GuildID(), action, sentAt)
 			if err != nil {
 				return err
 			}
@@ -443,7 +447,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 					AllowedMentions: actionAllowedMentions(action, nil),
 				}
 			} else {
-				data, err := m.responseMessage(*interaction.GuildID(), action)
+				data, err := m.responseMessage(*interaction.GuildID(), action, time.Now())
 				if err != nil {
 					return err
 				}
@@ -560,8 +564,8 @@ func templateErr(err error) error {
 }
 
 // responseMessage is the message an action responds with: the one it carries itself, or the saved
-// message it names.
-func (m *ActionHandler) responseMessage(guildID common.ID, action actions.Action) (*actions.MessageWithActions, error) {
+// message it names, with sentAt as its time of sending.
+func (m *ActionHandler) responseMessage(guildID common.ID, action actions.Action, sentAt time.Time) (*actions.MessageWithActions, error) {
 	data := action.Message
 	if data == nil {
 		var err error
@@ -570,7 +574,7 @@ func (m *ActionHandler) responseMessage(guildID common.ID, action actions.Action
 			return nil, err
 		}
 	}
-	data.ApplySendTime(time.Now())
+	data.ApplySendTime(sentAt)
 	return data, nil
 }
 

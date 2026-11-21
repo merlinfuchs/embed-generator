@@ -294,7 +294,7 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 		return 0, skipWith("Template error: "+err.Error(), err)
 	}
 
-	data.ApplySendTime(time.Now())
+	data.ApplySendTime(actions.SendTime(scheduledMessage.MessageID))
 
 	params := discord.WebhookMessageCreate{
 		Username:        data.Username,

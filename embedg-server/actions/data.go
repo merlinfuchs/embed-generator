@@ -93,10 +93,19 @@ func (m MessageWithActions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(raw)
 }
 
-// ApplySendTime sets the timestamp of every embed that shows the time of sending to now. Call it
-// right before the message is sent or edited, not when it is saved.
-func (m *MessageWithActions) ApplySendTime(now time.Time) {
-	t := now.UTC()
+// SendTime is the time of sending for a message: now for a new one, or the time the edited message
+// was first sent, which its ID holds. Editing a message doesn't move its timestamp.
+func SendTime(editedID common.NullID) time.Time {
+	if editedID.Valid {
+		return editedID.ID.Time()
+	}
+	return time.Now()
+}
+
+// ApplySendTime sets the timestamp of every embed that shows the time of sending to sentAt.
+// Call it right before the message is sent or edited, not when it is saved.
+func (m *MessageWithActions) ApplySendTime(sentAt time.Time) {
+	t := sentAt.UTC()
 	for i, useNow := range m.timestampNow {
 		if useNow {
 			m.Embeds[i].Timestamp = &t

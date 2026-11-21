@@ -77,7 +77,12 @@ export default function EditorEmbedFooter({ id }: Props) {
                 label="Time of sending"
                 checked={embed.timestamp_now ?? false}
                 onChange={(v) =>
-                  update<EmbedNode>(id, { timestamp_now: v || undefined })
+                  update<EmbedNode>(
+                    id,
+                    v
+                      ? { timestamp_now: true, timestamp: undefined }
+                      : { timestamp_now: undefined },
+                  )
                 }
               />
               <div className="text-sm font-medium text-mist-300">
