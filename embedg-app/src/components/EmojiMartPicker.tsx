@@ -8,23 +8,24 @@ import { Data, SearchIndex } from "emoji-mart";
 // picker show the custom emojis of whichever server was selected when it was
 // first opened. We swap the custom category in that list ourselves, before the
 // picker mounts and initializes.
-let previousEmojiIds: string[] = [];
+let previousCustom: any[] = [];
 
-function syncCustomCategories(custom: any[]) {
-  if (!Data?.originalCategories) return;
+export function syncCustomCategories(custom: any[]) {
+  if (custom === previousCustom) return;
 
-  for (const id of previousEmojiIds) {
-    delete Data.emojis[id];
+  // Before the first init there is nothing to swap, but the emojis it registers
+  // still have to be removed on the next server switch.
+  if (Data?.originalCategories) {
+    for (const category of previousCustom) {
+      for (const emoji of category.emojis) delete Data.emojis[emoji.id];
+    }
+    Data.originalCategories = [
+      ...Data.originalCategories.filter((category: any) => !category.name),
+      ...custom,
+    ];
+    SearchIndex.reset();
   }
-  previousEmojiIds = custom.flatMap((category) =>
-    category.emojis.map((emoji: any) => emoji.id),
-  );
-
-  Data.originalCategories = [
-    ...Data.originalCategories.filter((category: any) => !category.name),
-    ...custom,
-  ];
-  SearchIndex.reset();
+  previousCustom = custom;
 }
 
 export default function EmojiMartPicker(props: any) {
