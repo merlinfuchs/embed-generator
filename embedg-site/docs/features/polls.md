@@ -13,7 +13,7 @@ A poll lets members vote on a question straight from the message. Embed Generato
 2. Open the **Poll** section and click **Add Poll**.
 3. Write the question and the answers. Each answer can have an emoji next to it.
 4. Choose how long the poll stays open, and whether members can pick more than one answer.
-5. Send the message. A poll doesn't need any content or embeds, it can be the whole message.
+5. Send the message. A poll can be the whole message, without content or embeds.
 
 The preview shows the poll the way Discord does before anyone has voted.
 
@@ -21,7 +21,7 @@ The preview shows the poll the way Discord does before anyone has voted.
 
 - A question of up to 300 characters.
 - Up to 10 answers, each up to 55 characters.
-- A poll stays open for 1 hour up to 32 days. The editor offers the same choices as Discord, from 1 hour to 2 weeks, plus 32 days.
+- A poll stays open for 1 hour to 32 days.
 - One poll per message.
 
 ## Editing a message with a poll
@@ -32,6 +32,4 @@ Discord can't change a poll once the message is sent. Editing the message change
 
 ## Where polls don't work
 
-- Components V2 messages, which Discord doesn't allow a poll in.
-- [Fluxer](./fluxer) webhooks. The editor asks you to remove the poll before sending to Fluxer.
-- Replies that a button, select menu or command sends, as Discord has no poll in those.
+Discord doesn't allow a poll in a [Components V2](./components-v2) message. [Fluxer](./fluxer) doesn't support polls yet, so the editor asks you to remove the poll before sending there. Replies that a button, select menu or custom command sends can't have a poll either.

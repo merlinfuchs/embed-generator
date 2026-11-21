@@ -28,7 +28,7 @@ test("shows the question, the answers and how long the poll stays open", () => {
   expect(screen.getByText(/0 votes/)).toHaveTextContent("24 hours left");
   expect(screen.getByAltText("pasta")).toHaveAttribute(
     "src",
-    "https://cdn.discordapp.com/emojis/123.webp",
+    "https://cdn.discordapp.com/emojis/123.png",
   );
 });
 

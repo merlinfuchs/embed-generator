@@ -19,7 +19,7 @@ import Collapsable from "./Collapsable";
 import EditorComponentEmojiSelect from "./EditorComponentEmojiSelect";
 import EditorInput from "./EditorInput";
 
-/** The durations Discord's own poll creator offers, in hours, and the longest the API takes. */
+/** Durations to pick from, in hours, up to the longest Discord takes. */
 const DURATIONS: { hours: number; label: string }[] = [
   { hours: 1, label: "1 hour" },
   { hours: 4, label: "4 hours" },
@@ -113,17 +113,20 @@ function PollFields({
               // Answers have no identity of their own, so removing one reuses the rows after it.
               // biome-ignore lint/suspicious/noArrayIndexKey: see above
               key={i}
-              className="flex space-x-3 items-end"
+              className="flex space-x-3"
             >
-              <EditorComponentEmojiSelect
-                compact
-                emoji={answer.poll_media.emoji}
-                onChange={(emoji) =>
-                  setAnswer(i, {
-                    poll_media: { ...answer.poll_media, emoji },
-                  })
-                }
-              />
+              {/* Lined up with the input, below its label. */}
+              <div className="mt-6.5">
+                <EditorComponentEmojiSelect
+                  compact
+                  emoji={answer.poll_media.emoji}
+                  onChange={(emoji) =>
+                    setAnswer(i, {
+                      poll_media: { ...answer.poll_media, emoji },
+                    })
+                  }
+                />
+              </div>
               <EditorInput
                 label={`Answer ${i + 1}`}
                 value={answer.poll_media.text}
@@ -138,7 +141,7 @@ function PollFields({
                 type="button"
                 aria-label={`Remove answer ${i + 1}`}
                 disabled={poll.answers.length <= 1}
-                className="flex-none h-10 w-10 flex items-center justify-center rounded-lg text-mist-400 hover:text-white hover:bg-ink-700 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-mist-400 transition-colors"
+                className="flex-none mt-6.5 h-10.5 w-10 flex items-center justify-center rounded-lg text-mist-400 hover:text-white hover:bg-ink-700 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-mist-400 transition-colors"
                 onClick={() =>
                   setPoll({
                     ...poll,
@@ -213,9 +216,8 @@ function PollFields({
       </div>
 
       <div className="text-mist-400 text-sm font-light">
-        Discord can't change a poll once the message is sent, so editing a
-        message leaves its poll as it was. Polls can't be used with Components
-        V2.
+        Discord doesn't let you change a poll after it's sent. Editing the
+        message keeps the poll it was sent with.
       </div>
 
       <button

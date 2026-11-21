@@ -1,9 +1,11 @@
+version: "3.8"
+
 services:
   postgres:
     image: postgres
     restart: always
     volumes:
-      - embedg-postgres:/var/lib/postgresql/data
+      - embedg-local-postgres:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: postgres
       POSTGRES_DB: embedg
@@ -18,52 +20,36 @@ services:
 
   minio:
     image: pgsty/silo
-    restart: always
     command: server --console-address ":9001" /data
     ports:
-      # Kite's MinIO already uses 9000/9001 on the host
-      - "${MINIO_HOST_PORT:-9002}:9000"
-      - "${MINIO_CONSOLE_HOST_PORT:-9003}:9001"
+      - "9000:9000"
+      - "9001:9001"
     environment:
-      MINIO_ROOT_USER: ${MINIO_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
+      MINIO_ROOT_USER: embedg
+      MINIO_ROOT_PASSWORD: 1234567890
     volumes:
-      - embedg-minio:/data
+      - embedg-local-minio:/data
 
   embedg:
-    # Builds the repo this file sits in (your copy with light mode).
-    # To use the official image instead, swap it for:
-    #   image: merlintor/embed-generator:latest
-    build: .
+    image: merlintor/embed-generator:latest
     restart: always
     ports:
-      - "${EMBEDG_PORT:-8081}:8080"
+      - "8080:8080"
     environment:
       - EMBEDG_API__HOST=0.0.0.0
-      - EMBEDG_API__PORT=8080
-      - EMBEDG_API__PUBLIC_URL=${PUBLIC_BASE_URL}/api
-      - EMBEDG_APP__PUBLIC_URL=${PUBLIC_BASE_URL}/app
-      - EMBEDG_CDN__PUBLIC_URL=${PUBLIC_BASE_URL}/cdn
-      - EMBEDG_API__INSECURE_COOKIES=${INSECURE_COOKIES:-true}
-      - EMBEDG_DISCORD__CLIENT_ID=${DISCORD_CLIENT_ID:?Set DISCORD_CLIENT_ID in .env}
-      - EMBEDG_DISCORD__CLIENT_SECRET=${DISCORD_CLIENT_SECRET:?Set DISCORD_CLIENT_SECRET in .env}
-      - EMBEDG_DISCORD__TOKEN=${DISCORD_TOKEN:?Set DISCORD_TOKEN in .env}
+      - EMBEDG_API__INSECURE_COOKIES=true
       - EMBEDG_DATABASE__POSTGRES__HOST=postgres
       - EMBEDG_DATABASE__POSTGRES__USER=postgres
       - EMBEDG_DATABASE__POSTGRES__DB_NAME=embedg
       - EMBEDG_DATABASE__S3__ENDPOINT=minio:9000
-      - EMBEDG_DATABASE__S3__ACCESS_KEY_ID=${MINIO_USER}
-      - EMBEDG_DATABASE__S3__SECRET_ACCESS_KEY=${MINIO_PASSWORD}
-      - EMBEDG_DATABASE__S3__SECURE=false
-      - EMBEDG_OPENAI__API_KEY=${OPENAI_API_KEY:-}
+      - EMBEDG_API__PUBLIC_URL=http://localhost:8080/api
+      - EMBEDG_APP__PUBLIC_URL=http://localhost:8080/app
     volumes:
       - ./embedg.toml:/root/embedg.toml
     depends_on:
       postgres:
         condition: service_healthy
-      minio:
-        condition: service_started
 
 volumes:
-  embedg-postgres:
-  embedg-minio:
+  embedg-local-postgres:
+  embedg-local-minio:

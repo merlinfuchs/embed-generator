@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { emojiUrl } from "../discord/cdn";
 import type { Poll } from "../discord/schema";
 
 /** How long is left, the way Discord counts it: in hours up to two days, then in days. */
@@ -36,9 +37,7 @@ export default function MessagePreviewPoll({ poll }: { poll: Poll }) {
                 <span className="discord-poll-answer-emoji">
                   {emoji.id ? (
                     <img
-                      src={`https://cdn.discordapp.com/emojis/${emoji.id}.${
-                        emoji.animated ? "gif" : "webp"
-                      }`}
+                      src={emojiUrl({ ...emoji, id: emoji.id })}
                       alt={emoji.name}
                     />
                   ) : (

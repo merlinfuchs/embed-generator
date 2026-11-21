@@ -8,7 +8,7 @@ import Twemoji from "./Twemoji";
 interface Props {
   emoji: Emoji | undefined;
   onChange: (emoji: Emoji | undefined) => void;
-  /** Leaves out the heading and lines up with a text input beside it, for rows of several. */
+  /** Leaves out the heading and is as tall as a text input, for rows of several. */
   compact?: boolean;
 }
 
@@ -52,7 +52,7 @@ export default function EditorComponentEmojiSelect({
               aria-label="Select emoji"
               className={clsx(
                 "flex items-center justify-center cursor-pointer text-mist-300 hover:text-white",
-                compact ? "h-10 w-10" : "h-9 w-9",
+                compact ? "h-10.5 w-10.5" : "h-9 w-9",
               )}
             >
               {emoji ? (

@@ -110,8 +110,7 @@ func TestPollDecodesFromEditorJSON(t *testing.T) {
 				{"poll_media": {"text": "Pasta", "emoji": {"id": "123456789012345678", "name": "pasta", "animated": true}}}
 			],
 			"duration": 48,
-			"allow_multiselect": true,
-			"layout_type": 1
+			"allow_multiselect": true
 		}
 	}`
 
@@ -133,7 +132,7 @@ func TestPollDecodesFromEditorJSON(t *testing.T) {
 	if create.Answers[1].Emoji == nil || create.Answers[1].Emoji.ID == nil {
 		t.Errorf("expected the custom emoji of the second answer to be kept: %+v", create.Answers)
 	}
-	if create.Duration != 48 || !create.AllowMultiselect || create.LayoutType != discord.PollLayoutTypeDefault {
+	if create.Duration != 48 || !create.AllowMultiselect {
 		t.Errorf("unexpected poll settings: %+v", create)
 	}
 }

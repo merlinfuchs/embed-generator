@@ -26,9 +26,8 @@ type Poll struct {
 	Question discord.PollMedia    `json:"question"`
 	Answers  []discord.PollAnswer `json:"answers"`
 	// Duration is in hours. Left out, the poll stays open for 24 hours.
-	Duration         int                    `json:"duration,omitempty"`
-	AllowMultiselect bool                   `json:"allow_multiselect,omitempty"`
-	LayoutType       discord.PollLayoutType `json:"layout_type,omitempty"`
+	Duration         int  `json:"duration,omitempty"`
+	AllowMultiselect bool `json:"allow_multiselect,omitempty"`
 }
 
 // Check reports what Discord would reject about the poll. Run it after templates are rendered, as
@@ -80,7 +79,6 @@ func (p Poll) Create() *discord.PollCreate {
 		Answers:          answers,
 		Duration:         duration,
 		AllowMultiselect: p.AllowMultiselect,
-		LayoutType:       p.LayoutType,
 	}
 }
 
@@ -109,7 +107,6 @@ func PollFromMessage(poll *discord.Poll, sentAt time.Time) *Poll {
 		Answers:          answers,
 		Duration:         duration,
 		AllowMultiselect: poll.AllowMultiselect,
-		LayoutType:       poll.LayoutType,
 	}
 }
 

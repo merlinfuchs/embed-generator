@@ -715,7 +715,7 @@ export const RESPONSE_MESSAGE_OMIT = {
   avatar_url: true,
   tts: true,
   thread_name: true,
-  // Discord has no poll in the response to an interaction.
+  // The server doesn't take polls in responses.
   poll: true,
 } as const;
 
