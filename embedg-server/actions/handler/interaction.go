@@ -24,6 +24,9 @@ type Interaction interface {
 	Interaction() discord.Interaction
 	HasResponded() bool
 	Respond(data discord.InteractionResponseData, t ...discord.InteractionResponseType) *discord.Message
+	// ShowModal opens the modal as the initial response. It reports false when that's not possible
+	// anymore, because the handler or the automatic defer already responded.
+	ShowModal(modal discord.ModalCreate) bool
 	// Done stops the automatic defer, which a handler that returned without responding doesn't
 	// want: a command would show "thinking" until the token expires.
 	Done()
@@ -141,6 +144,26 @@ func (i *actionInteraction) Respond(data discord.InteractionResponseData, t ...d
 	}
 
 	return msg
+}
+
+func (i *actionInteraction) ShowModal(modal discord.ModalCreate) bool {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+
+	if i.acknowledged {
+		return false
+	}
+	// Holding the lock keeps the automatic defer from going out first. Stopping it also keeps it
+	// from deferring after the modal.
+	i.timer.Stop()
+
+	if err := i.initial(discord.InteractionResponseTypeModal, modal); err != nil {
+		slog.Error("Failed to show modal", slog.Any("error", err))
+		return true
+	}
+	i.acknowledged = true
+	i.responded = true
+	return true
 }
 
 func isDeferred(t discord.InteractionResponseType) bool {

@@ -15,6 +15,10 @@ import type {
   CustomCommandUpdateRequestWire,
   CustomCommandUpdateResponseWire,
   CustomCommandsDeployResponseWire,
+  FormSaveRequestWire,
+  FormCreateResponseWire,
+  FormDeleteResponseWire,
+  FormUpdateResponseWire,
   EmbedLinkCreateRequestWire,
   EmbedLinkCreateResponseWire,
   MessageRestoreFromChannelRequestWire,
@@ -488,6 +492,64 @@ export function useCustomCommandDeleteMutation() {
       ).then((res) =>
         handleApiResponse<CustomCommandDeleteResponseWire>(res.json()),
       );
+    },
+  });
+}
+
+export function useFormCreateMutation() {
+  return useMutation({
+    mutationFn: ({
+      guildId,
+      req,
+    }: {
+      guildId: string;
+      req: FormSaveRequestWire;
+    }) => {
+      return fetch(`/api/forms?guild_id=${guildId}`, {
+        method: "POST",
+        body: JSON.stringify(req),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) => handleApiResponse<FormCreateResponseWire>(res.json()));
+    },
+    onSuccess: trackOnSuccess("form_created", ({ req }) => ({
+      fields: req.fields.length,
+    })),
+  });
+}
+
+export function useFormUpdateMutation() {
+  return useMutation({
+    mutationFn: ({
+      formId,
+      guildId,
+      req,
+    }: {
+      formId: string;
+      guildId: string;
+      req: FormSaveRequestWire;
+    }) => {
+      return fetch(`/api/forms/${formId}?guild_id=${guildId}`, {
+        method: "PUT",
+        body: JSON.stringify(req),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) => handleApiResponse<FormUpdateResponseWire>(res.json()));
+    },
+  });
+}
+
+export function useFormDeleteMutation() {
+  return useMutation({
+    mutationFn: ({ formId, guildId }: { formId: string; guildId: string }) => {
+      return fetch(`/api/forms/${formId}?guild_id=${guildId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) => handleApiResponse<FormDeleteResponseWire>(res.json()));
     },
   });
 }

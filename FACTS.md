@@ -31,6 +31,7 @@ Features (feature | what it means for the user | free or paid):
 - Build the reply message inside the action instead of picking a saved message | one less saved message per reply | paid
 - Saved messages | reuse a message instead of rebuilding it | free, more on paid plans
 - Earlier versions of a saved message, kept when it's overwritten | go back to an older version | paid
+- Forms | pop-ups that ask members for text, to pick users, roles, channels, or from options (select menus, radio buttons, checkboxes), opened from a button, select menu, or custom command, with the answers used in the reply | free
 - Variables like the member's name or the server's member count | the message fills in details when it goes out | free
 - Scheduled messages: once, on a regular interval, or on a list of dates, with a calendar view | post on time without being online | one-time free, 1 recurring free, more on paid plans
 - AI assistant | describe the message and it builds it in the editor | 5 prompts a month free, more on paid plans
@@ -86,7 +87,7 @@ Exact names of commands, settings, and pages users see:
 - /help, /invite, /website
 - Message context menu: Restore Message, Dump Message. User context menu: Avatar Url, Format Mention.
 - Send modes: Webhook and Channel.
-- App pages: Message Editor, Saved Messages, Scheduled Messages, Commands, Utility Tools (Colored Text Generator, Embed Links, Webhook Info), Premium, Settings. The editor is at message.style/app/editor.
+- App pages: Message Editor, Saved Messages, Scheduled Messages, Forms, Commands, Utility Tools (Colored Text Generator, Embed Links, Webhook Info), Premium, Settings. The editor is at message.style/app/editor.
 - Plans: Free, Premium, and Ultimate.
 - Links: message.style/premium, /invite, /discord (support server), /source (GitHub), status.message.style.
 - Discord permissions by Discord's names, like Manage Webhooks, which /embed needs.
