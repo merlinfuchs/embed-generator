@@ -14,12 +14,19 @@ const poll = {
   allow_multiselect: false,
 };
 
-// The section starts collapsed, and the state outlives a test.
+// The section starts collapsed without a poll, and the state outlives a test.
 beforeEach(() => useCollapsedStatesStore.setState({ states: {} }));
 
 function open() {
   fireEvent.click(screen.getByText("Poll"));
 }
+
+test("the section starts open when the message has a poll", () => {
+  loadMessage({ poll });
+  renderEditor(<EditorPoll />);
+
+  expect(screen.getByLabelText("Question")).toHaveValue("Pizza or pasta?");
+});
 
 test("adding a poll starts with a question and two answers", () => {
   loadMessage({ content: "Vote!" });
@@ -42,7 +49,6 @@ test("adding a poll starts with a question and two answers", () => {
 test("editing the question and the answers changes the message", () => {
   loadMessage({ poll });
   renderEditor(<EditorPoll />);
-  open();
 
   fireEvent.change(screen.getByLabelText("Question"), {
     target: { value: "Tea or coffee?" },
@@ -61,7 +67,6 @@ test("editing the question and the answers changes the message", () => {
 test("answers can be added until Discord's limit and removed again", () => {
   loadMessage({ poll });
   renderEditor(<EditorPoll />);
-  open();
 
   for (let i = 0; i < 8; i++) {
     fireEvent.click(screen.getByRole("button", { name: "Add Answer" }));
@@ -80,7 +85,6 @@ test("the last answer can't be removed", () => {
     poll: { ...poll, answers: [{ poll_media: { text: "Pizza" } }] },
   });
   renderEditor(<EditorPoll />);
-  open();
 
   expect(
     screen.getByRole("button", { name: "Remove answer 1" }),
@@ -90,7 +94,6 @@ test("the last answer can't be removed", () => {
 test("duration and multiple answers can be changed", () => {
   loadMessage({ poll });
   renderEditor(<EditorPoll />);
-  open();
 
   fireEvent.change(screen.getByLabelText("Duration"), {
     target: { value: "168" },
@@ -106,7 +109,6 @@ test("duration and multiple answers can be changed", () => {
 test("a duration the list doesn't offer is kept", () => {
   loadMessage({ poll: { ...poll, duration: 30 } });
   renderEditor(<EditorPoll />);
-  open();
 
   expect(screen.getByLabelText("Duration")).toHaveValue("30");
   expect(screen.getByRole("option", { name: "30 hours" })).toBeInTheDocument();
@@ -115,7 +117,6 @@ test("a duration the list doesn't offer is kept", () => {
 test("removing the poll takes it out of the message", () => {
   loadMessage({ content: "Vote!", poll });
   renderEditor(<EditorPoll />);
-  open();
 
   fireEvent.click(screen.getByRole("button", { name: "Remove Poll" }));
 

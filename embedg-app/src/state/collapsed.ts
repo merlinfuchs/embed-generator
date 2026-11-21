@@ -4,6 +4,7 @@ interface CollapsedStatesStore {
   states: { [key: string]: boolean };
   getCollapsed: (key: string, def?: boolean) => boolean;
   toggleCollapsed: (key: string, def?: boolean) => void;
+  setCollapsed: (key: string, collapsed: boolean) => void;
 }
 
 export const useCollapsedStatesStore = create<CollapsedStatesStore>()(
@@ -18,6 +19,9 @@ export const useCollapsedStatesStore = create<CollapsedStatesStore>()(
       const current = states[key] === undefined ? def : states[key];
       states[key] = !current;
       set({ states });
+    },
+    setCollapsed: (key: string, collapsed: boolean) => {
+      set({ states: { ...get().states, [key]: collapsed } });
     },
   }),
 );

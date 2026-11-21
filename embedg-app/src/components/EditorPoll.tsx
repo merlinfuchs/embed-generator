@@ -14,6 +14,7 @@ import {
   useDocumentStoreApi,
   usePoll,
 } from "../state/document";
+import { useCollapsedStatesStore } from "../state/collapsed";
 import CheckBox from "./CheckBox";
 import Collapsable from "./Collapsable";
 import EditorComponentEmojiSelect from "./EditorComponentEmojiSelect";
@@ -37,6 +38,8 @@ export default function EditorPoll() {
   const { update } = useDocumentStoreApi().getState();
 
   function setPoll(next: Poll | undefined) {
+    // Without a poll the section would fold away along with the button to add one again.
+    if (!next) useCollapsedStatesStore.getState().setCollapsed("poll", false);
     update<MessageNode>(rootId, { poll: next });
   }
 
@@ -45,7 +48,8 @@ export default function EditorPoll() {
       id="poll"
       title="Poll"
       size="large"
-      defaultCollapsed={true}
+      // Open when the message already has a poll, like a restored one.
+      defaultCollapsed={!poll}
       validationPathPrefix="poll"
       extra={
         poll && (
