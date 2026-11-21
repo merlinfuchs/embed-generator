@@ -162,7 +162,6 @@ export default function InputControlBar({ onChange, inputRef }: Props) {
         guildId={guildId}
         onEmojiSelect={onEmojiSelect}
         align="right"
-        keepOpen
       >
         <button
           type="button"

@@ -23,9 +23,6 @@ interface Props {
   onEmojiSelect: (emoji: any) => void;
   children: ReactNode;
   align: "left" | "right" | "center";
-  // Keep the picker open after a selection so several emojis can be inserted
-  // in a row. It still closes when clicking outside.
-  keepOpen?: boolean;
 }
 
 export default function EmojiPicker({
@@ -33,7 +30,6 @@ export default function EmojiPicker({
   onEmojiSelect,
   children,
   align,
-  keepOpen = false,
 }: Props) {
   const [open, setOpen] = useState(false);
 
@@ -78,8 +74,12 @@ export default function EmojiPicker({
           <Suspense fallback={null}>
             <Picker
               data={loadEmojiData}
-              onEmojiSelect={(data: any) => {
-                if (!keepOpen) setOpen(false);
+              onEmojiSelect={(
+                data: any,
+                event?: MouseEvent | KeyboardEvent,
+              ) => {
+                // Holding Shift keeps it open to pick several, like in Discord.
+                if (!event?.shiftKey) setOpen(false);
                 onEmojiSelect(data);
               }}
               custom={customEmojis}
