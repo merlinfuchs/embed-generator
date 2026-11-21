@@ -88,9 +88,8 @@ export default function ToolsView() {
                 Timestamp Generator
               </div>
               <div className="text-mist-400 font-light text-sm">
-                Discord supports putting timestamps in messages which respect
-                timezones and even relative times like "3 hours ago". This tool
-                lets you easily generate timestamps for your messages.
+                Pick a date and time and copy a timestamp that every reader sees
+                in their own timezone, or as a relative time like "in 3 hours".
               </div>
             </div>
           </Link>

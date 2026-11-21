@@ -1,5 +1,3 @@
-import { ClipboardDocumentIcon } from "@heroicons/react/24/outline";
-import { CheckIcon } from "@heroicons/react/20/solid";
 import { useEffect, useState } from "react";
 import {
   formatTimestamp,
@@ -14,6 +12,7 @@ import {
   zonedDateTime,
   zonedTime,
 } from "../util/time";
+import CopyCodeButton from "./CopyCodeButton";
 import TimezoneSelect from "./TimezoneSelect";
 
 function currentSecond(): string {
@@ -28,40 +27,13 @@ function zonedTimeWithSeconds(iso: string, timezone: string): string {
   return `${zonedTime(iso, timezone)}:${seconds}`;
 }
 
-function CopyButton({ text, label }: { text: string; label: string }) {
-  const [copied, setCopied] = useState(false);
-
-  function copy() {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1000);
-    });
-  }
-
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      onClick={copy}
-      className="flex items-center rounded-lg bg-ink-900 hover:bg-ink-600 text-mist-100 overflow-hidden text-left cursor-pointer max-w-full"
-    >
-      <span className="bg-azure-500 hover:bg-azure-400 self-stretch flex items-center px-2.5 flex-none">
-        {copied ? (
-          <CheckIcon className="h-4 w-4" />
-        ) : (
-          <ClipboardDocumentIcon className="h-4 w-4" />
-        )}
-      </span>
-      <code className="px-3 py-1.5 text-sm font-mono truncate">{text}</code>
-    </button>
-  );
-}
-
 export default function ToolsTimestamps() {
   const [timezone, setTimezone] = useState(getCurrentTimezone);
   const [instant, setInstant] = useState(currentSecond);
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+  // What's typed in the Unix field, kept while it has focus so a half-typed
+  // number doesn't get replaced.
+  const [unixDraft, setUnixDraft] = useState<string | null>(null);
 
   // The relative time keeps counting.
   useEffect(() => {
@@ -88,6 +60,7 @@ export default function ToolsTimestamps() {
   }
 
   function setUnix(value: string) {
+    setUnixDraft(value);
     const n = Number(value);
     if (!value.trim() || !Number.isFinite(n)) return;
     const date = new Date(Math.trunc(n) * 1000);
@@ -136,12 +109,12 @@ export default function ToolsTimestamps() {
           <label className="block md:w-64">
             <div className="text-mist-300 text-sm mb-2">Unix timestamp</div>
             <input
-              key={unix}
               type="text"
               inputMode="numeric"
               className={inputClass}
-              defaultValue={unix}
+              value={unixDraft ?? unix}
               onChange={(e) => setUnix(e.target.value)}
+              onBlur={() => setUnixDraft(null)}
             />
           </label>
           <button
@@ -176,7 +149,7 @@ export default function ToolsTimestamps() {
                   {formatTimestamp(unix, style, now)}
                 </div>
                 <div className="flex">
-                  <CopyButton text={markdown} label={`Copy ${name}`} />
+                  <CopyCodeButton text={markdown} label={`Copy ${name}`} />
                 </div>
               </div>
             );
@@ -189,7 +162,7 @@ export default function ToolsTimestamps() {
           </div>
           <div className="text-mist-100">{unix}</div>
           <div className="flex">
-            <CopyButton text={String(unix)} label="Copy Unix timestamp" />
+            <CopyCodeButton text={String(unix)} label="Copy Unix timestamp" />
           </div>
         </div>
       </div>

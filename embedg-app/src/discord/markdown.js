@@ -1,6 +1,6 @@
 import markdown from "simple-markdown";
 import highlight from "highlight.js/lib/common";
-import { formatDistanceToNow } from "date-fns";
+import { formatTimestamp, isTimestampStyle } from "../util/timestamp";
 import { parseANSI } from "../util/ansi";
 
 // https://github.com/ItzDerock/discord-markdown-parser
@@ -404,45 +404,12 @@ const bodyRules = {
       format: capture[2] || "f",
     }),
     html: (node, _output, state) => {
-      const date = new Date(node.timestamp * 1000);
-      const options = {
-        t: date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        T: date.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        }),
-        d: date.toLocaleDateString([], {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-        }),
-        D: date.toLocaleDateString([], {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        }),
-        f: date.toLocaleString([], {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        F: date.toLocaleString([], {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        }),
-        R: formatDistanceToNow(date, { addSuffix: true }),
-      };
-      const formattedDate = options[node.format] || options.f;
+      const style = isTimestampStyle(node.format) ? node.format : "f";
+      const formattedDate = formatTimestamp(
+        node.timestamp,
+        style,
+        Math.floor(Date.now() / 1000),
+      );
       return htmlTag(
         "span",
         formattedDate,

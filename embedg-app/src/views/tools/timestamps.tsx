@@ -67,7 +67,8 @@ export default function TimestampsToolView() {
             <code className="text-mist-300">&lt;t:1794291300:F&gt;</code>. The
             number is the moment in seconds since 1 January 1970 (UTC), and the
             letter after it picks the format. Leave the letter out and Discord
-            uses the short date and time.
+            shows the long date and short time, the same as{" "}
+            <code className="text-mist-300">:f</code>.
           </p>
         </section>
 

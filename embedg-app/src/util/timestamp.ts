@@ -1,3 +1,5 @@
+import { formatRelative } from "./relativeTime";
+
 export type TimestampStyle =
   | "d"
   | "D"
@@ -57,31 +59,10 @@ export function timestampMarkdown(
   return style ? `<t:${unix}:${style}>` : `<t:${unix}>`;
 }
 
-const relativeUnits: [Intl.RelativeTimeFormatUnit, number][] = [
-  ["year", 365 * 24 * 3600],
-  ["month", 30 * 24 * 3600],
-  ["day", 24 * 3600],
-  ["hour", 3600],
-  ["minute", 60],
-  ["second", 1],
-];
-
-// "in 3 hours", "2 days ago". Like Discord it counts in whole units, rounded down.
-export function formatRelative(unix: number, nowUnix: number): string {
-  const diff = unix - nowUnix;
-  const abs = Math.abs(diff);
-  const formatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
-  for (const [unit, seconds] of relativeUnits) {
-    if (abs >= seconds || unit === "second") {
-      const value = Math.trunc(abs / seconds);
-      return formatter.format(diff < 0 ? -value : value, unit);
-    }
-  }
-  return "";
-}
-
 // What Discord shows for the style, in the viewer's own timezone and language. The preview is the
-// same, using the browser's.
+// same, using the browser's. dateStyle and timeStyle follow the locale, like "9:05 AM" in en-US
+// and "09:05" in en-GB. Only the short date is spelled out, since dateStyle "short" has a 2-digit
+// year in en-US.
 export function formatTimestamp(
   unix: number,
   style: TimestampStyle,
@@ -91,33 +72,32 @@ export function formatTimestamp(
   const fmt = (options: Intl.DateTimeFormatOptions) =>
     new Intl.DateTimeFormat(undefined, options).format(date);
 
-  const shortDate = {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  } as const;
-  const longDate = { day: "numeric", month: "long", year: "numeric" } as const;
-  const shortTime = { hour: "2-digit", minute: "2-digit" } as const;
-  const longTime = { ...shortTime, second: "2-digit" } as const;
+  const shortDate = fmt({ day: "2-digit", month: "2-digit", year: "numeric" });
 
   switch (style) {
     case "d":
-      return fmt(shortDate);
+      return shortDate;
     case "D":
-      return fmt(longDate);
+      return fmt({ dateStyle: "long" });
     case "t":
-      return fmt(shortTime);
+      return fmt({ timeStyle: "short" });
     case "T":
-      return fmt(longTime);
+      return fmt({ timeStyle: "medium" });
     case "f":
-      return fmt({ ...longDate, ...shortTime });
+      return fmt({ dateStyle: "long", timeStyle: "short" });
     case "F":
-      return fmt({ ...longDate, weekday: "long", ...shortTime });
+      return fmt({ dateStyle: "full", timeStyle: "short" });
     case "s":
-      return fmt({ ...shortDate, ...shortTime });
+      return `${shortDate}, ${fmt({ timeStyle: "short" })}`;
     case "S":
-      return fmt({ ...shortDate, ...longTime });
+      return `${shortDate}, ${fmt({ timeStyle: "medium" })}`;
     case "R":
       return formatRelative(unix, nowUnix);
   }
+}
+
+export function isTimestampStyle(style: string): style is TimestampStyle {
+  return timestampFormats.some(({ formats }) =>
+    formats.some((format) => format.style === style),
+  );
 }
