@@ -22,13 +22,14 @@ export default function EditorUndoButtons() {
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      // A modal edits something else, like a response message.
-      if (!e.ctrlKey || modalOpen()) return;
+      // Cmd on macOS. A modal edits something else, like a response message.
+      if (!(e.ctrlKey || e.metaKey) || modalOpen()) return;
 
       if (e.key === "z" || e.key === "Z") {
         e.preventDefault();
         e.shiftKey ? redo(1) : undo(1);
-      } else if (e.key === "y") {
+      } else if (e.key === "y" && e.ctrlKey) {
+        // Not Cmd+Y, which the browser uses for its history.
         e.preventDefault();
         redo(1);
       }
