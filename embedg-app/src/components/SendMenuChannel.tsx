@@ -9,7 +9,7 @@ import { useCurrentAttachmentsStore } from "../state/attachments";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { isThreadOnlyChannel, parseMessageId } from "../discord/util";
 import MessageRestoreButton from "./MessageRestoreButton";
-import Notice from "./Notice";
+import MessageErrorNotice from "./MessageErrorNotice";
 import { useToasts } from "../util/toasts";
 import { getCurrentMessage } from "../state/currentMessage";
 
@@ -150,12 +150,7 @@ export default function SendMenuChannel() {
         )}
       </div>
       <div>
-        {validationError && (
-          <Notice tone="error">
-            There are errors in your message, you have to fix them before
-            sending the message.
-          </Notice>
-        )}
+        <MessageErrorNotice />
       </div>
       <div className="flex justify-end flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2 items-end md:items-center">
         <MessageRestoreButton />

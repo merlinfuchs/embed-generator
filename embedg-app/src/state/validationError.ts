@@ -81,6 +81,7 @@ export interface ValidationErrorStore {
   getIssue(target: ValidationTarget): ZodIssue | null;
   hasIssue(scope: ValidationScope): boolean;
   hasAnyIssue(): boolean;
+  firstIssue(): ZodIssue | null;
 }
 
 export const createValidationErrorStore = () =>
@@ -132,6 +133,7 @@ export const createValidationErrorStore = () =>
         : state.index.prefixes.has(path);
     },
     hasAnyIssue: () => get().index.issues.size > 0,
+    firstIssue: () => get().index.issues.values().next().value ?? null,
   }));
 
 /** The issues of the message in the editor. */

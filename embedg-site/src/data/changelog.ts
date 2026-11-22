@@ -30,6 +30,7 @@ export const changelog: ChangeDay[] = [
         href: "/docs/guides/forms#sending-answers-to-other-tools",
       },
       { title: "The sidebar scrolls on short screens" },
+      { title: "The send menu says where the error in your message is" },
     ],
   },
   {
