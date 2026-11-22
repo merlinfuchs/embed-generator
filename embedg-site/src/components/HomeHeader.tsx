@@ -58,6 +58,7 @@ export default function HomeHeader(): JSX.Element {
             <a
               key={l.href}
               href={l.href}
+              {...(l.external && { target: "_blank", rel: "noopener" })}
               className="whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-mist-400 transition-colors hover:bg-white/5 hover:text-mist-100 hover:no-underline"
             >
               {l.label}
@@ -101,6 +102,7 @@ export default function HomeHeader(): JSX.Element {
             <a
               key={l.href}
               href={l.href}
+              {...(l.external && { target: "_blank", rel: "noopener" })}
               onClick={() => setOpen(false)}
               className="flex items-center justify-between rounded-lg px-3 py-3 text-sm font-medium text-mist-300 transition-colors hover:bg-white/5 hover:text-mist-100 hover:no-underline"
             >
