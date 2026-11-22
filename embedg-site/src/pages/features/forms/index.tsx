@@ -21,24 +21,24 @@ import {
   Steps,
 } from "../../../components/landing";
 
-const TITLE = "Discord Forms for Applications and Reports | Embed Generator";
+const TITLE = "Discord forms for applications and reports | Embed Generator";
 const DESCRIPTION =
-  "Pop-up forms in Discord for staff applications, reports, and suggestions. They open from a button, then reply with the answers or give a role. Free to start.";
+  "Pop-up forms in Discord for staff applications, reports, and suggestions. A button opens the form, and the bot replies with the answers. 3 forms are free.";
 const FORMS = { label: "Create a form", href: "/app/forms" };
 const GUIDE = "/docs/guides/forms";
 
 const steps = [
   {
     title: "Build the form",
-    text: "Open Forms in the app, pick your server, and add up to 5 questions. Each one can be a text box, a list of options, or a picker for members, roles, or channels.",
+    text: "Open Forms in the app and pick your server. Add up to 5 questions, each a text box, a list of options, or a picker for members, roles, or channels.",
   },
   {
     title: "Add a button that opens it",
-    text: "Give a button, a select menu option, or a custom command the Show Form action. Send the message with the Embed Generator bot, since Discord sends the click to the bot.",
+    text: "Give a button, a select menu option, or a custom command the Show Form action. Then send the message through the Embed Generator bot, which opens the form when someone clicks.",
   },
   {
     title: "Choose what happens on submit",
-    text: "Add actions the same way as on a button. Reply with the answers, give the member a role, or post everything in a staff channel with Embed Generator Premium.",
+    text: "Add actions like you would on a button. The bot can reply with the answers or give the member a role. With Embed Generator Premium, it can also post the answers in a staff channel.",
   },
 ];
 
@@ -46,12 +46,12 @@ const features = [
   {
     icon: DocumentTextIcon,
     name: "Text answers",
-    text: "Short answers or long paragraphs, with a minimum and maximum length and optional text that's already filled in.",
+    text: "Ask for a short answer or a few paragraphs. A minimum length keeps out one-word applications.",
   },
   {
     icon: ListBulletIcon,
     name: "Options to pick from",
-    text: "Select menus with up to 25 options, radio buttons for exactly one answer, and checkboxes for several.",
+    text: "Offer a select menu with up to 25 options, radio buttons, or checkboxes. Every answer uses your wording, which makes them easy to sort.",
   },
   {
     icon: UserGroupIcon,
@@ -61,30 +61,30 @@ const features = [
   {
     icon: ChatBubbleLeftEllipsisIcon,
     name: "Replies with the answers",
-    text: "Quote what they wrote in a reply that only they see, or in one for the whole channel.",
+    text: "Quote what members wrote back to them, and they know it arrived. The reply can be private or for the whole channel.",
     href: `${GUIDE}#using-what-members-entered`,
   },
   {
     icon: TagIcon,
     name: "Roles on submit",
-    text: "Give a role to everyone who fills in the form, like a role that opens the rest of the server after a short intro.",
+    text: "Give a role to everyone who fills in the form, like one that opens the rest of the server after a short intro.",
   },
   {
     icon: InboxArrowDownIcon,
     name: "Answers in a staff channel",
-    text: "Post every answer under its question in a channel only your team sees. This needs Premium.",
+    text: "Every answer lands under its question in a channel only your team sees. This needs Premium.",
   },
 ];
 
 const faq: Faq[] = [
   {
     q: "How do I make a form in Discord?",
-    a: "Create a form on the Forms page of Embed Generator, then give a button the Show Form action and send the message with the bot. When a member clicks the button, the form pops up.",
+    a: "Create a form on the Forms page, give a button the Show Form action, and send the message with the Embed Generator bot. When a member clicks the button, the form pops up.",
     link: { label: "Forms guide", href: GUIDE },
   },
   {
     q: "Are forms free?",
-    a: "Yes. Every server gets 3 forms for free, 10 with Embed Generator Premium, and 25 with Ultimate. Posting the answers to a staff channel and sending them to other tools need Premium.",
+    a: "Yes. Every server gets 3 forms for free, 10 with Embed Generator Premium, and 25 with Ultimate. Posting answers to a staff channel and sending them to other tools need Premium.",
     link: { label: "Premium", href: "/docs/premium" },
   },
   {
@@ -93,7 +93,7 @@ const faq: Faq[] = [
   },
   {
     q: "Can I use it for staff applications?",
-    a: "Yes. Ask your questions, then post the answers to a staff channel with Embed Generator Premium. Embed Generator doesn't keep a list of submissions, so that channel or your spreadsheet is where you go through them.",
+    a: "Yes. Ask your questions, then post the answers to a staff channel with Embed Generator Premium. Forms have no accept or deny buttons, and Embed Generator doesn't keep a list of submissions.",
   },
   {
     q: "Can a slash command open a form?",
@@ -102,15 +102,15 @@ const faq: Faq[] = [
   },
   {
     q: "Can I see who sent a form?",
-    a: "Yes. Put {{.User.Mention}} in the reply or the staff channel post, and it mentions the member who submitted the form.",
+    a: "Yes. Put {{.User.Mention}} in the reply or the staff channel post to mention the member who submitted the form.",
   },
   {
     q: "Does the bot have to be in my server?",
     a: "Yes. Discord sends the click and the answers to the app that sent the message, so the message with the button has to come from the Embed Generator bot.",
   },
   {
-    q: "Can buttons do anything else?",
-    a: "Yes. Buttons and select menus can also hand out roles, reply, send DMs, or update the message without a form.",
+    q: "Can I limit who can open a form?",
+    a: "Yes. Put a Check Permissions action before Show Form and pick the permissions or roles a member needs. Everyone else gets an error message instead of the form.",
     link: { label: "Button roles", href: "/features/interactive-components" },
   },
 ];
@@ -162,7 +162,7 @@ function FormPreview(): JSX.Element {
                 Join the staff team
               </div>
               <div className="text-sm leading-relaxed text-mist-300">
-                We're looking for two more moderators. Click below to apply, it
+                We're looking for two more moderators. Click below to apply. It
                 takes a minute.
               </div>
             </div>
@@ -271,7 +271,7 @@ function FormPreview(): JSX.Element {
 const fields = [
   { label: "Who are you reporting?", type: "User Select", required: true },
   { label: "What happened?", type: "Select Menu", required: true },
-  { label: "Anything else we should know?", type: "Text, multiple lines" },
+  { label: "Anything else we should know?", type: "Text" },
 ];
 
 const actions = [
@@ -296,7 +296,7 @@ function FormEditor(): JSX.Element {
         <span className="text-xs text-mist-500">Title: Report a member</span>
       </div>
       <div className="mb-3 flex items-center justify-between text-xs font-medium uppercase text-mist-400">
-        <span>Questions</span>
+        <span>Fields</span>
         <span className="normal-case text-mist-500">3 / 5</span>
       </div>
       <ul className="m-0 mb-5 grid list-none gap-2 p-0">
@@ -314,7 +314,7 @@ function FormEditor(): JSX.Element {
         ))}
       </ul>
       <div className="mb-3 text-xs font-medium uppercase text-mist-400">
-        When submitted
+        Actions
       </div>
       <ul className="m-0 grid list-none gap-2 p-0">
         {actions.map((a) => (
@@ -348,7 +348,7 @@ export default function Forms(): JSX.Element {
             <span className="text-azure-400">Discord forms</span>
           </>
         }
-        text="Add a button that opens a pop-up form, and members answer without leaving Discord. When they submit it, the bot can reply with their answers or give them a role. You set it all up on a website, with no commands to learn."
+        text="Add a button that opens a pop-up form, and the bot replies with the answers or gives the member a role. You build the form in the same place as your embeds, and the Embed Generator bot runs it."
         cta={FORMS}
         stats={[
           { value: "5", label: "questions per form" },
@@ -362,11 +362,14 @@ export default function Forms(): JSX.Element {
         steps={steps}
         aside={<FormEditor />}
       />
-      <Features title="What a form can ask and do." features={features} />
+      <Features
+        title="Ask what you need, then act on the answers."
+        features={features}
+      />
       <Callout
         icon={ArrowsRightLeftIcon}
         title="Send the answers to a spreadsheet."
-        text="With Premium, a form can send its answers to Zapier, n8n, Make, or your own server. Applications land in a spreadsheet or start a workflow there, without another bot."
+        text="With Premium, a form can send its answers to Zapier, n8n, Make, or your own server. Applications then land in a spreadsheet or start a workflow, without another bot."
         link={{
           label: "Sending answers",
           href: `${GUIDE}#sending-answers-to-other-tools`,
@@ -375,7 +378,7 @@ export default function Forms(): JSX.Element {
       <Questions faq={faq} />
       <ClosingCta
         title="Ready for your first form?"
-        text="Add a few questions, put a button on a message, and send it. 3 forms are free on every server."
+        text="Add a few questions, put a button on a message, and send it. Every server gets 3 forms for free, with no payment details needed."
         cta={FORMS}
       />
     </LandingPage>

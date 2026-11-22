@@ -52,7 +52,7 @@ const pages: { icon: Icon; name: string; text: string; href: string }[] = [
   },
   {
     icon: ClipboardDocumentListIcon,
-    name: "Discord Forms",
+    name: "Discord forms",
     text: "Pop-up forms for applications, reports, and suggestions that open from a button and reply with the answers.",
     href: "/features/forms",
   },
