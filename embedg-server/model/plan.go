@@ -22,6 +22,7 @@ type PlanFeatures struct {
 	// MaxPeriodicScheduledMessages is how many scheduled messages can repeat or be sent on more
 	// than one date. The rest can only be sent once.
 	MaxPeriodicScheduledMessages int `toml:"max_periodic_scheduled_messages"`
+	MaxForms                     int `toml:"max_forms"`
 	MaxTemplateOps               int `toml:"max_template_ops"`
 	MaxKVKeys                    int `toml:"max_kv_keys"`
 	// MaxAIPromptsPerMonth is how many prompts that change the message the AI assistant takes a
@@ -56,6 +57,9 @@ func (f *PlanFeatures) Merge(b PlanFeatures) {
 	}
 	if b.MaxPeriodicScheduledMessages > f.MaxPeriodicScheduledMessages {
 		f.MaxPeriodicScheduledMessages = b.MaxPeriodicScheduledMessages
+	}
+	if b.MaxForms > f.MaxForms {
+		f.MaxForms = b.MaxForms
 	}
 	if b.MaxTemplateOps > f.MaxTemplateOps {
 		f.MaxTemplateOps = b.MaxTemplateOps

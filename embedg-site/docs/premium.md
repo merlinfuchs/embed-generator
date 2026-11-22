@@ -15,6 +15,7 @@ The editor, webhooks, buttons and select menus, and one-time scheduled messages 
 - [Custom commands](./features/custom-commands), slash commands your members can use that reply with your messages.
 - Buttons, select menus and commands that [send a message to another channel](./guides/interactive-components#text-response), like reports to a staff channel.
 - The Message Response action, which replies with a message you build right in the action instead of a saved message.
+- [Forms](./guides/forms#sending-answers-to-other-tools) that send their answers to another tool, like Zapier, n8n or your own server.
 - More [recurring scheduled messages](./guides/scheduled-messages), sent every few hours, days, weeks or months, or on a list of dates.
 - Earlier versions of your saved messages, so you can go back after overwriting one.
 - More prompts for the [AI assistant](./features/ai-assistant).
@@ -28,6 +29,7 @@ The editor, webhooks, buttons and select menus, and one-time scheduled messages 
 | Actions per button or select menu          | 3    | 10      | 15       |
 | Scheduled messages                         | 5    | 25      | 100      |
 | Recurring scheduled messages               | 1    | 25      | 100      |
+| Forms                                      | 3    | 10      | 25       |
 | AI assistant prompts a month               | 5    | 100     | 250      |
 | Custom commands                            | None | 25      | 50       |
 | Image uploads                              | 1 MB | 8 MB    | 8 MB     |

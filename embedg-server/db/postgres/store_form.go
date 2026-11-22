@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -66,6 +67,7 @@ func (c *Client) CreateForm(ctx context.Context, form model.Form) (*model.Form, 
 		Fields:             rawFields,
 		Actions:            rawActions,
 		DerivedPermissions: rawDerivedPermissions,
+		SigningSecret:      pgtype.Text{String: form.SigningSecret, Valid: form.SigningSecret != ""},
 		CreatedAt:          pgtype.Timestamp{Time: form.CreatedAt, Valid: true},
 		UpdatedAt:          pgtype.Timestamp{Time: form.UpdatedAt, Valid: true},
 	})
@@ -89,7 +91,10 @@ func (c *Client) UpdateForm(ctx context.Context, form model.Form) (*model.Form, 
 		Fields:             rawFields,
 		Actions:            rawActions,
 		DerivedPermissions: rawDerivedPermissions,
-		UpdatedAt:          pgtype.Timestamp{Time: form.UpdatedAt, Valid: true},
+		// Only taken when the form doesn't have one yet. Saving also clears the forward error,
+		// which was about what the form was before.
+		SigningSecret: pgtype.Text{String: form.SigningSecret, Valid: form.SigningSecret != ""},
+		UpdatedAt:     pgtype.Timestamp{Time: form.UpdatedAt, Valid: true},
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -112,6 +117,15 @@ func (c *Client) DeleteForm(ctx context.Context, guildID common.ID, id string) (
 		return nil, err
 	}
 	return rowToForm(row)
+}
+
+func (c *Client) SetFormForwardError(ctx context.Context, guildID common.ID, id string, message string, startedAt time.Time) error {
+	return c.Q.SetFormForwardError(ctx, pgmodel.SetFormForwardErrorParams{
+		ID:             id,
+		GuildID:        guildID.String(),
+		ForwardError:   pgtype.Text{String: message, Valid: message != ""},
+		ForwardErrorAt: pgtype.Timestamp{Time: startedAt, Valid: true},
+	})
 }
 
 func marshalFormJSON(form model.Form) (fields []byte, acts []byte, derivedPermissions []byte, err error) {
@@ -159,6 +173,9 @@ func rowToForm(row pgmodel.Form) (*model.Form, error) {
 		Fields:             fields,
 		Actions:            acts,
 		DerivedPermissions: derivedPermissions,
+		SigningSecret:      row.SigningSecret.String,
+		ForwardError:       row.ForwardError.String,
+		ForwardErrorAt:     row.ForwardErrorAt.Time,
 		CreatedAt:          row.CreatedAt.Time,
 		UpdatedAt:          row.UpdatedAt.Time,
 	}, nil

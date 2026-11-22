@@ -66,6 +66,7 @@ const actionTypes = {
   11: "Text Message to Channel",
   12: "Saved Message to Channel",
   13: "Show Form",
+  14: "Send Answers to URL",
 } as const;
 
 /** The names of the response types when they carry a message of their own. */
@@ -90,6 +91,7 @@ const actionDescriptions = {
   11: "Send a text message to another channel.",
   12: "Send a saved message to another channel.",
   13: "Open a form for the user to fill in. This has to be the last action, and no action before it can reply. The form's own actions run when it's submitted.",
+  14: "Send the answers to another tool, like Zapier, n8n or your own server. Paste the webhook URL that the tool gives you.",
 } as const;
 
 const messageActionDescriptions = {
@@ -136,7 +138,10 @@ export default function Action({
   const advancedLocked = !!features && !features.advanced_action_types;
   const showPremiumSuggest =
     advancedLocked &&
-    (action.type === 11 || action.type === 12 || "message" in action);
+    (action.type === 11 ||
+      action.type === 12 ||
+      action.type === 14 ||
+      "message" in action);
 
   const actionTypeGroup = useMemo(() => {
     switch (action.type) {
@@ -162,6 +167,8 @@ export default function Action({
         return "check_permissions";
       case 13:
         return "show_form";
+      case 14:
+        return "send_answers";
     }
   }, [action]);
 
@@ -191,6 +198,9 @@ export default function Action({
         break;
       case "show_form":
         setType(13);
+        break;
+      case "send_answers":
+        setType(14);
         break;
     }
   }
@@ -315,6 +325,11 @@ export default function Action({
                   <option value="remove_role">Remove Role</option>
                   <option value="check_permissions">Check Permissions</option>
                   {!inForm && <option value="show_form">Show Form</option>}
+                  {inForm && (
+                    <option value="send_answers">
+                      Send Answers to URL{advancedLocked ? " (Premium)" : ""}
+                    </option>
+                  )}
                 </select>
               </div>
               {(actionTypeGroup === "text_response" ||
@@ -380,7 +395,8 @@ export default function Action({
                 action.type === 4 ||
                 action.type === 10 ||
                 action.type === 11 ||
-                action.type === 12) &&
+                action.type === 12 ||
+                action.type === 14) &&
                 !showPremiumSuggest && (
                   <div className="flex-none">
                     <div className="mb-1.5 flex">
@@ -415,6 +431,16 @@ export default function Action({
             )}
           {showPremiumSuggest ? (
             <PremiumSuggest />
+          ) : action.type === 14 ? (
+            <EditorInput
+              label="URL"
+              description="Where the answers are sent, signed with the form's signing secret."
+              type="url"
+              props={{ placeholder: "https://" }}
+              maxLength={2000}
+              value={action.text}
+              onChange={(v) => setText(v)}
+            />
           ) : action.type === 1 ||
             action.type === 6 ||
             action.type === 8 ||

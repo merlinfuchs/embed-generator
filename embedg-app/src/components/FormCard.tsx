@@ -151,6 +151,7 @@ export default function FormCard({ form }: { form: FormWire }) {
               setTitle={setTitle}
               fields={fields}
               setFields={setFields}
+              signingSecret={form.signing_secret}
             />
           </div>
         ) : (
@@ -163,6 +164,14 @@ export default function FormCard({ form }: { form: FormWire }) {
                 {form.title} · {form.fields.length}{" "}
                 {form.fields.length === 1 ? "field" : "fields"}
               </div>
+              {form.forward_error && (
+                <div className="text-red-400 text-sm mt-1 whitespace-normal">
+                  {form.forward_error_at
+                    ? `Answers couldn't be sent on ${new Date(form.forward_error_at).toLocaleString()}.`
+                    : "The last answers couldn't be sent."}{" "}
+                  {form.forward_error}
+                </div>
+              )}
             </div>
             <div className="flex flex-none items-center space-x-4 md:space-x-3">
               <button

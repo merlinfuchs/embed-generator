@@ -269,6 +269,9 @@ const (
 	ActionTypeSavedMessageChannel  ActionType = 12
 	// ActionTypeShowForm opens the form named by TargetID. Submitting it runs the form's own actions.
 	ActionTypeShowForm ActionType = 13
+	// ActionTypeForwardForm sends the answers of a submitted form to the URL in Text. Only the
+	// actions of a form can have it.
+	ActionTypeForwardForm ActionType = 14
 )
 
 type Action struct {

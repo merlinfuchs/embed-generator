@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/forward"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
@@ -16,6 +17,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
+	"gopkg.in/guregu/null.v4"
 )
 
 type FormsHandler struct {
@@ -102,7 +104,7 @@ func (h *FormsHandler) HandleCreateForm(c *fiber.Ctx, req wire.FormSaveRequestWi
 		return err
 	}
 
-	fields, actionSet, err := h.checkForm(c, guildID, req)
+	fields, actionSet, features, err := h.checkForm(c, guildID, req)
 	if err != nil {
 		return err
 	}
@@ -111,8 +113,8 @@ func (h *FormsHandler) HandleCreateForm(c *fiber.Ctx, req wire.FormSaveRequestWi
 	if err != nil {
 		return err
 	}
-	if int(existingCount) >= actions.MaxFormsPerGuild {
-		return handlers.Forbidden("form_limit", fmt.Sprintf("A server can have up to %d forms.", actions.MaxFormsPerGuild))
+	if int(existingCount) >= features.MaxForms {
+		return handlers.Forbidden("insufficient_plan", fmt.Sprintf("This server can have up to %d forms on its plan.", features.MaxForms))
 	}
 
 	derivedPerms, err := h.derivePermissionsForUser(c, session, guildID)
@@ -129,6 +131,7 @@ func (h *FormsHandler) HandleCreateForm(c *fiber.Ctx, req wire.FormSaveRequestWi
 		Fields:             fields,
 		Actions:            actionSet,
 		DerivedPermissions: &derivedPerms,
+		SigningSecret:      forward.NewSigningSecret(),
 		CreatedAt:          now,
 		UpdatedAt:          now,
 	})
@@ -155,7 +158,7 @@ func (h *FormsHandler) HandleUpdateForm(c *fiber.Ctx, req wire.FormSaveRequestWi
 		return err
 	}
 
-	fields, actionSet, err := h.checkForm(c, guildID, req)
+	fields, actionSet, _, err := h.checkForm(c, guildID, req)
 	if err != nil {
 		return err
 	}
@@ -173,6 +176,7 @@ func (h *FormsHandler) HandleUpdateForm(c *fiber.Ctx, req wire.FormSaveRequestWi
 		Fields:             fields,
 		Actions:            actionSet,
 		DerivedPermissions: &derivedPerms,
+		SigningSecret:      forward.NewSigningSecret(),
 		UpdatedAt:          time.Now().UTC(),
 	})
 	if err != nil {
@@ -212,38 +216,35 @@ func (h *FormsHandler) HandleDeleteForm(c *fiber.Ctx) error {
 }
 
 // checkForm validates what a request has for a form against Discord's limits for modals and the
-// plan of the server, and returns the fields and actions in the shape they're stored in.
-func (h *FormsHandler) checkForm(c *fiber.Ctx, guildID common.ID, req wire.FormSaveRequestWire) ([]actions.FormField, actions.ActionSet, error) {
+// plan of the server, and returns the fields and actions in the shape they're stored in, along with
+// the server's plan features.
+func (h *FormsHandler) checkForm(c *fiber.Ctx, guildID common.ID, req wire.FormSaveRequestWire) ([]actions.FormField, actions.ActionSet, model.PlanFeatures, error) {
 	fields := make([]actions.FormField, len(req.Fields))
 	for i, f := range req.Fields {
 		fields[i] = fieldFromWire(f)
 	}
 
 	if err := actions.ValidateForm(req.Name, req.Title, fields); err != nil {
-		return nil, actions.ActionSet{}, handlers.BadRequest("invalid_form", fmt.Sprintf("Invalid form: %s.", err))
+		return nil, actions.ActionSet{}, model.PlanFeatures{}, handlers.BadRequest("invalid_form", fmt.Sprintf("Invalid form: %s.", err))
 	}
 
 	actionSet := actions.ActionSet{}
 	if len(req.Actions) != 0 && string(req.Actions) != "null" {
 		if err := json.Unmarshal(req.Actions, &actionSet); err != nil {
-			return nil, actions.ActionSet{}, handlers.BadRequest("invalid_actions", fmt.Sprintf("Invalid actions: %s", err))
+			return nil, actions.ActionSet{}, model.PlanFeatures{}, handlers.BadRequest("invalid_actions", fmt.Sprintf("Invalid actions: %s", err))
 		}
-	}
-
-	if err := actions.ValidateFormActionSet(actionSet); err != nil {
-		return nil, actions.ActionSet{}, handlers.BadRequest("invalid_actions", fmt.Sprintf("Invalid actions: %s.", err))
 	}
 
 	features, err := h.planStore.GetPlanFeaturesForGuild(c.UserContext(), guildID)
 	if err != nil {
-		return nil, actions.ActionSet{}, err
+		return nil, actions.ActionSet{}, model.PlanFeatures{}, err
 	}
 
-	if err := handlers.CheckActionSetLimit(actionSet, features); err != nil {
-		return nil, actions.ActionSet{}, err
+	if err := handlers.CheckFormActionSetLimit(actionSet, features); err != nil {
+		return nil, actions.ActionSet{}, model.PlanFeatures{}, err
 	}
 
-	return fields, actionSet, nil
+	return fields, actionSet, features, nil
 }
 
 // derivePermissionsForUser records the authority the requesting user has over the form's actions,
@@ -269,13 +270,16 @@ func formToWire(form model.Form) wire.FormWire {
 	}
 
 	return wire.FormWire{
-		ID:        form.ID,
-		Name:      form.Name,
-		Title:     form.Title,
-		Fields:    fields,
-		Actions:   form.Actions,
-		CreatedAt: form.CreatedAt,
-		UpdatedAt: form.UpdatedAt,
+		ID:             form.ID,
+		Name:           form.Name,
+		Title:          form.Title,
+		Fields:         fields,
+		Actions:        form.Actions,
+		SigningSecret:  null.NewString(form.SigningSecret, form.SigningSecret != ""),
+		ForwardError:   null.NewString(form.ForwardError, form.ForwardError != ""),
+		ForwardErrorAt: null.NewTime(form.ForwardErrorAt, form.ForwardError != ""),
+		CreatedAt:      form.CreatedAt,
+		UpdatedAt:      form.UpdatedAt,
 	}
 }
 

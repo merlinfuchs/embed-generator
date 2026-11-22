@@ -99,6 +99,7 @@ func planFeaturesToWire(plan string, features model.PlanFeatures) wire.GetPremiu
 		MaxImageUploadSize:           features.MaxImageUploadSize,
 		MaxScheduledMessages:         features.MaxScheduledMessages,
 		MaxPeriodicScheduledMessages: features.MaxPeriodicScheduledMessages,
+		MaxForms:                     features.MaxForms,
 		MaxTemplateOps:               features.MaxTemplateOps,
 		MaxKVKeys:                    features.MaxKVKeys,
 		EmbedLinkAttribution:         features.EmbedLinkAttribution(),
