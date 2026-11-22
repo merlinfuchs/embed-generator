@@ -2,6 +2,7 @@ import React from "react";
 import {
   ArrowRightIcon,
   ChatBubbleLeftRightIcon,
+  ClipboardDocumentListIcon,
   ClockIcon,
   CloudIcon,
   CommandLineIcon,
@@ -48,6 +49,12 @@ const pages: { icon: Icon; name: string; text: string; href: string }[] = [
     name: "Components V2 Builder",
     text: "Discord's newer layouts with containers, sections, separators and galleries, built visually with a live preview.",
     href: "/features/components-v2",
+  },
+  {
+    icon: ClipboardDocumentListIcon,
+    name: "Discord Forms",
+    text: "Pop-up forms for applications, reports, and suggestions that open from a button and reply with the answers.",
+    href: "/features/forms",
   },
 ];
 

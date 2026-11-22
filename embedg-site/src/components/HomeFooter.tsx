@@ -20,6 +20,7 @@ const columns = [
     title: "Features",
     links: [
       { label: "Buttons & Select Menus", href: "/features/interactive-components" },
+      { label: "Forms", href: "/features/forms" },
       { label: "Custom Name & Avatar", href: "/docs/features/custom-branding" },
       { label: "Saved Messages", href: "/docs/features/save-messages" },
       { label: "Variables", href: "/docs/guides/variables" },

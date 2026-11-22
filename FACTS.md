@@ -118,6 +118,7 @@ Project-specific rules:
   - embedg-site/docs/features/interactive-components.md, embedg-site/docs/guides/interactive-components.md, and the FAQ in embedg-site/src/pages/features/interactive-components/index.tsx
   - embedg-site/docs/guides/custom-commands.md
   - embedg-site/docs/guides/scheduled-messages.md and embedg-site/src/pages/features/scheduled-messages/index.tsx
+  - embedg-site/docs/guides/forms.md and the FAQ, hero, and closing line in embedg-site/src/pages/features/forms/index.tsx
   - the Discohook comparison post in embedg-site/blog
   - the Discord directory description and the store tier benefits in the Developer Portal
 - The Premium price is typed by hand in embedg-site/src/components/HomePremium.tsx, embedg-site/docs/premium.md, the Discohook comparison post, and the Discord directory description. The Ultimate price is in docs/premium.md and the directory description. Change all of them together with the store.
