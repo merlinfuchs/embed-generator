@@ -218,6 +218,15 @@ export interface FormWire {
   title: string;
   fields: FormFieldWire[];
   actions: Record<string, any> | null;
+  /**
+   * SigningSecret signs the answers sent to a URL. Forms saved before it existed don't have one.
+   */
+  signing_secret: null | string;
+  /**
+   * ForwardError is why the last answers couldn't be sent to a URL.
+   */
+  forward_error: null | string;
+  forward_error_at: null | string /* RFC3339 */;
   created_at: string /* RFC3339 */;
   updated_at: string /* RFC3339 */;
 }

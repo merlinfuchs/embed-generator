@@ -20,6 +20,14 @@ type Form struct {
 	Actions actions.ActionSet
 	// DerivedPermissions are what the user who last saved the form may do with its actions.
 	DerivedPermissions *actions.ActionDerivedPermissions
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
+	// SigningSecret signs the answers that the form's actions send to a URL, so the receiver can
+	// check they come from us. Forms saved before it existed get one the next time they're saved.
+	SigningSecret string
+	// ForwardError is why the last answers couldn't be sent to a URL, empty when they could.
+	ForwardError string
+	// ForwardErrorAt is when the send that set ForwardError started. A send that worked and saving
+	// the form set it too, so a send that started before either can't overwrite them.
+	ForwardErrorAt time.Time
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }

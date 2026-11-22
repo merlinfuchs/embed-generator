@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/access"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/forward"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
@@ -16,6 +17,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
+	"gopkg.in/guregu/null.v4"
 )
 
 type FormsHandler struct {
@@ -129,6 +131,7 @@ func (h *FormsHandler) HandleCreateForm(c *fiber.Ctx, req wire.FormSaveRequestWi
 		Fields:             fields,
 		Actions:            actionSet,
 		DerivedPermissions: &derivedPerms,
+		SigningSecret:      forward.NewSigningSecret(),
 		CreatedAt:          now,
 		UpdatedAt:          now,
 	})
@@ -173,6 +176,7 @@ func (h *FormsHandler) HandleUpdateForm(c *fiber.Ctx, req wire.FormSaveRequestWi
 		Fields:             fields,
 		Actions:            actionSet,
 		DerivedPermissions: &derivedPerms,
+		SigningSecret:      forward.NewSigningSecret(),
 		UpdatedAt:          time.Now().UTC(),
 	})
 	if err != nil {
@@ -230,16 +234,12 @@ func (h *FormsHandler) checkForm(c *fiber.Ctx, guildID common.ID, req wire.FormS
 		}
 	}
 
-	if err := actions.ValidateFormActionSet(actionSet); err != nil {
-		return nil, actions.ActionSet{}, handlers.BadRequest("invalid_actions", fmt.Sprintf("Invalid actions: %s.", err))
-	}
-
 	features, err := h.planStore.GetPlanFeaturesForGuild(c.UserContext(), guildID)
 	if err != nil {
 		return nil, actions.ActionSet{}, err
 	}
 
-	if err := handlers.CheckActionSetLimit(actionSet, features); err != nil {
+	if err := handlers.CheckFormActionSetLimit(actionSet, features); err != nil {
 		return nil, actions.ActionSet{}, err
 	}
 
@@ -269,13 +269,16 @@ func formToWire(form model.Form) wire.FormWire {
 	}
 
 	return wire.FormWire{
-		ID:        form.ID,
-		Name:      form.Name,
-		Title:     form.Title,
-		Fields:    fields,
-		Actions:   form.Actions,
-		CreatedAt: form.CreatedAt,
-		UpdatedAt: form.UpdatedAt,
+		ID:             form.ID,
+		Name:           form.Name,
+		Title:          form.Title,
+		Fields:         fields,
+		Actions:        form.Actions,
+		SigningSecret:  null.NewString(form.SigningSecret, form.SigningSecret != ""),
+		ForwardError:   null.NewString(form.ForwardError, form.ForwardError != ""),
+		ForwardErrorAt: null.NewTime(form.ForwardErrorAt, form.ForwardError != ""),
+		CreatedAt:      form.CreatedAt,
+		UpdatedAt:      form.UpdatedAt,
 	}
 }
 

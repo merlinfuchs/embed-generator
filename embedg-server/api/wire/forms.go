@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
+	"gopkg.in/guregu/null.v4"
 )
 
 // FormFieldOptionWire is actions.FormFieldOption, which documents the fields.
@@ -33,13 +34,18 @@ type FormFieldWire struct {
 }
 
 type FormWire struct {
-	ID        string            `json:"id"`
-	Name      string            `json:"name"`
-	Title     string            `json:"title"`
-	Fields    []FormFieldWire   `json:"fields"`
-	Actions   actions.ActionSet `json:"actions"`
-	CreatedAt time.Time         `json:"created_at"`
-	UpdatedAt time.Time         `json:"updated_at"`
+	ID      string            `json:"id"`
+	Name    string            `json:"name"`
+	Title   string            `json:"title"`
+	Fields  []FormFieldWire   `json:"fields"`
+	Actions actions.ActionSet `json:"actions"`
+	// SigningSecret signs the answers sent to a URL. Forms saved before it existed don't have one.
+	SigningSecret null.String `json:"signing_secret"`
+	// ForwardError is why the last answers couldn't be sent to a URL.
+	ForwardError   null.String `json:"forward_error"`
+	ForwardErrorAt null.Time   `json:"forward_error_at"`
+	CreatedAt      time.Time   `json:"created_at"`
+	UpdatedAt      time.Time   `json:"updated_at"`
 }
 
 type FormsListResponseWire APIResponse[[]FormWire]
