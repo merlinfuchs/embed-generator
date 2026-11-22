@@ -803,6 +803,17 @@ export const messageActionSchema = z
   )
   .or(
     z.object({
+      type: z.literal(14), // sends a form's answers to a URL
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      text: z
+        .string()
+        .max(2000)
+        .regex(/^https:\/\/\S+$/, "Enter a URL that starts with https://"),
+      disable_default_response: z.boolean().default(false),
+    }),
+  )
+  .or(
+    z.object({
       type: z.literal(10), // permission check with default response
       id: uniqueIdSchema.default(() => getUniqueId()),
       permissions: z.string().default("0"),

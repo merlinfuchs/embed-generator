@@ -20,6 +20,7 @@ type RootConfig struct {
 	OpenAI    OpenAIConfig    `toml:"openai"`
 	Assistant AssistantConfig `toml:"assistant"`
 	Phishing  PhishingConfig  `toml:"phishing"`
+	Forms     FormsConfig     `toml:"forms"`
 }
 
 func (cfg *RootConfig) Validate() error {
@@ -204,4 +205,11 @@ type AssistantConfig struct {
 	// MaxRepairs is how often the assistant may fix problems with the message it produced
 	// without them counting as new prompts.
 	MaxRepairs int `toml:"max_repairs"`
+}
+
+type FormsConfig struct {
+	// ProxyURL is an egress proxy, like Smokescreen, that the answers of forms are sent to URLs
+	// through. The proxy then checks where the URLs point instead of this server. Unset sends them
+	// directly.
+	ProxyURL string `toml:"proxy_url" validate:"omitempty,url"`
 }

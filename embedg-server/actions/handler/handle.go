@@ -13,6 +13,7 @@ import (
 	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/forward"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/template"
 	"github.com/merlinfuchs/embed-generator/embedg-server/common"
@@ -52,6 +53,7 @@ type ActionHandler struct {
 	parser             *parser.ActionParser
 	planStore          store.PlanStore
 	guildState         *guildstate.Provider
+	forwarder          *forward.Forwarder
 }
 
 func New(
@@ -63,6 +65,7 @@ func New(
 	parser *parser.ActionParser,
 	planStore store.PlanStore,
 	guildState *guildstate.Provider,
+	forwarder *forward.Forwarder,
 ) *ActionHandler {
 	return &ActionHandler{
 		customCommandStore: customCommandStore,
@@ -73,6 +76,7 @@ func New(
 		parser:             parser,
 		planStore:          planStore,
 		guildState:         guildState,
+		forwarder:          forwarder,
 	}
 }
 
@@ -120,6 +124,9 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 	var formValues map[string]string
 	// formIDs is the IDs of what was picked in the select fields of a submitted form.
 	var formIDs map[string]string
+	// submittedForm and answers are the form and what was entered when one was submitted.
+	var submittedForm *model.Form
+	var answers []formAnswer
 
 	if interaction.Type() == discord.InteractionTypeComponent {
 		compInteraction := interaction.(discord.ComponentInteraction)
@@ -218,7 +225,9 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 		actionSet = form.Actions
 		derivedPerms = form.DerivedPermissions
 
-		formValues, formIDs = submittedFormValues(form.Fields, modalInteraction.Data)
+		submittedForm = form
+		answers = formAnswers(form.Fields, modalInteraction.Data)
+		formValues, formIDs = submittedFormValues(answers)
 	} else {
 		return fmt.Errorf("invalid interaciont type")
 	}
@@ -554,6 +563,22 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				return userErr("Opening the form took too long. Try again.")
 			}
 			return nil
+		case actions.ActionTypeForwardForm:
+			// Only a form's actions can have it, which is checked when they're saved.
+			if submittedForm == nil {
+				continue
+			}
+			if !features.AdvancedActionTypes {
+				return userErr("Sending form answers to a URL needs Embed Generator Premium on this server.")
+			}
+
+			m.forwarder.Forward(submittedForm, action.Text, formSubmission(submittedForm, interaction, answers))
+			if !action.DisableDefaultResponse {
+				i.Respond(discord.MessageCreate{
+					Content: "Thanks, your answers were submitted.",
+					Flags:   discord.MessageFlagEphemeral,
+				})
+			}
 		case actions.ActionTypePermissionCheck:
 			rawPerms, _ := strconv.ParseInt(action.Permissions, 10, 64)
 			perms := discord.Permissions(rawPerms)

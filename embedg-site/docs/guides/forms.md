@@ -67,6 +67,69 @@ A form with a user select called `target` and a text field called `reason` can p
 
 The other [variables](./variables) like the member's name or the server's name work in a form's actions too.
 
+## Sending Answers to Other Tools
+
+A form can send its answers to another tool, like Zapier, n8n, Make or your own server, to save them in a spreadsheet or start a workflow there. This needs [Embed Generator Premium](../premium).
+
+1. In the tool, create a webhook trigger and copy the URL it gives you. The URL has to start with `https://`.
+2. In the actions of your form, add a **Send Answers to URL** action and paste the URL.
+3. Save the form.
+
+The answers are sent after the member submits the form, and the member doesn't wait for your tool. They get the form's other replies as usual, plus "Thanks, your answers were submitted." unless you turn off **Default Response**. If your tool can't be reached or answers with an error, the form's card on the Forms page shows what went wrong. Saving the form clears it.
+
+Each submission is a `POST` request with a JSON body like this:
+
+```json
+{
+  "type": "form_submission",
+  "form": { "id": "a1b2c3", "name": "Report" },
+  "guild_id": "123456789012345678",
+  "channel_id": "234567890123456789",
+  "user": { "id": "345678901234567890", "username": "ana", "global_name": "Ana" },
+  "fields": [
+    { "key": "reason", "label": "Reason", "type": "text", "value": "Spam in #general", "ids": [] },
+    { "key": "target", "label": "Who", "type": "user", "value": "<@456789012345678901>", "ids": ["456789012345678901"] }
+  ],
+  "submitted_at": "2026-11-14T12:00:00Z"
+}
+```
+
+`value` and `ids` have what `{{.Form.variable_name}}` and `{{.FormIDs.variable_name}}` have, with `ids` as a list. `guild_id` is the ID of your server.
+
+### Checking that answers come from Embed Generator
+
+Anyone who knows the URL can send requests to it. To make sure a request comes from Embed Generator, check its signature with the form's **Signing Secret**, which the form shows once it has a Send Answers to URL action. Each request has two headers:
+
+- `X-Signature-Timestamp`, the time it was sent in seconds since 1970.
+- `X-Signature-256`, `sha256=` followed by the hex HMAC-SHA256 of the timestamp, a `.`, and the body, using the signing secret as the key.
+
+In Node.js:
+
+```js
+const crypto = require("crypto");
+
+function isFromEmbedGenerator(secret, timestamp, signature, rawBody) {
+  const expected =
+    "sha256=" +
+    crypto.createHmac("sha256", secret).update(`${timestamp}.${rawBody}`).digest("hex");
+  const fresh = Math.abs(Date.now() / 1000 - Number(timestamp)) < 300;
+  return (
+    fresh &&
+    signature.length === expected.length &&
+    crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+  );
+}
+```
+
+Use the body exactly as it arrived, before parsing it. Rejecting old timestamps stops someone from sending a request they caught again later.
+
+### Limits
+
+- A form can send its answers to one URL.
+- The URL has to use port 443 or 8443 and point to a public address. Addresses in private networks, like `localhost` or `192.168.0.1`, don't work.
+- Redirects aren't followed. Use the final URL.
+- Your tool has 10 seconds to answer. If it can't be reached or answers with a status of 429 or 500 and above, the answers are sent once more after 2 seconds.
+
 ## Good to Know
 
 - Pinging users from a select field works like any other mention in a reply. Role mentions only ping when the action allows role mentions.

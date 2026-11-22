@@ -101,6 +101,7 @@ export default function FormCreate({
         setTitle={setTitle}
         fields={fields}
         setFields={setFields}
+        signingSecret={null}
       />
     </div>
   );

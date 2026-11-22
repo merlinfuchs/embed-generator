@@ -48,6 +48,13 @@ function defaultsForType(type: number): Omit<MessageAction, "type" | "id"> {
     return { target_id: "" } as Omit<MessageAction, "type" | "id">;
   }
 
+  if (type === 14) {
+    return { text: "", disable_default_response: false } as Omit<
+      MessageAction,
+      "type" | "id"
+    >;
+  }
+
   const channelBase = {
     channel_id: "",
     allow_role_mentions: false,
