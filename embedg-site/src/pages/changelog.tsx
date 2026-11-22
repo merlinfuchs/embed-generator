@@ -85,22 +85,23 @@ function Day({ day }: { day: ChangeDay }): JSX.Element {
           </div>
         ))}
         {small.length > 0 && (
-          <ul className="m-0 grid list-disc gap-1.5 pl-5 text-sm leading-relaxed text-mist-400 marker:text-mist-500">
+          // Changes without a text are listed like the others, just closer together.
+          <div className="grid gap-2.5">
             {small.map((c) => (
-              <li key={c.title}>
+              <h3
+                key={c.title}
+                className="m-0 text-base font-semibold text-mist-100"
+              >
                 {c.href ? (
-                  <a
-                    href={c.href}
-                    className="text-mist-300 hover:text-azure-300"
-                  >
+                  <a href={c.href} className="text-inherit hover:text-azure-300">
                     {c.title}
                   </a>
                 ) : (
                   c.title
                 )}
-              </li>
+              </h3>
             ))}
-          </ul>
+          </div>
         )}
       </div>
     </div>
