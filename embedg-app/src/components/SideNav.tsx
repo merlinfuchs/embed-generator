@@ -8,7 +8,6 @@ import {
   ChevronDoubleRightIcon,
   ChevronDownIcon,
   ChevronDoubleLeftIcon,
-  Bars3Icon,
   PlusCircleIcon,
   ArrowRightOnRectangleIcon,
   CommandLineIcon,
@@ -38,14 +37,11 @@ export default function SideNav() {
     (s) => s.alwaysCollapseSidebar,
   );
 
-  const [preCollapsed, setCollapsed] = useState(
+  const [collapsed, setCollapsed] = useState(
     alwaysCollapseSidebar || document.body.clientWidth < collapsedBreakpoint,
   );
-  const [hidden, setHidden] = useState(true);
 
   const { data: user } = useUserQuery();
-
-  const collapsed = preCollapsed && hidden;
 
   useEffect(() => {
     if (alwaysCollapseSidebar) {
@@ -56,188 +52,159 @@ export default function SideNav() {
   }, [alwaysCollapseSidebar]);
 
   return (
-    <>
-      <div
-        className={clsx(
-          "h-dvh bg-ink-900 border-r border-white/5 flex-none transition-all fixed z-30",
-          collapsed ? "w-16" : "w-64",
-          hidden && "hidden xl:relative xl:block",
-        )}
-      >
-        <div className="flex flex-col h-full">
+    <div
+      className={clsx(
+        "hidden lg:block relative h-dvh bg-ink-900 border-r border-white/5 flex-none transition-all z-30",
+        collapsed ? "w-16" : "w-64",
+      )}
+    >
+      <div className="flex flex-col h-full">
+        <div
+          className={clsx("flex flex-col pt-5", collapsed && "items-center")}
+        >
           <div
-            className={clsx("flex flex-col pt-5", collapsed && "items-center")}
+            className={clsx(
+              "flex items-center mb-6 px-3",
+              collapsed ? "flex-col gap-3" : "justify-between",
+            )}
           >
-            <div
-              className={clsx(
-                "flex items-center mb-6 px-3",
-                collapsed ? "flex-col gap-3" : "justify-between",
+            <a href="/" className="flex items-center gap-3 min-w-0">
+              <img src={logo} alt="" className="h-9 w-9 rounded-xl flex-none" />
+              {!collapsed && (
+                <span className="font-semibold tracking-tight text-mist-100 truncate">
+                  Embed Generator
+                </span>
               )}
+            </a>
+            <button
+              type="button"
+              className="flex-none rounded-md p-1 text-mist-500 hover:bg-white/5 hover:text-mist-100 transition-colors"
+              onClick={() => setCollapsed((h) => !h)}
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              <a href="/" className="flex items-center gap-3 min-w-0">
-                <img
-                  src={logo}
-                  alt=""
-                  className="h-9 w-9 rounded-xl flex-none"
-                />
-                {!collapsed && (
-                  <span className="font-semibold tracking-tight text-mist-100 truncate">
-                    Embed Generator
-                  </span>
-                )}
-              </a>
-              <button
-                type="button"
-                className="hidden xl:block flex-none rounded-md p-1 text-mist-500 hover:bg-white/5 hover:text-mist-100 transition-colors"
-                onClick={() => setCollapsed((h) => !h)}
-                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              >
-                {collapsed ? (
-                  <ChevronDoubleRightIcon className="h-5 w-5" />
-                ) : (
-                  <ChevronDoubleLeftIcon className="h-5 w-5" />
-                )}
-              </button>
-            </div>
-            <div className="mb-7">
-              {user && user.success ? (
-                <NavigationGuildSelect collapsed={collapsed} />
+              {collapsed ? (
+                <ChevronDoubleRightIcon className="h-5 w-5" />
               ) : (
-                <LoginLink
-                  className={clsx(
-                    "bg-ink-800 border border-white/5 flex items-center mx-3 group transition-colors hover:border-white/15",
-                    collapsed ? "rounded-full p-2" : "rounded-xl p-3",
-                  )}
-                >
-                  <ArrowRightOnRectangleIcon className="h-7 w-7 flex-none text-azure-400" />
-                  {!collapsed && (
-                    <div className="ml-4">
-                      <div className="text-sm font-medium text-mist-100 mb-0.5">
-                        Login
-                      </div>
-                      <div className="text-xs text-mist-500">
-                        Many features are only available after loggin in with
-                        your Discord account!
-                      </div>
-                    </div>
-                  )}
-                </LoginLink>
+                <ChevronDoubleLeftIcon className="h-5 w-5" />
               )}
-            </div>
-            <div
-              className={clsx(
-                "h-px bg-white/5 mb-5",
-                collapsed ? "w-10" : "mx-3",
-              )}
-            ></div>
+            </button>
           </div>
-          <div className="flex flex-col flex-1 min-h-0 justify-between overflow-y-auto overflow-x-hidden overscroll-contain thin-scrollbar">
-            <div className="flex flex-col space-y-4 pb-5">
-              <NavigationButton
-                href="/editor"
-                label="Message Editor"
-                icon={PencilSquareIcon}
-                collapsed={collapsed}
-                setHidden={setHidden}
-              />
-              <NavigationButton
-                href="/messages"
-                label="Saved Messages"
-                icon={RectangleStackIcon}
-                collapsed={collapsed}
-                setHidden={setHidden}
-              />
-              <NavigationButton
-                href="/scheduled"
-                label="Scheduled Messages"
-                icon={CalendarDaysIcon}
-                collapsed={collapsed}
-                setHidden={setHidden}
-              />
-              <NavigationButton
-                href="/forms"
-                label="Forms"
-                icon={ClipboardDocumentListIcon}
-                collapsed={collapsed}
-                setHidden={setHidden}
-              />
-              <NavigationButton
-                href="/commands"
-                label="Commands"
-                icon={CommandLineIcon}
-                collapsed={collapsed}
-                setHidden={setHidden}
-              />
-              <NavigationButton
-                href="/tools"
-                label="Utility Tools"
-                icon={WrenchScrewdriverIcon}
-                collapsed={collapsed}
-                setHidden={setHidden}
-              />
-              <NavigationButton
-                href="/premium"
-                label="Premium"
-                icon={StarIcon}
-                collapsed={collapsed}
-                setHidden={setHidden}
-              />
-            </div>
-            <div className="flex flex-col items-center py-5 space-y-7">
-              <ExternalNavigationLink
-                href="/docs"
-                label="Documentation"
-                icon={BookOpenIcon}
-                collapsed={collapsed}
-              />
-              <ExternalNavigationLink
-                href="/discord"
-                label="Help & Support"
-                icon={QuestionMarkCircleIcon}
-                collapsed={collapsed}
-              />
-              {user && user.success && (
-                <LogoutLink
-                  className={clsx(
-                    "flex w-full items-center group",
-                    collapsed ? "px-4" : "px-5",
-                  )}
-                >
-                  <ArrowLeftOnRectangleIcon className="h-8 w-8 flex-none text-mist-400 group-hover:text-mist-100" />
-                  {!collapsed && (
-                    <div className="ml-5 text-mist-400 group-hover:text-mist-100">
-                      Logout
+          <div className="mb-7">
+            {user && user.success ? (
+              <NavigationGuildSelect collapsed={collapsed} />
+            ) : (
+              <LoginLink
+                className={clsx(
+                  "bg-ink-800 border border-white/5 flex items-center mx-3 group transition-colors hover:border-white/15",
+                  collapsed ? "rounded-full p-2" : "rounded-xl p-3",
+                )}
+              >
+                <ArrowRightOnRectangleIcon className="h-7 w-7 flex-none text-azure-400" />
+                {!collapsed && (
+                  <div className="ml-4">
+                    <div className="text-sm font-medium text-mist-100 mb-0.5">
+                      Login
                     </div>
-                  )}
-                </LogoutLink>
-              )}
+                    <div className="text-xs text-mist-500">
+                      Many features are only available after loggin in with your
+                      Discord account!
+                    </div>
+                  </div>
+                )}
+              </LoginLink>
+            )}
+          </div>
+          <div
+            className={clsx(
+              "h-px bg-white/5 mb-5",
+              collapsed ? "w-10" : "mx-3",
+            )}
+          ></div>
+        </div>
+        <div className="flex flex-col flex-1 min-h-0 justify-between overflow-y-auto overflow-x-hidden overscroll-contain thin-scrollbar">
+          <div className="flex flex-col space-y-4 pb-5">
+            <NavigationButton
+              href="/editor"
+              label="Message Editor"
+              icon={PencilSquareIcon}
+              collapsed={collapsed}
+            />
+            <NavigationButton
+              href="/messages"
+              label="Saved Messages"
+              icon={RectangleStackIcon}
+              collapsed={collapsed}
+            />
+            <NavigationButton
+              href="/scheduled"
+              label="Scheduled Messages"
+              icon={CalendarDaysIcon}
+              collapsed={collapsed}
+            />
+            <NavigationButton
+              href="/forms"
+              label="Forms"
+              icon={ClipboardDocumentListIcon}
+              collapsed={collapsed}
+            />
+            <NavigationButton
+              href="/commands"
+              label="Commands"
+              icon={CommandLineIcon}
+              collapsed={collapsed}
+            />
+            <NavigationButton
+              href="/tools"
+              label="Utility Tools"
+              icon={WrenchScrewdriverIcon}
+              collapsed={collapsed}
+            />
+            <NavigationButton
+              href="/premium"
+              label="Premium"
+              icon={StarIcon}
+              collapsed={collapsed}
+            />
+          </div>
+          <div className="flex flex-col items-center py-5 space-y-7">
+            <ExternalNavigationLink
+              href="/docs"
+              label="Documentation"
+              icon={BookOpenIcon}
+              collapsed={collapsed}
+            />
+            <ExternalNavigationLink
+              href="/discord"
+              label="Help & Support"
+              icon={QuestionMarkCircleIcon}
+              collapsed={collapsed}
+            />
+            {user && user.success && (
+              <LogoutLink
+                className={clsx(
+                  "flex w-full items-center group",
+                  collapsed ? "px-4" : "px-5",
+                )}
+              >
+                <ArrowLeftOnRectangleIcon className="h-8 w-8 flex-none text-mist-400 group-hover:text-mist-100" />
+                {!collapsed && (
+                  <div className="ml-5 text-mist-400 group-hover:text-mist-100">
+                    Logout
+                  </div>
+                )}
+              </LogoutLink>
+            )}
 
-              <NavigationButton
-                href="/settings"
-                label="Settings"
-                icon={Cog6ToothIcon}
-                collapsed={collapsed}
-                setHidden={setHidden}
-              />
-            </div>
+            <NavigationButton
+              href="/settings"
+              label="Settings"
+              icon={Cog6ToothIcon}
+              collapsed={collapsed}
+            />
           </div>
         </div>
       </div>
-      {!hidden && (
-        <div
-          className="fixed inset-0 bg-black/40 z-20"
-          onClick={() => setHidden(true)}
-        ></div>
-      )}
-      <button
-        type="button"
-        aria-label="Toggle navigation"
-        className="xl:hidden fixed w-12 h-12 rounded-full bg-azure-500 hover:bg-azure-400 shadow-lg bottom-3 left-3 flex items-center justify-center cursor-pointer z-10 transition-colors"
-        onClick={() => setHidden((h) => !h)}
-      >
-        <Bars3Icon className="text-white h-7 w-7" />
-      </button>
-    </>
+    </div>
   );
 }
 
@@ -246,22 +213,16 @@ function NavigationButton({
   label,
   icon,
   collapsed,
-  setHidden,
 }: {
   href: string;
   label: string;
   collapsed: boolean;
   icon: any;
-  setHidden: (hidden: boolean) => void;
 }) {
   const Icon = icon;
 
   return (
-    <NavLink
-      className="flex w-full items-center pr-4 group"
-      to={href}
-      onClick={() => setHidden(true)}
-    >
+    <NavLink className="flex w-full items-center pr-4 group" to={href}>
       {({ isActive }) => (
         <>
           <div

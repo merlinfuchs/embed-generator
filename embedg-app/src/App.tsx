@@ -6,6 +6,7 @@ import RequestLoadingIndicator from "./components/RequestLoadingIndicator";
 import MessageSettingsView from "./views/editor/messageSettings";
 import ShareView from "./views/editor/share";
 import EditorSideNav from "./components/SideNav";
+import MobileBottomBar from "./components/MobileBottomBar";
 import UpsellPopup from "./components/UpsellPopup";
 import ConfirmOnExit from "./components/ConfirmOnExit";
 import LoginErrorHandler from "./components/LoginErrorHandler";
@@ -52,7 +53,8 @@ function App() {
       <UpsellPopup />
       <ConfirmOnExit />
       <LoginErrorHandler />
-      <div className="flex h-full">
+      {/* Room for the bottom bar on screens without the sidebar. */}
+      <div className="flex h-full pb-[calc(3.75rem+env(safe-area-inset-bottom))] lg:pb-0">
         <EditorSideNav />
         <Routes>
           <Route path="/editor" element={<EditorView />}>
@@ -211,6 +213,7 @@ function App() {
           />
         </Routes>
       </div>
+      <MobileBottomBar />
       <ToastContainer />
     </div>
   );
