@@ -1,5 +1,6 @@
-import { fireEvent, screen } from "@testing-library/react";
+import { act, fireEvent, screen } from "@testing-library/react";
 import { beforeEach, expect, test } from "vitest";
+import { useCurrentAttachmentsStore } from "../state/attachments";
 import { useCollapsedStatesStore } from "../state/collapsed";
 import { currentMessage, loadMessage, renderEditor } from "../test/editor";
 import EditorPoll from "./EditorPoll";
@@ -15,7 +16,10 @@ const poll = {
 };
 
 // The section starts collapsed without a poll, and the state outlives a test.
-beforeEach(() => useCollapsedStatesStore.setState({ states: {} }));
+beforeEach(() => {
+  useCollapsedStatesStore.setState({ states: {} });
+  useCurrentAttachmentsStore.getState().clearAttachments();
+});
 
 function open() {
   fireEvent.click(screen.getByText("Poll"));
@@ -122,4 +126,27 @@ test("removing the poll takes it out of the message", () => {
 
   expect(currentMessage().poll).toBeUndefined();
   expect(screen.getByRole("button", { name: "Add Poll" })).toBeInTheDocument();
+});
+
+test("a poll with attachments warns that Discord won't send it", () => {
+  loadMessage({ poll });
+  renderEditor(<EditorPoll />);
+
+  expect(screen.queryByText(/attachments on a message with a poll/)).toBeNull();
+
+  act(() =>
+    useCurrentAttachmentsStore.getState().replaceAttachments([
+      {
+        id: 1,
+        name: "image.png",
+        description: null,
+        data_url: "data:image/png;base64,AA==",
+        size: 1,
+      },
+    ]),
+  );
+
+  expect(
+    screen.getByText(/attachments on a message with a poll/),
+  ).toBeInTheDocument();
 });

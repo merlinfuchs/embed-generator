@@ -11,6 +11,9 @@ import {
 } from "./WebhookNotice";
 import MessageRestoreButton from "./MessageRestoreButton";
 import MessageErrorNotice from "./MessageErrorNotice";
+import PollAttachmentsNotice, {
+  usePollWithAttachments,
+} from "./PollAttachmentsNotice";
 import { useToasts } from "../util/toasts";
 import { getCurrentMessage } from "../state/currentMessage";
 import {
@@ -29,6 +32,7 @@ export default function SendMenuWebhook() {
   const hasAttachments = useCurrentAttachmentsStore(
     (state) => state.attachments.length > 0,
   );
+  const pollWithAttachments = usePollWithAttachments();
 
   const [webhookUrl, setWebhookUrl] = useSendSettingsStore(
     useShallow((state) => [state.webhookUrl, state.setWebhookUrl]),
@@ -47,17 +51,19 @@ export default function SendMenuWebhook() {
 
   const createToast = useToasts((state) => state.create);
 
-  // Used for both the styling and the disabled attribute of both buttons.
-  const canSend =
+  // One predicate per button, used for both the styling and the disabled attribute. An edit
+  // leaves the poll out, so only a new message can't have both a poll and files.
+  const canEdit =
     !validationError &&
     !interactive &&
     !(fluxer && hasComponents) &&
     !(fluxer && hasPoll) &&
     !!target &&
     !sendToWebhookMutation.isPending;
+  const canSend = canEdit && !pollWithAttachments;
 
   function send(edit: boolean) {
-    if (!canSend) return;
+    if (edit ? !canEdit : !canSend) return;
     // Already covered by the predicate, repeated so target narrows to non-null below.
     if (!target) return;
 
@@ -140,6 +146,7 @@ export default function SendMenuWebhook() {
       {fluxer && hasComponents && <FluxerComponentsNotice />}
       {fluxer && hasPoll && <FluxerPollNotice />}
       {!fluxer && interactive && <InteractiveWebhookNotice />}
+      {!fluxer && pollWithAttachments && <PollAttachmentsNotice />}
       {fluxer && messageId && hasAttachments && (
         <div className="text-mist-400 font-light text-sm">
           Editing a Fluxer message keeps the files it was sent with, as Fluxer
@@ -156,11 +163,11 @@ export default function SendMenuWebhook() {
             <button
               type="button"
               className={`px-3 py-2 rounded-lg text-white flex items-center space-x-3 ${
-                canSend
+                canEdit
                   ? "bg-azure-500 hover:bg-azure-400 cursor-pointer"
                   : "cursor-not-allowed bg-ink-900"
               }`}
-              disabled={!canSend}
+              disabled={!canEdit}
               onClick={() => send(true)}
             >
               {sendToWebhookMutation.isPending && (

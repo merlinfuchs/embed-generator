@@ -19,6 +19,9 @@ import CheckBox from "./CheckBox";
 import Collapsable from "./Collapsable";
 import EditorComponentEmojiSelect from "./EditorComponentEmojiSelect";
 import EditorInput from "./EditorInput";
+import PollAttachmentsNotice, {
+  usePollWithAttachments,
+} from "./PollAttachmentsNotice";
 
 /** Durations to pick from, in hours, up to the longest Discord takes. */
 const DURATIONS: { hours: number; label: string }[] = [
@@ -96,9 +99,11 @@ function PollFields({
 
   const canAddAnswer = poll.answers.length < POLL_ANSWERS_LIMIT;
   const customDuration = !DURATIONS.some((d) => d.hours === poll.duration);
+  const pollWithAttachments = usePollWithAttachments();
 
   return (
     <div className="space-y-4">
+      {pollWithAttachments && <PollAttachmentsNotice />}
       <EditorInput
         label="Question"
         value={poll.question.text}

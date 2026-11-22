@@ -10,6 +10,9 @@ import { useSendSettingsStore } from "../state/sendSettings";
 import { isThreadOnlyChannel, parseMessageId } from "../discord/util";
 import MessageRestoreButton from "./MessageRestoreButton";
 import MessageErrorNotice from "./MessageErrorNotice";
+import PollAttachmentsNotice, {
+  usePollWithAttachments,
+} from "./PollAttachmentsNotice";
 import { useToasts } from "../util/toasts";
 import { getCurrentMessage } from "../state/currentMessage";
 
@@ -44,16 +47,18 @@ export default function SendMenuChannel() {
   const sendToChannelMutation = useSendMessageToChannelMutation();
 
   const createToast = useToasts((state) => state.create);
+  const pollWithAttachments = usePollWithAttachments();
 
   // One predicate per button, used for both the styling and the disabled attribute. A forum or
-  // media channel needs a thread name, and can't have an existing message edited in it.
+  // media channel needs a thread name, and can't have an existing message edited in it. An edit
+  // leaves the poll out, so only a new message can't have both a poll and files.
   const threadOnly = isThreadOnlyChannel(selectedChannel?.type);
   const ready =
     !validationError &&
     !!selectedGuildId &&
     !!selectedChannnelId &&
     !sendToChannelMutation.isPending;
-  const canSend = ready && !(threadOnly && !threadName);
+  const canSend = ready && !(threadOnly && !threadName) && !pollWithAttachments;
   const canEdit = ready && !threadOnly;
 
   function send(edit: boolean) {
@@ -149,6 +154,7 @@ export default function SendMenuChannel() {
           </div>
         )}
       </div>
+      {pollWithAttachments && <PollAttachmentsNotice />}
       <div>
         <MessageErrorNotice />
       </div>
@@ -182,7 +188,8 @@ export default function SendMenuChannel() {
             disabled={
               !!validationError ||
               !selectedChannnelId ||
-              (threadOnly && !threadName)
+              (threadOnly && !threadName) ||
+              pollWithAttachments
             }
             onClick={() => send(false)}
           >
