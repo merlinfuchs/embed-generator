@@ -19,9 +19,3 @@ DELETE FROM forms WHERE id = $1 AND guild_id = $2 RETURNING *;
 -- name: SetFormForwardError :exec
 UPDATE forms SET forward_error = $3, forward_error_at = $4 WHERE id = $1 AND guild_id = $2;
 
--- name: IncrementFormForwardCount :one
-INSERT INTO form_forward_counts (guild_id, window_start, count) VALUES ($1, $2, 1)
-ON CONFLICT (guild_id) DO UPDATE SET
-    count = CASE WHEN form_forward_counts.window_start = EXCLUDED.window_start THEN form_forward_counts.count + 1 ELSE 1 END,
-    window_start = EXCLUDED.window_start
-RETURNING count;

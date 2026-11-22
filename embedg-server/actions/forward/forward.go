@@ -24,13 +24,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 )
 
-const (
-	// MaxPerMinute is how many submissions a server can send to URLs a minute, counted across all
-	// instances.
-	MaxPerMinute = 60
-
-	userAgent = "EmbedGenerator-Forms (https://message.style)"
-)
+const userAgent = "EmbedGenerator-Forms (https://message.style)"
 
 // Submission is the JSON body that's sent for a submitted form.
 type Submission struct {
@@ -136,16 +130,6 @@ func (f *Forwarder) forward(ctx context.Context, form *model.Form, url string, s
 	}
 	if form.SigningSecret == "" {
 		return errors.New("The form has no signing secret yet. Save it again.")
-	}
-
-	now := f.now().UTC()
-	count, err := f.formStore.IncrementFormForwardCount(ctx, form.GuildID, now.Truncate(time.Minute))
-	if err != nil {
-		slog.Error("Failed to count form forward", slog.String("form_id", form.ID), slog.Any("error", err))
-		return errors.New("Something went wrong on our side.")
-	}
-	if count > MaxPerMinute {
-		return fmt.Errorf("More than %d forms were submitted on this server in a minute. The ones over that weren't sent.", MaxPerMinute)
 	}
 
 	body, err := json.Marshal(sub)

@@ -117,26 +117,6 @@ func (q *Queries) GetForms(ctx context.Context, guildID string) ([]Form, error) 
 	return items, nil
 }
 
-const incrementFormForwardCount = `-- name: IncrementFormForwardCount :one
-INSERT INTO form_forward_counts (guild_id, window_start, count) VALUES ($1, $2, 1)
-ON CONFLICT (guild_id) DO UPDATE SET
-    count = CASE WHEN form_forward_counts.window_start = EXCLUDED.window_start THEN form_forward_counts.count + 1 ELSE 1 END,
-    window_start = EXCLUDED.window_start
-RETURNING count
-`
-
-type IncrementFormForwardCountParams struct {
-	GuildID     string
-	WindowStart pgtype.Timestamp
-}
-
-func (q *Queries) IncrementFormForwardCount(ctx context.Context, arg IncrementFormForwardCountParams) (int32, error) {
-	row := q.db.QueryRow(ctx, incrementFormForwardCount, arg.GuildID, arg.WindowStart)
-	var count int32
-	err := row.Scan(&count)
-	return count, err
-}
-
 const insertForm = `-- name: InsertForm :one
 INSERT INTO forms (id, guild_id, name, title, fields, actions, derived_permissions, signing_secret, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, guild_id, name, title, fields, actions, derived_permissions, created_at, updated_at, signing_secret, forward_error, forward_error_at
 `

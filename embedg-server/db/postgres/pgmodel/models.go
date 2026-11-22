@@ -109,12 +109,6 @@ type Form struct {
 	ForwardErrorAt     pgtype.Timestamp
 }
 
-type FormForwardCount struct {
-	GuildID     string
-	WindowStart pgtype.Timestamp
-	Count       int32
-}
-
 type Guild struct {
 	ID        int64
 	Name      string

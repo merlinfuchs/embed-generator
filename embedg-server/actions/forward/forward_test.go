@@ -134,7 +134,7 @@ func TestForwardSignsTheBody(t *testing.T) {
 	}))
 	defer server.Close()
 
-	f, _ := newTestForwarder(server, 1)
+	f, _ := newTestForwarder(server)
 	if err := f.forward(context.Background(), testForm(), server.URL, sub); err != nil {
 		t.Fatal(err)
 	}
@@ -149,7 +149,7 @@ func TestForwardRetriesOnce(t *testing.T) {
 	}))
 	defer server.Close()
 
-	f, _ := newTestForwarder(server, 1)
+	f, _ := newTestForwarder(server)
 	if err := f.forward(context.Background(), testForm(), server.URL, Submission{}); err != nil {
 		t.Fatal(err)
 	}
@@ -166,29 +166,13 @@ func TestForwardReportsStatus(t *testing.T) {
 	}))
 	defer server.Close()
 
-	f, _ := newTestForwarder(server, 1)
+	f, _ := newTestForwarder(server)
 	err := f.forward(context.Background(), testForm(), server.URL, Submission{})
 	if err == nil || !strings.Contains(err.Error(), "404") {
 		t.Fatalf("want status error, got %v", err)
 	}
 	if hits.Load() != 1 {
 		t.Fatalf("a 404 shouldn't be retried, got %d requests", hits.Load())
-	}
-}
-
-func TestForwardRateLimit(t *testing.T) {
-	var hits atomic.Int32
-	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hits.Add(1)
-	}))
-	defer server.Close()
-
-	f, _ := newTestForwarder(server, MaxPerMinute+1)
-	if err := f.forward(context.Background(), testForm(), server.URL, Submission{}); err == nil {
-		t.Fatal("want rate limit error")
-	}
-	if hits.Load() != 0 {
-		t.Fatal("the request was sent")
 	}
 }
 
@@ -200,7 +184,7 @@ func TestForwardRecordsAndClearsErrors(t *testing.T) {
 	}))
 	defer server.Close()
 
-	f, fs := newTestForwarder(server, 1)
+	f, fs := newTestForwarder(server)
 	form := testForm()
 
 	f.Forward(form, server.URL, Submission{})
@@ -221,12 +205,7 @@ func allowAll(netip.Addr) bool { return true }
 
 type fakeFormStore struct {
 	store.FormStore
-	count  int
 	errors chan string
-}
-
-func (s *fakeFormStore) IncrementFormForwardCount(context.Context, common.ID, time.Time) (int, error) {
-	return s.count, nil
 }
 
 func (s *fakeFormStore) SetFormForwardError(_ context.Context, _ common.ID, _ string, message string, _ time.Time) error {
@@ -275,7 +254,7 @@ func newProxiedForwarder(t *testing.T, server *httptest.Server, proxyURL string)
 	if err != nil {
 		t.Fatal(err)
 	}
-	f, fs := newTestForwarder(server, 1)
+	f, fs := newTestForwarder(server)
 	client := newClient(isPublicAddr, proxy)
 	client.Transport.(*http.Transport).TLSClientConfig = server.Client().Transport.(*http.Transport).TLSClientConfig
 	f.client = client
@@ -321,10 +300,9 @@ func TestForwardReportsWhatTheProxyRefuses(t *testing.T) {
 	}
 }
 
-// newTestForwarder sends to server, which is on the loopback address, and counts count requests
-// for every submission.
-func newTestForwarder(server *httptest.Server, count int) (*Forwarder, *fakeFormStore) {
-	fs := &fakeFormStore{count: count, errors: make(chan string, 1)}
+// newTestForwarder sends to server, which is on the loopback address.
+func newTestForwarder(server *httptest.Server) (*Forwarder, *fakeFormStore) {
+	fs := &fakeFormStore{errors: make(chan string, 1)}
 	client := newClient(allowAll, nil)
 	client.Transport.(*http.Transport).TLSClientConfig = server.Client().Transport.(*http.Transport).TLSClientConfig
 	return &Forwarder{

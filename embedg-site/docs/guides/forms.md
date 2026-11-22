@@ -126,7 +126,6 @@ Use the body exactly as it arrived, before parsing it. Rejecting old timestamps 
 ### Limits
 
 - A form can send its answers to one URL.
-- A server can send up to 60 submissions a minute. Answers over that aren't sent.
 - The URL has to use port 443 or 8443 and point to a public address. Addresses in private networks, like `localhost` or `192.168.0.1`, don't work.
 - Redirects aren't followed. Use the final URL.
 - Your tool has 10 seconds to answer. If it can't be reached or answers with a status of 429 or 500 and above, the answers are sent once more after 2 seconds.

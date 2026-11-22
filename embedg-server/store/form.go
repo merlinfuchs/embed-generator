@@ -18,7 +18,4 @@ type FormStore interface {
 	// SetFormForwardError records why a form's answers couldn't be sent to a URL. An empty message
 	// clears it.
 	SetFormForwardError(ctx context.Context, guildID common.ID, id string, message string, at time.Time) error
-	// IncrementFormForwardCount counts a form submission that's sent to a URL in the window that
-	// starts at windowStart, and returns how many the guild has sent in it.
-	IncrementFormForwardCount(ctx context.Context, guildID common.ID, windowStart time.Time) (int, error)
 }

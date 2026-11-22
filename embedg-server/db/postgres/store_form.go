@@ -128,14 +128,6 @@ func (c *Client) SetFormForwardError(ctx context.Context, guildID common.ID, id 
 	})
 }
 
-func (c *Client) IncrementFormForwardCount(ctx context.Context, guildID common.ID, windowStart time.Time) (int, error) {
-	count, err := c.Q.IncrementFormForwardCount(ctx, pgmodel.IncrementFormForwardCountParams{
-		GuildID:     guildID.String(),
-		WindowStart: pgtype.Timestamp{Time: windowStart, Valid: true},
-	})
-	return int(count), err
-}
-
 func marshalFormJSON(form model.Form) (fields []byte, acts []byte, derivedPermissions []byte, err error) {
 	fields, err = json.Marshal(form.Fields)
 	if err != nil {

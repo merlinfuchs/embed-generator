@@ -32,7 +32,7 @@ Features (feature | what it means for the user | free or paid):
 - Saved messages | reuse a message instead of rebuilding it | free, more on paid plans
 - Earlier versions of a saved message, kept when it's overwritten | go back to an older version | paid
 - Forms | pop-ups that ask members for text, to pick users, roles, channels, or from options (select menus, radio buttons, checkboxes), opened from a button, select menu, or custom command, with the answers used in the reply | free
-- Send form answers to another tool (Zapier, n8n, Make, your own server) with the Send Answers to URL action | applications and reports end up in a spreadsheet or workflow without another bot | paid. One URL per form, up to 60 submissions a minute per server, signed with a per-form signing secret
+- Send form answers to another tool (Zapier, n8n, Make, your own server) with the Send Answers to URL action | applications and reports end up in a spreadsheet or workflow without another bot | paid. One URL per form, signed with a per-form signing secret
 - Variables like the member's name or the server's member count | the message fills in details when it goes out | free
 - Scheduled messages: once, on a regular interval, or on a list of dates, with a calendar view | post on time without being online | one-time free, 1 recurring free, more on paid plans
 - AI assistant | describe the message and it builds it in the editor | 5 prompts a month free, more on paid plans
