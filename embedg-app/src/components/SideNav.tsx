@@ -58,14 +58,14 @@ export default function SideNav() {
     <>
       <div
         className={clsx(
-          "h-full bg-ink-900 border-r border-white/5 flex-none transition-all fixed z-30",
+          "h-dvh bg-ink-900 border-r border-white/5 flex-none transition-all fixed z-30",
           collapsed ? "w-16" : "w-64",
           hidden && "hidden xl:relative xl:block",
         )}
       >
-        <div className="flex flex-col justify-between h-full">
+        <div className="flex flex-col h-full">
           <div
-            className={clsx("flex flex-col py-5", collapsed && "items-center")}
+            className={clsx("flex flex-col pt-5", collapsed && "items-center")}
           >
             <div
               className={clsx(
@@ -129,7 +129,9 @@ export default function SideNav() {
                 collapsed ? "w-10" : "mx-3",
               )}
             ></div>
-            <div className="flex flex-col space-y-4">
+          </div>
+          <div className="flex flex-col flex-1 min-h-0 justify-between overflow-y-auto overflow-x-hidden overscroll-contain thin-scrollbar">
+            <div className="flex flex-col space-y-4 pb-5">
               <NavigationButton
                 href="/editor"
                 label="Message Editor"
@@ -173,43 +175,43 @@ export default function SideNav() {
                 setHidden={setHidden}
               />
             </div>
-          </div>
-          <div className="flex flex-col items-center py-5 space-y-7">
-            <ExternalNavigationLink
-              href="/docs"
-              label="Documentation"
-              icon={BookOpenIcon}
-              collapsed={collapsed}
-            />
-            <ExternalNavigationLink
-              href="/discord"
-              label="Help & Support"
-              icon={QuestionMarkCircleIcon}
-              collapsed={collapsed}
-            />
-            {user && user.success && (
-              <LogoutLink
-                className={clsx(
-                  "flex w-full items-center group",
-                  collapsed ? "px-4" : "px-5",
-                )}
-              >
-                <ArrowLeftOnRectangleIcon className="h-8 w-8 flex-none text-mist-400 group-hover:text-mist-100" />
-                {!collapsed && (
-                  <div className="ml-5 text-mist-400 group-hover:text-mist-100">
-                    Logout
-                  </div>
-                )}
-              </LogoutLink>
-            )}
+            <div className="flex flex-col items-center py-5 space-y-7">
+              <ExternalNavigationLink
+                href="/docs"
+                label="Documentation"
+                icon={BookOpenIcon}
+                collapsed={collapsed}
+              />
+              <ExternalNavigationLink
+                href="/discord"
+                label="Help & Support"
+                icon={QuestionMarkCircleIcon}
+                collapsed={collapsed}
+              />
+              {user && user.success && (
+                <LogoutLink
+                  className={clsx(
+                    "flex w-full items-center group",
+                    collapsed ? "px-4" : "px-5",
+                  )}
+                >
+                  <ArrowLeftOnRectangleIcon className="h-8 w-8 flex-none text-mist-400 group-hover:text-mist-100" />
+                  {!collapsed && (
+                    <div className="ml-5 text-mist-400 group-hover:text-mist-100">
+                      Logout
+                    </div>
+                  )}
+                </LogoutLink>
+              )}
 
-            <NavigationButton
-              href="/settings"
-              label="Settings"
-              icon={Cog6ToothIcon}
-              collapsed={collapsed}
-              setHidden={setHidden}
-            />
+              <NavigationButton
+                href="/settings"
+                label="Settings"
+                icon={Cog6ToothIcon}
+                collapsed={collapsed}
+                setHidden={setHidden}
+              />
+            </div>
           </div>
         </div>
       </div>
