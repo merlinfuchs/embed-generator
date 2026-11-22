@@ -54,7 +54,7 @@ function App() {
       <ConfirmOnExit />
       <LoginErrorHandler />
       {/* Room for the bottom bar on screens without the sidebar. */}
-      <div className="flex h-full pb-[calc(3.75rem+env(safe-area-inset-bottom))] xl:pb-0">
+      <div className="flex h-full pb-[calc(3.75rem+env(safe-area-inset-bottom))] lg:pb-0">
         <EditorSideNav />
         <Routes>
           <Route path="/editor" element={<EditorView />}>

@@ -1,8 +1,10 @@
 import {
   ArrowLeftOnRectangleIcon,
   ArrowRightOnRectangleIcon,
+  BookOpenIcon,
   CalendarDaysIcon,
   CheckIcon,
+  ClipboardDocumentListIcon,
   CommandLineIcon,
   Cog6ToothIcon,
   EllipsisHorizontalIcon,
@@ -14,13 +16,12 @@ import {
   WrenchScrewdriverIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { Drawer } from "vaul";
 import { useGuildsQuery, useUserQuery } from "../api/queries";
 import { guildIconUrl } from "../discord/cdn";
 import { useSendSettingsStore } from "../state/sendSettings";
-import { useMobileUiStore } from "../state/mobileUi";
 import { useDefaultGuild } from "../util/guilds";
 import LoginLink from "./LoginLink";
 import LogoutLink from "./LogoutLink";
@@ -32,6 +33,7 @@ const TABS = [
 
 const MORE_LINKS = [
   { href: "/scheduled", label: "Scheduled Messages", icon: CalendarDaysIcon },
+  { href: "/forms", label: "Forms", icon: ClipboardDocumentListIcon },
   { href: "/commands", label: "Commands", icon: CommandLineIcon },
   { href: "/tools", label: "Utility Tools", icon: WrenchScrewdriverIcon },
   { href: "/premium", label: "Premium", icon: StarIcon },
@@ -43,8 +45,7 @@ const MORE_LINKS = [
  * as a bar at the bottom of the screen.
  */
 export default function MobileBottomBar() {
-  const moreOpen = useMobileUiStore((s) => s.moreOpen);
-  const setMoreOpen = useMobileUiStore((s) => s.setMoreOpen);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const location = useLocation();
   // The More tab lights up on the pages that live in the sheet.
@@ -61,7 +62,7 @@ export default function MobileBottomBar() {
     <>
       <nav
         aria-label="Main"
-        className="xl:hidden fixed bottom-0 inset-x-0 z-20 flex items-center justify-between gap-2 border-t border-white/10 bg-ink-900/95 backdrop-blur-md px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-lg select-none"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-20 flex items-center justify-between gap-2 border-t border-white/10 bg-ink-900/95 backdrop-blur-md px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-lg select-none"
       >
         <div className="flex w-full items-center gap-0.5 rounded-full border border-white/5 bg-white/5 p-0.5">
           {TABS.map((tab) => (
@@ -137,10 +138,11 @@ function MoreSheet({
               <LoginLink className="flex items-center gap-3 rounded-xl border border-white/5 bg-ink-900 p-3 transition-colors hover:border-white/15">
                 <ArrowRightOnRectangleIcon className="h-7 w-7 flex-none text-azure-400" />
                 <div>
-                  <div className="text-sm font-medium text-mist-100">Login</div>
+                  <div className="text-sm font-medium text-mist-100">
+                    Log in with Discord
+                  </div>
                   <div className="text-xs text-mist-500">
-                    Many features are only available after logging in with your
-                    Discord account!
+                    Log in to pick a server and save your messages.
                   </div>
                 </div>
               </LoginLink>
@@ -152,13 +154,16 @@ function MoreSheet({
                   {l.label}
                 </SheetRow>
               ))}
+              <SheetRow href="/docs" icon={BookOpenIcon} external>
+                Documentation
+              </SheetRow>
               <SheetRow href="/discord" icon={QuestionMarkCircleIcon} external>
                 Help & Support
               </SheetRow>
               {loggedIn && (
                 <LogoutLink className="flex items-center gap-3 border-t border-white/5 px-4 py-3 text-mist-300 transition-colors active:bg-white/5">
                   <ArrowLeftOnRectangleIcon className="h-6 w-6 flex-none text-mist-400" />
-                  Logout
+                  Log out
                 </LogoutLink>
               )}
             </div>
