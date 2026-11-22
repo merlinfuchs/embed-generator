@@ -416,7 +416,8 @@ export const changelog: ChangeDay[] = [
     date: "2018-02-05",
     changes: [
       {
-        title: "The Embed Generator bot is created",
+        title: "The first Embed Generator",
+        text: "You built a message by filling in a Google Form, and the bot posted it to your channel. A simple web form replaced the Google Form later, and that version stayed until the new editor in 2022.",
       },
     ],
   },
