@@ -36,7 +36,7 @@ const MORE_LINKS = [
   { href: "/forms", label: "Forms", icon: ClipboardDocumentListIcon },
   { href: "/commands", label: "Commands", icon: CommandLineIcon },
   { href: "/tools", label: "Utility Tools", icon: WrenchScrewdriverIcon },
-  { href: "/premium", label: "Premium", icon: StarIcon },
+  { href: "/premium", label: "Upgrade", icon: StarIcon },
   { href: "/settings", label: "Settings", icon: Cog6ToothIcon },
 ] as const;
 

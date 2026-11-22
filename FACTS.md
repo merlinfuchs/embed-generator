@@ -92,7 +92,7 @@ Exact names of commands, settings, and pages users see:
 - /help, /invite, /website
 - Message context menu: Restore Message, Dump Message. User context menu: Avatar Url, Format Mention.
 - Send modes: Webhook and Channel.
-- App pages: Message Editor, Saved Messages, Scheduled Messages, Forms, Commands, Utility Tools (Colored Text Generator, Timestamp Generator, Embed Links, Snowflake Decoder, Webhook Info), Premium, Settings. The editor is at message.style/app/editor.
+- App pages: Message Editor, Saved Messages, Scheduled Messages, Forms, Commands, Utility Tools (Colored Text Generator, Timestamp Generator, Embed Links, Snowflake Decoder, Webhook Info), Upgrade (the plans page at /premium), Settings. The editor is at message.style/app/editor.
 - Plans: Free, Premium, and Ultimate.
 - Links: message.style/premium, /invite, /discord (support server), /source (GitHub), status.message.style.
 - Discord permissions by Discord's names, like Manage Webhooks, which /embed needs.
@@ -121,7 +121,8 @@ Project-specific rules:
   - embedg-site/docs/guides/forms.md and the FAQ, hero, and closing line in embedg-site/src/pages/features/forms/index.tsx
   - the Discohook comparison post in embedg-site/blog
   - the Discord directory description and the store tier benefits in the Developer Portal
-- The Premium price is typed by hand in embedg-site/src/components/HomePremium.tsx, embedg-site/docs/premium.md, the Discohook comparison post, and the Discord directory description. The Ultimate price is in docs/premium.md and the directory description. Change all of them together with the store.
+- The Premium price is typed by hand in embedg-app/src/util/plans.ts (PLAN_PRICES), embedg-site/src/components/HomePremium.tsx, embedg-site/docs/premium.md, the Discohook comparison post, and the Discord directory description. The Ultimate price is in plans.ts (PLAN_PRICES), docs/premium.md and the directory description. Change all of them together with the store.
+- The free plan limits are typed by hand in embedg-app/src/util/plans.ts (FREE_LIMITS) for the Basic card on /premium. Change them with the free plan list above.
 - The bot doesn't see members join or leave. Never promise welcome messages, member events, or anything that needs a member list.
 - Never claim Embed Generator does everything another product does, or is the only tool that does something.
 - Legal pages (terms, privacy, cookies, imprint) are written separately. Don't edit them in a copy pass.
