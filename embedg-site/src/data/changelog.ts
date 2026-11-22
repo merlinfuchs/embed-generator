@@ -37,7 +37,7 @@ export const changelog: ChangeDay[] = [
     changes: [
       {
         title: "Polls",
-        text: "A message can carry a poll with up to 10 answers, shown below the embeds.",
+        text: "Add a poll with up to 10 answers to a message, and members vote on it right below the embeds.",
         href: "/docs/features/polls",
       },
       {
@@ -57,11 +57,11 @@ export const changelog: ChangeDay[] = [
       },
       {
         title: "Time of sending for embed timestamps",
-        text: "An embed's timestamp can be the time the message goes out instead of a fixed date.",
+        text: "An embed's timestamp can be the time the message goes out, so a scheduled or reused message shows when it was sent.",
       },
       {
         title: "Install the app",
-        text: "Embed Generator can be installed from the browser like an app, on desktop and on phones.",
+        text: "Install Embed Generator from your browser on desktop or your phone, and it opens in its own window like an app.",
       },
       { title: "Threads and forum posts are collapsed under their channel" },
       { title: "The emoji picker shows the emojis of the server you picked" },
@@ -113,7 +113,7 @@ export const changelog: ChangeDay[] = [
       },
       {
         title: "Open Discohook links",
-        text: "Links with ?data= from Embed Generator or Discohook open in the editor. Change the domain of a Discohook link to message.style and it opens here.",
+        text: "A link that opens a message in Discohook works here too. Change its domain to message.style and the message loads in the editor.",
         href: "/docs/guides/message-links",
       },
     ],
@@ -238,7 +238,7 @@ export const changelog: ChangeDay[] = [
       },
       {
         title: "Clearer permission errors",
-        text: "When the bot or you can't reach a server or channel, the editor says which permission is missing and who's missing it.",
+        text: "When you or the bot can't reach a server or channel, the editor says which permission is missing and who's missing it.",
       },
     ],
   },
@@ -247,7 +247,7 @@ export const changelog: ChangeDay[] = [
     changes: [
       {
         title: "Scheduled messages that edit",
-        text: "A scheduled message can edit an existing message on each run instead of sending a new one. Each schedule also has its own timezone, so admins in other countries see the same times.",
+        text: "A scheduled message can edit an existing message on each run instead of sending a new one, like a status post that stays up to date. Each schedule also has its own timezone, and admins in other countries see the same times.",
         href: "/docs/guides/scheduled-messages",
       },
       {
@@ -267,7 +267,7 @@ export const changelog: ChangeDay[] = [
     changes: [
       {
         title: "Components V2",
-        text: "Build messages with Discord's newer layouts: containers, sections, separators, and media galleries.",
+        text: "Build messages with Discord's newer layouts, which look more like a page than an embed. They're made of containers, sections, separators, and media galleries.",
         href: "/features/components-v2",
       },
     ],
@@ -306,7 +306,7 @@ export const changelog: ChangeDay[] = [
     changes: [
       {
         title: "Check Permissions action",
-        text: "Buttons and select menus only run their actions for members with the permissions you pick.",
+        text: "Buttons and select menus only run their actions for members with the permissions you pick, like a button only your staff can use.",
         href: "/docs/guides/interactive-components",
       },
     ],
@@ -316,7 +316,7 @@ export const changelog: ChangeDay[] = [
     changes: [
       {
         title: "Variables with conditions",
-        text: "Variables in messages and replies can use conditions and functions, and can remember values between clicks.",
+        text: "Variables can change what a message says based on things like the server's boost count, and remember values between clicks, like a counter.",
         href: "/docs/guides/variables",
       },
     ],
@@ -338,7 +338,7 @@ export const changelog: ChangeDay[] = [
     changes: [
       {
         title: "Colored Text Generator and Webhook Info",
-        text: "Two tools: one colors text in Discord with code blocks, the other shows the name, server, and creator behind a webhook URL.",
+        text: "The Colored Text Generator colors text in Discord with code blocks. Webhook Info shows the name, server, and creator behind a webhook URL.",
         href: "/docs/tools",
       },
     ],
@@ -348,7 +348,7 @@ export const changelog: ChangeDay[] = [
     changes: [
       {
         title: "Scheduled messages",
-        text: "Send a message later, or on a recurring schedule. Embed Generator was used by over 100,000 servers by then.",
+        text: "Send a message later, or on a recurring schedule, without staying online. By then, over 100,000 servers used Embed Generator.",
         href: "/features/scheduled-messages",
       },
       { title: "Send to forum channels and private threads" },
@@ -388,7 +388,7 @@ export const changelog: ChangeDay[] = [
     changes: [
       {
         title: "A new Embed Generator",
-        text: "The editor and the bot are rebuilt from scratch. The editor moves to message.style/app, buttons and select menus run actions like giving roles, and Discohook backups can be imported.",
+        text: "The editor and the bot are rebuilt from scratch, and the editor moves to message.style/app. Buttons and select menus can run actions like giving roles. Discohook backups can be imported.",
       },
     ],
   },

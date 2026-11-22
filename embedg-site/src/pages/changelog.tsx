@@ -121,8 +121,9 @@ export default function Changelog(): JSX.Element {
             What's new in <span className="text-azure-400">Embed Generator</span>
           </h1>
           <p className="m-0 max-w-2xl text-lg leading-relaxed text-mist-400">
-            New features, plan changes, and fixes, newest first. The bot started
-            in 2018, and the editor has been open source on GitHub since 2022.
+            New features, plan changes, and fixes, newest first. Embed Generator
+            started as a bot in 2018, and it's been open source on GitHub since
+            2022.
           </p>
         </div>
       </section>
