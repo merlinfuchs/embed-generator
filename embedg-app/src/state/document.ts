@@ -11,6 +11,7 @@ import {
   ACTION_ROWS_LIMIT,
   COMPONENTS_V2_FLAG,
   COMPONENTS_V2_LIMIT,
+  SUPPRESS_NOTIFICATIONS_FLAG,
 } from "../discord/schema";
 import type {
   EmbedAuthor,
@@ -258,7 +259,7 @@ export interface DocumentStore extends DocumentData, ActionSetActions {
   setComponentsV2(enabled: boolean): void;
 }
 
-export { COMPONENTS_V2_FLAG };
+export { COMPONENTS_V2_FLAG, SUPPRESS_NOTIFICATIONS_FLAG };
 
 /**
  * How many children a slot holds, as the message schema enforces it. Kept here
@@ -544,6 +545,10 @@ export const createDocumentStore = (
               set(
                 fromMessage({
                   ...(enabled ? emptyComponentsV2Message : defaultMessage),
+                  // Silent is about sending, not about the content.
+                  flags:
+                    (enabled ? COMPONENTS_V2_FLAG : 0) |
+                    ((message.flags ?? 0) & SUPPRESS_NOTIFICATIONS_FLAG),
                   allowed_mentions: message.allowed_mentions,
                   components,
                   actions: Object.fromEntries(
@@ -784,3 +789,13 @@ export function usePollWithAttachments() {
   );
   return pollSent && hasAttachments;
 }
+
+/** Whether the message is sent without notifying anyone. */
+export const useSilent = () =>
+  useDocument((state) => {
+    const root = state.nodes[state.rootId];
+
+    return root?.type === "message"
+      ? ((root.flags ?? 0) & SUPPRESS_NOTIFICATIONS_FLAG) !== 0
+      : false;
+  });

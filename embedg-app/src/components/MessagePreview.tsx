@@ -1,8 +1,10 @@
+import { BellSlashIcon } from "@heroicons/react/20/solid";
 import "./MessagePreview.css";
 import { format } from "date-fns";
 import { useState } from "react";
 import {
   COMPONENTS_V2_FLAG,
+  SUPPRESS_NOTIFICATIONS_FLAG,
   type Message,
   type MessageComponent,
 } from "../discord/schema";
@@ -36,6 +38,7 @@ export default function MessagePreview({ msg, unfurledComponent }: Props) {
   const currentTime = format(new Date(), "hh:mm aa");
   // A Components V2 message carries its content in the components instead.
   const componentsV2 = ((msg.flags ?? 0) & COMPONENTS_V2_FLAG) !== 0;
+  const silent = ((msg.flags ?? 0) & SUPPRESS_NOTIFICATIONS_FLAG) !== 0;
   const [responses, setResponses] = useState<ButtonResponse[]>([]);
 
   const guildId = useSendSettingsStore((s) => s.guildId);
@@ -72,6 +75,12 @@ export default function MessagePreview({ msg, unfurledComponent }: Props) {
               <span className="discord-message-timestamp pl-1">
                 Today at {currentTime}
               </span>
+              {silent && (
+                <BellSlashIcon
+                  aria-label="Silent message"
+                  className="inline-block h-3.5 w-3.5 ml-1.5 align-text-bottom text-[#949ba4]"
+                />
+              )}
               {componentsV2 ? (
                 <div className="discord-message-compact-indent">
                   <PreviewComponents components={msg.components} />

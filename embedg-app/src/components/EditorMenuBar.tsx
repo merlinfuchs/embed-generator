@@ -13,7 +13,11 @@ import {
   emptyComponentsV2Message,
 } from "../discord/defaultMessage";
 import { setCurrentMessage } from "../state/currentMessage";
-import { useAllowedMentions, useComponentsV2Enabled } from "../state/document";
+import {
+  useAllowedMentions,
+  useComponentsV2Enabled,
+  useSilent,
+} from "../state/document";
 import { useSendsToFluxer } from "../state/sendSettings";
 import { usePremiumGuildFeatures } from "../util/premium";
 import EditorUndoButtons from "./EditorUndoButtons";
@@ -26,7 +30,9 @@ export default function EditorMenuBar() {
   const aiAssistantAllowed =
     !!usePremiumGuildFeatures()?.max_ai_prompts_per_month;
   // Easy to forget behind a modal otherwise.
-  const settingsChanged = !isDefaultAllowedMentions(useAllowedMentions());
+  const allowedMentions = useAllowedMentions();
+  const silent = useSilent();
+  const settingsChanged = !isDefaultAllowedMentions(allowedMentions) || silent;
   // Fluxer has no Components V2, the toggle only stays to turn it off.
   const fluxer = useSendsToFluxer();
 

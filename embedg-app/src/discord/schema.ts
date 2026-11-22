@@ -2,6 +2,8 @@ import { z } from "zod";
 import { getUniqueId } from "../util";
 
 export const COMPONENTS_V2_FLAG = 1 << 15;
+/** Sends the message without a push or unread ping, like typing @silent. */
+export const SUPPRESS_NOTIFICATIONS_FLAG = 1 << 12;
 
 const VARIABLE_RE = /\{\{[^}]+\}\}/;
 const ATTACHMENT_RE = /^attachment:\/\/.+/;
