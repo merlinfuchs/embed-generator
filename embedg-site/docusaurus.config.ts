@@ -102,9 +102,6 @@ const config: Config = {
             "/blog/tags/**",
             "/blog/archive",
             "/blog/authors",
-            "/changelog/tags/**",
-            "/changelog/archive",
-            "/changelog/authors",
             // noindex, see src/pages
             "/cookies",
             "/imprint",
@@ -263,22 +260,6 @@ const config: Config = {
 
   plugins: [
     componentEmbeds,
-    [
-      "@docusaurus/plugin-content-blog",
-      {
-        // One post per month with what changed, under /changelog.
-        id: "changelog",
-        path: "changelog",
-        routeBasePath: "changelog",
-        blogTitle: "Changelog",
-        blogDescription:
-          "What's new in Embed Generator each month: new features, changes to plans and limits, and fixes.",
-        blogSidebarTitle: "All months",
-        blogSidebarCount: "ALL",
-        showReadingTime: false,
-        feedOptions: { type: "all", title: "Embed Generator changelog" },
-      },
-    ],
     async function myPlugin(context, options) {
       return {
         name: "docusaurus-tailwindcss",
