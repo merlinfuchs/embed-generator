@@ -63,6 +63,19 @@ html[data-theme="dark"] {
   --docusaurus-highlighted-code-line-bg: rgba(78, 110, 242, 0.12);
 }
 
+/* Matches the h-14 landing header (HomeHeader) used as the docs/blog navbar. */
+:root {
+  --ifm-navbar-height: 3.5rem;
+}
+
+/* Undo Infima's .navbar layout on the shared landing header. */
+.navbar.home-header {
+  display: block;
+  height: auto;
+  padding: 0;
+  box-shadow: none;
+}
+
 html[data-theme="dark"] .navbar {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: none;
@@ -164,4 +177,17 @@ html[data-theme="dark"] .tag_node_modules-\@docusaurus-theme-classic-lib-theme-T
   letter-spacing: 0.04em;
   text-transform: uppercase;
   line-height: 1.5;
+}
+
+/* The shared header stays on top while the mobile sidebar is open, so the
+   sidebar starts below it and drops its own brand/close row. */
+.navbar-sidebar {
+  top: var(--ifm-navbar-height);
+}
+.navbar-sidebar__brand {
+  display: none;
+}
+.navbar-sidebar,
+.navbar-sidebar__backdrop {
+  z-index: 190;
 }
