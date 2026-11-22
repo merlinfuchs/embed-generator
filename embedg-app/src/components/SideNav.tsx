@@ -58,17 +58,14 @@ export default function SideNav() {
     <>
       <div
         className={clsx(
-          "h-full max-h-dvh bg-ink-900 border-r border-white/5 flex-none transition-all fixed z-30",
+          "h-dvh bg-ink-900 border-r border-white/5 flex-none transition-all fixed z-30",
           collapsed ? "w-16" : "w-64",
           hidden && "hidden xl:relative xl:block",
         )}
       >
-        <div className="flex flex-col h-full min-h-0">
+        <div className="flex flex-col h-full">
           <div
-            className={clsx(
-              "flex flex-col pt-5 flex-none",
-              collapsed && "items-center",
-            )}
+            className={clsx("flex flex-col pt-5", collapsed && "items-center")}
           >
             <div
               className={clsx(
@@ -126,62 +123,59 @@ export default function SideNav() {
                 </LoginLink>
               )}
             </div>
+            <div
+              className={clsx(
+                "h-px bg-white/5 mb-5",
+                collapsed ? "w-10" : "mx-3",
+              )}
+            ></div>
           </div>
-          {/* Scrollable on short screens (phones, landscape) so every tab stays reachable */}
-          <div className="flex flex-col flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain thin-scrollbar">
-            <div className="flex flex-col pb-5">
-              <div
-                className={clsx(
-                  "h-px bg-white/5 mb-5 self-center",
-                  collapsed ? "w-10" : "w-[calc(100%-1.5rem)]",
-                )}
-              ></div>
-              <div className="flex flex-col space-y-4">
-                <NavigationButton
-                  href="/editor"
-                  label="Message Editor"
-                  icon={PencilSquareIcon}
-                  collapsed={collapsed}
-                  setHidden={setHidden}
-                />
-                <NavigationButton
-                  href="/messages"
-                  label="Saved Messages"
-                  icon={RectangleStackIcon}
-                  collapsed={collapsed}
-                  setHidden={setHidden}
-                />
-                <NavigationButton
-                  href="/scheduled"
-                  label="Scheduled Messages"
-                  icon={CalendarDaysIcon}
-                  collapsed={collapsed}
-                  setHidden={setHidden}
-                />
-                <NavigationButton
-                  href="/commands"
-                  label="Commands"
-                  icon={CommandLineIcon}
-                  collapsed={collapsed}
-                  setHidden={setHidden}
-                />
-                <NavigationButton
-                  href="/tools"
-                  label="Utility Tools"
-                  icon={WrenchScrewdriverIcon}
-                  collapsed={collapsed}
-                  setHidden={setHidden}
-                />
-                <NavigationButton
-                  href="/premium"
-                  label="Premium"
-                  icon={StarIcon}
-                  collapsed={collapsed}
-                  setHidden={setHidden}
-                />
-              </div>
+          <div className="flex flex-col flex-1 min-h-0 justify-between overflow-y-auto overflow-x-hidden overscroll-contain thin-scrollbar">
+            <div className="flex flex-col space-y-4 pb-5">
+              <NavigationButton
+                href="/editor"
+                label="Message Editor"
+                icon={PencilSquareIcon}
+                collapsed={collapsed}
+                setHidden={setHidden}
+              />
+              <NavigationButton
+                href="/messages"
+                label="Saved Messages"
+                icon={RectangleStackIcon}
+                collapsed={collapsed}
+                setHidden={setHidden}
+              />
+              <NavigationButton
+                href="/scheduled"
+                label="Scheduled Messages"
+                icon={CalendarDaysIcon}
+                collapsed={collapsed}
+                setHidden={setHidden}
+              />
+              <NavigationButton
+                href="/commands"
+                label="Commands"
+                icon={CommandLineIcon}
+                collapsed={collapsed}
+                setHidden={setHidden}
+              />
+              <NavigationButton
+                href="/tools"
+                label="Utility Tools"
+                icon={WrenchScrewdriverIcon}
+                collapsed={collapsed}
+                setHidden={setHidden}
+              />
+              <NavigationButton
+                href="/premium"
+                label="Premium"
+                icon={StarIcon}
+                collapsed={collapsed}
+                setHidden={setHidden}
+              />
             </div>
-            <div className="flex flex-col items-center pb-5 space-y-7 mt-auto">
+            <div className="flex flex-col items-center py-5 space-y-7">
               <ExternalNavigationLink
                 href="/docs"
                 label="Documentation"

@@ -95,20 +95,3 @@
   scrollbar-width: thin;
   scrollbar-color: var(--color-ink-600) transparent;
 }
-
-.thin-scrollbar::-webkit-scrollbar {
-  width: 6px;
-}
-
-.thin-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.thin-scrollbar::-webkit-scrollbar-thumb {
-  background: var(--color-ink-600);
-  border-radius: 9999px;
-}
-
-.thin-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: var(--color-ink-500);
-}
