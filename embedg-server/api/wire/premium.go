@@ -22,6 +22,7 @@ type GetPremiumPlanFeaturesResponseDataWire struct {
 	MaxImageUploadSize           int    `json:"max_image_upload_size"`
 	MaxScheduledMessages         int    `json:"max_scheduled_messages"`
 	MaxPeriodicScheduledMessages int    `json:"max_periodic_scheduled_messages"`
+	MaxForms                     int    `json:"max_forms"`
 	MaxTemplateOps               int    `json:"max_template_ops"`
 	MaxKVKeys                    int    `json:"max_kv_keys"`
 	// EmbedLinkAttribution is whether embed links end with the "Link preview from message.style" line.

@@ -15,6 +15,7 @@ export const defaultPlanFeatures: GetPremiumPlanFeaturesResponseDataWire = {
   max_image_upload_size: 0,
   max_scheduled_messages: 5,
   max_periodic_scheduled_messages: 1,
+  max_forms: 3,
   max_template_ops: 1000,
   max_kv_keys: 10,
 };

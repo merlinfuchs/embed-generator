@@ -5,6 +5,7 @@ export type Limit =
   | "max_saved_messages"
   | "max_saved_message_versions"
   | "max_scheduled_messages"
+  | "max_forms"
   | "max_custom_commands"
   | "max_actions_per_component"
   | "max_ai_prompts_per_month";
