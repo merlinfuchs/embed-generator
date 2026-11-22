@@ -203,6 +203,7 @@ const config: Config = {
               { label: "Scheduled Messages", to: "/features/scheduled-messages" },
               { label: "Components V2", to: "/features/components-v2" },
               { label: "Buttons & Role Menus", to: "/features/interactive-components" },
+              { label: "Forms", to: "/features/forms" },
               { label: "All Features", to: "/features" },
             ],
           },
