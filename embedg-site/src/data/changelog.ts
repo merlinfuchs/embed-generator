@@ -22,7 +22,7 @@ export const changelog: ChangeDay[] = [
       {
         title: "Forms",
         text: "Forms are pop-ups that ask members to type an answer or pick options, members, roles, or channels. A button, select menu, or custom command opens one with the Show Form action, and the answers can go into the reply. Every server gets 3 forms for free, 10 with Embed Generator Premium, and 25 with Ultimate.",
-        href: "/docs/guides/forms",
+        href: "/features/forms",
       },
       {
         title: "Form answers for your team",
