@@ -166,7 +166,8 @@ func (q *Queries) InsertForm(ctx context.Context, arg InsertFormParams) (Form, e
 }
 
 const setFormForwardError = `-- name: SetFormForwardError :exec
-UPDATE forms SET forward_error = $3, forward_error_at = $4 WHERE id = $1 AND guild_id = $2
+UPDATE forms SET forward_error = $3, forward_error_at = $4
+WHERE id = $1 AND guild_id = $2 AND (forward_error_at IS NULL OR forward_error_at <= $4)
 `
 
 type SetFormForwardErrorParams struct {
@@ -187,7 +188,7 @@ func (q *Queries) SetFormForwardError(ctx context.Context, arg SetFormForwardErr
 }
 
 const updateForm = `-- name: UpdateForm :one
-UPDATE forms SET name = $3, title = $4, fields = $5, actions = $6, derived_permissions = $7, signing_secret = COALESCE(signing_secret, $8), forward_error = NULL, forward_error_at = NULL, updated_at = $9 WHERE id = $1 AND guild_id = $2 RETURNING id, guild_id, name, title, fields, actions, derived_permissions, created_at, updated_at, signing_secret, forward_error, forward_error_at
+UPDATE forms SET name = $3, title = $4, fields = $5, actions = $6, derived_permissions = $7, signing_secret = COALESCE(signing_secret, $8), updated_at = $9, forward_error = NULL, forward_error_at = $9 WHERE id = $1 AND guild_id = $2 RETURNING id, guild_id, name, title, fields, actions, derived_permissions, created_at, updated_at, signing_secret, forward_error, forward_error_at
 `
 
 type UpdateFormParams struct {

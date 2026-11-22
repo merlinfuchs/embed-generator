@@ -110,14 +110,13 @@ func (f *Forwarder) Forward(form *model.Form, url string, sub Submission) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		defer cancel()
 
+		startedAt := f.now().UTC()
 		message := ""
 		if err := f.forward(ctx, form, url, sub); err != nil {
 			message = err.Error()
-		} else if form.ForwardError == "" {
-			return
 		}
 
-		if err := f.formStore.SetFormForwardError(ctx, form.GuildID, form.ID, message, f.now().UTC()); err != nil {
+		if err := f.formStore.SetFormForwardError(ctx, form.GuildID, form.ID, message, startedAt); err != nil {
 			slog.Error("Failed to record form forward error", slog.String("form_id", form.ID), slog.Any("error", err))
 		}
 	}()

@@ -119,12 +119,12 @@ func (c *Client) DeleteForm(ctx context.Context, guildID common.ID, id string) (
 	return rowToForm(row)
 }
 
-func (c *Client) SetFormForwardError(ctx context.Context, guildID common.ID, id string, message string, at time.Time) error {
+func (c *Client) SetFormForwardError(ctx context.Context, guildID common.ID, id string, message string, startedAt time.Time) error {
 	return c.Q.SetFormForwardError(ctx, pgmodel.SetFormForwardErrorParams{
 		ID:             id,
 		GuildID:        guildID.String(),
 		ForwardError:   pgtype.Text{String: message, Valid: message != ""},
-		ForwardErrorAt: pgtype.Timestamp{Time: at, Valid: message != ""},
+		ForwardErrorAt: pgtype.Timestamp{Time: startedAt, Valid: true},
 	})
 }
 

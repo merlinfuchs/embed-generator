@@ -24,7 +24,9 @@ type Form struct {
 	// check they come from us. Forms saved before it existed get one the next time they're saved.
 	SigningSecret string
 	// ForwardError is why the last answers couldn't be sent to a URL, empty when they could.
-	ForwardError   string
+	ForwardError string
+	// ForwardErrorAt is when the send that set ForwardError started. A send that worked and saving
+	// the form set it too, so a send that started before either can't overwrite them.
 	ForwardErrorAt time.Time
 	CreatedAt      time.Time
 	UpdatedAt      time.Time

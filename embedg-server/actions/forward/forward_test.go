@@ -194,7 +194,6 @@ func TestForwardRecordsAndClearsErrors(t *testing.T) {
 	}
 
 	status.Store(http.StatusOK)
-	form.ForwardError = msg
 	f.Forward(form, server.URL, Submission{})
 	if msg := <-fs.errors; msg != "" {
 		t.Fatalf("want the error cleared, got %q", msg)
