@@ -454,6 +454,7 @@ export interface GetPremiumPlanFeaturesResponseDataWire {
   max_image_upload_size: number /* int */;
   max_scheduled_messages: number /* int */;
   max_periodic_scheduled_messages: number /* int */;
+  max_forms: number /* int */;
   max_template_ops: number /* int */;
   max_kv_keys: number /* int */;
   /**
