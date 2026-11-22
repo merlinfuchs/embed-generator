@@ -10,11 +10,10 @@ import { useSendSettingsStore } from "../state/sendSettings";
 import { isThreadOnlyChannel, parseMessageId } from "../discord/util";
 import MessageRestoreButton from "./MessageRestoreButton";
 import MessageErrorNotice from "./MessageErrorNotice";
-import PollAttachmentsNotice, {
-  usePollWithAttachments,
-} from "./PollAttachmentsNotice";
+import PollAttachmentsNotice from "./PollAttachmentsNotice";
 import { useToasts } from "../util/toasts";
 import { getCurrentMessage } from "../state/currentMessage";
+import { usePollWithAttachments } from "../state/document";
 
 export default function SendMenuChannel() {
   const validationError = useValidationErrorStore((state) =>
@@ -185,12 +184,7 @@ export default function SendMenuChannel() {
                 ? "bg-azure-500 hover:bg-azure-400 cursor-pointer"
                 : "cursor-not-allowed bg-ink-900"
             }`}
-            disabled={
-              !!validationError ||
-              !selectedChannnelId ||
-              (threadOnly && !threadName) ||
-              pollWithAttachments
-            }
+            disabled={!canSend}
             onClick={() => send(false)}
           >
             {sendToChannelMutation.isPending && (

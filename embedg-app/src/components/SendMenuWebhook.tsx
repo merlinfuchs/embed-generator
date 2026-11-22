@@ -11,15 +11,14 @@ import {
 } from "./WebhookNotice";
 import MessageRestoreButton from "./MessageRestoreButton";
 import MessageErrorNotice from "./MessageErrorNotice";
-import PollAttachmentsNotice, {
-  usePollWithAttachments,
-} from "./PollAttachmentsNotice";
+import PollAttachmentsNotice from "./PollAttachmentsNotice";
 import { useToasts } from "../util/toasts";
 import { getCurrentMessage } from "../state/currentMessage";
 import {
   useHasComponents,
   useHasInteractiveComponents,
   usePoll,
+  usePollWithAttachments,
 } from "../state/document";
 
 export default function SendMenuWebhook() {

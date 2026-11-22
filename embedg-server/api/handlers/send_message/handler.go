@@ -116,13 +116,13 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 	if err != nil {
 		return handlers.BadRequest("invalid_poll", fmt.Sprintf("Invalid poll: %v", err))
 	}
+	if params.Poll != nil && len(req.Attachments) > 0 {
+		return pollWithAttachmentsError
+	}
 
 	params.Files, err = decodeAttachments(req.Attachments)
 	if err != nil {
 		return err
-	}
-	if params.Poll != nil && len(params.Files) > 0 {
-		return pollWithAttachmentsError
 	}
 
 	params.Components, err = h.actionParser.ParseMessageComponents(data.Components, true)
@@ -206,6 +206,9 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 	if err != nil {
 		return handlers.BadRequest("invalid_poll", fmt.Sprintf("Invalid poll: %v", err))
 	}
+	if params.Poll != nil && len(req.Attachments) > 0 {
+		return pollWithAttachmentsError
+	}
 
 	// Only the bot can handle interactive components, but webhooks send the rest. Checked before
 	// the attachments are decoded, as the request fails either way.
@@ -220,9 +223,6 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 	params.Files, err = decodeAttachments(req.Attachments)
 	if err != nil {
 		return err
-	}
-	if params.Poll != nil && len(params.Files) > 0 {
-		return pollWithAttachmentsError
 	}
 
 	var msg *discord.Message

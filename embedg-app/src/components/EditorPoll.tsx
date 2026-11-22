@@ -13,15 +13,14 @@ import {
   useDocument,
   useDocumentStoreApi,
   usePoll,
+  usePollWithAttachments,
 } from "../state/document";
 import { useCollapsedStatesStore } from "../state/collapsed";
 import CheckBox from "./CheckBox";
 import Collapsable from "./Collapsable";
 import EditorComponentEmojiSelect from "./EditorComponentEmojiSelect";
 import EditorInput from "./EditorInput";
-import PollAttachmentsNotice, {
-  usePollWithAttachments,
-} from "./PollAttachmentsNotice";
+import PollAttachmentsNotice from "./PollAttachmentsNotice";
 
 /** Durations to pick from, in hours, up to the longest Discord takes. */
 const DURATIONS: { hours: number; label: string }[] = [

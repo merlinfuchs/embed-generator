@@ -1,4 +1,5 @@
 import { localStorageJSON } from "./storage";
+import { useCurrentAttachmentsStore } from "./attachments";
 import { createContext, useContext } from "react";
 import { useShallow } from "zustand/react/shallow";
 import debounce from "just-debounce-it";
@@ -769,3 +770,17 @@ export const useHasComponents = () =>
 
 export const useComponentsV2Enabled = () =>
   useDocument(selectComponentsV2Enabled);
+
+/**
+ * Whether the message would be sent with a poll and files, which Discord rejects. A Components V2
+ * message is sent without its poll.
+ */
+export function usePollWithAttachments() {
+  const pollSent = useDocument(
+    (state) => !!selectPoll(state) && !selectComponentsV2Enabled(state),
+  );
+  const hasAttachments = useCurrentAttachmentsStore(
+    (state) => state.attachments.length > 0,
+  );
+  return pollSent && hasAttachments;
+}
