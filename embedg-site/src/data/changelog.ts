@@ -31,7 +31,7 @@ export const changelog: ChangeDay[] = [
       },
       { title: "The sidebar scrolls on short screens" },
       { title: "The send menu says where the error in your message is" },
-      { title: "The editor warns before you send a poll with attachments" },
+      { title: "The editor explains why a poll can't be sent with attachments" },
     ],
   },
   {

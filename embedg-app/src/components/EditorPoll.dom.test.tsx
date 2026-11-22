@@ -132,7 +132,9 @@ test("a poll with attachments warns that Discord won't send it", () => {
   loadMessage({ poll });
   renderEditor(<EditorPoll />);
 
-  expect(screen.queryByText(/attachments on a message with a poll/)).toBeNull();
+  expect(
+    screen.queryByText(/attachments when you send a message with a poll/),
+  ).toBeNull();
 
   act(() =>
     useCurrentAttachmentsStore.getState().replaceAttachments([
@@ -147,6 +149,6 @@ test("a poll with attachments warns that Discord won't send it", () => {
   );
 
   expect(
-    screen.getByText(/attachments on a message with a poll/),
+    screen.getByText(/attachments when you send a message with a poll/),
   ).toBeInTheDocument();
 });

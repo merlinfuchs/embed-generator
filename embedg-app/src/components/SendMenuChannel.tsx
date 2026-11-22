@@ -168,7 +168,7 @@ export default function SendMenuChannel() {
                   ? "bg-azure-500 hover:bg-azure-400 cursor-pointer"
                   : "cursor-not-allowed bg-ink-900"
               }`}
-              disabled={!!validationError || !selectedChannnelId || threadOnly}
+              disabled={!canEdit}
               onClick={() => send(true)}
             >
               {sendToChannelMutation.isPending && (

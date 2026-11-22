@@ -295,7 +295,7 @@ func decodeAttachments(attachments []*wire.MessageAttachmentWire) ([]*discord.Fi
 // Discord rejects any file on a message with a poll, with INVALID_POLL_ATTACHMENTS.
 var pollWithAttachmentsError = handlers.BadRequest(
 	"invalid_poll",
-	"Discord doesn't allow attachments on a message with a poll. Remove the attachments or the poll, or send the files in a message of their own.",
+	"Discord doesn't allow attachments when you send a message with a poll. Remove the attachments or the poll, or send the files in a message of their own.",
 )
 
 var componentsV2EditError = handlers.BadRequest(
