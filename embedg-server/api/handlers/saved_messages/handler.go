@@ -370,7 +370,8 @@ func (h *SavedMessagesHandler) checkSavedMessageLimit(ctx context.Context, featu
 	return nil
 }
 
-// checkActionMessages checks the response messages that actions in the message carry themselves.
+// checkActionMessages checks the response messages that actions in the message carry themselves,
+// that Show Form actions can open their form, and that there are no actions only a form can have.
 // A saved message brings its actions along when it's sent or used as a response, so they're
 // checked when it's saved like they are when a message is sent.
 func checkActionMessages(features model.PlanFeatures, data json.RawMessage) error {
@@ -388,6 +389,9 @@ func checkActionMessages(features model.PlanFeatures, data json.RawMessage) erro
 	}
 
 	for _, actionSet := range msg.Actions {
+		if err := handlers.CheckComponentActions(actionSet); err != nil {
+			return err
+		}
 		if err := handlers.CheckActionMessages(actionSet, features); err != nil {
 			return err
 		}

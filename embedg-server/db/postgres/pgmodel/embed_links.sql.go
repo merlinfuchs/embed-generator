@@ -11,8 +11,23 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const flagEmbedLink = `-- name: FlagEmbedLink :exec
+UPDATE embed_links SET flagged_at = $2, flagged_reason = $3 WHERE id = $1 AND flagged_at IS NULL
+`
+
+type FlagEmbedLinkParams struct {
+	ID            string
+	FlaggedAt     pgtype.Timestamp
+	FlaggedReason pgtype.Text
+}
+
+func (q *Queries) FlagEmbedLink(ctx context.Context, arg FlagEmbedLinkParams) error {
+	_, err := q.db.Exec(ctx, flagEmbedLink, arg.ID, arg.FlaggedAt, arg.FlaggedReason)
+	return err
+}
+
 const getEmbedLink = `-- name: GetEmbedLink :one
-SELECT id, url, theme_color, og_title, og_site_name, og_description, og_image, oe_type, oe_author_name, oe_author_url, oe_provider_name, oe_provider_url, tw_card, expires_at, created_at, component_embed FROM embed_links WHERE id = $1
+SELECT id, url, theme_color, og_title, og_site_name, og_description, og_image, oe_type, oe_author_name, oe_author_url, oe_provider_name, oe_provider_url, tw_card, expires_at, created_at, component_embed, user_id, attribution, flagged_at, flagged_reason FROM embed_links WHERE id = $1
 `
 
 func (q *Queries) GetEmbedLink(ctx context.Context, id string) (EmbedLink, error) {
@@ -35,6 +50,10 @@ func (q *Queries) GetEmbedLink(ctx context.Context, id string) (EmbedLink, error
 		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.ComponentEmbed,
+		&i.UserID,
+		&i.Attribution,
+		&i.FlaggedAt,
+		&i.FlaggedReason,
 	)
 	return i, err
 }
@@ -56,7 +75,9 @@ INSERT INTO embed_links (
     tw_card,
     component_embed,
     expires_at,
-    created_at
+    created_at,
+    user_id,
+    attribution
 ) VALUES (
     $1,
     $2,
@@ -73,8 +94,10 @@ INSERT INTO embed_links (
     $13,
     $14,
     $15,
-    $16
-) RETURNING id, url, theme_color, og_title, og_site_name, og_description, og_image, oe_type, oe_author_name, oe_author_url, oe_provider_name, oe_provider_url, tw_card, expires_at, created_at, component_embed
+    $16,
+    $17,
+    $18
+) RETURNING id, url, theme_color, og_title, og_site_name, og_description, og_image, oe_type, oe_author_name, oe_author_url, oe_provider_name, oe_provider_url, tw_card, expires_at, created_at, component_embed, user_id, attribution, flagged_at, flagged_reason
 `
 
 type InsertEmbedLinkParams struct {
@@ -94,6 +117,8 @@ type InsertEmbedLinkParams struct {
 	ComponentEmbed []byte
 	ExpiresAt      pgtype.Timestamp
 	CreatedAt      pgtype.Timestamp
+	UserID         pgtype.Text
+	Attribution    bool
 }
 
 func (q *Queries) InsertEmbedLink(ctx context.Context, arg InsertEmbedLinkParams) (EmbedLink, error) {
@@ -114,6 +139,8 @@ func (q *Queries) InsertEmbedLink(ctx context.Context, arg InsertEmbedLinkParams
 		arg.ComponentEmbed,
 		arg.ExpiresAt,
 		arg.CreatedAt,
+		arg.UserID,
+		arg.Attribution,
 	)
 	var i EmbedLink
 	err := row.Scan(
@@ -133,6 +160,10 @@ func (q *Queries) InsertEmbedLink(ctx context.Context, arg InsertEmbedLinkParams
 		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.ComponentEmbed,
+		&i.UserID,
+		&i.Attribution,
+		&i.FlaggedAt,
+		&i.FlaggedReason,
 	)
 	return i, err
 }

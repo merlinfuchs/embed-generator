@@ -24,17 +24,17 @@ func TestCheckResponseMessage(t *testing.T) {
 		ok   bool
 	}{
 		{name: "content", msg: MessageWithActions{Content: "hi"}, ok: true},
-		{name: "embed and link button", msg: MessageWithActions{Embeds: []discord.Embed{{Title: "hi"}}, Components: []ComponentWithActions{linkRow}}, ok: true},
+		{name: "embed and link button", msg: MessageWithActions{Embeds: []Embed{{Embed: discord.Embed{Title: "hi"}}}, Components: []ComponentWithActions{linkRow}}, ok: true},
 		{name: "empty", msg: MessageWithActions{}},
 		{name: "content too long", msg: MessageWithActions{Content: strings.Repeat("a", 2001)}},
 		{name: "content at the limit in runes", msg: MessageWithActions{Content: strings.Repeat("ä", 2000)}, ok: true},
-		{name: "too many embeds", msg: MessageWithActions{Embeds: make([]discord.Embed, 11)}},
-		{name: "title too long", msg: MessageWithActions{Embeds: []discord.Embed{{Title: strings.Repeat("a", 257)}}}},
+		{name: "too many embeds", msg: MessageWithActions{Embeds: make([]Embed, 11)}},
+		{name: "title too long", msg: MessageWithActions{Embeds: []Embed{{Embed: discord.Embed{Title: strings.Repeat("a", 257)}}}}},
 		{
 			name: "embeds too long together",
-			msg: MessageWithActions{Embeds: []discord.Embed{
-				{Description: strings.Repeat("a", 4000)},
-				{Description: strings.Repeat("a", 2001)},
+			msg: MessageWithActions{Embeds: []Embed{
+				{Embed: discord.Embed{Description: strings.Repeat("a", 4000)}},
+				{Embed: discord.Embed{Description: strings.Repeat("a", 2001)}},
 			}},
 		},
 		{name: "button with actions", msg: MessageWithActions{Content: "hi", Components: []ComponentWithActions{actionRow}}},

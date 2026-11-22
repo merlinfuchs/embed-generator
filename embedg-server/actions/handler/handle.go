@@ -8,15 +8,18 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions/forward"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/parser"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/template"
 	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 	"github.com/merlinfuchs/embed-generator/embedg-server/guildstate"
+	"github.com/merlinfuchs/embed-generator/embedg-server/model"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
 )
 
@@ -47,9 +50,11 @@ type ActionHandler struct {
 	savedMessageStore  store.SavedMessageStore
 	actionSetStore     store.MessageActionSetStore
 	kvEntryStore       store.KVEntryStore
+	formStore          store.FormStore
 	parser             *parser.ActionParser
 	planStore          store.PlanStore
 	guildState         *guildstate.Provider
+	forwarder          *forward.Forwarder
 }
 
 func New(
@@ -57,18 +62,22 @@ func New(
 	savedMessageStore store.SavedMessageStore,
 	actionSetStore store.MessageActionSetStore,
 	kvEntryStore store.KVEntryStore,
+	formStore store.FormStore,
 	parser *parser.ActionParser,
 	planStore store.PlanStore,
 	guildState *guildstate.Provider,
+	forwarder *forward.Forwarder,
 ) *ActionHandler {
 	return &ActionHandler{
 		customCommandStore: customCommandStore,
 		savedMessageStore:  savedMessageStore,
 		actionSetStore:     actionSetStore,
 		kvEntryStore:       kvEntryStore,
+		formStore:          formStore,
 		parser:             parser,
 		planStore:          planStore,
 		guildState:         guildState,
+		forwarder:          forwarder,
 	}
 }
 
@@ -112,6 +121,13 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 
 	var actionSet actions.ActionSet
 	var derivedPerms *actions.ActionDerivedPermissions
+	// formValues is what a submitted form contains by field key, nil for anything else.
+	var formValues map[string]string
+	// formIDs is the IDs of what was picked in the select fields of a submitted form.
+	var formIDs map[string]string
+	// submittedForm and answers are the form and what was entered when one was submitted.
+	var submittedForm *model.Form
+	var answers []formAnswer
 
 	if interaction.Type() == discord.InteractionTypeComponent {
 		compInteraction := interaction.(discord.ComponentInteraction)
@@ -151,7 +167,8 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 		actionSet = col.Actions
 		derivedPerms = col.DerivedPermissions
 
-		if resetSelection && !startsWithEdit(actionSet) {
+		// Opening a form is the response to the interaction, so nothing can respond before it.
+		if resetSelection && !startsWithEdit(actionSet) && !actionSet.ShowsForm() {
 			// Discord shows the picked option until the message changes. Sending its components back
 			// unchanged shows the placeholder again, and lets the same option be picked twice in a
 			// row. The actions' responses go out as followups.
@@ -166,7 +183,12 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 		}
 	} else if interaction.Type() == discord.InteractionTypeApplicationCommand {
 		appCommandInteraction := interaction.(discord.ApplicationCommandInteraction)
-		slashData := appCommandInteraction.SlashCommandInteractionData()
+		// Custom commands are slash commands. A custom bot can still get a user or message command
+		// that was registered outside Embed Generator.
+		slashData, ok := appCommandInteraction.Data.(discord.SlashCommandInteractionData)
+		if !ok {
+			return nil
+		}
 		fullName := slashData.CommandName()
 		if slashData.SubCommandGroupName != nil {
 			fullName += " " + *slashData.SubCommandGroupName
@@ -189,6 +211,24 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 		}
 		actionSet = col.Actions
 		derivedPerms = col.DerivedPermissions
+	} else if interaction.Type() == discord.InteractionTypeModalSubmit {
+		modalInteraction := interaction.(discord.ModalSubmitInteraction)
+
+		customID := modalInteraction.Data.CustomID
+		if !strings.HasPrefix(customID, actions.FormCustomIDPrefix) || interaction.GuildID() == nil {
+			return nil
+		}
+
+		form, err := m.getForm(*interaction.GuildID(), strings.TrimPrefix(customID, actions.FormCustomIDPrefix))
+		if err != nil {
+			return err
+		}
+		actionSet = form.Actions
+		derivedPerms = form.DerivedPermissions
+
+		submittedForm = form
+		answers = formAnswers(form.Fields, modalInteraction.Data)
+		formValues, formIDs = submittedFormValues(answers)
 	} else {
 		return fmt.Errorf("invalid interaciont type")
 	}
@@ -210,11 +250,14 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 	}
 
 	templateSource := template.NewSource(context.TODO(), m.guildState)
-	templates := template.NewContext(
-		"HANDLE_ACTION", features.MaxTemplateOps,
+	providers := []template.ContextProvider{
 		template.NewInteractionProvider(templateSource, interaction),
 		template.NewKVProvider(templateSource, *interaction.GuildID(), m.kvEntryStore, features.MaxKVKeys),
-	)
+	}
+	if formValues != nil {
+		providers = append(providers, template.NewFormProvider(formValues, formIDs))
+	}
+	templates := template.NewContext("HANDLE_ACTION", features.MaxTemplateOps, providers...)
 
 	for _, action := range actionSet.Actions {
 		switch action.Type {
@@ -327,7 +370,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 
 			newMsg := i.Respond(discord.MessageCreate{
 				Content:         data.Content,
-				Embeds:          data.Embeds,
+				Embeds:          data.DiscordEmbeds(time.Now()),
 				Components:      components,
 				Flags:           data.Flags,
 				AllowedMentions: actionAllowedMentions(action, data.AllowedMentions),
@@ -374,7 +417,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 
 			err = sendDM(restClient, interaction.User().ID, discord.MessageCreate{
 				Content:    data.Content,
-				Embeds:     data.Embeds,
+				Embeds:     data.DiscordEmbeds(time.Now()),
 				Components: components,
 				Flags:      data.Flags,
 			})
@@ -420,9 +463,15 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 				}
 			}
 
+			// The edited message keeps the time it was first sent.
+			sentAt := time.Now()
+			if compInteraction, ok := interaction.(discord.ComponentInteraction); ok {
+				sentAt = compInteraction.Message.ID.Time()
+			}
+			embeds := data.DiscordEmbeds(sentAt)
 			newMsg := i.Respond(discord.MessageUpdate{
 				Content:         &data.Content,
-				Embeds:          &data.Embeds,
+				Embeds:          &embeds,
 				Components:      &components,
 				Flags:           &data.Flags,
 				AllowedMentions: actionAllowedMentions(action, data.AllowedMentions),
@@ -477,7 +526,7 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 
 				msg = discord.MessageCreate{
 					Content:         data.Content,
-					Embeds:          data.Embeds,
+					Embeds:          data.DiscordEmbeds(time.Now()),
 					Components:      components,
 					Flags:           data.Flags,
 					AllowedMentions: actionAllowedMentions(action, data.AllowedMentions),
@@ -499,6 +548,41 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 			if !action.DisableDefaultResponse {
 				i.Respond(discord.MessageCreate{
 					Content: fmt.Sprintf("Sent a message to <#%s>.", channelID),
+					Flags:   discord.MessageFlagEphemeral,
+				})
+			}
+		case actions.ActionTypeShowForm:
+			if interaction.GuildID() == nil {
+				continue
+			}
+
+			// The modal has to be the first response to the interaction.
+			if i.HasResponded() {
+				return userErr("This is set up to open a form after it already replied. Make sure no action before Show Form replies.")
+			}
+
+			form, err := m.getForm(*interaction.GuildID(), action.TargetID)
+			if err != nil {
+				return err
+			}
+
+			if !i.ShowModal(buildFormModal(form)) {
+				return userErr("Opening the form took too long. Try again.")
+			}
+			return nil
+		case actions.ActionTypeForwardForm:
+			// Only a form's actions can have it, which is checked when they're saved.
+			if submittedForm == nil {
+				continue
+			}
+			if !features.AdvancedActionTypes {
+				return userErr("Sending form answers to a URL needs Embed Generator Premium on this server.")
+			}
+
+			m.forwarder.Forward(submittedForm, action.Text, formSubmission(submittedForm, interaction, answers))
+			if !action.DisableDefaultResponse {
+				i.Respond(discord.MessageCreate{
+					Content: "Thanks, your answers were submitted.",
 					Flags:   discord.MessageFlagEphemeral,
 				})
 			}
@@ -548,6 +632,17 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 	}
 
 	return nil
+}
+
+func (m *ActionHandler) getForm(guildID common.ID, formID string) (*model.Form, error) {
+	form, err := m.formStore.GetForm(context.TODO(), guildID, formID)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return nil, userErr("This form doesn't exist anymore.")
+		}
+		return nil, fmt.Errorf("failed to get form: %w", err)
+	}
+	return form, nil
 }
 
 // startsWithEdit is whether the action set's first response edits the message its component is on,

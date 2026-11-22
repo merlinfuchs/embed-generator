@@ -1,5 +1,5 @@
 import { useShallow } from "zustand/react/shallow";
-import { useCommandActionsStore } from "../state/actions";
+import type { useCommandActionsStore } from "../state/actions";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { usePremiumGuildFeatures } from "../util/premium";
 import Action from "./Action";
@@ -7,22 +7,31 @@ import Action from "./Action";
 interface Props {
   cmdId: string;
   actionIndex: number;
+  /** The store the action set lives in. */
+  store: typeof useCommandActionsStore;
+  /** The action runs when a form is submitted, so it can't open a form or edit a message. */
+  inForm?: boolean;
 }
 
-export default function EditorAction({ cmdId, actionIndex }: Props) {
+export default function EditorAction({
+  cmdId,
+  actionIndex,
+  store: useStore,
+  inForm,
+}: Props) {
   const features = usePremiumGuildFeatures();
   const maxActions = features?.max_actions_per_component || 0;
   const selectedGuildId = useSendSettingsStore((state) => state.guildId);
 
-  const action = useCommandActionsStore(
+  const action = useStore(
     useShallow((state) => state.actions[cmdId]?.actions[actionIndex]),
   );
 
-  const actionCount = useCommandActionsStore(
+  const actionCount = useStore(
     (state) => state.actions[cmdId]?.actions?.length || 0,
   );
 
-  const [moveUp, moveDown, duplicate, remove] = useCommandActionsStore(
+  const [moveUp, moveDown, duplicate, remove] = useStore(
     useShallow((state) => [
       state.moveActionUp,
       state.moveActionDown,
@@ -42,7 +51,7 @@ export default function EditorAction({ cmdId, actionIndex }: Props) {
     setDisableDefaultResponse,
     setRoleIds,
     setPermissions,
-  ] = useCommandActionsStore(
+  ] = useStore(
     useShallow((state) => [
       state.setActionType,
       state.setActionText,
@@ -65,6 +74,7 @@ export default function EditorAction({ cmdId, actionIndex }: Props) {
       actionIndex={actionIndex}
       action={action}
       collapsableId={`actions.${cmdId}.actions.${action.id}`}
+      inForm={inForm}
       moveUp={() => moveUp(cmdId, actionIndex)}
       moveDown={() => moveDown(cmdId, actionIndex)}
       duplicate={() => duplicate(cmdId, actionIndex)}

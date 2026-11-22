@@ -304,13 +304,18 @@ func (m *ScheduledMessageManager) SendScheduledMessage(ctx context.Context, sche
 	// Discord rejects content and embeds on a components v2 message.
 	if !data.ComponentsV2Enabled() {
 		params.Content = data.Content
-		params.Embeds = data.Embeds
+		params.Embeds = data.DiscordEmbeds(actions.SendTime(scheduledMessage.MessageID))
 		params.TTS = data.TTS
 	}
 
 	params.Components, err = m.actionParser.ParseMessageComponents(data.Components, true)
 	if err != nil {
 		return 0, skipWith("Invalid components: "+err.Error(), err)
+	}
+
+	params.Poll, err = data.PollForSend(scheduledMessage.MessageID.Valid)
+	if err != nil {
+		return 0, skipWith("Invalid poll: "+err.Error(), err)
 	}
 
 	// Actions carry the creator's authority, so resolve the creator before sending. Without a member

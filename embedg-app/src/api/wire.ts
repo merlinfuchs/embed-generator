@@ -184,6 +184,69 @@ export interface EmbedLinkOEmbedResponseWire {
 }
 
 //////////
+// source: forms.go
+
+/**
+ * FormFieldOptionWire is actions.FormFieldOption, which documents the fields.
+ */
+export interface FormFieldOptionWire {
+  label: string;
+  value: string;
+  description?: string;
+  default?: boolean;
+}
+/**
+ * FormFieldWire is actions.FormField, which documents the fields.
+ */
+export interface FormFieldWire {
+  key: string;
+  type?: string;
+  label: string;
+  placeholder?: string;
+  value?: string;
+  paragraph?: boolean;
+  required: boolean;
+  min_length?: number /* int */;
+  max_length?: number /* int */;
+  max_values?: number /* int */;
+  options?: FormFieldOptionWire[];
+  default?: boolean;
+}
+export interface FormWire {
+  id: string;
+  name: string;
+  title: string;
+  fields: FormFieldWire[];
+  actions: Record<string, any> | null;
+  /**
+   * SigningSecret signs the answers sent to a URL. Forms saved before it existed don't have one.
+   */
+  signing_secret: null | string;
+  /**
+   * ForwardError is why the last answers couldn't be sent to a URL.
+   */
+  forward_error: null | string;
+  forward_error_at: null | string /* RFC3339 */;
+  created_at: string /* RFC3339 */;
+  updated_at: string /* RFC3339 */;
+}
+export type FormsListResponseWire = APIResponse<FormWire[]>;
+export type FormGetResponseWire = APIResponse<FormWire>;
+/**
+ * FormSaveRequestWire creates or updates a form.
+ */
+export interface FormSaveRequestWire {
+  name: string;
+  title: string;
+  fields: FormFieldWire[];
+  actions: Record<string, any> | null;
+}
+export type FormCreateResponseWire = APIResponse<FormWire>;
+export type FormUpdateResponseWire = APIResponse<FormWire>;
+export type FormDeleteResponseWire = APIResponse<{
+  }>;
+
+//////////
 // source: guild.go
 
 export interface GuildWire {
@@ -391,8 +454,13 @@ export interface GetPremiumPlanFeaturesResponseDataWire {
   max_image_upload_size: number /* int */;
   max_scheduled_messages: number /* int */;
   max_periodic_scheduled_messages: number /* int */;
+  max_forms: number /* int */;
   max_template_ops: number /* int */;
   max_kv_keys: number /* int */;
+  /**
+   * EmbedLinkAttribution is whether embed links end with the "Link preview from message.style" line.
+   */
+  embed_link_attribution: boolean;
 }
 export type GetPremiumPlanFeaturesResponseWire = APIResponse<GetPremiumPlanFeaturesResponseDataWire>;
 /**

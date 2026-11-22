@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/snowflake/v2"
+	"github.com/merlinfuchs/embed-generator/embedg-server/common"
 )
 
 func TestMessageWithActionsEmbedTimestamp(t *testing.T) {
@@ -39,6 +41,65 @@ func TestMessageWithActionsEmbedTimestamp(t *testing.T) {
 	err = json.Unmarshal([]byte(`{"embeds": [{"title": "a"}, {"timestamp": "tomorrow"}]}`), &m)
 	if err == nil || err.Error() != `embed 2 has an invalid timestamp "tomorrow"` {
 		t.Errorf("invalid timestamp: err = %v", err)
+	}
+}
+
+func TestMessageWithActionsDiscordEmbeds(t *testing.T) {
+	var m MessageWithActions
+	err := json.Unmarshal([]byte(`{"embeds": [
+		{"title": "now", "timestamp_now": true},
+		{"title": "now over fixed", "timestamp": "2026-10-07T12:00:00Z", "timestamp_now": true},
+		{"title": "fixed", "timestamp": "2026-10-07T12:00:00Z"},
+		{"title": "none"}
+	]}`), &m)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	now := time.Date(2026, 11, 8, 22, 3, 0, 0, time.FixedZone("CST", -6*60*60))
+	embeds := m.DiscordEmbeds(now)
+
+	for _, i := range []int{0, 1} {
+		if got := embeds[i].Timestamp; got == nil || !got.Equal(now) {
+			t.Errorf("embed %d timestamp = %v, want %v", i, got, now)
+		}
+	}
+	if want := time.Date(2026, 10, 7, 12, 0, 0, 0, time.UTC); embeds[2].Timestamp == nil || !embeds[2].Timestamp.Equal(want) {
+		t.Errorf("fixed timestamp = %v, want %v", embeds[2].Timestamp, want)
+	}
+	if embeds[3].Timestamp != nil {
+		t.Errorf("embed without a timestamp got %v", embeds[3].Timestamp)
+	}
+	if m.Embeds[0].Timestamp != nil {
+		t.Errorf("the saved message got the send time %v", m.Embeds[0].Timestamp)
+	}
+}
+
+// Messages inside action sets are stored with json.Marshal and read back when the button is clicked.
+func TestMessageWithActionsTimestampNowRoundTrip(t *testing.T) {
+	var set ActionSet
+	if err := json.Unmarshal([]byte(`{"actions": [{"type": 5, "message": {"embeds": [
+		{"title": "now", "timestamp_now": true},
+		{"title": "none"}
+	]}}]}`), &set); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := json.Marshal(set)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var stored ActionSet
+	if err := json.Unmarshal(raw, &stored); err != nil {
+		t.Fatal(err)
+	}
+
+	now := time.Date(2026, 11, 8, 22, 3, 0, 0, time.UTC)
+	embeds := stored.Actions[0].Message.DiscordEmbeds(now)
+	if got := embeds[0].Timestamp; got == nil || !got.Equal(now) {
+		t.Errorf("stored embed timestamp = %v, want %v", got, now)
+	}
+	if embeds[1].Timestamp != nil {
+		t.Errorf("embed without a timestamp got %v", embeds[1].Timestamp)
 	}
 }
 
@@ -109,5 +170,16 @@ func TestCanSendToOtherChannels(t *testing.T) {
 				t.Fatalf("CanSendToOtherChannels = %v, want %v", got, test.want)
 			}
 		})
+	}
+}
+
+func TestSendTime(t *testing.T) {
+	sent := time.Date(2026, 11, 2, 9, 30, 0, 0, time.UTC)
+	edited := common.NullID{Valid: true, ID: snowflake.New(sent)}
+	if got := SendTime(edited); !got.Equal(sent) {
+		t.Errorf("edit send time = %v, want %v", got, sent)
+	}
+	if got := SendTime(common.NullID{}); time.Since(got) > time.Minute {
+		t.Errorf("new message send time = %v, want now", got)
 	}
 }

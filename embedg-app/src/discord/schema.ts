@@ -213,6 +213,9 @@ export const embedTimestampSchema = z.optional(
 
 export type EmbedTimestamp = z.infer<typeof embedTimestampSchema>;
 
+/** Shows the time the message is sent in the embed footer, instead of a fixed timestamp. */
+export const embedTimestampNowSchema = z.optional(z.boolean());
+
 export const embedColor = z.optional(z.number().max(16777215));
 
 export type EmbedColor = z.infer<typeof embedColor>;
@@ -224,6 +227,7 @@ export const embedSchema = z
     description: embedDescriptionSchema,
     url: embedUrlSchema,
     timestamp: embedTimestampSchema,
+    timestamp_now: embedTimestampNowSchema,
     color: embedColor,
     footer: embedFooterSchema,
     author: embedAuthorSchema,
@@ -581,6 +585,37 @@ function textDisplays(
   });
 }
 
+/** Discord's limits on a poll. */
+export const POLL_QUESTION_LIMIT = 300;
+export const POLL_ANSWER_LIMIT = 55;
+export const POLL_ANSWERS_LIMIT = 10;
+/** How long Discord lets a poll stay open, in hours: 32 days. */
+export const POLL_MAX_DURATION = 768;
+/** What Discord uses for a poll without a duration. */
+export const POLL_DEFAULT_DURATION = 24;
+
+export const pollAnswerSchema = z.object({
+  poll_media: z.object({
+    text: z.string().min(1).max(POLL_ANSWER_LIMIT),
+    emoji: z.optional(emojiSchema),
+  }),
+});
+
+export type PollAnswer = z.infer<typeof pollAnswerSchema>;
+
+export const pollSchema = z.object({
+  // Discord only takes text for the question, no emoji.
+  question: z.object({
+    text: z.string().min(1).max(POLL_QUESTION_LIMIT),
+  }),
+  answers: z.array(pollAnswerSchema).min(1).max(POLL_ANSWERS_LIMIT),
+  /** In hours. */
+  duration: z.number().int().min(1).max(POLL_MAX_DURATION),
+  allow_multiselect: z.boolean(),
+});
+
+export type Poll = z.infer<typeof pollSchema>;
+
 const messageFieldsSchema = z.object({
   content: messageContentSchema.default(""),
   username: webhookUsernameSchema,
@@ -589,6 +624,7 @@ const messageFieldsSchema = z.object({
   embeds: z.array(embedSchema).max(10).default([]),
   allowed_mentions: messageAllowedMentionsSchema,
   components: z.array(componentSchema).default([]),
+  poll: z.optional(pollSchema),
   thread_name: messageThreadName,
   flags: z.number().optional(),
 });
@@ -597,7 +633,7 @@ const messageFieldsSchema = z.object({
 function refineMessage(
   data: Pick<
     z.infer<typeof messageFieldsSchema>,
-    "content" | "embeds" | "components" | "flags"
+    "content" | "embeds" | "components" | "poll" | "flags"
   >,
   ctx: z.RefinementCtx,
 ) {
@@ -608,6 +644,14 @@ function refineMessage(
         code: z.ZodIssueCode.custom,
         path: ["components"],
         message: "Components are required when components v2 is enabled",
+      });
+    }
+
+    if (data.poll) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["poll"],
+        message: "A message can't have a poll when components v2 is enabled",
       });
     }
 
@@ -634,7 +678,12 @@ function refineMessage(
     }
   } else {
     // this currently doesn't take attachments into account
-    if (!data.content && !data.embeds.length && !data.components.length) {
+    if (
+      !data.content &&
+      !data.embeds.length &&
+      !data.components.length &&
+      !data.poll
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["content"],
@@ -670,6 +719,8 @@ export const RESPONSE_MESSAGE_OMIT = {
   avatar_url: true,
   tts: true,
   thread_name: true,
+  // The server doesn't take polls in responses.
+  poll: true,
 } as const;
 
 /**
@@ -745,6 +796,24 @@ export const messageActionSchema = z
       type: z.literal(12), // saved message to another channel
       ...channelActionFields,
       target_id: z.string().min(1),
+    }),
+  )
+  .or(
+    z.object({
+      type: z.literal(13), // opens a form
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      target_id: z.string().min(1),
+    }),
+  )
+  .or(
+    z.object({
+      type: z.literal(14), // sends a form's answers to a URL
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      text: z
+        .string()
+        .max(2000)
+        .regex(/^https:\/\/\S+$/, "Enter a URL that starts with https://"),
+      disable_default_response: z.boolean().default(false),
     }),
   )
   .or(

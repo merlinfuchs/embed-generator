@@ -49,8 +49,9 @@ func (h *SendMessageHandler) HandleRestoreMessageFromChannel(c *fiber.Ctx, req w
 		Content:    msg.Content,
 		Username:   msg.Author.Username,
 		AvatarURL:  msg.Author.EffectiveAvatarURL(discord.WithSize(512)),
-		Embeds:     msg.Embeds,
+		Embeds:     actions.EmbedsFromDiscord(msg.Embeds),
 		Components: components,
+		Poll:       actions.PollFromMessage(msg.Poll, msg.CreatedAt),
 		Actions:    actionSets,
 		Flags:      msg.Flags,
 	}, msg.Attachments)
@@ -89,8 +90,9 @@ func (h *SendMessageHandler) HandleRestoreMessageFromWebhook(c *fiber.Ctx, req w
 		Content:    msg.Content,
 		Username:   msg.Author.Username,
 		AvatarURL:  msg.Author.EffectiveAvatarURL(discord.WithSize(512)),
-		Embeds:     msg.Embeds,
+		Embeds:     actions.EmbedsFromDiscord(msg.Embeds),
 		Components: components,
+		Poll:       actions.PollFromMessage(msg.Poll, msg.CreatedAt),
 		Flags:      msg.Flags,
 	}, msg.Attachments)
 }

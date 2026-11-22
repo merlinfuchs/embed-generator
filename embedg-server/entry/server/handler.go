@@ -10,6 +10,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/rest"
+	"github.com/merlinfuchs/embed-generator/embedg-server/actions"
 	"github.com/merlinfuchs/embed-generator/embedg-server/actions/handler"
 	"github.com/merlinfuchs/embed-generator/embedg-server/embedg"
 	"github.com/merlinfuchs/embed-generator/embedg-server/store"
@@ -48,13 +49,15 @@ func (g *EventHandler) OnEvent(event bot.Event) {
 	case *events.MessageDelete:
 		g.onMessageDelete(e)
 	case *events.InteractionCreate:
-		componentInteraction, ok := e.Interaction.(discord.ComponentInteraction)
-		if ok {
+		switch interaction := e.Interaction.(type) {
+		case discord.ComponentInteraction:
 			g.onComponentInteractionCreate(&events.ComponentInteractionCreate{
 				GenericEvent:         e.GenericEvent,
-				ComponentInteraction: componentInteraction,
+				ComponentInteraction: interaction,
 				Respond:              e.Respond,
 			})
+		case discord.ModalSubmitInteraction:
+			g.onModalSubmitInteractionCreate(interaction, e.Respond)
 		}
 	}
 }
@@ -82,5 +85,20 @@ func (g *EventHandler) onComponentInteractionCreate(event *events.ComponentInter
 		if err != nil {
 			slog.Error("Failed to handle action interaction", slog.Any("error", err))
 		}
+	}
+}
+
+// onModalSubmitInteractionCreate runs the actions of a submitted form. The modals of the /embed
+// command have other custom IDs and are handled by the command handler.
+func (g *EventHandler) onModalSubmitInteractionCreate(interaction discord.ModalSubmitInteraction, respond events.InteractionResponderFunc) {
+	if !strings.HasPrefix(interaction.Data.CustomID, actions.FormCustomIDPrefix) {
+		return
+	}
+
+	i := handler.NewInteraction(interaction, g.rest, respond)
+
+	err := g.actionHandler.HandleActionInteraction(g.rest, i)
+	if err != nil {
+		slog.Error("Failed to handle action interaction", slog.Any("error", err))
 	}
 }

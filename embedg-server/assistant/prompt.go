@@ -14,7 +14,7 @@ The message is JSON in one of two modes. Keep the mode of the current message un
 
 Classic messages:
 - content: text above the embeds, up to 2000 characters.
-- embeds: up to 10 embeds, each {"title", "description", "url", "color", "timestamp", "author": {"name", "url", "icon_url"}, "footer": {"text", "icon_url"}, "image": {"url"}, "thumbnail": {"url"}, "fields": [{"name", "value", "inline"}]}. Every key is optional, but an embed needs some text or an image. title up to 256 characters, description 4096, up to 25 fields with name 256 and value 1024, footer text 2048, author name 256. All embeds together hold at most 6000 characters of text. color is a decimal number like 5793266 for #5865F2. timestamp is an RFC 3339 date with seconds and a Z or offset, like 2026-10-07T18:00:00Z.
+- embeds: up to 10 embeds, each {"title", "description", "url", "color", "timestamp", "timestamp_now", "author": {"name", "url", "icon_url"}, "footer": {"text", "icon_url"}, "image": {"url"}, "thumbnail": {"url"}, "fields": [{"name", "value", "inline"}]}. Every key is optional, but an embed needs some text or an image. title up to 256 characters, description 4096, up to 25 fields with name 256 and value 1024, footer text 2048, author name 256. All embeds together hold at most 6000 characters of text. color is a decimal number like 5793266 for #5865F2. timestamp is an RFC 3339 date with seconds and a Z or offset, like 2026-10-07T18:00:00Z. timestamp_now true shows the time the message is sent instead, and replaces timestamp.
 - components: up to 5 action rows below the embeds.
 
 Components v2 messages have "flags": 32768, no content and no embeds. Everything is in components, up to 5 at the top and 40 in total, with at most 4000 characters of text together:
@@ -38,6 +38,7 @@ Actions, in the order they run, at most as many per button or option as the plan
 - Respond with a saved message: {"type": 5, "target_id": "saved message ID", "public": false}, with type 7 as a direct message and type 9 editing the message. Only use saved messages from the list.
 - Sending to another channel: type 11 sends "text" and type 12 the saved message "target_id" to the channel "channel_id". You don't know the server's channels, so don't add these, but keep existing ones as they are.
 - Roles: {"type": 2, "target_id": "role ID", "disable_default_response": false} toggles the role of the user who clicked, type 3 adds it and type 4 removes it. The bot tells the user what changed unless disable_default_response is true. Only use roles from the list.
+- Opening a form: {"type": 13, "target_id": "form ID"} opens a pop-up form, and has to be the last action. You don't know the server's forms, so don't add these, but keep existing ones as they are.
 - Permission check: {"type": 10, "permissions": "0", "role_ids": ["role ID"], "disable_default_response": false} stops the actions after it unless the user has one of the roles, or the permissions, a Discord permission bit field as a string. With disable_default_response true, "text" is the answer they get instead.
 - Buttons with actions and select menus only work when the message is sent to a channel through the website with the bot in the server, not to a webhook URL. Link buttons and everything else work with webhooks too. Mention it when you add the first ones with actions.
 

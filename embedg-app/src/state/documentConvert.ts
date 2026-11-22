@@ -143,6 +143,7 @@ export function fromMessage(message: Message): DocumentData {
       description: embed.description,
       url: embed.url,
       timestamp: embed.timestamp,
+      timestamp_now: embed.timestamp_now,
       color: embed.color,
       footer: embed.footer,
       author: embed.author,
@@ -343,6 +344,7 @@ export function fromMessage(message: Message): DocumentData {
     thread_name: message.thread_name,
     flags: message.flags,
     allowed_mentions: message.allowed_mentions,
+    poll: message.poll,
     embedIds,
     componentIds,
   };
@@ -418,6 +420,7 @@ export function toMessage(state: DocumentData): ConvertedMessage {
       description: embedNode.description,
       url: embedNode.url,
       timestamp: embedNode.timestamp,
+      timestamp_now: embedNode.timestamp_now,
       color: embedNode.color,
       footer: embedNode.footer,
       author: embedNode.author,
@@ -612,6 +615,7 @@ export function toMessage(state: DocumentData): ConvertedMessage {
     thread_name: root.thread_name,
     flags: root.flags,
     allowed_mentions: root.allowed_mentions,
+    poll: root.poll,
     embeds: root.embedIds.map((id, i) => embed(id, `embeds.${i}`)),
     components: root.componentIds.map((id, i) =>
       component(id, `components.${i}`),

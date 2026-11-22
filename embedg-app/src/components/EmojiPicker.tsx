@@ -6,7 +6,7 @@ import { lazyView } from "../util/lazyView";
 
 // The picker and its dataset are only needed once someone opens it, and they
 // are a sizeable part of the main chunk otherwise.
-const Picker = lazyView(() => import("@emoji-mart/react"));
+const Picker = lazyView(() => import("./EmojiMartPicker"));
 
 let emojiData: Promise<unknown> | undefined;
 
@@ -74,8 +74,12 @@ export default function EmojiPicker({
           <Suspense fallback={null}>
             <Picker
               data={loadEmojiData}
-              onEmojiSelect={(data: any) => {
-                setOpen(false);
+              onEmojiSelect={(
+                data: any,
+                event?: MouseEvent | KeyboardEvent,
+              ) => {
+                // Holding Shift keeps it open to pick several, like in Discord.
+                if (!event?.shiftKey) setOpen(false);
                 onEmojiSelect(data);
               }}
               custom={customEmojis}

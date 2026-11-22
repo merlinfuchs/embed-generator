@@ -43,7 +43,7 @@ func (h *EmbedLinksHandler) renderEmbedLinkHTML(c *fiber.Ctx, el *model.EmbedLin
 		metaTags += fmt.Sprintf(`<link type="application/json+oembed" href="%s" />`, oEmbedURL)
 	}
 
-	metaTags += componentEmbedToHTML(el.ComponentEmbed)
+	metaTags += componentEmbedToHTML(el.ComponentEmbed, el.Attribution)
 
 	html := fmt.Sprintf(embedLinkHTML, metaTags, safeJSURL(el.Url))
 
@@ -57,9 +57,24 @@ func (h *EmbedLinksHandler) renderEmbedLinkHTML(c *fiber.Ctx, el *model.EmbedLin
 // escaped again here: nothing in the payload may close the script element.
 // jsonb also adds spaces after every colon and comma, which count toward
 // Discord's size limit, so they are removed again.
-func componentEmbedToHTML(raw []byte) string {
+//
+// The attribution is added here rather than stored, so links created before
+// it existed get it too.
+func componentEmbedToHTML(raw []byte, attribution bool) string {
 	if len(raw) == 0 {
 		return ""
+	}
+
+	if attribution {
+		var embed model.ComponentEmbed
+		if err := json.Unmarshal(raw, &embed); err != nil {
+			return ""
+		}
+
+		var err error
+		if raw, err = json.Marshal(embed.WithAttribution()); err != nil {
+			return ""
+		}
 	}
 
 	var compact bytes.Buffer
@@ -94,6 +109,22 @@ func (h *EmbedLinksHandler) renderUnknownEmbedLinkHTML(c *fiber.Ctx) error {
 		OgDescription: null.StringFrom("Create beautiful embed links for Discord, Slack, Twitter, and more!"),
 		OgImage:       null.StringFrom("https://message.style/img/logo-256.png"),
 	})
+}
+
+// What a flagged link shows instead of its preview.
+var blockedEmbedLink = model.EmbedLink{
+	OgTitle:        null.StringFrom("Link blocked"),
+	OgSiteName:     null.StringFrom("Embed Generator"),
+	OgDescription:  null.StringFrom("This link was blocked because it leads to a known phishing site."),
+	ThemeColor:     null.StringFrom("#ef4444"),
+	OeProviderName: null.StringFrom("Embed Generator"),
+}
+
+// Visitors go to a page that explains the block instead of the link's URL.
+func (h *EmbedLinksHandler) renderBlockedEmbedLinkHTML(c *fiber.Ctx) error {
+	el := blockedEmbedLink
+	el.Url = h.publicURL() + "/blocked-link"
+	return h.renderEmbedLinkHTML(c, &el)
 }
 
 func metaTagsToHTML(metaTags map[string]string) string {

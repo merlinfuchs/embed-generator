@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { type ReactNode, useMemo, useRef, useState } from "react";
 import MessagePreview from "./MessagePreview";
 import EditorInput from "./EditorInput";
 import type { Message } from "../discord/schema";
@@ -11,20 +11,42 @@ import CheckBox from "./CheckBox";
 import Collapsable from "./Collapsable";
 import clsx from "clsx";
 import { PADDED } from "./editorCard";
+import { usePremiumUserFeatures } from "../util/premium";
 import ComponentEmbedEditor from "./ComponentEmbedEditor";
 import {
   componentEmbedPayload,
   useComponentEmbedContainer,
 } from "../state/componentEmbed";
 
+/** The line the server adds to the end of the preview for anyone without a
+ * paid plan. */
+const ATTRIBUTION =
+  "-# Link preview from [message.style](https://message.style)";
+
 /** Subscribes to the component embed on its own, so typing in the editor
  * doesn't re-render the whole tool. */
-function ComponentEmbedPreview({ msg }: { msg: Message }) {
+function ComponentEmbedPreview({
+  msg,
+  attribution,
+}: {
+  msg: Message;
+  attribution: boolean;
+}) {
   const container = useComponentEmbedContainer();
+  const attributionId = useMemo(getUniqueId, []);
 
-  return (
-    <MessagePreview msg={msg} unfurledComponent={container ?? undefined} />
-  );
+  const unfurled =
+    container && attribution
+      ? {
+          ...container,
+          components: [
+            ...container.components,
+            { id: attributionId, type: 10 as const, content: ATTRIBUTION },
+          ],
+        }
+      : container;
+
+  return <MessagePreview msg={msg} unfurledComponent={unfurled ?? undefined} />;
 }
 
 export default function ToolsEmbedLinks() {
@@ -44,6 +66,7 @@ export default function ToolsEmbedLinks() {
 
   const [componentEmbed, setComponentEmbed] = useState(false);
   const previewEmbedId = useMemo(getUniqueId, []);
+  const attribution = usePremiumUserFeatures()?.embed_link_attribution ?? true;
 
   // What the fallback preview is built from, and what Discord shows when
   // there is no custom component.
@@ -84,6 +107,16 @@ export default function ToolsEmbedLinks() {
         title: "Some required fields are missing",
         message:
           "Please fill at least the  URL field before creating the embed link",
+        type: "error",
+      });
+      return;
+    }
+
+    if (!isWebUrl(url)) {
+      createToast({
+        title: "Enter a full URL",
+        message:
+          "Start the URL with https:// or http://, like https://discord.gg/your-invite",
         type: "error",
       });
       return;
@@ -173,6 +206,12 @@ export default function ToolsEmbedLinks() {
               Create New
             </button>
           </div>
+          {componentEmbed && attribution && (
+            <AttributionUpsell>
+              This link ends with the "Link preview from message.style" line.
+              Links you create after buying the one-time removal won't have it.
+            </AttributionUpsell>
+          )}
         </div>
       ) : (
         <div className="w-full lg:w-7/12 space-y-5">
@@ -314,11 +353,44 @@ export default function ToolsEmbedLinks() {
           )}
         </div>
         {componentEmbed ? (
-          <ComponentEmbedPreview msg={previewMsg} />
+          <>
+            <ComponentEmbedPreview msg={previewMsg} attribution={attribution} />
+            {attribution && !newLinkUrl && (
+              <AttributionUpsell>
+                Links made without a paid plan end with this line. Buy the
+                one-time removal to leave it out of every link you create while
+                logged in. Premium and Ultimate leave it out too.
+              </AttributionUpsell>
+            )}
+          </>
         ) : (
           <MessagePreview msg={previewMsg} />
         )}
       </div>
     </div>
   );
+}
+
+function AttributionUpsell({ children }: { children: ReactNode }) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-ink-900/60 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className="text-sm text-mist-300 flex-auto">{children}</div>
+      <div className="flex-none flex flex-col items-start sm:items-end gap-1">
+        <a
+          href="/premium/embed-links"
+          target="_blank"
+          rel="noopener"
+          className="px-3 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-ink-900 font-semibold transition-colors whitespace-nowrap"
+        >
+          Remove the line
+        </a>
+        <div className="text-xs text-mist-400">Paid once, no subscription</div>
+      </div>
+    </div>
+  );
+}
+
+// The link page only redirects to http and https URLs.
+function isWebUrl(url: string) {
+  return /^https?:\/\/[^/?#\s]/i.test(url);
 }

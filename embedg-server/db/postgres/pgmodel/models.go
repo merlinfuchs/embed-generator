@@ -75,6 +75,10 @@ type EmbedLink struct {
 	ExpiresAt      pgtype.Timestamp
 	CreatedAt      pgtype.Timestamp
 	ComponentEmbed []byte
+	UserID         pgtype.Text
+	Attribution    bool
+	FlaggedAt      pgtype.Timestamp
+	FlaggedReason  pgtype.Text
 }
 
 type Entitlement struct {
@@ -88,6 +92,21 @@ type Entitlement struct {
 	EndsAt          pgtype.Timestamp
 	Consumed        bool
 	ConsumedGuildID pgtype.Text
+}
+
+type Form struct {
+	ID                 string
+	GuildID            string
+	Name               string
+	Title              string
+	Fields             []byte
+	Actions            []byte
+	DerivedPermissions []byte
+	CreatedAt          pgtype.Timestamp
+	UpdatedAt          pgtype.Timestamp
+	SigningSecret      pgtype.Text
+	ForwardError       pgtype.Text
+	ForwardErrorAt     pgtype.Timestamp
 }
 
 type Guild struct {

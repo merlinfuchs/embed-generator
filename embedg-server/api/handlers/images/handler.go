@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/url"
 	"strings"
 
@@ -101,7 +102,8 @@ func (h *ImagesHandler) HandleUploadImage(c *fiber.Ctx) error {
 		Body:        body,
 	})
 	if err != nil {
-		return fmt.Errorf("could not upload image: %w", err)
+		slog.Error("Failed to upload image", slog.String("file_key", fileKey), slog.Any("error", err))
+		return handlers.ServiceUnavailable("storage_unavailable", "Our image storage isn't responding right now. Try again in a few minutes.")
 	}
 
 	image, err := h.imageStore.CreateImage(c.UserContext(), model.Image{
@@ -171,6 +173,8 @@ func (h *ImagesHandler) HandleDownloadImage(c *fiber.Ctx) error {
 
 	c.Set("Content-Type", file.ContentType)
 	c.Set("Content-Disposition", "inline")
+	// The key is a hash of the content, so it never changes. Only set here so errors aren't cached.
+	c.Set("Cache-Control", "public, max-age=31536000, immutable")
 
 	// Add security headers to prevent XSS and other attacks
 	c.Set("X-Content-Type-Options", "nosniff")

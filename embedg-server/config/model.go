@@ -19,6 +19,8 @@ type RootConfig struct {
 	Database  DatabaseConfig  `toml:"database"`
 	OpenAI    OpenAIConfig    `toml:"openai"`
 	Assistant AssistantConfig `toml:"assistant"`
+	Phishing  PhishingConfig  `toml:"phishing"`
+	Forms     FormsConfig     `toml:"forms"`
 }
 
 func (cfg *RootConfig) Validate() error {
@@ -146,6 +148,15 @@ func (c PremiumConfig) validatePlans() error {
 	return nil
 }
 
+type PhishingConfig struct {
+	// DomainListURL serves a JSON array of phishing domains that embed links can't lead to. Empty
+	// turns the check off.
+	DomainListURL string `toml:"domain_list_url"`
+	// ShortenerDomains are link shorteners new embed links can't use, as they hide where a link
+	// goes from the phishing check.
+	ShortenerDomains []string `toml:"shortener_domains"`
+}
+
 type LinksConfig struct {
 	Discord string `toml:"discord"`
 	Source  string `toml:"source"`
@@ -194,4 +205,11 @@ type AssistantConfig struct {
 	// MaxRepairs is how often the assistant may fix problems with the message it produced
 	// without them counting as new prompts.
 	MaxRepairs int `toml:"max_repairs"`
+}
+
+type FormsConfig struct {
+	// ProxyURL is an egress proxy, like Smokescreen, that the answers of forms are sent to URLs
+	// through. The proxy then checks where the URLs point instead of this server. Unset sends them
+	// directly.
+	ProxyURL string `toml:"proxy_url" validate:"omitempty,url"`
 }

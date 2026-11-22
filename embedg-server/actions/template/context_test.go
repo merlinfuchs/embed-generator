@@ -13,12 +13,12 @@ func TestParseAndExecuteMessageRendersEverything(t *testing.T) {
 
 	msg := &actions.MessageWithActions{
 		Content: tmpl,
-		Embeds: []discord.Embed{{
+		Embeds: []actions.Embed{{Embed: discord.Embed{
 			Title:       tmpl,
 			Description: tmpl,
 			Fields:      []discord.EmbedField{{Name: tmpl, Value: tmpl}},
 			Author:      &discord.EmbedAuthor{Name: tmpl},
-		}},
+		}}},
 		Components: []actions.ComponentWithActions{{
 			Type: discord.ComponentTypeContainer,
 			Components: []actions.ComponentWithActions{
@@ -117,5 +117,97 @@ func TestCheckMessageDoesNotRun(t *testing.T) {
 	broken := &actions.MessageWithActions{Content: "{{mark"}
 	if err := c.CheckMessage(broken); err == nil {
 		t.Error("want a template that doesn't parse to fail")
+	}
+}
+
+// A button or select menu has no command, so Interaction.Command is nil.
+func TestCommandFromButtonFailsClearly(t *testing.T) {
+	c := NewContext("TEST", 0)
+	var cmd *CommandData
+	c.Set("Command", cmd)
+
+	for _, tmpl := range []string{
+		`{{.Command.Args.user.Mention}}`,
+		`{{.Command.Options}}`,
+		`{{.Command.Name}}`,
+		`{{.Command.ID}}`,
+		`{{.Command.Mention}}`,
+	} {
+		_, err := c.ParseAndExecute(tmpl)
+		if err == nil || !strings.Contains(err.Error(), errNoCommand.Error()) {
+			t.Errorf("%s failed with %v, want %v", tmpl, err, errNoCommand)
+		}
+	}
+
+	if out, err := c.ParseAndExecute(`{{if .Command}}command{{else}}none{{end}}`); err != nil || out != "none" {
+		t.Errorf("if .Command = %q, %v, want none", out, err)
+	}
+}
+
+func TestUserOptionMention(t *testing.T) {
+	data := discord.SlashCommandInteractionData{
+		Options: map[string]discord.SlashCommandOption{
+			"user": {Name: "user", Type: discord.ApplicationCommandOptionTypeUser, Value: []byte(`"123"`)},
+		},
+	}
+
+	c := NewContext("TEST", 0)
+	c.Set("Command", NewCommandData(Source{}, 0, data))
+
+	out, err := c.ParseAndExecute(`{{.Command.Args.user.Mention}}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out != "<@123>" {
+		t.Errorf("got %q, want <@123>", out)
+	}
+}
+
+// Go runtime errors read as a bug on our side, so funcs check their input instead.
+func TestFuncsRejectBadInputWithoutPanicking(t *testing.T) {
+	c := NewContext("TEST", 0)
+
+	for _, tmpl := range []string{
+		`{{div 1 0}}`,
+		`{{bitwiseLeftShift 1 -1}}`,
+		`{{bitwiseRightShift 1 -1}}`,
+		`{{log}}`,
+		`{{structToSdict nil}}`,
+	} {
+		_, err := c.ParseAndExecute(tmpl)
+		if err == nil {
+			t.Errorf("%s succeeded, want an error", tmpl)
+		} else if strings.Contains(err.Error(), "runtime error") || strings.Contains(err.Error(), "reflect:") {
+			t.Errorf("%s panicked: %v", tmpl, err)
+		}
+	}
+}
+
+func TestParseAndExecuteMessageRendersPoll(t *testing.T) {
+	text := func(s string) discord.PollMedia { return discord.PollMedia{Text: &s} }
+
+	msg := &actions.MessageWithActions{
+		Poll: &actions.Poll{
+			Question: text(`{{ "question" }}`),
+			Answers: []discord.PollAnswer{
+				{PollMedia: text(`{{ "first" }}`)},
+				{PollMedia: discord.PollMedia{}},
+			},
+		},
+	}
+
+	c := NewContext("TEST", 0)
+	if err := c.ParseAndExecuteMessage(msg); err != nil {
+		t.Fatal(err)
+	}
+
+	if got := *msg.Poll.Question.Text; got != "question" {
+		t.Errorf("expected the question to be rendered, got %q", got)
+	}
+	if got := *msg.Poll.Answers[0].PollMedia.Text; got != "first" {
+		t.Errorf("expected the first answer to be rendered, got %q", got)
+	}
+	if msg.Poll.Answers[1].PollMedia.Text != nil {
+		t.Error("expected an answer without text to stay without text")
 	}
 }

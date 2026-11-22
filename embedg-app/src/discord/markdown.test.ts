@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 // @ts-expect-error - markdown.js is untyped
 import { toHTML } from "./markdown";
+import { formatTimestamp } from "../util/timestamp";
 
 describe("toHTML", () => {
   it("escapes HTML in subtext", () => {
@@ -26,7 +27,65 @@ describe("toHTML", () => {
     expect(toHTML("` a `")).toContain("<code> a </code>");
   });
 
+  it("does not add a line break after a code block", () => {
+    const html = toHTML("```\naaa\n```\nafter");
+
+    expect(html).toContain("</pre>after");
+    expect(html).not.toContain("</pre><br>");
+  });
+
+  it("keeps an empty line after a code block followed by a blank line", () => {
+    expect(toHTML("```\naaa\n```\n\nafter")).toContain("</pre><br>after");
+  });
+
+  it("does not hard-code styles on code blocks", () => {
+    expect(toHTML("```js\nconst x = 1;\n```")).not.toContain("style=");
+  });
+
+  it("renders ansi code blocks with colors, bold and underline", () => {
+    const html = toHTML(
+      "```ansi\n\x1b[1;31mhi\x1b[0m \x1b[4mu\x1b[0m \x1b[42mbg\x1b[0m plain\n```",
+    );
+
+    expect(html).toContain('<span class="ansi-1 ansi-31">hi</span>');
+    expect(html).toContain('<span class="ansi-4">u</span>');
+    expect(html).toContain('<span class="ansi-42">bg</span>');
+    expect(html).toContain(" plain");
+    expect(html).not.toContain("\x1b");
+  });
+
+  it("renders combined ansi styles, italic and strikethrough", () => {
+    const html = toHTML("```ansi\n\x1b[1;3;4;9;31mall\x1b[0m\n```");
+
+    expect(html).toContain(
+      '<span class="ansi-1 ansi-3 ansi-4 ansi-9 ansi-31">all</span>',
+    );
+  });
+
+  it("escapes HTML inside ansi code blocks", () => {
+    const html = toHTML("```ansi\n\x1b[31m<img src=x>\x1b[0m\n```");
+
+    expect(html).not.toContain("<img");
+    expect(html).toContain("&lt;img");
+  });
+
   it("trims spaces around the whole text", () => {
     expect(toHTML("  hello  ")).toBe("hello");
+  });
+
+  it("shows timestamps like the timestamp generator, f when the style is missing or unknown", () => {
+    const unix = 1794291300;
+    const shown = (markdown: string) =>
+      toHTML(markdown).match(
+        /<span class="discord-timestamp">(.*)<\/span>/,
+      )?.[1];
+
+    for (const style of ["d", "D", "t", "T", "f", "F", "s", "S"] as const) {
+      expect(shown(`<t:${unix}:${style}>`)).toBe(
+        formatTimestamp(unix, style, unix),
+      );
+    }
+    expect(shown(`<t:${unix}>`)).toBe(formatTimestamp(unix, "f", unix));
+    expect(shown(`<t:${unix}:x>`)).toBe(formatTimestamp(unix, "f", unix));
   });
 });

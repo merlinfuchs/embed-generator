@@ -15,7 +15,9 @@ INSERT INTO embed_links (
     tw_card,
     component_embed,
     expires_at,
-    created_at
+    created_at,
+    user_id,
+    attribution
 ) VALUES (
     $1,
     $2,
@@ -32,8 +34,13 @@ INSERT INTO embed_links (
     $13,
     $14,
     $15,
-    $16
+    $16,
+    $17,
+    $18
 ) RETURNING *;
 
 -- name: GetEmbedLink :one
 SELECT * FROM embed_links WHERE id = $1;
+
+-- name: FlagEmbedLink :exec
+UPDATE embed_links SET flagged_at = $2, flagged_reason = $3 WHERE id = $1 AND flagged_at IS NULL;

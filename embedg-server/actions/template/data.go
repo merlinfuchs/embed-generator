@@ -1,6 +1,7 @@
 package template
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -205,23 +206,53 @@ func NewCommandData(src Source, guildID common.ID, c discord.ApplicationCommandI
 	}
 }
 
+// Interaction.Command is nil when a button or select menu runs the action, so every accessor checks for it.
+var errNoCommand = errors.New("Command only works in custom commands, not in buttons or select menus")
+
 func (d *CommandData) String() string {
-	return d.Mention()
+	if d == nil {
+		return ""
+	}
+	return d.mention()
 }
 
-func (d *CommandData) ID() string {
-	return d.c.CommandID().String()
+func (d *CommandData) ID() (string, error) {
+	if d == nil {
+		return "", errNoCommand
+	}
+	return d.c.CommandID().String(), nil
 }
 
-func (d *CommandData) Name() string {
-	return d.c.CommandName()
+func (d *CommandData) Name() (string, error) {
+	if d == nil {
+		return "", errNoCommand
+	}
+	return d.c.CommandName(), nil
 }
 
-func (d *CommandData) Mention() string {
+func (d *CommandData) Mention() (string, error) {
+	if d == nil {
+		return "", errNoCommand
+	}
+	return d.mention(), nil
+}
+
+func (d *CommandData) mention() string {
 	return fmt.Sprintf("</%s:%s>", d.c.CommandName(), d.c.CommandID().String())
 }
 
-func (d *CommandData) Options() map[string]interface{} {
+func (d *CommandData) Options() (map[string]interface{}, error) {
+	if d == nil {
+		return nil, errNoCommand
+	}
+	return d.options(), nil
+}
+
+func (d *CommandData) Args() (map[string]interface{}, error) {
+	return d.Options()
+}
+
+func (d *CommandData) options() map[string]interface{} {
 	res := make(map[string]interface{})
 
 	if slashCMD, ok := d.c.(discord.SlashCommandInteractionData); ok {
@@ -231,10 +262,6 @@ func (d *CommandData) Options() map[string]interface{} {
 	}
 
 	return res
-}
-
-func (d *CommandData) Args() map[string]interface{} {
-	return d.Options()
 }
 
 func NewCommandOptionData(src Source, guildID common.ID, c discord.SlashCommandInteractionData, o discord.SlashCommandOption) interface{} {
@@ -249,9 +276,9 @@ func NewCommandOptionData(src Source, guildID common.ID, c discord.SlashCommandI
 		userID := o.Snowflake()
 		resolved, ok := c.Resolved.Users[userID]
 		if ok {
-			return UserData{resolved}
+			return NewUserData(resolved)
 		}
-		return UserData{u: discord.User{ID: userID}}
+		return NewUserData(discord.User{ID: userID})
 	case discord.ApplicationCommandOptionTypeChannel:
 		channelID := o.Snowflake()
 		resolved, ok := c.Resolved.Channels[channelID]

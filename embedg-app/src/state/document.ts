@@ -61,6 +61,7 @@ export type MessageNode = BaseNode & {
   thread_name?: string;
   flags?: number;
   allowed_mentions?: Message["allowed_mentions"];
+  poll?: Message["poll"];
   embedIds: NodeId[];
   componentIds: NodeId[];
 };
@@ -71,6 +72,8 @@ export type EmbedNode = BaseNode & {
   description?: string;
   url?: string;
   timestamp?: string;
+  /** Shows the time of sending instead of `timestamp`. */
+  timestamp_now?: boolean;
   color?: number;
   footer?: EmbedFooter;
   author?: EmbedAuthor;
@@ -726,6 +729,14 @@ export function selectAllowedMentions(state: DocumentData) {
 }
 
 export const useAllowedMentions = () => useDocument(selectAllowedMentions);
+
+/** Just the poll: the root node changes with every keystroke in the content. */
+export function selectPoll(state: DocumentData) {
+  const root = state.nodes[state.rootId];
+  return root?.type === "message" ? root.poll : undefined;
+}
+
+export const usePoll = () => useDocument(selectPoll);
 
 /** Whether the message has components only the bot can handle, which webhooks can't send. */
 export const useHasInteractiveComponents = () =>

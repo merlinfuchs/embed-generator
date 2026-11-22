@@ -12,7 +12,11 @@
  */
 import { z } from "zod";
 import { getUniqueId } from "../util";
-import { COMPONENTS_V2_FLAG, RESPONSE_MESSAGE_OMIT } from "./schema";
+import {
+  COMPONENTS_V2_FLAG,
+  POLL_DEFAULT_DURATION,
+  RESPONSE_MESSAGE_OMIT,
+} from "./schema";
 
 export const uniqueIdSchema = z.preprocess(
   (d) => {
@@ -207,6 +211,11 @@ export const embedTimestampSchema = z.preprocess(
 
 export type EmbedTimestamp = z.infer<typeof embedTimestampSchema>;
 
+export const embedTimestampNowSchema = z.preprocess(
+  (d) => d ?? undefined,
+  z.optional(z.boolean()),
+);
+
 export const embedColor = z.preprocess(
   (d) => d ?? undefined,
   z.optional(z.number()),
@@ -220,6 +229,7 @@ export const embedSchema = z.object({
   description: embedDescriptionSchema,
   url: embedUrlSchema,
   timestamp: embedTimestampSchema,
+  timestamp_now: embedTimestampNowSchema,
   color: embedColor,
   footer: embedFooterSchema,
   author: embedAuthorSchema,
@@ -484,6 +494,46 @@ export const messageAllowedMentionsSchema = z.preprocess(
 
 export const messageThreadName = z.optional(z.string());
 
+export const pollAnswerSchema = z.object({
+  poll_media: z.preprocess(
+    (d) => d ?? undefined,
+    z
+      .object({
+        text: z.preprocess((d) => d ?? undefined, z.string().default("")),
+        emoji: z.preprocess((d) => d ?? undefined, z.optional(emojiSchema)),
+      })
+      .default({ text: "" }),
+  ),
+});
+
+export const pollSchema = z.preprocess(
+  (d) => d ?? undefined,
+  z.optional(
+    z.object({
+      question: z.preprocess(
+        (d) => d ?? undefined,
+        z
+          .object({
+            text: z.preprocess((d) => d ?? undefined, z.string().default("")),
+          })
+          .default({ text: "" }),
+      ),
+      answers: z.preprocess(
+        (d) => d ?? undefined,
+        z.array(pollAnswerSchema).default([]),
+      ),
+      duration: z.preprocess(
+        (d) => d ?? undefined,
+        z.number().default(POLL_DEFAULT_DURATION),
+      ),
+      allow_multiselect: z.preprocess(
+        (d) => d ?? undefined,
+        z.boolean().default(false),
+      ),
+    }),
+  ),
+);
+
 const messageFieldsSchema = z.object({
   content: z.preprocess(
     (d) => d ?? undefined,
@@ -498,6 +548,7 @@ const messageFieldsSchema = z.object({
     (d) => d ?? undefined,
     z.array(componentSchema).default([]),
   ),
+  poll: pollSchema,
   thread_name: messageThreadName,
   flags: z.preprocess((d) => d ?? 0, z.number()),
 });
@@ -590,6 +641,24 @@ export const messageActionSchema = z
   )
   .or(
     z.object({
+      type: z.literal(13), // opens a form
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      target_id: z.preprocess((d) => d ?? undefined, z.string().default("")),
+    }),
+  )
+  .or(
+    z.object({
+      type: z.literal(14), // sends a form's answers to a URL
+      id: uniqueIdSchema.default(() => getUniqueId()),
+      text: z.preprocess((d) => d ?? undefined, z.string().default("")),
+      disable_default_response: z.preprocess(
+        (d) => d ?? undefined,
+        z.boolean().default(false),
+      ),
+    }),
+  )
+  .or(
+    z.object({
       type: z.literal(10), // permission check
       id: uniqueIdSchema.default(() => getUniqueId()),
       permissions: z.preprocess((d) => d ?? undefined, z.string().default("0")),
@@ -678,7 +747,11 @@ function embedToContainer(embed: MessageEmbed) {
     lines.push(`**${field.name}**\n${field.value}`);
   }
 
-  const time = embed.timestamp ? Date.parse(embed.timestamp) : Number.NaN;
+  // A container can't show the time of sending, and the fixed timestamp it replaced is stale.
+  const time =
+    embed.timestamp && !embed.timestamp_now
+      ? Date.parse(embed.timestamp)
+      : Number.NaN;
   const footer = [
     embed.footer?.text,
     Number.isNaN(time) ? undefined : `<t:${Math.floor(time / 1000)}:f>`,

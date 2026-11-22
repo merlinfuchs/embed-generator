@@ -90,3 +90,8 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-ink-600) transparent;
+}

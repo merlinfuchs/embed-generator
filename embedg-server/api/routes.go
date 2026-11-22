@@ -16,6 +16,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/auth"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/custom_bots"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/embed_links"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/forms"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/guilds"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/health"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/images"
@@ -29,6 +30,9 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/session"
 	embedgsite "github.com/merlinfuchs/embed-generator/embedg-site"
 )
+
+// The plan that only removes the attribution line from embed links, see embedg.example.toml.
+const embedLinkAttributionPlanID = "embed_link_attribution"
 
 func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	healthHandler := health.New(env.ShardManager)
@@ -134,6 +138,13 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	app.Post("/api/custom-bot/commands/deploy", sessionMiddleware.SessionRequired(), customBotHandler.HandleDeployCustomCommands)
 	app.Post("/api/gateway/:customBotID", customBotHandler.HandleCustomBotInteraction)
 
+	formsHandler := forms.New(env.FormStore, env.AccessManager, env.PremiumManager, env.ActionParser)
+	app.Get("/api/forms", sessionMiddleware.SessionRequired(), formsHandler.HandleListForms)
+	app.Get("/api/forms/:formID", sessionMiddleware.SessionRequired(), formsHandler.HandleGetForm)
+	app.Post("/api/forms", sessionMiddleware.SessionRequired(), handlers.WithRequestBodyValidated(formsHandler.HandleCreateForm))
+	app.Put("/api/forms/:formID", sessionMiddleware.SessionRequired(), handlers.WithRequestBodyValidated(formsHandler.HandleUpdateForm))
+	app.Delete("/api/forms/:formID", sessionMiddleware.SessionRequired(), formsHandler.HandleDeleteForm)
+
 	interactionHandler := interaction.New(interaction.InteractionHandlerConfig{
 		DiscordPublicKey: config.DiscordPublicKey,
 	}, env.EventDispatcher, env.Rest)
@@ -168,8 +179,8 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	embedLinksHandler := embed_links.New(embed_links.EmbedLinksHandlerConfig{
 		APIPublicURL: config.APIPublicURL,
 		AppPublicURL: config.AppPublicURL,
-	}, env.EmbedLinkStore)
-	app.Post("/api/embed-links", handlers.WithRequestBodyValidated(embedLinksHandler.HandleCreateEmbedLink))
+	}, env.EmbedLinkStore, env.PremiumManager, env.PhishingChecker)
+	app.Post("/api/embed-links", sessionMiddleware.SessionOptional(), handlers.WithRequestBodyValidated(embedLinksHandler.HandleCreateEmbedLink))
 	app.Get("/api/embed-links/:linkID/oembed", embedLinksHandler.HandleRenderEmbedLinkJSON)
 	app.Get("/e/:linkID", embedLinksHandler.HandleRenderEmbedLinkHTML)
 
@@ -187,6 +198,13 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 
 	app.Get("/premium", func(c *fiber.Ctx) error {
 		return c.Redirect(fmt.Sprintf("https://discord.com/application-directory/%s/premium", env.AppContext.ApplicationID()), 302)
+	})
+	app.Get("/premium/embed-links", func(c *fiber.Ctx) error {
+		plan := env.PremiumManager.GetPlanByID(embedLinkAttributionPlanID)
+		if plan == nil || plan.SKUID == "" {
+			return c.Redirect("/premium", 302)
+		}
+		return c.Redirect(fmt.Sprintf("https://discord.com/application-directory/%s/store/%s", env.AppContext.ApplicationID(), plan.SKUID), 302)
 	})
 
 	// Serve static files. Hashed assets are cached long term; index.html points

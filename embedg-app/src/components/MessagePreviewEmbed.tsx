@@ -1,4 +1,4 @@
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
 import type { MessageEmbed } from "../discord/schema";
 // @ts-expect-error untyped
 import { toHTML } from "../discord/markdown";
@@ -21,13 +21,21 @@ export default function MessagePreviewEmbed({
   const providerUrl = safeHref(embed.provider?.url);
   const authorUrl = safeHref(embed.author?.url);
   const titleUrl = safeHref(embed.url);
-  let timestamp = "";
-  if (embed.timestamp) {
-    const date = parseISO(embed.timestamp);
-    if (!Number.isNaN(date.getTime())) {
-      timestamp = format(date, "dd/MM/yyyy");
-    }
-  }
+  // The time of sending is only known once the message is sent, so the preview shows now.
+  const date = embed.timestamp_now
+    ? new Date()
+    : embed.timestamp
+      ? parseISO(embed.timestamp)
+      : undefined;
+  // Same as Discord's short date: the viewer's locale with a 4-digit year.
+  const timestamp =
+    date && !Number.isNaN(date.getTime())
+      ? date.toLocaleDateString([], {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        })
+      : "";
   return (
     <div key={embed.id} className="discord-embed overflow-hidden">
       <div
@@ -130,7 +138,7 @@ export default function MessagePreviewEmbed({
             {!!thumbnail && (
               <img src={thumbnail} alt="" className="discord-embed-thumbnail" />
             )}
-            {(embed.footer?.text || embed.timestamp) && (
+            {(embed.footer?.text || timestamp) && (
               <div className="discord-embed-footer overflow-hidden break-all">
                 {footerIcon && (
                   <img
@@ -140,7 +148,7 @@ export default function MessagePreviewEmbed({
                   />
                 )}
                 {embed.footer?.text}
-                {embed.footer?.text && embed.timestamp && (
+                {embed.footer?.text && timestamp && (
                   <div className="discord-footer-separator">•</div>
                 )}
                 <div className="flex-none">{timestamp}</div>

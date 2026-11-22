@@ -6,10 +6,15 @@ import { persist } from "zustand/middleware";
 export const DEFAULT_COLORED_TEXT =
   "\x1b[45mJust select\x1b[0m \x1b[34msome text\x1b[0m and \x1b[32mclick\x1b[0m on the \x1b[1;31mcolor\x1b[0m or \x1b[4mformat that you like\x1b[0m!";
 
+/** The Discord themes the preview can show. */
+export type ColoredTextTheme = "light" | "ash" | "dark" | "onyx";
+
 interface ColoredTextStore {
   /** The colored text tool's content as ANSI. */
   text: string;
   setText: (text: string) => void;
+  theme: ColoredTextTheme;
+  setTheme: (theme: ColoredTextTheme) => void;
 }
 
 export const useColoredTextStore = create<ColoredTextStore>()(
@@ -17,6 +22,8 @@ export const useColoredTextStore = create<ColoredTextStore>()(
     (set) => ({
       text: DEFAULT_COLORED_TEXT,
       setText: (text) => set({ text }),
+      theme: "ash",
+      setTheme: (theme) => set({ theme }),
     }),
     { name: "colored-text", version: 0, storage: localStorageJSON },
   ),

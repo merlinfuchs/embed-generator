@@ -33,6 +33,9 @@ func CheckResponseMessage(m *MessageWithActions) error {
 	if hasInteractive(m.Components) {
 		return errors.New("it can only have link buttons, not buttons with actions or select menus")
 	}
+	if m.Poll != nil {
+		return errors.New("it can't have a poll")
+	}
 
 	if m.ComponentsV2Enabled() {
 		if m.Content != "" || len(m.Embeds) != 0 {
@@ -74,7 +77,7 @@ func CheckResponseMessage(m *MessageWithActions) error {
 
 	total := 0
 	for i, embed := range m.Embeds {
-		n, err := embedTextLength(embed)
+		n, err := embedTextLength(embed.Embed)
 		if err != nil {
 			return fmt.Errorf("embed %d: %w", i+1, err)
 		}

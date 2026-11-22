@@ -108,8 +108,13 @@ func (h *SendMessageHandler) HandleSendMessageToChannel(c *fiber.Ctx, req wire.M
 	}
 	if !data.ComponentsV2Enabled() {
 		params.Content = data.Content
-		params.Embeds = data.Embeds
+		params.Embeds = data.DiscordEmbeds(actions.SendTime(req.MessageID))
 		params.TTS = data.TTS
+	}
+
+	params.Poll, err = data.PollForSend(req.MessageID.Valid)
+	if err != nil {
+		return handlers.BadRequest("invalid_poll", fmt.Sprintf("Invalid poll: %v", err))
 	}
 
 	params.Files, err = decodeAttachments(req.Attachments)
@@ -190,8 +195,13 @@ func (h *SendMessageHandler) HandleSendMessageToWebhook(c *fiber.Ctx, req wire.M
 	}
 	if !data.ComponentsV2Enabled() {
 		params.Content = data.Content
-		params.Embeds = data.Embeds
+		params.Embeds = data.DiscordEmbeds(actions.SendTime(req.MessageID))
 		params.TTS = data.TTS
+	}
+
+	params.Poll, err = data.PollForSend(req.MessageID.Valid)
+	if err != nil {
+		return handlers.BadRequest("invalid_poll", fmt.Sprintf("Invalid poll: %v", err))
 	}
 
 	// Only the bot can handle interactive components, but webhooks send the rest. Checked before

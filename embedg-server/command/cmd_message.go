@@ -1,6 +1,7 @@
 package command
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -85,15 +86,7 @@ func (g *CommandHandler) handleMessageDumpCommand(e *handler.CommandEvent) error
 		return fmt.Errorf("failed to dump message: %w", err)
 	}
 
-	pasteURL, err := common.CreateVaultBinPaste(e.Ctx, string(messageDump))
-	if err != nil {
-		return fmt.Errorf("failed to create vaultb.in paste: %w", err)
-	}
-
-	return e.CreateMessage(discord.MessageCreate{
-		Content: fmt.Sprintf("You can find the JSON code here: <%s>", pasteURL),
-		Flags:   discord.MessageFlagEphemeral,
-	})
+	return e.CreateMessage(messageDumpResponse(messageDump))
 }
 
 func (g *CommandHandler) handleMessageDumpContextCommand(e *handler.CommandEvent) error {
@@ -105,15 +98,7 @@ func (g *CommandHandler) handleMessageDumpContextCommand(e *handler.CommandEvent
 		return fmt.Errorf("failed to dump message: %w", err)
 	}
 
-	pasteURL, err := common.CreateVaultBinPaste(e.Ctx, string(messageDump))
-	if err != nil {
-		return fmt.Errorf("failed to create vaultb.in paste: %w", err)
-	}
-
-	return e.CreateMessage(discord.MessageCreate{
-		Content: fmt.Sprintf("You can find the JSON code here: <%s>", pasteURL),
-		Flags:   discord.MessageFlagEphemeral,
-	})
+	return e.CreateMessage(messageDumpResponse(messageDump))
 }
 
 var messageURLRegex = regexp.MustCompile(`https?://(?:canary\.|ptb\.)?discord(?:app)?\.com/channels/[0-9]+/([0-9]+)/([0-9]+)`)
@@ -192,6 +177,17 @@ func (g *CommandHandler) getMessageFromCommand(e *handler.CommandEvent) (*discor
 	return message, nil
 }
 
+func messageDumpResponse(messageDump json.RawMessage) discord.MessageCreate {
+	return discord.MessageCreate{
+		Content: "Here's the message as JSON. Paste it into the JSON Code view in the editor to edit it.",
+		Files: []*discord.File{{
+			Name:   "message.json",
+			Reader: bytes.NewReader(messageDump),
+		}},
+		Flags: discord.MessageFlagEphemeral,
+	}
+}
+
 func (g *CommandHandler) dumpMessage(ctx context.Context, message *discord.Message) (json.RawMessage, error) {
 	components, err := g.actionParser.UnparseMessageComponents(message.Components)
 	if err != nil {
@@ -207,7 +203,7 @@ func (g *CommandHandler) dumpMessage(ctx context.Context, message *discord.Messa
 		Username:   message.Author.Username,
 		AvatarURL:  message.Author.EffectiveAvatarURL(discord.WithSize(1024)),
 		Content:    message.Content,
-		Embeds:     message.Embeds,
+		Embeds:     actions.EmbedsFromDiscord(message.Embeds),
 		Components: components,
 		Actions:    actionSets,
 		// The other flags describe the message as it is now, like embeds hidden in Discord.

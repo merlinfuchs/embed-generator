@@ -25,6 +25,7 @@ const LazyDataRestoreView = lazyView(
 );
 const LazySettingsView = lazyView(() => import("./views/settings"));
 const LazyCommandsView = lazyView(() => import("./views/commands"));
+const LazyFormsView = lazyView(() => import("./views/forms"));
 const LazyScheduledMessagesView = lazyView(() => import("./views/scheduled"));
 const LazyToolsView = lazyView(() => import("./views/tools"));
 const LazyColoredTextToolView = lazyView(
@@ -36,6 +37,10 @@ const LazyWebhookInfoToolView = lazyView(
 const LazyEmbedLinksToolView = lazyView(
   () => import("./views/tools/embedLinks"),
 );
+const LazyTimestampsToolView = lazyView(
+  () => import("./views/tools/timestamps"),
+);
+const LazySnowflakeToolView = lazyView(() => import("./views/tools/snowflake"));
 
 function SuspendedView({ children }: { children: ReactNode }) {
   return <Suspense>{children}</Suspense>;
@@ -114,6 +119,14 @@ function App() {
             }
           />
           <Route
+            path="/forms"
+            element={
+              <SuspendedView>
+                <LazyFormsView />
+              </SuspendedView>
+            }
+          />
+          <Route
             path="/scheduled"
             element={
               <SuspendedView>
@@ -150,6 +163,22 @@ function App() {
             element={
               <SuspendedView>
                 <LazyEmbedLinksToolView />
+              </SuspendedView>
+            }
+          />
+          <Route
+            path="/tools/timestamps"
+            element={
+              <SuspendedView>
+                <LazyTimestampsToolView />
+              </SuspendedView>
+            }
+          />
+          <Route
+            path="/tools/snowflake"
+            element={
+              <SuspendedView>
+                <LazySnowflakeToolView />
               </SuspendedView>
             }
           />

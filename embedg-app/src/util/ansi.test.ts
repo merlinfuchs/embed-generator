@@ -14,9 +14,9 @@ test("reads what the colored text tool exports", () => {
     { text: " ", style: {} },
     { text: "some text", style: { fg: 34 } },
     { text: " and ", style: {} },
-    { text: "color", style: { st: 1, fg: 31 } },
+    { text: "color", style: { st: [1], fg: 31 } },
     { text: " or ", style: {} },
-    { text: "format", style: { st: 4 } },
+    { text: "format", style: { st: [4] } },
     { text: "!", style: {} },
   ]);
 });
@@ -25,7 +25,7 @@ test("styles carry over until a reset", () => {
   expect(parseANSI("\x1b[44mA\x1b[31mB\x1b[1mC\x1b[mD")).toEqual([
     { text: "A", style: { bg: 44 } },
     { text: "B", style: { fg: 31, bg: 44 } },
-    { text: "C", style: { st: 1, fg: 31, bg: 44 } },
+    { text: "C", style: { st: [1], fg: 31, bg: 44 } },
     { text: "D", style: {} },
   ]);
 });
@@ -39,8 +39,25 @@ test("line breaks survive and the code block is optional", () => {
 
 test("codes that turn a style off end it", () => {
   expect(parseANSI("\x1b[1;31mbold red\x1b[39m bold\x1b[22m plain")).toEqual([
-    { text: "bold red", style: { st: 1, fg: 31 } },
-    { text: " bold", style: { st: 1 } },
+    { text: "bold red", style: { st: [1], fg: 31 } },
+    { text: " bold", style: { st: [1] } },
     { text: " plain", style: {} },
+  ]);
+});
+
+test("styles combine and are turned off one by one", () => {
+  expect(parseANSI("\x1b[9;1mA\x1b[3mB\x1b[22mC\x1b[29;23mD")).toEqual([
+    { text: "A", style: { st: [1, 9] } },
+    { text: "B", style: { st: [1, 3, 9] } },
+    { text: "C", style: { st: [3, 9] } },
+    { text: "D", style: {} },
+  ]);
+});
+
+test("custom colors are skipped instead of read as other codes", () => {
+  expect(parseANSI("\x1b[38;2;31;40;1mA\x1b[48;5;41mB\x1b[32mC")).toEqual([
+    { text: "A", style: {} },
+    { text: "B", style: {} },
+    { text: "C", style: { fg: 32 } },
   ]);
 });
