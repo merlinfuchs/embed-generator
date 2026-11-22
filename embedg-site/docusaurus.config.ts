@@ -199,6 +199,7 @@ const config: Config = {
               { label: "Premium", href: "https://message.style/premium" },
               { label: "Documentation", to: "/docs" },
               { label: "Blog", to: "/blog" },
+              { label: "Changelog", to: "/changelog" },
               { label: "Discord Webhook Sender", to: "/features/discord-webhooks" },
               { label: "Scheduled Messages", to: "/features/scheduled-messages" },
               { label: "Components V2", to: "/features/components-v2" },
