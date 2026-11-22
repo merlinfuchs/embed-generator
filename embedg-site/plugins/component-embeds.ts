@@ -21,6 +21,7 @@ const MAX_BYTES = 3000;
 const SECTIONS: { prefix: string; name: string; button: string }[] = [
   { prefix: "/docs", name: "Docs", button: "Read more" },
   { prefix: "/blog", name: "Blog", button: "Read post" },
+  { prefix: "/changelog", name: "Changelog", button: "See what's new" },
 ];
 
 export interface PageMeta {

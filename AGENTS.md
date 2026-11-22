@@ -65,6 +65,8 @@ Migrations are in `embedg-server/db/postgres/migrations` as `NNN_description.up.
 
 Read `FACTS.md` before writing anything a user sees, on the site, in the docs, in the app or in a bot reply. It holds the prices, limits, stats, command names and naming rules. When a fact changes, update the sheet in the same PR.
 
+`embedg-site/changelog` has one post per month at /changelog. A PR that users would notice adds a line to the current month's post, or starts the post if it's the first one that month. Past months stay as they were.
+
 ## Rules
 
 - Match the surrounding code: naming, structure, comment density. Run gofmt and biome.

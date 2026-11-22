@@ -8,6 +8,7 @@ const columns = [
       { label: "Premium", href: "/premium" },
       { label: "Documentation", href: "/docs" },
       { label: "Blog", href: "/blog" },
+      { label: "Changelog", href: "/changelog" },
       { label: "Discord Webhook Sender", href: "/features/discord-webhooks" },
       { label: "Colored Text Generator", href: "/app/tools/colored-text" },
       { label: "Timestamp Generator", href: "/app/tools/timestamps" },
