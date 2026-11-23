@@ -32,4 +32,4 @@ Discord can't change a poll once the message is sent. Editing the message change
 
 ## Where polls don't work
 
-Discord doesn't allow a poll in a [Components V2](./components-v2) message. [Fluxer](./fluxer) doesn't support polls yet, so the editor asks you to remove the poll before sending there. Replies that a button, select menu or custom command sends can't have a poll either.
+Discord doesn't allow a poll in a [Components V2](./components-v2) message. It also rejects a message with both a poll and attachments. To show an image with a poll, send the image as a message of its own right before it. [Fluxer](./fluxer) doesn't support polls yet, so the editor asks you to remove the poll before sending there. Replies that a button, select menu or custom command sends can't have a poll either.
