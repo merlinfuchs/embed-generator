@@ -37,3 +37,21 @@ export function upgradesFor(
 
   return plans.filter((p) => p[limit] > features[limit]);
 }
+
+/** Monthly prices per server in dollars. Set in Discord's store, so typed by hand. */
+export const PLAN_PRICES: Record<string, string> = {
+  [PREMIUM_PLAN]: "$4.99",
+  [ULTIMATE_PLAN]: "$9.99",
+};
+
+/**
+ * The limits of the free plan. The API only serves the paid plans, so these are
+ * typed by hand and come from the prod config.
+ */
+export const FREE_LIMITS = {
+  max_saved_messages: 25,
+  max_scheduled_messages: 5,
+  max_actions_per_component: 3,
+  max_ai_prompts_per_month: 5,
+  max_forms: 3,
+};

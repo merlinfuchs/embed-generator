@@ -161,8 +161,9 @@ export default function SideNav() {
             />
             <NavigationButton
               href="/premium"
-              label="Premium"
+              label="Upgrade"
               icon={StarIcon}
+              accent
               collapsed={collapsed}
             />
           </div>
@@ -213,10 +214,13 @@ function NavigationButton({
   label,
   icon,
   collapsed,
+  accent,
 }: {
   href: string;
   label: string;
   collapsed: boolean;
+  /** Colors the button like the premium theme instead of the default blue. */
+  accent?: boolean;
   icon: any;
 }) {
   const Icon = icon;
@@ -228,16 +232,18 @@ function NavigationButton({
           <div
             className={clsx(
               "w-1 rounded-r-lg h-12",
-              isActive && "bg-azure-500",
+              isActive && (accent ? "bg-amber-400" : "bg-azure-500"),
               collapsed ? "mr-3" : "mr-4",
             )}
           ></div>
           <Icon
             className={clsx(
               "h-8 w-8 flex-none",
-              isActive
-                ? "text-azure-400"
-                : "text-mist-400 group-hover:text-mist-100",
+              accent
+                ? "text-amber-300 group-hover:text-amber-200"
+                : isActive
+                  ? "text-azure-400"
+                  : "text-mist-400 group-hover:text-mist-100",
             )}
             aria-label={label}
             title={label}
@@ -246,9 +252,11 @@ function NavigationButton({
             <div
               className={clsx(
                 "ml-5 truncate",
-                isActive
-                  ? "text-azure-400"
-                  : "text-mist-400 group-hover:text-mist-100",
+                accent
+                  ? "text-amber-300 group-hover:text-amber-200"
+                  : isActive
+                    ? "text-azure-400"
+                    : "text-mist-400 group-hover:text-mist-100",
               )}
             >
               {label}
