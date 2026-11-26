@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import clsx from "clsx";
 import {
   ArrowUpRightIcon,
   Bars3Icon,
@@ -32,21 +33,18 @@ export default function HomeHeader({
   asNavbar,
 }: HomeHeaderProps): JSX.Element {
   const [ownOpen, setOwnOpen] = useState(false);
-  const external = !!mobileMenu;
   const open = mobileMenu ? mobileMenu.open : ownOpen;
-  const setOpen = (v: boolean | ((o: boolean) => boolean)) =>
-    setOwnOpen(v);
   const headerRef = useRef<HTMLElement>(null);
 
   // Close the mobile menu on Escape or when clicking outside the header.
   useEffect(() => {
-    if (!ownOpen || external) return;
+    if (!ownOpen) return;
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") setOwnOpen(false);
     };
     const onPointer = (e: PointerEvent) => {
-      if (!headerRef.current?.contains(e.target as Node)) setOpen(false);
+      if (!headerRef.current?.contains(e.target as Node)) setOwnOpen(false);
     };
 
     document.addEventListener("keydown", onKey);
@@ -55,12 +53,15 @@ export default function HomeHeader({
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("pointerdown", onPointer);
     };
-  }, [ownOpen, external]);
+  }, [ownOpen]);
 
   return (
     <header
       ref={headerRef}
-      className={`${asNavbar ? "navbar home-header " : ""}sticky top-0 z-[200] border-0 border-b border-solid border-white/5 bg-ink-900/80 backdrop-blur-md`}
+      className={clsx(
+        asNavbar && "navbar home-header",
+        "sticky top-0 z-[200] border-0 border-b border-solid border-white/5 bg-ink-900/80 backdrop-blur-md",
+      )}
     >
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-5 md:px-8">
         <a
@@ -99,8 +100,8 @@ export default function HomeHeader({
             type="button"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
-            aria-controls={external ? undefined : "home-mobile-menu"}
-            onClick={() => (mobileMenu ? mobileMenu.onToggle() : setOpen((o) => !o))}
+            aria-controls={mobileMenu ? undefined : "home-mobile-menu"}
+            onClick={mobileMenu?.onToggle ?? (() => setOwnOpen((o) => !o))}
             className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border-0 bg-transparent text-mist-400 transition-colors hover:bg-white/5 hover:text-mist-100 md:hidden"
           >
             {open ? (
@@ -112,7 +113,7 @@ export default function HomeHeader({
         </div>
       </div>
 
-      {ownOpen && !external && (
+      {ownOpen && (
         <nav
           id="home-mobile-menu"
           aria-label="Menu"
@@ -123,7 +124,7 @@ export default function HomeHeader({
               key={l.href}
               href={l.href}
               {...(l.external && { target: "_blank", rel: "noopener" })}
-              onClick={() => setOpen(false)}
+              onClick={() => setOwnOpen(false)}
               className="flex items-center justify-between rounded-lg px-3 py-3 text-sm font-medium text-mist-300 transition-colors hover:bg-white/5 hover:text-mist-100 hover:no-underline"
             >
               {l.label}

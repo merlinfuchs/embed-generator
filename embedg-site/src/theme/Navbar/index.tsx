@@ -23,9 +23,7 @@ export default function Navbar(): JSX.Element {
           onToggle: mobileSidebar.toggle,
         }}
       />
-      <div
-        className={clsx({ "navbar-sidebar--show": mobileSidebar.shown })}
-      >
+      <div className={clsx(mobileSidebar.shown && "navbar-sidebar--show")}>
         <div
           role="presentation"
           className="navbar-sidebar__backdrop"

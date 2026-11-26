@@ -76,18 +76,6 @@ html[data-theme="dark"] {
   box-shadow: none;
 }
 
-html[data-theme="dark"] .navbar {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: none;
-  backdrop-filter: blur(12px);
-}
-
-/* backdrop-filter makes the navbar the containing block of the fixed mobile
-   sidebar, which clips the sidebar to the navbar's height. */
-html[data-theme="dark"] .navbar.navbar-sidebar--show {
-  backdrop-filter: none;
-}
-
 html[data-theme="dark"] .navbar-sidebar {
   background-color: #1e1f22;
 }
