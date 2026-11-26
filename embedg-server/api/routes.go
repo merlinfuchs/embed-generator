@@ -16,6 +16,7 @@ import (
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/auth"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/custom_bots"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/embed_links"
+	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/embed_templates"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/forms"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/guilds"
 	"github.com/merlinfuchs/embed-generator/embedg-server/api/handlers/health"
@@ -183,6 +184,10 @@ func registerRoutes(app *fiber.App, env *Env, config APIConfig) {
 	app.Post("/api/embed-links", sessionMiddleware.SessionOptional(), handlers.WithRequestBodyValidated(embedLinksHandler.HandleCreateEmbedLink))
 	app.Get("/api/embed-links/:linkID/oembed", embedLinksHandler.HandleRenderEmbedLinkJSON)
 	app.Get("/e/:linkID", embedLinksHandler.HandleRenderEmbedLinkHTML)
+
+	// Logged in only, so the lookups can't be used anonymously to hit YouTube and the others.
+	embedTemplatesHandler := embed_templates.New(embed_templates.NewFetcher())
+	app.Get("/api/embed-templates/:templateID", sessionMiddleware.SessionRequired(), embedTemplatesHandler.HandleGetEmbedTemplateData)
 
 	app.Get("/invite", func(c *fiber.Ctx) error {
 		return c.Redirect(env.AppContext.AppInviteURL(), 302)

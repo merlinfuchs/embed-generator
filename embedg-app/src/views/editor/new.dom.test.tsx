@@ -16,10 +16,25 @@ afterEach(() => {
   useSendSettingsStore.setState({ mode: "webhook", guildId: null });
 });
 
+const youtubeVideo = {
+  provider: "youtube",
+  provider_name: "YouTube",
+  title: "A video",
+  url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  description: "",
+  author_name: "A channel",
+  author_url: "https://www.youtube.com/@channel",
+  author_icon_url: "",
+  image_url: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+  thumbnail_url: "",
+  fields: [],
+};
+
 function logIn() {
   const responses: Record<string, unknown> = {
     "/api/users/@me": { id: "1", name: "Tester" },
     "/api/premium/features": defaultPlanFeatures,
+    "/api/embed-templates/youtube": youtubeVideo,
   };
   vi.stubGlobal("fetch", async (url: string) => {
     const data = responses[url.split("?")[0]];
@@ -81,7 +96,7 @@ test.each([
   });
 });
 
-test("logged out only the templates that need the bot ask to log in", async () => {
+test("logged out only the templates that need the bot or a link ask to log in", async () => {
   loadMessage({ content: "" });
   renderEditor(<NewMessageView />);
   const logins = await screen.findAllByRole("link", { name: "Log in to use" });
@@ -92,7 +107,8 @@ test("logged out only the templates that need the bot ask to log in", async () =
   expect(
     screen.queryByRole("button", { name: "Use Role selection" }),
   ).toBeNull();
-  expect(logins).toHaveLength(1);
+  // Role selection, and the four that look up a link.
+  expect(logins).toHaveLength(5);
   expect(logins[0]).toHaveAttribute(
     "href",
     expect.stringContaining("/api/auth/login"),
@@ -158,4 +174,52 @@ test("going back from the fields keeps the message", async () => {
 
   expect(screen.getByText("New message")).toBeInTheDocument();
   expect(currentMessage().components).toEqual([]);
+});
+
+test("a link template looks the link up before it can be used", async () => {
+  logIn();
+  loadMessage({ content: "" });
+  renderEditor(<NewMessageView />);
+  const user = editorUser();
+
+  await user.click(screen.getByRole("button", { name: "Embeds V1" }));
+  await user.click(
+    await screen.findByRole("button", { name: "Use YouTube video" }),
+  );
+  expect(screen.getByRole("button", { name: "Use template" })).toBeDisabled();
+
+  await user.type(screen.getByLabelText("YouTube link"), "vimeo.com/76979871");
+  await user.click(screen.getByRole("button", { name: "Look up" }));
+  expect(screen.getByRole("alert")).toHaveTextContent(
+    "That isn't a YouTube link.",
+  );
+
+  await user.clear(screen.getByLabelText("YouTube link"));
+  await user.type(
+    screen.getByLabelText("YouTube link"),
+    "youtu.be/dQw4w9WgXcQ",
+  );
+  await user.click(screen.getByRole("button", { name: "Look up" }));
+  const use = screen.getByRole("button", { name: "Use template" });
+  await vi.waitFor(() => expect(use).toBeEnabled());
+  await user.click(use);
+
+  expect(currentMessage()).toMatchObject({
+    embeds: [
+      { image: { url: youtubeVideo.image_url } },
+      {
+        title: "▶️ A video",
+        url: youtubeVideo.url,
+        fields: [
+          {
+            name: "📺 Channel",
+            value: `[A channel](${youtubeVideo.author_url})`,
+          },
+        ],
+        footer: { text: "YouTube" },
+      },
+    ],
+  });
+  // Only link buttons, so the webhook still works.
+  expect(useSendSettingsStore.getState().mode).toBe("webhook");
 });
