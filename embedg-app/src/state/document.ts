@@ -531,8 +531,8 @@ export const createDocumentStore = (
 
             // The two modes cannot hold each other's content, so the toggle
             // replaces the message rather than editing it. Components valid
-            // in the new mode carry over with their actions, as does who
-            // gets pinged.
+            // in the new mode carry over with their actions, as do who
+            // gets pinged and whether it's silent.
             setComponentsV2: (enabled) => {
               const { message } = toMessage(get());
               // Everything is valid in components v2, only action rows outside of it.
@@ -542,12 +542,16 @@ export const createDocumentStore = (
               const kept = new Set<string>();
               collectActionSetIds(components, kept);
 
+              const template = enabled
+                ? emptyComponentsV2Message
+                : defaultMessage;
+
               set(
                 fromMessage({
-                  ...(enabled ? emptyComponentsV2Message : defaultMessage),
+                  ...template,
                   // Silent is about sending, not about the content.
                   flags:
-                    (enabled ? COMPONENTS_V2_FLAG : 0) |
+                    (template.flags ?? 0) |
                     ((message.flags ?? 0) & SUPPRESS_NOTIFICATIONS_FLAG),
                   allowed_mentions: message.allowed_mentions,
                   components,
@@ -754,12 +758,14 @@ export const useHasInteractiveComponents = () =>
     ),
   );
 
-function selectComponentsV2Enabled(state: DocumentData) {
+function selectHasFlag(state: DocumentData, flag: number) {
   const root = state.nodes[state.rootId];
 
-  return root?.type === "message"
-    ? ((root.flags ?? 0) & COMPONENTS_V2_FLAG) !== 0
-    : false;
+  return root?.type === "message" ? ((root.flags ?? 0) & flag) !== 0 : false;
+}
+
+function selectComponentsV2Enabled(state: DocumentData) {
+  return selectHasFlag(state, COMPONENTS_V2_FLAG);
 }
 
 /** Whether the message has components or is a Components V2 one, which Fluxer can't send. */
@@ -792,10 +798,4 @@ export function usePollWithAttachments() {
 
 /** Whether the message is sent without notifying anyone. */
 export const useSilent = () =>
-  useDocument((state) => {
-    const root = state.nodes[state.rootId];
-
-    return root?.type === "message"
-      ? ((root.flags ?? 0) & SUPPRESS_NOTIFICATIONS_FLAG) !== 0
-      : false;
-  });
+  useDocument((state) => selectHasFlag(state, SUPPRESS_NOTIFICATIONS_FLAG));
