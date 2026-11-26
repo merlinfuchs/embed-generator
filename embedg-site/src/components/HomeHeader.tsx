@@ -80,9 +80,18 @@ export default function HomeHeader({
               key={l.href}
               href={l.href}
               {...(l.external && { target: "_blank", rel: "noopener" })}
-              className="whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-mist-400 transition-colors hover:bg-white/5 hover:text-mist-100 hover:no-underline"
+              className="flex items-center gap-1 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-mist-400 transition-colors hover:bg-white/5 hover:text-mist-100 hover:no-underline"
             >
               {l.label}
+              {l.external && (
+                <>
+                  <ArrowUpRightIcon
+                    aria-hidden="true"
+                    className="h-3.5 w-3.5 text-mist-500"
+                  />
+                  <span className="sr-only">(opens in a new tab)</span>
+                </>
+              )}
             </a>
           ))}
         </nav>
@@ -129,7 +138,13 @@ export default function HomeHeader({
             >
               {l.label}
               {l.external && (
-                <ArrowUpRightIcon className="h-4 w-4 text-mist-500" />
+                <>
+                  <ArrowUpRightIcon
+                    aria-hidden="true"
+                    className="h-4 w-4 text-mist-500"
+                  />
+                  <span className="sr-only">(opens in a new tab)</span>
+                </>
               )}
             </a>
           ))}
