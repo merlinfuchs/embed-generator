@@ -152,6 +152,32 @@ export type CustomCommandsDeployResponseWire = APIResponse<{
   }>;
 
 //////////
+// source: embed_templates.go
+
+/**
+ * EmbedTemplateDataWire is what a dynamic embed template fills the embed with.
+ * Empty strings are left out of the embed.
+ */
+export interface EmbedTemplateDataWire {
+  provider: string;
+  provider_name: string;
+  title: string;
+  url: string;
+  description: string;
+  author_name: string;
+  author_url: string;
+  author_icon_url: string;
+  image_url: string;
+  thumbnail_url: string;
+  fields: EmbedTemplateFieldWire[];
+}
+export interface EmbedTemplateFieldWire {
+  name: string;
+  value: string;
+}
+export type EmbedTemplateDataResponseWire = APIResponse<EmbedTemplateDataWire>;
+
+//////////
 // source: embeds_links.go
 
 export interface EmbedLinkCreateRequestWire {

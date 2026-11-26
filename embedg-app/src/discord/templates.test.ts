@@ -7,6 +7,7 @@ import {
 } from "./schema";
 import {
   EMPTY_TEMPLATE_INPUT,
+  linkMatchesTemplate,
   messageTemplates,
   type TemplateFormat,
   templateAvailable,
@@ -157,4 +158,76 @@ test("picked channels become mentions, and links to them in Components V2", () =
       }),
     ),
   ).toContain("<#6>");
+});
+
+const github = messageTemplates.find((t) => t.id === "github");
+const repo = {
+  provider: "github",
+  provider_name: "GitHub",
+  title: "owner/[weird] repo",
+  url: "https://github.com/owner/repo",
+  description: "A repository.",
+  author_name: "owner",
+  author_url: "https://github.com/owner",
+  author_icon_url: "https://avatars.githubusercontent.com/u/1",
+  image_url: "https://opengraph.githubassets.com/1/owner/repo",
+  thumbnail_url: "",
+  fields: [{ name: "⭐ Stars", value: "717" }],
+};
+
+test.each(FORMATS)("a looked up link as %s is a valid message", (format) => {
+  const message = github?.build[format]({
+    ...EMPTY_TEMPLATE_INPUT,
+    link: repo,
+  });
+
+  expect(messageSchema.safeParse(message).success).toBe(true);
+});
+
+test("a looked up link is laid out like the other templates", () => {
+  const message = github?.build.componentsV2({
+    ...EMPTY_TEMPLATE_INPUT,
+    link: repo,
+  });
+  const container = message?.components[0];
+  const children = container?.type === 17 ? container.components : [];
+
+  // Banner, heading, separator, details, button.
+  expect(children.map((c) => c.type)).toEqual([12, 10, 14, 10, 1]);
+  expect(children[1]).toMatchObject({
+    content:
+      "## 📦 [owner/\\[weird\\] repo](https://github.com/owner/repo)\nA repository.",
+  });
+  // The owner's name can't end the link it sits in.
+  expect(children[3]).toMatchObject({
+    content:
+      "**👤 Owner:** [owner](https://github.com/owner)\n**⭐ Stars:** 717",
+  });
+});
+
+test("details the site didn't give are left out", () => {
+  const message = github?.build.embeds({
+    ...EMPTY_TEMPLATE_INPUT,
+    link: { ...repo, author_name: "", image_url: "" },
+  });
+
+  expect(message?.embeds).toHaveLength(1);
+  expect(message?.embeds[0].fields.map((f) => f.name)).toEqual(["⭐ Stars"]);
+});
+
+test("only links to a template's own sites are looked up", () => {
+  const youtube = messageTemplates.find((t) => t.id === "youtube")?.link;
+  if (!youtube) throw new Error("no YouTube template");
+
+  expect(linkMatchesTemplate(youtube, "https://youtu.be/dQw4w9WgXcQ")).toBe(
+    true,
+  );
+  expect(linkMatchesTemplate(youtube, "www.youtube.com/watch?v=x")).toBe(true);
+  expect(linkMatchesTemplate(youtube, "https://vimeo.com/76979871")).toBe(
+    false,
+  );
+  expect(linkMatchesTemplate(youtube, "https://youtube.com.evil.test")).toBe(
+    false,
+  );
+  expect(linkMatchesTemplate(youtube, "")).toBe(false);
 });

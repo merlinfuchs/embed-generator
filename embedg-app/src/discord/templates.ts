@@ -1,4 +1,7 @@
-import type { GetPremiumPlanFeaturesResponseDataWire } from "../api/wire";
+import type {
+  EmbedTemplateDataWire,
+  GetPremiumPlanFeaturesResponseDataWire,
+} from "../api/wire";
 import { getUniqueId } from "../util";
 import { getRelativeUrl } from "../util/url";
 import { parseMessageWithAction } from "./importSchema";
@@ -21,6 +24,21 @@ export interface TemplateField {
 export interface TemplateInput {
   values: Partial<Record<string, string>>;
   guildId: string | null;
+  /** What the server found at the link, for a template built from one. */
+  link?: EmbedTemplateDataWire;
+}
+
+/**
+ * A template filled in from a link, like a YouTube video. The server looks the
+ * link up, which takes a login.
+ */
+export interface TemplateLink {
+  /** The server's name for the site. */
+  provider: string;
+  label: string;
+  placeholder: string;
+  /** Rejects links to other sites before asking the server. */
+  hosts: string[];
 }
 
 export const EMPTY_TEMPLATE_INPUT: TemplateInput = {
@@ -33,6 +51,7 @@ export interface MessageTemplate {
   name: string;
   description: string;
   fields?: TemplateField[];
+  link?: TemplateLink;
   /** Builds the message with fresh ids, so using a template twice doesn't share action sets. */
   build: Record<TemplateFormat, (input: TemplateInput) => Message>;
 }
@@ -56,10 +75,12 @@ const bannerEmbed = (name: string, color: number) => ({
   color,
 });
 
-const bannerGallery = (name: string) => ({
+const bannerGalleryUrl = (url: string) => ({
   type: 12,
-  items: [{ media: { url: banner(name) } }],
+  items: [{ media: { url } }],
 });
+
+const bannerGallery = (name: string) => bannerGalleryUrl(banner(name));
 
 // Link buttons need a valid URL, and this one is obviously meant to be replaced.
 const PLACEHOLDER_URL = "https://example.com";
@@ -218,6 +239,142 @@ function roleButtons(input: TemplateInput) {
 
 const ROLES_TEXT =
   "Click a button to get pinged for what you're interested in. Click it again to remove the role.";
+
+/** Keeps a title from closing the markdown link it sits in. */
+function escapeLinkText(text: string): string {
+  return text.replace(/([[\]\\])/g, "\\$1");
+}
+
+/** A markdown link to `url`, or just the text without one. */
+function mdLink(text: string, url: string): string {
+  return text && url ? `[${escapeLinkText(text)}](${url})` : text;
+}
+
+interface LinkTemplateStyle {
+  color: number;
+  /** Goes in front of the title, like the other templates' headings. */
+  emoji: string;
+  button: { label: string; emoji: string };
+  /** The line under the heading. */
+  intro: (d: EmbedTemplateDataWire) => string;
+  /** Shown as "**📺 Channel:** ..." lines, or fields in an embed. */
+  details: (d: EmbedTemplateDataWire) => [string, string][];
+  /** Stands in for what the server finds, until a link is looked up. */
+  sample: () => EmbedTemplateDataWire;
+}
+
+/** The heading, which has to stay within Discord's 256 characters for a title. */
+function linkHeading(style: LinkTemplateStyle, d: EmbedTemplateDataWire) {
+  return Array.from(`${style.emoji} ${d.title}`).slice(0, 256).join("");
+}
+
+/**
+ * The message for a link, laid out like the other templates: the picture as a
+ * banner on top, the title as the heading, the details below a separator and
+ * a button that opens the link. A square cover, like Spotify's, sits next to
+ * the text instead.
+ */
+function linkTemplateBuild(style: LinkTemplateStyle): MessageTemplate["build"] {
+  const data = (input: TemplateInput) => input.link ?? style.sample();
+  // A detail the site didn't give, like a missing author, is left out.
+  const detailsOf = (d: EmbedTemplateDataWire) =>
+    style.details(d).filter(([, value]) => value);
+
+  return {
+    embeds: (input) => {
+      const d = data(input);
+      return embeds({
+        embeds: [
+          ...(d.image_url
+            ? [{ image: { url: d.image_url }, color: style.color }]
+            : []),
+          {
+            title: linkHeading(style, d),
+            url: d.url,
+            description: style.intro(d),
+            color: style.color,
+            thumbnail: d.thumbnail_url ? { url: d.thumbnail_url } : undefined,
+            fields: detailsOf(d).map(([name, value]) => ({
+              name,
+              value,
+              inline: true,
+            })),
+            footer: { text: d.provider_name },
+          },
+        ],
+      });
+    },
+    componentsV2: (input) => {
+      const d = data(input);
+      // The title links to the page, like an embed's title does.
+      const heading = textDisplay(
+        `## ${style.emoji} ${mdLink(d.title, d.url)}\n${style.intro(d)}`,
+      );
+      const details = detailsOf(d);
+
+      return container(style.color, [
+        ...(d.image_url ? [bannerGalleryUrl(d.image_url)] : []),
+        d.thumbnail_url
+          ? {
+              type: 9,
+              components: [heading],
+              accessory: { type: 11, media: { url: d.thumbnail_url } },
+            }
+          : heading,
+        ...(details.length > 0
+          ? [
+              separator,
+              textDisplay(
+                details
+                  .map(([name, value]) => `**${name}:** ${value}`)
+                  .join("\n"),
+              ),
+            ]
+          : []),
+        {
+          type: 1,
+          components: [
+            linkButton(style.button.label, style.button.emoji, d.url),
+          ],
+        },
+      ]);
+    },
+  };
+}
+
+function sample(
+  providerName: string,
+  data: Partial<EmbedTemplateDataWire>,
+): EmbedTemplateDataWire {
+  return {
+    provider: "",
+    provider_name: providerName,
+    title: "",
+    url: PLACEHOLDER_URL,
+    description: "",
+    author_name: "",
+    author_url: "",
+    author_icon_url: "",
+    image_url: "",
+    thumbnail_url: "",
+    fields: [],
+    ...data,
+  };
+}
+
+/** Whether the link is on one of the sites the template is for. */
+export function linkMatchesTemplate(link: TemplateLink, raw: string): boolean {
+  const value = raw.trim();
+  if (!value) return false;
+
+  try {
+    const url = new URL(value.includes("://") ? value : `https://${value}`);
+    const host = url.hostname.toLowerCase().replace(/^(www|m|music)\./, "");
+    return link.hosts.includes(host);
+  } catch {
+    return false;
+  }
+}
 
 export const messageTemplates: MessageTemplate[] = [
   {
@@ -440,6 +597,119 @@ export const messageTemplates: MessageTemplate[] = [
         });
       },
     },
+  },
+  {
+    id: "youtube",
+    name: "YouTube video",
+    description:
+      "Paste a video and its title, channel and thumbnail are filled in",
+    link: {
+      provider: "youtube",
+      label: "YouTube link",
+      placeholder: "https://www.youtube.com/watch?v=...",
+      hosts: ["youtube.com", "youtu.be"],
+    },
+    build: linkTemplateBuild({
+      color: 0xff0000,
+      emoji: "▶️",
+      button: { label: "Watch on YouTube", emoji: "▶️" },
+      intro: () => "A new video is out! Grab a snack and give it a watch.",
+      details: (d) => [["📺 Channel", mdLink(d.author_name, d.author_url)]],
+      sample: () =>
+        sample("YouTube", {
+          title: "The title of the video",
+          author_name: "Channel name",
+          image_url: banner("video"),
+        }),
+    }),
+  },
+  {
+    id: "vimeo",
+    name: "Vimeo video",
+    description:
+      "Paste a video and its title, creator and thumbnail are filled in",
+    link: {
+      provider: "vimeo",
+      label: "Vimeo link",
+      placeholder: "https://vimeo.com/...",
+      hosts: ["vimeo.com", "player.vimeo.com"],
+    },
+    build: linkTemplateBuild({
+      color: 0x1ab7ea,
+      emoji: "🎬",
+      button: { label: "Watch on Vimeo", emoji: "🎬" },
+      intro: (d) =>
+        d.description ||
+        "A new video is out! Grab a snack and give it a watch.",
+      details: (d) => [["🎥 Creator", mdLink(d.author_name, d.author_url)]],
+      sample: () =>
+        sample("Vimeo", {
+          title: "The title of the video",
+          description: "What the video is about.",
+          author_name: "Creator name",
+          image_url: banner("film"),
+        }),
+    }),
+  },
+  {
+    id: "spotify",
+    name: "Spotify",
+    description:
+      "Paste a song, album, playlist or podcast to share it with its cover",
+    link: {
+      provider: "spotify",
+      label: "Spotify link",
+      placeholder: "https://open.spotify.com/track/...",
+      hosts: ["open.spotify.com"],
+    },
+    build: linkTemplateBuild({
+      color: 0x1db954,
+      emoji: "🎵",
+      button: { label: "Listen on Spotify", emoji: "🎧" },
+      intro: () => "Here's something worth a listen. Turn it up!",
+      // The server says what it is, like "Song on Spotify".
+      details: (d) => [["🎧 Type", d.description.replace(/ on Spotify$/, "")]],
+      sample: () =>
+        sample("Spotify", {
+          title: "The name of the song",
+          description: "Song on Spotify",
+          thumbnail_url: banner("music"),
+        }),
+    }),
+  },
+  {
+    id: "github",
+    name: "GitHub repository",
+    description:
+      "Paste a repository and its description, stars and language are filled in",
+    link: {
+      provider: "github",
+      label: "GitHub link",
+      placeholder: "https://github.com/owner/repository",
+      hosts: ["github.com"],
+    },
+    build: linkTemplateBuild({
+      color: 0x238636,
+      emoji: "📦",
+      button: { label: "View on GitHub", emoji: "🔗" },
+      intro: (d) => d.description || "Check out this repository on GitHub.",
+      details: (d) => [
+        ["👤 Owner", mdLink(d.author_name, d.author_url)],
+        ...d.fields.map((f): [string, string] => [f.name, f.value]),
+      ],
+      sample: () =>
+        sample("GitHub", {
+          title: "owner/repository",
+          description: "What the repository is about.",
+          author_name: "owner",
+          image_url: banner("repository"),
+          fields: [
+            { name: "⭐ Stars", value: "1,234" },
+            { name: "🍴 Forks", value: "56" },
+            { name: "💻 Language", value: "Go" },
+          ],
+        }),
+    }),
   },
 ];
 

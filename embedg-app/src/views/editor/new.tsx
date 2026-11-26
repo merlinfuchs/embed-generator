@@ -5,9 +5,11 @@ import {
   SparklesIcon,
 } from "@heroicons/react/20/solid";
 import clsx from "clsx";
-import { type ReactNode, useMemo, useState } from "react";
+import { type FormEvent, type ReactNode, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useEmbedTemplateDataMutation } from "../../api/mutations";
 import { useUserQuery } from "../../api/queries";
+import type { EmbedTemplateDataWire } from "../../api/wire";
 import { op } from "../../util/analytics";
 import { ChannelSelect } from "../../components/ChannelSelect";
 import ConfirmModal from "../../components/ConfirmModal";
@@ -22,6 +24,7 @@ import {
 import type { Message } from "../../discord/schema";
 import {
   EMPTY_TEMPLATE_INPUT,
+  linkMatchesTemplate,
   type MessageTemplate,
   type TemplateFormat,
   messageTemplates,
@@ -72,11 +75,14 @@ export default function NewMessageView() {
     template: (typeof templates)[number];
     locked: LockedReason | null;
   }>((template) =>
-    templateAvailable(template.message, features)
-      ? [{ template, locked: null }]
-      : !features && lockedReason
-        ? [{ template, locked: lockedReason }]
-        : [],
+    // Looking up a link takes a login, but no server.
+    template.link
+      ? [{ template, locked: !userPending && !user?.success ? "login" : null }]
+      : templateAvailable(template.message, features)
+        ? [{ template, locked: null }]
+        : !features && lockedReason
+          ? [{ template, locked: lockedReason }]
+          : [],
   );
 
   // Replacing a message with content asks first, as it's gone for good once
@@ -99,10 +105,10 @@ export default function NewMessageView() {
   }
 
   // Templates that ask for roles or channels get a step to pick them, which
-  // takes a server to pick from.
+  // takes a server to pick from. Ones built from a link always ask for it.
   const [filling, setFilling] = useState<MessageTemplate | null>(null);
   function pickTemplate(template: MessageTemplate, message: Message) {
-    if (features && guildId && template.fields?.length) {
+    if (template.link || (features && guildId && template.fields?.length)) {
       setFilling(template);
     } else {
       replace(() => applyTemplate(template, message));
@@ -124,7 +130,7 @@ export default function NewMessageView() {
     <>
       <Modal width="lg" height="full" onClose={() => navigate("/editor")}>
         <div className="flex flex-col h-full">
-          {filling && guildId ? (
+          {filling ? (
             <TemplateFields
               template={filling}
               format={format}
@@ -205,7 +211,10 @@ export default function NewMessageView() {
   );
 }
 
-/** Picks the roles and channels a template asks for, next to a live preview. */
+/**
+ * Picks the roles and channels a template asks for, or looks up the link it's
+ * built from, next to a live preview.
+ */
 function TemplateFields({
   template,
   format,
@@ -215,15 +224,18 @@ function TemplateFields({
 }: {
   template: MessageTemplate;
   format: TemplateFormat;
-  guildId: string;
+  guildId: string | null;
   onBack: () => void;
   onUse: (message: Message) => void;
 }) {
   const [values, setValues] = useState<Partial<Record<string, string>>>({});
+  const [link, setLink] = useState<EmbedTemplateDataWire | undefined>();
   const message = useMemo(
-    () => template.build[format]({ values, guildId }),
-    [template, format, values, guildId],
+    () => template.build[format]({ values, guildId, link }),
+    [template, format, values, guildId, link],
   );
+  // Until the link is looked up, the preview only shows placeholders.
+  const ready = !template.link || !!link;
 
   function setValue(id: string, value: string | null) {
     setValues((v) => ({ ...v, [id]: value ?? undefined }));
@@ -234,34 +246,42 @@ function TemplateFields({
       <div className="flex-none px-5 pt-4 pb-3 pr-12 border-b border-white/5">
         <div className="text-lg text-white">Set up {template.name}</div>
         <div className="text-sm text-mist-400">
-          Pick what the template should use. Anything you leave empty can be
-          filled in in the editor.
+          {template.link
+            ? "Paste a link and the message is filled in for you. You can change anything in the editor."
+            : "Pick what the template should use. Anything you leave empty can be filled in in the editor."}
         </div>
       </div>
 
       <div className="flex-auto min-h-0 overflow-y-auto">
         <div className="p-5 flex flex-col md:flex-row gap-6">
           <div className="md:w-80 flex-none space-y-4">
-            {template.fields?.map((field) => (
-              <div key={field.id}>
-                <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
-                  {field.label}
+            {template.link && (
+              <TemplateLinkField
+                templateLink={template.link}
+                onFound={setLink}
+              />
+            )}
+            {guildId &&
+              template.fields?.map((field) => (
+                <div key={field.id}>
+                  <div className="uppercase text-mist-300 text-sm font-medium mb-1.5">
+                    {field.label}
+                  </div>
+                  {field.type === "role" ? (
+                    <RoleSelect
+                      guildId={guildId}
+                      roleId={values[field.id] ?? null}
+                      onChange={(id) => setValue(field.id, id)}
+                    />
+                  ) : (
+                    <ChannelSelect
+                      guildId={guildId}
+                      channelId={values[field.id] ?? null}
+                      onChange={(id) => setValue(field.id, id)}
+                    />
+                  )}
                 </div>
-                {field.type === "role" ? (
-                  <RoleSelect
-                    guildId={guildId}
-                    roleId={values[field.id] ?? null}
-                    onChange={(id) => setValue(field.id, id)}
-                  />
-                ) : (
-                  <ChannelSelect
-                    guildId={guildId}
-                    channelId={values[field.id] ?? null}
-                    onChange={(id) => setValue(field.id, id)}
-                  />
-                )}
-              </div>
-            ))}
+              ))}
           </div>
           <div className="flex-auto min-w-0 rounded-xl bg-ink-800 border border-white/10 px-4 py-3">
             <MessagePreview msg={message} />
@@ -273,7 +293,7 @@ function TemplateFields({
         <FooterButton icon={<ArrowLeftIcon />} onClick={onBack}>
           Back
         </FooterButton>
-        <FooterButton primary onClick={() => onUse(message)}>
+        <FooterButton primary disabled={!ready} onClick={() => onUse(message)}>
           Use template
         </FooterButton>
       </div>
@@ -393,22 +413,27 @@ function LockedLabel({ children }: { children: string }) {
 function FooterButton({
   icon,
   primary,
+  disabled,
   children,
   onClick,
 }: {
   icon?: ReactNode;
   primary?: boolean;
+  disabled?: boolean;
   children: string;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
+      disabled={disabled}
       className={clsx(
         "flex items-center justify-center space-x-2 px-4 py-2 rounded-lg transition-colors",
-        primary
-          ? "bg-azure-500 hover:bg-azure-400 text-white font-medium"
-          : "border border-white/15 text-mist-100 hover:bg-white/5 hover:border-white/30",
+        disabled
+          ? "bg-ink-900 text-mist-300 cursor-not-allowed"
+          : primary
+            ? "bg-azure-500 hover:bg-azure-400 text-white font-medium"
+            : "border border-white/15 text-mist-100 hover:bg-white/5 hover:border-white/30",
       )}
       onClick={onClick}
     >
@@ -424,5 +449,72 @@ function FooterButton({
       )}
       <div>{children}</div>
     </button>
+  );
+}
+
+/** Asks for the link a template is built from and has the server look it up. */
+function TemplateLinkField({
+  templateLink,
+  onFound,
+}: {
+  templateLink: NonNullable<MessageTemplate["link"]>;
+  onFound: (data: EmbedTemplateDataWire) => void;
+}) {
+  const [value, setValue] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const lookup = useEmbedTemplateDataMutation();
+
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    if (lookup.isPending) return;
+
+    if (!linkMatchesTemplate(templateLink, value)) {
+      setError(`That isn't a ${templateLink.label}.`);
+      return;
+    }
+
+    setError(null);
+    lookup.mutate(
+      { templateId: templateLink.provider, url: value.trim() },
+      {
+        onSuccess: (res) => {
+          if (res.success) onFound(res.data);
+          else setError(res.error.message);
+        },
+      },
+    );
+  }
+
+  return (
+    <form onSubmit={submit}>
+      <label
+        htmlFor="template-link"
+        className="block uppercase text-mist-300 text-sm font-medium mb-1.5"
+      >
+        {templateLink.label}
+      </label>
+      <input
+        id="template-link"
+        type="text"
+        inputMode="url"
+        autoComplete="off"
+        className="bg-ink-900 px-3 py-2 rounded-lg w-full focus:outline-none text-white border border-white/10 focus:border-azure-400"
+        placeholder={templateLink.placeholder}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+      />
+      <button
+        type="submit"
+        disabled={lookup.isPending || !value.trim()}
+        className="mt-2 w-full px-4 py-2 rounded-lg bg-azure-500 hover:bg-azure-400 text-white font-medium transition-colors disabled:bg-ink-900 disabled:text-mist-300 disabled:cursor-not-allowed"
+      >
+        {lookup.isPending ? "Looking up..." : "Look up"}
+      </button>
+      {error && (
+        <div role="alert" className="mt-2 text-sm text-red">
+          {error}
+        </div>
+      )}
+    </form>
   );
 }

@@ -20,6 +20,7 @@ import type {
   FormDeleteResponseWire,
   FormUpdateResponseWire,
   EmbedLinkCreateRequestWire,
+  EmbedTemplateDataResponseWire,
   EmbedLinkCreateResponseWire,
   MessageRestoreFromChannelRequestWire,
   MessageRestoreFromWebhookRequestWire,
@@ -710,6 +711,20 @@ export function usePremiumEntitlementConsumeMutation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["premium"] });
+    },
+  });
+}
+
+/** Looks up the link a dynamic embed template is built from, like a YouTube video. */
+export function useEmbedTemplateDataMutation() {
+  return useMutation({
+    mutationFn: ({ templateId, url }: { templateId: string; url: string }) => {
+      const params = new URLSearchParams({ url });
+      return fetch(
+        `/api/embed-templates/${encodeURIComponent(templateId)}?${params}`,
+      ).then((res) =>
+        handleApiResponse<EmbedTemplateDataResponseWire>(res.json()),
+      );
     },
   });
 }
