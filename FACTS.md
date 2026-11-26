@@ -39,6 +39,7 @@ Features (feature | what it means for the user | free or paid):
 - Custom bot | replies to buttons and custom commands use your bot's name and avatar | paid
 - Custom commands | slash commands for your members that reply with your messages | paid
 - Restore and edit sent messages | fix a typo in a message that's already posted | free
+- Multiple messages | build up to 10 messages in editor tabs and send or edit them together, in order | free
 - Polls | a question with up to 10 answers that members vote on, shown below the embeds | free
 - Import Discohook JSON, backups, and ?data= links | bring existing messages over without rebuilding them | free
 - Fluxer webhooks | send the same messages to Fluxer | free
