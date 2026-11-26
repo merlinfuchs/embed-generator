@@ -5,20 +5,24 @@ import { ChannelSelect } from "./ChannelSelect";
 import GuildSelect from "./GuildSelect";
 import LoginSuggest from "./LoginSuggest";
 import { useValidationErrorStore } from "../state/validationError";
-import { useCurrentAttachmentsStore } from "../state/attachments";
 import { useSendSettingsStore } from "../state/sendSettings";
 import { isThreadOnlyChannel, parseMessageId } from "../discord/util";
 import MessageRestoreButton from "./MessageRestoreButton";
 import MessageErrorNotice from "./MessageErrorNotice";
 import PollAttachmentsNotice from "./PollAttachmentsNotice";
-import { useToasts } from "../util/toasts";
-import { getCurrentMessage } from "../state/currentMessage";
 import { usePollWithAttachments } from "../state/document";
+import SendMenuMessages, {
+  sendLabel,
+  useSendTabs,
+  useSendTabsQueue,
+} from "./SendMenuMessages";
 
 export default function SendMenuChannel() {
-  const validationError = useValidationErrorStore((state) =>
-    state.hasAnyIssue(),
-  );
+  const sendTabs = useSendTabs();
+  // The checks on the open message only matter while it's one of those sent.
+  const validationError =
+    useValidationErrorStore((state) => state.hasAnyIssue()) &&
+    sendTabs.activeIncluded;
 
   const [selectedGuildId, setSelectedGuildId] = useSendSettingsStore(
     useShallow((state) => [state.guildId, state.setGuildId]),
@@ -44,9 +48,10 @@ export default function SendMenuChannel() {
     : null;
 
   const sendToChannelMutation = useSendMessageToChannelMutation();
+  const { send: sendQueue, sending } = useSendTabsQueue();
 
-  const createToast = useToasts((state) => state.create);
-  const pollWithAttachments = usePollWithAttachments();
+  const pollWithAttachments =
+    usePollWithAttachments() && sendTabs.activeIncluded;
 
   // One predicate per button, used for both the styling and the disabled attribute. A forum or
   // media channel needs a thread name, and can't have an existing message edited in it. An edit
@@ -56,43 +61,43 @@ export default function SendMenuChannel() {
     !validationError &&
     !!selectedGuildId &&
     !!selectedChannnelId &&
-    !sendToChannelMutation.isPending;
+    sendTabs.count > 0 &&
+    !sending;
   const canSend = ready && !(threadOnly && !threadName) && !pollWithAttachments;
-  const canEdit = ready && !threadOnly;
+  // Each message is edited in place, so every one of them needs its message ID.
+  const canEdit = ready && !threadOnly && sendTabs.allSent;
 
   function send(edit: boolean) {
     if (edit ? !canEdit : !canSend) return;
     // Already covered by the predicate, repeated so the ids narrow to non-null below.
     if (!selectedGuildId || !selectedChannnelId) return;
 
-    sendToChannelMutation.mutate(
-      {
-        guild_id: selectedGuildId,
-        channel_id: selectedChannnelId,
-        thread_name: threadOnly ? threadName : null,
-        message_id: edit ? messageId : null,
-        data: getCurrentMessage(),
-        attachments: useCurrentAttachmentsStore.getState().attachments,
+    const guildId = selectedGuildId;
+    // A forum post is made by the first message, and the rest go into it.
+    let channelId = selectedChannnelId;
+    let newThreadName = threadOnly ? threadName : null;
+
+    sendQueue({
+      edit,
+      check: { mode: "channel" },
+      sendOne: async (item) => {
+        const resp = await sendToChannelMutation.mutateAsync({
+          guild_id: guildId,
+          channel_id: channelId,
+          thread_name: newThreadName,
+          message_id: item.messageId,
+          data: item.message,
+          attachments: item.attachments,
+        });
+        if (resp.success && newThreadName) {
+          channelId = resp.data.channel_id;
+          newThreadName = null;
+        }
+        return resp;
       },
-      {
-        onSuccess: (resp) => {
-          if (resp.success) {
-            setMessageId(resp.data.message_id);
-            createToast({
-              type: "success",
-              title: "Message has been sent",
-              message: "The message has been sent to the selected channel!",
-            });
-          } else {
-            createToast({
-              type: "error",
-              title: "Failed to send message",
-              message: resp.error.message,
-            });
-          }
-        },
-      },
-    );
+      successTitle: "Message has been sent",
+      successMessage: "The message has been sent to the selected channel!",
+    });
   }
 
   return user?.success ? (
@@ -153,6 +158,7 @@ export default function SendMenuChannel() {
           </div>
         )}
       </div>
+      <SendMenuMessages />
       {pollWithAttachments && <PollAttachmentsNotice />}
       <div>
         <MessageErrorNotice />
@@ -160,7 +166,7 @@ export default function SendMenuChannel() {
       <div className="flex justify-end flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2 items-end md:items-center">
         <MessageRestoreButton />
         <div className="flex items-center space-x-2">
-          {messageId && (
+          {(sendTabs.multiple ? sendTabs.allSent : !!messageId) && (
             <button
               type="button"
               className={`px-3 py-2 rounded-lg text-white flex items-center space-x-3 ${
@@ -171,10 +177,10 @@ export default function SendMenuChannel() {
               disabled={!canEdit}
               onClick={() => send(true)}
             >
-              {sendToChannelMutation.isPending && (
+              {sending && (
                 <div className="h-2 w-2 bg-white rounded-full animate-ping"></div>
               )}
-              <div>Edit Message</div>
+              <div>{sendLabel("Edit", sendTabs.count)}</div>
             </button>
           )}
           <button
@@ -187,10 +193,10 @@ export default function SendMenuChannel() {
             disabled={!canSend}
             onClick={() => send(false)}
           >
-            {sendToChannelMutation.isPending && (
+            {sending && (
               <div className="h-2 w-2 bg-white rounded-full animate-ping"></div>
             )}
-            <div>Send Message</div>
+            <div>{sendLabel("Send", sendTabs.count)}</div>
           </button>
         </div>
       </div>

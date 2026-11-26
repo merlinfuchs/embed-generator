@@ -5,7 +5,7 @@ import {
   Cog6ToothIcon,
 } from "@heroicons/react/20/solid";
 // Lucide fills in what heroicons doesn't have.
-import { BroomIcon } from "lucide-react";
+import { BroomIcon, MessageSquarePlusIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { isDefaultAllowedMentions } from "../discord/allowedMentions";
 import {
@@ -18,11 +18,13 @@ import {
   useComponentsV2Enabled,
   useSilent,
 } from "../state/document";
+import { useMessageTabsStore } from "../state/messageTabs";
 import { useSendsToFluxer } from "../state/sendSettings";
 import { usePremiumGuildFeatures } from "../util/premium";
 import EditorUndoButtons from "./EditorUndoButtons";
 import EditorIconButton from "./EditorIconButton";
 import EditorComponentsV2Toggle from "./EditorComponentsV2Toggle";
+import { useAddMessageTab } from "./EditorMessageTabs";
 
 export default function EditorMenuBar() {
   const navigate = useNavigate();
@@ -35,6 +37,9 @@ export default function EditorMenuBar() {
   const settingsChanged = !isDefaultAllowedMentions(allowedMentions) || silent;
   // Fluxer has no Components V2, the toggle only stays to turn it off.
   const fluxer = useSendsToFluxer();
+  // Once there are more, the tabs above have their own add button.
+  const singleMessage = useMessageTabsStore((state) => state.tabs.length <= 1);
+  const addMessage = useAddMessageTab();
 
   return (
     <div className="flex flex-wrap-reverse gap-x-5 gap-y-3 justify-between items-center mb-5 mt-5">
@@ -54,6 +59,14 @@ export default function EditorMenuBar() {
         >
           <BroomIcon className="h-full w-full" />
         </EditorIconButton>
+        {singleMessage && (
+          <EditorIconButton
+            label="Add Message (send several messages together)"
+            onClick={addMessage}
+          >
+            <MessageSquarePlusIcon className="h-full w-full" />
+          </EditorIconButton>
+        )}
         <EditorIconButton label="JSON Code" href="/editor/json">
           <CodeBracketSquareIcon />
         </EditorIconButton>

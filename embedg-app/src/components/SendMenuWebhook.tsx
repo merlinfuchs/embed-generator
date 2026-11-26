@@ -12,8 +12,11 @@ import {
 import MessageRestoreButton from "./MessageRestoreButton";
 import MessageErrorNotice from "./MessageErrorNotice";
 import PollAttachmentsNotice from "./PollAttachmentsNotice";
-import { useToasts } from "../util/toasts";
-import { getCurrentMessage } from "../state/currentMessage";
+import SendMenuMessages, {
+  sendLabel,
+  useSendTabs,
+  useSendTabsQueue,
+} from "./SendMenuMessages";
 import {
   useHasComponents,
   useHasInteractiveComponents,
@@ -22,16 +25,18 @@ import {
 } from "../state/document";
 
 export default function SendMenuWebhook() {
-  const validationError = useValidationErrorStore((state) =>
-    state.hasAnyIssue(),
-  );
-  const interactive = useHasInteractiveComponents();
-  const hasComponents = useHasComponents();
-  const hasPoll = !!usePoll();
+  const sendTabs = useSendTabs();
+  // The checks on the open message only matter while it's one of those sent.
+  const activeIncluded = sendTabs.activeIncluded;
+  const validationError =
+    useValidationErrorStore((state) => state.hasAnyIssue()) && activeIncluded;
+  const interactive = useHasInteractiveComponents() && activeIncluded;
+  const hasComponents = useHasComponents() && activeIncluded;
+  const hasPoll = !!usePoll() && activeIncluded;
   const hasAttachments = useCurrentAttachmentsStore(
     (state) => state.attachments.length > 0,
   );
-  const pollWithAttachments = usePollWithAttachments();
+  const pollWithAttachments = usePollWithAttachments() && activeIncluded;
 
   const [webhookUrl, setWebhookUrl] = useSendSettingsStore(
     useShallow((state) => [state.webhookUrl, state.setWebhookUrl]),
@@ -47,58 +52,46 @@ export default function SendMenuWebhook() {
   );
 
   const sendToWebhookMutation = useSendMessageToWebhookMutation();
-
-  const createToast = useToasts((state) => state.create);
+  const { send: sendQueue, sending } = useSendTabsQueue();
 
   // One predicate per button, used for both the styling and the disabled attribute. An edit
   // leaves the poll out, so only a new message can't have both a poll and files.
-  const canEdit =
+  const ready =
     !validationError &&
     !interactive &&
     !(fluxer && hasComponents) &&
     !(fluxer && hasPoll) &&
     !!target &&
-    !sendToWebhookMutation.isPending;
-  const canSend = canEdit && !pollWithAttachments;
+    sendTabs.count > 0 &&
+    !sending;
+  const canSend = ready && !pollWithAttachments;
+  // Each message is edited in place, so every one of them needs its message ID.
+  const canEdit = ready && sendTabs.allSent;
 
   function send(edit: boolean) {
     if (edit ? !canEdit : !canSend) return;
     // Already covered by the predicate, repeated so target narrows to non-null below.
     if (!target) return;
 
-    sendToWebhookMutation.mutate(
-      {
-        webhook_platform: target.platform,
-        webhook_id: target.id,
-        webhook_token: target.token,
-        message_id: edit ? messageId : null,
-        thread_id: target.threadId,
-        data: getCurrentMessage(),
-        // Fluxer's edits can't change the files.
-        attachments:
-          fluxer && edit
-            ? []
-            : useCurrentAttachmentsStore.getState().attachments,
-      },
-      {
-        onSuccess: (resp) => {
-          if (resp.success) {
-            setMessageId(resp.data.message_id);
-            createToast({
-              type: "success",
-              title: "Message has been sent",
-              message: "The message has been sent to the given webhook!",
-            });
-          } else {
-            createToast({
-              type: "error",
-              title: "Failed to send message",
-              message: resp.error.message,
-            });
-          }
-        },
-      },
-    );
+    const webhook = target;
+
+    sendQueue({
+      edit,
+      check: { mode: "webhook", fluxer },
+      sendOne: (item) =>
+        sendToWebhookMutation.mutateAsync({
+          webhook_platform: webhook.platform,
+          webhook_id: webhook.id,
+          webhook_token: webhook.token,
+          message_id: item.messageId,
+          thread_id: webhook.threadId,
+          data: item.message,
+          // Fluxer's edits can't change the files.
+          attachments: fluxer && edit ? [] : item.attachments,
+        }),
+      successTitle: "Message has been sent",
+      successMessage: "The message has been sent to the given webhook!",
+    });
   }
 
   return (
@@ -142,6 +135,7 @@ export default function SendMenuWebhook() {
           />
         </div>
       </div>
+      <SendMenuMessages />
       {fluxer && hasComponents && <FluxerComponentsNotice />}
       {fluxer && hasPoll && <FluxerPollNotice />}
       {!fluxer && interactive && <InteractiveWebhookNotice />}
@@ -158,7 +152,7 @@ export default function SendMenuWebhook() {
       <div className="flex justify-end flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2 items-end md:items-center">
         <MessageRestoreButton />
         <div className="flex items-center space-x-2">
-          {messageId && (
+          {(sendTabs.multiple ? sendTabs.allSent : !!messageId) && (
             <button
               type="button"
               className={`px-3 py-2 rounded-lg text-white flex items-center space-x-3 ${
@@ -169,10 +163,10 @@ export default function SendMenuWebhook() {
               disabled={!canEdit}
               onClick={() => send(true)}
             >
-              {sendToWebhookMutation.isPending && (
+              {sending && (
                 <div className="h-2 w-2 bg-white rounded-full animate-ping"></div>
               )}
-              <div>Edit Message</div>
+              <div>{sendLabel("Edit", sendTabs.count)}</div>
             </button>
           )}
           <button
@@ -185,10 +179,10 @@ export default function SendMenuWebhook() {
             disabled={!canSend}
             onClick={() => send(false)}
           >
-            {sendToWebhookMutation.isPending && (
+            {sending && (
               <div className="h-2 w-2 bg-white rounded-full animate-ping"></div>
             )}
-            <div>Send Message</div>
+            <div>{sendLabel("Send", sendTabs.count)}</div>
           </button>
         </div>
       </div>

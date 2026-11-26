@@ -7,6 +7,7 @@ import EditorAttachments from "../../components/EditorAttachments";
 import EditorComponents from "../../components/EditorComponents";
 import EditorEmbeds from "../../components/EditorEmbeds";
 import EditorMenuBar from "../../components/EditorMenuBar";
+import EditorMessageTabs from "../../components/EditorMessageTabs";
 import EditorMessageContentField from "../../components/EditorMessageContentField";
 import EditorMessagePreview from "../../components/EditorMessagePreview";
 import EditorPoll from "../../components/EditorPoll";
@@ -67,6 +68,7 @@ export default function EditorView() {
             <div className="px-5 pt-5 pb-20 space-y-5">
               <SendMenu />
               <div className="border border-ink-600"></div>
+              <EditorMessageTabs />
               <EditorMenuBar />
               <EditorWebhookFields />
               {!componentsV2Enabled && <EditorMessageContentField />}
