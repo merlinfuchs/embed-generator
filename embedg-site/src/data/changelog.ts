@@ -17,6 +17,12 @@ export interface ChangeDay {
 
 export const changelog: ChangeDay[] = [
   {
+    date: "2026-11-26",
+    changes: [
+      { title: "Send a message silently, without notifying anyone" },
+    ],
+  },
+  {
     date: "2026-11-22",
     changes: [
       {

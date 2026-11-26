@@ -95,3 +95,12 @@ test("a Components V2 message can still be switched back for Fluxer", () => {
 
   expect(screen.getByText("Components V2")).toBeInTheDocument();
 });
+
+test("the settings button also marks a silent message", () => {
+  loadMessage({ content: "", flags: 1 << 12 });
+  renderEditor(<EditorMenuBar />);
+
+  expect(
+    screen.getByRole("link", { name: "Message Settings (changed)" }),
+  ).toBeInTheDocument();
+});
