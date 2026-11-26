@@ -15,8 +15,13 @@ import { usePremiumUserFeatures } from "../util/premium";
 import ComponentEmbedEditor from "./ComponentEmbedEditor";
 import {
   componentEmbedPayload,
+  setComponentEmbed as setComponentEmbedContainer,
   useComponentEmbedContainer,
 } from "../state/componentEmbed";
+import { CodeBracketSquareIcon } from "@heroicons/react/20/solid";
+import EditorIconButton from "./EditorIconButton";
+import ToolsEmbedLinksJson from "./ToolsEmbedLinksJson";
+import type { EmbedLinkFields } from "../util/embedLinkJson";
 
 /** The line the server adds to the end of the preview for anyone without a
  * paid plan. */
@@ -97,6 +102,48 @@ export default function ToolsEmbedLinks() {
   } satisfies Message;
 
   const [newLinkUrl, setNewLinkUrl] = useState("");
+  const [jsonOpen, setJsonOpen] = useState(false);
+
+  function jsonFields(): EmbedLinkFields {
+    return {
+      url,
+      title,
+      description,
+      color,
+      image_url: imageUrl,
+      large_image: twitterCard,
+      provider: { name: providerName, url: providerUrl },
+      author: { name: authorName, url: authorUrl },
+      component: componentEmbed
+        ? (componentEmbedPayload()?.component ?? null)
+        : null,
+    };
+  }
+
+  function applyJsonFields(fields: EmbedLinkFields) {
+    // First, as it throws on a component that isn't a container.
+    if (fields.component) setComponentEmbedContainer(fields.component);
+    setComponentEmbed(!!fields.component);
+
+    setUrl(fields.url);
+    setTitle(fields.title);
+    setDescription(fields.description);
+    setColor(fields.color);
+    setImageUrl(fields.image_url);
+    setTwitterCard(fields.large_image);
+    setProviderName(fields.provider.name);
+    setProviderUrl(fields.provider.url);
+    setAuthorName(fields.author.name);
+    setAuthorUrl(fields.author.url);
+    // Back to the form, so the imported link can be created.
+    setNewLinkUrl("");
+  }
+
+  const jsonButton = (
+    <EditorIconButton label="JSON Code" onClick={() => setJsonOpen(true)}>
+      <CodeBracketSquareIcon />
+    </EditorIconButton>
+  );
 
   const embedLinkCreateMutation = useEmbedLinkCreateMutation();
   const createToast = useToasts((s) => s.create);
@@ -198,13 +245,14 @@ export default function ToolsEmbedLinks() {
               Copy Link
             </button>
           </div>
-          <div className="flex">
+          <div className="flex items-center space-x-2">
             <button
               className="px-3 py-2 rounded-lg border-2 border-white/15 hover:bg-white/5 hover:border-white/30 transition-colors cursor-pointer text-white"
               onClick={() => setNewLinkUrl("")}
             >
               Create New
             </button>
+            {jsonButton}
           </div>
           {componentEmbed && attribution && (
             <AttributionUpsell>
@@ -331,7 +379,8 @@ export default function ToolsEmbedLinks() {
               </div>
             )}
           </Collapsable>
-          <div className="sticky bottom-0 -mx-4 px-4 py-3 bg-ink-800/90 backdrop-blur border-t border-white/5 flex justify-end">
+          <div className="sticky bottom-0 -mx-4 px-4 py-3 bg-ink-800/90 backdrop-blur border-t border-white/5 flex justify-between items-center">
+            {jsonButton}
             <button
               className="px-3 py-2 rounded-lg text-white bg-azure-500 hover:bg-azure-400"
               onClick={createEmbedLink}
@@ -367,6 +416,13 @@ export default function ToolsEmbedLinks() {
           <MessagePreview msg={previewMsg} />
         )}
       </div>
+      {jsonOpen && (
+        <ToolsEmbedLinksJson
+          fields={jsonFields()}
+          onSave={applyJsonFields}
+          onClose={() => setJsonOpen(false)}
+        />
+      )}
     </div>
   );
 }

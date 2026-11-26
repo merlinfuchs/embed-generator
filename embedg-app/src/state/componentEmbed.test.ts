@@ -1,5 +1,9 @@
 import { beforeEach, expect, test } from "vitest";
-import { componentEmbedPayload, componentEmbedStore } from "./componentEmbed";
+import {
+  componentEmbedPayload,
+  componentEmbedStore,
+  setComponentEmbed,
+} from "./componentEmbed";
 import { childIds } from "./documentConvert";
 
 function containerId() {
@@ -79,4 +83,27 @@ test("a custom emoji keeps its id", () => {
       ],
     },
   ]);
+});
+
+test("a pasted container replaces the component embed", () => {
+  setComponentEmbed({
+    type: 17,
+    accent_color: 0xff0000,
+    components: [{ type: 10, content: "Pasted" }],
+  });
+
+  expect(componentEmbedPayload()).toEqual({
+    component: {
+      type: 17,
+      accent_color: 0xff0000,
+      components: [{ type: 10, content: "Pasted" }],
+    },
+  });
+});
+
+test("anything but a container is refused", () => {
+  expect(() => setComponentEmbed({ type: 10, content: "Hi" })).toThrow();
+  expect(componentEmbedPayload()).toEqual({
+    component: { type: 17, components: [] },
+  });
 });

@@ -1,4 +1,5 @@
 import { useStore } from "zustand";
+import { parseMessageWithAction } from "../discord/importSchema";
 import type { Message, MessageComponentContainer } from "../discord/schema";
 import {
   COMPONENTS_V2_FLAG,
@@ -74,4 +75,24 @@ export function componentEmbedPayload(): {
   if (!container) return null;
 
   return { component: stripEditorFields(container) };
+}
+
+/**
+ * Replaces the component embed with a container from outside the editor, like
+ * pasted JSON. Throws when it isn't a container.
+ */
+export function setComponentEmbed(raw: unknown) {
+  if (
+    !raw ||
+    typeof raw !== "object" ||
+    (raw as { type?: unknown }).type !== 17
+  ) {
+    throw new Error("The component has to be a container");
+  }
+
+  const message = parseMessageWithAction({
+    ...emptyComponentEmbed,
+    components: [raw],
+  });
+  componentEmbedStore.getState().replaceAll(message);
 }
