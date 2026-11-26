@@ -212,6 +212,9 @@ importers:
       '@docusaurus/theme-classic':
         specifier: ^3.8.1
         version: 3.8.1(@types/react@18.2.48)(csso@5.0.5)(debug@4.4.1(supports-color@8.1.1))(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(supports-color@8.1.1)(typescript@5.3.3)
+      '@docusaurus/theme-common':
+        specifier: ^3.8.1
+        version: 3.8.1(@docusaurus/plugin-content-docs@3.8.1(@mdx-js/react@3.0.0(@types/react@18.2.48)(react@18.2.0))(csso@5.0.5)(debug@4.4.1(supports-color@8.1.1))(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(supports-color@8.1.1)(typescript@5.3.3))(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(supports-color@8.1.1)
       '@docusaurus/tsconfig':
         specifier: 3.0.0
         version: 3.0.0

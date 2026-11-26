@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import clsx from "clsx";
 import {
   ArrowUpRightIcon,
   Bars3Icon,
@@ -14,19 +15,36 @@ const links = [
   { label: "GitHub", href: "/source", external: true },
 ];
 
-export default function HomeHeader(): JSX.Element {
-  const [open, setOpen] = useState(false);
+type HomeHeaderProps = {
+  /**
+   * Lets a parent own the mobile menu (used by the docs/blog navbar to open
+   * the Docusaurus sidebar). Without it the header renders its own link menu.
+   */
+  mobileMenu?: { open: boolean; onToggle: () => void };
+  /**
+   * Adds Docusaurus's `navbar` class. Docusaurus looks the navbar up by that
+   * class (e.g. the docs table of contents measures its height).
+   */
+  asNavbar?: boolean;
+};
+
+export default function HomeHeader({
+  mobileMenu,
+  asNavbar,
+}: HomeHeaderProps): JSX.Element {
+  const [ownOpen, setOwnOpen] = useState(false);
+  const open = mobileMenu ? mobileMenu.open : ownOpen;
   const headerRef = useRef<HTMLElement>(null);
 
   // Close the mobile menu on Escape or when clicking outside the header.
   useEffect(() => {
-    if (!open) return;
+    if (!ownOpen) return;
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") setOwnOpen(false);
     };
     const onPointer = (e: PointerEvent) => {
-      if (!headerRef.current?.contains(e.target as Node)) setOpen(false);
+      if (!headerRef.current?.contains(e.target as Node)) setOwnOpen(false);
     };
 
     document.addEventListener("keydown", onKey);
@@ -35,12 +53,15 @@ export default function HomeHeader(): JSX.Element {
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("pointerdown", onPointer);
     };
-  }, [open]);
+  }, [ownOpen]);
 
   return (
     <header
       ref={headerRef}
-      className="sticky top-0 z-20 border-0 border-b border-solid border-white/5 bg-ink-900/80 backdrop-blur-md"
+      className={clsx(
+        asNavbar && "navbar home-header",
+        "sticky top-0 z-[200] border-0 border-b border-solid border-white/5 bg-ink-900/80 backdrop-blur-md",
+      )}
     >
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-5 md:px-8">
         <a
@@ -59,9 +80,18 @@ export default function HomeHeader(): JSX.Element {
               key={l.href}
               href={l.href}
               {...(l.external && { target: "_blank", rel: "noopener" })}
-              className="whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-mist-400 transition-colors hover:bg-white/5 hover:text-mist-100 hover:no-underline"
+              className="flex items-center gap-1 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-mist-400 transition-colors hover:bg-white/5 hover:text-mist-100 hover:no-underline"
             >
               {l.label}
+              {l.external && (
+                <>
+                  <ArrowUpRightIcon
+                    aria-hidden="true"
+                    className="h-3.5 w-3.5 text-mist-500"
+                  />
+                  <span className="sr-only">(opens in a new tab)</span>
+                </>
+              )}
             </a>
           ))}
         </nav>
@@ -79,8 +109,8 @@ export default function HomeHeader(): JSX.Element {
             type="button"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
-            aria-controls="home-mobile-menu"
-            onClick={() => setOpen((o) => !o)}
+            aria-controls={mobileMenu ? undefined : "home-mobile-menu"}
+            onClick={mobileMenu?.onToggle ?? (() => setOwnOpen((o) => !o))}
             className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border-0 bg-transparent text-mist-400 transition-colors hover:bg-white/5 hover:text-mist-100 md:hidden"
           >
             {open ? (
@@ -92,7 +122,7 @@ export default function HomeHeader(): JSX.Element {
         </div>
       </div>
 
-      {open && (
+      {ownOpen && (
         <nav
           id="home-mobile-menu"
           aria-label="Menu"
@@ -103,12 +133,18 @@ export default function HomeHeader(): JSX.Element {
               key={l.href}
               href={l.href}
               {...(l.external && { target: "_blank", rel: "noopener" })}
-              onClick={() => setOpen(false)}
+              onClick={() => setOwnOpen(false)}
               className="flex items-center justify-between rounded-lg px-3 py-3 text-sm font-medium text-mist-300 transition-colors hover:bg-white/5 hover:text-mist-100 hover:no-underline"
             >
               {l.label}
               {l.external && (
-                <ArrowUpRightIcon className="h-4 w-4 text-mist-500" />
+                <>
+                  <ArrowUpRightIcon
+                    aria-hidden="true"
+                    className="h-4 w-4 text-mist-500"
+                  />
+                  <span className="sr-only">(opens in a new tab)</span>
+                </>
               )}
             </a>
           ))}
