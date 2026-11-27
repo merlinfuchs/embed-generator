@@ -11,6 +11,7 @@ import type {
   MessageComponentMediaGallery,
   MessageComponentMediaGalleryItem,
   MessageComponentSection,
+  MessageComponentEntitySelect,
   MessageComponentSelectMenu,
   MessageComponentSelectMenuOption,
   MessageComponentSeparator,
@@ -240,6 +241,24 @@ export function fromMessage(message: Message): DocumentData {
         };
         break;
       }
+      case 5:
+      case 6:
+      case 7:
+      case 8:
+        nodes[id] = {
+          type: "entitySelect",
+          selectType: component.type,
+          id,
+          parentId,
+          discordId: component.id,
+          placeholder: component.placeholder,
+          disabled: component.disabled,
+          reset_selection: component.reset_selection,
+          min_values: component.min_values,
+          max_values: component.max_values,
+          action_set_id: component.action_set_id,
+        };
+        break;
       case 9: {
         const childIds = component.components.map((child) =>
           addComponent(child, id),
@@ -484,7 +503,8 @@ export function toMessage(state: DocumentData): ConvertedMessage {
             (childId, i) =>
               component(childId, `${path}.components.${i}`) as
                 | MessageComponentButton
-                | MessageComponentSelectMenu,
+                | MessageComponentSelectMenu
+                | MessageComponentEntitySelect,
           ),
         } satisfies MessageComponentActionRow;
       case "button":
@@ -522,6 +542,18 @@ export function toMessage(state: DocumentData): ConvertedMessage {
             selectOption(optionId, `${path}.options.${i}`),
           ),
         } satisfies MessageComponentSelectMenu;
+      case "entitySelect":
+        usedActionSetIds.add(componentNode.action_set_id);
+        return {
+          id: componentNode.discordId,
+          type: componentNode.selectType,
+          placeholder: componentNode.placeholder,
+          disabled: componentNode.disabled,
+          reset_selection: componentNode.reset_selection,
+          min_values: componentNode.min_values,
+          max_values: componentNode.max_values,
+          action_set_id: componentNode.action_set_id,
+        } satisfies MessageComponentEntitySelect;
       case "section": {
         const accessory =
           componentNode.accessoryId &&

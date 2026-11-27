@@ -179,8 +179,11 @@ func check(msg map[string]any, guild Guild) []string {
 
 // childTypes is what components can hold, which the editor can't read otherwise.
 var childTypes = map[discord.ComponentType][]discord.ComponentType{
-	discord.ComponentTypeActionRow: {discord.ComponentTypeButton, discord.ComponentTypeStringSelectMenu},
-	discord.ComponentTypeSection:   {discord.ComponentTypeTextDisplay},
+	discord.ComponentTypeActionRow: {
+		discord.ComponentTypeButton, discord.ComponentTypeStringSelectMenu, discord.ComponentTypeUserSelectMenu,
+		discord.ComponentTypeRoleSelectMenu, discord.ComponentTypeMentionableSelectMenu, discord.ComponentTypeChannelSelectMenu,
+	},
+	discord.ComponentTypeSection: {discord.ComponentTypeTextDisplay},
 	discord.ComponentTypeContainer: {
 		discord.ComponentTypeActionRow, discord.ComponentTypeSection, discord.ComponentTypeTextDisplay,
 		discord.ComponentTypeMediaGallery, discord.ComponentTypeSeparator, discord.ComponentTypeFile,
@@ -304,7 +307,8 @@ func walkComponents(msg map[string]any, visit func(c map[string]any, path string
 }
 
 // actionSetOwners returns what has an action set in the component: the component itself for
-// buttons that aren't links, and the options of select menus.
+// buttons that aren't links, user, role, mentionable and channel selects, and the options of
+// select menus.
 func actionSetOwners(c map[string]any) []map[string]any {
 	switch typeOf(c) {
 	case discord.ComponentTypeButton:
@@ -320,6 +324,9 @@ func actionSetOwners(c map[string]any) []map[string]any {
 			}
 		}
 		return owners
+	}
+	if actions.IsEntitySelect(typeOf(c)) {
+		return []map[string]any{c}
 	}
 	return nil
 }

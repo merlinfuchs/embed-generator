@@ -7,6 +7,7 @@ import EditorComponentContainer from "./EditorComponentContainer";
 import EditorComponentFile from "./EditorComponentFile";
 import EditorComponentMediaGallery from "./EditorComponentMediaGallery";
 import EditorComponentSection from "./EditorComponentSection";
+import EditorComponentEntitySelect from "./EditorComponentEntitySelect";
 import EditorComponentSelectMenu from "./EditorComponentSelectMenu";
 import EditorComponentSeparator from "./EditorComponentSeparator";
 import EditorComponentTextDisplay from "./EditorComponentTextDisplay";
@@ -32,6 +33,7 @@ const EDITORS = {
   // Only ever nested, so they have no top level styling of their own.
   button: [EditorComponentButton, null],
   selectMenu: [EditorComponentSelectMenu, null],
+  entitySelect: [EditorComponentEntitySelect, null],
   thumbnail: [EditorComponentThumbnail, null],
 } as const;
 

@@ -245,3 +245,21 @@ func (p *FormProvider) ProvideData(data map[string]interface{}) {
 	data["Form"] = p.values
 	data["FormIDs"] = p.ids
 }
+
+// SelectProvider makes what was picked in a user, role, mentionable or channel select of a message
+// available as {{.Selected}}, the mentions, and {{.SelectedIDs}}, both separated by spaces.
+type SelectProvider struct {
+	mentions string
+	ids      string
+}
+
+func NewSelectProvider(mentions string, ids string) *SelectProvider {
+	return &SelectProvider{mentions: mentions, ids: ids}
+}
+
+func (p *SelectProvider) ProvideFuncs(funcs map[string]interface{}) {}
+
+func (p *SelectProvider) ProvideData(data map[string]interface{}) {
+	data["Selected"] = p.mentions
+	data["SelectedIDs"] = p.ids
+}

@@ -183,7 +183,8 @@ type ComponentWithActions struct {
 	URL         string                  `json:"url,omitempty"`
 	ActionSetID string                  `json:"action_set_id,omitempty"`
 
-	// Select Menu
+	// Select Menu, and the user, role, mentionable and channel selects, which have no options and
+	// carry their action set in ActionSetID.
 	Placeholder string                             `json:"placeholder,omitempty"`
 	MinValues   *int                               `json:"min_values,omitempty"`
 	MaxValues   int                                `json:"max_values,omitempty"`
@@ -223,6 +224,52 @@ const (
 	ResetSelectMenuCustomIDPrefix = SelectMenuCustomIDPrefix + "reset:"
 )
 
+// EntitySelectCustomIDPrefix starts the custom ID of every user, role, mentionable and channel
+// select, followed by its action set ID. Ones that reset carry "reset:" in between, or
+// "reset@<nonce>:" once they have been reset.
+const EntitySelectCustomIDPrefix = "action:entities:"
+
+// EntitySelectCustomID is the custom ID of a user, role, mentionable or channel select. Discord
+// keeps showing what was picked while the custom ID stays the same, so a select that resets is sent
+// back with a new nonce each time. A select that hasn't been reset yet has no nonce.
+func EntitySelectCustomID(actionSetID string, reset bool, nonce string) string {
+	switch {
+	case !reset:
+		return EntitySelectCustomIDPrefix + actionSetID
+	case nonce == "":
+		return EntitySelectCustomIDPrefix + "reset:" + actionSetID
+	default:
+		return EntitySelectCustomIDPrefix + "reset@" + nonce + ":" + actionSetID
+	}
+}
+
+// ParseEntitySelectCustomID is the reverse of EntitySelectCustomID, without the nonce. ok is false
+// for the custom ID of anything else.
+func ParseEntitySelectCustomID(customID string) (actionSetID string, reset bool, ok bool) {
+	rest, ok := strings.CutPrefix(customID, EntitySelectCustomIDPrefix)
+	if !ok {
+		return "", false, false
+	}
+	if id, found := strings.CutPrefix(rest, "reset:"); found {
+		return id, true, true
+	}
+	if after, found := strings.CutPrefix(rest, "reset@"); found {
+		_, id, ok := strings.Cut(after, ":")
+		return id, true, ok
+	}
+	return rest, false, true
+}
+
+// IsEntitySelect is whether the type is a select menu that picks users, roles or channels.
+func IsEntitySelect(t discord.ComponentType) bool {
+	switch t {
+	case discord.ComponentTypeUserSelectMenu, discord.ComponentTypeRoleSelectMenu,
+		discord.ComponentTypeMentionableSelectMenu, discord.ComponentTypeChannelSelectMenu:
+		return true
+	}
+	return false
+}
+
 // Interactive is whether the component needs the bot to handle it, unlike a link button.
 func (c ComponentWithActions) Interactive() bool {
 	switch c.Type {
@@ -231,7 +278,7 @@ func (c ComponentWithActions) Interactive() bool {
 	case discord.ComponentTypeStringSelectMenu:
 		return true
 	}
-	return false
+	return IsEntitySelect(c.Type)
 }
 
 type UnfurledMediaItem struct {
