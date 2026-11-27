@@ -22,6 +22,7 @@ import type {
   Emoji,
   Message,
   MessageActionSet,
+  EntitySelectType,
   MessageComponentButtonStyle,
   UnfurledMediaItem,
 } from "../discord/schema";
@@ -116,6 +117,20 @@ export type SelectMenuNode = BaseNode & {
   optionIds: NodeId[];
 };
 
+/** A select menu that picks users, roles or channels instead of options. */
+export type EntitySelectNode = BaseNode & {
+  type: "entitySelect";
+  /** The component type of the payload. */
+  selectType: EntitySelectType;
+  placeholder?: string;
+  disabled?: boolean;
+  /** Shows the placeholder again after each pick. */
+  reset_selection?: boolean;
+  min_values?: number;
+  max_values?: number;
+  action_set_id: string;
+};
+
 export type SelectOptionNode = BaseNode & {
   type: "selectOption";
   label: string;
@@ -181,6 +196,7 @@ export type Node =
   | ButtonNode
   | SelectMenuNode
   | SelectOptionNode
+  | EntitySelectNode
   | ContainerNode
   | SectionNode
   | TextDisplayNode
@@ -368,8 +384,15 @@ function emptyChildren(type: NodeType) {
   }
 }
 
+/** The nodes that run an action set. */
+type ActionSetNode = ButtonNode | SelectOptionNode | EntitySelectNode;
+
 function usesActionSet(node: { type: NodeType }): boolean {
-  return node.type === "button" || node.type === "selectOption";
+  return (
+    node.type === "button" ||
+    node.type === "selectOption" ||
+    node.type === "entitySelect"
+  );
 }
 
 /** Collects `id` and every node below it, deepest last. */
@@ -443,8 +466,7 @@ export const createDocumentStore = (
 
                 if (usesActionSet(created)) {
                   const actionSetId = getUniqueId().toString();
-                  (created as ButtonNode | SelectOptionNode).action_set_id =
-                    actionSetId;
+                  (created as ActionSetNode).action_set_id = actionSetId;
                   state.actions[actionSetId] = { actions: [] };
                 }
 
@@ -610,9 +632,7 @@ function removeSubtree(state: DocumentData, id: NodeId) {
   for (const removedId of descendants(state.nodes, id)) {
     const removed = state.nodes[removedId];
     if (removed && usesActionSet(removed)) {
-      delete state.actions[
-        (removed as ButtonNode | SelectOptionNode).action_set_id
-      ];
+      delete state.actions[(removed as ActionSetNode).action_set_id];
     }
     delete state.nodes[removedId];
   }
@@ -634,9 +654,9 @@ function copySubtree(
   } as Node;
 
   if (usesActionSet(copy)) {
-    const source = (node as ButtonNode | SelectOptionNode).action_set_id;
+    const source = (node as ActionSetNode).action_set_id;
     const actionSetId = getUniqueId().toString();
-    (copy as ButtonNode | SelectOptionNode).action_set_id = actionSetId;
+    (copy as ActionSetNode).action_set_id = actionSetId;
     state.actions[actionSetId] = {
       actions: state.actions[source]
         ? state.actions[source].actions.map((action) => ({ ...action }))
@@ -754,6 +774,7 @@ export const useHasInteractiveComponents = () =>
     Object.values(state.nodes).some(
       (node) =>
         node.type === "selectMenu" ||
+        node.type === "entitySelect" ||
         (node.type === "button" && node.style !== 5),
     ),
   );

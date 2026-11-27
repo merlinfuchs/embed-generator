@@ -367,11 +367,52 @@ export type MessageComponentSelectMenu = z.infer<
   typeof componentSelectMenuSchema
 >;
 
+/** The select menus that pick users (5), roles (6), both (7) or channels (8). */
+export const entitySelectTypeSchema = z
+  .literal(5)
+  .or(z.literal(6))
+  .or(z.literal(7))
+  .or(z.literal(8));
+
+export type EntitySelectType = z.infer<typeof entitySelectTypeSchema>;
+
+export const componentEntitySelectSchema = z
+  .object({
+    id: uniqueIdSchema.default(() => getUniqueId()),
+    type: entitySelectTypeSchema,
+    placeholder: z.optional(z.string().max(150)),
+    disabled: z.optional(z.boolean()),
+    reset_selection: z.optional(z.boolean()),
+    min_values: z.optional(z.number().int().min(0).max(25)),
+    max_values: z.optional(z.number().int().min(1).max(25)),
+    action_set_id: z.string().default(() => getUniqueId().toString()),
+  })
+  .superRefine((data, ctx) => {
+    // Discord takes one pick at most unless max_values says otherwise.
+    if ((data.min_values ?? 0) > (data.max_values ?? 1)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["min_values"],
+        message: "Min choices can't be more than max choices",
+      });
+    }
+  });
+
+export type MessageComponentEntitySelect = z.infer<
+  typeof componentEntitySelectSchema
+>;
+
 export const componentActionRowSchema = z.object({
   id: uniqueIdSchema.default(() => getUniqueId()),
   type: z.literal(1),
   components: z
-    .array(z.union([componentButtonSchema, componentSelectMenuSchema]))
+    .array(
+      z.union([
+        componentButtonSchema,
+        componentSelectMenuSchema,
+        componentEntitySelectSchema,
+      ]),
+    )
     .min(1)
     .max(5),
 });
@@ -492,6 +533,7 @@ export const componentSchema = z.union([
   componentActionRowSchema,
   componentButtonSchema,
   componentSelectMenuSchema,
+  componentEntitySelectSchema,
   componentSectionSchema,
   componentTextDisplaySchema,
   componentThumbnailSchema,

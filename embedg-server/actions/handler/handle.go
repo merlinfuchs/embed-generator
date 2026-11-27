@@ -125,6 +125,8 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 	var formValues map[string]string
 	// formIDs is the IDs of what was picked in the select fields of a submitted form.
 	var formIDs map[string]string
+	// selected is what was picked in a user, role, mentionable or channel select.
+	var selected *entitySelection
 	// submittedForm and answers are the form and what was entered when one was submitted.
 	var submittedForm *model.Form
 	var answers []formAnswer
@@ -139,6 +141,20 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 
 		actionSetID := data.CustomID()[7:]
 		resetSelection := strings.HasPrefix(data.CustomID(), actions.ResetSelectMenuCustomIDPrefix)
+
+		if actions.IsEntitySelect(data.Type()) {
+			var ok bool
+			actionSetID, resetSelection, ok = actions.ParseEntitySelectCustomID(data.CustomID())
+			if !ok {
+				return nil
+			}
+
+			selected = pickedSelection(data)
+			// Like a string select, one that is submitted empty runs nothing.
+			if selected == nil {
+				return nil
+			}
+		}
 
 		if strings.HasPrefix(data.CustomID(), actions.SelectMenuCustomIDPrefix) {
 			// Handle select menu values
@@ -168,7 +184,9 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 		derivedPerms = col.DerivedPermissions
 
 		// Opening a form is the response to the interaction, so nothing can respond before it.
-		if resetSelection && !startsWithEdit(actionSet) && !actionSet.ShowsForm() {
+		// An edit keeps the custom ID of a user, role or channel select, which then keeps showing
+		// the picks, so those reset before an edit too.
+		if resetSelection && (selected != nil || !startsWithEdit(actionSet)) && !actionSet.ShowsForm() {
 			// Discord shows the picked option until the message changes. Sending its components back
 			// unchanged shows the placeholder again, and lets the same option be picked twice in a
 			// row. The actions' responses go out as followups.
@@ -176,6 +194,11 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 			// Without allowed mentions Discord pings every mention in the message again. An empty
 			// parse list is what turns that off, a missing or null one means the default of all.
 			components := compInteraction.Message.Components
+			if selected != nil {
+				// User, role and channel selects only drop the picks under a new custom ID.
+				nonce := strconv.FormatUint(uint64(interaction.ID()), 36)
+				components = renameSelect(components, data.CustomID(), actions.EntitySelectCustomID(actionSetID, true, nonce))
+			}
 			i.Respond(discord.MessageUpdate{
 				Components:      &components,
 				AllowedMentions: &discord.AllowedMentions{Parse: []discord.AllowedMentionType{}},
@@ -253,6 +276,9 @@ func (m *ActionHandler) handleActionInteraction(restClient rest.Rest, i Interact
 	providers := []template.ContextProvider{
 		template.NewInteractionProvider(templateSource, interaction),
 		template.NewKVProvider(templateSource, *interaction.GuildID(), m.kvEntryStore, features.MaxKVKeys),
+	}
+	if selected != nil {
+		providers = append(providers, template.NewSelectProvider(selected.mentions, selected.ids))
 	}
 	if formValues != nil {
 		providers = append(providers, template.NewFormProvider(formValues, formIDs))

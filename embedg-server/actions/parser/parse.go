@@ -129,6 +129,9 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions, 
 			Options:     options,
 			Disabled:    data.Disabled,
 		}, nil
+	case discord.ComponentTypeUserSelectMenu, discord.ComponentTypeRoleSelectMenu,
+		discord.ComponentTypeMentionableSelectMenu, discord.ComponentTypeChannelSelectMenu:
+		return parseEntitySelect(data), nil
 	case discord.ComponentTypeSection:
 		se := discord.SectionComponent{
 			Components: make([]discord.SectionSubComponent, 0, len(data.Components)),
@@ -229,6 +232,65 @@ func (m *ActionParser) ParseMessageComponent(data actions.ComponentWithActions, 
 	}
 }
 
+// parseEntitySelect builds a user, role, mentionable or channel select.
+func parseEntitySelect(data actions.ComponentWithActions) discord.Component {
+	customID := actions.EntitySelectCustomID(data.ActionSetID, data.ResetSelection, "")
+
+	switch data.Type {
+	case discord.ComponentTypeRoleSelectMenu:
+		return discord.RoleSelectMenuComponent{
+			CustomID:    customID,
+			Placeholder: data.Placeholder,
+			MinValues:   data.MinValues,
+			MaxValues:   data.MaxValues,
+			Disabled:    data.Disabled,
+		}
+	case discord.ComponentTypeMentionableSelectMenu:
+		return discord.MentionableSelectMenuComponent{
+			CustomID:    customID,
+			Placeholder: data.Placeholder,
+			MinValues:   data.MinValues,
+			MaxValues:   data.MaxValues,
+			Disabled:    data.Disabled,
+		}
+	case discord.ComponentTypeChannelSelectMenu:
+		return discord.ChannelSelectMenuComponent{
+			CustomID:    customID,
+			Placeholder: data.Placeholder,
+			MinValues:   data.MinValues,
+			MaxValues:   data.MaxValues,
+			Disabled:    data.Disabled,
+		}
+	default:
+		return discord.UserSelectMenuComponent{
+			CustomID:    customID,
+			Placeholder: data.Placeholder,
+			MinValues:   data.MinValues,
+			MaxValues:   data.MaxValues,
+			Disabled:    data.Disabled,
+		}
+	}
+}
+
+// unparseEntitySelect is the reverse of parseEntitySelect.
+func unparseEntitySelect(t discord.ComponentType, customID string, placeholder string, minValues *int, maxValues int, disabled bool) actions.ComponentWithActions {
+	actionSetID, reset, ok := actions.ParseEntitySelectCustomID(customID)
+	if !ok {
+		// A select that Embed Generator didn't send has no action set of its own.
+		actionSetID = customID
+	}
+
+	return actions.ComponentWithActions{
+		Type:           t,
+		Disabled:       disabled,
+		Placeholder:    placeholder,
+		MinValues:      minValues,
+		MaxValues:      maxValues,
+		ActionSetID:    actionSetID,
+		ResetSelection: reset,
+	}
+}
+
 func (m *ActionParser) UnparseMessageComponents(data []discord.LayoutComponent) ([]actions.ComponentWithActions, error) {
 	res := make([]actions.ComponentWithActions, 0, len(data))
 
@@ -291,6 +353,14 @@ func (m *ActionParser) UnparseMessageComponent(data discord.Component) (actions.
 			Options:        options,
 			ResetSelection: strings.HasPrefix(c.CustomID, actions.ResetSelectMenuCustomIDPrefix),
 		}, nil
+	case discord.UserSelectMenuComponent:
+		return unparseEntitySelect(c.Type(), c.CustomID, c.Placeholder, c.MinValues, c.MaxValues, c.Disabled), nil
+	case discord.RoleSelectMenuComponent:
+		return unparseEntitySelect(c.Type(), c.CustomID, c.Placeholder, c.MinValues, c.MaxValues, c.Disabled), nil
+	case discord.MentionableSelectMenuComponent:
+		return unparseEntitySelect(c.Type(), c.CustomID, c.Placeholder, c.MinValues, c.MaxValues, c.Disabled), nil
+	case discord.ChannelSelectMenuComponent:
+		return unparseEntitySelect(c.Type(), c.CustomID, c.Placeholder, c.MinValues, c.MaxValues, c.Disabled), nil
 	case discord.SectionComponent:
 		se := actions.ComponentWithActions{
 			Type:       discord.ComponentTypeSection,

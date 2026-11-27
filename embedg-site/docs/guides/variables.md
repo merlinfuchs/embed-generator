@@ -48,6 +48,8 @@ Please notice the dot (`.`) in front of each variable name!
 | .Interaction.Command.Args.my_arg | text / user / channel / role / attachment | The value of one of the command arguments. Replace `my_arg` with the name of the argument. Depending on the type of the command argument this might have sub variables like `.Interaction.Command.Args.my_arg.ID` for the id of a user. |
 | .Form.my_field                   | text                                      | What a member typed into a field of a form, the mentions of what they picked in a user, role or channel select, the labels of the options they picked, or Yes or No for a checkbox. Only available in the actions of a form. Replace `my_field` with the variable name of the field. See the [forms guide](./forms). |
 | .FormIDs.my_field                | text                                      | The IDs of what a member picked in a user, role or channel select of a form, the values of the options they picked, or true or false for a checkbox. Only available in the actions of a form. |
+| .Selected | text | The mentions of what a member picked in a user, role, user & role or channel select, separated by spaces. Only available in the actions of those [select menus](./interactive-components#user-role-and-channel-selects). |
+| .SelectedIDs | text | The IDs of what a member picked in one of those select menus, separated by spaces. |
 
 ## Advanced Usage
 

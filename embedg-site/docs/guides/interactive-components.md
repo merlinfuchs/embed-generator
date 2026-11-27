@@ -5,7 +5,7 @@ description: "Full guide to buttons, select menus and actions in Embed Generator
 
 # Interactive Components
 
-Interactive Components can be added to your messages to allow users to interact with them. Right now there are two types of Interactive Components: buttons & select menus.
+Interactive Components can be added to your messages to allow users to interact with them. Right now there are two types of Interactive Components: buttons & select menus. Select menus either offer options you write, or let members [pick users, roles or channels](#user-role-and-channel-selects).
 
 Buttons with actions and select menus are only available after logging in and selecting a channel. When sending to a webhook, only link buttons work. The option can be found at the very bottom of the message editor.
 
@@ -36,6 +36,23 @@ Additionally you can add a number of [Actions](#actions). These are used to resp
 Discord keeps showing the option a user picked until the message changes. While it's shown, picking that option again does nothing. Turn on "Clear after use" to show the placeholder again after each pick, so the same option can be picked twice in a row. Actions that edit the message clear it anyway.
 
 ![Interactive Select Menus](./interactive-components-select.webp)
+
+## User, Role and Channel Selects
+
+These select menus let members pick from your server, so you don't set up any options. Add them like a select menu:
+
+| Select             | Members pick     |
+| ------------------ | ---------------- |
+| User Select        | Members          |
+| Role Select        | Roles            |
+| User & Role Select | Members or roles |
+| Channel Select     | Channels         |
+
+Each one has a placeholder, "Disabled" and "Clear after use" like other select menus. **Min Choices** and **Max Choices** set how many can be picked. Both are 1 by default, and Max Choices goes up to 25.
+
+The menu has one list of [actions](#actions), which runs on every pick. Use `{{.Selected}}` in a response to mention what was picked and `{{.SelectedIDs}}` for the IDs, both separated by spaces. For example, `{{.User.Mention}} picked {{.Selected}}`. The [Show Form](./forms) action opens a form, but the picks aren't passed on to it.
+
+Role actions always give or take the role you choose in the action, not the role a member picked. Members can pick any role of the server in a Role Select, including staff roles.
 
 ## Actions
 

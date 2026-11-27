@@ -28,9 +28,10 @@ export default function EditorComponentActionRow({
   const { insert, removeChildren } = useDocumentStoreApi().getState();
   const { interactive } = useEditorCapabilities();
   // A row holds either buttons or a single select menu, never both.
-  const isButtonRow = useDocument(
-    (state) => state.nodes[childIds[0]]?.type !== "selectMenu",
-  );
+  const isButtonRow = useDocument((state) => {
+    const type = state.nodes[childIds[0]]?.type;
+    return type !== "selectMenu" && type !== "entitySelect";
+  });
 
   return (
     <EditorComponentCollapsable

@@ -5,6 +5,7 @@ import type {
   MessageComponentActionRow,
   MessageComponentButton,
   MessageComponentContainer,
+  MessageComponentEntitySelect,
   MessageComponentFile,
   MessageComponentMediaGallery,
   MessageComponentSection,
@@ -106,7 +107,7 @@ export function PreviewButton({ button }: { button: MessageComponentButton }) {
 export function PreviewSelectMenu({
   selectMenu,
 }: {
-  selectMenu: MessageComponentSelectMenu;
+  selectMenu: MessageComponentSelectMenu | MessageComponentEntitySelect;
 }) {
   return (
     <div

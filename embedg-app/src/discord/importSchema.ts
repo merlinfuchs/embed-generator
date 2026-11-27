@@ -326,12 +326,33 @@ export type MessageComponentSelectMenu = z.infer<
   typeof componentSelectMenuSchema
 >;
 
+export const componentEntitySelectSchema = z.object({
+  id: uniqueIdSchema,
+  type: z.literal(5).or(z.literal(6)).or(z.literal(7)).or(z.literal(8)),
+  placeholder: z.preprocess((d) => d ?? undefined, z.optional(z.string())),
+  disabled: z.preprocess((d) => d ?? undefined, z.optional(z.boolean())),
+  reset_selection: z.preprocess((d) => d ?? undefined, z.optional(z.boolean())),
+  min_values: z.preprocess((d) => d ?? undefined, z.optional(z.number())),
+  // Discord leaves max_values out or sends 0 for the default of one.
+  max_values: z.preprocess((d) => d || undefined, z.optional(z.number())),
+  action_set_id: z.preprocess(
+    (d) => d ?? undefined,
+    z.string().default(() => getUniqueId().toString()),
+  ),
+});
+
 export const componentActionRowSchema = z.object({
   id: uniqueIdSchema,
   type: z.literal(1),
   components: z.preprocess(
     (d) => d ?? undefined,
-    z.array(componentButtonSchema.or(componentSelectMenuSchema)).default([]),
+    z
+      .array(
+        componentButtonSchema
+          .or(componentSelectMenuSchema)
+          .or(componentEntitySelectSchema),
+      )
+      .default([]),
   ),
 });
 

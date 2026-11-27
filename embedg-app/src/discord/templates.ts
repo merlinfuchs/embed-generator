@@ -447,6 +447,7 @@ function hasInteractive(components: MessageComponent[]): boolean {
   return components.some(
     (c) =>
       c.type === 3 ||
+      (c.type >= 5 && c.type <= 8) ||
       (c.type === 2 && c.style !== 5) ||
       ("accessory" in c && hasInteractive([c.accessory])) ||
       ("components" in c && hasInteractive(c.components)),

@@ -9,6 +9,7 @@ import {
 import { useState } from "react";
 import { useEditorCapabilities } from "../state/editorCapabilities";
 import ClickOutsideHandler from "./ClickOutsideHandler";
+import { ENTITY_SELECT_NAMES } from "../discord/entitySelect";
 
 interface Props {
   context: "root" | "container";
@@ -35,9 +36,10 @@ export default function EditorComponentAddDropdown({
   const componentsV2Enabled = useComponentsV2Enabled();
   const { componentTypes: allowedTypes, interactive } = useEditorCapabilities();
 
-  function addSelectMenuRow() {
+  /** A select menu fills an action row of its own. */
+  function addSelectRow(node: NewNode) {
     const rowId = insert(parentId, "components", "end", { type: "actionRow" });
-    insert(rowId, "components", "end", { type: "selectMenu" });
+    insert(rowId, "components", "end", node);
     setOpen(false);
   }
 
@@ -61,8 +63,15 @@ export default function EditorComponentAddDropdown({
     {
       label: "Select Menu",
       type: 3,
-      handler: addSelectMenuRow,
+      interactiveOnly: true,
+      handler: () => addSelectRow({ type: "selectMenu" }),
     },
+    ...([5, 6, 7, 8] as const).map((selectType) => ({
+      label: ENTITY_SELECT_NAMES[selectType],
+      type: selectType,
+      interactiveOnly: true,
+      handler: () => addSelectRow({ type: "entitySelect", selectType }),
+    })),
     {
       label: "Section",
       type: 9,
@@ -104,7 +113,7 @@ export default function EditorComponentAddDropdown({
     if (c.v2Only && !componentsV2Enabled) return false;
     if (c.rootOnly && context !== "root") return false;
     if (allowedTypes && !allowedTypes.includes(c.type)) return false;
-    if (c.type === 3 && !interactive) return false;
+    if ("interactiveOnly" in c && !interactive) return false;
 
     return true;
   });
@@ -133,7 +142,7 @@ export default function EditorComponentAddDropdown({
           <ChevronUpIcon className="w-5 h-5" />
         </button>
         {open && (
-          <div className="absolute bg-ink-900 bottom-full mb-1 left-0 rounded-lg shadow-lg border-2 border-white/10 z-10 text-white">
+          <div className="absolute bg-ink-900 bottom-full mb-1 left-0 rounded-lg shadow-lg border-2 border-white/10 z-10 text-white max-h-96 overflow-y-auto whitespace-nowrap">
             {componentTypes.map((componentType) => (
               <button
                 key={componentType.type}
