@@ -1,7 +1,7 @@
 import { DocumentMagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import clsx from "clsx";
-import { Outlet, useMatch, useNavigate } from "react-router-dom";
+import { Outlet, useMatch } from "react-router-dom";
 import { Drawer } from "vaul";
 import EditorAttachments from "../../components/EditorAttachments";
 import EditorComponents from "../../components/EditorComponents";
@@ -24,6 +24,14 @@ import {
 } from "../../state/document";
 import { useValidationErrorStore } from "../../state/validationError";
 import EditorErrorBoundary from "../../components/EditorErrorBoundary";
+import { useEditorPanelsStore } from "../../state/editorPanels";
+import { lazyView } from "../../util/lazyView";
+import MessageSettingsView from "./messageSettings";
+import ShareView from "./share";
+
+const LazyJsonView = lazyView(() => import("./json"));
+const LazyNewMessageView = lazyView(() => import("./new"));
+const LazyAssistantView = lazyView(() => import("./assistant"));
 
 export default function EditorView() {
   useDocumentValidation(
@@ -33,18 +41,26 @@ export default function EditorView() {
   );
 
   const componentsV2Enabled = useComponentsV2Enabled();
-  const assistantOpen = !!useMatch("/editor/assistant");
+  // Open through state instead of the URL, so the assistant stays open while
+  // a dialog like the settings is used next to it.
+  const assistantOpen = useEditorPanelsStore((s) => s.assistantOpen);
+  const dialog = useEditorPanelsStore((s) => s.dialog);
+  const openDialog = useEditorPanelsStore((s) => s.openDialog);
+  const closeDialog = useEditorPanelsStore((s) => s.closeDialog);
 
   // Taken on any editor route, so opening a shared message first doesn't
   // bring the templates up once it's loaded. A message restored before the
   // editor opened isn't blank anymore.
-  const navigate = useNavigate();
   const editorRoot = !!useMatch("/editor");
   useEffect(() => {
     if (takeFirstVisit() && editorRoot && currentMessageIsBlank()) {
-      navigate("/editor/new", { replace: true });
+      openDialog("new");
     }
   }, []);
+
+  // A dialog left open while visiting another page shouldn't come back with
+  // the editor. The assistant does, like a sidebar would.
+  useEffect(() => closeDialog, [closeDialog]);
 
   // TODO: also validate actions stores
 
@@ -107,8 +123,19 @@ export default function EditorView() {
             </Drawer.Portal>
           </Drawer.Root>
         </div>
+        {assistantOpen && (
+          <Suspense>
+            <LazyAssistantView />
+          </Suspense>
+        )}
         <Outlet />
       </div>
+      <Suspense>
+        {dialog === "new" && <LazyNewMessageView />}
+        {dialog === "json" && <LazyJsonView />}
+      </Suspense>
+      {dialog === "share" && <ShareView />}
+      {dialog === "settings" && <MessageSettingsView />}
     </EditorErrorBoundary>
   );
 }

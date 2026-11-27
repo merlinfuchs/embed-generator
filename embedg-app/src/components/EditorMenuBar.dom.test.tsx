@@ -9,6 +9,7 @@ import {
   targetFluxerWebhook,
 } from "../test/editor";
 import EditorMenuBar from "./EditorMenuBar";
+import { useEditorPanelsStore } from "../state/editorPanels";
 
 test("the settings button marks settings that differ from Discord's defaults", () => {
   loadMessage({
@@ -23,8 +24,8 @@ test("the settings button marks settings that differ from Discord's defaults", (
   renderEditor(<EditorMenuBar />);
 
   expect(
-    screen.getByRole("link", { name: "Message Settings (changed)" }),
-  ).toHaveAttribute("href", "/editor/settings");
+    screen.getByRole("button", { name: "Message Settings (changed)" }),
+  ).toBeInTheDocument();
 });
 
 test("it stays plain with the defaults", () => {
@@ -32,7 +33,7 @@ test("it stays plain with the defaults", () => {
   renderEditor(<EditorMenuBar />);
 
   expect(
-    screen.getByRole("link", { name: "Message Settings" }),
+    screen.getByRole("button", { name: "Message Settings" }),
   ).toBeInTheDocument();
 });
 
@@ -49,7 +50,7 @@ test("an imported setting that matches the defaults isn't marked", () => {
   renderEditor(<EditorMenuBar />);
 
   expect(
-    screen.getByRole("link", { name: "Message Settings" }),
+    screen.getByRole("button", { name: "Message Settings" }),
   ).toBeInTheDocument();
 });
 
@@ -101,6 +102,23 @@ test("the settings button also marks a silent message", () => {
   renderEditor(<EditorMenuBar />);
 
   expect(
-    screen.getByRole("link", { name: "Message Settings (changed)" }),
+    screen.getByRole("button", { name: "Message Settings (changed)" }),
   ).toBeInTheDocument();
+});
+
+test("the settings open without changing the URL or closing the assistant", async () => {
+  useEditorPanelsStore.setState({ dialog: null, assistantOpen: true });
+  loadMessage({ content: "" });
+  renderEditor(<EditorMenuBar />);
+  const path = window.location.pathname;
+
+  await editorUser().click(
+    screen.getByRole("button", { name: "Message Settings" }),
+  );
+
+  expect(useEditorPanelsStore.getState()).toMatchObject({
+    dialog: "settings",
+    assistantOpen: true,
+  });
+  expect(window.location.pathname).toBe(path);
 });

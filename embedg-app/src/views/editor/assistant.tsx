@@ -18,7 +18,7 @@ import {
   useState,
 } from "react";
 import TextareaAutosize from "react-textarea-autosize";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAssistantChatMutation } from "../../api/mutations";
 import { useAssistantUsageQuery } from "../../api/queries";
 import type { AssistantChatMessageWire } from "../../api/wire";
@@ -36,6 +36,7 @@ import {
   useDocumentStoreApi,
   useDocumentUndoStore,
 } from "../../state/document";
+import { setAssistantOpen } from "../../state/editorPanels";
 import { useSendSettingsStore } from "../../state/sendSettings";
 import { runAssistantPrompt } from "../../util/assistant";
 import { upgradesFor, usePlans } from "../../util/plans";
@@ -43,8 +44,6 @@ import { usePremiumGuildFeatures } from "../../util/premium";
 
 /** A chat next to the editor that builds and changes the message. */
 export default function AssistantView() {
-  const navigate = useNavigate();
-
   const guildId = useSendSettingsStore((s) => s.guildId);
   const features = usePremiumGuildFeatures();
   const plans = usePlans();
@@ -162,7 +161,7 @@ export default function AssistantView() {
           >
             <PencilSquareIcon className="h-5 w-5" />
           </HeaderButton>
-          <HeaderButton label="Close" onClick={() => navigate("/editor")}>
+          <HeaderButton label="Close" onClick={() => setAssistantOpen(false)}>
             <XMarkIcon className="h-5 w-5" />
           </HeaderButton>
         </div>

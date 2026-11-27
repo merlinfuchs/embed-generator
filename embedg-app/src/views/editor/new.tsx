@@ -6,7 +6,6 @@ import {
 } from "@heroicons/react/20/solid";
 import clsx from "clsx";
 import { type ReactNode, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useUserQuery } from "../../api/queries";
 import { op } from "../../util/analytics";
 import { ChannelSelect } from "../../components/ChannelSelect";
@@ -32,6 +31,7 @@ import {
   currentMessageIsBlank,
   setCurrentMessage,
 } from "../../state/currentMessage";
+import { closeEditorDialog, setAssistantOpen } from "../../state/editorPanels";
 import { useSendSettingsStore } from "../../state/sendSettings";
 import { usePremiumGuildFeatures } from "../../util/premium";
 
@@ -39,8 +39,6 @@ type LockedReason = "login" | "server";
 
 /** Replaces the message with a template, a blank one or whatever the AI builds. */
 export default function NewMessageView() {
-  const navigate = useNavigate();
-
   const { data: user, isPending: userPending } = useUserQuery();
   const guildId = useSendSettingsStore((s) => s.guildId);
   const features = usePremiumGuildFeatures();
@@ -95,7 +93,7 @@ export default function NewMessageView() {
     if (needsBot(message)) {
       useSendSettingsStore.getState().setMode("channel");
     }
-    navigate("/editor");
+    closeEditorDialog();
   }
 
   // Templates that ask for roles or channels get a step to pick them, which
@@ -109,20 +107,21 @@ export default function NewMessageView() {
     }
   }
 
-  function startBlank(path: string) {
+  function startBlank(withAssistant: boolean) {
     op.track("message_started", {
-      from: path === "/editor/assistant" ? "assistant" : "blank",
+      from: withAssistant ? "assistant" : "blank",
       format,
     });
     setCurrentMessage(
       format === "componentsV2" ? emptyComponentsV2Message : defaultMessage,
     );
-    navigate(path);
+    if (withAssistant) setAssistantOpen(true);
+    closeEditorDialog();
   }
 
   return (
     <>
-      <Modal width="lg" height="full" onClose={() => navigate("/editor")}>
+      <Modal width="lg" height="full" onClose={() => closeEditorDialog()}>
         <div className="flex flex-col h-full">
           {filling && guildId ? (
             <TemplateFields
@@ -174,9 +173,7 @@ export default function NewMessageView() {
                 {aiAllowed && (
                   <FooterButton
                     icon={<SparklesIcon className="text-amber-300" />}
-                    onClick={() =>
-                      replace(() => startBlank("/editor/assistant"))
-                    }
+                    onClick={() => replace(() => startBlank(true))}
                   >
                     Describe it to the AI
                   </FooterButton>
@@ -184,7 +181,7 @@ export default function NewMessageView() {
                 <FooterButton
                   icon={<PlusIcon />}
                   primary
-                  onClick={() => replace(() => startBlank("/editor"))}
+                  onClick={() => replace(() => startBlank(false))}
                 >
                   Start from scratch
                 </FooterButton>

@@ -6,13 +6,13 @@ import {
 } from "@heroicons/react/20/solid";
 // Lucide fills in what heroicons doesn't have.
 import { BroomIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { isDefaultAllowedMentions } from "../discord/allowedMentions";
 import {
   defaultMessage,
   emptyComponentsV2Message,
 } from "../discord/defaultMessage";
 import { setCurrentMessage } from "../state/currentMessage";
+import { openEditorDialog, useEditorPanelsStore } from "../state/editorPanels";
 import {
   useAllowedMentions,
   useComponentsV2Enabled,
@@ -25,7 +25,8 @@ import EditorIconButton from "./EditorIconButton";
 import EditorComponentsV2Toggle from "./EditorComponentsV2Toggle";
 
 export default function EditorMenuBar() {
-  const navigate = useNavigate();
+  const assistantOpen = useEditorPanelsStore((s) => s.assistantOpen);
+  const setAssistantOpen = useEditorPanelsStore((s) => s.setAssistantOpen);
   const componentsV2Enabled = useComponentsV2Enabled();
   const aiAssistantAllowed =
     !!usePremiumGuildFeatures()?.max_ai_prompts_per_month;
@@ -48,23 +49,29 @@ export default function EditorMenuBar() {
                 componentsV2Enabled ? emptyComponentsV2Message : defaultMessage,
               );
             } else {
-              navigate("/editor/new");
+              openEditorDialog("new");
             }
           }}
         >
           <BroomIcon className="h-full w-full" />
         </EditorIconButton>
-        <EditorIconButton label="JSON Code" href="/editor/json">
+        <EditorIconButton
+          label="JSON Code"
+          onClick={() => openEditorDialog("json")}
+        >
           <CodeBracketSquareIcon />
         </EditorIconButton>
-        <EditorIconButton label="Share Message" href="/editor/share">
+        <EditorIconButton
+          label="Share Message"
+          onClick={() => openEditorDialog("share")}
+        >
           <LinkIcon />
         </EditorIconButton>
         <EditorIconButton
           label={
             settingsChanged ? "Message Settings (changed)" : "Message Settings"
           }
-          href="/editor/settings"
+          onClick={() => openEditorDialog("settings")}
           indicator={settingsChanged}
         >
           <Cog6ToothIcon />
@@ -72,8 +79,9 @@ export default function EditorMenuBar() {
         {aiAssistantAllowed && (
           <EditorIconButton
             label="AI Assistant"
-            href="/editor/assistant"
+            onClick={() => setAssistantOpen(!assistantOpen)}
             highlight={true}
+            active={assistantOpen}
           >
             <SparklesIcon />
           </EditorIconButton>

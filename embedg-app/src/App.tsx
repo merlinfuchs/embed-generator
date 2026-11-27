@@ -3,8 +3,7 @@ import { Route, Routes, Navigate } from "react-router-dom";
 import { ToastContainer } from "./util/toasts";
 import EditorView from "./views/editor/editor";
 import RequestLoadingIndicator from "./components/RequestLoadingIndicator";
-import MessageSettingsView from "./views/editor/messageSettings";
-import ShareView from "./views/editor/share";
+import LegacyPanelRoute from "./views/editor/legacyPanelRoute";
 import EditorSideNav from "./components/SideNav";
 import MobileBottomBar from "./components/MobileBottomBar";
 import UpsellPopup from "./components/UpsellPopup";
@@ -12,9 +11,6 @@ import ConfirmOnExit from "./components/ConfirmOnExit";
 import LoginErrorHandler from "./components/LoginErrorHandler";
 import { lazyView } from "./util/lazyView";
 
-const LazyJsonView = lazyView(() => import("./views/editor/json"));
-const LazyNewMessageView = lazyView(() => import("./views/editor/new"));
-const LazyAssistantView = lazyView(() => import("./views/editor/assistant"));
 const LazyMessagesView = lazyView(() => import("./views/messages"));
 const LazyPremiumView = lazyView(() => import("./views/premium"));
 const LazyShareRestoreView = lazyView(
@@ -58,33 +54,18 @@ function App() {
         <EditorSideNav />
         <Routes>
           <Route path="/editor" element={<EditorView />}>
-            <Route
-              path="new"
-              element={
-                <SuspendedView>
-                  <LazyNewMessageView />
-                </SuspendedView>
-              }
-            />
-            <Route
-              path="json"
-              element={
-                <SuspendedView>
-                  <LazyJsonView />
-                </SuspendedView>
-              }
-            />
+            {/* The panels open without changing the URL now. */}
+            <Route path="new" element={<LegacyPanelRoute panel="new" />} />
+            <Route path="json" element={<LegacyPanelRoute panel="json" />} />
             <Route
               path="assistant"
-              element={
-                <SuspendedView>
-                  <LazyAssistantView />
-                </SuspendedView>
-              }
+              element={<LegacyPanelRoute panel="assistant" />}
             />
-
-            <Route path="share" element={<ShareView />} />
-            <Route path="settings" element={<MessageSettingsView />} />
+            <Route path="share" element={<LegacyPanelRoute panel="share" />} />
+            <Route
+              path="settings"
+              element={<LegacyPanelRoute panel="settings" />}
+            />
             <Route
               path="open"
               element={
