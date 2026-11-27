@@ -8,6 +8,8 @@ interface Props {
   href?: string;
   onClick?: (event: React.MouseEvent) => void;
   highlight?: boolean;
+  /** For toggles, like a panel that's open. */
+  active?: boolean;
   /** Shows a dot on the button. */
   indicator?: boolean;
   disabled?: boolean;
@@ -20,6 +22,7 @@ export default function EditorIconButton({
   href,
   onClick,
   highlight,
+  active,
   indicator,
   disabled,
   className,
@@ -29,7 +32,9 @@ export default function EditorIconButton({
     highlight ? "text-amber-300" : "text-mist-300 hover:text-mist-100",
     disabled
       ? "bg-white/5 text-mist-500 cursor-default"
-      : "bg-white/5 cursor-pointer hover:bg-white/10",
+      : active
+        ? "bg-white/15 cursor-pointer hover:bg-white/20"
+        : "bg-white/5 cursor-pointer hover:bg-white/10",
     className,
   );
 
@@ -52,6 +57,7 @@ export default function EditorIconButton({
         <button
           type="button"
           aria-label={label}
+          aria-pressed={active}
           disabled={disabled}
           className={classes}
           onClick={(e) => !disabled && onClick?.(e)}

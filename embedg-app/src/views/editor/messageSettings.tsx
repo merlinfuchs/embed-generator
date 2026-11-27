@@ -1,13 +1,11 @@
-import { useNavigate } from "react-router-dom";
+import { closeEditorDialog } from "../../state/editorPanels";
 import EditorAllowedMentions from "../../components/EditorAllowedMentions";
 import EditorSilentSetting from "../../components/EditorSilentSetting";
 import Modal from "../../components/Modal";
 
 export default function MessageSettingsView() {
-  const navigate = useNavigate();
-
   return (
-    <Modal width="sm" onClose={() => navigate("/editor")}>
+    <Modal width="sm" onClose={() => closeEditorDialog()}>
       <div className="p-4">
         <div className="text-lg mb-5 text-white">Message Settings</div>
         <EditorAllowedMentions />
@@ -17,7 +15,7 @@ export default function MessageSettingsView() {
         <div className="flex justify-end mt-5">
           <button
             className="px-3 py-2 rounded-lg text-white bg-ink-600 hover:bg-ink-500"
-            onClick={() => navigate("/editor")}
+            onClick={() => closeEditorDialog()}
           >
             Close
           </button>

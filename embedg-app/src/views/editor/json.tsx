@@ -11,11 +11,10 @@ import { githubDark } from "@uiw/codemirror-theme-github";
 import { linter, lintGutter } from "@codemirror/lint";
 import { parseMessageWithAction } from "../../discord/importSchema";
 import { exportMessage } from "../../discord/exportMessage";
-import { useNavigate } from "react-router-dom";
+import { closeEditorDialog } from "../../state/editorPanels";
 import { useToasts } from "../../util/toasts";
 
 export default function JsonView() {
-  const navigate = useNavigate();
   const createToast = useToasts((s) => s.create);
 
   const msg = useDebouncedCurrentDocument(250)?.message;
@@ -35,7 +34,7 @@ export default function JsonView() {
 
       setCurrentMessage(parsedData);
       if (edited) op.track("json_imported");
-      navigate("/editor");
+      closeEditorDialog();
     } catch (e) {
       console.error(e);
       createToast({
@@ -48,7 +47,7 @@ export default function JsonView() {
   }
 
   return (
-    <Modal height="full" onClose={() => navigate("/editor")}>
+    <Modal height="full" onClose={() => closeEditorDialog()}>
       <div className="h-full flex flex-col p-1.5 md:p-3">
         <ReactCodeMirror
           className="flex-1 rounded-lg overflow-hidden"
@@ -70,7 +69,7 @@ export default function JsonView() {
         <div className="mt-3 flex justify-end space-x-2">
           <button
             className="border-2 border-white/15 hover:bg-white/5 hover:border-white/30 transition-colors px-3 py-2 rounded-lg text-white"
-            onClick={() => navigate("/editor")}
+            onClick={() => closeEditorDialog()}
           >
             Cancel
           </button>

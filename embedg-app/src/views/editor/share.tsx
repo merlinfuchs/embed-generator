@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { closeEditorDialog } from "../../state/editorPanels";
 import Modal from "../../components/Modal";
 import { useSharedMessageCreateMutation } from "../../api/mutations";
 import { useEffect, useRef, useState } from "react";
@@ -6,8 +6,6 @@ import { useToasts } from "../../util/toasts";
 import { getCurrentMessage } from "../../state/currentMessage";
 
 export default function ShareView() {
-  const navigate = useNavigate();
-
   const [shareUrl, setShareUrl] = useState("");
 
   const shareCreateMutation = useSharedMessageCreateMutation();
@@ -51,7 +49,7 @@ export default function ShareView() {
   }
 
   return (
-    <Modal width="xs" onClose={() => navigate("/editor")}>
+    <Modal width="xs" onClose={() => closeEditorDialog()}>
       <div className="p-4">
         <div className="text-lg mb-5 text-white">
           Copy the URL below to share your message
@@ -72,7 +70,7 @@ export default function ShareView() {
           </button>
           <button
             className="px-3 py-2 rounded-lg text-white bg-ink-600 hover:bg-ink-500"
-            onClick={() => navigate("/editor")}
+            onClick={() => closeEditorDialog()}
           >
             Close
           </button>
